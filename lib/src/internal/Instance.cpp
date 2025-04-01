@@ -249,25 +249,21 @@ Instance::deleteFlow( const uuids::uuid &in_id )
 Instance *
 to_Instance( mxlInstance in_instance )
 {
-    if ( !in_instance )
-    {
-        throw std::invalid_argument( "Instance is nullptr" );
-    }
-
-    InstanceInternal *internal = reinterpret_cast<InstanceInternal *>( in_instance );
-    return internal->instance.get();
+    return (in_instance != nullptr)
+        ? reinterpret_cast<InstanceInternal *>( in_instance )->instance.get()
+        : nullptr;
 }
 
 FlowReaderId
 to_FlowReaderId( mxlFlowReader in_reader )
 {
-    return static_cast<FlowReaderId>( reinterpret_cast<uintptr_t>( in_reader ) );
+    return static_cast<FlowReaderId>( reinterpret_cast<std::uintptr_t>( in_reader ) );
 }
 
 FlowWriterId
 to_FlowWriterId( mxlFlowWriter in_writer )
 {
-    return static_cast<FlowWriterId>( reinterpret_cast<uintptr_t>( in_writer ) );
+    return static_cast<FlowWriterId>( reinterpret_cast<std::uintptr_t>( in_writer ) );
 }
 
 }
