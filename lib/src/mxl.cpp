@@ -6,8 +6,6 @@
 #include <string>
 #include "internal/Instance.hpp"
 
-using namespace mxl::lib;
-
 extern "C"
 MXL_EXPORT
 int8_t
@@ -35,10 +33,10 @@ mxlCreateInstance( const char *in_mxlDomain, const char *in_options )
     try
     {
         std::string opts = ( in_options ) ? in_options : "";
-        auto tmp = new InstanceInternal{ std::make_unique<Instance>( in_mxlDomain, opts ) };
+        auto tmp = new mxl::lib::InstanceInternal{ std::make_unique<mxl::lib::Instance>( in_mxlDomain, opts ) };
         return reinterpret_cast<mxlInstance>( tmp );
     }
-    catch ( std::exception & )
+    catch (...)
     {
         return nullptr;
     }
@@ -51,18 +49,14 @@ mxlDestroyInstance( mxlInstance in_instance )
 {
     try
     {
-        auto *instance = reinterpret_cast<InstanceInternal *>( in_instance );
-        if ( instance )
-        {
-            delete ( instance );
-            return MXL_STATUS_OK;
-        }
-        else
-        {
-            return MXL_ERR_INVALID_ARG;
-        }
+        auto const instance = reinterpret_cast<mxl::lib::InstanceInternal *>( in_instance );
+        delete instance;
+
+        return (instance != nullptr)
+            ? MXL_STATUS_OK
+            : MXL_ERR_INVALID_ARG;
     }
-    catch ( std::exception & )
+    catch (...)
     {
         return MXL_ERR_UNKNOWN;
     }
