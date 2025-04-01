@@ -1,15 +1,15 @@
-#include "internal/Instance.hpp"
-
 #include <cstdint>
 #include <exception>
 #include <memory>
 #include <mxl/mxl.h>
 #include <mxl/version.h>
 #include <string>
+#include "internal/Instance.hpp"
 
-using namespace std;
 using namespace mxl::lib;
 
+extern "C"
+MXL_EXPORT
 int8_t
 mxlGetVersion( mxlVersionType *out_version )
 {
@@ -27,7 +27,9 @@ mxlGetVersion( mxlVersionType *out_version )
     }
 }
 
-MXL_EXPORT mxlInstance
+extern "C"
+MXL_EXPORT
+mxlInstance
 mxlCreateInstance( const char *in_mxlDomain, const char *in_options )
 {
     try
@@ -42,7 +44,9 @@ mxlCreateInstance( const char *in_mxlDomain, const char *in_options )
     }
 }
 
-MXL_EXPORT mxlStatus
+extern "C"
+MXL_EXPORT
+mxlStatus
 mxlDestroyInstance( mxlInstance in_instance )
 {
     try

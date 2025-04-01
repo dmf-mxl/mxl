@@ -1,20 +1,20 @@
-
 #include <cstdint>
+#include <ctime>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
-#include <time.h>
 
 #ifdef __APPLE__
-#define MXL_CLOCK CLOCK_REALTIME
+#  define MXL_CLOCK CLOCK_REALTIME
 #elif __linux__
-#include <bits/time.h>
-#define MXL_CLOCK CLOCK_TAI
+#  define MXL_CLOCK CLOCK_TAI
 #else
-#pragma GCC error "Unsupported platform"
+#  pragma GCC error "Unsupported platform"
 #endif
 
 #define TAI_LEAP_SECONDS 37 // For platforms that do not have a CLOCK_TAI.
 
+extern "C"
+MXL_EXPORT
 void
 mxlGetTime( timespec *out_ts )
 {
@@ -25,6 +25,8 @@ mxlGetTime( timespec *out_ts )
     }
 }
 
+extern "C"
+MXL_EXPORT
 uint64_t
 mxlGetCurrentGrainIndex( const Rational *in_editRate )
 {
@@ -50,6 +52,8 @@ mxlGetCurrentGrainIndex( const Rational *in_editRate )
     }
 }
 
+extern "C"
+MXL_EXPORT
 uint64_t
 mxlTimeSpecToGrainIndex( const Rational *in_editRate, const timespec *in_timespec )
 {
@@ -63,7 +67,9 @@ mxlTimeSpecToGrainIndex( const Rational *in_editRate, const timespec *in_timespe
     return totalNs / grainDurationNs;
 }
 
-MXL_EXPORT uint64_t
+extern "C"
+MXL_EXPORT
+uint64_t
 mxlGetNsUntilGrainIndex( uint64_t in_index, const Rational *in_editRate )
 {
     // Validate the edit rate
@@ -105,6 +111,8 @@ mxlGetNsUntilGrainIndex( uint64_t in_index, const Rational *in_editRate )
     }
 }
 
+extern "C"
+MXL_EXPORT
 void
 mxlSleepForNs( uint64_t in_ns )
 {
