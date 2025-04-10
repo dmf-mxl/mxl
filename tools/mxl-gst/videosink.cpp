@@ -253,17 +253,37 @@ real_main( int argc, char **argv )
     gst_pipeline.start();
 
     grain_index = mxlGetCurrentGrainIndex( &flow_info.grainRate );
+
     while ( !g_exit_requested )
     {
         GrainInfo grain_info;
-        uint8_t *payload;
-        auto ret = mxlFlowReaderGetGrain( instance, reader, grain_index, editUnitDurationMs, &grain_info, &payload );
-        if ( ret != MXL_STATUS_OK )
+        GrainAccessor grain_accessor;
+        mxlStatus status;
+
+        // Try to consume the grain fully.
+        bool is_grain_complete = false;
+        do
         {
-            // Missed a grain. resync.
-            grain_index = mxlGetCurrentGrainIndex( &flow_info.grainRate );
+            status = mxlFlowReaderGetGrain( instance, reader, grain_index, editUnitDurationMs, &grain_info, &grain_accessor );
+            if ( status != MXL_STATUS_OK )
+            {
+                MXL_ERROR( "Failed to get grain {} : '{}'", grain_index, static_cast<int>( status ) );
+                // Missed a grain. resync.
+                grain_index = mxlGetCurrentGrainIndex( &flow_info.grainRate );
+                break;
+            }
+
+            // A grain is complete if we successfully read all slices (or we read a grain with no slices).
+            is_grain_complete = grain_info.sliceCount == 0 || grain_info.validSliceCount == grain_info.sliceCount;
+
+        } while ( !is_grain_complete );
+
+        // We resynced. start again.
+        if ( status != MXL_STATUS_OK )
+        {
             continue;
         }
+
         grain_index++;
 
         if ( !gst_buffer )
@@ -278,7 +298,7 @@ real_main( int argc, char **argv )
             gst_buffer_unref( gst_buffer );
             gst_buffer = gst_buffer_new_allocate( nullptr, grain_info.grainSize, nullptr );
         }
-        gst_pipeline.pushSample( gst_buffer, payload, grain_info.grainSize );
+        gst_pipeline.pushSample( gst_buffer, grain_accessor.payload, grain_info.grainSize );
     }
 
 mxl_cleanup:

@@ -25,7 +25,7 @@
 
 namespace fs = std::filesystem;
 
-TEST_CASE( "Video Flow : Create/Destroy", "[mxl flows]" )
+TEST_CASE( "Video Flow : Whole grains", "[mxl flows]" )
 {
     const char *opts = "{}";
     auto flowDef = mxl::tests::readFile( "data/v210_flow.json" );
@@ -62,35 +62,34 @@ TEST_CASE( "Video Flow : Create/Destroy", "[mxl flows]" )
 
     /// Open the grain.
     GrainInfo gInfo;
-    uint8_t *buffer = nullptr;
+    uint8_t *writerBuffer = nullptr;
     /// Open the grain for writing.
-    REQUIRE( mxlFlowWriterOpenGrain( instanceWriter, writer, index, &gInfo, &buffer ) == MXL_STATUS_OK );
+    REQUIRE( mxlFlowWriterOpenGrain( instanceWriter, writer, index, &gInfo, &writerBuffer ) == MXL_STATUS_OK );
 
-    /// Set a mark at the beginning and the end of the grain payload.
-    buffer[0] = 0xCA;
-    buffer[gInfo.grainSize - 1] = 0xFE;
-
-    /// Get some info about the freshly created flow.  Since no grains have been commited, the head should still be at 0.
     FlowInfo fInfo1;
     REQUIRE( mxlFlowReaderGetInfo( instanceReader, reader, &fInfo1 ) == MXL_STATUS_OK );
-    REQUIRE( fInfo1.headIndex == 0 );
+
+    /// Set a mark at the beginning and the end of the grain payload.
+    writerBuffer[0] = 0xCA;
+    writerBuffer[gInfo.grainSize - 1] = 0xFE;
 
     /// Mark the grain as invalid
     gInfo.flags |= GRAIN_FLAG_INVALID;
     REQUIRE( mxlFlowWriterCommit( instanceWriter, writer, &gInfo ) == MXL_STATUS_OK );
 
-    /// Create back the grain using a flow reader.
-    REQUIRE( mxlFlowReaderGetGrain( instanceReader, reader, index, 16, &gInfo, &buffer ) == MXL_STATUS_OK );
-
     // Give some time to the inotify message to reach the directorywatcher.
     std::this_thread::sleep_for( std::chrono::milliseconds( 5 ) );
+
+    GrainAccessor gAccessor;
+    /// Read back the grain using a flow reader.
+    REQUIRE( mxlFlowReaderGetGrain( instanceReader, reader, index, 16, &gInfo, &gAccessor ) == MXL_STATUS_OK );
 
     /// Confirm that the flags are preserved.
     REQUIRE( gInfo.flags == GRAIN_FLAG_INVALID );
 
     /// Confirm that the marks are still present.
-    REQUIRE( buffer[0] == 0xCA );
-    REQUIRE( buffer[gInfo.grainSize - 1] == 0xFE );
+    REQUIRE( gAccessor.payload[0] == 0xCA );
+    REQUIRE( gAccessor.payload[gInfo.grainSize - 1] == 0xFE );
 
     /// Get the updated flow info
     FlowInfo fInfo2;
@@ -109,11 +108,11 @@ TEST_CASE( "Video Flow : Create/Destroy", "[mxl flows]" )
     REQUIRE( mxlDestroyFlowReader( instanceReader, reader ) == MXL_STATUS_OK );
 
     // Use the writer after closing the reader.
-    buffer = nullptr;
-    REQUIRE( mxlFlowWriterOpenGrain( instanceWriter, writer, index++, &gInfo, &buffer ) == MXL_STATUS_OK );
+    writerBuffer = nullptr;
+    REQUIRE( mxlFlowWriterOpenGrain( instanceWriter, writer, index++, &gInfo, &writerBuffer ) == MXL_STATUS_OK );
     /// Set a mark at the beginning and the end of the grain payload.
-    buffer[0] = 0xCA;
-    buffer[gInfo.grainSize - 1] = 0xFE;
+    writerBuffer[0] = 0xCA;
+    writerBuffer[gInfo.grainSize - 1] = 0xFE;
 
     REQUIRE( mxlDestroyFlowWriter( instanceWriter, writer ) == MXL_STATUS_OK );
     REQUIRE( mxlDestroyFlow( instanceWriter, flowId ) == MXL_STATUS_OK );
@@ -275,3 +274,80 @@ TEST_CASE( "Data Flow : Create/Destroy", "[mxl flows]" )
 }
 
 #endif
+
+TEST_CASE( "Video Flow : Slices", "[mxl flows]" )
+{
+    const char *opts = "{}";
+    auto flowDef = mxl::tests::readFile( "data/v210_flow.json" );
+    const char *flowId = "5fbec3b1-1b0f-417d-9059-8b94a47197ed";
+
+    const char *homeDir = getenv( "HOME" );
+    REQUIRE( homeDir != nullptr );
+    fs::path domain{ homeDir }; // Remove that path if it exists.
+    domain /= "mxl_domain";
+    fs::remove_all( domain );
+
+    std::filesystem::create_directories( domain );
+    auto instanceReader = mxlCreateInstance( domain.string().c_str(), opts );
+    REQUIRE( instanceReader != nullptr );
+
+    auto instanceWriter = mxlCreateInstance( domain.string().c_str(), opts );
+    REQUIRE( instanceWriter != nullptr );
+
+    FlowInfo fInfo;
+    REQUIRE( mxlCreateFlow( instanceWriter, flowDef.c_str(), opts, &fInfo ) == MXL_STATUS_OK );
+
+    mxlFlowReader reader;
+    REQUIRE( mxlCreateFlowReader( instanceReader, flowId, "", &reader ) == MXL_STATUS_OK );
+
+    mxlFlowWriter writer;
+    REQUIRE( mxlCreateFlowWriter( instanceWriter, flowId, "", &writer ) == MXL_STATUS_OK );
+
+    /// Compute the grain index for the flow rate and current TAI time.
+    Rational rate{ 60000, 1001 };
+    timespec ts;
+    mxlGetTime( &ts );
+    uint64_t index = mxlTimeSpecToGrainIndex( &rate, &ts );
+    REQUIRE( index != MXL_UNDEFINED_OFFSET );
+
+    /// Open the grain.
+    GrainInfo gInfo;
+    gInfo.sliceCount = 16;
+    uint8_t *writerBuffer = nullptr;
+    /// Open the grain for writing.
+    REQUIRE( mxlFlowWriterOpenGrain( instanceWriter, writer, index, &gInfo, &writerBuffer ) == MXL_STATUS_OK );
+
+    // Wait for grain at 'index'.  this should be out of range since we have not written anything yet.
+    GrainAccessor gAccessor;
+    REQUIRE( mxlFlowReaderGetGrain( instanceReader, reader, index, 100, &gInfo, &gAccessor ) == MXL_ERR_OUT_OF_RANGE );
+
+    // Write data one slice at a time
+    auto sliceSize = gInfo.grainSize / gInfo.sliceCount;
+    for ( auto slice = 0; slice < gInfo.sliceCount; slice++ )
+    {
+        // Byte offset of the beginning of the slice
+        auto offset = slice * sliceSize;
+        // Set markers at the beginning and end of the slice with the slice number
+        writerBuffer[offset] = slice;
+        writerBuffer[offset + sliceSize - 1] = slice;
+        // Increment grain slice
+        mxlFlowWriterIncrementSlice( instanceWriter, writer, &gInfo );
+        // Read back the grain and confirm that the slice information is properly updated.
+        GrainAccessor gAccessor;
+        REQUIRE( mxlFlowReaderGetGrain( instanceReader, reader, index, 100, &gInfo, &gAccessor ) == MXL_STATUS_OK );
+        // Verify that the amount of valid bytes is correct
+        REQUIRE( gAccessor.validSize == sliceSize * ( slice + 1 ) );
+        // Verify that the total payload size is correct.
+        REQUIRE( gAccessor.payloadSize == gInfo.grainSize );
+        // Verify that the payload marker is also correct.
+        REQUIRE( gAccessor.payload[offset] == gInfo.validSliceCount - 1 );
+        REQUIRE( gAccessor.payload[offset + sliceSize - 1] == gInfo.validSliceCount - 1 );
+    }
+
+    REQUIRE( mxlDestroyFlowReader( instanceReader, reader ) == MXL_STATUS_OK );
+    REQUIRE( mxlDestroyFlowWriter( instanceWriter, writer ) == MXL_STATUS_OK );
+    REQUIRE( mxlDestroyFlow( instanceWriter, flowId ) == MXL_STATUS_OK );
+
+    mxlDestroyInstance( instanceReader );
+    mxlDestroyInstance( instanceWriter );
+}

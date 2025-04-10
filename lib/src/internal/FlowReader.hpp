@@ -52,12 +52,11 @@ public:
     /// \param in_index The grain index.
     /// \param in_timeoutMs How long to wait for the grain if in_index is > FlowInfo.headIndex
     /// \param out_grainInfo A valid pointer to GrainInfo that will be copied to
-    /// \param out_payload A valid void pointer to pointer that will be set to the first byte of the grain payload.  Payload size is available in the
-    /// GrainInfo structure.
+    /// \param out_accessor A grain accessor that will be filled if grain access is successful
     ///
     /// \return A status code describing the outcome of the call.
     ///
-    virtual mxlStatus getGrain( uint64_t in_index, uint16_t in_timeoutMs, GrainInfo *out_grainInfo, uint8_t **out_payload ) = 0;
+    virtual mxlStatus getGrain( uint64_t in_index, uint16_t in_timeoutMs, GrainInfo *out_grainInfo, GrainAccessor *out_accesor ) = 0;
 
     ///
     /// Dtor.

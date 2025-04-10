@@ -59,14 +59,16 @@ PosixFlowWriter::getFlowInfo()
 }
 
 mxlStatus
-PosixFlowWriter::openGrain( uint64_t in_index, GrainInfo *out_grainInfo, uint8_t **out_payload )
+PosixFlowWriter::openGrain( uint64_t in_index, GrainInfo *inout_grainInfo, uint8_t **out_payload )
 {
     if ( _flowData )
     {
         uint32_t offset = in_index % _flowData->flow->get()->info.grainCount;
 
         auto grain = _flowData->grains.at( offset )->get();
-        *out_grainInfo = grain->info;
+        grain->info.sliceCount = inout_grainInfo->sliceCount;
+        grain->info.validSliceCount = 0;
+        *inout_grainInfo = grain->info;
         *out_payload = reinterpret_cast<uint8_t *>( grain ) + MXL_GRAIN_PAYLOAD_OFFSET;
         _currentIndex = in_index;
         return MXL_STATUS_OK;
@@ -108,6 +110,10 @@ PosixFlowWriter::commit( const GrainInfo *in_grainInfo )
     uint32_t offset = _currentIndex % flow->info.grainCount;
     auto dst = &_flowData->grains.at( offset )->get()->info;
     std::memcpy( dst, in_grainInfo, sizeof( GrainInfo ) );
+
+    /// Mark as complete (all slices are written)s
+    dst->validSliceCount = in_grainInfo->sliceCount;
+
     mxlGetTime( &flow->info.lastWriteTime );
     _currentIndex = MXL_UNDEFINED_OFFSET;
 
@@ -123,4 +129,44 @@ PosixFlowWriter::~PosixFlowWriter()
     PosixFlowWriter::close();
 }
 
+mxlStatus
+PosixFlowWriter::incrementSlice( GrainInfo *out_grainInfo )
+{
+    // Check that a grain has been opened
+    if ( _currentIndex == MXL_UNDEFINED_OFFSET )
+    {
+        return MXL_ERR_OUT_OF_RANGE;
+    }
+
+    if ( _flowData )
+    {
+        auto flow = _flowData->flow->get();
+        auto grain = _flowData->grains.at( _currentIndex % flow->info.grainCount )->get();
+
+        /// Check if we are are already complete
+        if ( grain->info.validSliceCount >= grain->info.sliceCount )
+        {
+            return MXL_ERR_OUT_OF_RANGE;
+        }
+        else
+        {
+            grain->info.validSliceCount++;
+            *out_grainInfo = grain->info;
+
+            // Update the head index.  The head will now point to a potentially partial grain
+            flow->info.headIndex = _currentIndex;
+
+            // Let readers know that something has changed.
+            // This will trigger an inotify event, which will wake up the readers.
+            _flowData->flow->touch();
+
+            return MXL_STATUS_OK;
+        }
+    }
+    else
+    {
+        return MXL_ERR_UNKNOWN;
+    }
 }
+
+} // namespace mxl::lib

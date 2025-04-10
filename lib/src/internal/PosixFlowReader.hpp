@@ -38,22 +38,11 @@ public:
     ///
     virtual FlowInfo getFlowInfo() override;
 
-    /// \see FlowManager::grainAvailable
+    /// \see FlowReader::grainAvailable
     virtual void grainAvailable() override;
 
-    ///
-    /// Accessor for a specific grain at a specific index.
-    /// The index must be >= FlowInfo.tailIndex.
-    ///
-    /// \param in_index The grain index.
-    /// \param in_timeoutMs How long to wait for the grain if in_index is > FlowInfo.headIndex
-    /// \param out_grainInfo A valid pointer to GrainInfo that will be copied to
-    /// \param out_payload A valid void pointer to pointer that will be set to the first byte of the grain payload.  Payload size is available in the
-    /// GrainInfo structure.
-    ///
-    /// \return A status code describing the outcome of the call.
-    ///
-    virtual mxlStatus getGrain( uint64_t in_index, uint16_t in_timeoutMs, GrainInfo *out_grainInfo, uint8_t **out_payload ) override;
+    /// \see FlowReader::getGrain
+    virtual mxlStatus getGrain( uint64_t in_index, uint16_t in_timeoutMs, GrainInfo *out_grainInfo, GrainAccessor *out_accessor ) override;
 
     ///
     /// Dtor. Releases all resources.

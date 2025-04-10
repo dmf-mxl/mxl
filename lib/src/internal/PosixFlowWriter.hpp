@@ -54,6 +54,11 @@ public:
     virtual mxlStatus commit( const GrainInfo *in_grainInfo ) override;
 
     ///
+    /// \see FlowWriter::incrementSlice
+    ///
+    virtual mxlStatus incrementSlice( GrainInfo *out_grainInfo ) override;
+
+    ///
     /// dtor
     ///
     virtual ~PosixFlowWriter();

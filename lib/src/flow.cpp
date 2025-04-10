@@ -270,12 +270,16 @@ mxlFlowReaderGetInfo( mxlInstance in_instance, mxlFlowReader in_reader, FlowInfo
 }
 
 mxlStatus
-mxlFlowReaderGetGrain(
-    mxlInstance in_instance, mxlFlowReader in_reader, uint64_t in_index, uint16_t in_timeoutMs, GrainInfo *out_grainInfo, uint8_t **out_payload )
+mxlFlowReaderGetGrain( mxlInstance in_instance,
+                       mxlFlowReader in_reader,
+                       uint64_t in_index,
+                       uint16_t in_timeoutMs,
+                       GrainInfo *out_grainInfo,
+                       GrainAccessor *out_accessor )
 {
     try
     {
-        if ( in_instance == nullptr || out_grainInfo == nullptr || out_payload == nullptr )
+        if ( in_instance == nullptr || out_grainInfo == nullptr || out_accessor == nullptr )
         {
             return MXL_ERR_INVALID_ARG;
         }
@@ -291,9 +295,7 @@ mxlFlowReaderGetGrain(
         {
             return MXL_ERR_INVALID_FLOW_READER;
         }
-
-        auto status = reader->getGrain( in_index, in_timeoutMs, out_grainInfo, out_payload );
-        return status;
+        return reader->getGrain( in_index, in_timeoutMs, out_grainInfo, out_accessor );
     }
     catch ( std::exception & )
     {
@@ -302,11 +304,11 @@ mxlFlowReaderGetGrain(
 }
 
 mxlStatus
-mxlFlowWriterOpenGrain( mxlInstance in_instance, mxlFlowWriter in_writer, uint64_t in_index, GrainInfo *out_grainInfo, uint8_t **out_payload )
+mxlFlowWriterOpenGrain( mxlInstance in_instance, mxlFlowWriter in_writer, uint64_t in_index, GrainInfo *inout_grainInfo, uint8_t **out_payload )
 {
     try
     {
-        if ( in_instance == nullptr || out_grainInfo == nullptr || out_payload == nullptr )
+        if ( in_instance == nullptr || inout_grainInfo == nullptr || out_payload == nullptr )
         {
             return MXL_ERR_INVALID_ARG;
         }
@@ -323,7 +325,7 @@ mxlFlowWriterOpenGrain( mxlInstance in_instance, mxlFlowWriter in_writer, uint64
             return MXL_ERR_INVALID_FLOW_WRITER;
         }
 
-        auto status = writer->openGrain( in_index, out_grainInfo, out_payload );
+        auto status = writer->openGrain( in_index, inout_grainInfo, out_payload );
         return status;
     }
     catch ( std::exception & )
@@ -387,6 +389,36 @@ mxlFlowWriterCommit( mxlInstance in_instance, mxlFlowWriter in_writer, const Gra
         return writer->commit( in_grainInfo );
     }
     catch ( std::exception & )
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+mxlStatus
+mxlFlowWriterIncrementSlice( mxlInstance in_instance, mxlFlowWriter in_writer, GrainInfo *out_grainInfo )
+{
+    try
+    {
+        if ( in_instance == nullptr || out_grainInfo == nullptr )
+        {
+            return MXL_ERR_INVALID_ARG;
+        }
+
+        auto instance = to_Instance( in_instance );
+        if ( !instance )
+        {
+            return MXL_ERR_INVALID_ARG;
+        }
+
+        auto writer = instance->getWriter( to_FlowWriterId( in_writer ) );
+        if ( !writer )
+        {
+            return MXL_ERR_INVALID_FLOW_WRITER;
+        }
+
+        return writer->incrementSlice( out_grainInfo );
+    }
+    catch ( ... )
     {
         return MXL_ERR_UNKNOWN;
     }

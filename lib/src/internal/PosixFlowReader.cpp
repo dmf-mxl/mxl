@@ -89,7 +89,7 @@ PosixFlowReader::getFlowInfo()
 }
 
 mxlStatus
-PosixFlowReader::getGrain( uint64_t in_index, uint16_t in_timeoutMs, GrainInfo *out_grainInfo, uint8_t **out_payload )
+PosixFlowReader::getGrain( uint64_t in_index, uint16_t in_timeoutMs, GrainInfo *out_grainInfo, GrainAccessor *out_accessor )
 {
     mxlStatus status = MXL_ERR_TIMEOUT;
 
@@ -118,7 +118,19 @@ PosixFlowReader::getGrain( uint64_t in_index, uint16_t in_timeoutMs, GrainInfo *
             uint32_t offset = in_index % flow->info.grainCount;
             auto grain = _flowData->grains.at( offset )->get();
             *out_grainInfo = grain->info;
-            *out_payload = reinterpret_cast<uint8_t *>( grain ) + MXL_GRAIN_PAYLOAD_OFFSET;
+
+            out_accessor->payload = reinterpret_cast<uint8_t *>( grain ) + MXL_GRAIN_PAYLOAD_OFFSET;
+
+            if ( grain->info.sliceCount == 0 )
+            {
+                out_accessor->validSize = grain->info.grainSize;
+            }
+            else
+            {
+                out_accessor->validSize = grain->info.grainSize * grain->info.validSliceCount / grain->info.sliceCount;
+            }
+
+            out_accessor->payloadSize = grain->info.grainSize;
             status = MXL_STATUS_OK;
         }
         else
@@ -129,7 +141,18 @@ PosixFlowReader::getGrain( uint64_t in_index, uint16_t in_timeoutMs, GrainInfo *
                 uint32_t offset = in_index % flow->info.grainCount;
                 auto grain = _flowData->grains.at( offset )->get();
                 *out_grainInfo = grain->info;
-                *out_payload = reinterpret_cast<uint8_t *>( grain ) + MXL_GRAIN_PAYLOAD_OFFSET;
+                out_accessor->payload = reinterpret_cast<uint8_t *>( grain ) + MXL_GRAIN_PAYLOAD_OFFSET;
+
+                if ( grain->info.sliceCount == 0 )
+                {
+                    out_accessor->validSize = grain->info.grainSize;
+                }
+                else
+                {
+                    out_accessor->validSize = grain->info.grainSize * grain->info.validSliceCount / grain->info.sliceCount;
+                }
+
+                out_accessor->payloadSize = grain->info.grainSize;
                 status = MXL_STATUS_OK;
             }
             else
@@ -148,4 +171,4 @@ PosixFlowReader::grainAvailable()
     _grainCV.notify_all();
 }
 
-}
+} // namespace mxl::lib
