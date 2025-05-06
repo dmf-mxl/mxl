@@ -14,7 +14,7 @@ build_ubuntu_2204:
     - MXL_dind 
   before_script:
     - apk add bash
- variables:
+  variables:
     DOCKER_BUILDKIT: '1'    
     CI_PIPELINE_IID: $CI_PIPELINE_IID
   script:
