@@ -8,9 +8,9 @@ build_ubuntu_2204:
   image: docker:28.0.0
   stage: build
   services:
-    - docker:MXL_dind
+    - docker:dind
   tags:
-    - dind  
+    - MXL_dind 
   before_script:
     - apk add bash
   variables:
