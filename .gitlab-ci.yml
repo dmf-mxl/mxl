@@ -15,7 +15,6 @@ build_ubuntu_2204:
   before_script:
     - apk add bash
  variables:
-    # DOCKER_HOST: tcp://docker:2375
     DOCKER_BUILDKIT: '1'    
     CI_PIPELINE_IID: $CI_PIPELINE_IID
   script:
