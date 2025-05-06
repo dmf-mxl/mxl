@@ -14,11 +14,11 @@ build_ubuntu_2204:
     - MXL_dind 
   before_script:
     - apk add bash
-  variables:
+ variables:
+    # DOCKER_HOST: tcp://docker:2375
     DOCKER_BUILDKIT: '1'    
     CI_PIPELINE_IID: $CI_PIPELINE_IID
   script:
-    - unset DOCKER_HOST
     - docker build --build-arg BASE_IMAGE_VERSION=22.04 /builds/dmf/mxl/.devcontainer/ -t mxl_build_container
     - docker run --mount src=/builds/dmf/mxl/,target=/workspace/mxl,type=bind -i mxl_build_container:latest cmake -S /workspace/mxl -B /workspace/mxl/build/Linux-Clang-Release --preset Linux-Clang-Release -DMXL_BUILD_NUMBER=$CI_PIPELINE_IID
     - docker run --mount src=/builds/dmf/mxl/,target=/workspace/mxl,type=bind -i mxl_build_container:latest cmake --build /workspace/mxl/build/Linux-Clang-Release -t all doc install package
