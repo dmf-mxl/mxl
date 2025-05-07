@@ -53,7 +53,7 @@ RUN apt-get update || true \
 
 # Install CMake
 ARG CMAKE_VERSION=3.31.0
-RUN wget -O - https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz \
+RUN wget -O - https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-aarch64.tar.gz \
   | tar --strip-components=1 --directory /usr/local -xzf -
 
 # Install Ninja
@@ -65,7 +65,7 @@ RUN wget https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION
 # Install CCache
 ARG CCACHE_VERSION=4.9
 RUN mkdir -p /opt/ccache \
- && wget -O - https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}-linux-x86_64.tar.xz \
+ && wget -O - https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}-linux-aarch64.tar.xz \
   | tar --strip-components=1 --directory /opt/ccache -xJf - \
  && ln -s /opt/ccache/ccache /usr/local/bin/ccache
 
