@@ -65,7 +65,7 @@ RUN userdel --remove ubuntu >/dev/null 2>&1 || true
 RUN groupdel ubuntu >/dev/null 2>&1 || true
 
 # Set default user
-ARG USERNAME=ubuntu
+ARG USERNAME=devcontainer
 ARG USER_UID=1000
 ARG USER_GID=${USER_UID}
 

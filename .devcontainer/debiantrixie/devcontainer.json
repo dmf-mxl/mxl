@@ -47,5 +47,5 @@
         "CCACHE_DIR": "${containerWorkspaceFolder}/.cache/ccache",
         "DISPLAY": "${localEnv:DISPLAY}"
     },
-    "remoteUser": "rocky"
+    "remoteUser": "devcontainer"
 }

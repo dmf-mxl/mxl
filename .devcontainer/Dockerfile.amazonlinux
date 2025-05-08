@@ -46,7 +46,7 @@ RUN dnf install -y \
 RUN pip install --upgrade cmake
 
 # Set default user
-ARG USERNAME=amazon
+ARG USERNAME=devcontainer
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
