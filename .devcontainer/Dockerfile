@@ -1,11 +1,10 @@
-ARG BASE_IMAGE_VERSION=22.04
-FROM ubuntu:${BASE_IMAGE_VERSION}
+FROM ubuntu:24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN echo "vm.swappiness=0" >> /etc/sysctl.conf \
- && echo "kernel.shm_rmid_forced=1" >> /etc/sysctl.conf \
- && echo "kernel.shmmax=2147483648" >> /etc/sysctl.conf
+RUN echo 'vm.swappiness=0'          >> /etc/sysctl.conf \
+ && echo 'kernel.shm_rmid_forced=1' >> /etc/sysctl.conf \
+ && echo 'kernel.shmmax=2147483648' >> /etc/sysctl.conf
 
 # Install basic and runtime dependencies
 RUN apt-get update \
@@ -32,64 +31,56 @@ RUN apt-get update \
     automake \
     libtool \
     pkg-config \
-    htop \
     bison \
-    flex
+    flex \
+    ccache \
+    htop
 
-RUN apt-get update || true \
- && apt-get -y install libgstreamer1.0-dev \
-      libgstreamer-plugins-base1.0-dev \
-      gstreamer1.0-plugins-good \
-      gstreamer1.0-plugins-bad \
-      gstreamer1.0-plugins-ugly \
-      gstreamer1.0-x
-
-# Install a recent clang/clang++/lldb version
 ARG CLANG_VERSION=19
-RUN wget -qO- https://apt.llvm.org/llvm.sh | bash -s -- ${CLANG_VERSION}
+RUN apt-get install -y --no-install-recommends \
+    "clang-${CLANG_VERSION}" \
+    "clang-tools-${CLANG_VERSION}" \
+    "clang-tidy-${CLANG_VERSION}" \
+    "clang-format-${CLANG_VERSION}" \
+    cmake \
+    ninja-build
 
-RUN apt-get update || true \
- && apt-get -y install clang-format-${CLANG_VERSION}
+# Make the selected clang version the default alternative
+COPY register-clang-version.sh ./register-clang-version.sh 
+RUN ./register-clang-version.sh "${CLANG_VERSION}" 100 \
+ && rm ./register-clang-version.sh
 
-# Install CMake
-ARG CMAKE_VERSION=3.31.0
-RUN wget -O - https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz \
-  | tar --strip-components=1 --directory /usr/local -xzf -
 
-# Install Ninja
-ARG NINJA_VERSION=1.11.1
-RUN wget https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-linux.zip \
- && unzip ninja-linux.zip -d /usr/local/bin \
- && rm ninja-linux.zip
+RUN apt-get install -y --no-install-recommends \
+    libgstreamer1.0-dev \
+    libgstreamer-plugins-base1.0-dev \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-plugins-ugly \
+    gstreamer1.0-x
 
-# Install CCache
-ARG CCACHE_VERSION=4.9
-RUN mkdir -p /opt/ccache \
- && wget -O - https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}-linux-x86_64.tar.xz \
-  | tar --strip-components=1 --directory /opt/ccache -xJf - \
- && ln -s /opt/ccache/ccache /usr/local/bin/ccache
+
+# Remove the default ubuntu user if it exists
+RUN userdel --remove ubuntu >/dev/null 2>&1 || true
+RUN groupdel ubuntu >/dev/null 2>&1 || true
 
 # Set default user
 ARG USERNAME=ubuntu
 ARG USER_UID=1000
-ARG USER_GID=$USER_UID
+ARG USER_GID=${USER_UID}
 
 # Create the user
-RUN getent group $USERNAME || groupadd --gid $USER_GID $USERNAME \
- && getent passwd $USERNAME || useradd --uid $USER_UID --gid $USER_GID -m -s /bin/bash $USERNAME \
+RUN groupadd --gid "${USER_GID}" "${USERNAME}" \
+ && useradd --uid "${USER_UID}" --gid "${USER_GID}" -m -s /bin/bash "${USERNAME}" \
  && apt-get install -y sudo \
- && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
- && chmod 0440 /etc/sudoers.d/$USERNAME
+ && printf '%s ALL=(root) NOPASSWD:ALL\n' "${USERNAME}" > "/etc/sudoers.d/${USERNAME}" \
+ && chmod 0440 "/etc/sudoers.d/${USERNAME}"
 
-USER $USERNAME
-WORKDIR /home/$USERNAME
+USER "${USERNAME}"
+WORKDIR "/home/${USERNAME}"
 
-# vcpkg
+# Install vcpkg
 RUN git clone https://github.com/microsoft/vcpkg \
- && ./vcpkg/bootstrap-vcpkg.sh
+ && ./vcpkg/bootstrap-vcpkg.sh --disableMetrics
 
-ENV VCPKG_ROOT=/home/$USERNAME/vcpkg
-
-# Make the selected clang version the default alternative
-COPY register-clang-version.sh /home/$USERNAME/register-clang-version.sh 
-RUN sudo /home/$USERNAME/register-clang-version.sh ${CLANG_VERSION} 100 && rm /home/$USERNAME/register-clang-version.sh
+ENV VCPKG_ROOT="/home/${USERNAME}/vcpkg"
