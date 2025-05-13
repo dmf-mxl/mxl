@@ -35,7 +35,7 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(picojson REQUIRED)
 
-target_link_libraries(mxl PRIVATE stduuid spdlog::spdlog fmt::fmt picojson::picojson)
+target_link_libraries(mxl PRIVATE stduuid spdlog::spdlog fmt::fmt picojson::picojson pthread)
 target_include_directories(mxl PUBLIC
     $<BUILD_INTERFACE:${mxl_SOURCE_DIR}/lib/include>
     $<BUILD_INTERFACE:${mxl_BINARY_DIR}>
