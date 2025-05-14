@@ -9,7 +9,7 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "web"
 
 build_ubuntu_2204:
-  image: docker:28.1.0
+  image: docker:28.0.0
   stage: build
   services:
     - name: docker:20.10.16-dind
