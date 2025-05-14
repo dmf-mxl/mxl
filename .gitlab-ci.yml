@@ -4,6 +4,10 @@ stages:
 variables:
   DOCKER_DRIVER: overlay2
 
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+
 build_ubuntu_2204:
   image: docker:28.0.0
   stage: build
