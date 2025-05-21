@@ -77,16 +77,16 @@ namespace mxl::lib
         if (_flowData)
         {
             auto const flow = _flowData->flow.get();
-            if (auto const headIndex = flow->info.headIndex; in_index <= headIndex)
+            if (auto const headIndex = flow->info.discrete.headIndex; in_index <= headIndex)
             {
-                auto const grainCount = flow->info.grainCount;
+                auto const grainCount = flow->info.discrete.grainCount;
                 auto const minIndex = (headIndex >= grainCount)
                     ? (headIndex - grainCount + 1U)
                     : std::uint64_t{0};
 
                 if (in_index >= minIndex)
                 {
-                    auto const offset = in_index % flow->info.grainCount;
+                    auto const offset = in_index % flow->info.discrete.grainCount;
                     auto const grain = _flowData->grains.at(offset).get();
                     *out_grainInfo = grain->header.info;
                     *out_payload = reinterpret_cast<std::uint8_t*>(&grain->header + 1);
@@ -103,9 +103,9 @@ namespace mxl::lib
                 // FIXME: This code is hopelessly broken. As it assumes that the
                 //      next write provides the index of interest, which is not
                 //      guaranteed.
-                if (waitUntilChanged(&flow->info.syncCounter, flow->info.syncCounter, Duration(in_timeoutNs)))
+                if (waitUntilChanged(&flow->info.discrete.syncCounter, flow->info.discrete.syncCounter, Duration(in_timeoutNs)))
                 {
-                    auto const offset = in_index % flow->info.grainCount;
+                    auto const offset = in_index % flow->info.discrete.grainCount;
                     auto const grain = _flowData->grains[offset].get();
                     *out_grainInfo = grain->header.info;
                     *out_payload = reinterpret_cast<std::uint8_t*>(&grain->header + 1);
@@ -135,9 +135,9 @@ namespace mxl::lib
         if (_flowData)
         {
             auto const flow = _flowData->flow.get();
-            if (auto const headIndex = flow->info.headIndex; in_index <= headIndex)
+            if (auto const headIndex = flow->info.discrete.headIndex; in_index <= headIndex)
             {
-                auto const grainCount = flow->info.grainCount;
+                auto const grainCount = flow->info.discrete.grainCount;
                 auto const minIndex = (headIndex >= grainCount)
                     ? (headIndex - grainCount + 1U)
                     : std::uint64_t{0};

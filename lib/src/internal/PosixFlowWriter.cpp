@@ -45,7 +45,7 @@ namespace mxl::lib
     {
         if (_flowData)
         {
-            std::uint32_t offset = in_index % _flowData->flow.get()->info.grainCount;
+            std::uint32_t offset = in_index % _flowData->flow.get()->info.discrete.grainCount;
 
             auto grain = _flowData->grains.at(offset).get();
             *out_grainInfo = grain->header.info;
@@ -70,7 +70,7 @@ namespace mxl::lib
         if (_flowData && _flowData->flow)
         {
             auto flow = _flowData->flow.get();
-            flow->info.lastReadTime = mxlGetTime();
+            flow->info.common.lastReadTime = mxlGetTime();
         }
     }
 
@@ -82,12 +82,12 @@ namespace mxl::lib
         }
 
         auto flow = _flowData->flow.get();
-        flow->info.headIndex = _currentIndex;
+        flow->info.discrete.headIndex = _currentIndex;
 
-        std::uint32_t offset = _currentIndex % flow->info.grainCount;
+        std::uint32_t offset = _currentIndex % flow->info.discrete.grainCount;
         auto dst = &_flowData->grains.at(offset).get()->header.info;
         std::memcpy(dst, in_grainInfo, sizeof(GrainInfo));
-        flow->info.lastWriteTime = mxlGetTime();
+        flow->info.common.lastWriteTime = mxlGetTime();
 
         // If the grain is complete, reset the current index of the flow writer.
         if (in_grainInfo->grainSize == in_grainInfo->commitedSize)
@@ -96,8 +96,8 @@ namespace mxl::lib
         }
 
         // Let readers know that the head has moved or that new data is available in a partial grain
-        _flowData->flow.get()->info.syncCounter++;
-        wakeAll(&_flowData->flow.get()->info.syncCounter);
+        _flowData->flow.get()->info.discrete.syncCounter++;
+        wakeAll(&_flowData->flow.get()->info.discrete.syncCounter);
 
         return MXL_STATUS_OK;
     }

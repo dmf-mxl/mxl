@@ -7,59 +7,12 @@
 #endif
 
 #include <mxl/mxl.h>
-#include <mxl/rational.h>
+#include <mxl/flowinfo.h>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-
-    /**
-     * Binary structure stored in the Flow shared memory segment.
-     * The flow shared memory will be located in {mxlDomain}/{flowId}
-     * where {mxlDomain} is a filesystem location available to the application
-     */
-    typedef struct FlowInfo
-    {
-        /// Version of the structure. The only currently supported value is 1
-        uint32_t version;
-
-        /// Size of the structure
-        uint32_t size;
-
-        /// The flow uuid.  This should be identical to the {flowId} path component described above.
-        uint8_t id[16];
-
-        /// The current head index of the ringbuffer
-        uint64_t headIndex;
-
-        /// The 'edit rate' of the grains expressed as a rational.  For VIDEO and ANC this value must match the editRate found in the flow descriptor.
-        /// \todo Handle non-grain aligned sound access
-        Rational grainRate;
-
-        /// How many grains in the ring buffer. This should be identical to the number of entries in the {mxlDomain}/{flowId}/grains/ folder.
-        /// Accessing the shared memory section for that specific grain should be predictable
-        uint32_t grainCount;
-
-        /// no flags defined yet.
-        uint32_t flags;
-
-        /// The last time a producer wrote to the flow in nanoseconds since the
-        /// epoch.
-        uint64_t lastWriteTime;
-
-        /// The last time a consumer read from the flow in nanoseconds since the
-        /// epoch.
-        uint64_t lastReadTime;
-
-        /// 32 bit word used syncronization between a writer and multiple readers.  This value can be used by futexes.
-        // When a FlowWriter commits some data (a grain, a slice, etc) it will increment this value and then wake all FlowReaders waiting on this
-        // memory address.
-        uint32_t syncCounter;
-
-        /// User data space
-        uint8_t userData[4020];
-    } FlowInfo;
 
 /*
  * A grain can be marked as invalid for multiple reasons. for example, an input application may have

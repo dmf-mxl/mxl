@@ -16,24 +16,56 @@
 #include <sys/file.h>
 #include "../../lib/src/internal/PathUtils.hpp"
 
+namespace
+{
+    constexpr char const* getFormatString(int format) noexcept
+    {
+        switch (format)
+        {
+            case MXL_DATA_FORMAT_UNSPECIFIED:   return "UNSPECIFIED";
+            case MXL_DATA_FORMAT_VIDEO:         return "Video";
+            case MXL_DATA_FORMAT_AUDIO:         return "Audio";
+            case MXL_DATA_FORMAT_DATA:          return "Data";
+            case MXL_DATA_FORMAT_MUX:           return "Multiplexed";
+            default:                            return "UNKNOWN";
+        }
+    }
+}
+
+
 std::ostream& operator<<(std::ostream& os, FlowInfo const& info)
 {
-    auto span = gsl::span<std::uint8_t, 16>(const_cast<std::uint8_t*>(info.id), sizeof(info.id));
+    auto span = gsl::span<std::uint8_t, sizeof info.common.id>(const_cast<std::uint8_t*>(info.common.id), sizeof info.common.id);
     auto id = uuids::uuid(span);
     os << "- Flow [" << uuids::to_string(id) << ']' << '\n'
        << '\t' << fmt::format("{: >18}: {}", "Version", info.version) << '\n'
        << '\t' << fmt::format("{: >18}: {}", "Struct size", info.size) << '\n'
-       << '\t' << fmt::format("{: >18}: {:0>8x}", "Flags", info.flags) << '\n'
-       << '\t' << fmt::format("{: >18}: {}", "Head index", info.headIndex) << '\n'
-       << '\t' << fmt::format("{: >18}: {}/{}", "Grain rate", info.grainRate.numerator, info.grainRate.denominator) << '\n'
-       << '\t' << fmt::format("{: >18}: {}", "Grain count", info.grainCount) << '\n'
-       << '\t' << fmt::format("{: >18}: {}", "Last write time", info.lastWriteTime) << '\n'
-       << '\t' << fmt::format("{: >18}: {}", "Last read time", info.lastReadTime) << std::endl;
+       << '\t' << fmt::format("{: >18}: {}", "Last write time", info.common.lastWriteTime) << '\n'
+       << '\t' << fmt::format("{: >18}: {}", "Last read time", info.common.lastReadTime) << '\n'
+       << '\t' << fmt::format("{: >18}: {}", "Format", getFormatString(info.common.format)) << '\n'
+       << '\t' << fmt::format("{: >18}: {:0>8x}", "Flags", info.common.flags) << '\n';
+
+    if (mxlIsDiscreteDataFormat(info.common.format))
+    {
+       os << '\t' << fmt::format("{: >18}: {}/{}", "Grain rate", info.discrete.grainRate.numerator, info.discrete.grainRate.denominator) << '\n'
+          << '\t' << fmt::format("{: >18}: {}", "Grain count", info.discrete.grainCount) << '\n'
+          << '\t' << fmt::format("{: >18}: {}", "Head index", info.discrete.headIndex) << '\n';
+    }
+    else if (mxlIsContinuousDataFormat(info.common.format))
+    {
+       os << '\t' << fmt::format("{: >18}: {}/{}", "Sample rate", info.continuous.sampleRate.numerator, info.continuous.sampleRate.denominator) << '\n'
+          << '\t' << fmt::format("{: >18}: {}", "Channel count", info.continuous.channelCount) << '\n'
+          << '\t' << fmt::format("{: >18}: {}", "Buffer length", info.continuous.bufferLength) << '\n'
+          << '\t' << fmt::format("{: >18}: {}", "Commit batch size", info.continuous.commitBatchSize) << '\n'
+          << '\t' << fmt::format("{: >18}: {}", "Sync batch size", info.continuous.syncBatchSize) << '\n'
+          << '\t' << fmt::format("{: >18}: {}", "Head index", info.continuous.headIndex) << '\n';
+    }
 
     auto const now = mxlGetTime();
-    auto currentIndex = mxlTimestampToGrainIndex(&info.grainRate, now);
-    os << '\t' << fmt::format("{: >18}: {}", "Latency (grains)", currentIndex - info.headIndex) << '\n'
-       << '\t' << fmt::format("{: >18}: {}", "Latency (ns)", now - info.lastWriteTime) << std::endl;
+    auto const currentIndex = mxlTimestampToGrainIndex(&info.discrete.grainRate, now);
+    os << '\t' << fmt::format("{: >18}: {}", "Latency (grains)", currentIndex - info.discrete.headIndex) << '\n'
+       << '\t' << fmt::format("{: >18}: {}", "Latency (ns)", now - info.common.lastWriteTime)
+       << std::endl;
 
     return os;
 }

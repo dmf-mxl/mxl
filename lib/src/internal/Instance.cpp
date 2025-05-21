@@ -182,32 +182,14 @@ namespace mxl::lib
     std::unique_ptr<FlowData> Instance::createFlow(std::string const& in_flowDef)
     {
         // Parse the json flow resource
-        FlowParser parser{in_flowDef};
+        auto const parser = FlowParser{in_flowDef};
         // Read the mandatory grain_rate field
-        Rational grainRate = parser.getGrainRate();
-        // Read the mandatory id field
-        auto id = parser.getId();
+        auto const grainRate = parser.getGrainRate();
         // Compute the grain count based on our configured history duration
         auto const grainCount = _historyDuration * grainRate.numerator / (1'000'000'000ULL * grainRate.denominator);
 
         // Create the flow using the flow manager
-        auto flowData = _flowManager->createFlow(id, in_flowDef, grainCount, grainRate, parser.getPayloadSize());
-        auto info = flowData->flow.get()->info;
-
-        // Populate the flowinfo structure. This structure will be visible through the C api.
-        info.version = 1;
-        info.size = sizeof(FlowInfo);
-        auto idSpan = id.as_bytes();
-        std::memcpy(info.id, idSpan.data(), idSpan.size());
-        info.flags = 0;
-        info.headIndex = 0;
-        info.grainRate = grainRate;
-        info.grainCount = grainCount;
-
-        info.lastWriteTime = mxlGetTime();
-        info.lastReadTime = info.lastWriteTime;
-
-        return flowData;
+        return _flowManager->createFlow(parser.getId(), in_flowDef, grainCount, grainRate, parser.getPayloadSize());
     }
 
     bool Instance::deleteFlow(uuids::uuid const& in_id)

@@ -1,20 +1,13 @@
 #include "FlowManager.hpp"
-#include <cstddef>
 #include <cstring>
-#include <filesystem>
 #include <fstream>
 #include <ios>
-#include <memory>
 #include <stdexcept>
-#include <string>
-#include <vector>
 #include <unistd.h>
-#include <uuid.h>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
 #include <system_error>
-#include "Flow.hpp"
 #include "Logging.hpp"
 #include "PathUtils.hpp"
 #include "SharedMemory.hpp"
@@ -104,13 +97,13 @@ namespace mxl::lib
             info.size = sizeof info;
 
             auto const idSpan = flowId.as_bytes();
-            std::memcpy(info.id, idSpan.data(), idSpan.size());
-            info.lastWriteTime = mxlGetTime();
-            info.lastReadTime = info.lastWriteTime;
+            std::memcpy(info.common.id, idSpan.data(), idSpan.size());
+            info.common.lastWriteTime = mxlGetTime();
+            info.common.lastReadTime = info.common.lastWriteTime;
 
-            info.grainRate = grainRate;
-            info.grainCount = grainCount;
-            info.syncCounter = 0;
+            info.discrete.grainRate = grainRate;
+            info.discrete.grainCount = grainCount;
+            info.discrete.syncCounter = 0;
 
             auto const grainDir = makeGrainDirectoryName(tempDirectory);
             create_directory(grainDir);
@@ -165,7 +158,7 @@ namespace mxl::lib
         auto flowData = std::make_unique<FlowData>();
         flowData->flow = SharedMemoryInstance<Flow>{flowFile.string().c_str(), in_mode, 0U};
 
-        auto const grainCount = flowData->flow.get()->info.grainCount;
+        auto const grainCount = flowData->flow.get()->info.discrete.grainCount;
         if (grainCount > 0U)
         {
             auto const grainDir = makeGrainDirectoryName(base);
@@ -195,7 +188,7 @@ namespace mxl::lib
         if (flowData && flowData->flow)
         {
             // Extract the ID
-            auto const span = uuids::span<std::uint8_t, sizeof flowData->flow.get()->info.id>{const_cast<std::uint8_t*>(flowData->flow.get()->info.id), sizeof flowData->flow.get()->info.id};
+            auto const span = uuids::span<std::uint8_t, sizeof flowData->flow.get()->info.common.id>{const_cast<std::uint8_t*>(flowData->flow.get()->info.common.id), sizeof flowData->flow.get()->info.common.id};
             auto const id = uuids::uuid(span);
 
             // Close the flow

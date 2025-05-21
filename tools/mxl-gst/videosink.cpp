@@ -265,12 +265,12 @@ int real_main(int argc, char** argv)
         goto mxl_cleanup;
     }
 
-    rate = flow_info.grainRate;
+    rate = flow_info.discrete.grainRate;
     editUnitDurationNs = static_cast<std::uint64_t>(1.0 * rate.denominator * (1'000'000'000.0 / rate.numerator));
     editUnitDurationNs += 1'000'000ULL; // allow some margin.
     gst_pipeline.start();
 
-    grain_index = mxlGetCurrentGrainIndex(&flow_info.grainRate);
+    grain_index = mxlGetCurrentGrainIndex(&flow_info.discrete.grainRate);
     while (!g_exit_requested)
     {
         GrainInfo grain_info;
@@ -280,7 +280,7 @@ int real_main(int argc, char** argv)
         {
             // Missed a grain. resync.
             MXL_ERROR("Missed grain {}, err : {}", grain_index, (int)ret);
-            grain_index = mxlGetCurrentGrainIndex(&flow_info.grainRate);
+            grain_index = mxlGetCurrentGrainIndex(&flow_info.discrete.grainRate);
             continue;
         }
         else if (grain_info.commitedSize != grain_info.grainSize)

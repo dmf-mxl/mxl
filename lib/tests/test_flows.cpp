@@ -69,7 +69,7 @@ TEST_CASE("Video Flow : Create/Destroy", "[mxl flows]")
     /// Get some info about the freshly created flow.  Since no grains have been commited, the head should still be at 0.
     FlowInfo fInfo1;
     REQUIRE(mxlFlowReaderGetInfo(reader, &fInfo1) == MXL_STATUS_OK);
-    REQUIRE(fInfo1.headIndex == 0);
+    REQUIRE(fInfo1.discrete.headIndex == 0);
 
     /// Mark the grain as invalid
     gInfo.flags |= GRAIN_FLAG_INVALID;
@@ -93,13 +93,13 @@ TEST_CASE("Video Flow : Create/Destroy", "[mxl flows]")
     REQUIRE(mxlFlowReaderGetInfo(reader, &fInfo2) == MXL_STATUS_OK);
 
     /// Confirm that that head has moved.
-    REQUIRE(fInfo2.headIndex == index);
+    REQUIRE(fInfo2.discrete.headIndex == index);
 
     // We accessed the grain using mxlFlowReaderGetGrain. This should have increased the lastReadTime field.
-    REQUIRE(fInfo2.lastReadTime > fInfo1.lastReadTime);
+    REQUIRE(fInfo2.common.lastReadTime > fInfo1.common.lastReadTime);
 
     // We commited a new grain. This should have increased the lastWriteTime field.
-    REQUIRE(fInfo2.lastWriteTime > fInfo1.lastWriteTime);
+    REQUIRE(fInfo2.common.lastWriteTime > fInfo1.common.lastWriteTime);
 
     /// Release the reader
     REQUIRE(mxlReleaseFlowReader(instanceReader, reader) == MXL_STATUS_OK);
@@ -218,7 +218,7 @@ TEST_CASE("Data Flow : Create/Destroy", "[mxl flows]")
     /// Get some info about the freshly created flow.  Since no grains have been commited, the head should still be at 0.
     FlowInfo fInfo1;
     REQUIRE(mxlFlowReaderGetInfo(reader, &fInfo1) == MXL_STATUS_OK);
-    REQUIRE(fInfo1.headIndex == 0);
+    REQUIRE(fInfo1.discrete.headIndex == 0);
 
     /// Mark the grain as invalid
     gInfo.flags |= GRAIN_FLAG_INVALID;
@@ -241,13 +241,13 @@ TEST_CASE("Data Flow : Create/Destroy", "[mxl flows]")
     REQUIRE(mxlFlowReaderGetInfo(reader, &fInfo2) == MXL_STATUS_OK);
 
     /// Confirm that that head has moved.
-    REQUIRE(fInfo2.headIndex == index);
+    REQUIRE(fInfo2.discrete.headIndex == index);
 
     // We accessed the grain using mxlFlowReaderGetGrain. This should have increased the lastReadTime field.
-    REQUIRE(fInfo2.lastReadTime > fInfo1.lastReadTime);
+    REQUIRE(fInfo2.common.lastReadTime > fInfo1.common.lastReadTime);
 
     // We commited a new grain. This should have increased the lastWriteTime field.
-    REQUIRE(fInfo2.lastWriteTime > fInfo1.lastWriteTime);
+    REQUIRE(fInfo2.common.lastWriteTime > fInfo1.common.lastWriteTime);
 
     /// Delete the reader
     REQUIRE(mxlReleaseFlowReader(instanceReader, reader) == MXL_STATUS_OK);
@@ -304,7 +304,7 @@ TEST_CASE("Video Flow : Slices", "[mxl flows]")
     /// Get some info about the freshly created flow.  Since no grains have been commited, the head should still be at 0.
     FlowInfo fInfo1;
     REQUIRE(mxlFlowReaderGetInfo(reader, &fInfo1) == MXL_STATUS_OK);
-    REQUIRE(fInfo1.headIndex == 0);
+    REQUIRE(fInfo1.discrete.headIndex == 0);
 
     size_t const maxSlice = 8;
     auto sliceSize = gInfo.grainSize / maxSlice;
@@ -316,10 +316,10 @@ TEST_CASE("Video Flow : Slices", "[mxl flows]")
 
         FlowInfo sliceFlowInfo;
         REQUIRE(mxlFlowReaderGetInfo(reader, &sliceFlowInfo) == MXL_STATUS_OK);
-        REQUIRE(sliceFlowInfo.headIndex == index);
+        REQUIRE(sliceFlowInfo.discrete.headIndex == index);
 
         // We commited data to a grain. This should have increased the lastWriteTime field.
-        REQUIRE(sliceFlowInfo.lastWriteTime > fInfo1.lastWriteTime);
+        REQUIRE(sliceFlowInfo.common.lastWriteTime > fInfo1.common.lastWriteTime);
 
         /// Read back the partial grain using the flow reader.
         REQUIRE(mxlFlowReaderGetGrain(reader, index, 8, &gInfo, &buffer) == MXL_STATUS_OK);
@@ -332,7 +332,7 @@ TEST_CASE("Video Flow : Slices", "[mxl flows]")
 
         // We accessed the grain using mxlFlowReaderGetGrain. This should have increased the lastReadTime field.
         REQUIRE(mxlFlowReaderGetInfo(reader, &sliceFlowInfo) == MXL_STATUS_OK);
-        REQUIRE(sliceFlowInfo.lastReadTime > fInfo1.lastReadTime);
+        REQUIRE(sliceFlowInfo.common.lastReadTime > fInfo1.common.lastReadTime);
     }
 
     REQUIRE(mxlReleaseFlowReader(instanceReader, reader) == MXL_STATUS_OK);

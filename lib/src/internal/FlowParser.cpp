@@ -138,6 +138,10 @@ namespace mxl::lib
         {
             _grainRate = extractRational(fetchAs<picojson::object>(_root, "grain_rate"));
         }
+        else if (_format == MXL_DATA_FORMAT_AUDIO)
+        {
+            _grainRate = extractRational(fetchAs<picojson::object>(_root, "sample_rate"));
+        }
         else
         {
             throw std::domain_error{"Unsupported flow format."};
