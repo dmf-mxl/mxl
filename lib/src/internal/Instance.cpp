@@ -30,10 +30,8 @@
 
 namespace mxl::lib
 {
-
     namespace
     {
-
         std::once_flag loggingFlag;
 
         void initializeLogging()
@@ -189,7 +187,7 @@ namespace mxl::lib
         auto const grainCount = _historyDuration * grainRate.numerator / (1'000'000'000ULL * grainRate.denominator);
 
         // Create the flow using the flow manager
-        return _flowManager->createFlow(parser.getId(), in_flowDef, grainCount, grainRate, parser.getPayloadSize());
+        return _flowManager->createFlow(parser.getId(), in_flowDef, parser.getFormat(), grainCount, grainRate, parser.getPayloadSize());
     }
 
     bool Instance::deleteFlow(uuids::uuid const& in_id)

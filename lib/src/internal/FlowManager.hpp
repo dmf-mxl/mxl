@@ -68,14 +68,15 @@ namespace mxl::lib
         ///
         /// Create a new Flow and associated grains. Opens it in read-write mode
         ///
-        /// \param in_flowId The id of the flow.
-        /// \param in_flowDef The json definition of the flow (NMOS Resource format).  The flow is not parsed or validated. It is written as is.
-        /// \param in_grainCount How many individual grains to create
-        /// \param in_grainRate The grain rate.
-        /// \param in_grainPayloadSize Size of the grain in host memory.  0 if the grain payload lives in device memory.
+        /// \param[in] flowId The id of the flow.
+        /// \param[in] flowDef The json definition of the flow (NMOS Resource format). The flow is not parsed or validated. It is written as is.
+        /// \param[in] flowFormat The flow data format.
+        /// \param[in] grainCount How many individual grains to create.
+        /// \param[in] grainRate The grain rate.
+        /// \param[in] grainPayloadSize Size of the grain in host memory.  0 if the grain payload lives in device memory.
         ///
-        std::unique_ptr<FlowData> createFlow(uuids::uuid const& in_flowId, std::string const& in_flowDef, size_t grainCount, Rational const& in_grainRate,
-            size_t grainPayloadSize);
+        std::unique_ptr<FlowData> createFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat, std::size_t grainCount, Rational const& grainRate,
+            std::size_t grainPayloadSize);
 
         ///
         /// Open an existing flow by id.
@@ -112,10 +113,7 @@ namespace mxl::lib
         ///
         /// Accessor for the mxl domain (base path where shared memory will be stored)
         /// \return The base path
-        std::filesystem::path const& getDomain() const
-        {
-            return _mxlDomain;
-        }
+        std::filesystem::path const& getDomain() const;
 
     private:
         std::filesystem::path _mxlDomain;
