@@ -11,28 +11,34 @@
 
 using namespace mxl::lib;
 
-TEST_CASE("Flow Manager", "[flow manager]")
+TEST_CASE("Flow Manager : Create Manager", "[flow manager]")
 {
-    auto const domain = std::filesystem::path{"/dev/shm/mxl_domain"}; // Remove that path if it exists.
+    auto const domain = std::filesystem::path{"/dev/shm/mxl_domain"};
+    // Remove that path if it exists.
     remove_all(domain);
 
-    auto flowDef = mxl::tests::readFile("data/v210_flow.json");
-    auto flowId = *uuids::uuid::from_string("5fbec3b1-1b0f-417d-9059-8b94a47197ed");
-
     // This should throw since the folder should not exist.
-    REQUIRE_THROWS(
-        [&]()
-        {
-            auto manager = std::make_shared<FlowManager>(domain);
-        }());
+    REQUIRE_THROWS( [&]() { std::make_shared<FlowManager>(domain); }());
 
     // Create the mxl domain path.
     REQUIRE(create_directory(domain));
 
-    auto manager = std::make_shared<FlowManager>(domain);
+    auto const manager = std::make_shared<FlowManager>(domain);
+    REQUIRE(manager->listFlows().size() == 0);
+}
 
+TEST_CASE("Flow Manager : Create Video Flow Structure", "[flow manager]")
+{
+    auto const domain = std::filesystem::path{"/dev/shm/mxl_domain"};
+    // Clean out the mxl domain path, if it exists.
+    remove_all(domain);
+    REQUIRE(create_directory(domain));
+
+    auto const flowDef = mxl::tests::readFile("data/v210_flow.json");
+    auto const flowId = *uuids::uuid::from_string("5fbec3b1-1b0f-417d-9059-8b94a47197ed");
     auto const grainRate = Rational{60000, 1001};
 
+    auto manager = std::make_shared<FlowManager>(domain);
     auto flowData = manager->createFlow(flowId, flowDef, 5, grainRate, 1024);
 
     REQUIRE(flowData != nullptr);
@@ -72,10 +78,10 @@ TEST_CASE("Flow Manager", "[flow manager]")
     {
         if (is_regular_file(entry))
         {
-            ++grainCount;
+            grainCount += 1U;
         }
     }
-    REQUIRE(grainCount == 5);
+    REQUIRE(grainCount == 5U);
 
     // This should throw since the flow metadata will already exist.
     REQUIRE_THROWS(
