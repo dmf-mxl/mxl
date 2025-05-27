@@ -71,7 +71,7 @@ namespace mxl::lib
         }
     }
 
-    std::unique_ptr<FlowData> FlowManager::createFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat, std::size_t grainCount,
+    std::unique_ptr<DiscreteFlowData> FlowManager::createFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat, std::size_t grainCount,
         Rational const& grainRate, std::size_t grainPayloadSize)
     {
         auto const uuidString = uuids::to_string(flowId);
@@ -100,10 +100,9 @@ namespace mxl::lib
                     "Failed to create flow access file.", readAccessFile, std::make_error_code(std::errc::file_exists));
             }
 
-            auto flowData = std::make_unique<FlowData>();
-            flowData->flow = SharedMemoryInstance<Flow>{makeFlowDataFilePath(tempDirectory).string().c_str(), AccessMode::CREATE_READ_WRITE, 0U};
+            auto flowData = std::make_unique<DiscreteFlowData>(makeFlowDataFilePath(tempDirectory).string().c_str(), AccessMode::CREATE_READ_WRITE);
 
-            auto& info = flowData->flow.get()->info;
+            auto& info = *flowData->flowInfo();
             info.version = 1;
             info.size = sizeof info;
 
@@ -124,14 +123,12 @@ namespace mxl::lib
 
                 for (auto i = std::size_t{0}; i < grainCount; ++i)
                 {
-                    // \todo Handle payload stored device memory
-                    auto const totalSize = std::size_t{MXL_GRAIN_PAYLOAD_OFFSET + grainPayloadSize};
-
                     auto const grainPath = makeGrainDataFilePath(grainDir, i);
                     MXL_TRACE("Creating grain: {}", grainPath.string());
 
-                    auto& grain = flowData->grains.emplace_back(grainPath.string().c_str(), AccessMode::CREATE_READ_WRITE, totalSize);
-                    auto& gInfo = grain.get()->header.info;
+                    // \todo Handle payload stored device memory
+                    auto const grain = flowData->emplaceGrain(grainPath.string().c_str(), grainPayloadSize);
+                    auto& gInfo = grain->header.info;
                     gInfo.grainSize = grainPayloadSize;
                     gInfo.version = 1;
                     gInfo.size = sizeof gInfo;
@@ -156,7 +153,7 @@ namespace mxl::lib
         }
     }
 
-    std::unique_ptr<FlowData> FlowManager::openFlow(uuids::uuid const& in_flowId, AccessMode in_mode)
+    std::unique_ptr<DiscreteFlowData> FlowManager::openFlow(uuids::uuid const& in_flowId, AccessMode in_mode)
     {
         if (in_mode == AccessMode::CREATE_READ_WRITE)
         {
@@ -174,22 +171,20 @@ namespace mxl::lib
         }
 
         // Open the shared memory
-        auto flowData = std::make_unique<FlowData>();
-        flowData->flow = SharedMemoryInstance<Flow>{flowFile.string().c_str(), in_mode, 0U};
+        auto flowData = std::make_unique<DiscreteFlowData>(flowFile.string().c_str(), in_mode);
 
-        auto const grainCount = flowData->flow.get()->info.discrete.grainCount;
+        auto const grainCount = flowData->flowInfo()->discrete.grainCount;
         if (grainCount > 0U)
         {
             auto const grainDir = makeGrainDirectoryName(base);
             if (exists(grainDir) && is_directory(grainDir))
             {
                 // Open each grain
-                flowData->grains.reserve(grainCount);
                 for (auto i = 0U; i < grainCount; ++i)
                 {
                     auto const grainPath = makeGrainDataFilePath(grainDir, i).string();
                     MXL_TRACE("Opening grain: {}", grainPath);
-                    flowData->grains.emplace_back(grainPath.c_str(), in_mode, 0U);
+                    flowData->emplaceGrain(grainPath.c_str(), 0U);
                 }
             }
             else
@@ -204,10 +199,10 @@ namespace mxl::lib
 
     bool FlowManager::deleteFlow(std::unique_ptr<FlowData>&& flowData)
     {
-        if (flowData && flowData->flow)
+        if (flowData)
         {
             // Extract the ID
-            auto const span = uuids::span<std::uint8_t, sizeof flowData->flow.get()->info.common.id>{const_cast<std::uint8_t*>(flowData->flow.get()->info.common.id), sizeof flowData->flow.get()->info.common.id};
+            auto const span = uuids::span<std::uint8_t, sizeof flowData->flowInfo()->common.id>{const_cast<std::uint8_t*>(flowData->flowInfo()->common.id), sizeof flowData->flowInfo()->common.id};
             auto const id = uuids::uuid(span);
 
             // Close the flow

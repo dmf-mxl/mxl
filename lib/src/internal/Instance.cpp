@@ -25,8 +25,8 @@
 #include "FlowParser.hpp"
 #include "Logging.hpp"
 #include "PathUtils.hpp"
-#include "PosixFlowReader.hpp"
-#include "PosixFlowWriter.hpp"
+#include "PosixDiscreteFlowReader.hpp"
+#include "PosixDiscreteFlowWriter.hpp"
 
 namespace mxl::lib
 {
@@ -43,21 +43,20 @@ namespace mxl::lib
 
     } // namespace
 
-    Instance::Instance(std::filesystem::path const& in_mxlDomain, std::string const& in_options)
-        : _readers{}
+    Instance::Instance(std::filesystem::path const& mxlDomain, std::string const& options)
+        : _flowManager{mxlDomain}
+        , _readers{}
         , _writers{}
         , _mutex{}
-        , _options{in_options}
-        , _flowManager{}
+        , _options{options}
         , _historyDuration{100'000'000ULL}
         , _watcher{}
         , _stopping{false}
     {
         std::call_once(loggingFlag, [&]() { initializeLogging(); });
-        _flowManager = std::make_shared<FlowManager>(in_mxlDomain);
-        _watcher = std::make_shared<DomainWatcher>(in_mxlDomain,
-            [this](auto const& in_uuid, auto in_type) { fileChangedCallback(in_uuid, in_type); });
-        MXL_DEBUG("Instance created. MXL Domain: {}", in_mxlDomain.string());
+        _watcher = std::make_shared<DomainWatcher>(mxlDomain,
+            [this](auto const& uuid, auto type) { fileChangedCallback(uuid, type); });
+        MXL_DEBUG("Instance created. MXL Domain: {}", mxlDomain.string());
     }
 
     Instance::~Instance()
@@ -68,18 +67,18 @@ namespace mxl::lib
         spdlog::default_logger()->flush();
     }
 
-    void Instance::fileChangedCallback(uuids::uuid const& in_flowId, WatcherType in_type)
+    void Instance::fileChangedCallback(uuids::uuid const& flowId, WatcherType type)
     {
         if (!_stopping)
         {
             std::lock_guard<std::mutex> lock(_mutex);
 
             // Someone wrote to the flow. let the readers know.
-            if (in_type == WatcherType::WRITER)
+            if (type == WatcherType::WRITER)
 
             {
                 // Someone read the grain and touched the ".access" file.  let update the last read count.
-                if (auto const found = _writers.find(in_flowId); found != _writers.end())
+                if (auto const found = _writers.find(flowId); found != _writers.end())
                 {
                     found->second.get()->flowRead();
                 }
@@ -101,16 +100,13 @@ namespace mxl::lib
         }
         else
         {
-            auto reader = std::make_unique<PosixFlowReader>(_flowManager, *id);
-            if (reader->open())
-            {
-                // FIXME: This leaks if the map insertion throws an exception.
-                //     Delegate the watch handling to the reader itself by
-                //     passing it a reference to the DomainWatcher.
-                _watcher->addFlow(*id, WatcherType::READER);
-                return (*_readers.try_emplace(pos, *id, std::move(reader))).second.get();
-            }
-            throw std::runtime_error("Failed to open flow " + flowId);
+            auto reader = std::make_unique<PosixDiscreteFlowReader>(_flowManager, *id);
+
+            // FIXME: This leaks if the map insertion throws an exception.
+            //     Delegate the watch handling to the reader itself by
+            //     passing it a reference to the DomainWatcher.
+            _watcher->addFlow(*id, WatcherType::READER);
+            return (*_readers.try_emplace(pos, *id, std::move(reader))).second.get();
         }
     }
 
@@ -146,16 +142,13 @@ namespace mxl::lib
         }
         else
         {
-            auto writer = std::make_unique<PosixFlowWriter>(_flowManager, *id);
-            if (writer->open())
-            {
-                // FIXME: This leaks if the map insertion throws an exception.
-                //     Delegate the watch handling to the writer itself by
-                //     passing it a reference to the DomainWatcher.
-                _watcher->addFlow(*id, WatcherType::WRITER);
-                return (*_writers.try_emplace(pos, *id, std::move(writer))).second.get();
-            }
-            throw std::runtime_error("Failed to open flow " + flowId);
+            auto writer = std::make_unique<PosixDiscreteFlowWriter>(_flowManager, *id);
+
+            // FIXME: This leaks if the map insertion throws an exception.
+            //     Delegate the watch handling to the writer itself by
+            //     passing it a reference to the DomainWatcher.
+            _watcher->addFlow(*id, WatcherType::WRITER);
+            return (*_writers.try_emplace(pos, *id, std::move(writer))).second.get();
         }
     }
 
@@ -177,22 +170,22 @@ namespace mxl::lib
         }
     }
 
-    std::unique_ptr<FlowData> Instance::createFlow(std::string const& in_flowDef)
+    std::unique_ptr<FlowData> Instance::createFlow(std::string const& flowDef)
     {
         // Parse the json flow resource
-        auto const parser = FlowParser{in_flowDef};
+        auto const parser = FlowParser{flowDef};
         // Read the mandatory grain_rate field
         auto const grainRate = parser.getGrainRate();
         // Compute the grain count based on our configured history duration
         auto const grainCount = _historyDuration * grainRate.numerator / (1'000'000'000ULL * grainRate.denominator);
 
         // Create the flow using the flow manager
-        return _flowManager->createFlow(parser.getId(), in_flowDef, parser.getFormat(), grainCount, grainRate, parser.getPayloadSize());
+        return _flowManager.createFlow(parser.getId(), flowDef, parser.getFormat(), grainCount, grainRate, parser.getPayloadSize());
     }
 
-    bool Instance::deleteFlow(uuids::uuid const& in_id)
+    bool Instance::deleteFlow(uuids::uuid const& flowId)
     {
-        return _flowManager->deleteFlow(in_id);
+        return _flowManager.deleteFlow(flowId);
     }
 
     // This function is performed in a 'collaborative best effort' way.
@@ -204,7 +197,7 @@ namespace mxl::lib
 
         try
         {
-            auto base = std::filesystem::path{_flowManager->getDomain()};
+            auto base = std::filesystem::path{_flowManager.getDomain()};
             if (exists(base) && is_directory(base))
             {
                 for (auto const& entry : std::filesystem::directory_iterator{base})
@@ -213,7 +206,7 @@ namespace mxl::lib
                     {
                         // Try to obtain an exclusive lock on the flow data file.  If we can obtain one it means that no
                         // other process is writing to the flow.
-                        auto const flowDataFile = mxl::lib::makeFlowDataFilePath(_flowManager->getDomain(), entry.path().stem().string());
+                        auto const flowDataFile = mxl::lib::makeFlowDataFilePath(_flowManager.getDomain(), entry.path().stem().string());
 
                         // Check if the flow data file exists
                         if (!std::filesystem::exists(flowDataFile))

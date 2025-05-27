@@ -5,7 +5,7 @@
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include "FlowManager.hpp"
-#include "FlowWriter.hpp"
+#include "DiscreteFlowWriter.hpp"
 
 namespace mxl::lib
 {
@@ -13,21 +13,16 @@ namespace mxl::lib
     ///
     /// Implementation of a FlowWriter based on POSIX shared memory mapping.
     ///
-    class PosixFlowWriter
-        : public FlowWriter
+    class PosixDiscreteFlowWriter
+        : public DiscreteFlowWriter
     {
     public:
         ///
-        /// Creates a PosixFlowWriter
+        /// Creates a PosixDiscreteFlowWriter
         ///
         /// \param in_manager The flow manager
         ///
-        PosixFlowWriter(FlowManager::ptr manager, uuids::uuid const& flowId);
-
-        ///
-        /// \see FlowWriter::open
-        ///
-        virtual bool open() override;
+        PosixDiscreteFlowWriter(FlowManager& in_manager, uuids::uuid const& flowId);
 
         ///
         /// \see FlowWriter::getFlowInfo
@@ -35,17 +30,17 @@ namespace mxl::lib
         virtual FlowInfo getFlowInfo() override;
 
         ///
-        /// \see FlowWriter::openGrain
+        /// \see DiscreteFlowWriter::openGrain
         ///
         virtual mxlStatus openGrain(std::uint64_t in_index, GrainInfo* out_grainInfo, std::uint8_t** out_payload) override;
 
         ///
-        /// \see FlowWriter::commit
+        /// \see DiscreteFlowWriter::commit
         ///
-        virtual mxlStatus commit(GrainInfo const* in_grainInfo) override;
+        virtual mxlStatus commit(GrainInfo const& grainInfo) override;
 
         ///
-        /// \see FlowWriter::cancel
+        /// \see DiscreteFlowWriter::cancel
         ///
         virtual mxlStatus cancel() override;
 
@@ -55,10 +50,8 @@ namespace mxl::lib
         virtual void flowRead() override;
 
     private:
-        /// The flow manager
-        FlowManager::ptr _manager;
         /// The FlowData for the currently opened flow. null if no flow is opened.
-        std::unique_ptr<FlowData> _flowData;
+        std::unique_ptr<DiscreteFlowData> _flowData;
         /// The currently opened grain index. MXL_UNDEFINED_INDEX if no grain is currently opened.
         std::uint64_t _currentIndex;
     };

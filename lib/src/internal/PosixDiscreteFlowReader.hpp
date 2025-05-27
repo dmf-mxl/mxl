@@ -7,7 +7,7 @@
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include "FlowManager.hpp"
-#include "FlowReader.hpp"
+#include "DiscreteFlowReader.hpp"
 
 namespace mxl::lib
 {
@@ -15,17 +15,12 @@ namespace mxl::lib
     ///
     /// Implementation of a flow reader based on POSIX shared memory.
     ///
-    class PosixFlowReader final
-        : public FlowReader
+    class PosixDiscreteFlowReader final
+        : public DiscreteFlowReader
     {
     public:
         /// Ctor.
-        PosixFlowReader(FlowManager::ptr manager, uuids::uuid const& flowId);
-
-        ///
-        /// \see FlowReader::open
-        ///
-        virtual bool open() override;
+        PosixDiscreteFlowReader(FlowManager& manager, uuids::uuid const& flowId);
 
         ///
         /// Accessor for the current FlowInfo. A copy of the current structure is returned.
@@ -62,8 +57,7 @@ namespace mxl::lib
         virtual mxlStatus getGrain(std::uint64_t in_index, GrainInfo* out_grainInfo, std::uint8_t** out_payload) override;
 
     private:
-        FlowManager::ptr _manager;
-        std::unique_ptr<FlowData> _flowData;
+        std::unique_ptr<DiscreteFlowData> _flowData;
         int _accessFileFd;
     };
 

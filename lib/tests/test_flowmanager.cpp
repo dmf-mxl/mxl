@@ -42,8 +42,8 @@ TEST_CASE("Flow Manager : Create Video Flow Structure", "[flow manager]")
     auto flowData = manager->createFlow(flowId, flowDef, MXL_DATA_FORMAT_VIDEO, 5, grainRate, 1024);
 
     REQUIRE(flowData != nullptr);
-    REQUIRE(flowData->flow.isValid());
-    REQUIRE(flowData->grains.size() == 5);
+    REQUIRE(flowData->isValid());
+    REQUIRE(flowData->grainCount() == 5);
 
     auto const flowDirectory = makeFlowDirectoryName(domain, uuids::to_string(flowId));
     REQUIRE(exists(flowDirectory));

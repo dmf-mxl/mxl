@@ -11,14 +11,6 @@ namespace mxl::lib
     {
     public:
         ///
-        /// Opens all the required shared memory structures associated with this flow.
-        ///
-        /// \param in_id The flow id.  Must be valid and refer to an existing flow.
-        /// \return true on success
-        ///
-        virtual bool open() = 0;
-
-        ///
         /// Accessor for the flow id;
         /// \return The flow id
         ///
@@ -30,12 +22,6 @@ namespace mxl::lib
         /// \return A copy of the FlowInfo
         ///
         virtual FlowInfo getFlowInfo() = 0;
-
-        virtual mxlStatus openGrain(uint64_t in_index, GrainInfo* out_grainInfo, uint8_t** out_payload) = 0;
-
-        virtual mxlStatus cancel() = 0;
-
-        virtual mxlStatus commit(GrainInfo const* in_grainInfo) = 0;
 
         /// Invoked when a flow is read. The writer will
         /// update the 'lastReadTime' field

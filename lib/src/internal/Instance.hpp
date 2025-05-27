@@ -12,8 +12,8 @@
 #include <mxl/mxl.h>
 #include "DomainWatcher.hpp"
 #include "FlowManager.hpp"
-#include "FlowReader.hpp"
-#include "FlowWriter.hpp"
+#include "DiscreteFlowReader.hpp"
+#include "DiscreteFlowWriter.hpp"
 
 namespace mxl::lib
 {
@@ -25,10 +25,10 @@ namespace mxl::lib
     public:
         ///
         /// Creates an instance
-        /// \param in_mxlDomain The directory where the shared memory files will be created
-        /// \param in_jsonOptions Additional options. \todo Not implemented yet.
+        /// \param[in] mxlDomain The directory where the shared memory files will be created
+        /// \param[in] options Additional options. \todo Not implemented yet.
         ///
-        Instance(std::filesystem::path const& in_mxlDomain, std::string const& in_jsonOptions);
+        Instance(std::filesystem::path const& mxlDomain, std::string const& options);
 
         /// Dtor. Release all readers and writers.
         ~Instance();
@@ -42,17 +42,17 @@ namespace mxl::lib
         ///
         /// Create a flow
         ///
-        /// \param in_flowDef The json flow definition according to the NMOS Flow Resource json schema
+        /// \param[in] flowDef The json flow definition according to the NMOS Flow Resource json schema
         /// \return The created flow resources in shared memory
         /// \throw std::runtime_error On any error (parse exception, shared memory conflicts, etc)
         ///
-        std::unique_ptr<FlowData> createFlow(std::string const& in_flowDef);
+        std::unique_ptr<FlowData> createFlow(std::string const& flowDef);
 
         /// Delete a flow by id
         ///
-        /// \param in_id The flow id
+        /// \param[in] flowId The flow id
         /// \return false if the flow was not found.
-        bool deleteFlow(uuids::uuid const& in_id);
+        bool deleteFlow(uuids::uuid const& flowId);
 
         ///
         /// Create a FlowReader or obtain an additional reference to a
@@ -62,7 +62,7 @@ namespace mxl::lib
         /// \note Please note that each successful call to this method must be
         ///     paired with a corresponding call to releaseReader().
         ///
-        FlowReader* getFlowReader(std::string const& in_flowId);
+        FlowReader* getFlowReader(std::string const& flowId);
 
         ///
         /// Release a reference to a FlowReader in order to ultimately free all
@@ -128,9 +128,12 @@ namespace mxl::lib
 
 
     private:
-        void fileChangedCallback(uuids::uuid const& in_flowId, WatcherType in_type);
+        void fileChangedCallback(uuids::uuid const& flowId, WatcherType type);
 
     private:
+        /// Performs flow CRUD operations
+        FlowManager _flowManager;
+
         /// Maps flow uuids to flow readers.
         std::map<uuids::uuid, RefCounted<FlowReader>> _readers;
         /// Maps flow uuids to flow writers.
@@ -142,9 +145,6 @@ namespace mxl::lib
         /// For future use.
         std::string _options;
 
-        /// Performs flow CRUD operations
-        FlowManager::ptr _flowManager;
-
         /// Ring buffer history duration in nanoseconds
         std::uint64_t _historyDuration;
 
@@ -155,13 +155,13 @@ namespace mxl::lib
 
 
     /// Utility function to convert from a C mxlInstance handle to a C++ Instance class
-    Instance* to_Instance(mxlInstance in_instance) noexcept;
+    Instance* to_Instance(mxlInstance instance) noexcept;
 
     /// Utility function to convert from a C mxlFlowReader handle to a C++ FlowReaders instance.
-    FlowReader* to_FlowReader(mxlFlowReader in_reader) noexcept;
+    FlowReader* to_FlowReader(mxlFlowReader reader) noexcept;
 
     /// Utility function to convert from a C mxlFlowWriter handle to a C++ FlowWriter instance.
-    FlowWriter* to_FlowWriter(mxlFlowWriter in_writer) noexcept;
+    FlowWriter* to_FlowWriter(mxlFlowWriter writer) noexcept;
 
 
     /**************************************************************************/
@@ -207,19 +207,19 @@ namespace mxl::lib
     }
 
 
-    inline Instance* to_Instance(mxlInstance in_instance) noexcept
+    inline Instance* to_Instance(mxlInstance instance) noexcept
     {
-        return reinterpret_cast<Instance*>(in_instance);
+        return reinterpret_cast<Instance*>(instance);
     }
 
-    inline FlowReader* to_FlowReader(mxlFlowReader in_reader) noexcept
+    inline FlowReader* to_FlowReader(mxlFlowReader reader) noexcept
     {
-        return reinterpret_cast<FlowReader*>(in_reader);
+        return reinterpret_cast<FlowReader*>(reader);
     }
 
-    inline FlowWriter* to_FlowWriter(mxlFlowWriter in_writer) noexcept
+    inline FlowWriter* to_FlowWriter(mxlFlowWriter writer) noexcept
     {
-        return reinterpret_cast<FlowWriter*>(in_writer);
+        return reinterpret_cast<FlowWriter*>(writer);
     }
 
 } // namespace mxl::lib

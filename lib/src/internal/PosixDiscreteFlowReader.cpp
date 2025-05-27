@@ -1,4 +1,4 @@
-#include "PosixFlowReader.hpp"
+#include "PosixDiscreteFlowReader.hpp"
 #include <cstdint>
 #include <cstdio>
 #include <ctime>
@@ -32,62 +32,46 @@ namespace mxl::lib
         }
     }
 
-    PosixFlowReader::PosixFlowReader(FlowManager::ptr manager, uuids::uuid const& flowId)
-        : FlowReader{flowId}
-        , _manager{manager}
-        , _flowData{}
+    PosixDiscreteFlowReader::PosixDiscreteFlowReader(FlowManager& manager, uuids::uuid const& flowId)
+        : DiscreteFlowReader{flowId}
+        , _flowData{manager.openFlow(flowId, AccessMode::READ_ONLY)}
         , _accessFileFd{-1}
-    {}
-
-    bool PosixFlowReader::open()
     {
-        auto const& flowId = getId();
-        _flowData = _manager->openFlow(flowId, AccessMode::READ_ONLY);
-        if (_flowData)
-        {
-            auto const accessFile = makeFlowAccessFilePath(_manager->getDomain(), to_string(flowId));
-            _accessFileFd = ::open(accessFile.string().c_str(), O_RDWR);
+        auto const accessFile = makeFlowAccessFilePath(manager.getDomain(), to_string(flowId));
+        _accessFileFd = ::open(accessFile.string().c_str(), O_RDWR);
 
-            // Opening the access file may fail if the domain is in a read only volume.
-            // we can still execute properly but the 'lastReadTime' will never be updated.
-            // Ignore failures.
-
-            return true;
-        }
-        return false;
+        // Opening the access file may fail if the domain is in a read only volume.
+        // we can still execute properly but the 'lastReadTime' will never be updated.
+        // Ignore failures.
     }
 
-    FlowInfo PosixFlowReader::getFlowInfo()
+    FlowInfo PosixDiscreteFlowReader::getFlowInfo()
     {
         if (_flowData)
         {
-            FlowInfo info = _flowData->flow.get()->info;
-            return info;
+            return *_flowData->flowInfo();
         }
-        else
-        {
-            throw std::runtime_error("No open flow.");
-        }
+        throw std::runtime_error("No open flow.");
     }
 
-    mxlStatus PosixFlowReader::getGrain(std::uint64_t in_index, std::uint64_t in_timeoutNs, GrainInfo* out_grainInfo, std::uint8_t** out_payload)
+    mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, std::uint64_t in_timeoutNs, GrainInfo* out_grainInfo, std::uint8_t** out_payload)
     {
         auto status = MXL_ERR_TIMEOUT;
 
         if (_flowData)
         {
-            auto const flow = _flowData->flow.get();
-            if (auto const headIndex = flow->info.discrete.headIndex; in_index <= headIndex)
+            auto const flowInfo = _flowData->flowInfo();
+            if (auto const headIndex = flowInfo->discrete.headIndex; in_index <= headIndex)
             {
-                auto const grainCount = flow->info.discrete.grainCount;
+                auto const grainCount = flowInfo->discrete.grainCount;
                 auto const minIndex = (headIndex >= grainCount)
                     ? (headIndex - grainCount + 1U)
                     : std::uint64_t{0};
 
                 if (in_index >= minIndex)
                 {
-                    auto const offset = in_index % flow->info.discrete.grainCount;
-                    auto const grain = _flowData->grains.at(offset).get();
+                    auto const offset = in_index % flowInfo->discrete.grainCount;
+                    auto const grain = _flowData->grainAt(offset);
                     *out_grainInfo = grain->header.info;
                     *out_payload = reinterpret_cast<std::uint8_t*>(&grain->header + 1);
 
@@ -103,10 +87,10 @@ namespace mxl::lib
                 // FIXME: This code is hopelessly broken. As it assumes that the
                 //      next write provides the index of interest, which is not
                 //      guaranteed.
-                if (waitUntilChanged(&flow->info.discrete.syncCounter, flow->info.discrete.syncCounter, Duration(in_timeoutNs)))
+                if (waitUntilChanged(&flowInfo->discrete.syncCounter, flowInfo->discrete.syncCounter, Duration(in_timeoutNs)))
                 {
-                    auto const offset = in_index % flow->info.discrete.grainCount;
-                    auto const grain = _flowData->grains[offset].get();
+                    auto const offset = in_index % flowInfo->discrete.grainCount;
+                    auto const grain = _flowData->grainAt(offset);
                     *out_grainInfo = grain->header.info;
                     *out_payload = reinterpret_cast<std::uint8_t*>(&grain->header + 1);
 
@@ -130,21 +114,21 @@ namespace mxl::lib
         return status;
     }
 
-    mxlStatus PosixFlowReader::getGrain(std::uint64_t in_index, GrainInfo* out_grainInfo, std::uint8_t** out_payload)
+    mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, GrainInfo* out_grainInfo, std::uint8_t** out_payload)
     {
         if (_flowData)
         {
-            auto const flow = _flowData->flow.get();
-            if (auto const headIndex = flow->info.discrete.headIndex; in_index <= headIndex)
+            auto const flowInfo = _flowData->flowInfo();
+            if (auto const headIndex = flowInfo->discrete.headIndex; in_index <= headIndex)
             {
-                auto const grainCount = flow->info.discrete.grainCount;
+                auto const grainCount = flowInfo->discrete.grainCount;
                 auto const minIndex = (headIndex >= grainCount)
                     ? (headIndex - grainCount + 1U)
                     : std::uint64_t{0};
                 if (in_index >= minIndex)
                 {
                     auto const offset = in_index % grainCount;
-                    auto const grain = _flowData->grains[offset].get();
+                    auto const grain = _flowData->grainAt(offset);
                     *out_grainInfo = grain->header.info;
                     *out_payload = reinterpret_cast<std::uint8_t*>(&grain->header + 1);
 

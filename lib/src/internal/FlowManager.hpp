@@ -6,21 +6,10 @@
 #include <string>
 #include <vector>
 #include <uuid.h>
-#include "Flow.hpp"
-#include "SharedMemory.hpp"
+#include "DiscreteFlowData.hpp"
 
 namespace mxl::lib
 {
-
-    ///
-    /// Simple structure holding Flows and Grains shared memory resources.
-    ///
-    struct FlowData
-    {
-        SharedMemoryInstance<Flow> flow;
-        std::vector<SharedMemoryInstance<Grain>> grains;
-    };
-
     ///
     /// Performs Flow CRUD operations as well as garbage collection of stale flows.
     ///
@@ -50,8 +39,6 @@ namespace mxl::lib
     class FlowManager
     {
     public:
-        typedef std::shared_ptr<FlowManager> ptr;
-
         ///
         /// Creates a FlowManager.  Ideally there should only be on instance of the manager per instance of the SDK.
         ///
@@ -75,7 +62,7 @@ namespace mxl::lib
         /// \param[in] grainRate The grain rate.
         /// \param[in] grainPayloadSize Size of the grain in host memory.  0 if the grain payload lives in device memory.
         ///
-        std::unique_ptr<FlowData> createFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat, std::size_t grainCount, Rational const& grainRate,
+        std::unique_ptr<DiscreteFlowData> createFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat, std::size_t grainCount, Rational const& grainRate,
             std::size_t grainPayloadSize);
 
         ///
@@ -84,7 +71,7 @@ namespace mxl::lib
         /// \param in_flowId The flow to open
         /// \param in_mode The flow access mode
         ///
-        std::unique_ptr<FlowData> openFlow(uuids::uuid const& in_flowId, AccessMode in_mode);
+        std::unique_ptr<DiscreteFlowData> openFlow(uuids::uuid const& in_flowId, AccessMode in_mode);
 
         ///
         /// Delete all resources associated to a flow
@@ -118,5 +105,4 @@ namespace mxl::lib
     private:
         std::filesystem::path _mxlDomain;
     };
-
 } // namespace mxl::lib
