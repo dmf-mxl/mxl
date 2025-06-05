@@ -31,11 +31,17 @@ namespace mxl::lib
                 // because we delegated to the default constructor.
                 throw std::system_error(errno, std::generic_category(), "Could not resize shared memory segment.");
             }
-            _created = true;
+            _mode = AccessMode::CREATE_READ_WRITE;
         }
-        else if ((_fd = ::open(path, (mode == AccessMode::READ_ONLY) ? OMODE_RO : OMODE_RW)) == -1)
+        else
         {
-            throw std::system_error(errno, std::generic_category(), "Could not open shared memory segment.");
+            if ((_fd = ::open(path, (mode == AccessMode::READ_ONLY) ? OMODE_RO : OMODE_RW)) == -1)
+            {
+                throw std::system_error(errno, std::generic_category(), "Could not open shared memory segment.");
+            }
+            _mode = (mode == AccessMode::READ_ONLY)
+                ? AccessMode::READ_ONLY
+                : AccessMode::READ_WRITE;
         }
 
         if (mode != AccessMode::READ_ONLY)
@@ -99,11 +105,12 @@ namespace mxl::lib
     void SharedMemoryBase::touch()
     {
         // Update the file times
-        std::array<timespec, 2> times;
-        times[0].tv_sec = 0; // Set access time to current time
-        times[0].tv_nsec = UTIME_NOW;
-        times[1].tv_sec = 0; // Set modification time to current time
-        times[1].tv_nsec = UTIME_NOW;
+        auto const times = std::array<std::timespec, 2>{
+            {
+                {0, UTIME_NOW},
+                {0, (accessMode() == AccessMode::READ_ONLY) ? UTIME_OMIT : UTIME_NOW}
+            }
+        };
 
         if (::futimens(_fd, times.data()) == -1)
         {

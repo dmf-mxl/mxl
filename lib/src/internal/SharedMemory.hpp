@@ -50,6 +50,13 @@ namespace mxl::lib
         constexpr std::size_t mappedSize() const noexcept;
 
         /**
+         * Return the (normalized) access mode the segment is operating in.
+         * \note Please note that the returned value is undefined for segments
+         *      that don't currently represent a valid mapping.
+         */
+        constexpr AccessMode accessMode() const noexcept;
+
+        /**
          * Return whether or the underlying file was created by this instance.
          */
         constexpr bool created() const noexcept;
@@ -86,8 +93,12 @@ namespace mxl::lib
     private:
         /** File descriptor of the shared memory object. */
         int _fd;
-        /** FLag indicating whether the underlying file was created by this instance. */
-        bool _created;
+        /**
+         * A derivation of the mode used to open the segemnt that is used to
+         * indicate the access mode the segement is operating in, as well as
+         * whether or not it was created when it was last opened.
+         */
+        AccessMode _mode;
         /** Pointer to the mapped region. */
         void* _data;
         /** The size of the mapped region in bytes. */
@@ -162,7 +173,7 @@ namespace mxl::lib
 
     constexpr SharedMemoryBase::SharedMemoryBase() noexcept
         : _fd{-1}
-        , _created{false}
+        , _mode{AccessMode::READ_ONLY}
         , _data{nullptr}
         , _mappedSize{0}
     {}
@@ -188,9 +199,16 @@ namespace mxl::lib
         return _mappedSize;
     }
 
+    constexpr AccessMode SharedMemoryBase::accessMode() const noexcept
+    {
+        return (_mode == AccessMode::READ_ONLY)
+            ? AccessMode::READ_ONLY
+            : AccessMode::READ_WRITE;
+    }
+
     constexpr bool SharedMemoryBase::created() const noexcept
     {
-        return _created;
+        return (_mode == AccessMode::CREATE_READ_WRITE);
     }
 
     constexpr void SharedMemoryBase::swap(SharedMemoryBase& other) noexcept
@@ -204,7 +222,7 @@ namespace mxl::lib
             };
 
         cx_swap(_fd, other._fd);
-        cx_swap(_created, other._created);
+        cx_swap(_mode, other._mode);
         cx_swap(_data, other._data);
         cx_swap(_mappedSize, other._mappedSize);
     }
