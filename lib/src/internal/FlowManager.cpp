@@ -1,4 +1,10 @@
 #include "FlowManager.hpp"
+
+#ifdef __APPLE__
+#   define _GNU_SOURCE
+#   include <unistd.h>
+#endif
+
 #include <cstddef>
 #include <cstring>
 #include <filesystem>
@@ -25,7 +31,7 @@ namespace mxl::lib
         /**
          * Attempt to create a temporary directory to prepare a new flow.
          * The temporary name is structured in a way that prevents is from
-         * clashing with directory names that belkong to established flows.
+         * clashing with directory names that belong to established flows.
          *
          * \param[in] base the base directory, below which the temporary
          *      directory should be created,
@@ -66,8 +72,8 @@ namespace mxl::lib
         }
     }
 
-    std::unique_ptr<FlowData> FlowManager::createFlow(uuids::uuid const& flowId, std::string const& flowDef, std::size_t grainCount, Rational const& grainRate,
-        std::size_t grainPayloadSize)
+    std::unique_ptr<FlowData> FlowManager::createFlow(uuids::uuid const& flowId, std::string const& flowDef, std::size_t grainCount,
+        Rational const& grainRate, std::size_t grainPayloadSize)
     {
         auto const uuidString = uuids::to_string(flowId);
         MXL_DEBUG("Create flow. id: {}, grainCount: {}, grain payload size: {}", uuidString, grainCount, grainPayloadSize);
@@ -194,7 +200,8 @@ namespace mxl::lib
         if (flowData && flowData->flow)
         {
             // Extract the ID
-            auto const span = uuids::span<std::uint8_t, sizeof flowData->flow.get()->info.id>{const_cast<std::uint8_t*>(flowData->flow.get()->info.id), sizeof flowData->flow.get()->info.id};
+            auto const span = uuids::span<std::uint8_t, sizeof flowData->flow.get()->info.id>{
+                const_cast<std::uint8_t*>(flowData->flow.get()->info.id), sizeof flowData->flow.get()->info.id};
             auto const id = uuids::uuid(span);
 
             // Close the flow
