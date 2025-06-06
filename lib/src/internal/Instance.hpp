@@ -33,10 +33,9 @@ namespace mxl::lib
         /// Dtor. Release all readers and writers.
         ~Instance();
 
-        /// Delete Copy Constructor
+        Instance(Instance&&) = delete;
         Instance(Instance const&) = delete;
-
-        /// Delete Copy Assignment
+        Instance& operator=(Instance&&) = delete;
         Instance& operator=(Instance const&) = delete;
 
         ///
