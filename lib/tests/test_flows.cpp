@@ -73,7 +73,7 @@ TEST_CASE("Video Flow : Create/Destroy", "[mxl flows]")
 
     /// Mark the grain as invalid
     gInfo.flags |= GRAIN_FLAG_INVALID;
-    REQUIRE(mxlFlowWriterCommit(writer, &gInfo) == MXL_STATUS_OK);
+    REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_STATUS_OK);
 
     /// Create back the grain using a flow reader.
     REQUIRE(mxlFlowReaderGetGrain(reader, index, 16, &gInfo, &buffer) == MXL_STATUS_OK);
@@ -222,7 +222,7 @@ TEST_CASE("Data Flow : Create/Destroy", "[mxl flows]")
 
     /// Mark the grain as invalid
     gInfo.flags |= GRAIN_FLAG_INVALID;
-    REQUIRE(mxlFlowWriterCommit(writer, &gInfo) == MXL_STATUS_OK);
+    REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_STATUS_OK);
 
     /// Create back the grain using a flow reader.
     REQUIRE(mxlFlowReaderGetGrain(reader, index, 16, &gInfo, &buffer) == MXL_STATUS_OK);
@@ -312,7 +312,7 @@ TEST_CASE("Video Flow : Slices", "[mxl flows]")
     {
         /// Write a slice to the grain.
         gInfo.commitedSize += sliceSize;
-        REQUIRE(mxlFlowWriterCommit(writer, &gInfo) == MXL_STATUS_OK);
+        REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_STATUS_OK);
 
         FlowInfo sliceFlowInfo;
         REQUIRE(mxlFlowReaderGetInfo(reader, &sliceFlowInfo) == MXL_STATUS_OK);

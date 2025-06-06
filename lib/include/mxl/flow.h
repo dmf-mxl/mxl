@@ -82,7 +82,7 @@ MXL_EXPORT
     mxlStatus mxlReleaseFlowWriter(mxlInstance instance, mxlFlowWriter writer);
 
     /**
-     * Get the current head and tail values of a Flow
+     * Get a copy of the current descriptive header of a Flow
      *
      * \param[in] reader A valid flow reader
      * \param[out] info A valid pointer to a FlowInfo structure. on return, the structure will be updated with a copy of the current flow info value.
@@ -92,27 +92,35 @@ MXL_EXPORT
     mxlStatus mxlFlowReaderGetInfo(mxlFlowReader reader, FlowInfo* info);
 
     /**
-     * Accessor for a flow grain at a specific index
+     * Accessors for a flow grain at a specific index
      *
-     * \param[in] reader A valid flow reader
+     * \param[in] reader A valid discrete flow reader.
      * \param[in] index The index of the grain to obtain
      * \param[in] timeoutNs How long should we wait for the grain (in nanoseconds)
      * \param[out] grain The requested GrainInfo structure.
      * \param[out] payload The requested grain payload.
      * \return The result code. \see mxlStatus
+     * \note Please note that this function can only be called on readers that
+     *      operate on discrete flows. Any attempt to call this function on a
+     *      reader that operates on another type of flow will result in an
+     *      error.
      */
 MXL_EXPORT
     mxlStatus mxlFlowReaderGetGrain(mxlFlowReader reader, uint64_t index, uint64_t timeoutNs, GrainInfo* grain,
         uint8_t** payload);
 
     /**
-     * Non-blocking accessor for a flow grain at a specific index
+     * Non-blocking accessors for a flow grain at a specific index
      *
      * \param[in] reader A valid flow reader
      * \param[in] index The index of the grain to obtain
      * \param[out] grain The requested GrainInfo structure.
      * \param[out] payload The requested grain payload.
      * \return The result code. \see mxlStatus
+     * \note Please note that this function can only be called on readers that
+     *      operate on discrete flows. Any attempt to call this function on a
+     *      reader that operates on another type of flow will result in an
+     *      error.
      */
 MXL_EXPORT
     mxlStatus mxlFlowReaderGetGrainNonBlocking(mxlFlowReader reader, uint64_t index, GrainInfo* grain,
@@ -120,13 +128,17 @@ MXL_EXPORT
 
     /**
      * Open a grain for mutation.  The flow writer will remember which index is currently opened. Before opening a new grain
-     * for mutation, the user must either cancel the mutation using mxlFlowWriterCancel or mxlFlowWriterCommit
+     * for mutation, the user must either cancel the mutation using mxlFlowWriterCancelGrain or mxlFlowWriterCommitGrain.
      *
      * \param[in] writer A valid flow writer
      * \param[in] index The index of the grain to obtain
      * \param[out] grainInfo The requested GrainInfo structure.
      * \param[out] payload The requested grain payload.
      * \return The result code. \see mxlStatus
+     * \note Please note that this function can only be called on writers that
+     *      operate on discrete flows. Any attempt to call this function on a
+     *      writer that operates on another type of flow will result in an
+     *      error.
      */
 MXL_EXPORT
     mxlStatus mxlFlowWriterOpenGrain(mxlFlowWriter writer, uint64_t index, GrainInfo* grainInfo,
@@ -137,7 +149,7 @@ MXL_EXPORT
      * \param[in] writer A valid flow writer
      */
 MXL_EXPORT
-    mxlStatus mxlFlowWriterCancel(mxlFlowWriter writer);
+    mxlStatus mxlFlowWriterCancelGrain(mxlFlowWriter writer);
 
     /**
      * Inform mxl that a user is done writing the grain that was previously opened.  This will in turn signal all readers waiting on the ringbuffer
@@ -147,7 +159,7 @@ MXL_EXPORT
      * \return The result code. \see mxlStatus
      */
 MXL_EXPORT
-    mxlStatus mxlFlowWriterCommit(mxlFlowWriter writer, GrainInfo const* grain);
+    mxlStatus mxlFlowWriterCommitGrain(mxlFlowWriter writer, GrainInfo const* grain);
 
 #ifdef __cplusplus
 }

@@ -256,7 +256,7 @@ mxlStatus mxlFlowWriterOpenGrain(mxlFlowWriter writer, uint64_t index, GrainInfo
 
 extern "C"
 MXL_EXPORT
-mxlStatus mxlFlowWriterCancel(mxlFlowWriter writer)
+mxlStatus mxlFlowWriterCancelGrain(mxlFlowWriter writer)
 {
     try
     {
@@ -274,7 +274,7 @@ mxlStatus mxlFlowWriterCancel(mxlFlowWriter writer)
 
 extern "C"
 MXL_EXPORT
-mxlStatus mxlFlowWriterCommit(mxlFlowWriter writer, GrainInfo const* grainInfo)
+mxlStatus mxlFlowWriterCommitGrain(mxlFlowWriter writer, GrainInfo const* grainInfo)
 {
     if (grainInfo == nullptr)
     {
