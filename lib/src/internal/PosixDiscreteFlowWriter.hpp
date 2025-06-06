@@ -4,11 +4,12 @@
 #include <uuid.h>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
-#include "FlowManager.hpp"
 #include "DiscreteFlowWriter.hpp"
+#include "DiscreteFlowData.hpp"
 
 namespace mxl::lib
 {
+    class FlowManager;
 
     ///
     /// Implementation of a FlowWriter based on POSIX shared memory mapping.
@@ -20,9 +21,10 @@ namespace mxl::lib
         ///
         /// Creates a PosixDiscreteFlowWriter
         ///
-        /// \param in_manager The flow manager
+        /// \param[in] manager A referene to the flow manager used to obtain
+        ///         additional information about the flows context.
         ///
-        PosixDiscreteFlowWriter(FlowManager& in_manager, uuids::uuid const& flowId);
+        PosixDiscreteFlowWriter(FlowManager const& manager, uuids::uuid const& flowId, std::unique_ptr<DiscreteFlowData>&& data);
 
         ///
         /// \see FlowWriter::getFlowInfo

@@ -40,11 +40,11 @@ namespace mxl::lib
             spdlog::set_default_logger(console);
             spdlog::cfg::load_env_levels("MXL_LOG_LEVEL");
         }
+    }
 
-    } // namespace
-
-    Instance::Instance(std::filesystem::path const& mxlDomain, std::string const& options)
+    Instance::Instance(std::filesystem::path const& mxlDomain, std::string const& options, std::unique_ptr<FlowIoFactory>&& flowIoFactory)
         : _flowManager{mxlDomain}
+        , _flowIoFactory{std::move(flowIoFactory)}
         , _readers{}
         , _writers{}
         , _mutex{}
@@ -100,7 +100,8 @@ namespace mxl::lib
         }
         else
         {
-            auto reader = std::make_unique<PosixDiscreteFlowReader>(_flowManager, *id);
+            auto flowData = _flowManager.openFlow(*id, AccessMode::READ_ONLY);
+            auto reader = _flowIoFactory->createFlowReader(_flowManager, *id, std::move(flowData));
 
             // FIXME: This leaks if the map insertion throws an exception.
             //     Delegate the watch handling to the reader itself by
@@ -142,7 +143,8 @@ namespace mxl::lib
         }
         else
         {
-            auto writer = std::make_unique<PosixDiscreteFlowWriter>(_flowManager, *id);
+            auto flowData = _flowManager.openFlow(*id, AccessMode::READ_WRITE);
+            auto writer = _flowIoFactory->createFlowWriter(_flowManager, *id, std::move(flowData));
 
             // FIXME: This leaks if the map insertion throws an exception.
             //     Delegate the watch handling to the writer itself by
@@ -174,13 +176,18 @@ namespace mxl::lib
     {
         // Parse the json flow resource
         auto const parser = FlowParser{flowDef};
-        // Read the mandatory grain_rate field
-        auto const grainRate = parser.getGrainRate();
-        // Compute the grain count based on our configured history duration
-        auto const grainCount = _historyDuration * grainRate.numerator / (1'000'000'000ULL * grainRate.denominator);
 
         // Create the flow using the flow manager
-        return _flowManager.createFlow(parser.getId(), flowDef, parser.getFormat(), grainCount, grainRate, parser.getPayloadSize());
+        if (auto const format = parser.getFormat(); mxlIsDiscreteDataFormat(format))
+        {
+            // Read the mandatory grain_rate field
+            auto const grainRate = parser.getGrainRate();
+            // Compute the grain count based on our configured history duration
+            auto const grainCount = _historyDuration * grainRate.numerator / (1'000'000'000ULL * grainRate.denominator);
+
+            return _flowManager.createDiscreteFlow(parser.getId(), flowDef, parser.getFormat(), grainCount, grainRate, parser.getPayloadSize());
+        }
+        throw std::runtime_error("Unsupported flow format.");
     }
 
     bool Instance::deleteFlow(uuids::uuid const& flowId)

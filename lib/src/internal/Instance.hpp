@@ -11,9 +11,8 @@
 #include <uuid.h>
 #include <mxl/mxl.h>
 #include "DomainWatcher.hpp"
+#include "FlowIoFactory.hpp"
 #include "FlowManager.hpp"
-#include "DiscreteFlowReader.hpp"
-#include "DiscreteFlowWriter.hpp"
 
 namespace mxl::lib
 {
@@ -27,8 +26,9 @@ namespace mxl::lib
         /// Creates an instance
         /// \param[in] mxlDomain The directory where the shared memory files will be created
         /// \param[in] options Additional options. \todo Not implemented yet.
+        /// \param[in] flowIoFactory A factory used to create flow readers for flows of different types.
         ///
-        Instance(std::filesystem::path const& mxlDomain, std::string const& options);
+        Instance(std::filesystem::path const& mxlDomain, std::string const& options, std::unique_ptr<FlowIoFactory>&& flowIoFactory);
 
         /// Dtor. Release all readers and writers.
         ~Instance();
@@ -133,6 +133,9 @@ namespace mxl::lib
     private:
         /// Performs flow CRUD operations
         FlowManager _flowManager;
+
+        /// The I/O factor used to delegate the creation of readers and writers
+        std::unique_ptr<FlowIoFactory> _flowIoFactory;
 
         /// Maps flow uuids to flow readers.
         std::map<uuids::uuid, RefCounted<FlowReader>> _readers;

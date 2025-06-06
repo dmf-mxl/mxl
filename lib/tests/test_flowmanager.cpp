@@ -39,7 +39,7 @@ TEST_CASE("Flow Manager : Create Video Flow Structure", "[flow manager]")
     auto const grainRate = Rational{60000, 1001};
 
     auto manager = std::make_shared<FlowManager>(domain);
-    auto flowData = manager->createFlow(flowId, flowDef, MXL_DATA_FORMAT_VIDEO, 5, grainRate, 1024);
+    auto flowData = manager->createDiscreteFlow(flowId, flowDef, MXL_DATA_FORMAT_VIDEO, 5, grainRate, 1024);
 
     REQUIRE(flowData != nullptr);
     REQUIRE(flowData->isValid());
@@ -87,7 +87,7 @@ TEST_CASE("Flow Manager : Create Video Flow Structure", "[flow manager]")
     REQUIRE_THROWS(
         [&]()
         {
-            manager->createFlow(flowId, flowDef, MXL_DATA_FORMAT_VIDEO, 5, grainRate, 1024);
+            manager->createDiscreteFlow(flowId, flowDef, MXL_DATA_FORMAT_VIDEO, 5, grainRate, 1024);
         }());
 
     REQUIRE(manager->listFlows().size() == 1);

@@ -71,7 +71,7 @@ namespace mxl::lib
         }
     }
 
-    std::unique_ptr<DiscreteFlowData> FlowManager::createFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat, std::size_t grainCount,
+    std::unique_ptr<DiscreteFlowData> FlowManager::createDiscreteFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat, std::size_t grainCount,
         Rational const& grainRate, std::size_t grainPayloadSize)
     {
         auto const uuidString = uuids::to_string(flowId);
@@ -153,7 +153,7 @@ namespace mxl::lib
         }
     }
 
-    std::unique_ptr<DiscreteFlowData> FlowManager::openFlow(uuids::uuid const& in_flowId, AccessMode in_mode)
+    std::unique_ptr<FlowData> FlowManager::openFlow(uuids::uuid const& in_flowId, AccessMode in_mode)
     {
         if (in_mode == AccessMode::CREATE_READ_WRITE)
         {
@@ -164,19 +164,32 @@ namespace mxl::lib
         auto const base = makeFlowDirectoryName(_mxlDomain, uuid);
 
         // Verify that the flow file exists.
-        auto const flowFile = makeFlowDataFilePath(base);
-        if (!exists(flowFile))
+        if (auto const flowFile = makeFlowDataFilePath(base); exists(flowFile))
+        {
+            auto flowSegment = SharedMemoryInstance<Flow>{flowFile.string().c_str(), in_mode, 0U};
+            if (mxlIsDiscreteDataFormat(flowSegment.get()->info.common.format))
+            {
+                return openDiscreteFlow(base, std::move(flowSegment));
+            }
+            else
+            {
+                throw std::runtime_error("Attempt to open flow with unsupported data format.");
+            }
+        }
+        else
         {
             throw std::filesystem::filesystem_error("Flow file not found", flowFile, std::make_error_code(std::errc::no_such_file_or_directory));
         }
+    }
 
-        // Open the shared memory
-        auto flowData = std::make_unique<DiscreteFlowData>(flowFile.string().c_str(), in_mode);
+    std::unique_ptr<DiscreteFlowData> FlowManager::openDiscreteFlow(std::filesystem::path const& flowDir, SharedMemoryInstance<Flow>&& sharedFlowInstance)
+    {
+        auto flowData = std::make_unique<DiscreteFlowData>(std::move(sharedFlowInstance));
 
         auto const grainCount = flowData->flowInfo()->discrete.grainCount;
         if (grainCount > 0U)
         {
-            auto const grainDir = makeGrainDirectoryName(base);
+            auto const grainDir = makeGrainDirectoryName(flowDir);
             if (exists(grainDir) && is_directory(grainDir))
             {
                 // Open each grain
@@ -256,14 +269,8 @@ namespace mxl::lib
         return flowIds;
     }
 
-    FlowManager::~FlowManager()
-    {
-        MXL_TRACE("~FlowManager");
-    }
-
     std::filesystem::path const& FlowManager::getDomain() const
     {
         return _mxlDomain;
     }
-
-} // namespace mxl::lib
+}

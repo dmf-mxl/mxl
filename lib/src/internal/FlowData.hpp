@@ -26,6 +26,8 @@ namespace mxl::lib
             constexpr FlowInfo* flowInfo() noexcept;
             constexpr FlowInfo const* flowInfo() const noexcept;
 
+            virtual ~FlowData();
+
         protected:
             constexpr explicit FlowData(SharedMemoryInstance<Flow>&& flowSegement) noexcept;
             FlowData(char const* flowFilePath, AccessMode mode);
@@ -41,10 +43,6 @@ namespace mxl::lib
 
     constexpr FlowData::FlowData(SharedMemoryInstance<Flow>&& flowSegement) noexcept
         : _flow{std::move(flowSegement)}
-    {}
-
-    inline FlowData::FlowData(char const* flowFilePath, AccessMode mode)
-        : _flow{flowFilePath, mode, 0U}
     {}
 
     constexpr bool FlowData::isValid() const noexcept

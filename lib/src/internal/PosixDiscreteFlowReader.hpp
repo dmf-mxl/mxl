@@ -3,14 +3,14 @@
 #include <cstdint>
 #include <memory>
 #include <uuid.h>
-#include <condition_variable>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
-#include "FlowManager.hpp"
 #include "DiscreteFlowReader.hpp"
+#include "DiscreteFlowData.hpp"
 
 namespace mxl::lib
 {
+    class FlowManager;
 
     ///
     /// Implementation of a flow reader based on POSIX shared memory.
@@ -19,8 +19,11 @@ namespace mxl::lib
         : public DiscreteFlowReader
     {
     public:
-        /// Ctor.
-        PosixDiscreteFlowReader(FlowManager& manager, uuids::uuid const& flowId);
+        ///
+        /// \param[in] manager A referene to the flow manager used to obtain
+        ///         additional information about the flows context.
+        ///
+        PosixDiscreteFlowReader(FlowManager const& manager, uuids::uuid const& flowId, std::unique_ptr<DiscreteFlowData>&& data);
 
         ///
         /// Accessor for the current FlowInfo. A copy of the current structure is returned.

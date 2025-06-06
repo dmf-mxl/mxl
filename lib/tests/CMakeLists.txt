@@ -24,6 +24,8 @@ target_sources(mxl-tests
             Utils.cpp
             ../src/internal/DomainWatcher.cpp
             ../src/internal/Flow.cpp
+            ../src/internal/FlowData.cpp
+            ../src/internal/FlowIoFactory.cpp
             ../src/internal/FlowManager.cpp
             ../src/internal/FlowParser.cpp
             ../src/internal/FlowReader.cpp

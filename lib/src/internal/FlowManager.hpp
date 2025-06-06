@@ -48,30 +48,24 @@ namespace mxl::lib
         FlowManager(std::filesystem::path const& in_mxlDomain);
 
         ///
-        /// Destructor. Closes all opened resources
-        ///
-        ~FlowManager();
-
-        ///
-        /// Create a new Flow and associated grains. Opens it in read-write mode
+        /// Create a new discrete flow together with its associated grains and opens it in read-write mode.
         ///
         /// \param[in] flowId The id of the flow.
         /// \param[in] flowDef The json definition of the flow (NMOS Resource format). The flow is not parsed or validated. It is written as is.
-        /// \param[in] flowFormat The flow data format.
+        /// \param[in] flowFormat The flow data format. Must be one of the discrete formats.
         /// \param[in] grainCount How many individual grains to create.
         /// \param[in] grainRate The grain rate.
         /// \param[in] grainPayloadSize Size of the grain in host memory.  0 if the grain payload lives in device memory.
         ///
-        std::unique_ptr<DiscreteFlowData> createFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat, std::size_t grainCount, Rational const& grainRate,
+        std::unique_ptr<DiscreteFlowData> createDiscreteFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat, std::size_t grainCount, Rational const& grainRate,
             std::size_t grainPayloadSize);
 
-        ///
         /// Open an existing flow by id.
         ///
-        /// \param in_flowId The flow to open
-        /// \param in_mode The flow access mode
+        /// \param[in] flowId The flow to open
+        /// \param[in] mode The flow access mode
         ///
-        std::unique_ptr<DiscreteFlowData> openFlow(uuids::uuid const& in_flowId, AccessMode in_mode);
+        std::unique_ptr<FlowData> openFlow(uuids::uuid const& flowId, AccessMode mode);
 
         ///
         /// Delete all resources associated to a flow
@@ -101,6 +95,9 @@ namespace mxl::lib
         /// Accessor for the mxl domain (base path where shared memory will be stored)
         /// \return The base path
         std::filesystem::path const& getDomain() const;
+
+    private:
+        std::unique_ptr<DiscreteFlowData> openDiscreteFlow(std::filesystem::path const& flowDir, SharedMemoryInstance<Flow>&& sharedFlowInstance);
 
     private:
         std::filesystem::path _mxlDomain;

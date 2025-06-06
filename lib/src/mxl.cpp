@@ -6,6 +6,7 @@
 #include <mxl/version.h>
 #include "internal/Instance.hpp"
 #include "internal/Logging.hpp"
+#include "internal/PosixFlowIoFactory.hpp"
 
 extern "C"
 MXL_EXPORT
@@ -31,7 +32,8 @@ mxlInstance mxlCreateInstance(char const* in_mxlDomain, char const* in_options)
     try
     {
         auto const opts = (in_options != nullptr) ? in_options : "";
-        return reinterpret_cast<mxlInstance>(new mxl::lib::Instance{in_mxlDomain, opts});
+        auto flowIoFactory = std::make_unique<mxl::lib::PosixFlowIoFactory>();
+        return reinterpret_cast<mxlInstance>(new mxl::lib::Instance{in_mxlDomain, opts, std::move(flowIoFactory)});
     }
     catch (std::exception& e)
     {

@@ -32,9 +32,9 @@ namespace mxl::lib
         }
     }
 
-    PosixDiscreteFlowReader::PosixDiscreteFlowReader(FlowManager& manager, uuids::uuid const& flowId)
+    PosixDiscreteFlowReader::PosixDiscreteFlowReader(FlowManager const& manager, uuids::uuid const& flowId, std::unique_ptr<DiscreteFlowData>&& data)
         : DiscreteFlowReader{flowId}
-        , _flowData{manager.openFlow(flowId, AccessMode::READ_ONLY)}
+        , _flowData{std::move(data)}
         , _accessFileFd{-1}
     {
         auto const accessFile = makeFlowAccessFilePath(manager.getDomain(), to_string(flowId));

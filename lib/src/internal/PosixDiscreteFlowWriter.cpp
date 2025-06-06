@@ -15,9 +15,9 @@
 
 namespace mxl::lib
 {
-    PosixDiscreteFlowWriter::PosixDiscreteFlowWriter(FlowManager& manager, uuids::uuid const& flowId)
+    PosixDiscreteFlowWriter::PosixDiscreteFlowWriter(FlowManager const&, uuids::uuid const& flowId, std::unique_ptr<DiscreteFlowData>&& data)
         : DiscreteFlowWriter{flowId}
-        , _flowData{manager.openFlow(flowId, AccessMode::READ_WRITE)}
+        , _flowData{std::move(data)}
         , _currentIndex{MXL_UNDEFINED_INDEX}
     {}
 
