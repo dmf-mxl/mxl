@@ -130,6 +130,9 @@ MXL_EXPORT
      * Open a grain for mutation.  The flow writer will remember which index is currently opened. Before opening a new grain
      * for mutation, the user must either cancel the mutation using mxlFlowWriterCancelGrain or mxlFlowWriterCommitGrain.
      *
+     * \todo Allow operating on multiple grains simultaneously, by making this function return a handle that has to be passed
+     *      to mxlFlowWriterCommitGrain or mxlFlowWriterCancelGrain to identify the grain the call refers to.
+     *
      * \param[in] writer A valid flow writer
      * \param[in] index The index of the grain to obtain
      * \param[out] grainInfo The requested GrainInfo structure.
