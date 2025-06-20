@@ -84,7 +84,6 @@ TEST_CASE("Create", "[shared mem]")
     // Confirm correct creatiion via default constructor of payload
     REQUIRE(writer.get()->testData == 123456789ULL);
 
-
     // Confirm that it exists.
     REQUIRE(exists(p));
     // Confirm that the file is the right size.

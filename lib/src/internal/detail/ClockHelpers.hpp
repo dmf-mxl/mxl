@@ -17,33 +17,29 @@ namespace mxl::lib::detail
 #endif
 
 #if defined(CLOCK_TAI)
-            case Clock::TAI:
-                return CLOCK_TAI;
+            case Clock::TAI: return CLOCK_TAI;
 #endif
-            case Clock::ProcessCPUTime:
-                return CLOCK_PROCESS_CPUTIME_ID;
+            case Clock::ProcessCPUTime: return CLOCK_PROCESS_CPUTIME_ID;
 
-            case Clock::ThreadCPUTime:
-                return CLOCK_THREAD_CPUTIME_ID;
+            case Clock::ThreadCPUTime:  return CLOCK_THREAD_CPUTIME_ID;
 
-            default:
-                return CLOCK_REALTIME;
+            default:                    return CLOCK_REALTIME;
         }
     }
 
     constexpr Duration getClockOffset(Clock clock) noexcept
     {
-        [[maybe_unused]] constexpr auto const ZERO_SECONDS = fromSeconds(0.0);
-        [[maybe_unused]] constexpr auto const TAI_LEAP_SECONDS = fromSeconds(37.0);
+        [[maybe_unused]]
+        constexpr auto const ZERO_SECONDS = fromSeconds(0.0);
+        [[maybe_unused]]
+        constexpr auto const TAI_LEAP_SECONDS = fromSeconds(37.0);
 
         switch (clock)
         {
 #if !defined(CLOCK_TAI)
-            case Clock::TAI:
-                return TAI_LEAP_SECONDS;
+            case Clock::TAI: return TAI_LEAP_SECONDS;
 #endif
-            default:
-                return ZERO_SECONDS;
+            default: return ZERO_SECONDS;
         }
     }
 }

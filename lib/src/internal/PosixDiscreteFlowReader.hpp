@@ -5,8 +5,8 @@
 #include <uuid.h>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
-#include "DiscreteFlowReader.hpp"
 #include "DiscreteFlowData.hpp"
+#include "DiscreteFlowReader.hpp"
 
 namespace mxl::lib
 {
@@ -15,8 +15,7 @@ namespace mxl::lib
     ///
     /// Implementation of a flow reader based on POSIX shared memory.
     ///
-    class PosixDiscreteFlowReader final
-        : public DiscreteFlowReader
+    class PosixDiscreteFlowReader final : public DiscreteFlowReader
     {
     public:
         ///

@@ -187,8 +187,7 @@ mxlStatus mxlFlowReaderGetInfo(mxlFlowReader reader, FlowInfo* info)
 
 extern "C"
 MXL_EXPORT
-mxlStatus mxlFlowReaderGetGrain(mxlFlowReader reader, uint64_t index, uint64_t timeoutNs, GrainInfo* grainInfo,
-    uint8_t** payload)
+mxlStatus mxlFlowReaderGetGrain(mxlFlowReader reader, uint64_t index, uint64_t timeoutNs, GrainInfo* grainInfo, uint8_t** payload)
 {
     try
     {
@@ -210,8 +209,7 @@ mxlStatus mxlFlowReaderGetGrain(mxlFlowReader reader, uint64_t index, uint64_t t
 
 extern "C"
 MXL_EXPORT
-mxlStatus mxlFlowReaderGetGrainNonBlocking(mxlFlowReader reader, uint64_t index, GrainInfo* grainInfo,
-    uint8_t** payload)
+mxlStatus mxlFlowReaderGetGrainNonBlocking(mxlFlowReader reader, uint64_t index, GrainInfo* grainInfo, uint8_t** payload)
 {
     try
     {

@@ -2,8 +2,8 @@
 #include <cstdint>
 #include <ctime>
 #include <ostream>
-#include <fmt/format.h>
 #include <uuid.h>
+#include <fmt/format.h>
 #include <mxl/flow.h>
 
 namespace mxl::lib
@@ -14,19 +14,20 @@ namespace mxl::lib
         {
             switch (format)
             {
-                case MXL_DATA_FORMAT_UNSPECIFIED:   return "UNSPECIFIED";
-                case MXL_DATA_FORMAT_VIDEO:         return "Video";
-                case MXL_DATA_FORMAT_AUDIO:         return "Audio";
-                case MXL_DATA_FORMAT_DATA:          return "Data";
-                case MXL_DATA_FORMAT_MUX:           return "Multiplexed";
-                default:                            return "UNKNOWN";
+                case MXL_DATA_FORMAT_UNSPECIFIED: return "UNSPECIFIED";
+                case MXL_DATA_FORMAT_VIDEO:       return "Video";
+                case MXL_DATA_FORMAT_AUDIO:       return "Audio";
+                case MXL_DATA_FORMAT_DATA:        return "Data";
+                case MXL_DATA_FORMAT_MUX:         return "Multiplexed";
+                default:                          return "UNKNOWN";
             }
         }
     }
 
     std::ostream& operator<<(std::ostream& os, Flow const& flow)
     {
-        auto const span = uuids::span<std::uint8_t, sizeof flow.info.common.id>{const_cast<std::uint8_t*>(flow.info.common.id), sizeof flow.info.common.id};
+        auto const span = uuids::span<std::uint8_t, sizeof flow.info.common.id>{
+            const_cast<std::uint8_t*>(flow.info.common.id), sizeof flow.info.common.id};
         auto const id = uuids::uuid(span);
         os << "- Flow [" << uuids::to_string(id) << ']' << '\n'
            << '\t' << fmt::format("{: >18}: {}", "Version", flow.info.version) << '\n'
@@ -38,18 +39,22 @@ namespace mxl::lib
 
         if (mxlIsDiscreteDataFormat(flow.info.common.format))
         {
-           os << '\t' << fmt::format("{: >18}: {}/{}", "Grain rate", flow.info.discrete.grainRate.numerator, flow.info.discrete.grainRate.denominator) << '\n'
-              << '\t' << fmt::format("{: >18}: {}", "Grain count", flow.info.discrete.grainCount) << '\n'
-              << '\t' << fmt::format("{: >18}: {}", "Head index", flow.info.discrete.headIndex) << '\n';
+            os << '\t'
+               << fmt::format("{: >18}: {}/{}", "Grain rate", flow.info.discrete.grainRate.numerator, flow.info.discrete.grainRate.denominator)
+               << '\n'
+               << '\t' << fmt::format("{: >18}: {}", "Grain count", flow.info.discrete.grainCount) << '\n'
+               << '\t' << fmt::format("{: >18}: {}", "Head index", flow.info.discrete.headIndex) << '\n';
         }
         else if (mxlIsContinuousDataFormat(flow.info.common.format))
         {
-           os << '\t' << fmt::format("{: >18}: {}/{}", "Sample rate", flow.info.continuous.sampleRate.numerator, flow.info.continuous.sampleRate.denominator) << '\n'
-              << '\t' << fmt::format("{: >18}: {}", "Channel count", flow.info.continuous.channelCount) << '\n'
-              << '\t' << fmt::format("{: >18}: {}", "Buffer length", flow.info.continuous.bufferLength) << '\n'
-              << '\t' << fmt::format("{: >18}: {}", "Commit batch size", flow.info.continuous.commitBatchSize) << '\n'
-              << '\t' << fmt::format("{: >18}: {}", "Sync batch size", flow.info.continuous.syncBatchSize) << '\n'
-              << '\t' << fmt::format("{: >18}: {}", "Head index", flow.info.continuous.headIndex) << '\n';
+            os << '\t'
+               << fmt::format("{: >18}: {}/{}", "Sample rate", flow.info.continuous.sampleRate.numerator, flow.info.continuous.sampleRate.denominator)
+               << '\n'
+               << '\t' << fmt::format("{: >18}: {}", "Channel count", flow.info.continuous.channelCount) << '\n'
+               << '\t' << fmt::format("{: >18}: {}", "Buffer length", flow.info.continuous.bufferLength) << '\n'
+               << '\t' << fmt::format("{: >18}: {}", "Commit batch size", flow.info.continuous.commitBatchSize) << '\n'
+               << '\t' << fmt::format("{: >18}: {}", "Sync batch size", flow.info.continuous.syncBatchSize) << '\n'
+               << '\t' << fmt::format("{: >18}: {}", "Head index", flow.info.continuous.headIndex) << '\n';
         }
 
         return os;

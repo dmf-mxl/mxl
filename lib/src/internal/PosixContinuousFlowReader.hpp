@@ -16,8 +16,7 @@ namespace mxl::lib
     /**
      * Implementation of a continuous flow reader based on POSIX shared memory.
      */
-    class PosixContinuousFlowReader final
-        : public ContinuousFlowReader
+    class PosixContinuousFlowReader final : public ContinuousFlowReader
     {
     public:
         /**

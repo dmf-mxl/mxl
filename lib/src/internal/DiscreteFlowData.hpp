@@ -7,27 +7,25 @@ namespace mxl::lib
     ///
     /// Simple structure holding the shared memory resources of discrete flows.
     ///
-    class DiscreteFlowData
-        : public FlowData
+    class DiscreteFlowData : public FlowData
     {
-        public:
-            explicit DiscreteFlowData(SharedMemoryInstance<Flow>&& flowSegement) noexcept;
-            DiscreteFlowData(char const* flowFilePath, AccessMode mode);
+    public:
+        explicit DiscreteFlowData(SharedMemoryInstance<Flow>&& flowSegement) noexcept;
+        DiscreteFlowData(char const* flowFilePath, AccessMode mode);
 
-            std::size_t grainCount() const noexcept;
+        std::size_t grainCount() const noexcept;
 
-            Grain* emplaceGrain(char const* grainFilePath, std::size_t grainPayloadSize);
+        Grain* emplaceGrain(char const* grainFilePath, std::size_t grainPayloadSize);
 
-            Grain* grainAt(std::size_t i) noexcept;
-            Grain const* grainAt(std::size_t i) const noexcept;
+        Grain* grainAt(std::size_t i) noexcept;
+        Grain const* grainAt(std::size_t i) const noexcept;
 
-            GrainInfo* grainInfoAt(std::size_t i) noexcept;
-            GrainInfo const* grainInfoAt(std::size_t i) const noexcept;
+        GrainInfo* grainInfoAt(std::size_t i) noexcept;
+        GrainInfo const* grainInfoAt(std::size_t i) const noexcept;
 
-        private:
-            std::vector<SharedMemoryInstance<Grain>> _grains;
+    private:
+        std::vector<SharedMemoryInstance<Grain>> _grains;
     };
-
 
     /**************************************************************************/
     /* Inline implementation.                                                 */
