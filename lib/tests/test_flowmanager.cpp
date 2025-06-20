@@ -18,7 +18,11 @@ TEST_CASE("Flow Manager : Create Manager", "[flow manager]")
     remove_all(domain);
 
     // This should throw since the folder should not exist.
-    REQUIRE_THROWS( [&]() { std::make_shared<FlowManager>(domain); }());
+    REQUIRE_THROWS(
+        [&]()
+        {
+            std::make_shared<FlowManager>(domain);
+        }());
 
     // Create the mxl domain path.
     REQUIRE(create_directory(domain));
@@ -101,7 +105,6 @@ TEST_CASE("Flow Manager : Create Video Flow Structure", "[flow manager]")
             auto const sampleRate = Rational{48000, 1};
             manager->createContinuousFlow(flowId, flowDef, MXL_DATA_FORMAT_AUDIO, sampleRate, 8, sizeof(float), 8192);
         }());
-
 
     REQUIRE(manager->listFlows().size() == 1);
 

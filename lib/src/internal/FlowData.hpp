@@ -12,30 +12,29 @@ namespace mxl::lib
     ///
     class FlowData
     {
-        public:
-            constexpr bool isValid() const noexcept;
-            constexpr explicit operator bool() const noexcept;
+    public:
+        constexpr bool isValid() const noexcept;
+        constexpr explicit operator bool() const noexcept;
 
-            constexpr AccessMode accessMode() const noexcept;
-            constexpr bool created() const noexcept;
-            constexpr std::size_t mappedSize() const noexcept;
+        constexpr AccessMode accessMode() const noexcept;
+        constexpr bool created() const noexcept;
+        constexpr std::size_t mappedSize() const noexcept;
 
-            constexpr Flow* flow() noexcept;
-            constexpr Flow const* flow() const noexcept;
+        constexpr Flow* flow() noexcept;
+        constexpr Flow const* flow() const noexcept;
 
-            constexpr FlowInfo* flowInfo() noexcept;
-            constexpr FlowInfo const* flowInfo() const noexcept;
+        constexpr FlowInfo* flowInfo() noexcept;
+        constexpr FlowInfo const* flowInfo() const noexcept;
 
-            virtual ~FlowData();
+        virtual ~FlowData();
 
-        protected:
-            constexpr explicit FlowData(SharedMemoryInstance<Flow>&& flowSegement) noexcept;
-            FlowData(char const* flowFilePath, AccessMode mode);
+    protected:
+        constexpr explicit FlowData(SharedMemoryInstance<Flow>&& flowSegement) noexcept;
+        FlowData(char const* flowFilePath, AccessMode mode);
 
-        private:
-            SharedMemoryInstance<Flow> _flow;
+    private:
+        SharedMemoryInstance<Flow> _flow;
     };
-
 
     /**************************************************************************/
     /* Inline implementation.                                                 */

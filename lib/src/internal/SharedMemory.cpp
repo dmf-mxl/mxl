@@ -1,16 +1,16 @@
 #include "SharedMemory.hpp"
-#include <array>
 #include <cerrno>
 #include <cstring>
-#include <fcntl.h>
+#include <array>
 #include <stdexcept>
-#include <system_error>
+#include <fcntl.h>
 #include <unistd.h>
 #include <utime.h>
 #include <sys/file.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <system_error>
 #include "Logging.hpp"
 
 namespace mxl::lib
@@ -39,9 +39,7 @@ namespace mxl::lib
             {
                 throw std::system_error(errno, std::generic_category(), "Could not open shared memory segment.");
             }
-            _mode = (mode == AccessMode::READ_ONLY)
-                ? AccessMode::READ_ONLY
-                : AccessMode::READ_WRITE;
+            _mode = (mode == AccessMode::READ_ONLY) ? AccessMode::READ_ONLY : AccessMode::READ_WRITE;
         }
 
         if (mode != AccessMode::READ_ONLY)
@@ -61,9 +59,8 @@ namespace mxl::lib
         {
             if (static_cast<std::size_t>(statBuf.st_size) >= payloadSize)
             {
-                auto const shared_data_buffer = ::mmap(nullptr, statBuf.st_size,
-                        PROT_READ | ((mode != AccessMode::READ_ONLY) ? PROT_WRITE : 0),
-                        MAP_FILE | MAP_SHARED, _fd, 0);
+                auto const shared_data_buffer = ::mmap(
+                    nullptr, statBuf.st_size, PROT_READ | ((mode != AccessMode::READ_ONLY) ? PROT_WRITE : 0), MAP_FILE | MAP_SHARED, _fd, 0);
                 if (shared_data_buffer != MAP_FAILED)
                 {
                     _data = shared_data_buffer;
@@ -103,10 +100,7 @@ namespace mxl::lib
     {
         // Update the file times
         auto const times = std::array<std::timespec, 2>{
-            {
-                {0, UTIME_NOW},
-                {0, (accessMode() == AccessMode::READ_ONLY) ? UTIME_OMIT : UTIME_NOW}
-            }
+            {{0, UTIME_NOW}, {0, (accessMode() == AccessMode::READ_ONLY) ? UTIME_OMIT : UTIME_NOW}}
         };
 
         if (::futimens(_fd, times.data()) == -1)

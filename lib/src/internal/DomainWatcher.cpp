@@ -89,9 +89,7 @@ namespace mxl::lib
         record->type = in_type;
 
         auto const flowDirectory = makeFlowDirectoryName(_domain, id);
-        record->fileName = (in_type == WatcherType::READER)
-            ? makeFlowDataFilePath(flowDirectory)
-            : makeFlowAccessFilePath(flowDirectory);
+        record->fileName = (in_type == WatcherType::READER) ? makeFlowDataFilePath(flowDirectory) : makeFlowAccessFilePath(flowDirectory);
 
         // try to find it in the maps.
         std::lock_guard<std::mutex> lock(_mutex);
@@ -238,7 +236,7 @@ namespace mxl::lib
 
 #elif defined __linux__
         epoll_event events[1];
-        alignas(alignof(struct inotify_event)) char buffer[406]  = {};
+        alignas(alignof(struct inotify_event)) char buffer[406] = {};
 
         while (_running)
         {
@@ -262,7 +260,7 @@ namespace mxl::lib
                 auto it = _watches.find(event->wd);
                 if (it != _watches.end())
                 {
-                    if ((event->mask & (IN_ACCESS | IN_MODIFY| IN_ATTRIB)) != 0)
+                    if ((event->mask & (IN_ACCESS | IN_MODIFY | IN_ATTRIB)) != 0)
                     {
                         _callback(it->second->id, it->second->type);
                     }

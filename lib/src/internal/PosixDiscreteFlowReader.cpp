@@ -27,7 +27,9 @@ namespace mxl::lib
     {
         bool updateFileAccessTime(int fd) noexcept
         {
-            auto const times = std::array<timespec, 2>{{{0, UTIME_NOW}, {0, UTIME_OMIT}}};
+            auto const times = std::array<timespec, 2>{
+                {{0, UTIME_NOW}, {0, UTIME_OMIT}}
+            };
             return (::futimens(fd, times.data()) == 0);
         }
     }
@@ -54,7 +56,8 @@ namespace mxl::lib
         throw std::runtime_error("No open flow.");
     }
 
-    mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, std::uint64_t in_timeoutNs, GrainInfo* out_grainInfo, std::uint8_t** out_payload)
+    mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, std::uint64_t in_timeoutNs, GrainInfo* out_grainInfo,
+        std::uint8_t** out_payload)
     {
         auto status = MXL_ERR_TIMEOUT;
 
@@ -64,9 +67,7 @@ namespace mxl::lib
             if (auto const headIndex = flowInfo->discrete.headIndex; in_index <= headIndex)
             {
                 auto const grainCount = flowInfo->discrete.grainCount;
-                auto const minIndex = (headIndex >= grainCount)
-                    ? (headIndex - grainCount + 1U)
-                    : std::uint64_t{0};
+                auto const minIndex = (headIndex >= grainCount) ? (headIndex - grainCount + 1U) : std::uint64_t{0};
 
                 if (in_index >= minIndex)
                 {
@@ -122,9 +123,7 @@ namespace mxl::lib
             if (auto const headIndex = flowInfo->discrete.headIndex; in_index <= headIndex)
             {
                 auto const grainCount = flowInfo->discrete.grainCount;
-                auto const minIndex = (headIndex >= grainCount)
-                    ? (headIndex - grainCount + 1U)
-                    : std::uint64_t{0};
+                auto const minIndex = (headIndex >= grainCount) ? (headIndex - grainCount + 1U) : std::uint64_t{0};
                 if (in_index >= minIndex)
                 {
                     auto const offset = in_index % grainCount;
