@@ -19,6 +19,7 @@ ubuntu_24_04:
     - apk add bash
   script:
     - docker build -t mxl_build_container:$CI_JOB_ID $CI_PROJECT_DIR/.devcontainer/
+    - docker run --rm --volume $CI_PROJECT_DIR/:/workspace/mxl --volume $CI_PROJECT_DIR/vcpkg_cache:/home/devcontainer/.cache/vcpkg -i mxl_build_container:$CI_JOB_ID find . -iregex '.*\.\(h\|c\|hpp\|cpp\)' | xargs clang-format --dry-run --Werror
     - docker run --rm --volume $CI_PROJECT_DIR/:/workspace/mxl --volume $CI_PROJECT_DIR/vcpkg_cache:/home/devcontainer/.cache/vcpkg -i mxl_build_container:$CI_JOB_ID cmake -S /workspace/mxl -B /workspace/mxl/build/Linux-$PRESET --preset Linux-$PRESET -DMXL_BUILD_NUMBER=$CI_PIPELINE_IID
     - docker run --rm --volume $CI_PROJECT_DIR/:/workspace/mxl --volume $CI_PROJECT_DIR/vcpkg_cache:/home/devcontainer/.cache/vcpkg -i mxl_build_container:$CI_JOB_ID cmake --build /workspace/mxl/build/Linux-$PRESET -t all doc install package
     - docker run --rm --volume $CI_PROJECT_DIR/:/workspace/mxl --volume $CI_PROJECT_DIR/vcpkg_cache:/home/devcontainer/.cache/vcpkg -i mxl_build_container:$CI_JOB_ID bash -c "cd /workspace/mxl/build/Linux-$PRESET && ctest --output-junit test-results.xml"
@@ -51,6 +52,7 @@ ubuntu_22_04:
     - apk add bash
   script:
     - docker build --build-arg BASE_IMAGE_VERSION=$IMAGE_VERSION --file $CI_PROJECT_DIR/.devcontainer/Dockerfile.ubuntu-legacy -t mxl_build_container:$CI_JOB_ID $CI_PROJECT_DIR/.devcontainer/
+    - docker run --rm --volume $CI_PROJECT_DIR/:/workspace/mxl --volume $CI_PROJECT_DIR/vcpkg_cache:/home/devcontainer/.cache/vcpkg -i mxl_build_container:$CI_JOB_ID find . -iregex '.*\.\(h\|c\|hpp\|cpp\)' | xargs clang-format --dry-run --Werror
     - docker run --rm --volume $CI_PROJECT_DIR/:/workspace/mxl --volume $CI_PROJECT_DIR/vcpkg_cache:/home/devcontainer/.cache/vcpkg -i mxl_build_container:$CI_JOB_ID cmake -S /workspace/mxl -B /workspace/mxl/build/Linux-$PRESET --preset Linux-$PRESET -DMXL_BUILD_NUMBER=$CI_PIPELINE_IID
     - docker run --rm --volume $CI_PROJECT_DIR/:/workspace/mxl --volume $CI_PROJECT_DIR/vcpkg_cache:/home/devcontainer/.cache/vcpkg -i mxl_build_container:$CI_JOB_ID cmake --build /workspace/mxl/build/Linux-$PRESET -t all doc install package
     - docker run --rm --volume $CI_PROJECT_DIR/:/workspace/mxl --volume $CI_PROJECT_DIR/vcpkg_cache:/home/devcontainer/.cache/vcpkg -i mxl_build_container:$CI_JOB_ID bash -c "cd /workspace/mxl/build/Linux-$PRESET && ctest --output-junit test-results.xml"
@@ -83,6 +85,7 @@ ubuntu_20_04:
     - apk add bash
   script:
     - docker build --build-arg BASE_IMAGE_VERSION=$IMAGE_VERSION --file $CI_PROJECT_DIR/.devcontainer/Dockerfile.ubuntu-legacy -t mxl_build_container:$CI_JOB_ID $CI_PROJECT_DIR/.devcontainer/
+    - docker run --rm --volume $CI_PROJECT_DIR/:/workspace/mxl --volume $CI_PROJECT_DIR/vcpkg_cache:/home/devcontainer/.cache/vcpkg -i mxl_build_container:$CI_JOB_ID find . -iregex '.*\.\(h\|c\|hpp\|cpp\)' | xargs clang-format --dry-run --Werror
     - docker run --rm --volume $CI_PROJECT_DIR/:/workspace/mxl --volume $CI_PROJECT_DIR/vcpkg_cache:/home/devcontainer/.cache/vcpkg -i mxl_build_container:$CI_JOB_ID cmake -S /workspace/mxl -B /workspace/mxl/build/Linux-$PRESET --preset Linux-$PRESET -DMXL_BUILD_NUMBER=$CI_PIPELINE_IID
     - docker run --rm --volume $CI_PROJECT_DIR/:/workspace/mxl --volume $CI_PROJECT_DIR/vcpkg_cache:/home/devcontainer/.cache/vcpkg -i mxl_build_container:$CI_JOB_ID cmake --build /workspace/mxl/build/Linux-$PRESET -t all doc install package
     - docker run --rm --volume $CI_PROJECT_DIR/:/workspace/mxl --volume $CI_PROJECT_DIR/vcpkg_cache:/home/devcontainer/.cache/vcpkg -i mxl_build_container:$CI_JOB_ID bash -c "cd /workspace/mxl/build/Linux-$PRESET && ctest --output-junit test-results.xml"
