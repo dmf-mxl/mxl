@@ -19,6 +19,7 @@ target_sources(mxl-tests
             test_domainwatcher.cpp
             test_flowmanager.cpp
             test_flows.cpp
+            test_flows_timing.cpp
             test_time.cpp
             test_sharedmem.cpp
             Utils.cpp
