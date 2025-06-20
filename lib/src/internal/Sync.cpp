@@ -37,8 +37,7 @@ namespace mxl::lib
         int do_wait(void const* futex, std::uint32_t expected, Duration timeout)
         {
             return ::os_sync_wait_on_address_with_timeout(
-                const_cast<void*>(futex), expected, sizeof(std::uint32_t), OS_SYNC_WAIT_ON_ADDRESS_SHARED,
-                OS_CLOCK_MACH_ABSOLUTE_TIME, timeout.value);
+                const_cast<void*>(futex), expected, sizeof(std::uint32_t), OS_SYNC_WAIT_ON_ADDRESS_SHARED, OS_CLOCK_MACH_ABSOLUTE_TIME, timeout.value);
         }
 
         int do_wake_one(void const* futex)

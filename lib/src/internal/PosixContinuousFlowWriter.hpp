@@ -16,8 +16,7 @@ namespace mxl::lib
     /**
      * Implementation of a FlowWriter based on POSIX shared memory mapping.
      */
-    class PosixContinuousFlowWriter
-        : public ContinuousFlowWriter
+    class PosixContinuousFlowWriter : public ContinuousFlowWriter
     {
     public:
         /**

@@ -101,30 +101,29 @@ namespace mxl::lib
         template<typename T>
         class RefCounted
         {
-            public:
-                using value_type = T;
+        public:
+            using value_type = T;
 
-            public:
-                explicit RefCounted(std::unique_ptr<value_type>&& value) noexcept;
+        public:
+            explicit RefCounted(std::unique_ptr<value_type>&& value) noexcept;
 
-                RefCounted(RefCounted&&) = delete;
-                RefCounted(RefCounted const&) = delete;
-                RefCounted& operator=(RefCounted&&) = delete;
-                RefCounted& operator=(RefCounted const&) = delete;
+            RefCounted(RefCounted&&) = delete;
+            RefCounted(RefCounted const&) = delete;
+            RefCounted& operator=(RefCounted&&) = delete;
+            RefCounted& operator=(RefCounted const&) = delete;
 
-                constexpr value_type* get() noexcept;
-                constexpr value_type const* get() const noexcept;
+            constexpr value_type* get() noexcept;
+            constexpr value_type const* get() const noexcept;
 
-                constexpr void addReference() const noexcept;
-                constexpr bool releaseReference() const noexcept;
+            constexpr void addReference() const noexcept;
+            constexpr bool releaseReference() const noexcept;
 
-                constexpr std::uint64_t referenceCount() const noexcept;
+            constexpr std::uint64_t referenceCount() const noexcept;
 
-            private:
-                std::unique_ptr<value_type> _ptr;
-                std::uint64_t mutable _refCount;
+        private:
+            std::unique_ptr<value_type> _ptr;
+            std::uint64_t mutable _refCount;
         };
-
 
     private:
         void fileChangedCallback(uuids::uuid const& flowId, WatcherType type);
@@ -155,7 +154,6 @@ namespace mxl::lib
         std::atomic_bool _stopping;
     };
 
-
     /// Utility function to convert from a C mxlInstance handle to a C++ Instance class
     Instance* to_Instance(mxlInstance instance) noexcept;
 
@@ -164,7 +162,6 @@ namespace mxl::lib
 
     /// Utility function to convert from a C mxlFlowWriter handle to a C++ FlowWriter instance.
     FlowWriter* to_FlowWriter(mxlFlowWriter writer) noexcept;
-
 
     /**************************************************************************/
     /* Inline implementation.                                                 */
@@ -188,7 +185,6 @@ namespace mxl::lib
         return _ptr.get();
     }
 
-
     template<typename T>
     constexpr void Instance::RefCounted<T>::addReference() const noexcept
     {
@@ -207,7 +203,6 @@ namespace mxl::lib
     {
         return _refCount;
     }
-
 
     inline Instance* to_Instance(mxlInstance instance) noexcept
     {

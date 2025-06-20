@@ -22,16 +22,15 @@ namespace
     {
         switch (format)
         {
-            case MXL_DATA_FORMAT_UNSPECIFIED:   return "UNSPECIFIED";
-            case MXL_DATA_FORMAT_VIDEO:         return "Video";
-            case MXL_DATA_FORMAT_AUDIO:         return "Audio";
-            case MXL_DATA_FORMAT_DATA:          return "Data";
-            case MXL_DATA_FORMAT_MUX:           return "Multiplexed";
-            default:                            return "UNKNOWN";
+            case MXL_DATA_FORMAT_UNSPECIFIED: return "UNSPECIFIED";
+            case MXL_DATA_FORMAT_VIDEO:       return "Video";
+            case MXL_DATA_FORMAT_AUDIO:       return "Audio";
+            case MXL_DATA_FORMAT_DATA:        return "Data";
+            case MXL_DATA_FORMAT_MUX:         return "Multiplexed";
+            default:                          return "UNKNOWN";
         }
     }
 }
-
 
 std::ostream& operator<<(std::ostream& os, FlowInfo const& info)
 {
@@ -47,25 +46,25 @@ std::ostream& operator<<(std::ostream& os, FlowInfo const& info)
 
     if (mxlIsDiscreteDataFormat(info.common.format))
     {
-       os << '\t' << fmt::format("{: >18}: {}/{}", "Grain rate", info.discrete.grainRate.numerator, info.discrete.grainRate.denominator) << '\n'
-          << '\t' << fmt::format("{: >18}: {}", "Grain count", info.discrete.grainCount) << '\n'
-          << '\t' << fmt::format("{: >18}: {}", "Head index", info.discrete.headIndex) << '\n';
+        os << '\t' << fmt::format("{: >18}: {}/{}", "Grain rate", info.discrete.grainRate.numerator, info.discrete.grainRate.denominator) << '\n'
+           << '\t' << fmt::format("{: >18}: {}", "Grain count", info.discrete.grainCount) << '\n'
+           << '\t' << fmt::format("{: >18}: {}", "Head index", info.discrete.headIndex) << '\n';
     }
     else if (mxlIsContinuousDataFormat(info.common.format))
     {
-       os << '\t' << fmt::format("{: >18}: {}/{}", "Sample rate", info.continuous.sampleRate.numerator, info.continuous.sampleRate.denominator) << '\n'
-          << '\t' << fmt::format("{: >18}: {}", "Channel count", info.continuous.channelCount) << '\n'
-          << '\t' << fmt::format("{: >18}: {}", "Buffer length", info.continuous.bufferLength) << '\n'
-          << '\t' << fmt::format("{: >18}: {}", "Commit batch size", info.continuous.commitBatchSize) << '\n'
-          << '\t' << fmt::format("{: >18}: {}", "Sync batch size", info.continuous.syncBatchSize) << '\n'
-          << '\t' << fmt::format("{: >18}: {}", "Head index", info.continuous.headIndex) << '\n';
+        os << '\t' << fmt::format("{: >18}: {}/{}", "Sample rate", info.continuous.sampleRate.numerator, info.continuous.sampleRate.denominator)
+           << '\n'
+           << '\t' << fmt::format("{: >18}: {}", "Channel count", info.continuous.channelCount) << '\n'
+           << '\t' << fmt::format("{: >18}: {}", "Buffer length", info.continuous.bufferLength) << '\n'
+           << '\t' << fmt::format("{: >18}: {}", "Commit batch size", info.continuous.commitBatchSize) << '\n'
+           << '\t' << fmt::format("{: >18}: {}", "Sync batch size", info.continuous.syncBatchSize) << '\n'
+           << '\t' << fmt::format("{: >18}: {}", "Head index", info.continuous.headIndex) << '\n';
     }
 
     auto const now = mxlGetTime();
     auto const currentIndex = mxlTimestampToHeadIndex(&info.discrete.grainRate, now);
     os << '\t' << fmt::format("{: >18}: {}", "Latency (grains)", currentIndex - info.discrete.headIndex) << '\n'
-       << '\t' << fmt::format("{: >18}: {}", "Latency (ns)", now - info.common.lastWriteTime)
-       << std::endl;
+       << '\t' << fmt::format("{: >18}: {}", "Latency (ns)", now - info.common.lastWriteTime) << std::endl;
 
     return os;
 }

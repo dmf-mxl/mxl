@@ -58,8 +58,8 @@ namespace mxl::lib
         /// \param[in] grainRate The grain rate.
         /// \param[in] grainPayloadSize Size of the grain in host memory.  0 if the grain payload lives in device memory.
         ///
-        std::unique_ptr<DiscreteFlowData> createDiscreteFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat, std::size_t grainCount, Rational const& grainRate,
-            std::size_t grainPayloadSize);
+        std::unique_ptr<DiscreteFlowData> createDiscreteFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat,
+            std::size_t grainCount, Rational const& grainRate, std::size_t grainPayloadSize);
 
         ///
         /// Create a new continuous flow together with its associated channel store and open it in read-write mode.
@@ -72,8 +72,8 @@ namespace mxl::lib
         /// \param[in] sampleWordSize The size of one sample in bytes.
         /// \param[in] bufferLength The length of each channel buffer in samples.
         ///
-        std::unique_ptr<ContinuousFlowData> createContinuousFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat, Rational const& sampleRate,
-            std::size_t channelCount, std::size_t sampleWordSize, std::size_t bufferLength);
+        std::unique_ptr<ContinuousFlowData> createContinuousFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat,
+            Rational const& sampleRate, std::size_t channelCount, std::size_t sampleWordSize, std::size_t bufferLength);
 
         /// Open an existing flow by id.
         ///

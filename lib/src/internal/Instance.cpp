@@ -8,9 +8,6 @@
 #include <stdexcept>
 #include <string>
 #include <fcntl.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
 #include <uuid.h>
 #include <mxl/flow.h>
@@ -20,6 +17,9 @@
 #include <spdlog/cfg/env.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "DomainWatcher.hpp"
 #include "FlowManager.hpp"
 #include "FlowParser.hpp"
@@ -54,8 +54,7 @@ namespace mxl::lib
         , _stopping{false}
     {
         std::call_once(loggingFlag, [&]() { initializeLogging(); });
-        _watcher = std::make_shared<DomainWatcher>(mxlDomain,
-            [this](auto const& uuid, auto type) { fileChangedCallback(uuid, type); });
+        _watcher = std::make_shared<DomainWatcher>(mxlDomain, [this](auto const& uuid, auto type) { fileChangedCallback(uuid, type); });
         MXL_DEBUG("Instance created. MXL Domain: {}", mxlDomain.string());
     }
 
@@ -218,7 +217,8 @@ namespace mxl::lib
 
             auto const pageAlignedLength = ((bufferLength + lengthPerPage - 1U) / lengthPerPage) * lengthPerPage;
 
-            return _flowManager.createContinuousFlow(parser.getId(), flowDef, parser.getFormat(), sampleRate, parser.getChannelCount(), sampleWordSize, pageAlignedLength);
+            return _flowManager.createContinuousFlow(
+                parser.getId(), flowDef, parser.getFormat(), sampleRate, parser.getChannelCount(), sampleWordSize, pageAlignedLength);
         }
         throw std::runtime_error("Unsupported flow format.");
     }
