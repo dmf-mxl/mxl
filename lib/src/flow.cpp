@@ -12,7 +12,7 @@ extern "C"
 MXL_EXPORT
 mxlStatus mxlCreateFlow(mxlInstance instance, char const* flowDef, char const* /*options*/, FlowInfo* flowInfo)
 {
-    try
+      try
     {
         if (flowDef != nullptr)
         {
