@@ -69,6 +69,15 @@ jobs:
             -f .devcontainer/Dockerfile \
             .devcontainer
 
+      - name: Run clang-format
+        run: |
+          docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
+            -i mxl_build_container_with_source \
+            bash -c "
+              cd /workspace/mxl && \
+              find lib tools -iregex '.*\.\(h\|c\|hpp\|cpp\)' | xargs clang-format --dry-run --Werror
+            "
+
       - name: Configure CMake
         run: |
           docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
