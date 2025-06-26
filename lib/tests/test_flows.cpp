@@ -428,7 +428,8 @@ TEST_CASE("Audio Flow : Create/Destroy", "[mxl flows]")
         }
         for (auto i = 0U; i < payloadBuffersSlices.base.fragments[1].size; ++i)
         {
-            REQUIRE(static_cast<std::uint8_t const*>(payloadBuffersSlices.base.fragments[0].pointer)[i] == payloadBuffersSlices.base.fragments[0].size + i);
+            REQUIRE(static_cast<std::uint8_t const*>(payloadBuffersSlices.base.fragments[0].pointer)[i] ==
+                    payloadBuffersSlices.base.fragments[0].size + i);
         }
 
         // Get the updated flow info

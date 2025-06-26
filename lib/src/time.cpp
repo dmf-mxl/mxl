@@ -19,9 +19,7 @@ uint64_t mxlGetCurrentHeadIndex(Rational const* editRate)
     }
 
     auto const now = currentTime(mxl::lib::Clock::TAI);
-    return now
-        ? mxlTimestampToHeadIndex(editRate, now.value)
-        : MXL_UNDEFINED_INDEX;
+    return now ? mxlTimestampToHeadIndex(editRate, now.value) : MXL_UNDEFINED_INDEX;
 }
 
 extern "C"
@@ -63,9 +61,7 @@ uint64_t mxlGetNsUntilHeadIndex(uint64_t index, Rational const* editRate)
     auto const targetNs = (index * editRate->denominator * 1'000'000'000ULL) / editRate->numerator;
 
     auto const nowNs = static_cast<std::uint64_t>(currentTime(mxl::lib::Clock::TAI).value);
-    return ((nowNs != 0ULL) && (targetNs >= nowNs))
-        ? targetNs - nowNs
-        : 0ULL;
+    return ((nowNs != 0ULL) && (targetNs >= nowNs)) ? targetNs - nowNs : 0ULL;
 }
 
 extern "C"
