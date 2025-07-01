@@ -5,236 +5,30 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE.txt)
 [![Issues](https://img.shields.io/github/issues/dmf-mxl/mxl)](https://github.com/dmf-mxl/mxl/issues)
 
-## Overview
+[Go straight to documentation](#governance)
 
+Rapid advances in computing power and network infrastructure are transforming the landscape of live media production. The professional broadcast industry is gradually moving away from hardware-centric systems and towards software-defined solutions, promising far greater flexibility, scalability, and operational agility. However, this shift into a more virtualised, “dematerialised” environment also introduces substantial interoperability challenges. Multiple vendors, proprietary frameworks, and disparate technology stacks can prevent diverse systems from integrating seamlessly across distributed networks, potentially inhibiting innovation and restricting the efficiency of modern broadcast workflows.
+
+To address these challenges, the [EBU Dynamic Media Facility (DMF)](https://tech.ebu.ch/groups/dmf) initiative proposes a standardised architecture inspired by the cloud-hyperscaler model. In this architecture, discrete “media functions”, the modular building blocks responsible for ingesting, processing, and delivering content, are deployed onto a common container-based platform. These functions can be provisioned and scaled on-demand, and strategically placed wherever compute, storage, and bandwidth are most readily available, whether on-premises, at the network edge, or in public or private clouds.
+
+At the heart of the [DMF architecture](https://tech.ebu.ch/publications/white-paper-2024-09-03) lies the Media Exchange Layer (MXL), a high-performance data plane designed to simplify and accelerate communication between these distributed media functions. The MXL enables entirely new production paradigms, including asynchronous “faster-than-live” workflows, allowing teams to produce content more flexibly and quickly than traditional linear models permit. Moreover, its extensible design supports evolving transport mechanisms and new media formats as they emerge, ensuring that the architecture is well equipped to evolve alongside technological progress.
+
+![docs/Media eXchange Layer.png](https://github.com/dmf-mxl/mxl/blob/53e889c888b2daceb4bf550943f3a194f559f182/docs/Media%20eXchange%20Layer.png "MXL Layer Diagram")
+
+In order to encourage broad industry adoption, the European Broadcasting Union (EBU), the North American Broadcasters Association (NABA), and the Linux Foundation are pursuing an “implement-first” strategy. This practical, hands-on approach involves close collaboration with broadcasters and technology suppliers to produce an open-source software development kit that promotes interoperability and showcases real-world use cases for the MXL. The first alpha version of this SDK was released in June 2025. Ultimately, the DMF initiative aspires to establish a new baseline for open, interoperable software-based live production, a foundation that is robust, future-proof, and capable of sustaining innovation across the entire media ecosystem.
+
+# Learn more about:
+## Governance
+- The project governance principles: [GOVERNANCE.md](GOVERNANCE/GOVERNANCE.md) and [Technical Charter](GOVERNANCE/CHARTER.pdf) 
+- How to contribute: [CONTRIBUTING.md](CONTRIBUTING.md)
+- How to report a vulnerability: [SECURITY.md](SECURITY.md)
+- [Code of conduct](CODE_OF_CONDUCT.md)
+
+## Technical documentation
 - [MXL Architecture](docs/architecture.md)
 - [SDK Usage](docs/usage.md)
-
-## Building
-
-### Option 1 : Devcontainer build environment
-
-This is the preferred option for development on WSL2 or native linux desktop. This method is self contained, provides a predictable build environment (through a dynamically built container) and pre-configured set of VSCode extensions defined in the devcontainer definition file.
-
-1. Install [VSCode](https://code.visualstudio.com/)
-2. Install the [DevContainer extension](vscode:extension/ms-vscode-remote.remote-containers)
-3. Install docker (inside wsl2 or native linux). Make sure the current user is part of the docker group.
-   - On Ubuntu, this would be: `sudo apt install docker.io`
-4. Install docker buildx.
-   - On Ubuntu, this would be: `sudo apt install docker-buildx`
-5. Install the [NVIDIA Container Runtime](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
-6. Open the MXL source code folder using VSCode. In wsl2 this can be done by launching `code <mxl_directory>`
-   - NOTE: If not running under WSL2, remove the 2 mount points defined in the devcontainer.json you intend to use for development.  For example, if you intend to use the Ubuntu 24.04 devcontainer, edit the .devcontainer/ubuntu24/devcontainer.json file and remove the content of the "mounts" array.  These mount points are only needed for X/WAYLAND support in WSL2.  Their presence will prevent the devcontainer to load correctly when running on a native Linux system.    
-7. VSCode will detect that this folder contains a devcontainer definition. It will prompt you with a dialog "Reopen in dev container". Click this dialog. If the dialog does not appear, you can invoke the command: `CTRL-SHIFT-P -> Dev Containers : Reopen in container`
-
-### Option 2: CMake with presets
-
-_Note: the following instructions apply to Ubuntu 22.04._
-
-1. Install all apt packages specified in the [Dockerfile](.devcontainer/Dockerfile)
-2. Install vcpkg as done in the [Dockerfile](.devcontainer/Dockerfile)
-3. Create a build directory and invoke cmake with a build preset. the list of available presets is:
-
-```bash
-  "Linux-GCC-Debug"
-  "Linux-GCC-Release"
-  "Linux-GCC-AddressSanitizer"
-  "Linux-GCC-ThreadSanitizer"
-  "Linux-GCC-UBSanitizer"
-  "Linux-Clang-Debug"
-  "Linux-Clang-Release"
-  "Linux-Clang-AddressSanitizer"
-  "Linux-Clang-UBSanitizer"
-  "Darwin-Clang-Debug"
-  "Darwin-Clang-Release"
-  "Darwin-Clang-AddressSanitizer"
-  "Darwin-Clang-UBSanitizer"
-```
-
-For example:
-
-```bash
-# Generate the build files using the Linux-Clang-Debug preset
-mkdir build
-cd build
-cmake .. --preset Linux-Clang-Debug
-
-# Build everything
-cmake --build build/Linux-Clang-Debug --target all
-```
-
-### macOS notes
-
-1. Install the [Homebrew](https://brew.sh) package manager
-2. Install doxygen and ccache through brew: `brew install doxygen ccache`
-3. Install the GStreamer runtime and developement packages according to [these instructions](https://gstreamer.freedesktop.org/documentation/installing/on-mac-osx.html?gi-language=c#download-and-install-the-sdk)
-
-### macOS notes
-
-1. Install the [Homebrew](https://brew.sh) package manager
-2. Install doxygen and ccache through brew: `brew install doxygen ccache`
-3. Install the GStreamer runtime and development packages according to [these instructions](https://gstreamer.freedesktop.org/documentation/installing/on-mac-osx.html?gi-language=c#download-and-install-the-sdk)
-
-## Using with CMake
-
-The MXL provides a CMake package configuration file that allows for easy integration into your project. If it is installed in a non-default location, you may need to specify its root path using `CMAKE_PREFIX_PATH`:
-
-```bash
-cmake -DCMAKE_PREFIX_PATH=/home/username/mxl-sdk ..
-```
-
-### Basic usage
-
-Below is a minimal example of how to use the MXL in your project:
-
-```cmake
-cmake_minimum_required(VERSION 3.20)
-project(mxl-test LANGUAGES CXX)
-find_package(mxl CONFIG REQUIRED)
-add_executable(mxl-test main.cpp)
-target_link_libraries(mxl-test PRIVATE mxl::mxl)
-```
-
-## Automated Testing
-
-This project use [Catch2](https://github.com/catchorg/Catch2) automated testing framework. This framework is a modern, lightweight, compatible with CMake/CTest and nicely integrated with VSCode [C++ Test Mate](https://marketplace.visualstudio.com/items?itemName=matepek.vscode-catch2-test-adapter) extension.
-
-## Documentation
-
-Documentation is automatically generated by Doxygen. A documentation target is available in the cmake generate build files.
-
-`ninja doc`
-
-## Logging
-
-This library uses [spdlog](https://github.com/gabime/spdlog) for internal logging. Logging is disabled by default but can be enabled by setting the MXL_LOG_LEVEL environment variable to one of : off, critical, error, warn, info, debug, trace.
-At the moment the logs are going to stdout.
-
-_Note: the debug and trace log statements are statically excluded from the library at compilation time in release mode._
-
-## Tools
-
-### mxl-info
-
-Simple tool that uses the MXL sdk to open a flow by ID and prints the flow details.
-
-```bash
-Usage: ./mxl-info [OPTIONS]
-
-Options:
-  -h,--help                   Print this help message and exit
-  --version                   Display program version information and exit
-  -d,--domain TEXT:DIR REQUIRED
-                              The MXL domain directory
-  -f,--flow TEXT              The flow id to analyse
-  -l,--list                   List all flows in the MXL domain
-```
-
-Example 1 : listing all flows in a domain
-
-```bash
-./mxl-info -d ~/mxl_domain/ -l
---- MXL Flows ---
-        5fbec3b1-1b0f-417d-9059-8b94a47197ed
-
-```
-
-Example 2 : Printing details about a specific flow
-
-```bash
-./mxl-info -d ~/mxl_domain/ -f 5fbec3b1-1b0f-417d-9059-8b94a47197ed
-
-- Flow [5fbec3b1-1b0f-417d-9059-8b94a47197ed]
-        version           : 1
-        struct size       : 4192
-        flags             : 0x00000000000000000000000000000000
-        head index        : 52146817788
-        grain rate        : 60000/1001
-        grain count       : 3
-        last write time   : 2025-02-19 11:44:12 UTC +062314246ns
-        last read time    : 1970-01-01 00:00:00 UTC +000000000ns
-```
-
-Hint : Live monitoring of a flow details (updates every second)
-
-```bash
-watch -n 1 -p ./mxl-info -d ~/mxl_domain/ -f 5fbec3b1-1b0f-417d-9059-8b94a47197ed
-```
-
-### mxl-viewer
-
-TODO. A generic GUI application based on gstreamer or ffmpeg to display flow(s).
-
-### mxl-gst-videotestsrc
-
-A binary that uses the gstreamer element 'videotestsrc' to produce video grains which will be pushed to a MXL Flow. The video format is configured from a NMOS Flow json file. Here's an example of such file :
-
-```json
-{
-  "description": "MXL Test File",
-  "id": "5fbec3b1-1b0f-417d-9059-8b94a47197ef",
-  "tags": {},
-  "format": "urn:x-nmos:format:video",
-  "label": "MXL Test File",
-  "parents": [],
-  "media_type": "video/v210",
-  "grain_rate": {
-    "numerator": 50,
-    "denominator": 1
-  },
-  "frame_width": 1920,
-  "frame_height": 1080,
-  "colorspace": "BT709",
-  "components": [
-    {
-      "name": "Y",
-      "width": 1920,
-      "height": 1080,
-      "bit_depth": 10
-    },
-    {
-      "name": "Cb",
-      "width": 960,
-      "height": 1080,
-      "bit_depth": 10
-    },
-    {
-      "name": "Cr",
-      "width": 960,
-      "height": 1080,
-      "bit_depth": 10
-    }
-  ]
-}
-```
-
-```bash
-mxl-gst-videotestsrc
-Usage: ./build/Linux-GCC-Release/tools/mxl-gst/mxl-gst-videotestsrc [OPTIONS]
-
-Options:
-  -h,--help                   Print this help message and exit
-  -f,--flow-config-file TEXT REQUIRED
-                              The json file which contains the NMOS Flow configuration
-  -d,--domain TEXT:DIR REQUIRED
-                              The MXL domain directory
-  -p,--pattern TEXT [smpte]   Test pattern to use. For available options see https://gstreamer.freedesktop.org/documentation/videotestsrc/index.html?gi-language=c#GstVideoTestSrcPattern
-```
-
-### mxl-gst-videosink
-
-A binary that reads from a MXL Flow and display the flow using the gstreamer element 'autovideosink'.
-
-```bash
-mxl-gst-videosink
-Usage: ./build/Linux-GCC-Release/tools/mxl-gst/mxl-gst-videosink [OPTIONS]
-
-Options:
-  -h,--help                   Print this help message and exit
-  -f,--flow-id TEXT REQUIRED  The flow ID
-  -d,--domain TEXT:DIR REQUIRED
-                              The MXL domain directory
-```
+- [Building options](docs/Building.md)
+- [Tools](docs/Tools.md)
 
 ## License
 
