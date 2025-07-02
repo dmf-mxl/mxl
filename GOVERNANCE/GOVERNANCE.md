@@ -18,7 +18,7 @@ Project Maintainers have merge access on the MXL GitHub repository and are respo
 - Ensuring responses to questions on the MXL-discussion mailing list.
 - Contributing code and documentation changes that improve the project.
 - Reviewing and commenting on issues and pull requests.
-- Ensuring that changes and new code meet acceptable standards and align with the long-term - - - interest of the project.
+- Ensuring that changes and new code meet acceptable standards and align with the long-term interests of the project.
 - Participation in working groups.
 - Merging pull requests.
 ## How to Become a Maintainer
