@@ -52,7 +52,7 @@ endif()
 
 add_subdirectory(lib)
 add_subdirectory(tools)
-
+add_subdirectory(utils)
 
 find_package(Doxygen)
 
