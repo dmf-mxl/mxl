@@ -7,7 +7,7 @@ There are four primary project roles:
 - A Requirements Council complements the TSC by representing user requirements.
 # Contributors
 The MXL project grows and thrives from the assistance of Contributors. Contributors include anyone in the community who contributes code, documentation, or other technical artefacts that have been incorporated into the project's repository.
-Anyone can be a Contributor. You need no formal approval from the project, (?) beyond the legal forms.
+Anyone can be a Contributor. You need no formal approval from the project, beyond the legal forms (Developer Certificate of Origin).
 ## How to Become a Contributor
 - Review the coding standards to ensure your contribution aligns with the project's coding and styling guidelines.
 - Submit your code as a Pull Request with the appropriate DCO sign-off.
@@ -73,9 +73,9 @@ Members serve one-year terms and may be reappointed or removed by the TSC.
 - John Mailhot (Imagine Communications)
 - Marcel Malchau (SWR)
 - Phil Myers (Lawo)
-- (?) Mathieu Rochon (CBC/Radio Canada)
+- Mathieu Rochon (CBC/Radio Canada)
 - Willem Vermost (EBU)
-- (?) Ian Wagdin (Appear)
+- Ian Wagdin (Appear)
 # Meetings
 TSC meetings are public unless a justified need for privacy arises. Meetings are announced in advance and may be held virtually or in person. The agenda is shared in advance. Any community member can propose items by opening an issue and tagging it for TSC consideration.
 Minutes are recorded and archived. Additional guests may attend in a non-voting capacity.
