@@ -17,22 +17,22 @@
 
 #pragma once
 
+#include <stdio.h>
 #include <gst/base/gstbasesrc.h>
 #include <gst/gst.h>
-#include <stdio.h>
 
 G_BEGIN_DECLS
 
 #define GST_TYPE_LOOPING_FILESRC (gst_looping_filesrc_get_type())
-G_DECLARE_FINAL_TYPE(GstLoopingFileSrc, gst_looping_filesrc, GST,
-                     LOOPING_FILESRC, GstBaseSrc)
+G_DECLARE_FINAL_TYPE(GstLoopingFileSrc, gst_looping_filesrc, GST, LOOPING_FILESRC, GstBaseSrc)
 
-struct _GstLoopingFileSrc {
-  GstBaseSrc basesrc;
-  gchar* location;
-  bool loop;
-  FILE* file;
-  guint64 file_size;
+struct _GstLoopingFileSrc
+{
+    GstBaseSrc basesrc;
+    gchar* location;
+    bool loop;
+    FILE* file;
+    guint64 file_size;
 };
 
 void gst_looping_filesrc_register_static();
