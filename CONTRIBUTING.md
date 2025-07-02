@@ -6,7 +6,7 @@ Charter. Briefly, Contributors submit content to the project, Maintainers review
 There are several ways to connect with the MXL project:
 - The MXL [GitHub discussions](https://github.com/dmf-mxl/mxl/discussions).
 - The email distribution list?
-- GitHub [Issues](https://github.com/dmf-mxl/mxl/issues): GitHub (used to track both bugs and feature requests).
+- GitHub [Issues](https://github.com/dmf-mxl/mxl/issues) (used to track both bugs and feature requests).
 - (?) Slack channel
 - The regular TSC meetings are free to attend for all interested parties
 ## How to Ask for Help
