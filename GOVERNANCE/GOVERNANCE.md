@@ -27,8 +27,7 @@ Maintainers may step down or be removed by a two-thirds vote of the entire TSC.
 # Technical Steering Committee (TSC)
 The Technical Steering Committee (TSC) is responsible for all technical oversight of the project.
 ## Composition and Evolution
-During the Startup Period (first 18 months from project inception on 3.06.2025), TSC voting members are listed in this GOVERNANCE file. Before the conclusion of this period, the TSC will approve a 'steady state' composition model, to be documented herein.
-The TSC may change its membership structure by majority vote. The Requirements Council Chair is a voting TSC member.
+During the Startup Period (first 18 months from project inception on 3.06.2025), TSC voting members are listed in this GOVERNANCE file. Before the conclusion of this period, the TSC will approve a 'steady state' composition model, to be documented herein. The [Requirements Council](#requirements-council) Chair is a voting TSC member.
 ## Leadership
 The TSC may elect two Co-Chairs. One Co-Chair should be from an End-User and the other from an Implementor. Co-Chairs serve until resignation or replacement by the TSC.
 ## Responsibilities
