@@ -1,19 +1,19 @@
-#include <csignal>
-#include <filesystem>
-#include <atomic>
-#include <thread>
-#include <memory>
 #include <climits>
+#include <csignal>
+#include <atomic>
+#include <filesystem>
+#include <memory>
+#include <thread>
 #include <uuid.h>
 #include <CLI/CLI.hpp>
 #include <gst/app/gstappsink.h>
 #include <gst/gst.h>
-#include <picojson/picojson.h>
-#include <spdlog/cfg/env.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
+#include <picojson/picojson.h>
+#include <spdlog/cfg/env.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include "../../lib/src/internal/Logging.hpp"
 
 namespace fs = std::filesystem;
@@ -95,20 +95,21 @@ public:
         //
         // Create the gstreamer pipeline
         //
-        
-        std::string pipelineDesc = "looping_filesrc location=" + in_uri + 
-                                   " ! tsdemux"
-                                   " ! decodebin"
-                                   " ! videorate"
-                                   " ! videoconvert"
-                                   " ! video/x-raw,format=v210,colorimetry=BT709"
-                                   " ! queue"
-                                   " ! appsink name=appSinkVideo"
-                                   " emit-signals=true"
-                                   " max-buffers=20"
-                                   " drop=false"
-                                   " sync=true";
-                                   
+
+        std::string pipelineDesc =
+            "looping_filesrc location=" + in_uri +
+            " ! tsdemux"
+            " ! decodebin"
+            " ! videorate"
+            " ! videoconvert"
+            " ! video/x-raw,format=v210,colorimetry=BT709"
+            " ! queue"
+            " ! appsink name=appSinkVideo"
+            " emit-signals=true"
+            " max-buffers=20"
+            " drop=false"
+            " sync=true";
+
         GError* error = nullptr;
         pipeline = gst_parse_launch(pipelineDesc.c_str(), &error);
         if (!pipeline)
@@ -336,17 +337,13 @@ private:
         return id;
     }
 
-
-
     void videoThread()
     {
         while (running)
         {
-            
             auto sample = gst_app_sink_try_pull_sample(GST_APP_SINK(appSinkVideo), 100'000'000);
             if (sample)
             {
-
                 uint64_t grainIndex = mxlGetCurrentHeadIndex(&videoGrainRate);
                 if (lastVideoGrainIndex == 0)
                 {
@@ -359,10 +356,9 @@ private:
 
                 lastVideoGrainIndex = grainIndex;
 
-
                 auto buffer = gst_sample_get_buffer(sample);
                 if (buffer)
-                {   
+                {
                     GstClockTime pts = GST_BUFFER_PTS(buffer);
                     if (GST_CLOCK_TIME_IS_VALID(pts))
                     {
@@ -405,13 +401,12 @@ private:
 
                 gst_sample_unref(sample);
             }
-            else{
+            else
+            {
                 MXL_WARN("No sample received while pulling from appsink");
             }
         }
     }
-
-
 
     // The URI GST PlayBin will use to play the video
     std::string uri;
@@ -512,4 +507,4 @@ int main(int argc, char* argv[])
     gst_deinit();
 
     return 0;
-} 
+}
