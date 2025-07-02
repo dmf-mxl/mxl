@@ -36,6 +36,43 @@ In order to encourage broad industry adoption, the European Broadcasting Union (
 - [Building options](docs/Building.md)
 - [Tools](docs/Tools.md)
 
+### mxl-gst-looping-filesrc
+
+A utility that continuously loops through MPEG-TS files to generate video grains to push into MXL flows.
+
+#### Prerequisites
+
+This application requires the `looping_filesrc` GStreamer plugin located in `utils/gst-looping-filesrc/`. 
+
+**Installation Options:**
+
+1. **System Installation (Recommended):**
+   ```bash
+   cmake --install .
+   ```
+
+2. **Development Setup:**
+   ```bash
+   export GST_PLUGIN_PATH="./build/Linux-GCC-Release/utils/gst-looping-filesrc:${GST_PLUGIN_PATH}"
+   ```
+
+**Verify Installation:**
+```bash
+gst-inspect-1.0 looping_filesrc
+```
+
+#### Usage
+
+```bash
+mxl-gst-looping-filesrc [OPTIONS]
+
+Options:
+  -h,--help                     Print this help message and exit
+  -d,--domain TEXT:DIR REQUIRED   MXL domain directory
+  -i,--input TEXT:FILE REQUIRED   Input MPEG-TS file to loop
+```
+
+
 ## License
 
 This code is covered by the [Apache v2 license](./LICENSE.txt)
