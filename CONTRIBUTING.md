@@ -4,7 +4,7 @@ For a description of the roles and responsibilities of the various members of th
 Charter. Briefly, Contributors submit content to the project, Maintainers review and approve these submissions, and the Technical Steering Committee (TSC) oversees the project as a whole.
 ## Getting Information
 There are several ways to connect with the MXL project:
-- The MXL [GitHub discussions](https://github.com/dmf-mxl/mxl/discussions).
+- The MXL [GitHub discussions](https://github.com/dmf-mxl/mxl/discussions)
 - The email distribution list?
 - GitHub [Issues](https://github.com/dmf-mxl/mxl/issues) (used to track both bugs and feature requests).
 - (?) Slack channel
