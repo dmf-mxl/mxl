@@ -73,10 +73,12 @@ Disagreements or blocked changes may be escalated to the TSC for resolution. Mai
 This project uses [Catch2](https://github.com/catchorg/Catch2) automated testing framework. This framework is a modern, lightweight, and compatible with CMake/CTest and nicely integrated with VSCode [C++ Test Mate](https://marketplace.visualstudio.com/items?itemName=matepek.vscode-catch2-test-adapter) extension.
 ## Copyright Notices
 All new source files should begin with a copyright and license stating:
- 	//
-	// SPDX-License-Identifier: Apache-2.0
-	// Copyright (c) Contributors to the MXL Project.
-	//
+
+    //
+    // SPDX-License-Identifier: Apache-2.0
+    // Copyright (c) Contributors to the MXL Project.
+    //
+
 ## Third-party libraries
 The use of third-party libraries is allowed. If these libraries don't match the Apache 2 license, they need to be approved by the TSC. Dependencies of the library itself should be on small-sized libraries, not frameworks, as the goal is to keep the code lightweight.
 ## Comments and Doxygen
