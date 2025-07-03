@@ -16,30 +16,35 @@ set_target_properties(mxl-tests
 
 target_sources(mxl-tests
         PRIVATE
-            test_domainwatcher.cpp
-            test_flowmanager.cpp
-            test_flows.cpp
-            test_flows_timing.cpp
-            test_time.cpp
-            test_sharedmem.cpp
-            Utils.cpp
-            ../src/internal/DomainWatcher.cpp
-            ../src/internal/Flow.cpp
-            ../src/internal/FlowData.cpp
-            ../src/internal/FlowIoFactory.cpp
-            ../src/internal/FlowManager.cpp
-            ../src/internal/FlowParser.cpp
-            ../src/internal/FlowReader.cpp
-            ../src/internal/FlowWriter.cpp
-            ../src/internal/PathUtils.cpp
-            ../src/internal/PosixContinuousFlowReader.cpp
-            ../src/internal/PosixDiscreteFlowReader.cpp
-            ../src/internal/SharedMemory.cpp
-            ../src/internal/Thread.cpp
-            ../src/internal/Time.cpp
-            ../src/internal/Timing.cpp
-            ../src/internal/Sync.cpp
-        )
+        test_domainwatcher.cpp
+        test_flowmanager.cpp
+        test_flows.cpp
+        test_flows_timing.cpp
+        test_options.cpp
+        test_time.cpp
+        test_sharedmem.cpp
+        Utils.cpp
+        ../src/internal/DomainWatcher.cpp
+        ../src/internal/Flow.cpp
+        ../src/internal/FlowData.cpp
+        ../src/internal/FlowIoFactory.cpp
+        ../src/internal/FlowManager.cpp
+        ../src/internal/FlowParser.cpp
+        ../src/internal/FlowReader.cpp
+        ../src/internal/FlowWriter.cpp
+        ../src/internal/Instance.cpp
+        ../src/internal/PathUtils.cpp
+        ../src/internal/PosixContinuousFlowReader.cpp
+        ../src/internal/PosixContinuousFlowWriter.cpp
+        ../src/internal/PosixDiscreteFlowReader.cpp
+        ../src/internal/PosixDiscreteFlowWriter.cpp
+        ../src/internal/PosixFlowIoFactory.cpp
+        ../src/internal/SharedMemory.cpp
+        ../src/internal/Thread.cpp
+        ../src/internal/Time.cpp
+        ../src/internal/Timing.cpp
+        ../src/internal/Sync.cpp
+    )
 
 if (NOT TARGET Catch2::Catch2WithMain)
     find_package(Catch2 REQUIRED)

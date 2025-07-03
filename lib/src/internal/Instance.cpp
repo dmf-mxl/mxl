@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstring>
 #include <filesystem>
+#include <fstream>
 #include <memory>
 #include <mutex>
 #include <stdexcept>
@@ -32,6 +33,8 @@ namespace mxl::lib
 {
     namespace
     {
+        constexpr auto MXL_HISTORY_DURATION_OPTION = "urn:x-mxl:option:history_duration/v1.0";
+
         std::once_flag loggingFlag;
 
         void initializeLogging()
@@ -40,6 +43,31 @@ namespace mxl::lib
             spdlog::set_default_logger(console);
             spdlog::cfg::load_env_levels("MXL_LOG_LEVEL");
         }
+
+        /// Simple json string parser wrapper
+        ///
+        /// \param options The options json string to parse
+        /// \param config The parsed json object
+        /// \return true if the parsing was successful, false otherwise
+        bool parseOptionsJson(std::string const& options, picojson::object& config)
+        {
+            picojson::value parsed;
+            std::string err = picojson::parse(parsed, options);
+            if (!err.empty())
+            {
+                return false;
+            }
+            if (!parsed.is<picojson::object>())
+            {
+                return false;
+            }
+
+            // Assign the json object config
+            config = parsed.get<picojson::object>();
+
+            return true;
+        }
+
     }
 
     Instance::Instance(std::filesystem::path const& mxlDomain, std::string const& options, std::unique_ptr<FlowIoFactory>&& flowIoFactory)
@@ -54,6 +82,7 @@ namespace mxl::lib
         , _stopping{false}
     {
         std::call_once(loggingFlag, [&]() { initializeLogging(); });
+        parseOptions(options);
         _watcher = std::make_shared<DomainWatcher>(mxlDomain, [this](auto const& uuid, auto type) { fileChangedCallback(uuid, type); });
         MXL_DEBUG("Instance created. MXL Domain: {}", mxlDomain.string());
     }
@@ -299,6 +328,72 @@ namespace mxl::lib
             MXL_DEBUG("Failed to perform garbage collection");
         }
         return count;
+    }
+
+    void Instance::parseOptions(std::string const& options)
+    {
+        // This could be way more sophisticated, but for now we just parse the options and extract the history_duration value if it is present.
+        // A full configuration framework with validation, defaults, etc. could be implemented at a later point.
+
+        // Start with the default history duration
+        std::uint64_t historyDuration = _historyDuration;
+
+        //
+        // Try to parse the .options file found in the MXL domain directory.
+        // If found and configured, it will override the default history duration.
+        //
+        auto domainOptionsFile = _flowManager.getDomain() / ".options";
+        if (exists(domainOptionsFile))
+        {
+            std::ifstream ifs(domainOptionsFile);
+            if (!ifs)
+            {
+                MXL_ERROR("Failed to open domain options file: {}", domainOptionsFile.string());
+            }
+            else
+            {
+                std::stringstream buffer;
+                buffer << ifs.rdbuf();
+                std::string json_content = buffer.str();
+                picojson::object config;
+                if (parseOptionsJson(json_content, config))
+                {
+                    if (auto it = config.find(MXL_HISTORY_DURATION_OPTION); it != config.end() && it->second.is<double>())
+                    {
+                        MXL_TRACE("Found history duration option in domain specific options: {}ns", it->second.get<double>());
+                        historyDuration = static_cast<std::uint64_t>(it->second.get<double>());
+                    }
+                }
+                else
+                {
+                    MXL_ERROR("Failed to parse domain specific options: {}", options);
+                }
+            }
+        }
+
+        // If we have am instance level options string, parse it as well.
+        if (!options.empty())
+        {
+            picojson::object config;
+            if (parseOptionsJson(options, config))
+            {
+                // We are not considering MXL_HISTORY_DURATION_TAG here. we don't want per-instance history durations.
+                // In the future we might want to use this mecanism to set other options that would be instance specific.
+            }
+            else
+            {
+                MXL_ERROR("Failed to parse instance specific options: {}", options);
+            }
+        }
+
+        // Set the history duration
+        _historyDuration = historyDuration;
+        MXL_DEBUG("History duration set to {} ns", historyDuration);
+    }
+
+    std::uint64_t Instance::getHistoryDuration() const
+    {
+        return _historyDuration;
     }
 
 } // namespace mxl::lib

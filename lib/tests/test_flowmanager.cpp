@@ -11,32 +11,9 @@
 
 using namespace mxl::lib;
 
-/// Simple utility function to get the domain path for the tests.
-/// This will return a path to /dev/shm/mxl_domain on Linux and a path in the user's
-/// home directory ($HOME/mxl_domain) on macOS.
-/// \return the path to the mxl domain directory.  The directory may not exist yet.
-auto getDomainPath() -> std::filesystem::path
-{
-#ifdef __linux__
-    return std::filesystem::path{"/dev/shm/mxl_domain"};
-#elif __APPLE__
-    auto home = std::getenv("HOME");
-    if (home)
-    {
-        return std::filesystem::path{home} / "mxl_domain";
-    }
-    else
-    {
-        throw std::runtime_error{"Environment variable HOME is not set."};
-    }
-#else
-#   error "Unsupported platform. This is only implemented for Linux and macOS."
-#endif
-}
-
 TEST_CASE("Flow Manager : Create Manager", "[flow manager]")
 {
-    auto const domain = getDomainPath();
+    auto const domain = mxl::tests::getDomainPath();
     // Remove that path if it exists.
     remove_all(domain);
 
@@ -56,7 +33,7 @@ TEST_CASE("Flow Manager : Create Manager", "[flow manager]")
 
 TEST_CASE("Flow Manager : Create Video Flow Structure", "[flow manager]")
 {
-    auto const domain = getDomainPath();
+    auto const domain = mxl::tests::getDomainPath();
     // Clean out the mxl domain path, if it exists.
     remove_all(domain);
     REQUIRE(create_directory(domain));
@@ -147,7 +124,7 @@ TEST_CASE("Flow Manager : Create Video Flow Structure", "[flow manager]")
 
 TEST_CASE("Flow Manager : Create Audio Flow Structure", "[flow manager]")
 {
-    auto const domain = getDomainPath();
+    auto const domain = mxl::tests::getDomainPath();
     // Clean out the mxl domain path, if it exists.
     remove_all(domain);
     REQUIRE(create_directory(domain));

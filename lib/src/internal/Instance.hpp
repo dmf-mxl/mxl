@@ -97,6 +97,10 @@ namespace mxl::lib
         ///
         std::size_t garbageCollect() const;
 
+        /// Accessor for the history duration value
+        /// \return The history duration in nanoseconds
+        std::uint64_t getHistoryDuration() const;
+
     private:
         template<typename T>
         class RefCounted
@@ -127,6 +131,13 @@ namespace mxl::lib
 
     private:
         void fileChangedCallback(uuids::uuid const& flowId, WatcherType type);
+
+        /// Parses the options json string (if non empty) and merges it with the optional
+        /// domain-wide options (if defined in the domain).
+        /// Values defined at the instance level will override the domain-wide value.
+        ///
+        /// \param options The options json string
+        void parseOptions(std::string const& options);
 
     private:
         /// Performs flow CRUD operations
