@@ -33,7 +33,8 @@ RUN apt clean all && apt-get update \
     bison \
     flex \
     htop \
-    ccache
+    ccache \
+    rustup
 
 ARG CLANG_VERSION=19
 RUN apt-get install -y --no-install-recommends \
@@ -49,7 +50,6 @@ COPY register-clang-version.sh ./register-clang-version.sh
 RUN ./register-clang-version.sh "${CLANG_VERSION}" 100 \
  && rm ./register-clang-version.sh
 
-
 RUN apt-get install -y --no-install-recommends \
     libgstreamer1.0-dev \
     libgstreamer-plugins-base1.0-dev \
@@ -57,7 +57,6 @@ RUN apt-get install -y --no-install-recommends \
     gstreamer1.0-plugins-bad \
     gstreamer1.0-plugins-ugly \
     gstreamer1.0-x
-
 
 # Remove the default ubuntu user if it exists
 RUN userdel --remove ubuntu >/dev/null 2>&1 || true
@@ -83,3 +82,5 @@ RUN git clone https://github.com/microsoft/vcpkg \
  && ./vcpkg/bootstrap-vcpkg.sh --disableMetrics
 
 ENV VCPKG_ROOT="/home/${USERNAME}/vcpkg"
+
+RUN rustup default 1.88.0

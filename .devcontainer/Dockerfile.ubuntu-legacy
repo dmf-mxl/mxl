@@ -96,3 +96,5 @@ ENV VCPKG_ROOT=/home/$USERNAME/vcpkg
 # Make the selected clang version the default alternative
 COPY register-clang-version.sh /home/$USERNAME/register-clang-version.sh 
 RUN sudo /home/$USERNAME/register-clang-version.sh ${CLANG_VERSION} 100 && rm /home/$USERNAME/register-clang-version.sh
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain=1.88.0
