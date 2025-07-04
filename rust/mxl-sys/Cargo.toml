@@ -1,0 +1,10 @@
+[package]
+name = "mxl-sys"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[dependencies]
+
+[build-dependencies]
+bindgen.workspace = true

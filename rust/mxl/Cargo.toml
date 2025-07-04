@@ -1,0 +1,16 @@
+[package]
+name = "mxl"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[dependencies]
+mxl-sys = { path = "../mxl-sys" }
+
+dlopen2.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+clap.workspace = true
+tracing-subscriber.workspace = true
