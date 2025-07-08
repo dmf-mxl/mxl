@@ -17,6 +17,8 @@ cmake_minimum_required(VERSION 3.22)
 
 project(gst-looping-filesrc LANGUAGES C CXX)
 
+include(GNUInstallDirs)
+
 find_package(PkgConfig)
 
 pkg_check_modules(GST REQUIRED IMPORTED_TARGET gstreamer-1.0 gstreamer-base-1.0)
@@ -55,7 +57,7 @@ target_link_libraries(looping_filesrc PUBLIC
 
 set_target_properties(PROPERTIES PUBLIC_HEADER gst-looping-filesrc.h)
 
-set(GSTREAMER_PLUGIN_PATH /usr/lib/${CMAKE_SYSTEM_PROCESSOR}-linux-gnu/gstreamer-1.0/ CACHE PATH "Where to install the plugin")
+set(GSTREAMER_PLUGIN_PATH ${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0 CACHE PATH "Where to install the plugin")
 message(STATUS "GSTREAMER_PLUGIN_PATH=\"${GSTREAMER_PLUGIN_PATH}\"")
 
 install(
