@@ -3,12 +3,17 @@
 #include <cstdint>
 #include <mxl/mxl.h>
 #include "mxl/flow.h"
+#include "mxl/platform.h"
 #include "flow.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+    typedef struct mxlFabricsInstance_t* mxlFabricsInstance;
+    typedef struct mxlFabricsTarget_t* mxlFabricsTarget;
+    typedef struct mxlFabricsInitiator_t* mxlFabricsInitiator;
 
     typedef enum mxlFabricsProvider
     {
@@ -24,15 +29,6 @@ extern "C"
         uint64_t size;
     } mxlMemoryRegion;
 
-    typedef struct mxlFabricsTarget_t* mxlFabricsTarget;
-    typedef struct mxlFabricsInitiator_t* mxlFabricsInitiator;
-
-    /**
-     * The definition of the endpoint address depends on the chosen provider
-     * Tcp : <ip>:<port>
-     * Verbs: <ip>:<port>
-     * EFA: both node and service can be NULL.
-     * */
     typedef struct mxlEndpointAddress_t
     {
         char const* node;
@@ -62,60 +58,82 @@ extern "C"
     typedef void (*mxlFabricsCompletionCallback_t)(uint64_t in_index, void* in_userData);
 
     /**
+     * Create a new mxl-fabrics from an mxl instance. Targets and initiators created from this mxl-fabrics instance
+     * will have access to the flows created in the supplied mxl instance.
+     * \param in_instance An mxlInstance previously created with mxlCreateInstance().
+     * \param out_fabricsInstance Returns a pointer to the created mxlFabricsInstance.
+     * \return MXL_STATUS_OK if the instance was successfully created
+     */
+    MXL_EXPORT
+    mxlStatus mxlFabricsCreateInstance(mxlInstance in_instance, mxlFabricsInstance* out_fabricsInstance);
+
+    /**
+     * Destroy a mxlFabricsInstance.
+     * \param in_instance The mxlFabricsInstance to destroy.
+     * \return MXL_STATUS_OK if the instances was successfully destroyed.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFabricsDestroyInstance(mxlFabricsInstance in_instance);
+
+    /**
      * Create a fabrics target instance.
-     * \param in_instance A valid mxl instance
+     * \param in_fabricsInstance A valid mxl fabrics instance
      * \param out_target A valid fabrics target
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsCreateTarget(mxlInstance in_instance, mxlFabricsTarget* out_target);
+    mxlStatus mxlFabricsCreateTarget(mxlFabricsInstance in_fabricsInstance, mxlFabricsTarget* out_target);
 
     /**
      * Destroy a fabrics target instance.
-     * \param in_instance A valid mxl instance
+     * \param in_fabricsInstance A valid mxl fabrics instance
      * \param in_target A valid fabrics target
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsDestroyTarget(mxlInstance in_instance, mxlFabricsTarget in_target);
+    mxlStatus mxlFabricsDestroyTarget(mxlFabricsInstance in_fabricsInstance, mxlFabricsTarget in_target);
 
     /**
      * Configure the target.
-     * \param in_instance A valid mxl instance
+     * \param in_fabricsInstance A valid mxl fabrics instance
      * \param in_target A valid fabrics target
      * \param in_config The target configuration. This will be used to create an endpoint and register a memory region. The memory region corresponds
      * to the one that will be written to by the initiator.
      * \param out_info An mxlTargetInfo_t object which should be shared to a remote initiator which this target should receive data from.
+     * \return The result code. \see mxlStatus
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsTargetSetup(mxlInstance in_instance, mxlFabricsTarget in_target, mxlTargetConfig* in_config, mxlTargetInfo* out_info);
+    mxlStatus mxlFabricsTargetSetup(mxlFabricsInstance in_fabricsInstance, mxlFabricsTarget in_target, mxlTargetConfig* in_config,
+        mxlTargetInfo* out_info);
 
     /**
      * Non-blocking accessor for a flow grain at a specific index
-     * \param in_instance A valid mxl instance
+     * \param in_fabricsInstance A valid mxl fabrics instance
      * \param in_target A valid fabrics target
      * \param in_index The index of the grain to obtain
      * \param out_grain The requested GrainInfo structure.
      * \param out_payload The requested grain payload.
+     * \return The result code. \see mxlStatus
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsTargetGetGrain(mxlInstance in_instance, mxlFabricsTarget in_target, uint64_t in_index, GrainInfo* out_grain,
+    mxlStatus mxlFabricsTargetGetGrain(mxlFabricsInstance in_fabricsInstance, mxlFabricsTarget in_target, uint64_t in_index, GrainInfo* out_grain,
         uint8_t** out_payload);
 
     /**
      * Blocking accessor for a flow grain at a specific index
-     * \param in_instance A valid mxl instance
+     * \param in_fabricsInstance A valid mxl fabrics instance
      * \param in_target A valid fabrics target
      * \param in_index The index of the grain to obtain
      * \param in_timeoutMs How long should we wait for the grain (in milliseconds)
      * \param out_grain The requested GrainInfo structure.
      * \param out_payload The requested grain payload.
+     * \return The result code. \see mxlStatus
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsTargetGetGrainBlocking(mxlInstance in_instance, mxlFabricsTarget in_target, uint64_t in_index, uint16_t in_timeoutMs,
-        GrainInfo* out_grain, uint8_t** out_payload);
+    mxlStatus mxlFabricsTargetGetGrainBlocking(mxlFabricsInstance in_fabricsInstance, mxlFabricsTarget in_target, uint64_t in_index,
+        uint16_t in_timeoutMs, GrainInfo* out_grain, uint8_t** out_payload);
 
     /**
      * Wait for a new grain to be available. This will block until a new grain is available or the timeout is reached.
-     * \param in_instance A valid mxl instance
+     * \param in_fabricsInstance A valid mxl fabrics instance
      * \param in_target A valid fabrics target
      * \param in_timeoutMs How long should we wait for the grain (in milliseconds)
      * \param out_grain The new grain GrainInfo structure.
@@ -123,84 +141,90 @@ extern "C"
      * \param out_grainIndex The index of the grain that was received.
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsTargetWaitForNewGrain(mxlInstance in_instance, mxlFabricsTarget in_target, uint16_t in_timeoutMs, GrainInfo* out_grain,
-        uint8_t** out_payload, uint64_t* out_grainIndex);
+    mxlStatus mxlFabricsTargetWaitForNewGrain(mxlFabricsInstance in_fabricsInstance, mxlFabricsTarget in_target, uint16_t in_timeoutMs,
+        GrainInfo* out_grain, uint8_t** out_payload, uint64_t* out_grainIndex);
 
     /**
      * Set a callback function to be called everytime a new grain is available.
-     * \param in_instance A valid mxl instance
+     * \param in_fabricsInstance A valid mxl fabrics instance
      * \param in_target A valid fabrics target
      * \param in_callback A callback function to be called when a new grain is available.
+     * \return The result code. \see mxlStatus
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsTargetSetCompletionCallback(mxlInstance in_instance, mxlFabricsTarget in_target, mxlFabricsCompletionCallback_t callbackFn);
+    mxlStatus mxlFabricsTargetSetCompletionCallback(mxlFabricsInstance in_fabricsInstance, mxlFabricsTarget in_target,
+        mxlFabricsCompletionCallback_t callbackFn);
 
     /**
      * Create a fabrics initiator instance.
-     * \param in_instance A valid mxl instance
+     * \param in_fabricsInstance A valid mxl fabrics instance
      * \param out_initiator A valid fabrics initiator
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsCreateInitiator(mxlInstance in_instance, mxlFabricsInitiator* out_initiator);
+    mxlStatus mxlFabricsCreateInitiator(mxlFabricsInstance in_fabricsInstance, mxlFabricsInitiator* out_initiator);
 
     /**
      * Destroy a fabrics initiator instance.
-     * \param in_instance A valid mxl instance
+     * \param in_fabricsInstance A valid mxl fabrics instance
      * \param in_initiator A valid fabrics initiator
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsDestroyInitiator(mxlInstance in_instance, mxlFabricsInitiator in_initiator);
+    mxlStatus mxlFabricsDestroyInitiator(mxlFabricsInstance in_fabricsInstance, mxlFabricsInitiator in_initiator);
 
     /**
      * Configure the initiator.
-     * \param in_instance A valid mxl instance
+     * \param in_fabricsInstance A valid mxl fabrics instance
      * \param in_initiator A valid fabrics initiator
      * \param in_config The initiator configuration. This will be used to create an endpoint and register a memory region. The memory region
      * corresponds to the one that will be shared with targets.
+     * \return The result code. \see mxlStatus
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsInitiatorSetup(mxlInstance in_instance, mxlFabricsInitiator in_initiator, mxlInitiatorConfig const* in_config);
+    mxlStatus mxlFabricsInitiatorSetup(mxlFabricsInstance in_fabricsInstance, mxlFabricsInitiator in_initiator, mxlInitiatorConfig const* in_config);
 
     /**
      * Add a target to the initiator. This will allow the initiator to send data to the target.
-     * \param in_instance A valid mxl instance
+     * \param in_fabricsInstance A valid mxl fabrics instance
      * \param in_initiator A valid fabrics initiator
      * \param in_targetInfo The target information. This should be the same as the one returned from "mxlFabricsTargetSetup".
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsInitiatorAddTarget(mxlInstance in_instance, mxlFabricsInitiator in_initiator, mxlTargetInfo const* in_targetInfo);
+    mxlStatus mxlFabricsInitiatorAddTarget(mxlFabricsInstance in_fabricsInstance, mxlFabricsInitiator in_initiator,
+        mxlTargetInfo const* in_targetInfo);
 
     /**
      * Remove a target from the initiator.
-     * \param in_instance A valid mxl instance
+     * \param in_fabricsInstance A valid mxl fabrics instance
      * \param in_initiator A valid fabrics initiator
      * \param in_targetInfo The target information. This should be the same as the one returned from "mxlFabricsTargetSetup".
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsInitiatorRemoveTarget(mxlInstance in_instance, mxlFabricsInitiator in_initiator, mxlTargetInfo const* in_targetInfo);
+    mxlStatus mxlFabricsInitiatorRemoveTarget(mxlFabricsInstance in_fabricsInstance, mxlFabricsInitiator in_initiator,
+        mxlTargetInfo const* in_targetInfo);
 
     /**
      * Transfer of a grain to all added targets.
-     * \param in_instance A valid mxl instance
+     * \param in_fabricsInstance A valid mxl fabrics instance
      * \param in_initiator A valid fabrics initiator
      * \param in_grainInfo The grain information.
      * \param in_payload The payload to send.
+     * \return The result code. \see mxlStatus
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsInitiatorTransferGrain(mxlInstance in_instance, mxlFabricsInitiator in_initiator, GrainInfo const* in_grainInfo,
+    mxlStatus mxlFabricsInitiatorTransferGrain(mxlFabricsInstance in_fabricsInstance, mxlFabricsInitiator in_initiator, GrainInfo const* in_grainInfo,
         uint8_t const* in_payload);
 
     /**
      * Transfer of a grain to a specific target.
-     * \param in_instance A valid mxl instance
+     * \param in_fabricsInstance A valid mxl fabrics instance
      * \param in_initiator A valid fabrics initiator
      * \param in_grainInfo The grain information.
      * \param in_targetInfo The target information to send the grain to.
      * \param in_payload The payload to send.
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsInitiatorTransferGrainToTarget(mxlInstance in_instance, mxlFabricsInitiator in_initiator, GrainInfo const* in_grainInfo,
-        mxlFabricsTarget const* in_targetInfo, uint8_t const* in_payload);
+    mxlStatus mxlFabricsInitiatorTransferGrainToTarget(mxlFabricsInstance in_fabricsInstance, mxlFabricsInitiator in_initiator,
+        GrainInfo const* in_grainInfo, mxlFabricsTarget const* in_targetInfo, uint8_t const* in_payload);
 
     // Below are helper functions
 
@@ -208,6 +232,7 @@ extern "C"
      * Convert a string to a fabrics provider.
      * \param in_string A valid string to convert
      * \param out_provider A valid fabrics provider to convert to
+     * \return The result code. \see mxlStatus
      */
     MXL_EXPORT
     mxlStatus mxlFabricsProviderFromString(char const* in_string, mxlFabricsProvider* out_provider);
