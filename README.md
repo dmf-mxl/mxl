@@ -44,17 +44,11 @@ A utility that continuously loops through MPEG-TS files to generate video grains
 
 This application requires the `looping_filesrc` GStreamer plugin located in `utils/gst-looping-filesrc/`. 
 
-**Installation Options:**
+After building the plugin successfully, set the GST_PLUGIN_PATH environment variable to enable GStreamer to locate and load the plugin.
 
-1. **System Installation (Recommended):**
-   ```bash
-   cmake --install .
-   ```
-
-2. **Development Setup:**
-   ```bash
-   export GST_PLUGIN_PATH="./build/Linux-GCC-Release/utils/gst-looping-filesrc:${GST_PLUGIN_PATH}"
-   ```
+```bash
+export GST_PLUGIN_PATH="./build/Linux-GCC-Release/utils/gst-looping-filesrc:${GST_PLUGIN_PATH}"
+```
 
 **Verify Installation:**
 ```bash
