@@ -105,14 +105,14 @@ public:
             " ! video/x-raw,format=v210,colorimetry=BT709"
             " ! queue"
             " ! appsink name=appSinkVideo"
-            " emit-signals=true"
+            " emit-signals=false"
             " max-buffers=20"
             " drop=false"
             " sync=true";
 
         GError* error = nullptr;
         pipeline = gst_parse_launch(pipelineDesc.c_str(), &error);
-        if (!pipeline)
+        if (!pipeline || error)
         {
             MXL_ERROR("Failed to create pipeline: {}", error->message);
             g_error_free(error);
@@ -362,7 +362,8 @@ private:
                     GstClockTime pts = GST_BUFFER_PTS(buffer);
                     if (GST_CLOCK_TIME_IS_VALID(pts))
                     {
-                        int64_t frame = currentFrame++;
+                        int64_t frame [[maybe_unused]]
+                        = currentFrame++;
                         MXL_TRACE("Video frame received.  Frame {}, pts (ms) {}, duratio (ms) {}",
                             frame,
                             pts / GST_MSECOND,
@@ -439,11 +440,6 @@ int main(int argc, char* argv[])
     // Set up signal handlers for graceful shutdown
     std::signal(SIGINT, signal_handler);
     std::signal(SIGTERM, signal_handler);
-
-    // Initialize logging in the current app (initialisation in the mxl shared object is done in the createinstance function).
-    auto console = spdlog::stdout_color_mt("console");
-    spdlog::set_default_logger(console);
-    spdlog::cfg::load_env_levels("MXL_LOG_LEVEL");
 
     //
     // Command line argument parsing

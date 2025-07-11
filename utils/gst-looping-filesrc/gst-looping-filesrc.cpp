@@ -141,6 +141,7 @@ namespace
 
     gboolean is_seekable(GstBaseSrc* basesrc)
     {
+        (void)basesrc;
         return false;
     }
 
@@ -166,7 +167,7 @@ namespace
         int rtn;
         size_t read = 0;
 
-        GST_TRACE_OBJECT(basesrc, "fill (offset %zi, size %u)", offset, size);
+        GST_TRACE_OBJECT(basesrc, "fill (offset %" G_GUINT64_FORMAT ", size %u)", offset, size);
 
         if (!gst_buffer_map(buf, &info, GST_MAP_WRITE))
         {
