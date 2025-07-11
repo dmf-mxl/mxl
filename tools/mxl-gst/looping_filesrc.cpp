@@ -344,7 +344,7 @@ private:
             auto sample = gst_app_sink_try_pull_sample(GST_APP_SINK(appSinkVideo), 100'000'000);
             if (sample)
             {
-                uint64_t grainIndex = mxlGetCurrentHeadIndex(&videoGrainRate);
+                uint64_t grainIndex = mxlGetCurrentIndex(&videoGrainRate);
                 if (lastVideoGrainIndex == 0)
                 {
                     lastVideoGrainIndex = grainIndex;
@@ -397,7 +397,7 @@ private:
                     gst_buffer_unmap(buffer, &map);
                 }
 
-                auto ns = mxlGetNsUntilHeadIndex(grainIndex, &videoGrainRate);
+                auto ns = mxlGetNsUntilIndex(grainIndex, &videoGrainRate);
                 mxlSleepForNs(ns);
 
                 gst_sample_unref(sample);
