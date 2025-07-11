@@ -247,8 +247,8 @@ MXL_EXPORT
     mxlStatus mxlFlowWriterCommitGrain(mxlFlowWriter writer, GrainInfo const* grain);
 
     /**
-     * Accessor for a specific set of samples across all channels starting at a
-     * specific index.
+     * Accessor for a specific set of samples across all channels ending at a
+     * specific index (`count` samples up to `index`).
      *
      * \param[in] index The head index of the samples to obtain.
      * \param[in] count The number of samples to obtain.

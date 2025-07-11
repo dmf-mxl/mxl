@@ -9,7 +9,8 @@ namespace mxl::lib
     public:
         /**
          * Accessor for a specific set of mutable samples across all
-         * channels starting at a specific index.
+         * channels ending at a specific index (`count` samples up to
+         * `index`).
          *
          * \param[in] index The starting index of the samples to obtain.
          * \param[in] count The number of samples to obtain.
