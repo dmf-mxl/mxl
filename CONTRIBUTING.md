@@ -5,9 +5,9 @@ Charter. Briefly, Contributors submit content to the project, Maintainers review
 ## Getting Information
 There are several ways to connect with the MXL project:
 - The MXL [GitHub discussions](https://github.com/dmf-mxl/mxl/discussions)
-- The email distribution list?
-- GitHub [Issues](https://github.com/dmf-mxl/mxl/issues) (used to track both bugs and feature requests).
-- (?) Slack channel
+- The email distribution list. To join the email distribution list, please click the "Join our group" button at the [EBU MXL group page](https://tech.ebu.ch/dmf/mxl). The EBU MXL group is free to join for everyone. You will receive the distribution list address as well as the link to register for the TSC meetings in the confirmation email after joining the group. Please note that you will need to create an account on the EBU page to proceed.
+- [GitHub Issues](https://github.com/dmf-mxl/mxl/issues) (used to track both bugs and feature requests)
+- Slack channel
 - The regular TSC meetings are free to attend for all interested parties
 ## How to Ask for Help
 If you have questions about implementing, using, or extending MXL, please use the MXL [GitHub discussions](https://github.com/dmf-mxl/mxl/discussions).
