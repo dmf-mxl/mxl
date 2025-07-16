@@ -24,7 +24,8 @@ This is the preferred option for development on WSL2 or native linux desktop. Th
    - On Ubuntu, this would be: `sudo apt install docker-buildx`
 5. Install the [NVIDIA Container Runtime](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 6. Open the MXL source code folder using VSCode. In wsl2 this can be done by launching `code <mxl_directory>`
-   - NOTE: If not running under WSL2, remove the 2 mount points defined in the devcontainer.json you intend to use for development.  For example, if you intend to use the Ubuntu 24.04 devcontainer, edit the .devcontainer/ubuntu24/devcontainer.json file and remove the content of the "mounts" array.  These mount points are only needed for X/WAYLAND support in WSL2.  Their presence will prevent the devcontainer to load correctly when running on a native Linux system.    
+   - NOTE: If not running under WSL2, remove the 2 mount points defined in the devcontainer.json you intend to use for development.  For example, if you intend to use the Ubuntu 24.04 devcontainer, edit the .devcontainer/ubuntu24/devcontainer.json file and remove the content of the "mounts" array.  These mount points are only needed for X/WAYLAND support in WSL2.  Their presence will prevent the devcontainer to load correctly when running on a native Linux system.
+   files for with GPU and withotu have been created fro ubuntu 24.04
 7. VSCode will detect that this folder contains a devcontainer definition. It will prompt you with a dialog "Reopen in dev container". Click this dialog. If the dialog does not appear, you can invoke the command: `CTRL-SHIFT-P -> Dev Containers : Reopen in container`
 
 ### Option 2: CMake with presets
@@ -58,6 +59,7 @@ For example:
 mkdir build
 cd build
 cmake .. --preset Linux-Clang-Debug
+cd ..
 
 # Build everything
 cmake --build build/Linux-Clang-Debug --target all

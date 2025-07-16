@@ -46,7 +46,7 @@ RUN apt-get install -y --no-install-recommends \
     ninja-build
 
 # Make the selected clang version the default alternative
-COPY register-clang-version.sh ./register-clang-version.sh 
+COPY register-clang-version.sh ./register-clang-version.sh
 RUN ./register-clang-version.sh "${CLANG_VERSION}" 100 \
  && rm ./register-clang-version.sh
 
