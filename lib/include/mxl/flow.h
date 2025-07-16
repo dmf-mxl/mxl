@@ -91,7 +91,7 @@ extern "C"
          */
         size_t stride;
         /**
-         * The number of buffers following the base buffer.
+         * The total number of buffers in the sequence.
          */
         size_t count;
     } WrappedMultiBufferSlice;
@@ -111,7 +111,7 @@ extern "C"
          */
         size_t stride;
         /**
-         * The number of buffers following the base buffer.
+         * The total number of buffers in the sequence.
          */
         size_t count;
     } MutableWrappedMultiBufferSlice;
