@@ -64,7 +64,7 @@ Maintains a roadmap of user-relevant requirements in the Project's repository.
 Elects a Chair who is also a voting TSC member.
 Members serve one-year terms and may be reappointed or removed by the TSC.
 ## RC Members
-- Peter Brightwell (BBC) - Chair
+- Peter Brightwell (BBC)
 - Thomas Edwards (AWS)
 - Zakarias Faust (SR)
 - Ian Fletcher (Grass Valley)
