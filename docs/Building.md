@@ -1,6 +1,6 @@
-## Building
+# Building
 
-### Option 1 : Devcontainer build environment
+## Option 1 : Devcontainer build environment
 
 This is the preferred option for development on WSL2 or native linux desktop. This method is self contained, provides a predictable build environment (through a dynamically built container) and pre-configured set of VSCode extensions defined in the devcontainer definition file.
 
@@ -12,10 +12,10 @@ This is the preferred option for development on WSL2 or native linux desktop. Th
    - On Ubuntu, this would be: `sudo apt install docker-buildx`
 5. Install the [NVIDIA Container Runtime](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 6. Open the MXL source code folder using VSCode. In wsl2 this can be done by launching `code <mxl_directory>`
-   - NOTE: If not running under WSL2, remove the 2 mount points defined in the devcontainer.json you intend to use for development.  For example, if you intend to use the Ubuntu 24.04 devcontainer, edit the .devcontainer/ubuntu24/devcontainer.json file and remove the content of the "mounts" array.  These mount points are only needed for X/WAYLAND support in WSL2.  Their presence will prevent the devcontainer to load correctly when running on a native Linux system.    
+   - NOTE: If not running under WSL2, remove the 2 mount points defined in the devcontainer.json you intend to use for development.  For example, if you intend to use the Ubuntu 24.04 devcontainer, edit the .devcontainer/ubuntu24/devcontainer.json file and remove the content of the "mounts" array.  These mount points are only needed for X/WAYLAND support in WSL2.  Their presence will prevent the devcontainer to load correctly when running on a native Linux system.
 7. VSCode will detect that this folder contains a devcontainer definition. It will prompt you with a dialog "Reopen in dev container". Click this dialog. If the dialog does not appear, you can invoke the command: `CTRL-SHIFT-P -> Dev Containers : Reopen in container`
 
-### Option 2: CMake with presets
+## Option 2: CMake with presets
 
 _Note: the following instructions apply to Ubuntu 22.04._
 
@@ -51,19 +51,13 @@ cmake .. --preset Linux-Clang-Debug
 cmake --build build/Linux-Clang-Debug --target all
 ```
 
-### macOS notes
+## macOS notes
 
 1. Install the [Homebrew](https://brew.sh) package manager
 2. Install doxygen and ccache through brew: `brew install doxygen ccache`
 3. Install the GStreamer runtime and developement packages according to [these instructions](https://gstreamer.freedesktop.org/documentation/installing/on-mac-osx.html?gi-language=c#download-and-install-the-sdk)
 
-### macOS notes
-
-1. Install the [Homebrew](https://brew.sh) package manager
-2. Install doxygen and ccache through brew: `brew install doxygen ccache`
-3. Install the GStreamer runtime and development packages according to [these instructions](https://gstreamer.freedesktop.org/documentation/installing/on-mac-osx.html?gi-language=c#download-and-install-the-sdk)
-
-## Using with CMake
+# Using with CMake
 
 The MXL provides a CMake package configuration file that allows for easy integration into your project. If it is installed in a non-default location, you may need to specify its root path using `CMAKE_PREFIX_PATH`:
 
@@ -71,7 +65,7 @@ The MXL provides a CMake package configuration file that allows for easy integra
 cmake -DCMAKE_PREFIX_PATH=/home/username/mxl-sdk ..
 ```
 
-### Basic usage
+## Basic usage
 
 Below is a minimal example of how to use the MXL in your project:
 

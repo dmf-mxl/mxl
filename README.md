@@ -17,14 +17,17 @@ At the heart of the [DMF architecture](https://tech.ebu.ch/publications/white-pa
 
 In order to encourage broad industry adoption, the European Broadcasting Union (EBU), the North American Broadcasters Association (NABA), and the Linux Foundation are pursuing an “implement-first” strategy. This practical, hands-on approach involves close collaboration with broadcasters and technology suppliers to produce an open-source software development kit that promotes interoperability and showcases real-world use cases for the MXL. The first alpha version of this SDK was released in June 2025. Ultimately, the DMF initiative aspires to establish a new baseline for open, interoperable software-based live production, a foundation that is robust, future-proof, and capable of sustaining innovation across the entire media ecosystem.
 
-# Learn more about:
+# Learning More
+
 ## Governance
-- The project governance principles: [GOVERNANCE.md](GOVERNANCE/GOVERNANCE.md) and [Technical Charter](GOVERNANCE/CHARTER.pdf) 
+
+- The project governance principles: [GOVERNANCE.md](GOVERNANCE/GOVERNANCE.md) and [Technical Charter](GOVERNANCE/CHARTER.pdf)
 - How to contribute: [CONTRIBUTING.md](CONTRIBUTING.md)
 - How to report a vulnerability: [SECURITY.md](SECURITY.md)
 - [Code of conduct](CODE_OF_CONDUCT.md)
 
-## Technical documentation
+## Technical Documentation
+
 - [MXL Architecture](docs/architecture.md)
 - [SDK Usage](docs/usage.md)
 - [Building options](docs/Building.md)

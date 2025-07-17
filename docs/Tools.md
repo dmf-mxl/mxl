@@ -1,7 +1,6 @@
+# Tools
 
-## Tools
-
-### mxl-info
+## mxl-info
 
 Simple tool that uses the MXL sdk to open a flow by ID and prints the flow details.
 
@@ -48,11 +47,11 @@ Hint : Live monitoring of a flow details (updates every second)
 watch -n 1 -p ./mxl-info -d ~/mxl_domain/ -f 5fbec3b1-1b0f-417d-9059-8b94a47197ed
 ```
 
-### mxl-viewer
+## mxl-viewer
 
 TODO. A generic GUI application based on gstreamer or ffmpeg to display flow(s).
 
-### mxl-gst-videotestsrc
+## mxl-gst-videotestsrc
 
 A binary that uses the gstreamer element 'videotestsrc' to produce video grains which will be pushed to a MXL Flow. The video format is configured from a NMOS Flow json file. Here's an example of such file :
 
@@ -108,7 +107,7 @@ Options:
   -p,--pattern TEXT [smpte]   Test pattern to use. For available options see https://gstreamer.freedesktop.org/documentation/videotestsrc/index.html?gi-language=c#GstVideoTestSrcPattern
 ```
 
-### mxl-gst-videosink
+## mxl-gst-videosink
 
 A binary that reads from a MXL Flow and display the flow using the gstreamer element 'autovideosink'.
 
