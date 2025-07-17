@@ -1,4 +1,4 @@
-# Contributing to MXL
+# Contributing
 Thank you for your interest in contributing to MXL. This document explains our contribution process and procedures.
 For a description of the roles and responsibilities of the various members of the MXL community, see the GOVERNANCE file, and for further details, see the project's Technical
 Charter. Briefly, Contributors submit content to the project, Maintainers review and approve these submissions, and the Technical Steering Committee (TSC) oversees the project as a whole.
