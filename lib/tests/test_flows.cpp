@@ -53,7 +53,7 @@ TEST_CASE("Video Flow : Create/Destroy", "[mxl flows]")
     /// Compute the grain index for the flow rate and current TAI time.
     auto const rate = Rational{60000, 1001};
     auto const now = mxlGetTime();
-    uint64_t index = mxlTimestampToHeadIndex(&rate, now);
+    uint64_t index = mxlTimestampToIndex(&rate, now);
     REQUIRE(index != MXL_UNDEFINED_INDEX);
 
     /// Open the grain.
@@ -200,7 +200,7 @@ TEST_CASE("Data Flow : Create/Destroy", "[mxl flows]")
     /// Compute the grain index for the flow rate and current TAI time.
     auto const rate = Rational{60000, 1001};
     auto const now = mxlGetTime();
-    uint64_t index = mxlTimestampToHeadIndex(&rate, now);
+    uint64_t index = mxlTimestampToIndex(&rate, now);
     REQUIRE(index != MXL_UNDEFINED_INDEX);
 
     /// Open the grain.
@@ -293,7 +293,7 @@ TEST_CASE("Video Flow : Slices", "[mxl flows]")
     /// Compute the grain index for the flow rate and current TAI time.
     auto const rate = Rational{60000, 1001};
     auto const now = mxlGetTime();
-    uint64_t index = mxlTimestampToHeadIndex(&rate, now);
+    uint64_t index = mxlTimestampToIndex(&rate, now);
     REQUIRE(index != MXL_UNDEFINED_INDEX);
 
     /// Open the grain.
@@ -380,7 +380,7 @@ TEST_CASE("Audio Flow : Create/Destroy", "[mxl flows]")
     /// Compute the grain index for the flow rate and current TAI time.
     auto const rate = Rational{48000, 1};
     auto const now = mxlGetTime();
-    auto const index = mxlTimestampToHeadIndex(&rate, now);
+    auto const index = mxlTimestampToIndex(&rate, now);
     REQUIRE(index != MXL_UNDEFINED_INDEX);
 
     {
@@ -428,7 +428,8 @@ TEST_CASE("Audio Flow : Create/Destroy", "[mxl flows]")
         }
         for (auto i = 0U; i < payloadBuffersSlices.base.fragments[1].size; ++i)
         {
-            REQUIRE(static_cast<std::uint8_t const*>(payloadBuffersSlices.base.fragments[0].pointer)[i] == payloadBuffersSlices.base.fragments[0].size + i);
+            REQUIRE(static_cast<std::uint8_t const*>(payloadBuffersSlices.base.fragments[0].pointer)[i] ==
+                    payloadBuffersSlices.base.fragments[0].size + i);
         }
 
         // Get the updated flow info

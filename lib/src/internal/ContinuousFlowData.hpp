@@ -7,33 +7,31 @@ namespace mxl::lib
     ///
     /// Simple structure holding the shared memory resources of discrete flows.
     ///
-    class ContinuousFlowData
-        : public FlowData
+    class ContinuousFlowData : public FlowData
     {
-        public:
-            explicit ContinuousFlowData(SharedMemoryInstance<Flow>&& flowSegement) noexcept;
-            ContinuousFlowData(char const* flowFilePath, AccessMode mode);
+    public:
+        explicit ContinuousFlowData(SharedMemoryInstance<Flow>&& flowSegement) noexcept;
+        ContinuousFlowData(char const* flowFilePath, AccessMode mode);
 
-            constexpr std::size_t channelCount() const noexcept;
-            constexpr std::size_t sampleWordSize() const noexcept;
-            constexpr std::size_t channelBufferLength() const noexcept;
+        constexpr std::size_t channelCount() const noexcept;
+        constexpr std::size_t sampleWordSize() const noexcept;
+        constexpr std::size_t channelBufferLength() const noexcept;
 
-            void openChannelBuffers(char const* channelBuffersFilePath, std::size_t sampleWordSize);
+        void openChannelBuffers(char const* channelBuffersFilePath, std::size_t sampleWordSize);
 
-            /** The size of the mapped channel data in bytes. */
-            constexpr std::size_t channelDataSize() const noexcept;
+        /** The size of the mapped channel data in bytes. */
+        constexpr std::size_t channelDataSize() const noexcept;
 
-            /** The length of the mapped channel data in samples. */
-            constexpr std::size_t channelDataLength() const noexcept;
+        /** The length of the mapped channel data in samples. */
+        constexpr std::size_t channelDataLength() const noexcept;
 
-            constexpr void* channelData() noexcept;
-            constexpr void const* channelData() const noexcept;
+        constexpr void* channelData() noexcept;
+        constexpr void const* channelData() const noexcept;
 
-        private:
-            SharedMemorySegment _channelBuffers;
-            std::size_t _sampleWordSize;
+    private:
+        SharedMemorySegment _channelBuffers;
+        std::size_t _sampleWordSize;
     };
-
 
     /**************************************************************************/
     /* Inline implementation.                                                 */
@@ -43,8 +41,7 @@ namespace mxl::lib
         : FlowData{std::move(flowSegement)}
         , _channelBuffers{}
         , _sampleWordSize{1U}
-    {
-    }
+    {}
 
     inline ContinuousFlowData::ContinuousFlowData(char const* flowFilePath, AccessMode mode)
         : FlowData{flowFilePath, mode}
@@ -82,9 +79,7 @@ namespace mxl::lib
                 _channelBuffers = SharedMemorySegment{grainFilePath, mode, buffersLength * sampleWordSize};
 
                 auto const mappedSize = _channelBuffers.mappedSize();
-                _sampleWordSize = (sampleWordSize != 0U)
-                    ? sampleWordSize
-                    : ((mappedSize >= buffersLength) ? (mappedSize / buffersLength) : 1U);
+                _sampleWordSize = (sampleWordSize != 0U) ? sampleWordSize : ((mappedSize >= buffersLength) ? (mappedSize / buffersLength) : 1U);
             }
             else
             {

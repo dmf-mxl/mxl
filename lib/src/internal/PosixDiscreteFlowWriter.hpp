@@ -4,8 +4,8 @@
 #include <uuid.h>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
-#include "DiscreteFlowWriter.hpp"
 #include "DiscreteFlowData.hpp"
+#include "DiscreteFlowWriter.hpp"
 
 namespace mxl::lib
 {
@@ -14,8 +14,7 @@ namespace mxl::lib
     ///
     /// Implementation of a FlowWriter based on POSIX shared memory mapping.
     ///
-    class PosixDiscreteFlowWriter
-        : public DiscreteFlowWriter
+    class PosixDiscreteFlowWriter : public DiscreteFlowWriter
     {
     public:
         ///

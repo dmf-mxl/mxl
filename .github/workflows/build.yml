@@ -19,6 +19,7 @@ permissions:
   issues: read
   checks: write
   pull-requests: write
+  packages: write
 
 jobs:
   build:
@@ -41,6 +42,34 @@ jobs:
       - name: Initialize Git Submodules (if needed)
         run: git submodule update --init --recursive
 
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Calculate Docker image hash
+        id: docker-hash
+        run: |
+          # Create a hash based on Dockerfile content and matrix parameters
+          HASH_INPUT=$(cat .devcontainer/Dockerfile .devcontainer/register-clang-version.sh)
+          HASH_INPUT="${HASH_INPUT}${{ matrix.version }}${{ matrix.architecture }}${{ matrix.compiler }}"
+          DOCKER_HASH=$(echo -n "$HASH_INPUT" | sha256sum | cut -d' ' -f1)
+          echo "hash=$DOCKER_HASH" >> $GITHUB_OUTPUT
+          echo "image-tag=ghcr.io/${{ github.repository_owner }}/mxl-build:$DOCKER_HASH" >> $GITHUB_OUTPUT
+
+      - name: Check if Docker image exists
+        id: check-image
+        run: |
+          if docker manifest inspect ${{ steps.docker-hash.outputs.image-tag }} >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Docker image ${{ steps.docker-hash.outputs.image-tag }} already exists"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Docker image ${{ steps.docker-hash.outputs.image-tag }} does not exist"
+          fi
+
       - name: Get runner UID and GID
         id: vars
         run: |
@@ -60,14 +89,36 @@ jobs:
           chmod g+s ${{ github.workspace }}/install
 
       - name: Build Docker image
+        if: steps.check-image.outputs.exists == 'false'
         run: |
           docker build \
             --build-arg BASE_IMAGE_VERSION=${{ matrix.version }} \
             --build-arg USER_UID=${{ steps.vars.outputs.uid }} \
             --build-arg USER_GID=${{ steps.vars.outputs.gid }} \
+            -t ${{ steps.docker-hash.outputs.image-tag }} \
             -t mxl_build_container_with_source \
             -f .devcontainer/Dockerfile \
             .devcontainer
+
+      - name: Push Docker image to registry
+        if: steps.check-image.outputs.exists == 'false'
+        run: |
+          docker push ${{ steps.docker-hash.outputs.image-tag }}
+
+      - name: Pull Docker image from registry
+        if: steps.check-image.outputs.exists == 'true'
+        run: |
+          docker pull ${{ steps.docker-hash.outputs.image-tag }}
+          docker tag ${{ steps.docker-hash.outputs.image-tag }} mxl_build_container_with_source
+
+      - name: Run clang-format
+        run: |
+          docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
+            -i mxl_build_container_with_source \
+            bash -c "
+              cd /workspace/mxl && \
+              find lib tools -iregex '.*\.\(h\|c\|hpp\|cpp\)' | xargs clang-format --dry-run --Werror
+            "
 
       - name: Configure CMake
         run: |

@@ -8,8 +8,8 @@
 #   include <stdint.h>
 #endif
 
-#include <mxl/mxl.h>
 #include <mxl/flowinfo.h>
+#include <mxl/mxl.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -91,7 +91,7 @@ extern "C"
          */
         size_t stride;
         /**
-         * The number of buffers following the base buffer.
+         * The total number of buffers in the sequence.
          */
         size_t count;
     } WrappedMultiBufferSlice;
@@ -111,12 +111,10 @@ extern "C"
          */
         size_t stride;
         /**
-         * The number of buffers following the base buffer.
+         * The total number of buffers in the sequence.
          */
         size_t count;
     } MutableWrappedMultiBufferSlice;
-
-
 
     typedef struct GrainInfo
     {
@@ -148,8 +146,8 @@ extern "C"
     /// \param[in] instance The mxl instance created using mxlCreateInstance
     /// \param[in] flowDef A flow definition in the NMOS Flow json format.  The flow ID is read from the <id> field of this json object.
     /// \param[in] options Additional options (undefined). \todo Specify and used the additional options.
-    /// \param[out] info A pointer to a FlowInfo structure.  If not nullptr, this structure will be updated with the flow information after the flow is
-    /// created.
+    /// \param[out] info A pointer to a FlowInfo structure.  If not nullptr, this structure will be updated with the flow information after the flow
+    /// is created.
 MXL_EXPORT
     mxlStatus mxlCreateFlow(mxlInstance instance, char const* flowDef, char const* options, FlowInfo* info);
 
@@ -193,8 +191,7 @@ MXL_EXPORT
      *      error.
      */
 MXL_EXPORT
-    mxlStatus mxlFlowReaderGetGrain(mxlFlowReader reader, uint64_t index, uint64_t timeoutNs, GrainInfo* grain,
-        uint8_t** payload);
+    mxlStatus mxlFlowReaderGetGrain(mxlFlowReader reader, uint64_t index, uint64_t timeoutNs, GrainInfo* grain, uint8_t** payload);
 
     /**
      * Non-blocking accessors for a flow grain at a specific index
@@ -210,8 +207,7 @@ MXL_EXPORT
      *      error.
      */
 MXL_EXPORT
-    mxlStatus mxlFlowReaderGetGrainNonBlocking(mxlFlowReader reader, uint64_t index, GrainInfo* grain,
-        uint8_t** payload);
+    mxlStatus mxlFlowReaderGetGrainNonBlocking(mxlFlowReader reader, uint64_t index, GrainInfo* grain, uint8_t** payload);
 
     /**
      * Open a grain for mutation.  The flow writer will remember which index is currently opened. Before opening a new grain
@@ -231,8 +227,7 @@ MXL_EXPORT
      *      error.
      */
 MXL_EXPORT
-    mxlStatus mxlFlowWriterOpenGrain(mxlFlowWriter writer, uint64_t index, GrainInfo* grainInfo,
-        uint8_t** payload);
+    mxlStatus mxlFlowWriterOpenGrain(mxlFlowWriter writer, uint64_t index, GrainInfo* grainInfo, uint8_t** payload);
 
     /**
      *
@@ -251,10 +246,9 @@ MXL_EXPORT
 MXL_EXPORT
     mxlStatus mxlFlowWriterCommitGrain(mxlFlowWriter writer, GrainInfo const* grain);
 
-
     /**
-     * Accessor for a specific set of samples across all channels starting at a
-     * specific index.
+     * Accessor for a specific set of samples across all channels ending at a
+     * specific index (`count` samples up to `index`).
      *
      * \param[in] index The head index of the samples to obtain.
      * \param[in] count The number of samples to obtain.

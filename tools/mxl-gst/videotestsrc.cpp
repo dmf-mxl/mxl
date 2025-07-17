@@ -308,7 +308,7 @@ int main(int argc, char** argv)
         gst_sample = gst_pipeline.pullSample();
         if (gst_sample)
         {
-            grain_index = mxlGetCurrentHeadIndex(&frame_rate);
+            grain_index = mxlGetCurrentIndex(&frame_rate);
 
             gst_buffer = gst_sample_get_buffer(gst_sample);
             if (gst_buffer)
@@ -344,7 +344,7 @@ int main(int argc, char** argv)
 
             gst_sample_unref(gst_sample);
 
-            auto ns = mxlGetNsUntilHeadIndex(grain_index++, &frame_rate);
+            auto ns = mxlGetNsUntilIndex(grain_index++, &frame_rate);
             mxlSleepForNs(ns);
         }
     }

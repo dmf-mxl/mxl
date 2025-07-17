@@ -27,7 +27,9 @@ namespace mxl::lib
     {
         bool updateFileAccessTime(int fd) noexcept
         {
-            auto const times = std::array<timespec, 2>{{{0, UTIME_NOW}, {0, UTIME_OMIT}}};
+            auto const times = std::array<timespec, 2>{
+                {{0, UTIME_NOW}, {0, UTIME_OMIT}}
+            };
             return (::futimens(fd, times.data()) == 0);
         }
     }
@@ -54,51 +56,54 @@ namespace mxl::lib
         throw std::runtime_error("No open flow.");
     }
 
-    mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, std::uint64_t in_timeoutNs, GrainInfo* out_grainInfo, std::uint8_t** out_payload)
+    mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, std::uint64_t in_timeoutNs, GrainInfo* out_grainInfo,
+        std::uint8_t** out_payload)
     {
+        auto const deadline = currentTime(Clock::Realtime) + Duration{static_cast<std::int64_t>(in_timeoutNs)};
         auto status = MXL_ERR_TIMEOUT;
 
         if (_flowData)
         {
             auto const flowInfo = _flowData->flowInfo();
-            if (auto const headIndex = flowInfo->discrete.headIndex; in_index <= headIndex)
+            while (true)
             {
-                auto const grainCount = flowInfo->discrete.grainCount;
-                auto const minIndex = (headIndex >= grainCount)
-                    ? (headIndex - grainCount + 1U)
-                    : std::uint64_t{0};
-
-                if (in_index >= minIndex)
+                // We remember the sync counter before checking the head index, otherwise we would introduce a race condition:
+                // 1. We check the header index, data won't be available yet.
+                // 2. Writer writes the data and updates the counter.
+                // 3. If we used the current value of the counter for the futex, we would delay everything by 1 grain.
+                auto previousSyncCounter = flowInfo->discrete.syncCounter;
+                if (auto const headIndex = flowInfo->discrete.headIndex; in_index <= headIndex)
                 {
-                    auto const offset = in_index % flowInfo->discrete.grainCount;
-                    auto const grain = _flowData->grainAt(offset);
-                    *out_grainInfo = grain->header.info;
-                    *out_payload = reinterpret_cast<std::uint8_t*>(&grain->header + 1);
+                    auto const grainCount = flowInfo->discrete.grainCount;
+                    auto const minIndex = (headIndex >= grainCount) ? (headIndex - grainCount + 1U) : std::uint64_t{0};
 
-                    status = MXL_STATUS_OK;
+                    if (in_index >= minIndex)
+                    {
+                        auto const offset = in_index % flowInfo->discrete.grainCount;
+                        auto const grain = _flowData->grainAt(offset);
+                        *out_grainInfo = grain->header.info;
+                        *out_payload = reinterpret_cast<std::uint8_t*>(&grain->header + 1);
+
+                        status = MXL_STATUS_OK;
+                        break;
+                    }
+                    else
+                    {
+                        status = MXL_ERR_OUT_OF_RANGE_TOO_LATE;
+                        break;
+                    }
                 }
                 else
                 {
-                    status = MXL_ERR_OUT_OF_RANGE_TOO_LATE;
-                }
-            }
-            else
-            {
-                // FIXME: This code is hopelessly broken. As it assumes that the
-                //      next write provides the index of interest, which is not
-                //      guaranteed.
-                if (waitUntilChanged(&flowInfo->discrete.syncCounter, flowInfo->discrete.syncCounter, Duration(in_timeoutNs)))
-                {
-                    auto const offset = in_index % flowInfo->discrete.grainCount;
-                    auto const grain = _flowData->grainAt(offset);
-                    *out_grainInfo = grain->header.info;
-                    *out_payload = reinterpret_cast<std::uint8_t*>(&grain->header + 1);
-
-                    status = MXL_STATUS_OK;
-                }
-                else
-                {
-                    status = MXL_ERR_TIMEOUT;
+                    if (waitUntilChanged(&flowInfo->discrete.syncCounter, previousSyncCounter, deadline))
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        status = MXL_ERR_TIMEOUT;
+                        break;
+                    }
                 }
             }
 
@@ -122,9 +127,7 @@ namespace mxl::lib
             if (auto const headIndex = flowInfo->discrete.headIndex; in_index <= headIndex)
             {
                 auto const grainCount = flowInfo->discrete.grainCount;
-                auto const minIndex = (headIndex >= grainCount)
-                    ? (headIndex - grainCount + 1U)
-                    : std::uint64_t{0};
+                auto const minIndex = (headIndex >= grainCount) ? (headIndex - grainCount + 1U) : std::uint64_t{0};
                 if (in_index >= minIndex)
                 {
                     auto const offset = in_index % grainCount;

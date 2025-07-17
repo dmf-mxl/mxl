@@ -16,8 +16,7 @@ namespace mxl::lib
     /**
      * Implementation of a continuous flow reader based on POSIX shared memory.
      */
-    class PosixContinuousFlowReader final
-        : public ContinuousFlowReader
+    class PosixContinuousFlowReader final : public ContinuousFlowReader
     {
     public:
         /**
@@ -35,7 +34,7 @@ namespace mxl::lib
 
         /**
          * Accessor for a specific set of samples across all channels
-         * starting at a specific index.
+         * ending at a specific index (`count` samples up to `index`).
          *
          * \param[in] index The head index of the samples to obtain.
          * \param[in] count The number of samples to obtain.

@@ -106,16 +106,15 @@ namespace mxl::lib
         std::size_t _mappedSize;
     };
 
-    struct SharedMemorySegment
-        : SharedMemoryBase
+    struct SharedMemorySegment : SharedMemoryBase
     {
         constexpr SharedMemorySegment() noexcept;
         constexpr SharedMemorySegment(SharedMemorySegment&& other) noexcept;
 
         SharedMemorySegment(char const* path, AccessMode mode, std::size_t payloadSize);
 
-        using SharedMemoryBase::data;
         using SharedMemoryBase::cdata;
+        using SharedMemoryBase::data;
 
         SharedMemorySegment& operator=(SharedMemorySegment other) noexcept;
         constexpr void swap(SharedMemorySegment& other) noexcept;
@@ -124,13 +123,11 @@ namespace mxl::lib
     /** ADL compatible shwap function for SharedMemorySegment. */
     constexpr void swap(SharedMemorySegment& lhs, SharedMemorySegment& rhs) noexcept;
 
-
     /**
      * Utility class that allocates and places a structure in shared memory
      */
     template<typename T>
-    struct SharedMemoryInstance
-        : SharedMemoryBase
+    struct SharedMemoryInstance : SharedMemoryBase
     {
         constexpr SharedMemoryInstance() noexcept;
         constexpr SharedMemoryInstance(SharedMemoryInstance&& other);
@@ -170,7 +167,6 @@ namespace mxl::lib
     template<typename T>
     constexpr void swap(SharedMemoryInstance<T>& lhs, SharedMemoryInstance<T>& rhs) noexcept;
 
-
     /**************************************************************************/
     /* Inline implementation.                                                 */
     /**************************************************************************/
@@ -205,9 +201,7 @@ namespace mxl::lib
 
     constexpr AccessMode SharedMemoryBase::accessMode() const noexcept
     {
-        return (_mode == AccessMode::READ_ONLY)
-            ? AccessMode::READ_ONLY
-            : AccessMode::READ_WRITE;
+        return (_mode == AccessMode::READ_ONLY) ? AccessMode::READ_ONLY : AccessMode::READ_WRITE;
     }
 
     constexpr bool SharedMemoryBase::created() const noexcept
@@ -219,11 +213,11 @@ namespace mxl::lib
     {
         // Workaround for std::swap not being declared constexpr in libstdc++ v10
         constexpr auto const cx_swap = [](auto& lhs, auto& rhs) constexpr noexcept
-            {
-                auto temp = lhs;
-                lhs = rhs;
-                rhs = temp;
-            };
+        {
+            auto temp = lhs;
+            lhs = rhs;
+            rhs = temp;
+        };
 
         cx_swap(_fd, other._fd);
         cx_swap(_mode, other._mode);
@@ -274,7 +268,6 @@ namespace mxl::lib
         lhs.swap(rhs);
     }
 
-
     template<typename T>
     constexpr SharedMemoryInstance<T>::SharedMemoryInstance() noexcept
         : SharedMemoryBase{}
@@ -285,7 +278,6 @@ namespace mxl::lib
         : SharedMemoryBase{std::move(other)}
     {}
 
-
     template<typename T>
     inline SharedMemoryInstance<T>::SharedMemoryInstance(char const* path, AccessMode mode, std::size_t payloadSize)
         : SharedMemoryBase{path, mode, payloadSize + sizeof(T)}
@@ -295,7 +287,6 @@ namespace mxl::lib
             new (data()) T{};
         }
     }
-
 
     template<typename T>
     inline auto SharedMemoryInstance<T>::operator=(SharedMemoryInstance other) noexcept -> SharedMemoryInstance&
@@ -313,7 +304,8 @@ namespace mxl::lib
     template<typename T>
     constexpr T* SharedMemoryInstance<T>::get() noexcept
     {
-        return static_cast<T*>(data());;
+        return static_cast<T*>(data());
+        ;
     }
 
     template<typename T>

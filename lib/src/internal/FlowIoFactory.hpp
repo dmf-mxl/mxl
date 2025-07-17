@@ -6,15 +6,16 @@
 namespace mxl::lib
 {
     class FlowIoFactory
-        : public FlowReaderFactory, public FlowWriterFactory
+        : public FlowReaderFactory
+        , public FlowWriterFactory
     {
-        public:
-            std::unique_ptr<FlowReader> createFlowReader(FlowManager const& manager, uuids::uuid const& flowId, std::unique_ptr<FlowData>&& data);
-            std::unique_ptr<FlowWriter> createFlowWriter(FlowManager const& manager, uuids::uuid const& flowId, std::unique_ptr<FlowData>&& data);
+    public:
+        std::unique_ptr<FlowReader> createFlowReader(FlowManager const& manager, uuids::uuid const& flowId, std::unique_ptr<FlowData>&& data);
+        std::unique_ptr<FlowWriter> createFlowWriter(FlowManager const& manager, uuids::uuid const& flowId, std::unique_ptr<FlowData>&& data);
 
-            virtual ~FlowIoFactory();
+        virtual ~FlowIoFactory();
 
-        protected:
-            FlowIoFactory();
+    protected:
+        FlowIoFactory();
     };
 }

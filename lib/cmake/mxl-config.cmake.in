@@ -1,5 +1,5 @@
 @PACKAGE_INIT@
 
 if(NOT TARGET mxl::mxl)
-    include("${CMAKE_CURRENT_LIST_DIR}/mxlTarget.cmake")
+    include("${CMAKE_CURRENT_LIST_DIR}/mxl-targets.cmake")
 endif()

@@ -13,12 +13,16 @@ using namespace mxl::lib;
 
 TEST_CASE("Flow Manager : Create Manager", "[flow manager]")
 {
-    auto const domain = std::filesystem::path{"/dev/shm/mxl_domain"};
+    auto const domain = mxl::tests::getDomainPath();
     // Remove that path if it exists.
     remove_all(domain);
 
     // This should throw since the folder should not exist.
-    REQUIRE_THROWS( [&]() { std::make_shared<FlowManager>(domain); }());
+    REQUIRE_THROWS(
+        [&]()
+        {
+            std::make_shared<FlowManager>(domain);
+        }());
 
     // Create the mxl domain path.
     REQUIRE(create_directory(domain));
@@ -29,7 +33,7 @@ TEST_CASE("Flow Manager : Create Manager", "[flow manager]")
 
 TEST_CASE("Flow Manager : Create Video Flow Structure", "[flow manager]")
 {
-    auto const domain = std::filesystem::path{"/dev/shm/mxl_domain"};
+    auto const domain = mxl::tests::getDomainPath();
     // Clean out the mxl domain path, if it exists.
     remove_all(domain);
     REQUIRE(create_directory(domain));
@@ -102,7 +106,6 @@ TEST_CASE("Flow Manager : Create Video Flow Structure", "[flow manager]")
             manager->createContinuousFlow(flowId, flowDef, MXL_DATA_FORMAT_AUDIO, sampleRate, 8, sizeof(float), 8192);
         }());
 
-
     REQUIRE(manager->listFlows().size() == 1);
 
     // Close the flow.  it should not be available for a get operation after being closed.
@@ -121,7 +124,7 @@ TEST_CASE("Flow Manager : Create Video Flow Structure", "[flow manager]")
 
 TEST_CASE("Flow Manager : Create Audio Flow Structure", "[flow manager]")
 {
-    auto const domain = std::filesystem::path{"/dev/shm/mxl_domain"};
+    auto const domain = mxl::tests::getDomainPath();
     // Clean out the mxl domain path, if it exists.
     remove_all(domain);
     REQUIRE(create_directory(domain));

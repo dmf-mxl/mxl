@@ -55,9 +55,7 @@ namespace mxl::lib
          */
         mxlDataFormat sanitizeFlowFormat(mxlDataFormat format)
         {
-            return mxlIsSupportedDataFormat(format)
-                ? format
-                : MXL_DATA_FORMAT_UNSPECIFIED;
+            return mxlIsSupportedDataFormat(format) ? format : MXL_DATA_FORMAT_UNSPECIFIED;
         }
 
         void writeFlowDescriptor(std::filesystem::path const& flowDir, std::string const& flowDef)
@@ -99,8 +97,8 @@ namespace mxl::lib
         }
     }
 
-    std::unique_ptr<DiscreteFlowData> FlowManager::createDiscreteFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat, std::size_t grainCount,
-        Rational const& grainRate, std::size_t grainPayloadSize)
+    std::unique_ptr<DiscreteFlowData> FlowManager::createDiscreteFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat,
+        std::size_t grainCount, Rational const& grainRate, std::size_t grainPayloadSize)
     {
         auto const uuidString = uuids::to_string(flowId);
         MXL_DEBUG("Create discrete flow. id: {}, grainCount: {}, grain payload size: {}", uuidString, grainCount, grainPayloadSize);
@@ -154,7 +152,6 @@ namespace mxl::lib
                 gInfo.deviceIndex = -1;
             }
 
-
             publishFlowDirectory(tempDirectory, makeFlowDirectoryName(_mxlDomain, uuidString));
 
             return flowData;
@@ -167,10 +164,15 @@ namespace mxl::lib
         }
     }
 
-    std::unique_ptr<ContinuousFlowData> FlowManager::createContinuousFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat, Rational const& sampleRate, std::size_t channelCount, std::size_t sampleWordSize, std::size_t bufferLength)
+    std::unique_ptr<ContinuousFlowData> FlowManager::createContinuousFlow(uuids::uuid const& flowId, std::string const& flowDef,
+        mxlDataFormat flowFormat, Rational const& sampleRate, std::size_t channelCount, std::size_t sampleWordSize, std::size_t bufferLength)
     {
         auto const uuidString = uuids::to_string(flowId);
-        MXL_DEBUG("Create continuous flow. id: {}, channel count: {}, word size: {}, buffer length: {}", uuidString, channelCount, sampleWordSize, bufferLength);
+        MXL_DEBUG("Create continuous flow. id: {}, channel count: {}, word size: {}, buffer length: {}",
+            uuidString,
+            channelCount,
+            sampleWordSize,
+            bufferLength);
 
         flowFormat = sanitizeFlowFormat(flowFormat);
         if (!mxlIsContinuousDataFormat(flowFormat))
@@ -244,7 +246,8 @@ namespace mxl::lib
         }
     }
 
-    std::unique_ptr<DiscreteFlowData> FlowManager::openDiscreteFlow(std::filesystem::path const& flowDir, SharedMemoryInstance<Flow>&& sharedFlowInstance)
+    std::unique_ptr<DiscreteFlowData> FlowManager::openDiscreteFlow(std::filesystem::path const& flowDir,
+        SharedMemoryInstance<Flow>&& sharedFlowInstance)
     {
         auto flowData = std::make_unique<DiscreteFlowData>(std::move(sharedFlowInstance));
 
@@ -272,7 +275,8 @@ namespace mxl::lib
         return flowData;
     }
 
-    std::unique_ptr<ContinuousFlowData> FlowManager::openContinuousFlow(std::filesystem::path const& flowDir, SharedMemoryInstance<Flow>&& sharedFlowInstance)
+    std::unique_ptr<ContinuousFlowData> FlowManager::openContinuousFlow(std::filesystem::path const& flowDir,
+        SharedMemoryInstance<Flow>&& sharedFlowInstance)
     {
         auto flowData = std::make_unique<ContinuousFlowData>(std::move(sharedFlowInstance));
         flowData->openChannelBuffers(makeChannelDataFilePath(flowDir).string().c_str(), 0U);
@@ -284,7 +288,8 @@ namespace mxl::lib
         if (flowData)
         {
             // Extract the ID
-            auto const span = uuids::span<std::uint8_t, sizeof flowData->flowInfo()->common.id>{const_cast<std::uint8_t*>(flowData->flowInfo()->common.id), sizeof flowData->flowInfo()->common.id};
+            auto const span = uuids::span<std::uint8_t, sizeof flowData->flowInfo()->common.id>{
+                const_cast<std::uint8_t*>(flowData->flowInfo()->common.id), sizeof flowData->flowInfo()->common.id};
             auto const id = uuids::uuid(span);
 
             // Close the flow

@@ -37,8 +37,7 @@ namespace mxl::lib
         int do_wait(void const* futex, std::uint32_t expected, Duration timeout)
         {
             return ::os_sync_wait_on_address_with_timeout(
-                const_cast<void*>(futex), expected, sizeof(std::uint32_t), OS_SYNC_WAIT_ON_ADDRESS_SHARED,
-                OS_CLOCK_MACH_ABSOLUTE_TIME, timeout.value);
+                const_cast<void*>(futex), expected, sizeof(std::uint32_t), OS_SYNC_WAIT_ON_ADDRESS_SHARED, OS_CLOCK_MACH_ABSOLUTE_TIME, timeout.value);
         }
 
         int do_wake_one(void const* futex)
@@ -109,8 +108,8 @@ namespace mxl::lib
     {
         static_assert(sizeof(T) == sizeof(std::uint32_t), "Only 32-bit types are supported.");
 
-        MXL_TRACE("Wake all waiting on = {}, val : {}", static_cast<void const*>(in_addr), *in_addr);
-        do_wake_all(in_addr);
+        MXL_TRACE("Wake one waiting on = {}, val : {}", static_cast<void const*>(in_addr), *in_addr);
+        do_wake_one(in_addr);
     }
 
     template<typename T>
@@ -118,8 +117,8 @@ namespace mxl::lib
     {
         static_assert(sizeof(T) == sizeof(std::uint32_t), "Only 32-bit types are supported.");
 
-        MXL_TRACE("Wake one waiting on = {}, val : {}", static_cast<void const*>(in_addr), *in_addr);
-        do_wake_one(in_addr);
+        MXL_TRACE("Wake all waiting on = {}, val : {}", static_cast<void const*>(in_addr), *in_addr);
+        do_wake_all(in_addr);
     }
 
     // Explicit template instantiations
