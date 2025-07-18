@@ -1,3 +1,6 @@
+<!-- SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project https://github.com/dmf-mxl/mxl/contributors.md -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # Timing Model
 
 As described in the [architecture](./architecture.md) page, the grains of an MXL flow are organized in a ring buffer. Each index of the ring buffer correspond to a timestamp relative to the PTP epoch as defined by SMPTE 2059-1. MXL does NOT require a PTP/SMPTE 2059 time source : it only _leverages_ the epoch and clock definitions (TAI time) as defined in SMPTE 2059-1.

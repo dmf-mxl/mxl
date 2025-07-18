@@ -1,17 +1,19 @@
 {
-    "description": "MXL Audio Flow",
-    "format": "urn:x-nmos:format:audio",
-    "tags": {},
-    "label": "MXL Audio Flow",
-    "version": "1441812152:154331951",
-    "id": "b3bb5be7-9fe9-4324-a5bb-4c70e1084449",
-    "media_type": "audio/float32",
-    "sample_rate": {
-        "numerator": 48000
-    },
-    "channel_count": 1,
-    "bit_depth": 32,
-    "parents": [],
-    "source_id": "2aa143ac-0ab7-4d75-bc32-5c00c13d186f",
-    "device_id": "169feb2c-3fae-42a5-ae2e-f6f8cbce29cf"
+  "$copyright": "SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project https://github.com/dmf-mxl/mxl/contributors.md",
+  "$license": "SPDX-License-Identifier: Apache-2.0",
+  "description": "MXL Audio Flow",
+  "format": "urn:x-nmos:format:audio",
+  "tags": {},
+  "label": "MXL Audio Flow",
+  "version": "1441812152:154331951",
+  "id": "b3bb5be7-9fe9-4324-a5bb-4c70e1084449",
+  "media_type": "audio/float32",
+  "sample_rate": {
+    "numerator": 48000
+  },
+  "channel_count": 1,
+  "bit_depth": 32,
+  "parents": [],
+  "source_id": "2aa143ac-0ab7-4d75-bc32-5c00c13d186f",
+  "device_id": "169feb2c-3fae-42a5-ae2e-f6f8cbce29cf"
 }

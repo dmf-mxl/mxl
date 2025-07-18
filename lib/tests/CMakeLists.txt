@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project https://github.com/dmf-mxl/mxl/contributors.md
+# SPDX-License-Identifier: Apache-2.0
+
 # Add the test executable
 add_executable(mxl-tests)
 target_compile_features(mxl-tests

@@ -1,4 +1,6 @@
 {
+  "$copyright": "SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project https://github.com/dmf-mxl/mxl/contributors.md",
+  "$license": "SPDX-License-Identifier: Apache-2.0",
   "description": "MXL VANC Data",
   "tags": {},
   "format": "urn:x-nmos:format:data",

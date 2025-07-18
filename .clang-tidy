@@ -1,6 +1,9 @@
-Checks: '-*,modernize-*,-modernize-use-trailing-return-type'
-HeaderFileExtensions:         ['', 'h','hpp']
-ImplementationFileExtensions: ['cpp']
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project https://github.com/dmf-mxl/mxl/contributors.md
+# SPDX-License-Identifier: Apache-2.0
+
+Checks: "-*,modernize-*,-modernize-use-trailing-return-type"
+HeaderFileExtensions: ["", "h", "hpp"]
+ImplementationFileExtensions: ["cpp"]
 CheckOptions:
-  modernize-use-using.IgnoreExternC: 'true'
-  modernize-use-using.IgnoreMacros: 'true'
+  modernize-use-using.IgnoreExternC: "true"
+  modernize-use-using.IgnoreMacros: "true"

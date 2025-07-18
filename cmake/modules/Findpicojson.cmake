@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project https://github.com/dmf-mxl/mxl/contributors.md
+# SPDX-License-Identifier: Apache-2.0
+
 find_path(picojson_INCLUDE_DIR NAMES picojson/picojson.h DOC "The picojson include directory")
 mark_as_advanced(picojson_INCLUDE_DIR)
 

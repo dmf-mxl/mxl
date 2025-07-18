@@ -1,3 +1,6 @@
+<!-- SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project https://github.com/dmf-mxl/mxl/contributors.md -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # Docker Compose Example
 
 This example launches two containers simulating two different media functions executing in separate containers.  It relies on docker.io and docker-compose-plugin being installed on the host.

@@ -1,3 +1,6 @@
+<!-- SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project https://github.com/dmf-mxl/mxl/contributors.md -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # Contributing
 
 Thank you for your interest in contributing to MXL. This document explains our contribution process and procedures.

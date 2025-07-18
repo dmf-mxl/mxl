@@ -1,2 +1,5 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project https://github.com/dmf-mxl/mxl/contributors.md
+# SPDX-License-Identifier: Apache-2.0
+
 add_subdirectory(mxl-info)
 add_subdirectory(mxl-gst)
