@@ -1,12 +1,5 @@
 name: Build and Test the MXL Project
 
-#
-# A few ideas for improvements:
-# - Avoid rebuilding the image if it already exists (test if exists, if not build it and push it to the github registry, if it does, pull it)
-# - This workflow tries to leverage binary caching of vcpkg artefacts. unfortunately the vcpkg 'gha' provider (github actions) was recently removed.
-#   It should be possible to use this approach instead : https://github.com/lukka/run-cmake/issues/152#issuecomment-2833729132
-#
-
 on:
   push:
     branches:
@@ -34,6 +27,7 @@ jobs:
 
     env:
       DOCKER_BUILDKIT: 1
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg_cache,readwrite
 
     steps:
       - name: Checkout repository
@@ -120,9 +114,17 @@ jobs:
               find lib tools -iregex '.*\.\(h\|c\|hpp\|cpp\)' | xargs clang-format --dry-run --Werror
             "
 
+      - name: Restore vcpkg cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg_cache
+          key: vcpkg-${{ steps.docker-hash.outputs.image-tag }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: vcpkg-${{ steps.docker-hash.outputs.image-tag }}-
+
       - name: Configure CMake
         run: |
           docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
+            -e VCPKG_BINARY_SOURCES="clear;files,/workspace/mxl/vcpkg_cache,readwrite" \
             -i mxl_build_container_with_source \
             bash -c "
               cmake -S /workspace/mxl -B /workspace/mxl/build/${{ matrix.compiler }} \
@@ -130,6 +132,12 @@ jobs:
                 -DMXL_BUILD_NUMBER=${{ github.run_number }} \
                 -DCMAKE_INSTALL_PREFIX=/workspace/mxl/install
             "
+ 
+      - name: Save vcpkg cache
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg_cache
+          key: vcpkg-${{ steps.docker-hash.outputs.image-tag }}-${{ hashFiles('vcpkg.json') }}
 
       - name: Build Project
         run: |
