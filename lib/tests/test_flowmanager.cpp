@@ -5,6 +5,7 @@
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <atomic>
 #include <filesystem>
 #include <memory>
 #include <string>
@@ -488,8 +489,7 @@ TEST_CASE("FlowManager: concurrent listFlows and deleteFlow", "[flow manager][co
     }
 
     auto done = std::atomic<bool>{false};
-    auto lister = std::thread{
-        [&]()
+    auto lister = std::thread{[&]()
         {
             while (!done)
             {
