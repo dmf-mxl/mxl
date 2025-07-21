@@ -456,21 +456,16 @@ TEST_CASE("FlowManager: deleteFlow on read-only domain", "[flow manager][deletio
         std::filesystem::perms::owner_all | std::filesystem::perms::group_all | std::filesystem::perms::others_all,
         std::filesystem::perm_options::remove);
 
-    // Current behavior: deleteFlow succeeds even on read-only domain
-    // \todo: DESIGN DECISION NEEDED - Should deleteFlow respect filesystem permissions?
-    //   a) Succeed regardless of permissions (current behavior - uses shared memory),
-    //   b) Throw std::filesystem::filesystem_error when domain is read-only, or
-    //   c) Return false to indicate failure?
-    //   Consider consistency with createFlow behavior and security implications.
-    REQUIRE_NOTHROW(mgr->deleteFlow(id));
-    REQUIRE(mgr->listFlows().empty());
+    // DeleteFlow should respect filesystem permissions
+    // When domain is read-only, deletion operations should fail gracefully
+    // The method returns false and logs an error instead of throwing
+    REQUIRE(mgr->deleteFlow(id) == false);
 
-    // Alternative behavior if permissions should be respected:
-    // REQUIRE_THROWS_AS(
-    //     mgr->deleteFlow(id),
-    //     std::filesystem::filesystem_error
-    // );
+    // Restore full permissions for cleanup and verification
+    std::filesystem::permissions(domain, std::filesystem::perms::owner_all, std::filesystem::perm_options::add);
 
+    // Since deletion failed, the flow should still exist
+    REQUIRE(mgr->listFlows().size() == 1);
     remove_all(domain);
 }
 
@@ -548,19 +543,10 @@ TEST_CASE("FlowManager: createFlow throws on unwritable domain", "[flow manager]
     auto const def = mxl::tests::readFile("data/v210_flow.json");
     auto const rate = Rational{50, 1};
 
-    // Current behavior: createFlow succeeds even on unwritable domain
-    // \todo : DESIGN DECISION NEEDED - Should createFlow respect filesystem permissions?
-    //   a) Succeed regardless of permissions (current behavior - uses shared memory),
-    //   b) Throw std::filesystem::filesystem_error when domain is unwritable, or
-    //   c) Perform actual filesystem write test before proceeding?
-    //   Consider security implications and consistency with deleteFlow behavior.
-    REQUIRE_NOTHROW(mgr->createDiscreteFlow(id, def, MXL_DATA_FORMAT_VIDEO, 1, rate, 8));
-
-    // Alternative behavior if permissions should be respected:
-    // REQUIRE_THROWS_AS(
-    //     mgr->createDiscreteFlow(id, def, MXL_DATA_FORMAT_VIDEO, 1, rate, 8),
-    //     std::filesystem::filesystem_error
-    // );
+    // CreateFlow should respect filesystem permissions
+    // When domain is unwritable, creation operations should fail
+    // This test verifies proper permission enforcement
+    REQUIRE_THROWS_AS(mgr->createDiscreteFlow(id, def, MXL_DATA_FORMAT_VIDEO, 1, rate, 8), std::filesystem::filesystem_error);
 
     // restore perms so we can clean up
     std::filesystem::permissions(domain, std::filesystem::perms::owner_all, std::filesystem::perm_options::add);
