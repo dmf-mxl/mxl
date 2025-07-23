@@ -243,16 +243,16 @@ namespace mxl::lib
                 throw std::runtime_error(std::string("FlowManager: Failed to open channel buffers: ") + e.what());
             }
 
-            auto const FinalDir = makeFlowDirectoryName(_mxlDomain, uuidString);
+            auto const finalDir = makeFlowDirectoryName(_mxlDomain, uuidString);
             try
             {
-                publishFlowDirectory(tempDirectory, FinalDir);
+                publishFlowDirectory(tempDirectory, finalDir);
             }
             catch (std::exception const& e)
             {
                 MXL_ERROR("FlowManager: Failed to publish continuous flow directory from '{}' to '{}': {}",
                     tempDirectory.string(),
-                    FinalDir.string(),
+                    finalDir.string(),
                     e.what());
                 throw std::runtime_error(std::string("FlowManager: Failed to publish flow dir: ") + e.what());
             }
@@ -297,7 +297,7 @@ namespace mxl::lib
             if (!flow)
             {
                 MXL_ERROR("FlowManager: Failed to access flow data for '{}': invalid shared memory segment", uuid);
-                throw std::runtime_error("FlowManager: Failed to access flow data: invalid shared memory segment");
+                throw std::runtime_error("FlowManager: Failed to access flow data: invalid shared memory segment.");
             }
 
             auto const flowFormat = flow->info.common.format;
@@ -365,7 +365,7 @@ namespace mxl::lib
                     catch (std::exception const& e)
                     {
                         MXL_ERROR("FlowManager: Failed to open grain [{}] for flow '{}': {}", i, flowDir.string(), e.what());
-                        throw std::filesystem::filesystem_error(std::string("FlowManager: Failed to open grain [") + std::to_string(i) + "]",
+                        throw std::filesystem::filesystem_error(std::string("FlowManager: Failed to open grain [") + std::to_string(i) + "].",
                             makeGrainDataFilePath(grainDir, i),
                             std::make_error_code(std::errc::io_error));
                     }
@@ -373,7 +373,7 @@ namespace mxl::lib
                     {
                         MXL_ERROR("FlowManager: Failed to open grain [{}] for flow '{}': unknown error", i, flowDir.string());
                         throw std::filesystem::filesystem_error(
-                            std::string("FlowManager: Failed to open grain [") + std::to_string(i) + "]: unknown error",
+                            std::string("FlowManager: Failed to open grain [") + std::to_string(i) + "]: unknown error.",
                             makeGrainDataFilePath(grainDir, i),
                             std::make_error_code(std::errc::io_error));
                     }

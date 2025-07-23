@@ -19,6 +19,17 @@
 
 using namespace mxl::lib;
 
+namespace
+{
+    // Helper to make a unique temp domain
+    std::filesystem::path makeTempDomain()
+    {
+        char tmpl[] = "/dev/shm/mxl_test_domainXXXXXX";
+        REQUIRE(mkdtemp(tmpl) != nullptr); // mkdtemp is in global namespace
+        return std::filesystem::path{tmpl};
+    }
+}
+
 TEST_CASE("Flow Manager : Create Manager", "[flow manager]")
 {
     auto const domain = mxl::tests::getDomainPath();
@@ -320,14 +331,6 @@ TEST_CASE("Flow Manager : Open, List, and Error Conditions", "[flow manager]")
     auto const badId = *uuids::uuid::from_string("44444444-4444-4444-4444-444444444444");
     REQUIRE_THROWS_AS(manager->createDiscreteFlow(badId, flowDef1, MXL_DATA_FORMAT_UNSPECIFIED, 1, grainRate, 128), std::runtime_error);
     REQUIRE_THROWS_AS(manager->createContinuousFlow(badId, flowDef2, MXL_DATA_FORMAT_VIDEO, sampleRate, 1, 4, 1024), std::runtime_error);
-}
-
-// Helper to make a unique temp domain
-static std::filesystem::path makeTempDomain()
-{
-    char tmpl[] = "/dev/shm/mxl_test_domainXXXXXX";
-    REQUIRE(mkdtemp(tmpl) != nullptr); // mkdtemp is in global namespace
-    return std::filesystem::path{tmpl};
 }
 
 // Re-creation after deletion
