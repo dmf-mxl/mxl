@@ -1,4 +1,7 @@
 {
+    "rust-analyzer.linkedProjects": [
+        "rust/Cargo.toml"
+    ],
     "files.associations": {
         "array": "cpp",
         "atomic": "cpp",
