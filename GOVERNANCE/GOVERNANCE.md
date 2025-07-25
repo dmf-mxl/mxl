@@ -77,7 +77,7 @@ The TSC strives for consensus. If voting is needed:
 
 - [Vincent Trussart (Grass Valley)](https://github.com/vt-tv) - Implementor Co-Chair
 - [Felix Poulin (CBC/Radio Canada)](https://github.com/felixpou) - User Co-Chair
-- Osmar Bento (AWS)
+- [Osmar Bento (AWS)](https://github.com/osmarbento-AWS)
 - [Peter Brightwell (BBC)](https://github.com/peterbrightwell)
 - [Kimon Hoffmann (Lawo)](https://github.com/KimonHoffmann)
 - [Pavlo Kondratenko (EBU)](https://github.com/paulvko)
