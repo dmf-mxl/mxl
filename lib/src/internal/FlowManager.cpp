@@ -72,7 +72,6 @@ namespace mxl::lib
             }
             else
             {
-                MXL_ERROR("Failed to create flow resource definition file '{}'", flowJsonFile.string());
                 throw std::filesystem::filesystem_error{
                     "Failed to create flow resource definition.", flowJsonFile, std::make_error_code(std::errc::io_error)};
             }
@@ -98,7 +97,6 @@ namespace mxl::lib
     {
         if (!exists(in_mxlDomain) || !is_directory(in_mxlDomain))
         {
-            MXL_ERROR("Domain path '{}' does not exist or is not a directory", in_mxlDomain.string());
             throw std::filesystem::filesystem_error{
                 "Path does not exist or is not a directory.", in_mxlDomain, std::make_error_code(std::errc::no_such_file_or_directory)};
         }
@@ -126,7 +124,6 @@ namespace mxl::lib
             auto readAccessFile = makeFlowAccessFilePath(tempDirectory);
             if (auto out = std::ofstream{readAccessFile, std::ios::out | std::ios::trunc}; !out)
             {
-                MXL_ERROR("Failed to create flow access file '{}'", readAccessFile.string());
                 throw std::filesystem::filesystem_error{
                     "Failed to create flow access file.", readAccessFile, std::make_error_code(std::errc::file_exists)};
             }
@@ -146,7 +143,6 @@ namespace mxl::lib
             auto const grainDir = makeGrainDirectoryName(tempDirectory);
             if (!std::filesystem::create_directory(grainDir))
             {
-                MXL_ERROR("Could not create grain directory '{}'", grainDir.string());
                 throw std::filesystem::filesystem_error{"Could not create grain directory.", grainDir, std::make_error_code(std::errc::io_error)};
             }
 
