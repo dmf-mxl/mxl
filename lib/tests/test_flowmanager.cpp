@@ -25,7 +25,7 @@ namespace
     std::filesystem::path makeTempDomain()
     {
         char tmpl[] = "/dev/shm/mxl_test_domainXXXXXX";
-        REQUIRE(mkdtemp(tmpl) != nullptr); // mkdtemp is in global namespace
+        REQUIRE(::mkdtemp(tmpl) != nullptr);
         return std::filesystem::path{tmpl};
     }
 }
@@ -361,7 +361,7 @@ TEST_CASE("FlowManager: re-create flow after deletion", "[flow manager][reuse]")
 }
 
 // Test robustness: corrupted flow directory with missing descriptor
-TEST_CASE("FlowManager: skip corrupted flow with missing descriptor", "[flow manager][corruption]")
+TEST_CASE("FlowManager: corrupted flow with missing descriptor", "[flow manager][corruption]")
 {
     auto domain = makeTempDomain();
     auto mgr = std::make_shared<FlowManager>(domain);
@@ -380,18 +380,10 @@ TEST_CASE("FlowManager: skip corrupted flow with missing descriptor", "[flow man
     REQUIRE(std::filesystem::exists(descFile));
     std::filesystem::remove(descFile);
 
-    // Current behavior: listFlows still reports the ID (only checks directory structure)
-    // \todo : DESIGN DECISION NEEDED - Should corrupted flows be:
-    //   a) Filtered out from listFlows() for safety, or
-    //   b) Listed but marked as corrupted, or
-    //   c) Listed normally (current behavior)?
+    // By design decision, corrupted flows are not filtered out
     auto ids = mgr->listFlows();
     REQUIRE(ids.size() == 1);
 
-    // Current behavior: openFlow works (shared-memory header contains metadata)
-    // \todo : DESIGN DECISION NEEDED - Should openFlow:
-    //   a) Succeed if shared memory is intact (current), or
-    //   b) Fail without complete metadata files?
     auto rd = mgr->openFlow(id, AccessMode::READ_ONLY);
     REQUIRE(rd);
     auto* d = dynamic_cast<DiscreteFlowData*>(rd.get());
@@ -441,7 +433,7 @@ TEST_CASE("FlowManager: concurrent createDiscreteFlow same UUID", "[flow manager
     remove_all(domain);
 }
 
-// deleteFlow on read-only domain - current behavior
+// deleteFlow on read-only domain
 TEST_CASE("FlowManager: deleteFlow on read-only domain", "[flow manager][deletion]")
 {
     auto domain = makeTempDomain();
@@ -534,7 +526,7 @@ TEST_CASE("FlowManager: multiple instances share domain", "[flow manager]")
     remove_all(domain);
 }
 
-// createFlow on unwritable domain - current behavior
+// createFlow on unwritable domain
 TEST_CASE("FlowManager: createFlow throws on unwritable domain", "[flow manager][error]")
 {
     auto domain = makeTempDomain();
