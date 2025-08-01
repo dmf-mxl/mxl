@@ -451,14 +451,14 @@ TEST_CASE("FlowManager: deleteFlow on read-only domain", "[flow manager][deletio
         std::filesystem::perm_options::remove);
 
     // DeleteFlow should respect filesystem permissions
-    // When domain is read-only, deletion operations should fail gracefully
-    // The method returns false and logs an error instead of throwing
-    REQUIRE(mgr->deleteFlow(id) == false);
+    // When domain is read-only, deletion operations should throw filesystem_error
+    // This test verifies proper permission enforcement
+    REQUIRE_THROWS_AS(mgr->deleteFlow(id), std::filesystem::filesystem_error);
 
     // Restore full permissions for cleanup and verification
     permissions(domain, std::filesystem::perms::owner_all, std::filesystem::perm_options::add);
 
-    // Since deletion failed, the flow should still exist
+    // Since deletion failed due to permissions, the flow should still exist
     REQUIRE(mgr->listFlows().size() == 1);
     remove_all(domain);
 }
