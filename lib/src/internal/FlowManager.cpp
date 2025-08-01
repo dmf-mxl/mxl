@@ -141,7 +141,7 @@ namespace mxl::lib
             info.discrete.syncCounter = 0;
 
             auto const grainDir = makeGrainDirectoryName(tempDirectory);
-            if (!std::filesystem::create_directory(grainDir))
+            if (!create_directory(grainDir))
             {
                 throw std::filesystem::filesystem_error{"Could not create grain directory.", grainDir, std::make_error_code(std::errc::io_error)};
             }
@@ -238,9 +238,7 @@ namespace mxl::lib
         {
             auto flowSegment = SharedMemoryInstance<Flow>{flowFile.string().c_str(), in_mode, 0U};
 
-            auto const* flow = flowSegment.get();
-            auto const flowFormat = flow->info.common.format;
-            if (mxlIsDiscreteDataFormat(flowFormat))
+            if (auto const flowFormat = flowSegment.get()->info.common.format; mxlIsDiscreteDataFormat(flowFormat))
             {
                 return openDiscreteFlow(base, std::move(flowSegment));
             }
@@ -295,16 +293,7 @@ namespace mxl::lib
     {
         auto flowData = std::make_unique<ContinuousFlowData>(std::move(sharedFlowInstance));
 
-        // Verify that the channel‐buffers file actually exists before attempting to open it
-        auto const channelPath = makeChannelDataFilePath(flowDir);
-        if (!std::filesystem::exists(channelPath))
-        {
-            throw std::filesystem::filesystem_error{
-                "Channel buffer file not found.", channelPath, std::make_error_code(std::errc::no_such_file_or_directory)};
-        }
-
-        // Open the channel buffers (may throw on I/O or mmap failure)
-        flowData->openChannelBuffers(channelPath.string().c_str(), /*payloadSize=*/0U);
+        flowData->openChannelBuffers(makeChannelDataFilePath(flowDir).string().c_str(), /*payloadSize=*/0U);
 
         return flowData;
     }
@@ -321,21 +310,8 @@ namespace mxl::lib
             // Close the flow
             flowData.reset();
 
-            // Attempt filesystem deletion, catching any errors
-            try
-            {
-                return deleteFlow(id);
-            }
-            catch (std::exception const& e)
-            {
-                MXL_ERROR("Failed to delete flow {}: {}", uuids::to_string(id), e.what());
-                return false;
-            }
-            catch (...)
-            {
-                MXL_ERROR("Failed to delete flow {}: unknown error", uuids::to_string(id));
-                return false;
-            }
+            // Delegate to the other deleteFlow overload
+            return deleteFlow(id);
         }
         return false;
     }
@@ -347,26 +323,13 @@ namespace mxl::lib
 
         // Compute the flow directory path
         auto const flowPath = makeFlowDirectoryName(_mxlDomain, uuid);
-        try
+        auto const removed = std::filesystem::remove_all(flowPath);
+        if (removed == 0)
         {
-            auto const removed = std::filesystem::remove_all(flowPath);
-            if (removed == 0)
-            {
-                MXL_TRACE("Flow not found or already deleted: {}", uuid);
-                return false;
-            }
-            return true;
-        }
-        catch (std::exception const& e)
-        {
-            MXL_ERROR("Error deleting flow {} at {}: {}", uuid, flowPath.string(), e.what());
+            MXL_TRACE("Flow not found or already deleted: {}", uuid);
             return false;
         }
-        catch (...)
-        {
-            MXL_ERROR("Error deleting flow {} at {}: unknown error", uuid, flowPath.string());
-            return false;
-        }
+        return true;
     }
 
     void FlowManager::garbageCollect()

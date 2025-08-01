@@ -312,7 +312,7 @@ TEST_CASE("Flow Manager : Open, List, and Error Conditions", "[flow manager]")
     {
         // manually drop a bogus folder
         auto invalidDir = domain / "not-a-valid-uuid.mxl-flow";
-        REQUIRE(std::filesystem::create_directory(invalidDir));
+        REQUIRE(create_directory(invalidDir));
         manager = std::make_shared<FlowManager>(domain);
         auto flows2 = manager->listFlows();
         REQUIRE(flows2.empty());
@@ -446,7 +446,7 @@ TEST_CASE("FlowManager: deleteFlow on read-only domain", "[flow manager][deletio
     REQUIRE(mgr->listFlows().size() == 1);
 
     // Make domain read-only
-    std::filesystem::permissions(domain,
+    permissions(domain,
         std::filesystem::perms::owner_all | std::filesystem::perms::group_all | std::filesystem::perms::others_all,
         std::filesystem::perm_options::remove);
 
@@ -456,7 +456,7 @@ TEST_CASE("FlowManager: deleteFlow on read-only domain", "[flow manager][deletio
     REQUIRE(mgr->deleteFlow(id) == false);
 
     // Restore full permissions for cleanup and verification
-    std::filesystem::permissions(domain, std::filesystem::perms::owner_all, std::filesystem::perm_options::add);
+    permissions(domain, std::filesystem::perms::owner_all, std::filesystem::perm_options::add);
 
     // Since deletion failed, the flow should still exist
     REQUIRE(mgr->listFlows().size() == 1);
@@ -530,7 +530,7 @@ TEST_CASE("FlowManager: createFlow throws on unwritable domain", "[flow manager]
 {
     auto domain = makeTempDomain();
     // remove write perms on domain
-    std::filesystem::permissions(domain, std::filesystem::perms::owner_write, std::filesystem::perm_options::remove);
+    permissions(domain, std::filesystem::perms::owner_write, std::filesystem::perm_options::remove);
 
     auto mgr = std::make_shared<FlowManager>(domain);
     auto const id = *uuids::uuid::from_string("aaaaaaaa-0000-0000-0000-000000000000");
@@ -543,6 +543,6 @@ TEST_CASE("FlowManager: createFlow throws on unwritable domain", "[flow manager]
     REQUIRE_THROWS_AS(mgr->createDiscreteFlow(id, def, MXL_DATA_FORMAT_VIDEO, 1, rate, 8), std::filesystem::filesystem_error);
 
     // restore perms so we can clean up
-    std::filesystem::permissions(domain, std::filesystem::perms::owner_all, std::filesystem::perm_options::add);
+    permissions(domain, std::filesystem::perms::owner_all, std::filesystem::perm_options::add);
     remove_all(domain);
 }
