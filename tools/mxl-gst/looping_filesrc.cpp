@@ -362,9 +362,9 @@ private:
                     GstClockTime pts = GST_BUFFER_PTS(buffer);
                     if (GST_CLOCK_TIME_IS_VALID(pts))
                     {
-                        int64_t frame [[maybe_unused]]
-                        = currentFrame++;
-                        MXL_TRACE("Video frame received.  Frame {}, pts (ms) {}, duratio (ms) {}",
+                        [[maybe_unused]]
+                        int64_t frame = currentFrame++;
+                        MXL_TRACE("Video frame received.  Frame {}, pts (ms) {}, duration (ms) {}",
                             frame,
                             pts / GST_MSECOND,
                             GST_BUFFER_DURATION(buffer) / GST_MSECOND);
@@ -463,7 +463,7 @@ int main(int argc, char* argv[])
 
     // Simple scope guard to ensure GStreamer is de-initialized.
     // Replace with std::scope_exit when widely available ( C++23 )
-    auto onExit = std::unique_ptr<void, std::function<void(void*)>>(nullptr, [](void*) { gst_deinit(); });
+    auto onExit = std::unique_ptr<void, void (*)(void*)>(nullptr, [](void*) { gst_deinit(); });
 
     //
     // Create the Player and open the input uri
@@ -481,7 +481,6 @@ int main(int argc, char* argv[])
     if (!player->start())
     {
         MXL_ERROR("Failed to start the player");
-        gst_deinit();
         return -1;
     }
 
@@ -498,9 +497,6 @@ int main(int argc, char* argv[])
 
     // Release the player
     player.reset();
-
-    // Release gstreamer resources.
-    gst_deinit();
 
     return 0;
 }
