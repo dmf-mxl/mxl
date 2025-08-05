@@ -212,6 +212,11 @@ int real_main(int argc, char** argv, void*)
     domainOpt->required(true);
     domainOpt->check(CLI::ExistingDirectory);
 
+    std::optional<std::uint64_t> readTimeoutNs;
+    auto readTimeoutOpt = app.add_option("-t,--timeout", readTimeoutNs, "The read timeout in ns, frame interval + 1 ms used if not specified");
+    readTimeoutOpt->required(false);
+    readTimeoutOpt->default_val(std::nullopt);
+
     CLI11_PARSE(app, argc, argv);
 
     // So the source need to generate a json?
@@ -237,7 +242,6 @@ int real_main(int argc, char** argv, void*)
     mxlStatus ret;
 
     Rational rate;
-    std::uint64_t editUnitDurationNs = 33'000'000LL;
     std::uint64_t grain_index = 0;
 
     auto instance = mxlCreateInstance(domain.c_str(), "");
@@ -269,8 +273,16 @@ int real_main(int argc, char** argv, void*)
     }
 
     rate = flow_info.discrete.grainRate;
-    editUnitDurationNs = static_cast<std::uint64_t>(1.0 * rate.denominator * (1'000'000'000.0 / rate.numerator));
-    editUnitDurationNs += 1'000'000ULL; // allow some margin.
+    std::uint64_t actualReadTimeoutNs;
+    if (readTimeoutNs)
+    {
+        actualReadTimeoutNs = *readTimeoutNs;
+    }
+    else
+    {
+        actualReadTimeoutNs = static_cast<std::uint64_t>(1.0 * rate.denominator * (1'000'000'000.0 / rate.numerator));
+        actualReadTimeoutNs += 1'000'000ULL; // allow some margin.
+    }
     gst_pipeline.start();
 
     grain_index = mxlGetCurrentIndex(&flow_info.discrete.grainRate);
@@ -278,7 +290,7 @@ int real_main(int argc, char** argv, void*)
     {
         GrainInfo grain_info;
         uint8_t* payload;
-        auto ret = mxlFlowReaderGetGrain(reader, grain_index, editUnitDurationNs, &grain_info, &payload);
+        auto ret = mxlFlowReaderGetGrain(reader, grain_index, actualReadTimeoutNs, &grain_info, &payload);
         if (ret != MXL_STATUS_OK)
         {
             // Missed a grain. resync.
