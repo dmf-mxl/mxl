@@ -171,12 +171,14 @@ public:
         gst_element_set_state(_pipeline, GST_STATE_PLAYING);
     }
 
-    void pushSample(GstBuffer* gst_buffer, uint8_t* payload, size_t payload_len)
+    void pushSample(uint8_t* payload, size_t payload_len)
     {
+        GstBuffer* gst_buffer{gst_buffer_new_allocate(nullptr, payload_len, nullptr)};
+
         GstMapInfo map;
         gst_buffer_map(gst_buffer, &map, GST_MAP_WRITE);
-
         ::memcpy(map.data, payload, payload_len);
+        gst_buffer_unmap(gst_buffer, &map);
 
         int ret;
         g_signal_emit_by_name(_appsrc, "push-buffer", gst_buffer, &ret);
@@ -185,7 +187,8 @@ public:
             MXL_ERROR("Error pushing buffer to appsrc");
             return;
         }
-        gst_buffer_unmap(gst_buffer, &map);
+
+        gst_buffer_unref(gst_buffer);
     }
 
 private:
@@ -236,7 +239,6 @@ int real_main(int argc, char** argv, void*)
         .frame_rate = descriptor_parser.getGrainRate()};
 
     GstreamerPipeline gst_pipeline(gst_config);
-    GstBuffer* gst_buffer{nullptr};
 
     int exit_status = EXIT_SUCCESS;
     mxlStatus ret;
@@ -306,19 +308,7 @@ int real_main(int argc, char** argv, void*)
 
         grain_index++;
 
-        if (!gst_buffer)
-        {
-            gst_buffer = gst_buffer_new_allocate(nullptr, grain_info.grainSize, nullptr);
-        }
-
-        // check if the buffer is writable to avoid segmentation fault
-        // https://github.com/moontree/gstreamer-usage
-        if (!gst_buffer_is_writable(gst_buffer))
-        {
-            gst_buffer_unref(gst_buffer);
-            gst_buffer = gst_buffer_new_allocate(nullptr, grain_info.grainSize, nullptr);
-        }
-        gst_pipeline.pushSample(gst_buffer, payload, grain_info.grainSize);
+        gst_pipeline.pushSample(payload, grain_info.grainSize);
     }
 
 mxl_cleanup:
