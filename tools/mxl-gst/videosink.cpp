@@ -165,20 +165,28 @@ public:
         }
     }
 
-    void start()
+    void start(std::uint64_t baseTimestamp)
     {
         // Start playing
         gst_element_set_state(_pipeline, GST_STATE_PLAYING);
+        _baseTimestamp = baseTimestamp;
     }
 
-    void pushSample(uint8_t* payload, size_t payload_len)
+    void pushSample(uint8_t* payload, size_t payload_len, std::uint64_t timestamp, std::uint64_t currentTime)
     {
+        auto const latency = currentTime > timestamp ? currentTime - timestamp : 0;
+        if (latency > _highestLatency)
+        {
+            _highestLatency = latency;
+            MXL_WARN("Latency increase detected: {} ns", latency);
+        }
         GstBuffer* gst_buffer{gst_buffer_new_allocate(nullptr, payload_len, nullptr)};
 
         GstMapInfo map;
         gst_buffer_map(gst_buffer, &map, GST_MAP_WRITE);
         ::memcpy(map.data, payload, payload_len);
         gst_buffer_unmap(gst_buffer, &map);
+        GST_BUFFER_PTS(gst_buffer) = timestamp - _baseTimestamp + _highestLatency;
 
         int ret;
         g_signal_emit_by_name(_appsrc, "push-buffer", gst_buffer, &ret);
@@ -197,6 +205,11 @@ private:
     GstElement* _videoscale{nullptr};
     GstElement* _autovideosink{nullptr};
     GstElement* _pipeline{nullptr};
+    /// Indicates the MXL timestamp at the moment the pipeline got started. Is used to calculate the PTS of the buffers based on the pipeline's
+    /// running time.
+    std::uint64_t _baseTimestamp{0};
+    /// Indicates the latency at which we are getting the data. We adjust PTS values based on this information to ensure fluent playback.
+    std::uint64_t _highestLatency{0};
 };
 
 int real_main(int argc, char** argv, void*)
@@ -285,7 +298,7 @@ int real_main(int argc, char** argv, void*)
         readTimeoutNs = static_cast<std::uint64_t>(1.0 * rate.denominator * (1'000'000'000.0 / rate.numerator));
         readTimeoutNs += 1'000'000ULL; // allow some margin.
     }
-    gst_pipeline.start();
+    gst_pipeline.start(mxlGetTime());
 
     grain_index = mxlGetCurrentIndex(&flow_info.discrete.grainRate);
     while (!g_exit_requested)
@@ -305,10 +318,11 @@ int real_main(int argc, char** argv, void*)
             // we don't need partial grains. wait for the grain to be complete.
             continue;
         }
+        std::uint64_t timestamp = mxlIndexToTimestamp(&flow_info.discrete.grainRate, grain_index);
 
         grain_index++;
 
-        gst_pipeline.pushSample(payload, grain_info.grainSize);
+        gst_pipeline.pushSample(payload, grain_info.grainSize, timestamp, mxlGetTime());
     }
 
 mxl_cleanup:
