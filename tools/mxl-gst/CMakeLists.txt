@@ -6,6 +6,7 @@ include(GNUInstallDirs)
 find_package(PkgConfig REQUIRED)
 pkg_search_module(gstreamer IMPORTED_TARGET gstreamer-1.0)
 pkg_search_module(gstreamer-app IMPORTED_TARGET gstreamer-app-1.0)
+pkg_search_module(gstreamer-audio IMPORTED_TARGET gstreamer-audio-1.0)
 pkg_search_module(gstreamer-video IMPORTED_TARGET gstreamer-video-1.0)
 
 if (gstreamer_FOUND)
@@ -84,6 +85,7 @@ if (gstreamer_FOUND)
                 spdlog::spdlog
                 PkgConfig::gstreamer
                 PkgConfig::gstreamer-app
+                PkgConfig::gstreamer-audio
                 PkgConfig::gstreamer-video
         )
 
