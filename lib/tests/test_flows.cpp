@@ -402,7 +402,7 @@ TEST_CASE("Audio Flow : Create/Destroy", "[mxl flows]")
         }
         for (auto i = 0U; i < payloadBuffersSlices.base.fragments[1].size; ++i)
         {
-            static_cast<std::uint8_t*>(payloadBuffersSlices.base.fragments[0].pointer)[i] = payloadBuffersSlices.base.fragments[0].size + i;
+            static_cast<std::uint8_t*>(payloadBuffersSlices.base.fragments[1].pointer)[i] = payloadBuffersSlices.base.fragments[0].size + i;
         }
 
         /// Get some info about the freshly created flow.  Since no grains have been commited, the head should still be at 0.
@@ -431,7 +431,7 @@ TEST_CASE("Audio Flow : Create/Destroy", "[mxl flows]")
         }
         for (auto i = 0U; i < payloadBuffersSlices.base.fragments[1].size; ++i)
         {
-            REQUIRE(static_cast<std::uint8_t const*>(payloadBuffersSlices.base.fragments[0].pointer)[i] ==
+            REQUIRE(static_cast<std::uint8_t const*>(payloadBuffersSlices.base.fragments[1].pointer)[i] ==
                     payloadBuffersSlices.base.fragments[0].size + i);
         }
 
