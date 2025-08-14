@@ -112,8 +112,22 @@ Members serve one-year terms and may be reappointed or removed by the TSC.
 
 # Meetings
 
-TSC meetings are public unless a justified need for privacy arises. Meetings are announced in advance and may be held virtually or in person. The agenda is shared in advance. Any community member can propose items by opening an issue and tagging it for TSC consideration.
-Minutes are recorded and archived. Additional guests may attend in a non-voting capacity.
+TSC and RC meetings are public unless a justified need for privacy arises. Additional guests may attend in a non-voting capacity. Meetings are announced in advance and may be held virtually or in person. 
+
+The agenda is maintained as a project board, with issues attached to this project board as agenda items: [TSC Board](https://github.com/orgs/dmf-mxl/projects/1), [RC Board](https://github.com/orgs/dmf-mxl/projects/5). Any community member can propose items by opening an issue and adding to the corresponding project board for consideration. (If you don't have the privilege to assign the issue to a project board, contact the group chair(s)). 
+
+Items discussed in the meetings should include a comment indicating the date of the meeting, the general points of discussions, any decision or tentative decision taken. Immediate actions that can be executed in the next week to close the issue are indicated with a check mark and a mention to whom it is assigned. Substantive follow up action or further action require to create a new issue and can be linked in the note. Ex:
+```
+# TSC YYYY-MM-DD
+- General points of discussion, keep as short as possible
+- **Decision**: a decision taken
+- **Tentative decision**: when we give another week for the participants to make verifications
+- [] Action @assignee by [date]
+- #Reference_to_a_follow_up_issue
+```
+
+Calls can be recorded and kept for a limited period of time as AI summarisation may be used for note taking purpose.
+
 
 # Licensing
 
