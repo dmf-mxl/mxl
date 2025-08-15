@@ -28,7 +28,7 @@ namespace mxl::lib
     {
         if (_flowData)
         {
-            if (count < (_bufferLength / 2))
+            if (count <= (_bufferLength / 2))
             {
                 auto const startOffset = (index + _bufferLength - count) % _bufferLength;
                 auto const endOffset = (index % _bufferLength);
@@ -42,7 +42,7 @@ namespace mxl::lib
                 payloadBufferSlices.base.fragments[0].pointer = baseBufferPtr + sampleWordSize * startOffset;
                 payloadBufferSlices.base.fragments[0].size = sampleWordSize * firstLength;
 
-                payloadBufferSlices.base.fragments[1].pointer = baseBufferPtr + sampleWordSize * endOffset;
+                payloadBufferSlices.base.fragments[1].pointer = baseBufferPtr;
                 payloadBufferSlices.base.fragments[1].size = sampleWordSize * secondLength;
 
                 payloadBufferSlices.stride = sampleWordSize * _bufferLength;
