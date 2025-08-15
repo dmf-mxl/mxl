@@ -165,18 +165,28 @@ public:
         }
     }
 
-    void start()
+    void start(std::uint64_t baseTimestamp)
     {
         // Start playing
         gst_element_set_state(_pipeline, GST_STATE_PLAYING);
+        _baseTimestamp = baseTimestamp;
     }
 
-    void pushSample(GstBuffer* gst_buffer, uint8_t* payload, size_t payload_len)
+    void pushSample(uint8_t* payload, size_t payload_len, std::uint64_t timestamp, std::uint64_t currentTime)
     {
+        auto const latencyNs = currentTime > timestamp ? currentTime - timestamp : 0;
+        if (latencyNs > _highestLatencyNs)
+        {
+            _highestLatencyNs = latencyNs;
+            MXL_WARN("Latency increase detected: {} ns", latencyNs);
+        }
+        GstBuffer* gst_buffer{gst_buffer_new_allocate(nullptr, payload_len, nullptr)};
+
         GstMapInfo map;
         gst_buffer_map(gst_buffer, &map, GST_MAP_WRITE);
-
         ::memcpy(map.data, payload, payload_len);
+        gst_buffer_unmap(gst_buffer, &map);
+        GST_BUFFER_PTS(gst_buffer) = timestamp - _baseTimestamp + _highestLatencyNs;
 
         int ret;
         g_signal_emit_by_name(_appsrc, "push-buffer", gst_buffer, &ret);
@@ -185,7 +195,8 @@ public:
             MXL_ERROR("Error pushing buffer to appsrc");
             return;
         }
-        gst_buffer_unmap(gst_buffer, &map);
+
+        gst_buffer_unref(gst_buffer);
     }
 
 private:
@@ -194,6 +205,11 @@ private:
     GstElement* _videoscale{nullptr};
     GstElement* _autovideosink{nullptr};
     GstElement* _pipeline{nullptr};
+    /// Indicates the MXL timestamp at the moment the pipeline got started. Is used to calculate the PTS of the buffers based on the pipeline's
+    /// running time.
+    std::uint64_t _baseTimestamp{0};
+    /// Indicates the latency in ns at which we are getting the data. We adjust PTS values based on this information to ensure fluent playback.
+    std::uint64_t _highestLatencyNs{0};
 };
 
 int real_main(int argc, char** argv, void*)
@@ -211,6 +227,11 @@ int real_main(int argc, char** argv, void*)
     auto domainOpt = app.add_option("-d,--domain", domain, "The MXL domain directory");
     domainOpt->required(true);
     domainOpt->check(CLI::ExistingDirectory);
+
+    std::optional<std::uint64_t> readTimeoutNs;
+    auto readTimeoutOpt = app.add_option("-t,--timeout", readTimeoutNs, "The read timeout in ns, frame interval + 1 ms used if not specified");
+    readTimeoutOpt->required(false);
+    readTimeoutOpt->default_val(std::nullopt);
 
     CLI11_PARSE(app, argc, argv);
 
@@ -231,13 +252,11 @@ int real_main(int argc, char** argv, void*)
         .frame_rate = descriptor_parser.getGrainRate()};
 
     GstreamerPipeline gst_pipeline(gst_config);
-    GstBuffer* gst_buffer{nullptr};
 
     int exit_status = EXIT_SUCCESS;
     mxlStatus ret;
 
     Rational rate;
-    std::uint64_t editUnitDurationNs = 33'000'000LL;
     std::uint64_t grain_index = 0;
 
     auto instance = mxlCreateInstance(domain.c_str(), "");
@@ -269,16 +288,24 @@ int real_main(int argc, char** argv, void*)
     }
 
     rate = flow_info.discrete.grainRate;
-    editUnitDurationNs = static_cast<std::uint64_t>(1.0 * rate.denominator * (1'000'000'000.0 / rate.numerator));
-    editUnitDurationNs += 1'000'000ULL; // allow some margin.
-    gst_pipeline.start();
+    std::uint64_t actualReadTimeoutNs;
+    if (readTimeoutNs)
+    {
+        actualReadTimeoutNs = *readTimeoutNs;
+    }
+    else
+    {
+        actualReadTimeoutNs = static_cast<std::uint64_t>(1.0 * rate.denominator * (1'000'000'000.0 / rate.numerator));
+        actualReadTimeoutNs += 1'000'000ULL; // allow some margin.
+    }
+    gst_pipeline.start(mxlGetTime());
 
     grain_index = mxlGetCurrentIndex(&flow_info.discrete.grainRate);
     while (!g_exit_requested)
     {
         GrainInfo grain_info;
         uint8_t* payload;
-        auto ret = mxlFlowReaderGetGrain(reader, grain_index, editUnitDurationNs, &grain_info, &payload);
+        auto ret = mxlFlowReaderGetGrain(reader, grain_index, actualReadTimeoutNs, &grain_info, &payload);
         if (ret != MXL_STATUS_OK)
         {
             // Missed a grain. resync.
@@ -291,22 +318,11 @@ int real_main(int argc, char** argv, void*)
             // we don't need partial grains. wait for the grain to be complete.
             continue;
         }
+        std::uint64_t timestamp = mxlIndexToTimestamp(&flow_info.discrete.grainRate, grain_index);
 
         grain_index++;
 
-        if (!gst_buffer)
-        {
-            gst_buffer = gst_buffer_new_allocate(nullptr, grain_info.grainSize, nullptr);
-        }
-
-        // check if the buffer is writable to avoid segmentation fault
-        // https://github.com/moontree/gstreamer-usage
-        if (!gst_buffer_is_writable(gst_buffer))
-        {
-            gst_buffer_unref(gst_buffer);
-            gst_buffer = gst_buffer_new_allocate(nullptr, grain_info.grainSize, nullptr);
-        }
-        gst_pipeline.pushSample(gst_buffer, payload, grain_info.grainSize);
+        gst_pipeline.pushSample(payload, grain_info.grainSize, timestamp, mxlGetTime());
     }
 
 mxl_cleanup:
