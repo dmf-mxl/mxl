@@ -49,6 +49,11 @@ namespace mxl::lib
         virtual mxlStatus cancel() override;
 
         ///
+        /// \see FlowWriter::getFlowData()
+        ///
+        virtual FlowData& getFlowData() override;
+
+        ///
         /// \see FlowWriter
         ///
         virtual void flowRead() override;

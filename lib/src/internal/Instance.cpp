@@ -260,6 +260,11 @@ namespace mxl::lib
         throw std::runtime_error("Unsupported flow format.");
     }
 
+    std::unique_ptr<FlowData> Instance::openFlow(uuids::uuid const& flowId, AccessMode mode)
+    {
+        return _flowManager.openFlow(flowId, mode);
+    }
+
     bool Instance::deleteFlow(uuids::uuid const& flowId)
     {
         return _flowManager.deleteFlow(flowId);

@@ -12,7 +12,12 @@ configure_file(
 
 # Files to be compiled into the library
 add_library(mxl SHARED)
+add_library(mxl-static STATIC)
 target_compile_features(mxl
+        PRIVATE
+            cxx_std_20
+    )
+target_compile_features(mxl-static
         PRIVATE
             cxx_std_20
     )
@@ -27,9 +32,19 @@ set_target_properties(mxl
             VERSION                      "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
             SOVERSION                    "${PROJECT_VERSION_MAJOR}"
     )
+set_target_properties(mxl-static
+        PROPERTIES
+            POSITION_INDEPENDENT_CODE    ON
+            VISIBILITY_INLINES_HIDDEN    OFF
+            C_VISIBILITY_PRESET          default
+            CXX_VISIBILITY_PRESET        default
+            C_EXTENSIONS                 OFF
+            CXX_EXTENSIONS               OFF
+            VERSION                      "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
+            SOVERSION                    "${PROJECT_VERSION_MAJOR}"
+    )
 
-target_sources(mxl
-        PRIVATE
+set(MXL_SOURCES
             src/flow.cpp
             src/mxl.cpp
             src/time.cpp
@@ -54,8 +69,11 @@ target_sources(mxl
             src/internal/Thread.cpp
             src/internal/Time.cpp
             src/internal/Timing.cpp
-        )
 
+)
+
+target_sources(mxl PRIVATE ${MXL_SOURCES})
+target_sources(mxl-static PRIVATE ${MXL_SOURCES})
 
 if (NOT TARGET stduuid)
     find_package(stduuid CONFIG REQUIRED)
@@ -78,7 +96,19 @@ target_include_directories(mxl PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
+target_include_directories(mxl-static PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
 target_link_libraries(mxl
+        PRIVATE
+            stduuid
+            spdlog::spdlog
+            fmt::fmt
+            picojson::picojson
+    )
+target_link_libraries(mxl-static
         PRIVATE
             stduuid
             spdlog::spdlog
@@ -89,6 +119,8 @@ target_link_libraries(mxl
 # Alias trace to libtrace::libtrace so that this library can be used
 # in lieu of a module from the local source tree
 add_library(${PROJECT_NAME}::mxl ALIAS mxl)
+
+add_subdirectory(fabrics)
 add_subdirectory(tests)
 
 # Install targets

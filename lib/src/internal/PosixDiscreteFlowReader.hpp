@@ -35,6 +35,12 @@ namespace mxl::lib
         virtual FlowInfo getFlowInfo() override;
 
         ///
+        /// Accessor for the underlying flow data.
+        /// The reader must be properly attached to the flow before invoking this method.
+        ///
+        virtual FlowData& getFlowData() override;
+
+        ///
         /// Accessor for a specific grain at a specific index.
         /// The index must be >= FlowInfo.tailIndex.
         ///

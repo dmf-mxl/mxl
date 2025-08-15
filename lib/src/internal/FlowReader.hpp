@@ -7,6 +7,7 @@
 #include <uuid.h>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
+#include "FlowData.hpp"
 
 namespace mxl::lib
 {
@@ -25,6 +26,12 @@ namespace mxl::lib
         /// \return A copy of the FlowInfo
         ///
         virtual FlowInfo getFlowInfo() = 0;
+
+        ///
+        /// Accessor for the underlying flow data.
+        /// The reader must be properly attached to the flow before invoking this method.
+        ///
+        virtual FlowData& getFlowData() = 0;
 
         ///
         /// Dtor.

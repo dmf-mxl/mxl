@@ -6,7 +6,6 @@
 #include <cstdint>
 #include <atomic>
 #include <filesystem>
-#include <limits>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -49,6 +48,8 @@ namespace mxl::lib
         /// \throw std::runtime_error On any error (parse exception, shared memory conflicts, etc)
         ///
         std::unique_ptr<FlowData> createFlow(std::string const& flowDef);
+
+        std::unique_ptr<FlowData> openFlow(uuids::uuid const& flowId, AccessMode mode);
 
         /// Delete a flow by id
         ///

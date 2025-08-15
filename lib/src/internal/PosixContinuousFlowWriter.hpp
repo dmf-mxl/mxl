@@ -33,6 +33,9 @@ namespace mxl::lib
         /** \see FlowWriter::getFlowInfo */
         virtual FlowInfo getFlowInfo() override;
 
+        /** \see FlowWriter::getFlowData() */
+        virtual FlowData& getFlowData() override;
+
         /** \see ContinuousFlowWriter::openSamples */
         virtual mxlStatus openSamples(std::uint64_t index, std::size_t count, MutableWrappedMultiBufferSlice& payloadBufferSlices) override;
 

@@ -33,6 +33,10 @@
       "name": "pcapplusplus",
       "version>=": "25.5#0",
       "platform": "linux"
+    },
+    {
+      "name": "reflectcpp",
+      "version>=": "0.19.0"
     }
   ],
   "builtin-baseline": "189fcdcb953b871d206ffada6db047496fc3f496"

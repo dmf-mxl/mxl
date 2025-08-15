@@ -36,6 +36,13 @@ namespace mxl::lib
         virtual FlowInfo getFlowInfo() override;
 
         /**
+         * Accessor for the underlying flow data.
+         * The reader must be properly attached to the flow before invoking this method.
+         * \return A copy of the FlowInfo
+         */
+        virtual FlowData& getFlowData() override;
+
+        /**
          * Accessor for a specific set of samples across all channels
          * ending at a specific index (`count` samples up to `index`).
          *
