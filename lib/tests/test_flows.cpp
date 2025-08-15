@@ -21,6 +21,7 @@
 #include <filesystem>
 #include <memory>
 #include <thread>
+#include <uuid.h>
 #include <catch2/catch_test_macros.hpp>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
@@ -402,7 +403,7 @@ TEST_CASE("Audio Flow : Create/Destroy", "[mxl flows]")
         }
         for (auto i = 0U; i < payloadBuffersSlices.base.fragments[1].size; ++i)
         {
-            static_cast<std::uint8_t*>(payloadBuffersSlices.base.fragments[0].pointer)[i] = payloadBuffersSlices.base.fragments[0].size + i;
+            static_cast<std::uint8_t*>(payloadBuffersSlices.base.fragments[1].pointer)[i] = payloadBuffersSlices.base.fragments[0].size + i;
         }
 
         /// Get some info about the freshly created flow.  Since no grains have been commited, the head should still be at 0.
@@ -431,7 +432,7 @@ TEST_CASE("Audio Flow : Create/Destroy", "[mxl flows]")
         }
         for (auto i = 0U; i < payloadBuffersSlices.base.fragments[1].size; ++i)
         {
-            REQUIRE(static_cast<std::uint8_t const*>(payloadBuffersSlices.base.fragments[0].pointer)[i] ==
+            REQUIRE(static_cast<std::uint8_t const*>(payloadBuffersSlices.base.fragments[1].pointer)[i] ==
                     payloadBuffersSlices.base.fragments[0].size + i);
         }
 
@@ -464,4 +465,105 @@ TEST_CASE("Audio Flow : Create/Destroy", "[mxl flows]")
 
     mxlDestroyInstance(instanceReader);
     mxlDestroyInstance(instanceWriter);
+}
+
+struct BatchIndexAndSize
+{
+    std::uint64_t index;
+    std::size_t size;
+};
+
+/// Prepares reading or writing batches in a way that the given numOfSamples are split into numOfBatches batches, which can be read or written. The
+/// batch with the lowest index (containing the "oldest" data) is the first one.
+std::vector<BatchIndexAndSize> planAudioBatches(std::size_t numOfBatches, std::size_t numOfSamples, std::uint64_t lastBatchIndex)
+{
+    std::vector<BatchIndexAndSize> result;
+    auto const batchSize = numOfSamples / numOfBatches;
+    auto const remainder = numOfSamples % numOfBatches;
+
+    std::size_t samplesSoFar = 0U;
+    for (std::size_t i = 0; i < numOfBatches; ++i)
+    {
+        BatchIndexAndSize batch;
+        batch.size = batchSize + (i < remainder ? 1 : 0);
+        samplesSoFar += batch.size;
+        batch.index = lastBatchIndex - numOfSamples + samplesSoFar;
+        result.push_back(batch);
+    }
+
+    return result;
+}
+
+TEST_CASE("Audio Flow : Different writer / reader batch size", "[mxl flows]")
+{
+    auto domain = std::filesystem::path{"./mxl_unittest_domain"};
+    remove_all(domain);
+    create_directories(domain);
+
+    auto const opts = "{}";
+    auto instance = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instance != nullptr);
+
+    auto flowDef = mxl::tests::readFile("data/audio_flow.json");
+    FlowInfo flowInfo;
+    REQUIRE(mxlCreateFlow(instance, flowDef.c_str(), opts, &flowInfo) == MXL_STATUS_OK);
+    auto const flowId = uuids::to_string(flowInfo.common.id);
+    REQUIRE(flowInfo.continuous.bufferLength > 11U); // To have at least 2 samples per batch in our second part of the test with reading in 3 batches.
+
+    // We write the whole buffer worth of data in 4 batches, and then we try to read the second half back in both equally-sized batches and in
+    // different-sized batches.
+    auto const lastIndex{mxlGetCurrentIndex(&flowInfo.continuous.sampleRate)};
+    auto writeBatches{planAudioBatches(4, flowInfo.continuous.bufferLength, lastIndex)};
+
+    mxlFlowWriter writer;
+    REQUIRE(mxlCreateFlowWriter(instance, flowId.c_str(), "", &writer) == MXL_STATUS_OK);
+    for (auto const& batch : writeBatches)
+    {
+        MutableWrappedMultiBufferSlice payloadBuffersSlices;
+        REQUIRE(mxlFlowWriterOpenSamples(writer, batch.index, batch.size, &payloadBuffersSlices) == MXL_STATUS_OK);
+        REQUIRE((payloadBuffersSlices.base.fragments[0].size + payloadBuffersSlices.base.fragments[1].size) / 4 == batch.size);
+        std::uint64_t index = batch.index - batch.size + 1;
+        for (std::size_t i = 0U; i < payloadBuffersSlices.base.fragments[0].size / 4; ++i)
+        {
+            static_cast<std::uint32_t*>(payloadBuffersSlices.base.fragments[0].pointer)[i] = static_cast<uint32_t>(index++);
+        }
+        for (std::size_t i = 0U; i < payloadBuffersSlices.base.fragments[1].size / 4; ++i)
+        {
+            static_cast<std::uint32_t*>(payloadBuffersSlices.base.fragments[1].pointer)[i] = static_cast<uint32_t>(index++);
+        }
+        REQUIRE(index == batch.index + 1);
+        REQUIRE(mxlFlowWriterCommitSamples(writer) == MXL_STATUS_OK);
+    }
+    REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
+
+    mxlFlowReader reader;
+    REQUIRE(mxlCreateFlowReader(instance, flowId.c_str(), "", &reader) == MXL_STATUS_OK);
+    auto const readCheckFn = [](mxlFlowReader reader, std::vector<BatchIndexAndSize> const& batches)
+    {
+        for (auto const& batch : batches)
+        {
+            WrappedMultiBufferSlice payloadBuffersSlices;
+            REQUIRE(mxlFlowReaderGetSamples(reader, batch.index, batch.size, &payloadBuffersSlices) == MXL_STATUS_OK);
+            REQUIRE((payloadBuffersSlices.base.fragments[0].size + payloadBuffersSlices.base.fragments[1].size) / 4 == batch.size);
+            std::uint64_t index = batch.index - batch.size + 1;
+            for (std::size_t i = 0U; i < payloadBuffersSlices.base.fragments[0].size / 4; ++i)
+            {
+                REQUIRE(static_cast<std::uint32_t const*>(payloadBuffersSlices.base.fragments[0].pointer)[i] == static_cast<uint32_t>(index++));
+            }
+            for (std::size_t i = 0U; i < payloadBuffersSlices.base.fragments[1].size / 4; ++i)
+            {
+                REQUIRE(static_cast<std::uint32_t const*>(payloadBuffersSlices.base.fragments[1].pointer)[i] == static_cast<uint32_t>(index++));
+            }
+            REQUIRE(index == batch.index + 1);
+        }
+    };
+    // When checking the batches, we can only check the second half of the buffer (this is what mxlFlowReaderGetSamples allows us).
+    writeBatches.erase(writeBatches.begin(), writeBatches.begin() + writeBatches.size() / 2);
+    readCheckFn(reader, writeBatches);
+    auto const readBatches{planAudioBatches(writeBatches.size() + 1, flowInfo.continuous.bufferLength / 2, lastIndex)};
+    readCheckFn(reader, readBatches);
+    REQUIRE(mxlReleaseFlowReader(instance, reader) == MXL_STATUS_OK);
+
+    REQUIRE(mxlDestroyFlow(instance, flowId.c_str()) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
 }
