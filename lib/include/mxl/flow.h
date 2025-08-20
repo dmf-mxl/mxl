@@ -136,8 +136,12 @@ extern "C"
         /// How many bytes in the grain are currently valid (commited).  This is typically used when writing slices.
         /// A grain is complete when commitedSize == grainSize
         uint32_t commitedSize;
+        /// absolute index of grain last written to this buffer
+        uint64_t grainIndex;
+        /// time stamp of grain last written to this buffer
+        uint64_t grainTimeStamp;
         /// User data space
-        uint8_t userData[4068];
+        uint8_t userData[4044];
     } GrainInfo;
 
     typedef struct mxlFlowReader_t* mxlFlowReader;

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../src/internal/Time.hpp"
+#include "../src/internal/Flow.hpp"
 #include "Utils.hpp"
 
 #ifndef __APPLE__
@@ -206,6 +207,11 @@ TEST_CASE("Data Flow : Create/Destroy", "[mxl flows]")
     auto const now = mxlGetTime();
     uint64_t index = mxlTimestampToIndex(&rate, now);
     REQUIRE(index != MXL_UNDEFINED_INDEX);
+
+    /// validate grain and flow structure sizes
+    REQUIRE(sizeof(GrainInfo) == 0x1000);
+    REQUIRE(sizeof(FlowInfo) == 0x1000);
+    REQUIRE(sizeof(mxl::lib::Grain) == 0x2000);
 
     /// Open the grain.
     GrainInfo gInfo;
