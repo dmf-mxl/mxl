@@ -219,10 +219,25 @@ private:
     GstElement* _pipeline{nullptr};
 };
 
+void log_grain(GrainInfo &gInfo)
+{
+    printf("size %u flags %x location %d device index %d grain size %u committed %u\n",
+        gInfo.size, gInfo.flags, gInfo.payloadLocation, gInfo.deviceIndex, gInfo.grainSize, gInfo.commitedSize);
+    printf("payload location %u device index %d grain size %u grain index %lu grain time stamp %lu\n",
+        gInfo.payloadLocation, gInfo.deviceIndex, gInfo.grainSize, gInfo.grainIndex, gInfo.grainTimeStamp);
+}
+
 int main(int argc, char** argv)
 {
     std::signal(SIGINT, &signal_handler);
     std::signal(SIGTERM, &signal_handler);
+    struct timespec grain_time;
+    uint64_t grain_time_ns = 0;
+    uint64_t initial_index = 0;
+
+    // start at relative frame zero
+    uint64_t frame_count = 0;
+
 
     CLI::App app("mxl-gst-videotestsrc");
 
@@ -304,14 +319,25 @@ int main(int argc, char** argv)
 
     GstSample* gst_sample;
     GstBuffer* gst_buffer;
-    uint64_t grain_index;
+
+    setlocale(LC_NUMERIC, "");
+    printf("test loop starts\n");
+
+    // get time now (tai willbe close but out by 35 apporx seconds unless corrected on host)
+    clock_gettime(CLOCK_TAI, &grain_time);
+
+    // compute time in nano seconds
+    grain_time_ns = grain_time.tv_sec * 1000000000;
+    grain_time_ns += grain_time.tv_nsec;
+
+    initial_index = mxlTimestampToIndex(&frame_rate, grain_time_ns);
 
     while (!g_exit_requested)
     {
         gst_sample = gst_pipeline.pullSample();
         if (gst_sample)
         {
-            grain_index = mxlGetCurrentIndex(&frame_rate);
+            uint64_t grain_index = frame_count + initial_index;
 
             gst_buffer = gst_sample_get_buffer(gst_sample);
             if (gst_buffer)
@@ -331,6 +357,12 @@ int main(int argc, char** argv)
                         break;
                     }
 
+                    // set grain index and time stamp
+                    gInfo.grainIndex = grain_index;
+                    gInfo.grainTimeStamp = mxlIndexToTimestamp(&frame_rate, gInfo.grainIndex);
+
+                    log_grain(gInfo);
+
                     ::memcpy(mxl_buffer, map_info.data, gInfo.grainSize);
 
                     gInfo.commitedSize = gInfo.grainSize;
@@ -341,6 +373,9 @@ int main(int argc, char** argv)
                     }
 
                     gst_buffer_unmap(gst_buffer, &map_info);
+
+                    // next frame
+                    frame_count++;
                 }
                 gst_buffer_unref(gst_buffer);
             }
