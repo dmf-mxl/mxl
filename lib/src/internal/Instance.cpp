@@ -206,7 +206,7 @@ namespace mxl::lib
     {
         if (writer)
         {
-            auto const& id = writer->getId();
+            auto const id = writer->getId();
             auto removeFlowWatch = false;
             {
                 auto const lock = std::lock_guard{_mutex};
