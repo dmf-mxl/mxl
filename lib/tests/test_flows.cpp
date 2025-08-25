@@ -567,3 +567,49 @@ TEST_CASE("Audio Flow : Different writer / reader batch size", "[mxl flows]")
     REQUIRE(mxlDestroyFlow(instance, flowId.c_str()) == MXL_STATUS_OK);
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
 }
+
+TEST_CASE("mxlGetFlowDef", "[mxl flows]")
+{
+    auto domain = std::filesystem::path{"./mxl_unittest_domain"};
+    remove_all(domain);
+    create_directories(domain);
+
+    auto const opts = "{}";
+    auto instance = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instance != nullptr);
+
+    auto flowDef = mxl::tests::readFile("data/v210_flow.json");
+    mxlFlowInfo flowInfo;
+    REQUIRE(mxlCreateFlow(instance, flowDef.c_str(), opts, &flowInfo) == MXL_STATUS_OK);
+    auto const flowId = uuids::to_string(flowInfo.common.id);
+
+    char fourKBuffer[4096];
+    auto fourKBufferSize = sizeof(fourKBuffer);
+
+    REQUIRE(mxlGetFlowDef(nullptr, flowId.c_str(), fourKBuffer, &fourKBufferSize) == MXL_ERR_INVALID_ARG);
+    REQUIRE(fourKBufferSize == sizeof(fourKBuffer));
+
+    REQUIRE(mxlGetFlowDef(instance, nullptr, fourKBuffer, &fourKBufferSize) == MXL_ERR_INVALID_ARG);
+    REQUIRE(fourKBufferSize == sizeof(fourKBuffer));
+    REQUIRE(mxlGetFlowDef(instance, "this is not UUID", fourKBuffer, &fourKBufferSize) == MXL_ERR_INVALID_ARG);
+    REQUIRE(fourKBufferSize == sizeof(fourKBuffer));
+    REQUIRE(mxlGetFlowDef(instance, "75f369f9-6814-48a3-b827-942bc24c3d25", fourKBuffer, &fourKBufferSize) == MXL_ERR_FLOW_NOT_FOUND);
+    REQUIRE(fourKBufferSize == sizeof(fourKBuffer));
+
+    REQUIRE(mxlGetFlowDef(instance, flowId.c_str(), fourKBuffer, nullptr) == MXL_ERR_INVALID_ARG);
+
+    auto requiredBufferSize = size_t{0U};
+    REQUIRE(mxlGetFlowDef(instance, flowId.c_str(), nullptr, &requiredBufferSize) == MXL_ERR_INVALID_ARG);
+    REQUIRE(requiredBufferSize == flowDef.size() + 1);
+    auto requiredBufferSize2 = size_t{10U};
+    REQUIRE(mxlGetFlowDef(instance, flowId.c_str(), fourKBuffer, &requiredBufferSize2) == MXL_ERR_INVALID_ARG);
+    REQUIRE(requiredBufferSize == requiredBufferSize2);
+
+    requiredBufferSize = fourKBufferSize;
+    REQUIRE(mxlGetFlowDef(instance, flowId.c_str(), fourKBuffer, &requiredBufferSize) == MXL_STATUS_OK);
+    REQUIRE(requiredBufferSize == requiredBufferSize2);
+    REQUIRE(flowDef == std::string{fourKBuffer});
+
+    REQUIRE(mxlDestroyFlow(instance, flowId.c_str()) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+}

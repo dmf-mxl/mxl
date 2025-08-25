@@ -73,6 +73,51 @@ mxlStatus mxlDestroyFlow(mxlInstance instance, char const* flowId)
 
 extern "C"
 MXL_EXPORT
+mxlStatus mxlGetFlowDef(mxlInstance instance, char const* flowId, char* buffer, size_t* bufferSize)
+{
+    if (flowId == nullptr || bufferSize == nullptr)
+    {
+        return MXL_ERR_INVALID_ARG;
+    }
+
+    try
+    {
+        if (auto const cppInstance = to_Instance(instance); cppInstance != nullptr)
+        {
+            if (auto const id = uuids::uuid::from_string(flowId); id.has_value())
+            {
+                auto const flowDef = cppInstance->getFlowDef(*id);
+                auto const requiredSize = flowDef.size() + 1; // +1 for the null terminator
+                if (buffer == nullptr || *bufferSize < requiredSize)
+                {
+                    *bufferSize = requiredSize;
+                    return MXL_ERR_INVALID_ARG;
+                }
+                *bufferSize = requiredSize;
+                std::strncpy(buffer, flowDef.c_str(), requiredSize);
+                return MXL_STATUS_OK;
+            }
+        }
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (std::filesystem::filesystem_error const& e)
+    {
+        MXL_ERROR("Failed to get flow definition : {}", e.what());
+        return MXL_ERR_FLOW_NOT_FOUND;
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Failed to get flow definition : {}", e.what());
+    }
+    catch (...)
+    {
+        MXL_ERROR("Failed to get flow definition : {}", "An unknown error occured.");
+    }
+    return MXL_ERR_UNKNOWN;
+}
+
+extern "C"
+MXL_EXPORT
 mxlStatus mxlCreateFlowReader(mxlInstance instance, char const* flowId, char const* /*options*/, mxlFlowReader* reader)
 {
     try

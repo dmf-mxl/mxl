@@ -157,6 +157,25 @@ MXL_EXPORT
     MXL_EXPORT
     mxlStatus mxlDestroyFlow(mxlInstance instance, char const* flowId);
 
+    /**
+     * Get the flow definition used to create the given flow.
+     *
+     * @param[in] instance The mxl instance tied to domain we want to get the flow definition from. If invalid instance is provided, the function will
+     *                     return MXL_ERR_INVALID_ARG and do nothing.
+     * @param[in] flowId The id of the flow we want to get the definition for. If nullptr, the function will return MXL_ERR_INVALID_ARG and do
+     *                   nothing.
+     * @param[out] buffer A pointer to a buffer that will be filled with the flow definition. If nullptr, or if the buffer does not contain enough
+     *                    space to return the result (based on the bufferSize provided later), the function will return MXL_ERR_INVALID_ARG and
+     *                    update the value pointed to by the bufferSize with the required buffer size.
+     * @param[in,out] bufferSize A pointer to a variable with the length of the supplied buffer. If nullptr, the function will return
+     *                           MXL_ERR_INVALID_ARG and do nothing. If function succeeds, the value pointed to by this variable will be updated with
+     *                           the number of bytes written to the buffer (including the null terminator).
+     * @return MXL_STATUS_OK when buffer was successfully filled with the flow definition, or other error codes based on the previous parameter
+     *         description or other encountered errors.
+     */
+    MXL_EXPORT
+    mxlStatus mxlGetFlowDef(mxlInstance instance, char const* flowId, char* buffer, size_t* bufferSize);
+
     MXL_EXPORT
     mxlStatus mxlCreateFlowReader(mxlInstance instance, char const* flowId, char const* options, mxlFlowReader* reader);
 

@@ -110,6 +110,14 @@ namespace mxl::lib
         std::vector<uuids::uuid> listFlows() const;
 
         ///
+        /// \param flowId The ID of the flow to get the information about.
+        /// \return The requested json flow definition.
+        /// \throws std::filesystem::filesystem_error on flow not found
+        /// \throws std::runtime_error on any other error
+        ///
+        std::string getFlowDef(uuids::uuid const& flowId) const;
+
+        ///
         /// Accessor for the mxl domain (base path where shared memory will be stored)
         /// \return The base path
         std::filesystem::path const& getDomain() const;
