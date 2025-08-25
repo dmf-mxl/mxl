@@ -97,5 +97,9 @@ include(CTest)
 include(Catch)
 catch_discover_tests(mxl-tests)
 
+if (MXL_FABRICS_OFI)
+    add_subdirectory(fabrics)
+endif()
+
 # Copy test files to the build directory
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

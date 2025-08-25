@@ -59,6 +59,15 @@ namespace mxl::lib
         throw std::runtime_error("No open flow.");
     }
 
+    FlowData& PosixDiscreteFlowReader::getFlowData()
+    {
+        if (_flowData)
+        {
+            return *_flowData;
+        }
+        throw std::runtime_error("No open flow.");
+    }
+
     mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, std::uint64_t in_timeoutNs, mxlGrainInfo* out_grainInfo,
         std::uint8_t** out_payload)
     {
