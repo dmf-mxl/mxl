@@ -104,6 +104,10 @@ namespace mxl::lib
         /// \return The history duration in nanoseconds
         std::uint64_t getHistoryDurationNs() const;
 
+        /// Accessor for the domain path
+        /// \return The path to the MXL domain of this instance
+        std::string getDomain() const;
+
     private:
         template<typename T>
         class RefCounted

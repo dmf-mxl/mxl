@@ -265,6 +265,11 @@ namespace mxl::lib
         return _flowManager.deleteFlow(flowId);
     }
 
+    std::string Instance::getDomain() const
+    {
+        return _flowManager.getDomain();
+    }
+
     // This function is performed in a 'collaborative best effort' way.
     // Exceptions thrown should not be propagated to the caller and cause disruptions to the application.
     // On error the function will return 0 and log the error

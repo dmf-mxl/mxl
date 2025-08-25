@@ -341,12 +341,6 @@ namespace mxl::lib
         }
     }
 
-    void FlowManager::garbageCollect()
-    {
-        MXL_WARN("Garbage collection of flows not implemented yet.");
-        /// \todo Implement a garbage collection low priority thread.
-    }
-
     std::vector<uuids::uuid> FlowManager::listFlows() const
     {
         auto base = std::filesystem::path{_mxlDomain};

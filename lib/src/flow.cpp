@@ -6,8 +6,11 @@
 #include <exception>
 #include <string>
 #include <uuid.h>
+#include <sys/file.h>
 #include "internal/Instance.hpp"
 #include "internal/Logging.hpp"
+#include "internal/PathUtils.hpp"
+#include "mxl/mxl.h"
 
 using namespace mxl::lib;
 
@@ -35,6 +38,58 @@ mxlStatus mxlCreateFlow(mxlInstance instance, char const* flowDef, char const* /
     catch (...)
     {
         MXL_ERROR("Failed to create flow : {}", "An unknown error occured.");
+    }
+    return MXL_ERR_UNKNOWN;
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlIsFlowActive(mxlInstance instance, char const* flowId, bool* isActive)
+{
+    try
+    {
+        if (isActive != nullptr)
+        {
+            if (auto const cppInstance = to_Instance(instance); cppInstance != nullptr)
+            {
+                if ((flowId != nullptr) && uuids::uuid::is_valid_uuid(flowId))
+                {
+                    auto const id = uuids::uuid::from_string(flowId);
+                    if (id.has_value())
+                    {
+                        auto const domain = cppInstance->getDomain();
+
+                        // Try to obtain an exclusive lock on the flow data file.  If we can obtain one it means that no
+                        // other process is writing to the flow.
+                        auto flowDataFile = mxl::lib::makeFlowDataFilePath(domain, flowId);
+
+                        int fd = open(flowDataFile.c_str(), O_RDONLY | O_CLOEXEC);
+                        if (fd < 0)
+                        {
+                            MXL_ERROR("Failed to open flow data file {} : {}", flowDataFile.string(), std::strerror(errno));
+                            return MXL_ERR_FLOW_NOT_FOUND;
+                        }
+
+                        // Try to obtain an exclusive lock on the file descriptor. Do not block if the lock cannot be obtained.
+                        bool active = flock(fd, LOCK_EX | LOCK_NB) < 0;
+                        close(fd);
+
+                        *isActive = active;
+                        return MXL_STATUS_OK;
+                    }
+                }
+            }
+            return MXL_ERR_INVALID_ARG;
+        }
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Failed to check if flow is active : {}", e.what());
+    }
+    catch (...)
+    {
+        MXL_ERROR("Failed to check if flow is active : {}", "An unknown error occured.");
     }
     return MXL_ERR_UNKNOWN;
 }

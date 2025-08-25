@@ -15,7 +15,7 @@
 namespace mxl::lib
 {
     ///
-    /// Performs Flow CRUD operations as well as garbage collection of stale flows.
+    /// Performs Flow CRUD operations
     ///
     /// CREATE
     /// Creates the flow resources in the base path (the MXL 'domain'). Flow resource contain
@@ -32,10 +32,6 @@ namespace mxl::lib
     ///
     /// DELETE
     /// Delete a flow by flowId.  If the flow is opened it is first closed than all physical resources (see above) are deleted
-    ///
-    /// GARBAGE Collect
-    /// POSIX IPC resources are not automatically reclaimed if processes using them die or misbehave. A shared memory
-    /// file that has not been used for more than X seconds (by looking at the last read time or write time in the flow shared memory)
     ///
     /// LIST
     /// List all the flows found in the domain.
@@ -98,11 +94,6 @@ namespace mxl::lib
         /// \return success or failure.
         ///
         bool deleteFlow(uuids::uuid const& flowId);
-
-        ///
-        /// Delete all flows that haven't been accessed for a period of time.
-        ///
-        void garbageCollect();
 
         ///
         /// \return List all flows on disk.

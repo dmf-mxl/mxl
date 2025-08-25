@@ -132,17 +132,17 @@ int printFlow(std::string const& in_domain, std::string const& in_id)
         // Print the flow information.
         std::cout << info;
 
-        // Try to obtain an exclusive lock on the flow data file.  If we can obtain one it means that no
-        // other process is writing to the flow.
-        auto flowDataFile = mxl::lib::makeFlowDataFilePath(in_domain, in_id);
-        int fd = open(flowDataFile.c_str(), O_RDONLY | O_CLOEXEC);
-
-        // Try to obtain an exclusive lock on the file descriptor. Do not block if the lock cannot be obtained.
-        bool active = flock(fd, LOCK_EX | LOCK_NB) < 0;
-        close(fd);
-
-        // Print the status of the flow.
-        std::cout << '\t' << fmt::format("{: >18}: {}", "Active", active) << std::endl;
+        auto active = false;
+        status = mxlIsFlowActive(instance, in_id.c_str(), &active);
+        if (status != MXL_STATUS_OK)
+        {
+            std::cerr << "Failed to check if flow is active: " << status << std::endl;
+        }
+        else
+        {
+            // Print the status of the flow.
+            std::cout << '\t' << fmt::format("{: >18}: {}", "Active", active) << std::endl;
+        }
 
         ret = EXIT_SUCCESS;
     }

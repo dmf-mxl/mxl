@@ -48,11 +48,20 @@ TEST_CASE("Video Flow : Create/Destroy", "[mxl flows]")
     mxlFlowInfo fInfo;
     REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), opts, &fInfo) == MXL_STATUS_OK);
 
+    // We created the flow but it does not have a writer yet. The flow should not be active.
+    bool active = true;
+    REQUIRE(mxlIsFlowActive(instanceReader, flowId, &active) == MXL_STATUS_OK);
+    REQUIRE(active == false);
+
     mxlFlowReader reader;
     REQUIRE(mxlCreateFlowReader(instanceReader, flowId, "", &reader) == MXL_STATUS_OK);
 
     mxlFlowWriter writer;
     REQUIRE(mxlCreateFlowWriter(instanceWriter, flowId, "", &writer) == MXL_STATUS_OK);
+
+    // The writer is now created. The flow should be active.
+    REQUIRE(mxlIsFlowActive(instanceReader, flowId, &active) == MXL_STATUS_OK);
+    REQUIRE(active == true);
 
     /// Compute the grain index for the flow rate and current TAI time.
     auto const rate = mxlRational{60000, 1001};
@@ -79,7 +88,7 @@ TEST_CASE("Video Flow : Create/Destroy", "[mxl flows]")
     gInfo.flags |= MXL_GRAIN_FLAG_INVALID;
     REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_STATUS_OK);
 
-    /// Create back the grain using a flow reader.
+    /// Read back the grain using a flow reader.
     REQUIRE(mxlFlowReaderGetGrain(reader, index, 16, &gInfo, &buffer) == MXL_STATUS_OK);
 
     // Give some time to the inotify message to reach the directorywatcher.
@@ -116,6 +125,11 @@ TEST_CASE("Video Flow : Create/Destroy", "[mxl flows]")
     buffer[gInfo.grainSize - 1] = 0xFE;
 
     REQUIRE(mxlReleaseFlowWriter(instanceWriter, writer) == MXL_STATUS_OK);
+
+    // The writer is now gone. The flow should be inactive.
+    REQUIRE(mxlIsFlowActive(instanceReader, flowId, &active) == MXL_STATUS_OK);
+    REQUIRE(active == false);
+
     REQUIRE(mxlDestroyFlow(instanceWriter, flowId) == MXL_STATUS_OK);
     // This should be gone from the filesystem.
     REQUIRE(mxlDestroyFlow(instanceWriter, flowId) == MXL_ERR_FLOW_NOT_FOUND);
@@ -228,7 +242,7 @@ TEST_CASE("Data Flow : Create/Destroy", "[mxl flows]")
     gInfo.flags |= MXL_GRAIN_FLAG_INVALID;
     REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_STATUS_OK);
 
-    /// Create back the grain using a flow reader.
+    /// Read back the grain using a flow reader.
     REQUIRE(mxlFlowReaderGetGrain(reader, index, 16, &gInfo, &buffer) == MXL_STATUS_OK);
 
     /// Confirm that the flags are preserved.

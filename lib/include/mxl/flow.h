@@ -157,6 +157,16 @@ MXL_EXPORT
     MXL_EXPORT
     mxlStatus mxlDestroyFlow(mxlInstance instance, char const* flowId);
 
+    ///
+    /// Verify if a flow has an active writer or not
+    ///
+    /// \param[in] instance The mxl instance created using mxlCreateInstance
+    /// \param[in] flowId The ID of the flow to check.
+    /// \param[out] isActive A pointer to a boolean that will be set to true if the flow has an active writer, false otherwise.
+    /// \return MXL_STATUS_OK if the flow exists and has been tested successfully, or an error code otherwise.
+    MXL_EXPORT
+    mxlStatus mxlIsFlowActive(mxlInstance instance, char const* flowId, bool* isActive);
+
     MXL_EXPORT
     mxlStatus mxlCreateFlowReader(mxlInstance instance, char const* flowId, char const* options, mxlFlowReader* reader);
 
