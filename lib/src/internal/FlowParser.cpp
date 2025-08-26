@@ -119,6 +119,12 @@ namespace mxl::lib
             throw std::invalid_argument{"Invalid JSON flow definition. " + err};
         }
 
+        printf("Trace: A:1\n");
+
+        // parse the json as nlohmann
+        n_root = nlohmann::json::parse(in_flowDef);
+        n_components = n_root["components"];
+
         // Confirm that the root is a json object
         if (!jsonValue.is<picojson::object>())
         {
@@ -199,6 +205,43 @@ namespace mxl::lib
         return _format;
     }
 
+    std::size_t FlowParser::getVideoComponentCount() const
+    {
+        std::size_t result = 0;
+
+        printf("Trace: B\n");
+
+        // if an array how many elements
+        result = n_components.size();
+
+        printf("Trace: C %lu\n", result );
+
+        return result;
+    }
+
+    std::size_t FlowParser::getVideoComponentBitDepth() const
+    {
+
+        std::size_t max_bit_depth = 0;
+
+        printf("Trace: D\n");
+
+        // iterate over components
+        for( uint32_t i = 0; i < n_components.size(); i++ )
+        {
+            printf("Trace: E %u\n", i);
+
+            nlohmann::json component = n_components[i];
+            uint32_t depth = component["bit_depth"];
+            if( depth > max_bit_depth )
+            {
+                max_bit_depth = depth;
+            }
+        }
+
+        return max_bit_depth;
+    }
+
     std::size_t FlowParser::getPayloadSize() const
     {
         auto payloadSize = std::size_t{0};
@@ -208,25 +251,42 @@ namespace mxl::lib
             auto const width = static_cast<std::size_t>(fetchAs<double>(_root, "frame_width"));
             auto const height = static_cast<std::size_t>(fetchAs<double>(_root, "frame_height"));
             auto const mediaType = fetchAs<std::string>(_root, "media_type");
+            auto const videoType = mxlVideoTypeFromString(mediaType.c_str());
 
-            if (mediaType == "video/v210")
+            switch(videoType)
             {
-                if (!_interlaced || ((height % 2) == 0))
-                {
-                    // Interlaced media is handled as separate fields.
-                    auto const h = _interlaced ? height / 2 : height;
-                    payloadSize = static_cast<std::size_t>((width + 47) / 48 * 128) * h;
-                }
-                else
-                {
-                    auto msg = std::string{"Invalid video height for interlaced v210. Must be even."};
-                    throw std::invalid_argument{std::move(msg)};
-                }
-            }
-            else
-            {
+                case MXL_TYPE_V210:
+                    if (!_interlaced || ((height % 2) == 0))
+                    {
+                        // Interlaced media is handled as separate fields.
+                        auto const h = _interlaced ? height / 2 : height;
+                        payloadSize = static_cast<std::size_t>((width + 47) / 48 * 128) * h;
+                    }
+                    else
+                    {
+                        auto msg = std::string{"Invalid video height for interlaced v210. Must be even."};
+                        throw std::invalid_argument{std::move(msg)};
+                    }
+
+                    break;
+
+                case MXL_TYPE_PLANAR:
+                        // get component count
+                        {
+                        std::size_t component_count = getVideoComponentCount();
+                        std::size_t bit_depth = getVideoComponentBitDepth();
+
+                        payloadSize = width * height * component_count * ((bit_depth + 7) / 8);
+
+                        printf("component_count %lu bit_depth %lu payloadSize %lu\n", component_count, bit_depth, payloadSize );
+
+                        }
+                    break;
+
+                case MXL_TYPE_UNKWOWN:
                 auto msg = std::string{"Unsupported video media_type: "} + mediaType;
                 throw std::invalid_argument{std::move(msg)};
+                    break;
             }
         }
         else if (_format == MXL_DATA_FORMAT_DATA)
