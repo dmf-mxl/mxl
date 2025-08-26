@@ -26,6 +26,7 @@ struct GstreamerPipelineConfig
     Rational frame_rate{30, 1};
     uint64_t pattern{0};
     std::string textoverlay{"EBU DMF MXL"};
+    uint64_t bit_depth{10};
 };
 
 static std::unordered_map<std::string, uint64_t> const pattern_map = {
@@ -102,13 +103,18 @@ public:
             throw std::runtime_error("Gstreamer: 'appsink' could not be created.");
         }
 
+        // what format to use, 10 bit v210, 16bit v216
+        std::string pixel_format = "v210";
+        if( config.bit_depth == 16 )
+            pixel_format = "v216";
+
         // Configure appsink
         g_object_set(G_OBJECT(_appsink),
             "caps",
             gst_caps_new_simple("video/x-raw",
                 "format",
                 G_TYPE_STRING,
-                "v210",
+                pixel_format,
                 "width",
                 G_TYPE_INT,
                 config.frame_width,
@@ -221,10 +227,29 @@ private:
 
 void log_grain(GrainInfo &gInfo)
 {
-    printf("size %u flags %x location %d device index %d grain size %u committed %u\n",
+    printf("videotestsrc.cpp: size %u flags %x location %d device index %d grain size %u committed %u\n",
         gInfo.size, gInfo.flags, gInfo.payloadLocation, gInfo.deviceIndex, gInfo.grainSize, gInfo.commitedSize);
     printf("payload location %u device index %d grain size %u grain index %lu grain time stamp %lu\n",
         gInfo.payloadLocation, gInfo.deviceIndex, gInfo.grainSize, gInfo.grainIndex, gInfo.grainTimeStamp);
+}
+
+void copy_packed_to_planar_16_yuv_422(uint16_t *dest_planar, const uint16_t *src_packed, uint64_t frame_width, uint64_t frame_height)
+{
+    // get pointers to planes and copy
+    uint16_t *y = dest_planar;
+    uint16_t *u = y + frame_width * frame_height / 2;
+    uint16_t *v = u + frame_width * frame_height / 2;
+
+    // simple iteration
+    uint64_t loops = frame_width * frame_height / 2;
+
+    while(loops-- > 0)
+    {
+        *u++ = *src_packed++;
+        *y++ = *src_packed++;
+        *v++ = *src_packed++;
+        *y++ = *src_packed++;
+    }
 }
 
 int main(int argc, char** argv)
@@ -274,6 +299,7 @@ int main(int argc, char** argv)
 
     auto frame_rate = descriptor_parser.getGrainRate();
     auto flowID = uuids::to_string(descriptor_parser.getId());
+    auto bit_depth = descriptor_parser.getVideoComponentBitDepth();
 
     GstreamerPipelineConfig gst_config{
         .frame_width = static_cast<uint64_t>(descriptor_parser.get<double>("frame_width")),
@@ -281,6 +307,7 @@ int main(int argc, char** argv)
         .frame_rate = frame_rate,
         .pattern = pattern_map.at(pattern),
         .textoverlay = textOverlay,
+        .bit_depth = bit_depth,
     };
 
     GstreamerPipeline gst_pipeline(gst_config);
@@ -363,7 +390,18 @@ int main(int argc, char** argv)
 
                     log_grain(gInfo);
 
-                    ::memcpy(mxl_buffer, map_info.data, gInfo.grainSize);
+                    // log memcpy params
+                    printf("memcpy frame mxl_buffer %p, map_info.data %p, gInfo.grainSize %u\n", mxl_buffer, map_info.data, gInfo.grainSize );
+
+                    // convert to planar if 16 bit
+                    if( bit_depth == 16 )
+                    {
+                        copy_packed_to_planar_16_yuv_422((uint16_t*)mxl_buffer, (uint16_t*)map_info.data, gst_config.frame_width, gst_config.frame_height);
+                    }
+                    else
+                    {
+                        ::memcpy(mxl_buffer, map_info.data, gInfo.grainSize);
+                    }
 
                     gInfo.commitedSize = gInfo.grainSize;
                     if (mxlFlowWriterCommitGrain(writer, &gInfo) != MXL_STATUS_OK)
