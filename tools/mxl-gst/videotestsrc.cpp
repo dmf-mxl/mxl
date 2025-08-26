@@ -390,9 +390,6 @@ int main(int argc, char** argv)
 
                     log_grain(gInfo);
 
-                    // log memcpy params
-                    printf("memcpy frame mxl_buffer %p, map_info.data %p, gInfo.grainSize %u\n", mxl_buffer, map_info.data, gInfo.grainSize );
-
                     // convert to planar if 16 bit
                     if( bit_depth == 16 )
                     {
