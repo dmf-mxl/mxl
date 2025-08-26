@@ -87,6 +87,35 @@ if (gstreamer_FOUND)
                 PkgConfig::gstreamer-video
         )
 
+    add_executable(mxl-to-yuv-file)
+        target_compile_features(mxl-to-yuv-file
+                PRIVATE
+                    cxx_std_20
+            )
+    set_target_properties(mxl-to-yuv-file
+    PROPERTIES
+        POSITION_INDEPENDENT_CODE    ON
+        VISIBILITY_INLINES_HIDDEN    ON
+        C_VISIBILITY_PRESET          hidden
+        CXX_VISIBILITY_PRESET        hidden
+        C_EXTENSIONS                 OFF
+        CXX_EXTENSIONS               OFF
+        )
+    target_sources(mxl-to-yuv-file
+        PRIVATE
+            mxl-to-yuv.cpp
+            ../../lib/src/internal/FlowParser.cpp
+            ../../lib/src/internal/PathUtils.cpp
+        )
+
+    target_link_libraries(mxl-to-yuv-file
+        PRIVATE
+            mxl
+            stduuid
+            CLI11::CLI11
+            spdlog::spdlog
+    )
+
     add_executable(mxl-gst-looping-filesrc)
     target_compile_features(mxl-gst-looping-filesrc
         PRIVATE
