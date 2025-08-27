@@ -31,17 +31,17 @@ namespace mxl::lib
         ///
         /// \see FlowWriter::getFlowInfo
         ///
-        virtual FlowInfo getFlowInfo() override;
+        virtual mxlFlowInfo getFlowInfo() override;
 
         ///
         /// \see DiscreteFlowWriter::openGrain
         ///
-        virtual mxlStatus openGrain(std::uint64_t in_index, GrainInfo* out_grainInfo, std::uint8_t** out_payload) override;
+        virtual mxlStatus openGrain(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload) override;
 
         ///
         /// \see DiscreteFlowWriter::commit
         ///
-        virtual mxlStatus commit(GrainInfo const& grainInfo) override;
+        virtual mxlStatus commit(mxlGrainInfo const& mxlGrainInfo) override;
 
         ///
         /// \see DiscreteFlowWriter::cancel

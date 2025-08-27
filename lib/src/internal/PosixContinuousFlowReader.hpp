@@ -29,11 +29,11 @@ namespace mxl::lib
         PosixContinuousFlowReader(FlowManager const& manager, uuids::uuid const& flowId, std::unique_ptr<ContinuousFlowData>&& data);
 
         /**
-         * Accessor for the current FlowInfo. A copy of the current structure is returned.
+         * Accessor for the current mxlFlowInfo. A copy of the current structure is returned.
          * The reader must be properly attached to the flow before invoking this method.
-         * \return A copy of the FlowInfo
+         * \return A copy of the mxlFlowInfo
          */
-        virtual FlowInfo getFlowInfo() override;
+        virtual mxlFlowInfo getFlowInfo() override;
 
         /**
          * Accessor for a specific set of samples across all channels
@@ -50,13 +50,13 @@ namespace mxl::lib
          *      safely hang on to the returned range of samples without the
          *      risk of these samples being overwritten.
          */
-        virtual mxlStatus getSamples(std::uint64_t index, std::size_t count, WrappedMultiBufferSlice& payloadBuffersSlices) override;
+        virtual mxlStatus getSamples(std::uint64_t index, std::size_t count, mxlWrappedMultiBufferSlice& payloadBuffersSlices) override;
 
     private:
         std::unique_ptr<ContinuousFlowData> _flowData;
-        /** Cached copy of the numer of channels from FLowInfo. */
+        /** Cached copy of the numer of channels from mxlFlowInfo. */
         std::size_t _channelCount;
-        /** Cached copy of the length of the per channel buffers from FLowInfo. */
+        /** Cached copy of the length of the per channel buffers from mxlFlowInfo. */
         std::size_t _bufferLength;
     };
 }

@@ -42,7 +42,7 @@ namespace mxl::lib
          * \return The grain rate or sample rate respectively if found and valid.
          */
         [[nodiscard]]
-        Rational getGrainRate() const;
+        mxlRational getGrainRate() const;
 
         /**
          * Accessor for the 'format' field
@@ -86,7 +86,7 @@ namespace mxl::lib
         /** True if video and interlaced, false otherwise. */
         bool _interlaced;
         /** The flow grain rate, if defined, 0/1 if undefined. */
-        Rational _grainRate;
+        mxlRational _grainRate;
         /** The parsed flow object. */
         picojson::object _root;
     };

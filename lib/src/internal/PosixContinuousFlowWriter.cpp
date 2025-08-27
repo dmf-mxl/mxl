@@ -15,7 +15,7 @@ namespace mxl::lib
         , _currentIndex{MXL_UNDEFINED_INDEX}
     {}
 
-    FlowInfo PosixContinuousFlowWriter::getFlowInfo()
+    mxlFlowInfo PosixContinuousFlowWriter::getFlowInfo()
     {
         if (_flowData)
         {
@@ -24,11 +24,11 @@ namespace mxl::lib
         throw std::runtime_error("No open flow.");
     }
 
-    mxlStatus PosixContinuousFlowWriter::openSamples(std::uint64_t index, std::size_t count, MutableWrappedMultiBufferSlice& payloadBufferSlices)
+    mxlStatus PosixContinuousFlowWriter::openSamples(std::uint64_t index, std::size_t count, mxlMutableWrappedMultiBufferSlice& payloadBufferSlices)
     {
         if (_flowData)
         {
-            if (count < (_bufferLength / 2))
+            if (count <= (_bufferLength / 2))
             {
                 auto const startOffset = (index + _bufferLength - count) % _bufferLength;
                 auto const endOffset = (index % _bufferLength);
@@ -42,7 +42,7 @@ namespace mxl::lib
                 payloadBufferSlices.base.fragments[0].pointer = baseBufferPtr + sampleWordSize * startOffset;
                 payloadBufferSlices.base.fragments[0].size = sampleWordSize * firstLength;
 
-                payloadBufferSlices.base.fragments[1].pointer = baseBufferPtr + sampleWordSize * endOffset;
+                payloadBufferSlices.base.fragments[1].pointer = baseBufferPtr;
                 payloadBufferSlices.base.fragments[1].size = sampleWordSize * secondLength;
 
                 payloadBufferSlices.stride = sampleWordSize * _bufferLength;

@@ -65,7 +65,7 @@ namespace mxl::lib
 
     std::ostream& operator<<(std::ostream& os, Grain const& grain)
     {
-        auto const location = (grain.header.info.payloadLocation == PAYLOAD_LOCATION_HOST_MEMORY) ? "host" : "device";
+        auto const location = (grain.header.info.payloadLocation == MXL_PAYLOAD_LOCATION_HOST_MEMORY) ? "host" : "device";
         os << "- Grain" << '\n'
            << '\t' << fmt::format("{: >14}: {}", "Version", grain.header.info.version) << '\n'
            << '\t' << fmt::format("{: >14}: {}", "Struct size", grain.header.info.size) << '\n'

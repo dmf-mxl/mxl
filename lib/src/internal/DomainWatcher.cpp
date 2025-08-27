@@ -49,7 +49,7 @@ namespace mxl::lib
         if (_inotifyFd == -1)
         {
             auto const error = errno;
-            MXL_ERROR("DomainWatcher: inotify_init1 failed: {}", std::strerror(error));
+            MXL_ERROR("inotify_init1 failed: {}", std::strerror(error));
             throw std::system_error(error, std::generic_category(), "inotify_init1 failed");
         }
 
@@ -59,7 +59,7 @@ namespace mxl::lib
         if (_epollFd == -1)
         {
             auto const error = errno;
-            MXL_ERROR("DomainWatcher: epoll_create1 failed (errno {}: {})", error, std::strerror(error));
+            MXL_ERROR("epoll_create1 failed (errno {}: {})", error, std::strerror(error));
             // Clean up inotify FD before throwing
             ::close(_inotifyFd);
             throw std::system_error(error, std::generic_category(), "epoll_create1 failed");
@@ -72,7 +72,7 @@ namespace mxl::lib
         if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, _inotifyFd, &event) == -1)
         {
             auto const error = errno;
-            MXL_ERROR("DomainWatcher: epoll_ctl ADD(inotify) failed: {}", std::strerror(error));
+            MXL_ERROR("epoll_ctl ADD(inotify) failed: {}", std::strerror(error));
             ::close(_inotifyFd);
             ::close(_epollFd);
             throw std::system_error(error, std::generic_category(), "epoll_ctl ADD inotify failed");
@@ -86,7 +86,7 @@ namespace mxl::lib
         }
         catch (std::exception const& e)
         {
-            MXL_ERROR("DomainWatcher: failed to start watcher thread: {}", e.what());
+            MXL_ERROR("Failed to start watcher thread: {}", e.what());
 #ifdef __APPLE__
             ::close(_kq);
 #elif defined __linux__
@@ -97,7 +97,7 @@ namespace mxl::lib
         }
         catch (...)
         {
-            MXL_ERROR("DomainWatcher: failed to start watcher thread: unknown exception");
+            MXL_ERROR("Failed to start watcher thread: unknown exception");
 #ifdef __APPLE__
             ::close(_kq);
 #elif defined __linux__
@@ -125,18 +125,18 @@ namespace mxl::lib
             if (inotify_rm_watch(_inotifyFd, wd) == -1)
             {
                 auto const error = errno;
-                MXL_ERROR("DomainWatcher: Error removing inotify watch (wd={}): {}", wd, std::strerror(error));
+                MXL_ERROR("Error removing inotify watch (wd={}): {}", wd, std::strerror(error));
             }
         }
         if (::close(_inotifyFd) == -1)
         {
             auto const error = errno;
-            MXL_ERROR("DomainWatcher: Error closing inotify FD: {}", std::strerror(error));
+            MXL_ERROR("Error closing inotify FD: {}", std::strerror(error));
         }
         if (::close(_epollFd) == -1)
         {
             auto const error = errno;
-            MXL_ERROR("DomainWatcher: Error closing epoll FD: {}", std::strerror(error));
+            MXL_ERROR("Error closing epoll FD: {}", std::strerror(error));
         }
 #endif
     }
@@ -173,7 +173,7 @@ namespace mxl::lib
 
         if (!found)
         {
-            MXL_DEBUG("DomainWatcher: Record for {} not found, creating one.", id);
+            MXL_DEBUG("Record for {} not found, creating one.", id);
             record->count = 1;
 
 #ifdef __APPLE__
@@ -185,12 +185,12 @@ namespace mxl::lib
             if (wd == -1)
             {
                 auto const error = errno;
-                MXL_ERROR("DomainWatcher: Failed to add watch for file '{}': {}", record->fileName, std::strerror(error));
+                MXL_ERROR("Failed to add watch for file '{}': {}", record->fileName, std::strerror(error));
                 throw std::system_error(error, std::generic_category(), "Failed to add watch for file: " + record->fileName);
             }
             else
             {
-                MXL_DEBUG("DomainWatcher: Added watch {} for file: {}", wd, record->fileName);
+                MXL_DEBUG("Added watch {} for file: {}", wd, record->fileName);
             }
             _watches.emplace(wd, record);
             useCount = record->count;
@@ -222,13 +222,13 @@ namespace mxl::lib
 #ifdef __APPLE__
                     if (::close(wd) == -1)
                     {
-                        MXL_ERROR("DomainWatcher: Error closing file descriptor {} for '{}'", wd, rec->fileName);
+                        MXL_ERROR("Error closing file descriptor {} for '{}'", wd, rec->fileName);
                     }
 #elif defined __linux__
                     if (inotify_rm_watch(_inotifyFd, wd) == -1)
                     {
                         auto const error = errno;
-                        MXL_ERROR("DomainWatcher: Failed to remove inotify watch (wd={}) for '{}': {}", wd, rec->fileName, std::strerror(error));
+                        MXL_ERROR("Failed to remove inotify watch (wd={}) for '{}': {}", wd, rec->fileName, std::strerror(error));
                         // Continue with cleanup despite failure
                     }
 #endif
@@ -248,7 +248,7 @@ namespace mxl::lib
                 }
                 else if (rec->count == 0)
                 {
-                    MXL_DEBUG("DomainWatcher: Should not have 0 use-count record");
+                    MXL_DEBUG("Should not have 0 use-count record");
                     useCount = -1;
                 }
                 else

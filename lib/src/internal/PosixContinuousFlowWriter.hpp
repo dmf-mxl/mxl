@@ -31,10 +31,10 @@ namespace mxl::lib
         PosixContinuousFlowWriter(FlowManager const& manager, uuids::uuid const& flowId, std::unique_ptr<ContinuousFlowData>&& data);
 
         /** \see FlowWriter::getFlowInfo */
-        virtual FlowInfo getFlowInfo() override;
+        virtual mxlFlowInfo getFlowInfo() override;
 
         /** \see ContinuousFlowWriter::openSamples */
-        virtual mxlStatus openSamples(std::uint64_t index, std::size_t count, MutableWrappedMultiBufferSlice& payloadBufferSlices) override;
+        virtual mxlStatus openSamples(std::uint64_t index, std::size_t count, mxlMutableWrappedMultiBufferSlice& payloadBufferSlices) override;
 
         /** \see ContinuousFlowWriter::commit */
         virtual mxlStatus commit() override;
@@ -48,9 +48,9 @@ namespace mxl::lib
     private:
         /** The FlowData for the currently opened flow. null if no flow is opened. */
         std::unique_ptr<ContinuousFlowData> _flowData;
-        /** Cached copy of the numer of channels from FLowInfo. */
+        /** Cached copy of the numer of channels from mxlFlowInfo. */
         std::size_t _channelCount;
-        /** Cached copy of the length of the per channel buffers from FLowInfo. */
+        /** Cached copy of the length of the per channel buffers from mxlFlowInfo. */
         std::size_t _bufferLength;
         /** The currently opened sample range head index. MXL_UNDEFINED_INDEX if no range is currently opened. */
         std::uint64_t _currentIndex;

@@ -20,11 +20,11 @@ namespace mxl::lib
         uuids::uuid const& getId() const;
 
         ///
-        /// Accessor for the current FlowInfo. A copy of the current structure is returned.
+        /// Accessor for the current mxlFlowInfo. A copy of the current structure is returned.
         /// The flow writer must first open the  flow before invoking this method.
-        /// \return A copy of the FlowInfo
+        /// \return A copy of the mxlFlowInfo
         ///
-        virtual FlowInfo getFlowInfo() = 0;
+        virtual mxlFlowInfo getFlowInfo() = 0;
 
         /// Invoked when a flow is read. The writer will
         /// update the 'lastReadTime' field

@@ -241,10 +241,10 @@ public:
             gst_object_unref(pad);
 
             std::string flowDef;
-            videoGrainRate = Rational{fps_n, fps_d};
+            videoGrainRate = mxlRational{fps_n, fps_d};
             videoFlowId = createVideoFlowJson(uri, width, height, videoGrainRate, true, colorimetry, flowDef);
 
-            FlowInfo flowInfo;
+            mxlFlowInfo flowInfo;
             auto res = mxlCreateFlow(mxlInstance, flowDef.c_str(), nullptr, &flowInfo);
             if (res != MXL_STATUS_OK)
             {
@@ -292,7 +292,7 @@ public:
     }
 
 private:
-    static uuids::uuid createVideoFlowJson(std::string const& in_uri, int in_width, int in_height, Rational in_rate, bool in_progressive,
+    static uuids::uuid createVideoFlowJson(std::string const& in_uri, int in_width, int in_height, mxlRational in_rate, bool in_progressive,
         std::string const& in_colorspace, std::string& out_flowDef)
     {
         picojson::object root;
@@ -378,7 +378,7 @@ private:
                 if (gst_buffer_map(buffer, &map, GST_MAP_READ))
                 {
                     /// Open the grain.
-                    GrainInfo gInfo;
+                    mxlGrainInfo gInfo;
                     uint8_t* mxl_buffer = nullptr;
 
                     /// Open the grain for writing.
@@ -434,7 +434,7 @@ private:
     // Current frame number
     std::atomic<int64_t> currentFrame{0};
     // The video grain rate
-    ::Rational videoGrainRate{0, 1};
+    ::mxlRational videoGrainRate{0, 1};
 };
 
 int main(int argc, char* argv[])

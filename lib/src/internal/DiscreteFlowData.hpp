@@ -23,8 +23,8 @@ namespace mxl::lib
         Grain* grainAt(std::size_t i) noexcept;
         Grain const* grainAt(std::size_t i) const noexcept;
 
-        GrainInfo* grainInfoAt(std::size_t i) noexcept;
-        GrainInfo const* grainInfoAt(std::size_t i) const noexcept;
+        mxlGrainInfo* grainInfoAt(std::size_t i) noexcept;
+        mxlGrainInfo const* grainInfoAt(std::size_t i) const noexcept;
 
     private:
         std::vector<SharedMemoryInstance<Grain>> _grains;
@@ -69,7 +69,7 @@ namespace mxl::lib
         return (i < _grains.size()) ? _grains[i].get() : nullptr;
     }
 
-    inline GrainInfo* DiscreteFlowData::grainInfoAt(std::size_t i) noexcept
+    inline mxlGrainInfo* DiscreteFlowData::grainInfoAt(std::size_t i) noexcept
     {
         if (auto const grain = grainAt(i); grain != nullptr)
         {
@@ -78,7 +78,7 @@ namespace mxl::lib
         return nullptr;
     }
 
-    inline GrainInfo const* DiscreteFlowData::grainInfoAt(std::size_t i) const noexcept
+    inline mxlGrainInfo const* DiscreteFlowData::grainInfoAt(std::size_t i) const noexcept
     {
         if (auto const grain = grainAt(i); grain != nullptr)
         {

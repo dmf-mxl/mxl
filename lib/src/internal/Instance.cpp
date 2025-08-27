@@ -206,7 +206,7 @@ namespace mxl::lib
     {
         if (writer)
         {
-            auto const& id = writer->getId();
+            auto const id = writer->getId();
             auto removeFlowWatch = false;
             {
                 auto const lock = std::lock_guard{_mutex};
@@ -263,6 +263,11 @@ namespace mxl::lib
     bool Instance::deleteFlow(uuids::uuid const& flowId)
     {
         return _flowManager.deleteFlow(flowId);
+    }
+
+    std::string Instance::getFlowDef(uuids::uuid const& flowId) const
+    {
+        return _flowManager.getFlowDef(flowId);
     }
 
     // This function is performed in a 'collaborative best effort' way.

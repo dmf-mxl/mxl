@@ -88,9 +88,9 @@ namespace mxl::lib
             return it->second.get<T>();
         }
 
-        Rational extractRational(picojson::object const& in_object)
+        mxlRational extractRational(picojson::object const& in_object)
         {
-            auto result = Rational{0, 1};
+            auto result = mxlRational{0, 1};
 
             result.numerator = static_cast<std::int64_t>(fetchAs<double>(in_object, "numerator"));
             if (auto const it = in_object.find("denominator"); it != in_object.end())
@@ -171,7 +171,7 @@ namespace mxl::lib
             if ((interlaceMode == "interlaced_tff") || (interlaceMode == "interlaced_bff"))
             {
                 // This is an interlaced video flow.  confirm that the grain rate is defined to 30000/1001 or 25/1
-                if ((_grainRate != Rational{30000, 1001}) && (_grainRate != Rational{25, 1}))
+                if ((_grainRate != mxlRational{30000, 1001}) && (_grainRate != mxlRational{25, 1}))
                 {
                     auto msg = std::string{"Invalid grain_rate for interlaced video. Expected 30000/1001 or 25/1."};
                     throw std::invalid_argument{std::move(msg)};
@@ -189,7 +189,7 @@ namespace mxl::lib
         return _id;
     }
 
-    Rational FlowParser::getGrainRate() const
+    mxlRational FlowParser::getGrainRate() const
     {
         return _grainRate;
     }

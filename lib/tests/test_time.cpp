@@ -9,10 +9,10 @@
 
 TEST_CASE("Invalid Times", "[time]")
 {
-    auto const badRate = Rational{0, 0};
-    auto const badNumerator = Rational{0, 1001};
-    auto const badDenominator = Rational{30000, 0};
-    auto const goodRate = Rational{30000, 1001};
+    auto const badRate = mxlRational{0, 0};
+    auto const badNumerator = mxlRational{0, 1001};
+    auto const badDenominator = mxlRational{30000, 0};
+    auto const goodRate = mxlRational{30000, 1001};
 
     auto const now = mxlGetTime();
 
@@ -25,7 +25,7 @@ TEST_CASE("Invalid Times", "[time]")
 
 TEST_CASE("Index 0 and 1", "[time]")
 {
-    auto const rate = Rational{30000, 1001};
+    auto const rate = mxlRational{30000, 1001};
 
     auto const firstIndexTimeNs = 0ULL;
     auto const secondIndexTimeNs = (rate.denominator * 1'000'000'000ULL + (rate.numerator / 2)) / rate.numerator;
@@ -53,7 +53,7 @@ TEST_CASE("Test TAI Epoch", "[time]")
 
 TEST_CASE("Index <-> Timestamp roundtrip (current)", "[time]")
 {
-    auto const rate = Rational{30000, 1001};
+    auto const rate = mxlRational{30000, 1001};
 
     auto const currentTime = mxlGetTime();
     auto const currentIndex = mxlGetCurrentIndex(&rate);
@@ -68,7 +68,7 @@ TEST_CASE("Index <-> Timestamp roundtrip (current)", "[time]")
 
 TEST_CASE("Index <-> Timestamp roundtrip (others)", "[time]")
 {
-    auto const editRate = Rational{30000, 1001};
+    auto const editRate = mxlRational{30000, 1001};
 
     for (auto i = 30'000'000U; i < 60'000'000U; ++i)
     {

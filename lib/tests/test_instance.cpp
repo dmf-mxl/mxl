@@ -18,7 +18,7 @@ TEST_CASE("Flow readers / writers caching", "[instance]")
     REQUIRE(instance != nullptr);
 
     auto flowDef = mxl::tests::readFile("data/audio_flow.json");
-    FlowInfo fInfo;
+    mxlFlowInfo fInfo;
     REQUIRE(mxlCreateFlow(instance, flowDef.c_str(), opts, &fInfo) == MXL_STATUS_OK);
     auto const audioFlowId = uuids::to_string(fInfo.common.id);
     flowDef = mxl::tests::readFile("data/v210_flow.json");

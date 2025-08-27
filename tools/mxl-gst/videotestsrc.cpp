@@ -23,7 +23,7 @@ struct GstreamerPipelineConfig
 {
     uint64_t frame_width{1920};
     uint64_t frame_height{1080};
-    Rational frame_rate{30, 1};
+    mxlRational frame_rate{30, 1};
     uint64_t pattern{0};
     std::string textoverlay{"EBU DMF MXL"};
 };
@@ -282,7 +282,7 @@ int main(int argc, char** argv)
     }
 
     // Create the flow
-    FlowInfo fInfo;
+    mxlFlowInfo fInfo;
     ret = mxlCreateFlow(instance, flow_descriptor.c_str(), nullptr, &fInfo);
     if (ret != MXL_STATUS_OK)
     {
@@ -322,7 +322,7 @@ int main(int argc, char** argv)
                 if (gst_buffer_map(gst_buffer, &map_info, GST_MAP_READ))
                 {
                     /// Open the grain.
-                    GrainInfo gInfo;
+                    mxlGrainInfo gInfo;
                     uint8_t* mxl_buffer = nullptr;
                     /// Open the grain for writing.
                     if (mxlFlowWriterOpenGrain(writer, grain_index, &gInfo, &mxl_buffer) != MXL_STATUS_OK)

@@ -27,7 +27,7 @@ extern "C"
      * \return The index or MXL_UNDEFINED_INDEX if editRate is null or invalid
      */
     MXL_EXPORT
-    uint64_t mxlGetCurrentIndex(Rational const* editRate);
+    uint64_t mxlGetCurrentIndex(mxlRational const* editRate);
 
     /**
      * Utility method to help compute how many nanoseconds we need to wait until the beginning of the specified index
@@ -36,7 +36,7 @@ extern "C"
      * \return How many nanoseconds to wait or MXL_UNDEFINED_INDEX if editRate is null or invalid
      */
     MXL_EXPORT
-    uint64_t mxlGetNsUntilIndex(uint64_t index, Rational const* editRate);
+    uint64_t mxlGetNsUntilIndex(uint64_t index, mxlRational const* editRate);
 
     /**
      * Get the current index based on the user provided timespec
@@ -47,7 +47,7 @@ extern "C"
      * \return The index or MXL_UNDEFINED_INDEX if editRate is null or invalid
      */
     MXL_EXPORT
-    uint64_t mxlTimestampToIndex(Rational const* editRate, uint64_t timestamp);
+    uint64_t mxlTimestampToIndex(mxlRational const* editRate, uint64_t timestamp);
 
     /**
      * Get the current timestamp based on the user provided index.
@@ -58,7 +58,7 @@ extern "C"
      * \return The time stamp in nanoseconds since the epoch or MXL_UNDEFINED_INDEX if editRate is null or invalid
      */
     MXL_EXPORT
-    uint64_t mxlIndexToTimestamp(Rational const* editRate, uint64_t index);
+    uint64_t mxlIndexToTimestamp(mxlRational const* editRate, uint64_t index);
 
     /**
      * Sleep for a specific amount of time.
