@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <csignal>
+#include <string>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -11,6 +12,7 @@
 #include <iterator>
 #include <stdexcept>
 #include <string>
+#include <stdio.h>
 #include <CLI/CLI.hpp>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
@@ -136,6 +138,21 @@ int main(int argc, char** argv)
         {
             printf("Got grain %lu\n", grain_index);
             log_grain(grain_info);
+
+            // write out 4 every 32 grains
+            if( !(grain_index & 0x1c) )
+            {
+                std::string file_name = "mxl-to-yuv-";
+                file_name += '0' + (grain_index & 0x3);
+                file_name += ".yuv";
+
+                FILE *fptr = fopen(file_name.c_str(), "w");
+                if( fptr )
+                {
+                    fwrite( payload, 1, grain_info.commitedSize, fptr );
+                    fclose(fptr);
+                }
+            }
         }
 
         grain_index++;

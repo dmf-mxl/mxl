@@ -108,6 +108,8 @@ public:
         if( config.bit_depth == 16 )
             pixel_format = "v216";
 
+        printf("Pixel format %s\n", pixel_format.c_str() );
+
         // Configure appsink
         g_object_set(G_OBJECT(_appsink),
             "caps",
@@ -252,6 +254,85 @@ void copy_packed_to_planar_16_yuv_422(uint16_t *dest_planar, const uint16_t *src
     }
 }
 
+typedef struct ColourBars
+{
+    uint8_t colours[8][4];
+} ColourBars;
+
+static const ColourBars bars_75_percent_8_bit = {
+    180, 128, 128, 255, /* 75% white */
+    162, 44, 142, 255, /* 75% yellow */
+    131, 156, 44, 255, /* 75% cyan */
+    112, 72, 58, 255, /* 75% green */
+    84, 184, 198, 255, /* 75% magenta */
+    65, 100, 212, 255, /* 75% red */
+    35, 212, 114, 255, /* 75% blue */
+    16, 128, 128, 255 /* black */
+};
+
+static uint16_t * fill_pixels( uint16_t *buffer, uint32_t width, uint16_t value )
+{
+    // just fill with value width times
+    for( uint32_t i = 0; i < width; i++ )
+    {
+        *buffer++ = value;
+    }
+
+    return buffer;
+}
+
+static void fill_planar_bars( uint16_t *buffer, uint32_t width, uint32_t height )
+{
+    uint32_t y_bar_width = width / 8;
+    uint32_t uv_bar_width = (width / 8) / 2;
+
+    printf("fill_planar_bars(): buffer %p width %u height %u\n", (void*)buffer, width, height );
+
+    if( buffer )
+    {
+        printf("fill_planar_bars(): Y\n");
+
+        // assume a contiguous planar buufer, fill y then u then v
+        for( uint32_t i = 0; i < height; i++ )
+        {
+            // fill each colour value in turn
+            for( uint32_t j = 0; j < 8; j++ )
+            {
+                buffer = fill_pixels( buffer, y_bar_width, bars_75_percent_8_bit.colours[j][0] * 256 );
+            }
+        }
+
+        printf("fill_planar_bars(): U\n");
+
+        for( uint32_t i = 0; i < height; i++ )
+        {
+            // fill each colour value in turn
+            for( uint32_t j = 0; j < 8; j++ )
+            {
+                buffer = fill_pixels( buffer, uv_bar_width, bars_75_percent_8_bit.colours[j][1] * 256 );
+            }
+        }
+
+        printf("fill_planar_bars(): V\n");
+
+        for( uint32_t i = 0; i < height; i++ )
+        {
+            // fill each colour value in turn
+            for( uint32_t j = 0; j < 8; j++ )
+            {
+                buffer = fill_pixels( buffer, uv_bar_width, bars_75_percent_8_bit.colours[j][2] * 256 );
+            }
+        }
+
+        printf("fill_planar_bars(): complete\n");
+
+    }
+    else
+    {
+        printf("fill_planar_bars(): no buffer provided\n");
+    }
+}
+
 int main(int argc, char** argv)
 {
     std::signal(SIGINT, &signal_handler);
@@ -309,6 +390,8 @@ int main(int argc, char** argv)
         .textoverlay = textOverlay,
         .bit_depth = bit_depth,
     };
+
+    printf("bit depth %lu w %lu h %lu\n", bit_depth, gst_config.frame_width, gst_config.frame_height );
 
     GstreamerPipeline gst_pipeline(gst_config);
 
@@ -393,7 +476,10 @@ int main(int argc, char** argv)
                     // convert to planar if 16 bit
                     if( bit_depth == 16 )
                     {
-                        copy_packed_to_planar_16_yuv_422((uint16_t*)mxl_buffer, (uint16_t*)map_info.data, gst_config.frame_width, gst_config.frame_height);
+                        // copy_packed_to_planar_16_yuv_422((uint16_t*)mxl_buffer, (uint16_t*)map_info.data, gst_config.frame_width, gst_config.frame_height);
+
+                        fill_planar_bars( (uint16_t*)mxl_buffer, gst_config.frame_width, gst_config.frame_height );
+
                     }
                     else
                     {
