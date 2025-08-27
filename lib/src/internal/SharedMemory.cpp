@@ -112,4 +112,20 @@ namespace mxl::lib
         }
     }
 
+    const char *AccessModeString(AccessMode mode)
+    {
+        switch(mode)
+        {
+            case AccessMode::READ_ONLY:
+                return "read-only";
+            case AccessMode::READ_WRITE:
+                return "read-write";
+            case AccessMode::CREATE_READ_WRITE:
+                return "create-read-write";
+            default:
+                return "Unknown";
+        }
+        return "Unknown";
+    }
+
 }
