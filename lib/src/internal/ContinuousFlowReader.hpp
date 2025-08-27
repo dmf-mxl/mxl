@@ -25,7 +25,7 @@ namespace mxl::lib
          *      safely hang on to the returned range of samples without the
          *      risk of these samples being overwritten.
          */
-        virtual mxlStatus getSamples(std::uint64_t index, std::size_t count, WrappedMultiBufferSlice& payloadBufferSlices) = 0;
+        virtual mxlStatus getSamples(std::uint64_t index, std::size_t count, mxlWrappedMultiBufferSlice& payloadBufferSlices) = 0;
 
     protected:
         using FlowReader::FlowReader;

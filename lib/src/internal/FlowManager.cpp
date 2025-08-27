@@ -77,9 +77,9 @@ namespace mxl::lib
             }
         }
 
-        CommonFlowInfo initCommonFlowInfo(uuids::uuid const& flowId, mxlDataFormat format)
+        mxlCommonFlowInfo initCommonFlowInfo(uuids::uuid const& flowId, mxlDataFormat format)
         {
-            auto result = CommonFlowInfo{};
+            auto result = mxlCommonFlowInfo{};
 
             auto const idSpan = flowId.as_bytes();
             std::memcpy(result.id, idSpan.data(), idSpan.size());
@@ -103,7 +103,7 @@ namespace mxl::lib
     }
 
     std::unique_ptr<DiscreteFlowData> FlowManager::createDiscreteFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat,
-        std::size_t grainCount, Rational const& grainRate, std::size_t grainPayloadSize)
+        std::size_t grainCount, mxlRational const& grainRate, std::size_t grainPayloadSize)
     {
         auto const uuidString = uuids::to_string(flowId);
         MXL_DEBUG("Create discrete flow. id: {}, grainCount: {}, grain payload size: {}", uuidString, grainCount, grainPayloadSize);
@@ -174,7 +174,7 @@ namespace mxl::lib
     }
 
     std::unique_ptr<ContinuousFlowData> FlowManager::createContinuousFlow(uuids::uuid const& flowId, std::string const& flowDef,
-        mxlDataFormat flowFormat, Rational const& sampleRate, std::size_t channelCount, std::size_t sampleWordSize, std::size_t bufferLength)
+        mxlDataFormat flowFormat, mxlRational const& sampleRate, std::size_t channelCount, std::size_t sampleWordSize, std::size_t bufferLength)
     {
         auto const uuidString = uuids::to_string(flowId);
         MXL_DEBUG("Create continuous flow. id: {}, channel count: {}, word size: {}, buffer length: {}",
@@ -373,6 +373,31 @@ namespace mxl::lib
         }
 
         return flowIds;
+    }
+
+    std::string FlowManager::getFlowDef(uuids::uuid const& flowId) const
+    {
+        auto const uuid = uuids::to_string(flowId);
+        auto const flowPath = makeFlowDirectoryName(_mxlDomain, uuid);
+        auto const flowJsonFile = makeFlowDescriptorFilePath(flowPath);
+        if (auto in = std::ifstream{flowJsonFile, std::ios::in}; in)
+        {
+            auto const result = std::string{std::istreambuf_iterator<char>{in}, std::istreambuf_iterator<char>{}};
+            if (!in)
+            {
+                throw std::runtime_error{"Error while reading the flow definition."};
+            }
+            return result;
+        }
+        // Here is a race condition, but plain C++ API does not provide a way to check whether it was not possible to open a file because it does not
+        // exist, or whether the access rights are wrong.
+        if (!exists(flowJsonFile))
+        {
+            throw std::filesystem::filesystem_error{"Failed to open flow resource definition - file not found.",
+                flowJsonFile,
+                std::make_error_code(std::errc::no_such_file_or_directory)};
+        }
+        throw std::runtime_error{"Failed to open flow resource definition."};
     }
 
     std::filesystem::path const& FlowManager::getDomain() const

@@ -13,7 +13,7 @@ using namespace mxl::lib;
 
 extern "C"
 MXL_EXPORT
-mxlStatus mxlCreateFlow(mxlInstance instance, char const* flowDef, char const* /*options*/, FlowInfo* flowInfo)
+mxlStatus mxlCreateFlow(mxlInstance instance, char const* flowDef, char const* /*options*/, mxlFlowInfo* flowInfo)
 {
     try
     {
@@ -67,6 +67,51 @@ mxlStatus mxlDestroyFlow(mxlInstance instance, char const* flowId)
     catch (...)
     {
         MXL_ERROR("Failed to destroy flow : {}", "An unknown error occured.");
+    }
+    return MXL_ERR_UNKNOWN;
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlGetFlowDef(mxlInstance instance, char const* flowId, char* buffer, size_t* bufferSize)
+{
+    if (flowId == nullptr || bufferSize == nullptr)
+    {
+        return MXL_ERR_INVALID_ARG;
+    }
+
+    try
+    {
+        if (auto const cppInstance = to_Instance(instance); cppInstance != nullptr)
+        {
+            if (auto const id = uuids::uuid::from_string(flowId); id.has_value())
+            {
+                auto const flowDef = cppInstance->getFlowDef(*id);
+                auto const requiredSize = flowDef.size() + 1; // +1 for the null terminator
+                if (buffer == nullptr || *bufferSize < requiredSize)
+                {
+                    *bufferSize = requiredSize;
+                    return MXL_ERR_INVALID_ARG;
+                }
+                *bufferSize = requiredSize;
+                std::strncpy(buffer, flowDef.c_str(), requiredSize);
+                return MXL_STATUS_OK;
+            }
+        }
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (std::filesystem::filesystem_error const& e)
+    {
+        MXL_ERROR("Failed to get flow definition : {}", e.what());
+        return MXL_ERR_FLOW_NOT_FOUND;
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Failed to get flow definition : {}", e.what());
+    }
+    catch (...)
+    {
+        MXL_ERROR("Failed to get flow definition : {}", "An unknown error occured.");
     }
     return MXL_ERR_UNKNOWN;
 }
@@ -167,7 +212,7 @@ mxlStatus mxlReleaseFlowWriter(mxlInstance instance, mxlFlowWriter writer)
 
 extern "C"
 MXL_EXPORT
-mxlStatus mxlFlowReaderGetInfo(mxlFlowReader reader, FlowInfo* info)
+mxlStatus mxlFlowReaderGetInfo(mxlFlowReader reader, mxlFlowInfo* info)
 {
     try
     {
@@ -190,7 +235,7 @@ mxlStatus mxlFlowReaderGetInfo(mxlFlowReader reader, FlowInfo* info)
 
 extern "C"
 MXL_EXPORT
-mxlStatus mxlFlowReaderGetGrain(mxlFlowReader reader, uint64_t index, uint64_t timeoutNs, GrainInfo* grainInfo, uint8_t** payload)
+mxlStatus mxlFlowReaderGetGrain(mxlFlowReader reader, uint64_t index, uint64_t timeoutNs, mxlGrainInfo* grainInfo, uint8_t** payload)
 {
     try
     {
@@ -212,7 +257,7 @@ mxlStatus mxlFlowReaderGetGrain(mxlFlowReader reader, uint64_t index, uint64_t t
 
 extern "C"
 MXL_EXPORT
-mxlStatus mxlFlowReaderGetGrainNonBlocking(mxlFlowReader reader, uint64_t index, GrainInfo* grainInfo, uint8_t** payload)
+mxlStatus mxlFlowReaderGetGrainNonBlocking(mxlFlowReader reader, uint64_t index, mxlGrainInfo* grainInfo, uint8_t** payload)
 {
     try
     {
@@ -234,7 +279,7 @@ mxlStatus mxlFlowReaderGetGrainNonBlocking(mxlFlowReader reader, uint64_t index,
 
 extern "C"
 MXL_EXPORT
-mxlStatus mxlFlowWriterOpenGrain(mxlFlowWriter writer, uint64_t index, GrainInfo* grainInfo, uint8_t** payload)
+mxlStatus mxlFlowWriterOpenGrain(mxlFlowWriter writer, uint64_t index, mxlGrainInfo* grainInfo, uint8_t** payload)
 {
     try
     {
@@ -275,7 +320,7 @@ mxlStatus mxlFlowWriterCancelGrain(mxlFlowWriter writer)
 
 extern "C"
 MXL_EXPORT
-mxlStatus mxlFlowWriterCommitGrain(mxlFlowWriter writer, GrainInfo const* grainInfo)
+mxlStatus mxlFlowWriterCommitGrain(mxlFlowWriter writer, mxlGrainInfo const* grainInfo)
 {
     if (grainInfo == nullptr)
     {
@@ -298,7 +343,7 @@ mxlStatus mxlFlowWriterCommitGrain(mxlFlowWriter writer, GrainInfo const* grainI
 
 extern "C"
 MXL_EXPORT
-mxlStatus mxlFlowReaderGetSamples(mxlFlowReader reader, uint64_t index, size_t count, WrappedMultiBufferSlice* payloadBuffersSlices)
+mxlStatus mxlFlowReaderGetSamples(mxlFlowReader reader, uint64_t index, size_t count, mxlWrappedMultiBufferSlice* payloadBuffersSlices)
 {
     try
     {
@@ -321,7 +366,7 @@ mxlStatus mxlFlowReaderGetSamples(mxlFlowReader reader, uint64_t index, size_t c
 
 extern "C"
 MXL_EXPORT
-mxlStatus mxlFlowWriterOpenSamples(mxlFlowWriter writer, uint64_t index, size_t count, MutableWrappedMultiBufferSlice* payloadBuffersSlices)
+mxlStatus mxlFlowWriterOpenSamples(mxlFlowWriter writer, uint64_t index, size_t count, mxlMutableWrappedMultiBufferSlice* payloadBuffersSlices)
 {
     try
     {

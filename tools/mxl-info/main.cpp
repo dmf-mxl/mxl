@@ -35,7 +35,7 @@ namespace
     }
 }
 
-std::ostream& operator<<(std::ostream& os, FlowInfo const& info)
+std::ostream& operator<<(std::ostream& os, mxlFlowInfo const& info)
 {
     auto span = gsl::span<std::uint8_t, sizeof info.common.id>(const_cast<std::uint8_t*>(info.common.id), sizeof info.common.id);
     auto id = uuids::uuid(span);
@@ -119,8 +119,8 @@ int printFlow(std::string const& in_domain, std::string const& in_id)
         return EXIT_FAILURE;
     }
 
-    // Extract the FlowInfo structure.
-    FlowInfo info;
+    // Extract the mxlFlowInfo structure.
+    mxlFlowInfo info;
     status = mxlFlowReaderGetInfo(reader, &info);
     if (status != MXL_STATUS_OK)
     {

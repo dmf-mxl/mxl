@@ -14,7 +14,7 @@ uint64_t mxlGetTime()
 
 extern "C"
 MXL_EXPORT
-uint64_t mxlGetCurrentIndex(Rational const* editRate)
+uint64_t mxlGetCurrentIndex(mxlRational const* editRate)
 {
     if ((editRate == nullptr) || (editRate->denominator == 0) || (editRate->numerator == 0))
     {
@@ -27,7 +27,7 @@ uint64_t mxlGetCurrentIndex(Rational const* editRate)
 
 extern "C"
 MXL_EXPORT
-uint64_t mxlTimestampToIndex(Rational const* editRate, uint64_t timestamp)
+uint64_t mxlTimestampToIndex(mxlRational const* editRate, uint64_t timestamp)
 {
     if ((editRate == nullptr) || (editRate->denominator == 0) || (editRate->numerator == 0))
     {
@@ -40,7 +40,7 @@ uint64_t mxlTimestampToIndex(Rational const* editRate, uint64_t timestamp)
 
 extern "C"
 MXL_EXPORT
-uint64_t mxlIndexToTimestamp(Rational const* editRate, uint64_t index)
+uint64_t mxlIndexToTimestamp(mxlRational const* editRate, uint64_t index)
 {
     // Validate the edit rate
     if ((editRate == nullptr) || (editRate->denominator == 0) || (editRate->numerator == 0))
@@ -54,7 +54,7 @@ uint64_t mxlIndexToTimestamp(Rational const* editRate, uint64_t index)
 
 extern "C"
 MXL_EXPORT
-uint64_t mxlGetNsUntilIndex(uint64_t index, Rational const* editRate)
+uint64_t mxlGetNsUntilIndex(uint64_t index, mxlRational const* editRate)
 {
     // Validate the edit rate
     if ((editRate == nullptr) || (editRate->denominator == 0) || (editRate->numerator == 0))

@@ -15,7 +15,7 @@ namespace mxl::lib
         , _currentIndex{MXL_UNDEFINED_INDEX}
     {}
 
-    FlowInfo PosixContinuousFlowWriter::getFlowInfo()
+    mxlFlowInfo PosixContinuousFlowWriter::getFlowInfo()
     {
         if (_flowData)
         {
@@ -24,7 +24,7 @@ namespace mxl::lib
         throw std::runtime_error("No open flow.");
     }
 
-    mxlStatus PosixContinuousFlowWriter::openSamples(std::uint64_t index, std::size_t count, MutableWrappedMultiBufferSlice& payloadBufferSlices)
+    mxlStatus PosixContinuousFlowWriter::openSamples(std::uint64_t index, std::size_t count, mxlMutableWrappedMultiBufferSlice& payloadBufferSlices)
     {
         if (_flowData)
         {

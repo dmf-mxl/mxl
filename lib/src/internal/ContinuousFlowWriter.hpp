@@ -23,7 +23,7 @@ namespace mxl::lib
          *
          * \return A status code describing the outcome of the call.
          */
-        virtual mxlStatus openSamples(std::uint64_t index, std::size_t count, MutableWrappedMultiBufferSlice& payloadBufferSlices) = 0;
+        virtual mxlStatus openSamples(std::uint64_t index, std::size_t count, mxlMutableWrappedMultiBufferSlice& payloadBufferSlices) = 0;
 
         virtual mxlStatus commit() = 0;
 

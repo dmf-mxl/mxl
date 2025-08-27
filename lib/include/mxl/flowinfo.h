@@ -20,7 +20,7 @@ extern "C"
      * Metadata about media a flow that is independent of the data format of the
      * flow and thus common to all flows handled by MXL.
      */
-    typedef struct CommonFlowInfo
+    typedef struct mxlCommonFlowInfo_t
     {
         /** The flow UUID.  This should be identical to the {flowId} path component. */
         uint8_t id[16];
@@ -42,15 +42,15 @@ extern "C"
 
         /** Reserved space for future extensions.  */
         uint8_t reserved[80];
-    } CommonFlowInfo;
+    } mxlCommonFlowInfo;
 
-    typedef struct DiscreteFlowInfo
+    typedef struct mxlDiscreteFlowInfo_t
     {
         /**
          * The number of grains per second expressed as a rational.
          * For VIDEO and DATA this value must match the 'grain_rate' found in the flow descriptor.
          */
-        Rational grainRate;
+        mxlRational grainRate;
 
         /**
          * How many grains in the ring buffer. This should be identical to the number of entries in the {mxlDomain}/{flowId}/grains/ folder.
@@ -70,15 +70,15 @@ extern "C"
 
         /** Reserved space for future extensions.  */
         uint8_t reserved[96];
-    } DiscreteFlowInfo;
+    } mxlDiscreteFlowInfo;
 
-    typedef struct ContinuousFlowInfo
+    typedef struct mxlContinuousFlowInfo_t
     {
         /**
          * The number of samples per second in this continuous flow.
          * For AUDIO flows this value must match the 'sample_rate' found in the flow descriptor.
          */
-        Rational sampleRate;
+        mxlRational sampleRate;
 
         /**
          * The number of channels in this flow.
@@ -109,14 +109,14 @@ extern "C"
 
         /** Reserved space for future extensions.  */
         uint8_t reserved[88];
-    } ContinuousFlowInfo;
+    } mxlContinuousFlowInfo;
 
     /**
      * Binary structure stored in the Flow shared memory segment.
      * The flow shared memory will be located in {mxlDomain}/{flowId}
      * where {mxlDomain} is a filesystem location available to the application
      */
-    typedef struct FlowInfo
+    typedef struct mxlFlowInfo_t
     {
         /** Version of this structure. The only currently supported value is 1 */
         uint32_t version;
@@ -124,18 +124,18 @@ extern "C"
         /** The total size of this structure */
         uint32_t size;
 
-        CommonFlowInfo common;
+        mxlCommonFlowInfo common;
 
         /** Format specific header data. */
         union
         {
-            DiscreteFlowInfo discrete;
-            ContinuousFlowInfo continuous;
+            mxlDiscreteFlowInfo discrete;
+            mxlContinuousFlowInfo continuous;
         };
 
         /** User data space. */
         uint8_t userData[3840];
-    } FlowInfo;
+    } mxlFlowInfo;
 
 #ifdef __cplusplus
 }

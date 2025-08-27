@@ -39,7 +39,7 @@ TEST_CASE("Video Flow : Wait for grain availability", "[mxl flows timing]")
     REQUIRE(instanceWriter != nullptr);
 
     auto flowDef = mxl::tests::readFile("data/v210_flow.json");
-    FlowInfo fInfo;
+    mxlFlowInfo fInfo;
     REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), opts, &fInfo) == MXL_STATUS_OK);
     auto const flowId = uuids::to_string(fInfo.common.id);
 
@@ -55,7 +55,7 @@ TEST_CASE("Video Flow : Wait for grain availability", "[mxl flows timing]")
             constexpr auto writerLatencyGrains = 3;
             for (std::uint64_t writerGrainIndex = readerGrainIndex - writerLatencyGrains; writerGrainIndex <= readerGrainIndex; ++writerGrainIndex)
             {
-                GrainInfo gInfo;
+                mxlGrainInfo gInfo;
                 std::uint8_t* buffer = nullptr;
                 REQUIRE(mxlFlowWriterOpenGrain(writer, writerGrainIndex, &gInfo, &buffer) == MXL_STATUS_OK);
                 REQUIRE(buffer != nullptr);
@@ -69,7 +69,7 @@ TEST_CASE("Video Flow : Wait for grain availability", "[mxl flows timing]")
             }
         }};
 
-    GrainInfo gInfo;
+    mxlGrainInfo gInfo;
     std::uint8_t* buffer = nullptr;
     constexpr auto oneS = 1000000000;
     REQUIRE(mxlFlowReaderGetGrain(reader, readerGrainIndex, oneS, &gInfo, &buffer) == MXL_STATUS_OK);

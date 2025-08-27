@@ -49,7 +49,7 @@ See [timing model](./timing.md)
 
 Grain I/O can be 'partial'. In other words, a FlowWriter can write the bytes of a grain progressively (as slices for example).
 
-The following example demonstrates how a FlowWriter may write a grain as slices using multiple `mxlFlowWriterCommitGrain()` calls. The important field here is the GrainInfo.committedSize: it tells us how many bytes in the grain are valid. A complete grain will have `GrainInfo.committedSize == GrainInfo.grainSize`. It is imperative that FlowReaders _always_ take into consideration the `GrainInfo.committedSize` field before making use of the grain buffer. The `mxlFlowReaderGetGrain` function will return as soon as new data is committed to the grain.
+The following example demonstrates how a FlowWriter may write a grain as slices using multiple `mxlFlowWriterCommitGrain()` calls. The important field here is the mxlGrainInfo.committedSize: it tells us how many bytes in the grain are valid. A complete grain will have `mxlGrainInfo.committedSize == mxlGrainInfo.grainSize`. It is imperative that FlowReaders _always_ take into consideration the `mxlGrainInfo.committedSize` field before making use of the grain buffer. The `mxlFlowReaderGetGrain` function will return as soon as new data is committed to the grain.
 
 ### Example Grain I/O (from the [unit tests](../lib/tests/test_flows.cpp))
 
@@ -59,7 +59,7 @@ The following example demonstrates how a FlowWriter may write a grain as slices 
     ///
 
     /// Open the grain.
-    GrainInfo gInfo;
+    mxlGrainInfo gInfo;
     uint8_t *buffer = nullptr;
 
     /// Open the grain for writing.
@@ -73,7 +73,7 @@ The following example demonstrates how a FlowWriter may write a grain as slices 
         gInfo.committedSize += sliceSize;
         REQUIRE( mxlFlowWriterCommitGrain( instanceWriter, writer, &gInfo ) == MXL_STATUS_OK );
 
-        FlowInfo sliceFlowInfo;
+        mxlFlowInfo sliceFlowInfo;
         REQUIRE( mxlFlowReaderGetInfo( instanceReader, reader, &sliceFlowInfo ) == MXL_STATUS_OK );
         REQUIRE( sliceFlowInfo.headIndex == index );
 

@@ -13,7 +13,7 @@ namespace mxl::lib
         , _bufferLength{_flowData->channelBufferLength()}
     {}
 
-    FlowInfo PosixContinuousFlowReader::getFlowInfo()
+    mxlFlowInfo PosixContinuousFlowReader::getFlowInfo()
     {
         if (_flowData)
         {
@@ -22,7 +22,7 @@ namespace mxl::lib
         throw std::runtime_error("No open flow.");
     }
 
-    mxlStatus PosixContinuousFlowReader::getSamples(std::uint64_t index, std::size_t count, WrappedMultiBufferSlice& payloadBuffersSlices)
+    mxlStatus PosixContinuousFlowReader::getSamples(std::uint64_t index, std::size_t count, mxlWrappedMultiBufferSlice& payloadBuffersSlices)
     {
         if (_flowData)
         {

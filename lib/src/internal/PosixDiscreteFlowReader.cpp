@@ -50,7 +50,7 @@ namespace mxl::lib
         // Ignore failures.
     }
 
-    FlowInfo PosixDiscreteFlowReader::getFlowInfo()
+    mxlFlowInfo PosixDiscreteFlowReader::getFlowInfo()
     {
         if (_flowData)
         {
@@ -59,7 +59,7 @@ namespace mxl::lib
         throw std::runtime_error("No open flow.");
     }
 
-    mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, std::uint64_t in_timeoutNs, GrainInfo* out_grainInfo,
+    mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, std::uint64_t in_timeoutNs, mxlGrainInfo* out_grainInfo,
         std::uint8_t** out_payload)
     {
         auto const deadline = currentTime(Clock::Realtime) + Duration{static_cast<std::int64_t>(in_timeoutNs)};
@@ -122,7 +122,7 @@ namespace mxl::lib
         return status;
     }
 
-    mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, GrainInfo* out_grainInfo, std::uint8_t** out_payload)
+    mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload)
     {
         if (_flowData)
         {

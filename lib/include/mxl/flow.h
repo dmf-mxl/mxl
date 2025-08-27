@@ -25,68 +25,68 @@ extern "C"
  * to make the ringbuffer <move forward> whilst letting consumers know that the grain is invalid. A consumer
  * may choose to repeat the previous grain, insert silence, etc.
  */
-#define GRAIN_FLAG_INVALID 0x00000001 // 1 << 0.
+#define MXL_GRAIN_FLAG_INVALID 0x00000001 // 1 << 0.
 
     /**
      * The payload location of the grain
      */
-    typedef enum PayloadLocation
+    typedef enum mxlPayloadLocation
     {
-        PAYLOAD_LOCATION_HOST_MEMORY = 0,
-        PAYLOAD_LOCATION_DEVICE_MEMORY = 1,
-    } PayloadLocation;
+        MXL_PAYLOAD_LOCATION_HOST_MEMORY = 0,
+        MXL_PAYLOAD_LOCATION_DEVICE_MEMORY = 1,
+    } mxlPayloadLocation;
 
     /**
      * A helper type used to describe consecutive sequences of bytes in memory.
      */
-    typedef struct BufferSlice
+    typedef struct mxlBufferSlice_t
     {
         /** A pointer referring to the beginning of the slice. */
         void const* pointer;
         /** The number of bytes that make up this slice. */
         size_t size;
-    } BufferSlice;
+    } mxlBufferSlice;
 
     /**
      * A helper type used to describe consecutive sequences of mutable bytes in
      * memory.
      */
-    typedef struct MutableBufferSlice
+    typedef struct mxlMutableBufferSlice_t
     {
         /** A pointer referring to the beginning of the slice. */
         void* pointer;
         /** The number of bytes that make up this slice. */
         size_t size;
-    } MutableBufferSlice;
+    } mxlMutableBufferSlice;
 
     /**
      * A helper type used to describe consecutive sequences of bytes
      * in a ring buffer that may potentially straddle the wrapraround
      * point of the buffer.
      */
-    typedef struct WrappedBufferSlice
+    typedef struct mxlWrappedBufferSlice_t
     {
-        BufferSlice fragments[2];
-    } WrappedBufferSlice;
+        mxlBufferSlice fragments[2];
+    } mxlWrappedBufferSlice;
 
     /**
      * A helper type used to describe consecutive sequences of mutable bytes in
      * a ring buffer that may potentially straddle the wrapraround point of the
      * buffer.
      */
-    typedef struct MutableWrappedBufferSlice
+    typedef struct mxlMutableWrappedBufferSlice_t
     {
-        MutableBufferSlice fragments[2];
-    } MutableWrappedBufferSlice;
+        mxlMutableBufferSlice fragments[2];
+    } mxlMutableWrappedBufferSlice;
 
     /**
      * A helper type used to describe consecutive sequences of bytes
      * in memory in consecutive ring buffers separated by the specified
      * stride of bytes.
      */
-    typedef struct WrappedMultiBufferSlice
+    typedef struct mxlWrappedMultiBufferSlice_t
     {
-        WrappedBufferSlice base;
+        mxlWrappedBufferSlice base;
 
         /**
          * The stride in bytes to get from a position in one buffer
@@ -97,16 +97,16 @@ extern "C"
          * The total number of buffers in the sequence.
          */
         size_t count;
-    } WrappedMultiBufferSlice;
+    } mxlWrappedMultiBufferSlice;
 
     /**
      * A helper type used to describe consecutive sequences of mutable bytes in
      * memory in consecutive ring buffers separated by the specified stride of
      * bytes.
      */
-    typedef struct MutableWrappedMultiBufferSlice
+    typedef struct mxlMutableWrappedMultiBufferSlice_t
     {
-        MutableWrappedBufferSlice base;
+        mxlMutableWrappedBufferSlice base;
 
         /**
          * The stride in bytes to get from a position in one buffer
@@ -117,9 +117,9 @@ extern "C"
          * The total number of buffers in the sequence.
          */
         size_t count;
-    } MutableWrappedMultiBufferSlice;
+    } mxlMutableWrappedMultiBufferSlice;
 
-    typedef struct GrainInfo
+    typedef struct mxlGrainInfo_t
     {
         /// Version of the structure. The only currently supported value is 1
         uint32_t version;
@@ -128,7 +128,7 @@ extern "C"
         /// Grain flags.
         uint32_t flags;
         /// Payload location
-        PayloadLocation payloadLocation;
+        mxlPayloadLocation payloadLocation;
         /// Device index (if payload is in device memory). -1 if on host memory.
         int32_t deviceIndex;
         /// Size in bytes of the complete payload of a grain
@@ -142,7 +142,7 @@ extern "C"
         uint64_t grainTimeStamp;
         /// User data space
         uint8_t userData[4044];
-    } GrainInfo;
+    } mxlGrainInfo;
 
     typedef struct mxlFlowReader_t* mxlFlowReader;
     typedef struct mxlFlowWriter_t* mxlFlowWriter;
@@ -153,13 +153,32 @@ extern "C"
     /// \param[in] instance The mxl instance created using mxlCreateInstance
     /// \param[in] flowDef A flow definition in the NMOS Flow json format.  The flow ID is read from the <id> field of this json object.
     /// \param[in] options Additional options (undefined). \todo Specify and used the additional options.
-    /// \param[out] info A pointer to a FlowInfo structure.  If not nullptr, this structure will be updated with the flow information after the flow
-    /// is created.
+    /// \param[out] info A pointer to an mxlFlowInfo structure.  If not nullptr, this structure will be updated with the flow information after the
+    /// flow is created.
 MXL_EXPORT
-    mxlStatus mxlCreateFlow(mxlInstance instance, char const* flowDef, char const* options, FlowInfo* info);
+    mxlStatus mxlCreateFlow(mxlInstance instance, char const* flowDef, char const* options, mxlFlowInfo* info);
 
     MXL_EXPORT
     mxlStatus mxlDestroyFlow(mxlInstance instance, char const* flowId);
+
+    /**
+     * Get the flow definition used to create the given flow.
+     *
+     * @param[in] instance The mxl instance tied to domain we want to get the flow definition from. If invalid instance is provided, the function will
+     *                     return MXL_ERR_INVALID_ARG and do nothing.
+     * @param[in] flowId The id of the flow we want to get the definition for. If nullptr, the function will return MXL_ERR_INVALID_ARG and do
+     *                   nothing.
+     * @param[out] buffer A pointer to a buffer that will be filled with the flow definition. If nullptr, or if the buffer does not contain enough
+     *                    space to return the result (based on the bufferSize provided later), the function will return MXL_ERR_INVALID_ARG and
+     *                    update the value pointed to by the bufferSize with the required buffer size.
+     * @param[in,out] bufferSize A pointer to a variable with the length of the supplied buffer. If nullptr, the function will return
+     *                           MXL_ERR_INVALID_ARG and do nothing. If function succeeds, the value pointed to by this variable will be updated with
+     *                           the number of bytes written to the buffer (including the null terminator).
+     * @return MXL_STATUS_OK when buffer was successfully filled with the flow definition, or other error codes based on the previous parameter
+     *         description or other encountered errors.
+     */
+    MXL_EXPORT
+    mxlStatus mxlGetFlowDef(mxlInstance instance, char const* flowId, char* buffer, size_t* bufferSize);
 
     MXL_EXPORT
     mxlStatus mxlCreateFlowReader(mxlInstance instance, char const* flowId, char const* options, mxlFlowReader* reader);
@@ -177,11 +196,12 @@ MXL_EXPORT
      * Get a copy of the current descriptive header of a Flow
      *
      * \param[in] reader A valid flow reader
-     * \param[out] info A valid pointer to a FlowInfo structure. on return, the structure will be updated with a copy of the current flow info value.
+     * \param[out] info A valid pointer to an mxlFlowInfo structure. on return, the structure will be updated with a copy of the current flow info
+     * value.
      * \return The result code. \see mxlStatus
      */
 MXL_EXPORT
-    mxlStatus mxlFlowReaderGetInfo(mxlFlowReader reader, FlowInfo* info);
+    mxlStatus mxlFlowReaderGetInfo(mxlFlowReader reader, mxlFlowInfo* info);
 
     /**
      * Accessors for a flow grain at a specific index
@@ -189,7 +209,7 @@ MXL_EXPORT
      * \param[in] reader A valid discrete flow reader.
      * \param[in] index The index of the grain to obtain
      * \param[in] timeoutNs How long should we wait for the grain (in nanoseconds)
-     * \param[out] grain The requested GrainInfo structure.
+     * \param[out] grain The requested mxlGrainInfo structure.
      * \param[out] payload The requested grain payload.
      * \return The result code. \see mxlStatus
      * \note Please note that this function can only be called on readers that
@@ -198,14 +218,14 @@ MXL_EXPORT
      *      error.
      */
 MXL_EXPORT
-    mxlStatus mxlFlowReaderGetGrain(mxlFlowReader reader, uint64_t index, uint64_t timeoutNs, GrainInfo* grain, uint8_t** payload);
+    mxlStatus mxlFlowReaderGetGrain(mxlFlowReader reader, uint64_t index, uint64_t timeoutNs, mxlGrainInfo* grain, uint8_t** payload);
 
     /**
      * Non-blocking accessors for a flow grain at a specific index
      *
      * \param[in] reader A valid flow reader
      * \param[in] index The index of the grain to obtain
-     * \param[out] grain The requested GrainInfo structure.
+     * \param[out] grain The requested mxlGrainInfo structure.
      * \param[out] payload The requested grain payload.
      * \return The result code. \see mxlStatus
      * \note Please note that this function can only be called on readers that
@@ -214,7 +234,7 @@ MXL_EXPORT
      *      error.
      */
 MXL_EXPORT
-    mxlStatus mxlFlowReaderGetGrainNonBlocking(mxlFlowReader reader, uint64_t index, GrainInfo* grain, uint8_t** payload);
+    mxlStatus mxlFlowReaderGetGrainNonBlocking(mxlFlowReader reader, uint64_t index, mxlGrainInfo* grain, uint8_t** payload);
 
     /**
      * Open a grain for mutation.  The flow writer will remember which index is currently opened. Before opening a new grain
@@ -225,7 +245,7 @@ MXL_EXPORT
      *
      * \param[in] writer A valid flow writer
      * \param[in] index The index of the grain to obtain
-     * \param[out] grainInfo The requested GrainInfo structure.
+     * \param[out] mxlGrainInfo The requested mxlGrainInfo structure.
      * \param[out] payload The requested grain payload.
      * \return The result code. \see mxlStatus
      * \note Please note that this function can only be called on writers that
@@ -234,7 +254,7 @@ MXL_EXPORT
      *      error.
      */
 MXL_EXPORT
-    mxlStatus mxlFlowWriterOpenGrain(mxlFlowWriter writer, uint64_t index, GrainInfo* grainInfo, uint8_t** payload);
+    mxlStatus mxlFlowWriterOpenGrain(mxlFlowWriter writer, uint64_t index, mxlGrainInfo* mxlGrainInfo, uint8_t** payload);
 
     /**
      *
@@ -245,13 +265,13 @@ MXL_EXPORT
 
     /**
      * Inform mxl that a user is done writing the grain that was previously opened.  This will in turn signal all readers waiting on the ringbuffer
-     * that a new grain is available.  The graininfo flags field in shared memory will be updated based on grain->flags This will increase the head
+     * that a new grain is available.  The mxlGrainInfo flags field in shared memory will be updated based on grain->flags This will increase the head
      * and potentially the tail IF this grain is the new head.
      *
      * \return The result code. \see mxlStatus
      */
 MXL_EXPORT
-    mxlStatus mxlFlowWriterCommitGrain(mxlFlowWriter writer, GrainInfo const* grain);
+    mxlStatus mxlFlowWriterCommitGrain(mxlFlowWriter writer, mxlGrainInfo const* grain);
 
     /**
      * Accessor for a specific set of samples across all channels ending at a
@@ -269,7 +289,7 @@ MXL_EXPORT
      *      risk of these samples being overwritten.
      */
     MXL_EXPORT
-    mxlStatus mxlFlowReaderGetSamples(mxlFlowReader reader, uint64_t index, size_t count, WrappedMultiBufferSlice* payloadBuffersSlices);
+    mxlStatus mxlFlowReaderGetSamples(mxlFlowReader reader, uint64_t index, size_t count, mxlWrappedMultiBufferSlice* payloadBuffersSlices);
 
     /**
      * Open a specific set of mutable samples across all channels starting at a
@@ -285,7 +305,7 @@ MXL_EXPORT
      * \return A status code describing the outcome of the call.
      */
     MXL_EXPORT
-    mxlStatus mxlFlowWriterOpenSamples(mxlFlowWriter writer, uint64_t index, size_t count, MutableWrappedMultiBufferSlice* payloadBuffersSlices);
+    mxlStatus mxlFlowWriterOpenSamples(mxlFlowWriter writer, uint64_t index, size_t count, mxlMutableWrappedMultiBufferSlice* payloadBuffersSlices);
 
     /**
      * Cancel the mutation of the previously opened range of samples.

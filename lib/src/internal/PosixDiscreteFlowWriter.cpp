@@ -24,7 +24,7 @@ namespace mxl::lib
         , _currentIndex{MXL_UNDEFINED_INDEX}
     {}
 
-    FlowInfo PosixDiscreteFlowWriter::getFlowInfo()
+    mxlFlowInfo PosixDiscreteFlowWriter::getFlowInfo()
     {
         if (_flowData)
         {
@@ -33,7 +33,7 @@ namespace mxl::lib
         throw std::runtime_error("No open flow.");
     }
 
-    mxlStatus PosixDiscreteFlowWriter::openGrain(std::uint64_t in_index, GrainInfo* out_grainInfo, std::uint8_t** out_payload)
+    mxlStatus PosixDiscreteFlowWriter::openGrain(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload)
     {
         if (_flowData)
         {
@@ -61,7 +61,7 @@ namespace mxl::lib
         }
     }
 
-    mxlStatus PosixDiscreteFlowWriter::commit(GrainInfo const& grainInfo)
+    mxlStatus PosixDiscreteFlowWriter::commit(mxlGrainInfo const& mxlGrainInfo)
     {
         if (_flowData)
         {
@@ -69,11 +69,11 @@ namespace mxl::lib
             flowInfo->discrete.headIndex = _currentIndex;
 
             auto const offset = _currentIndex % flowInfo->discrete.grainCount;
-            *_flowData->grainInfoAt(offset) = grainInfo;
+            *_flowData->grainInfoAt(offset) = mxlGrainInfo;
             flowInfo->common.lastWriteTime = mxlGetTime();
 
             // If the grain is complete, reset the current index of the flow writer.
-            if (grainInfo.grainSize == grainInfo.commitedSize)
+            if (mxlGrainInfo.grainSize == mxlGrainInfo.commitedSize)
             {
                 _currentIndex = MXL_UNDEFINED_INDEX;
             }

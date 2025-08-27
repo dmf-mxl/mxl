@@ -14,11 +14,11 @@ extern "C"
 {
 #endif
 
-    typedef struct Rational
+    typedef struct mxlRational_t
     {
         int64_t numerator;
         int64_t denominator;
-    } Rational;
+    } mxlRational;
 
 #ifdef __cplusplus
 }

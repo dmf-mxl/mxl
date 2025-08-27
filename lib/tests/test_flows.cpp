@@ -46,7 +46,7 @@ TEST_CASE("Video Flow : Create/Destroy", "[mxl flows]")
     auto instanceWriter = mxlCreateInstance(domain.string().c_str(), opts);
     REQUIRE(instanceWriter != nullptr);
 
-    FlowInfo fInfo;
+    mxlFlowInfo fInfo;
     REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), opts, &fInfo) == MXL_STATUS_OK);
 
     mxlFlowReader reader;
@@ -56,13 +56,13 @@ TEST_CASE("Video Flow : Create/Destroy", "[mxl flows]")
     REQUIRE(mxlCreateFlowWriter(instanceWriter, flowId, "", &writer) == MXL_STATUS_OK);
 
     /// Compute the grain index for the flow rate and current TAI time.
-    auto const rate = Rational{60000, 1001};
+    auto const rate = mxlRational{60000, 1001};
     auto const now = mxlGetTime();
     uint64_t index = mxlTimestampToIndex(&rate, now);
     REQUIRE(index != MXL_UNDEFINED_INDEX);
 
     /// Open the grain.
-    GrainInfo gInfo;
+    mxlGrainInfo gInfo;
     uint8_t* buffer = nullptr;
     /// Open the grain for writing.
     REQUIRE(mxlFlowWriterOpenGrain(writer, index, &gInfo, &buffer) == MXL_STATUS_OK);
@@ -72,12 +72,12 @@ TEST_CASE("Video Flow : Create/Destroy", "[mxl flows]")
     buffer[gInfo.grainSize - 1] = 0xFE;
 
     /// Get some info about the freshly created flow.  Since no grains have been commited, the head should still be at 0.
-    FlowInfo fInfo1;
+    mxlFlowInfo fInfo1;
     REQUIRE(mxlFlowReaderGetInfo(reader, &fInfo1) == MXL_STATUS_OK);
     REQUIRE(fInfo1.discrete.headIndex == 0);
 
     /// Mark the grain as invalid
-    gInfo.flags |= GRAIN_FLAG_INVALID;
+    gInfo.flags |= MXL_GRAIN_FLAG_INVALID;
     REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_STATUS_OK);
 
     /// Create back the grain using a flow reader.
@@ -87,14 +87,14 @@ TEST_CASE("Video Flow : Create/Destroy", "[mxl flows]")
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
     /// Confirm that the flags are preserved.
-    REQUIRE(gInfo.flags == GRAIN_FLAG_INVALID);
+    REQUIRE(gInfo.flags == MXL_GRAIN_FLAG_INVALID);
 
     /// Confirm that the marks are still present.
     REQUIRE(buffer[0] == 0xCA);
     REQUIRE(buffer[gInfo.grainSize - 1] == 0xFE);
 
     /// Get the updated flow info
-    FlowInfo fInfo2;
+    mxlFlowInfo fInfo2;
     REQUIRE(mxlFlowReaderGetInfo(reader, &fInfo2) == MXL_STATUS_OK);
 
     /// Confirm that that head has moved.
@@ -144,7 +144,7 @@ TEST_CASE("Invalid flow definitions", "[mxl flows]")
     auto instance = mxlCreateInstance(domain.string().c_str(), opts);
     REQUIRE(instance != nullptr);
 
-    FlowInfo fInfo;
+    mxlFlowInfo fInfo;
     REQUIRE(mxlCreateFlow(instance, noGrainRate.c_str(), opts, &fInfo) != MXL_STATUS_OK);
     REQUIRE(mxlCreateFlow(instance, noId.c_str(), opts, &fInfo) != MXL_STATUS_OK);
     REQUIRE(mxlCreateFlow(instance, noMediaType.c_str(), opts, &fInfo) != MXL_STATUS_OK);
@@ -193,7 +193,7 @@ TEST_CASE("Data Flow : Create/Destroy", "[mxl flows]")
     auto instanceWriter = mxlCreateInstance(domain.string().c_str(), opts);
     REQUIRE(instanceWriter != nullptr);
 
-    FlowInfo fInfo;
+    mxlFlowInfo fInfo;
     REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), opts, &fInfo) == MXL_STATUS_OK);
 
     mxlFlowReader reader;
@@ -203,7 +203,7 @@ TEST_CASE("Data Flow : Create/Destroy", "[mxl flows]")
     REQUIRE(mxlCreateFlowWriter(instanceWriter, flowId, "", &writer) == MXL_STATUS_OK);
 
     /// Compute the grain index for the flow rate and current TAI time.
-    auto const rate = Rational{60000, 1001};
+    auto const rate = mxlRational{60000, 1001};
     auto const now = mxlGetTime();
     uint64_t index = mxlTimestampToIndex(&rate, now);
     REQUIRE(index != MXL_UNDEFINED_INDEX);
@@ -214,7 +214,7 @@ TEST_CASE("Data Flow : Create/Destroy", "[mxl flows]")
     REQUIRE(sizeof(mxl::lib::Grain) == 0x2000);
 
     /// Open the grain.
-    GrainInfo gInfo;
+    mxlGrainInfo gInfo;
     uint8_t* buffer = nullptr;
     /// Open the grain for writing.
     REQUIRE(mxlFlowWriterOpenGrain(writer, index, &gInfo, &buffer) == MXL_STATUS_OK);
@@ -226,19 +226,19 @@ TEST_CASE("Data Flow : Create/Destroy", "[mxl flows]")
     memcpy(buffer, rtpData, rtpSize);
 
     /// Get some info about the freshly created flow.  Since no grains have been commited, the head should still be at 0.
-    FlowInfo fInfo1;
+    mxlFlowInfo fInfo1;
     REQUIRE(mxlFlowReaderGetInfo(reader, &fInfo1) == MXL_STATUS_OK);
     REQUIRE(fInfo1.discrete.headIndex == 0);
 
     /// Mark the grain as invalid
-    gInfo.flags |= GRAIN_FLAG_INVALID;
+    gInfo.flags |= MXL_GRAIN_FLAG_INVALID;
     REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_STATUS_OK);
 
     /// Create back the grain using a flow reader.
     REQUIRE(mxlFlowReaderGetGrain(reader, index, 16, &gInfo, &buffer) == MXL_STATUS_OK);
 
     /// Confirm that the flags are preserved.
-    REQUIRE(gInfo.flags == GRAIN_FLAG_INVALID);
+    REQUIRE(gInfo.flags == MXL_GRAIN_FLAG_INVALID);
 
     /// Confirm that our original -40 packet is still there
     REQUIRE(0 == memcmp(buffer, rtpData, reinterpret_cast<size_t>(rtpSize)));
@@ -247,7 +247,7 @@ TEST_CASE("Data Flow : Create/Destroy", "[mxl flows]")
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
     /// Get the updated flow info
-    FlowInfo fInfo2;
+    mxlFlowInfo fInfo2;
     REQUIRE(mxlFlowReaderGetInfo(reader, &fInfo2) == MXL_STATUS_OK);
 
     /// Confirm that that head has moved.
@@ -291,7 +291,7 @@ TEST_CASE("Video Flow : Slices", "[mxl flows]")
     auto instanceWriter = mxlCreateInstance(domain.string().c_str(), opts);
     REQUIRE(instanceWriter != nullptr);
 
-    FlowInfo fInfo;
+    mxlFlowInfo fInfo;
     REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), opts, &fInfo) == MXL_STATUS_OK);
 
     mxlFlowReader reader;
@@ -301,18 +301,18 @@ TEST_CASE("Video Flow : Slices", "[mxl flows]")
     REQUIRE(mxlCreateFlowWriter(instanceWriter, flowId, "", &writer) == MXL_STATUS_OK);
 
     /// Compute the grain index for the flow rate and current TAI time.
-    auto const rate = Rational{60000, 1001};
+    auto const rate = mxlRational{60000, 1001};
     auto const now = mxlGetTime();
     uint64_t index = mxlTimestampToIndex(&rate, now);
     REQUIRE(index != MXL_UNDEFINED_INDEX);
 
     /// Open the grain.
-    GrainInfo gInfo;
+    mxlGrainInfo gInfo;
     uint8_t* buffer = nullptr;
     REQUIRE(mxlFlowWriterOpenGrain(writer, index, &gInfo, &buffer) == MXL_STATUS_OK);
 
     /// Get some info about the freshly created flow.  Since no grains have been commited, the head should still be at 0.
-    FlowInfo fInfo1;
+    mxlFlowInfo fInfo1;
     REQUIRE(mxlFlowReaderGetInfo(reader, &fInfo1) == MXL_STATUS_OK);
     REQUIRE(fInfo1.discrete.headIndex == 0);
 
@@ -324,7 +324,7 @@ TEST_CASE("Video Flow : Slices", "[mxl flows]")
         gInfo.commitedSize += sliceSize;
         REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_STATUS_OK);
 
-        FlowInfo sliceFlowInfo;
+        mxlFlowInfo sliceFlowInfo;
         REQUIRE(mxlFlowReaderGetInfo(reader, &sliceFlowInfo) == MXL_STATUS_OK);
         REQUIRE(sliceFlowInfo.discrete.headIndex == index);
 
@@ -372,7 +372,7 @@ TEST_CASE("Audio Flow : Create/Destroy", "[mxl flows]")
     REQUIRE(instanceWriter != nullptr);
 
     {
-        FlowInfo flowInfo;
+        mxlFlowInfo flowInfo;
         REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), opts, &flowInfo) == MXL_STATUS_OK);
 
         REQUIRE(flowInfo.continuous.sampleRate.numerator == 48000U);
@@ -388,14 +388,14 @@ TEST_CASE("Audio Flow : Create/Destroy", "[mxl flows]")
     REQUIRE(mxlCreateFlowWriter(instanceWriter, flowId, "", &writer) == MXL_STATUS_OK);
 
     /// Compute the grain index for the flow rate and current TAI time.
-    auto const rate = Rational{48000, 1};
+    auto const rate = mxlRational{48000, 1};
     auto const now = mxlGetTime();
     auto const index = mxlTimestampToIndex(&rate, now);
     REQUIRE(index != MXL_UNDEFINED_INDEX);
 
     {
         /// Open a range of samples for writing
-        MutableWrappedMultiBufferSlice payloadBuffersSlices;
+        mxlMutableWrappedMultiBufferSlice payloadBuffersSlices;
         REQUIRE(mxlFlowWriterOpenSamples(writer, index, 64U, &payloadBuffersSlices) == MXL_STATUS_OK);
 
         // Verify that the returned info looks alright
@@ -413,7 +413,7 @@ TEST_CASE("Audio Flow : Create/Destroy", "[mxl flows]")
         }
 
         /// Get some info about the freshly created flow.  Since no grains have been commited, the head should still be at 0.
-        FlowInfo flowInfo;
+        mxlFlowInfo flowInfo;
         REQUIRE(mxlFlowReaderGetInfo(reader, &flowInfo) == MXL_STATUS_OK);
 
         // Verify that the headindex is yet to be modified
@@ -425,7 +425,7 @@ TEST_CASE("Audio Flow : Create/Destroy", "[mxl flows]")
 
     {
         /// Open a range of samples for reading
-        WrappedMultiBufferSlice payloadBuffersSlices;
+        mxlWrappedMultiBufferSlice payloadBuffersSlices;
         REQUIRE(mxlFlowReaderGetSamples(reader, index, 64U, &payloadBuffersSlices) == MXL_STATUS_OK);
 
         // Verify that the returned info looks alright
@@ -443,7 +443,7 @@ TEST_CASE("Audio Flow : Create/Destroy", "[mxl flows]")
         }
 
         // Get the updated flow info
-        FlowInfo flowInfo;
+        mxlFlowInfo flowInfo;
         REQUIRE(mxlFlowReaderGetInfo(reader, &flowInfo) == MXL_STATUS_OK);
 
         // Confirm that that head has moved.
@@ -455,7 +455,7 @@ TEST_CASE("Audio Flow : Create/Destroy", "[mxl flows]")
 
     {
         // Use the writer after closing the reader.
-        MutableWrappedMultiBufferSlice payloadBuffersSlices;
+        mxlMutableWrappedMultiBufferSlice payloadBuffersSlices;
         REQUIRE(mxlFlowWriterOpenSamples(writer, index + 64U, 64U, &payloadBuffersSlices) == MXL_STATUS_OK);
 
         // Verify that the returned info looks alright
@@ -511,7 +511,7 @@ TEST_CASE("Audio Flow : Different writer / reader batch size", "[mxl flows]")
     REQUIRE(instance != nullptr);
 
     auto flowDef = mxl::tests::readFile("data/audio_flow.json");
-    FlowInfo flowInfo;
+    mxlFlowInfo flowInfo;
     REQUIRE(mxlCreateFlow(instance, flowDef.c_str(), opts, &flowInfo) == MXL_STATUS_OK);
     auto const flowId = uuids::to_string(flowInfo.common.id);
     REQUIRE(flowInfo.continuous.bufferLength > 11U); // To have at least 2 samples per batch in our second part of the test with reading in 3 batches.
@@ -525,7 +525,7 @@ TEST_CASE("Audio Flow : Different writer / reader batch size", "[mxl flows]")
     REQUIRE(mxlCreateFlowWriter(instance, flowId.c_str(), "", &writer) == MXL_STATUS_OK);
     for (auto const& batch : writeBatches)
     {
-        MutableWrappedMultiBufferSlice payloadBuffersSlices;
+        mxlMutableWrappedMultiBufferSlice payloadBuffersSlices;
         REQUIRE(mxlFlowWriterOpenSamples(writer, batch.index, batch.size, &payloadBuffersSlices) == MXL_STATUS_OK);
         REQUIRE((payloadBuffersSlices.base.fragments[0].size + payloadBuffersSlices.base.fragments[1].size) / 4 == batch.size);
         std::uint64_t index = batch.index - batch.size + 1;
@@ -548,7 +548,7 @@ TEST_CASE("Audio Flow : Different writer / reader batch size", "[mxl flows]")
     {
         for (auto const& batch : batches)
         {
-            WrappedMultiBufferSlice payloadBuffersSlices;
+            mxlWrappedMultiBufferSlice payloadBuffersSlices;
             REQUIRE(mxlFlowReaderGetSamples(reader, batch.index, batch.size, &payloadBuffersSlices) == MXL_STATUS_OK);
             REQUIRE((payloadBuffersSlices.base.fragments[0].size + payloadBuffersSlices.base.fragments[1].size) / 4 == batch.size);
             std::uint64_t index = batch.index - batch.size + 1;
@@ -569,6 +569,52 @@ TEST_CASE("Audio Flow : Different writer / reader batch size", "[mxl flows]")
     auto const readBatches = planAudioBatches(writeBatches.size() + 1, flowInfo.continuous.bufferLength / 2, lastIndex);
     readCheckFn(reader, readBatches);
     REQUIRE(mxlReleaseFlowReader(instance, reader) == MXL_STATUS_OK);
+
+    REQUIRE(mxlDestroyFlow(instance, flowId.c_str()) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+}
+
+TEST_CASE("mxlGetFlowDef", "[mxl flows]")
+{
+    auto domain = std::filesystem::path{"./mxl_unittest_domain"};
+    remove_all(domain);
+    create_directories(domain);
+
+    auto const opts = "{}";
+    auto instance = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instance != nullptr);
+
+    auto flowDef = mxl::tests::readFile("data/v210_flow.json");
+    mxlFlowInfo flowInfo;
+    REQUIRE(mxlCreateFlow(instance, flowDef.c_str(), opts, &flowInfo) == MXL_STATUS_OK);
+    auto const flowId = uuids::to_string(flowInfo.common.id);
+
+    char fourKBuffer[4096];
+    auto fourKBufferSize = sizeof(fourKBuffer);
+
+    REQUIRE(mxlGetFlowDef(nullptr, flowId.c_str(), fourKBuffer, &fourKBufferSize) == MXL_ERR_INVALID_ARG);
+    REQUIRE(fourKBufferSize == sizeof(fourKBuffer));
+
+    REQUIRE(mxlGetFlowDef(instance, nullptr, fourKBuffer, &fourKBufferSize) == MXL_ERR_INVALID_ARG);
+    REQUIRE(fourKBufferSize == sizeof(fourKBuffer));
+    REQUIRE(mxlGetFlowDef(instance, "this is not UUID", fourKBuffer, &fourKBufferSize) == MXL_ERR_INVALID_ARG);
+    REQUIRE(fourKBufferSize == sizeof(fourKBuffer));
+    REQUIRE(mxlGetFlowDef(instance, "75f369f9-6814-48a3-b827-942bc24c3d25", fourKBuffer, &fourKBufferSize) == MXL_ERR_FLOW_NOT_FOUND);
+    REQUIRE(fourKBufferSize == sizeof(fourKBuffer));
+
+    REQUIRE(mxlGetFlowDef(instance, flowId.c_str(), fourKBuffer, nullptr) == MXL_ERR_INVALID_ARG);
+
+    auto requiredBufferSize = size_t{0U};
+    REQUIRE(mxlGetFlowDef(instance, flowId.c_str(), nullptr, &requiredBufferSize) == MXL_ERR_INVALID_ARG);
+    REQUIRE(requiredBufferSize == flowDef.size() + 1);
+    auto requiredBufferSize2 = size_t{10U};
+    REQUIRE(mxlGetFlowDef(instance, flowId.c_str(), fourKBuffer, &requiredBufferSize2) == MXL_ERR_INVALID_ARG);
+    REQUIRE(requiredBufferSize == requiredBufferSize2);
+
+    requiredBufferSize = fourKBufferSize;
+    REQUIRE(mxlGetFlowDef(instance, flowId.c_str(), fourKBuffer, &requiredBufferSize) == MXL_STATUS_OK);
+    REQUIRE(requiredBufferSize == requiredBufferSize2);
+    REQUIRE(flowDef == std::string{fourKBuffer});
 
     REQUIRE(mxlDestroyFlow(instance, flowId.c_str()) == MXL_STATUS_OK);
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
