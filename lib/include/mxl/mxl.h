@@ -82,6 +82,15 @@ extern "C"
     MXL_EXPORT
     mxlStatus mxlDestroyInstance(mxlInstance in_instance);
 
+    ///
+    /// Return test description of mxlStatus code
+    ///
+    /// \param status The mxlStatus code to decode to human text
+    /// \return const char * representing status code
+    ///
+    MXL_EXPORT
+    const char * xmlStatus_to_string(mxlStatus status);
+
 #ifdef __cplusplus
 }
 #endif

@@ -89,3 +89,25 @@ mxlStatus mxlGarbageCollectFlows(mxlInstance in_instance)
         return MXL_ERR_UNKNOWN;
     }
 }
+
+extern "C"
+MXL_EXPORT
+const char * xmlStatus_to_string(mxlStatus status)
+{
+    switch(status)
+    {
+        case MXL_STATUS_OK: return "MXL_STATUS_OK";
+        case MXL_ERR_UNKNOWN: return "MXL_ERR_UNKNOWN";
+        case MXL_ERR_FLOW_NOT_FOUND: return "MXL_ERR_FLOW_NOT_FOUND";
+        case MXL_ERR_OUT_OF_RANGE_TOO_LATE: return "MXL_ERR_OUT_OF_RANGE_TOO_LATE";
+        case MXL_ERR_OUT_OF_RANGE_TOO_EARLY: return "MXL_ERR_OUT_OF_RANGE_TOO_EARLY";
+        case MXL_ERR_INVALID_FLOW_READER: return "MXL_ERR_INVALID_FLOW_READER";
+        case MXL_ERR_INVALID_FLOW_WRITER: return "MXL_ERR_INVALID_FLOW_WRITER";
+        case MXL_ERR_TIMEOUT: return "MXL_ERR_TIMEOUT";
+        case MXL_ERR_INVALID_ARG: return "MXL_ERR_INVALID_ARG";
+        case MXL_ERR_CONFLICT: return "MXL_ERR_CONFLICT";
+
+        default: return "Unknown mxlStatus code";
+    }
+}
+
