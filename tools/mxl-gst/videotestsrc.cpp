@@ -227,7 +227,7 @@ private:
     GstElement* _pipeline{nullptr};
 };
 
-void log_grain(GrainInfo &gInfo)
+void log_grain(mxlGrainInfo &gInfo)
 {
     printf("videotestsrc.cpp: size %u flags %x location %d device index %d grain size %u committed %u\n",
         gInfo.size, gInfo.flags, gInfo.payloadLocation, gInfo.deviceIndex, gInfo.grainSize, gInfo.commitedSize);

@@ -209,8 +209,8 @@ TEST_CASE("Data Flow : Create/Destroy", "[mxl flows]")
     REQUIRE(index != MXL_UNDEFINED_INDEX);
 
     /// validate grain and flow structure sizes
-    REQUIRE(sizeof(GrainInfo) == 0x1000);
-    REQUIRE(sizeof(FlowInfo) == 0x1000);
+    REQUIRE(sizeof(mxlGrainInfo) == 0x1000);
+    REQUIRE(sizeof(mxlFlowInfo) == 0x1000);
     REQUIRE(sizeof(mxl::lib::Grain) == 0x2000);
 
     /// Open the grain.

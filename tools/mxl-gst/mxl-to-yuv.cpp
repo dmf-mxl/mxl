@@ -36,7 +36,7 @@ void signal_handler(int)
     g_exit_requested = 1;
 }
 
-void log_grain(GrainInfo &gInfo)
+void log_grain(mxlGrainInfo &gInfo)
 {
     printf("videotestsrc.cpp: size %u flags %x location %d device index %d grain size %u committed %u\n",
         gInfo.size, gInfo.flags, gInfo.payloadLocation, gInfo.deviceIndex, gInfo.grainSize, gInfo.commitedSize);
@@ -78,7 +78,7 @@ int main(int argc, char** argv)
     int exit_status = EXIT_SUCCESS;
     mxlStatus ret;
 
-    Rational rate;
+    mxlRational rate;
     std::uint64_t editUnitDurationNs = 33'000'000LL;
     std::uint64_t grain_index = 0;
 
@@ -101,7 +101,7 @@ int main(int argc, char** argv)
     }
 
     // Extract the FlowInfo structure.
-    FlowInfo flow_info;
+    mxlFlowInfo flow_info;
     ret = mxlFlowReaderGetInfo(reader, &flow_info);
     if (ret != MXL_STATUS_OK)
     {
@@ -117,7 +117,7 @@ int main(int argc, char** argv)
     grain_index = mxlGetCurrentIndex(&flow_info.discrete.grainRate);
     while (!g_exit_requested)
     {
-        GrainInfo grain_info;
+        mxlGrainInfo grain_info;
         uint8_t* payload;
         auto ret = mxlFlowReaderGetGrain(reader, grain_index, editUnitDurationNs*5, &grain_info, &payload);
         if (ret != MXL_STATUS_OK)
