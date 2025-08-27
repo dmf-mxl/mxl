@@ -81,6 +81,8 @@ int main(int argc, char** argv)
     mxlRational rate;
     std::uint64_t editUnitDurationNs = 33'000'000LL;
     std::uint64_t grain_index = 0;
+    char FlowDefBuffer[2000];
+    size_t FlowDef_bufferSize = sizeof(FlowDefBuffer);
 
     auto instance = mxlCreateInstance(domain.c_str(), "");
     if (instance == nullptr)
@@ -100,7 +102,7 @@ int main(int argc, char** argv)
         goto mxl_cleanup;
     }
 
-    // Extract the FlowInfo structure.
+    // Extract the FlowInfo data as json string
     mxlFlowInfo flow_info;
     ret = mxlFlowReaderGetInfo(reader, &flow_info);
     if (ret != MXL_STATUS_OK)
@@ -113,6 +115,18 @@ int main(int argc, char** argv)
     rate = flow_info.discrete.grainRate;
     editUnitDurationNs = static_cast<std::uint64_t>(1.0 * rate.denominator * (1'000'000'000.0 / rate.numerator));
     editUnitDurationNs += 1'000'000ULL; // allow some margin.
+
+    ret = mxlGetFlowDef(instance, flowID.c_str(), FlowDefBuffer, &FlowDef_bufferSize);
+    if( ret == MXL_ERR_INVALID_ARG )
+    {
+        // should now have buffer size needed in FlowDef_bufferSize, ours was to small
+        MXL_ERROR("Buffer size needed is {} aborting", FlowDef_bufferSize);
+        exit_status = EXIT_FAILURE;
+        goto mxl_cleanup;
+    }
+
+    // log the defintion
+    printf("Defintion for flow is \n[%s]\n", FlowDefBuffer );
 
     grain_index = mxlGetCurrentIndex(&flow_info.discrete.grainRate);
     while (!g_exit_requested)
