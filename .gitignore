@@ -9,3 +9,4 @@ CMakeUserPresets.json
 
 .idea
 .vscode
+vcpkg_installed
