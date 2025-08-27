@@ -119,8 +119,6 @@ namespace mxl::lib
             throw std::invalid_argument{"Invalid JSON flow definition. " + err};
         }
 
-        printf("Trace: A:1\n");
-
         // parse the json as nlohmann
         n_root = nlohmann::json::parse(in_flowDef);
         n_components = n_root["components"];
@@ -209,12 +207,8 @@ namespace mxl::lib
     {
         std::size_t result = 0;
 
-        printf("Trace: B\n");
-
         // if an array how many elements
         result = n_components.size();
-
-        printf("Trace: C %lu\n", result );
 
         return result;
     }
@@ -224,13 +218,9 @@ namespace mxl::lib
 
         std::size_t max_bit_depth = 0;
 
-        printf("Trace: D\n");
-
         // iterate over components
         for( uint32_t i = 0; i < n_components.size(); i++ )
         {
-            printf("Trace: E %u\n", i);
-
             nlohmann::json component = n_components[i];
             uint32_t depth = component["bit_depth"];
             if( depth > max_bit_depth )
@@ -277,9 +267,6 @@ namespace mxl::lib
                         std::size_t bit_depth = getVideoComponentBitDepth();
 
                         payloadSize = width * height * component_count * ((bit_depth + 7) / 8);
-
-                        printf("component_count %lu bit_depth %lu payloadSize %lu\n", component_count, bit_depth, payloadSize );
-
                         }
                     break;
 
