@@ -21,19 +21,19 @@
       "name": "Y",
       "width": 1920,
       "height": 1080,
-      "bit_depth": 10
+      "bit_depth": 16
     },
     {
       "name": "Cb",
       "width": 960,
       "height": 1080,
-      "bit_depth": 10
+      "bit_depth": 16
     },
     {
       "name": "Cr",
       "width": 960,
       "height": 1080,
-      "bit_depth": 10
+      "bit_depth": 16
     }
   ]
 }
