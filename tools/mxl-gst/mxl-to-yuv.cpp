@@ -34,6 +34,15 @@ void signal_handler(int)
     g_exit_requested = 1;
 }
 
+void log_grain(GrainInfo &gInfo)
+{
+    printf("videotestsrc.cpp: size %u flags %x location %d device index %d grain size %u committed %u\n",
+        gInfo.size, gInfo.flags, gInfo.payloadLocation, gInfo.deviceIndex, gInfo.grainSize, gInfo.commitedSize);
+    printf("payload location %u device index %d grain size %u grain index %lu grain time stamp %lu\n",
+        gInfo.payloadLocation, gInfo.deviceIndex, gInfo.grainSize, gInfo.grainIndex, gInfo.grainTimeStamp);
+}
+
+
 int main(int argc, char** argv)
 {
     std::signal(SIGINT, &signal_handler);
@@ -108,11 +117,13 @@ int main(int argc, char** argv)
     {
         GrainInfo grain_info;
         uint8_t* payload;
-        auto ret = mxlFlowReaderGetGrain(reader, grain_index, editUnitDurationNs, &grain_info, &payload);
+        auto ret = mxlFlowReaderGetGrain(reader, grain_index, editUnitDurationNs*5, &grain_info, &payload);
         if (ret != MXL_STATUS_OK)
         {
             // Missed a grain. resync.
-            MXL_ERROR("Missed grain {}, err : {}", grain_index, (int)ret);
+            MXL_ERROR("Missed grain {}, err : {}", grain_index, (int)ret, xmlStatus_to_string(ret));
+            printf("%s\n", xmlStatus_to_string(ret));
+
             grain_index = mxlGetCurrentIndex(&flow_info.discrete.grainRate);
             continue;
         }
@@ -120,6 +131,11 @@ int main(int argc, char** argv)
         {
             // we don't need partial grains. wait for the grain to be complete.
             continue;
+        }
+        else
+        {
+            printf("Got grain %lu\n", grain_index);
+            log_grain(grain_info);
         }
 
         grain_index++;
