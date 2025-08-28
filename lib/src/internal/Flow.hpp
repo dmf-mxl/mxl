@@ -48,4 +48,12 @@ namespace mxl::lib
 
     std::ostream& operator<<(std::ostream& os, Grain const& obj);
 
+    ///
+    /// dumps to stdout grain data
+    ///
+    /// \param[in] gInfo a grain info structure to log to stdout
+    ///
+    MXL_EXPORT
+    void log_grain(const mxlGrainInfo &gInfo);
+
 } // namespace mxl::lib

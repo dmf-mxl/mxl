@@ -35,6 +35,16 @@ namespace mxl::lib
         virtual mxlFlowInfo getFlowInfo() override;
 
         ///
+        /// retrieve current range of absolute grain indexes available
+        ///
+        /// \param oldest_index oldest valid grain
+        /// \param newest_index newest valid grain
+        ///
+        /// \return A status code describing the outcome of the call.
+        ///
+        virtual mxlStatus getGrainRange(std::uint64_t &oldest_index, std::uint64_t &newest_index) override;
+
+            ///
         /// Accessor for a specific grain at a specific index.
         /// The index must be >= mxlFlowInfo.tailIndex.
         ///

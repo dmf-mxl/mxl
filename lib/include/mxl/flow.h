@@ -291,6 +291,18 @@ MXL_EXPORT
     MXL_EXPORT
     mxlStatus mxlFlowReaderGetSamples(mxlFlowReader reader, uint64_t index, size_t count, mxlWrappedMultiBufferSlice* payloadBuffersSlices);
 
+    ///
+    /// retrieve the current range of absolute grain indexes available
+    ///
+    /// \param[in] reader flow reader to access
+    /// \param[out] oldest_index pointer to oldest valid grain
+    /// \param[out] newest_index pointer to newest valid grain
+    ///
+    /// \return A status code describing the outcome of the call.
+    ///
+    MXL_EXPORT
+    mxlStatus mxlFlowReaderGetGrainRange(mxlFlowReader reader, std::uint64_t *oldest_index, std::uint64_t *newest_index);
+
     /**
      * Open a specific set of mutable samples across all channels starting at a
      * specific index for mutation.

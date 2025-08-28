@@ -343,6 +343,63 @@ mxlStatus mxlFlowWriterCommitGrain(mxlFlowWriter writer, mxlGrainInfo const* gra
 
 extern "C"
 MXL_EXPORT
+mxlStatus mxlFlowReaderGetGrainRange(mxlFlowReader reader, std::uint64_t *oldest_index, std::uint64_t *newest_index)
+{
+    printf("mxlFlowReaderGetGrainRange:A\n");
+
+    // use flow reader to access results
+    try
+    {
+        // check args
+        if( oldest_index  == nullptr )
+        {
+            return MXL_ERR_INVALID_ARG;
+        }
+        if( newest_index == nullptr )
+        {
+            return MXL_ERR_INVALID_ARG;
+        }
+
+        printf("mxlFlowReaderGetGrainRange:B\n");
+
+        if (auto const cppReader = dynamic_cast<DiscreteFlowReader*>(to_FlowReader(reader)); cppReader != nullptr)
+        {
+            printf("mxlFlowReaderGetGrainRange:C\n");
+
+            uint64_t oldest, newest;
+            mxlStatus status = cppReader->getGrainRange(oldest, newest);
+
+            printf("mxlFlowReaderGetGrainRange:D status %d oldest %lu newest %lu\n", status, oldest, newest );
+
+            if( status == MXL_STATUS_OK )
+            {
+                printf("mxlFlowReaderGetGrainRange:E OK\n");
+                *oldest_index = oldest;
+                *newest_index = newest;
+                return MXL_STATUS_OK;
+            }
+            else
+            {
+                printf("mxlFlowReaderGetGrainRange:F no data\n");
+                return status;
+            }
+        }
+        else
+        {
+            printf("mxlFlowReaderGetGrainRange:G\n");
+            return MXL_ERR_INVALID_FLOW_READER;
+        }
+
+    }
+    catch (...)
+    {
+        printf("mxlFlowReaderGetGrainRange:H\n");
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
 mxlStatus mxlFlowReaderGetSamples(mxlFlowReader reader, uint64_t index, size_t count, mxlWrappedMultiBufferSlice* payloadBuffersSlices)
 {
     try

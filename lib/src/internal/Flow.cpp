@@ -76,4 +76,14 @@ namespace mxl::lib
 
         return os;
     }
+
+    MXL_EXPORT
+    void log_grain(const mxlGrainInfo &gInfo)
+    {
+        printf( "T_mxl_stream::log_grain: size %u flags %x location %d device index %d grain size %u committed %u\n",
+            gInfo.size, gInfo.flags, gInfo.payloadLocation, gInfo.deviceIndex, gInfo.grainSize, gInfo.commitedSize);
+        printf( "payload location %u device index %d grain size %u grain index %lu grain time stamp %lu\n",
+            gInfo.payloadLocation, gInfo.deviceIndex, gInfo.grainSize, gInfo.grainIndex, gInfo.grainTimeStamp);
+    }
+
 }
