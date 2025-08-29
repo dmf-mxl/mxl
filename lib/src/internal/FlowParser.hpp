@@ -77,12 +77,22 @@ namespace mxl::lib
         std::size_t getVideoComponentCount() const;
 
         /**
-         * Get the number of bit depth of components in an video flow.
-         * \return The greatest bit depth of components in an video flow, or 0
-         *      if the flow format indicates that this not an video flow.
+         * Get the bit depth of a component in a video flow.
+         * \param index, 0 based index into components
+         * \return The bit depth of component in a video flow, or 0
+         *      if the flow format indicates that this not an video flow or index is invalid.
          */
         [[nodiscard]]
-        std::size_t getVideoComponentBitDepth() const;
+        std::size_t getVideoComponentBitDepth(uint32_t index) const;
+
+        /**
+         * Get the number of samples in a component in a video flow.
+         * \param index, 0 based index into components
+         * \return The number of samples in a component in a video flow, or 0
+         *      if the flow format indicates that this not an video flow or index is invalid.
+         */
+        [[nodiscard]]
+        std::size_t getVideoComponentSamples(uint32_t index) const;
 
         /**
          * Generic accessor for json fields.

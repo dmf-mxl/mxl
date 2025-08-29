@@ -245,6 +245,8 @@ void copy_packed_to_planar_16_yuv_422(uint16_t *dest_planar, const uint16_t *src
     // simple iteration
     uint64_t loops = frame_width * frame_height / 2;
 
+    printf("Loops to copy %lu width %ld height %lu\n", loops, frame_width, frame_height );
+
     while(loops-- > 0)
     {
         *u++ = *src_packed++;
@@ -380,7 +382,7 @@ int main(int argc, char** argv)
 
     auto frame_rate = descriptor_parser.getGrainRate();
     auto flowID = uuids::to_string(descriptor_parser.getId());
-    auto bit_depth = descriptor_parser.getVideoComponentBitDepth();
+    auto bit_depth = descriptor_parser.getVideoComponentBitDepth(0);
 
     GstreamerPipelineConfig gst_config{
         .frame_width = static_cast<uint64_t>(descriptor_parser.get<double>("frame_width")),

@@ -213,23 +213,36 @@ namespace mxl::lib
         return result;
     }
 
-    std::size_t FlowParser::getVideoComponentBitDepth() const
+    std::size_t FlowParser::getVideoComponentBitDepth(uint32_t index) const
     {
 
-        std::size_t max_bit_depth = 0;
+        std::size_t depth = 0;
 
-        // iterate over components
-        for( uint32_t i = 0; i < n_components.size(); i++ )
+        // validate index
+        if( index < n_components.size() )
         {
-            nlohmann::json component = n_components[i];
-            uint32_t depth = component["bit_depth"];
-            if( depth > max_bit_depth )
-            {
-                max_bit_depth = depth;
-            }
+            nlohmann::json component = n_components[index];
+            depth = component["bit_depth"];
         }
 
-        return max_bit_depth;
+        return depth;
+    }
+
+    std::size_t FlowParser::getVideoComponentSamples(uint32_t index) const
+    {
+
+        std::size_t samples = 0;
+
+        // validate index
+        if( index < n_components.size() )
+        {
+            nlohmann::json component = n_components[index];
+            std::size_t width = component["width"];
+            std::size_t height = component["height"];
+            samples = width * height;
+        }
+
+        return samples;
     }
 
     std::size_t FlowParser::getPayloadSize() const
@@ -262,12 +275,17 @@ namespace mxl::lib
 
                 case MXL_TYPE_PLANAR:
                         // get component count
-                        {
+                    {
                         std::size_t component_count = getVideoComponentCount();
-                        std::size_t bit_depth = getVideoComponentBitDepth();
+                        payloadSize = 0;
 
-                        payloadSize = width * height * component_count * ((bit_depth + 7) / 8);
+                        for( uint32_t i = 0; i < component_count; i++ )
+                        {
+                            std::size_t bytes_per_sample = (getVideoComponentBitDepth(i) + 7) / 8;
+                            payloadSize += getVideoComponentSamples(i) * bytes_per_sample;
                         }
+
+                    }
                     break;
 
                 case MXL_TYPE_UNKWOWN:
