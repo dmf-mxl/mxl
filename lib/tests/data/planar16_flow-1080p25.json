@@ -1,11 +1,11 @@
 {
   "$copyright": "SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.",
   "$license": "SPDX-License-Identifier: Apache-2.0",
-  "description": "MXL Test Flow, 1080p29",
+  "description": "MXL Test Flow, 1080p25",
   "id": "5fbec3b1-1b0f-417d-9059-8b94a47197ed",
   "tags": {},
   "format": "urn:x-nmos:format:video",
-  "label": "MXL Test Flow, 1080p29",
+  "label": "MXL Test Flow, 1080p25",
   "parents": [],
   "media_type": "video/planar",
   "grain_rate": {
