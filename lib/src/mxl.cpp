@@ -59,6 +59,11 @@ mxlStatus mxlDestroyInstance(mxlInstance in_instance)
         delete mxl::lib::to_Instance(in_instance);
         return (in_instance != nullptr) ? MXL_STATUS_OK : MXL_ERR_INVALID_ARG;
     }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Exception in DestroyInstance : {}", e.what());
+        return MXL_ERR_UNKNOWN;
+    }
     catch (...)
     {
         return MXL_ERR_UNKNOWN;
@@ -83,6 +88,11 @@ mxlStatus mxlGarbageCollectFlows(mxlInstance in_instance)
         {
             return MXL_ERR_INVALID_ARG;
         }
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Exception in GarbageCollectFlows : {}", e.what() );
+        return MXL_ERR_UNKNOWN;
     }
     catch (...)
     {

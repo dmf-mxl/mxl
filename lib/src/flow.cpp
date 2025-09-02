@@ -136,6 +136,11 @@ mxlStatus mxlCreateFlowReader(mxlInstance instance, char const* flowId, char con
 
         return MXL_ERR_INVALID_ARG;
     }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Failed to create flow : {}", e.what());
+        return MXL_ERR_UNKNOWN;
+    }
     catch (...)
     {
         return MXL_ERR_UNKNOWN;
@@ -157,6 +162,11 @@ mxlStatus mxlReleaseFlowReader(mxlInstance instance, mxlFlowReader reader)
         }
         return MXL_ERR_INVALID_ARG;
     }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Failed to release flow : {}", e.what());
+        return MXL_ERR_UNKNOWN;
+    }
     catch (...)
     {
         return MXL_ERR_UNKNOWN;
@@ -173,14 +183,25 @@ mxlStatus mxlCreateFlowWriter(mxlInstance instance, char const* flowId, char con
         {
             if (auto const cppInstance = to_Instance(instance); cppInstance != nullptr)
             {
+                MXL_INFO("found instance");
                 if ((flowId != nullptr) && uuids::uuid::is_valid_uuid(flowId))
                 {
+                    MXL_INFO("instance valid");
                     *writer = reinterpret_cast<mxlFlowWriter>(cppInstance->getFlowWriter(flowId));
                     return MXL_STATUS_OK;
+                }
+                else
+                {
+                    MXL_WARN("instance Invalid");
                 }
             }
         }
         return MXL_ERR_INVALID_ARG;
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Failed to create flow writer: {}", e.what());
+        return MXL_ERR_UNKNOWN;
     }
     catch (...)
     {
@@ -203,6 +224,11 @@ mxlStatus mxlReleaseFlowWriter(mxlInstance instance, mxlFlowWriter writer)
         }
 
         return MXL_ERR_INVALID_ARG;
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Failed to release flow writer : {}", e.what());
+        return MXL_ERR_UNKNOWN;
     }
     catch (...)
     {
@@ -227,6 +253,11 @@ mxlStatus mxlFlowReaderGetInfo(mxlFlowReader reader, mxlFlowInfo* info)
         }
         return MXL_ERR_INVALID_ARG;
     }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Exception in get flow reader GetInfo : {}", e.what());
+        return MXL_ERR_UNKNOWN;
+    }
     catch (...)
     {
         return MXL_ERR_UNKNOWN;
@@ -249,6 +280,11 @@ mxlStatus mxlFlowReaderGetGrain(mxlFlowReader reader, uint64_t index, uint64_t t
         }
         return MXL_ERR_INVALID_ARG;
     }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Exception in get flow reader GetGrain : {}", e.what());
+        return MXL_ERR_UNKNOWN;
+    }
     catch (...)
     {
         return MXL_ERR_UNKNOWN;
@@ -270,6 +306,11 @@ mxlStatus mxlFlowReaderGetGrainNonBlocking(mxlFlowReader reader, uint64_t index,
             return MXL_ERR_INVALID_FLOW_READER;
         }
         return MXL_ERR_INVALID_ARG;
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Exception in get flow reader GetInfoNonBlocking : {}", e.what());
+        return MXL_ERR_UNKNOWN;
     }
     catch (...)
     {
@@ -294,6 +335,11 @@ mxlStatus mxlFlowWriterOpenGrain(mxlFlowWriter writer, uint64_t index, mxlGrainI
         }
         return MXL_ERR_INVALID_ARG;
     }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Exception in flow writer OpenGrain : {}", e.what());
+        return MXL_ERR_UNKNOWN;
+    }
     catch (...)
     {
         return MXL_ERR_UNKNOWN;
@@ -311,6 +357,11 @@ mxlStatus mxlFlowWriterCancelGrain(mxlFlowWriter writer)
             return cppWriter->cancel();
         }
         return MXL_ERR_INVALID_FLOW_WRITER;
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Exception in flow writer CancelGrain : {}", e.what());
+        return MXL_ERR_UNKNOWN;
     }
     catch (...)
     {
@@ -334,6 +385,11 @@ mxlStatus mxlFlowWriterCommitGrain(mxlFlowWriter writer, mxlGrainInfo const* gra
             return cppWriter->commit(*grainInfo);
         }
         return MXL_ERR_INVALID_FLOW_WRITER;
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Exception in flow writer CommitGrain : {}", e.what());
+        return MXL_ERR_UNKNOWN;
     }
     catch (...)
     {
@@ -391,6 +447,11 @@ mxlStatus mxlFlowReaderGetGrainRange(mxlFlowReader reader, std::uint64_t *oldest
         }
 
     }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Exception in flow reader GetGrainRange : {}", e.what());
+        return MXL_ERR_UNKNOWN;
+    }
     catch (...)
     {
         printf("mxlFlowReaderGetGrainRange:H\n");
@@ -415,6 +476,11 @@ mxlStatus mxlFlowReaderGetSamples(mxlFlowReader reader, uint64_t index, size_t c
         }
         return MXL_ERR_INVALID_ARG;
     }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Exception in flow reader GetSamples : {}", e.what());
+        return MXL_ERR_UNKNOWN;
+    }
     catch (...)
     {
         return MXL_ERR_UNKNOWN;
@@ -438,6 +504,11 @@ mxlStatus mxlFlowWriterOpenSamples(mxlFlowWriter writer, uint64_t index, size_t 
         }
         return MXL_ERR_INVALID_ARG;
     }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Exception in flow writer OpenSamples : {}", e.what());
+        return MXL_ERR_UNKNOWN;
+    }
     catch (...)
     {
         return MXL_ERR_UNKNOWN;
@@ -456,6 +527,11 @@ mxlStatus mxlFlowWriterCancelSamples(mxlFlowWriter writer)
         }
         return MXL_ERR_INVALID_FLOW_WRITER;
     }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Exception in flow writer CancelSamples : {}", e.what());
+        return MXL_ERR_UNKNOWN;
+    }
     catch (...)
     {
         return MXL_ERR_UNKNOWN;
@@ -473,6 +549,11 @@ mxlStatus mxlFlowWriterCommitSamples(mxlFlowWriter writer)
             return cppWriter->commit();
         }
         return MXL_ERR_INVALID_FLOW_WRITER;
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Exception in flow writer CommitSamples : {}", e.what());
+        return MXL_ERR_UNKNOWN;
     }
     catch (...)
     {

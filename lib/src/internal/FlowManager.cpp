@@ -47,6 +47,8 @@ namespace mxl::lib
 
         void publishFlowDirectory(std::filesystem::path const& source, std::filesystem::path const& dest)
         {
+            MXL_INFO("source, src {} {} dest {} {}\n", source.c_str(), exists(source), dest.c_str(), exists(dest) );
+
             permissions(source,
                 std::filesystem::perms::group_read | std::filesystem::perms::group_exec | std::filesystem::perms::others_read |
                     std::filesystem::perms::others_exec,
@@ -105,6 +107,8 @@ namespace mxl::lib
     std::unique_ptr<DiscreteFlowData> FlowManager::createDiscreteFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat,
         std::size_t grainCount, mxlRational const& grainRate, std::size_t grainPayloadSize)
     {
+        MXL_INFO("FlowManager::createDiscreteFlow: {}", flowDef.c_str());
+
         auto const uuidString = uuids::to_string(flowId);
         MXL_DEBUG("Create discrete flow. id: {}, grainCount: {}, grain payload size: {}", uuidString, grainCount, grainPayloadSize);
 
@@ -149,7 +153,7 @@ namespace mxl::lib
             for (auto i = std::size_t{0}; i < grainCount; ++i)
             {
                 auto const grainPath = makeGrainDataFilePath(grainDir, i);
-                MXL_TRACE("Creating grain: {}", grainPath.string());
+                MXL_INFO("Creating grain: {}", grainPath.string());
 
                 // \todo Handle payload stored device memory
                 auto const grain = flowData->emplaceGrain(grainPath.string().c_str(), grainPayloadSize);
@@ -164,6 +168,13 @@ namespace mxl::lib
             publishFlowDirectory(tempDirectory, finalDir);
 
             return flowData;
+        }
+        catch (std::exception const& e)
+        {
+            MXL_ERROR("Exception in CreateDiscreteFlow : {}", e.what());
+            auto ec = std::error_code{};
+            remove_all(tempDirectory, ec);
+            throw;
         }
         catch (...)
         {
@@ -215,6 +226,13 @@ namespace mxl::lib
 
             return flowData;
         }
+        catch (std::exception const& e)
+        {
+            MXL_ERROR("Exception in CreateContinuousFlow : {}", e.what());
+            auto ec = std::error_code{};
+            remove_all(tempDirectory, ec);
+            throw;
+        }
         catch (...)
         {
             auto ec = std::error_code{};
@@ -225,6 +243,8 @@ namespace mxl::lib
 
     std::unique_ptr<FlowData> FlowManager::openFlow(uuids::uuid const& in_flowId, AccessMode in_mode)
     {
+        MXL_INFO("A");
+
         if (in_mode == AccessMode::CREATE_READ_WRITE)
         {
             throw std::invalid_argument{"Attempt to open flow with invalid access mode."};
@@ -233,27 +253,37 @@ namespace mxl::lib
         auto uuid = uuids::to_string(in_flowId);
         auto const base = makeFlowDirectoryName(_mxlDomain, uuid);
 
+        MXL_INFO("base {}", base.c_str());
+
         // Verify that the flow file exists.
-        if (auto const flowFile = makeFlowDataFilePath(base); exists(flowFile))
+        auto const flowFile = makeFlowDataFilePath(base);
+        MXL_INFO("flowFile {}", flowFile.c_str());
+        if ( exists(flowFile))
         {
             auto flowSegment = SharedMemoryInstance<Flow>{flowFile.string().c_str(), in_mode, 0U};
 
+            MXL_INFO("file {}", flowFile.string().c_str());
+
             if (auto const flowFormat = flowSegment.get()->info.common.format; mxlIsDiscreteDataFormat(flowFormat))
             {
+                MXL_INFO("B");
                 return openDiscreteFlow(base, std::move(flowSegment));
             }
             else if (mxlIsContinuousDataFormat(flowFormat))
             {
+                MXL_INFO("C");
                 return openContinuousFlow(base, std::move(flowSegment));
             }
             else
             {
+                MXL_INFO("D");
                 // This should never happen for a valid flow.
                 throw std::runtime_error{"Attempt to open flow with unsupported data format."};
             }
         }
         else
         {
+            MXL_INFO("E");
             throw std::filesystem::filesystem_error{"Flow file not found.", flowFile, std::make_error_code(std::errc::no_such_file_or_directory)};
         }
     }
@@ -273,7 +303,7 @@ namespace mxl::lib
                 for (auto i = 0U; i < grainCount; ++i)
                 {
                     auto const grainPath = makeGrainDataFilePath(grainDir, i).string();
-                    MXL_TRACE("Opening grain: {}", grainPath);
+                    MXL_TRACE("Opening grain: {}", grainPath.c_str());
 
                     flowData->emplaceGrain(grainPath.c_str(), /*payloadSize=*/0U);
                 }
@@ -332,6 +362,13 @@ namespace mxl::lib
                 return false;
             }
             return true;
+        }
+        catch (std::exception const& e)
+        {
+            MXL_ERROR("Exception in DeleteFlow : {}", e.what());
+            // Convert any filesystem exception to false return
+            // This makes the method effectively noexcept while indicating failure
+            return false;
         }
         catch (...)
         {
