@@ -627,3 +627,53 @@ TEST_CASE("mxlGetFlowDef", "[mxl flows]")
     REQUIRE(mxlDestroyFlow(instance, flowId.c_str()) == MXL_STATUS_OK);
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
 }
+
+TEST_CASE("mxlIsFlowActive works on restarted writer", "[mxl flows]")
+{
+    auto domain = std::filesystem::path{"./mxl_unittest_domain"};
+    remove_all(domain);
+    create_directories(domain);
+
+    auto const opts = "{}";
+    auto instanceWriter = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instanceWriter != nullptr);
+
+    auto flowDef = mxl::tests::readFile("data/v210_flow.json");
+    mxlFlowInfo flowInfo;
+    REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), opts, &flowInfo) == MXL_STATUS_OK);
+    auto const flowId = uuids::to_string(flowInfo.common.id);
+
+    auto instanceReader = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instanceReader != nullptr);
+
+    mxlFlowWriter writer;
+    REQUIRE(mxlCreateFlowWriter(instanceWriter, flowId.c_str(), "", &writer) == MXL_STATUS_OK);
+    mxlFlowReader reader;
+    REQUIRE(mxlCreateFlowReader(instanceReader, flowId.c_str(), "", &reader) == MXL_STATUS_OK);
+
+    bool active = false;
+    REQUIRE(mxlIsFlowActive(instanceReader, flowId.c_str(), &active) == MXL_STATUS_OK);
+    REQUIRE(active == true);
+
+    // At this point, we have the writer and the reader normally connected...
+    // Imagine everything was working, reader is now waiting for a grain from the writer, but writer gets restarted:
+    REQUIRE(mxlReleaseFlowWriter(instanceWriter, writer) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyFlow(instanceWriter, flowId.c_str()) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instanceWriter) == MXL_STATUS_OK);
+    instanceWriter = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instanceWriter != nullptr);
+    REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), opts, &flowInfo) == MXL_STATUS_OK);
+    REQUIRE(mxlCreateFlowWriter(instanceWriter, flowId.c_str(), "", &writer) == MXL_STATUS_OK);
+
+    // Now reader is still connected to the old flow. It will get timeout and tries to check whether the flow is still active, but...
+    REQUIRE(mxlIsFlowActive(instanceReader, flowId.c_str(), &active) == MXL_STATUS_OK);
+    // ... it gets wrong answer, because the function will check the new flow, not the one the reader is connected to.
+    REQUIRE(active == false);
+    // Reader will get stuck here, not knowing it can never receive data anymore.
+
+    REQUIRE(mxlReleaseFlowWriter(instanceWriter, writer) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyFlow(instanceWriter, flowId.c_str()) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instanceWriter) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowReader(instanceReader, reader) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instanceReader) == MXL_STATUS_OK);
+}
