@@ -22,6 +22,16 @@ namespace mxl::lib
         throw std::runtime_error("No open flow.");
     }
 
+    FlowData& PosixContinuousFlowReader::getFlowData()
+    {
+        if (_flowData)
+        {
+            return *_flowData;
+        }
+
+        throw std::runtime_error("No open flow.");
+    }
+
     mxlStatus PosixContinuousFlowReader::getSamples(std::uint64_t index, std::size_t count, mxlWrappedMultiBufferSlice& payloadBuffersSlices)
     {
         if (_flowData)
