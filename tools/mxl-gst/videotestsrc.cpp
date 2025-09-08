@@ -14,6 +14,8 @@
 
 std::sig_atomic_t volatile g_exit_requested = 0;
 
+bool Logging = false;
+
 void signal_handler(int)
 {
     g_exit_requested = 1;
@@ -288,11 +290,11 @@ static void fill_planar_bars( uint16_t *buffer, uint32_t width, uint32_t height 
     uint32_t y_bar_width = width / 8;
     uint32_t uv_bar_width = (width / 8) / 2;
 
-    printf("fill_planar_bars(): buffer %p width %u height %u\n", (void*)buffer, width, height );
+    if( Logging ) printf("fill_planar_bars(): buffer %p width %u height %u\n", (void*)buffer, width, height );
 
     if( buffer )
     {
-        printf("fill_planar_bars(): Y\n");
+        if( Logging ) printf("fill_planar_bars(): Y\n");
 
         // assume a contiguous planar buufer, fill y then u then v
         for( uint32_t i = 0; i < height; i++ )
@@ -304,7 +306,7 @@ static void fill_planar_bars( uint16_t *buffer, uint32_t width, uint32_t height 
             }
         }
 
-        printf("fill_planar_bars(): U\n");
+        if( Logging ) printf("fill_planar_bars(): U\n");
 
         for( uint32_t i = 0; i < height; i++ )
         {
@@ -315,7 +317,7 @@ static void fill_planar_bars( uint16_t *buffer, uint32_t width, uint32_t height 
             }
         }
 
-        printf("fill_planar_bars(): V\n");
+        if( Logging ) printf("fill_planar_bars(): V\n");
 
         for( uint32_t i = 0; i < height; i++ )
         {
@@ -326,7 +328,7 @@ static void fill_planar_bars( uint16_t *buffer, uint32_t width, uint32_t height 
             }
         }
 
-        printf("fill_planar_bars(): complete\n");
+        if( Logging ) printf("fill_planar_bars(): complete\n");
 
     }
     else
