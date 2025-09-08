@@ -179,17 +179,24 @@ namespace mxl::lib
         auto const lock = std::lock_guard{_mutex};
         if (auto const pos = _writers.find(*id); pos != _writers.end())
         {
+            MXL_INFO("flow writer instance already exists");
             auto& v = (*pos).second;
             v.addReference();
             return v.get();
         }
         else
         {
+            MXL_INFO("create flow writer instance ");
+
             auto flowData = _flowManager.openFlow(*id, AccessMode::READ_WRITE);
+            MXL_INFO("A");
             auto writer = _flowIoFactory->createFlowWriter(_flowManager, *id, std::move(flowData));
+
+            MXL_INFO("B");
 
             if (dynamic_cast<ContinuousFlowWriter*>(writer.get()) == nullptr)
             {
+                MXL_INFO("C");
                 // FIXME: This leaks if the map insertion throws an exception.
                 //     Delegate the watch handling to the writer itself by
                 //     passing it a reference to the DomainWatcher.
@@ -197,7 +204,11 @@ namespace mxl::lib
                 //     Doing it like this would also get rid of the ugly cast
                 //     to decide whether or not to install the watch.
                 _watcher->addFlow(*id, WatcherType::WRITER);
+
+                MXL_INFO("D");
             }
+
+            MXL_TRACE();
             return (*_writers.try_emplace(pos, *id, std::move(writer))).second.get();
         }
     }

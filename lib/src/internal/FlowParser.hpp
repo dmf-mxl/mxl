@@ -9,6 +9,7 @@
 #include <mxl/dataformat.h>
 #include <mxl/rational.h>
 #include <picojson/picojson.h>
+#include <nlohmann/json.hpp>
 
 namespace mxl::lib
 {
@@ -68,6 +69,32 @@ namespace mxl::lib
         std::size_t getChannelCount() const;
 
         /**
+         * Get the number of components in an video flow.
+         * \return The number of components in an video flow, or 0
+         *      if the flow format indicates that this not an video flow.
+         */
+        [[nodiscard]]
+        std::size_t getVideoComponentCount() const;
+
+        /**
+         * Get the bit depth of a component in a video flow.
+         * \param index, 0 based index into components
+         * \return The bit depth of component in a video flow, or 0
+         *      if the flow format indicates that this not an video flow or index is invalid.
+         */
+        [[nodiscard]]
+        std::size_t getVideoComponentBitDepth(uint32_t index) const;
+
+        /**
+         * Get the number of samples in a component in a video flow.
+         * \param index, 0 based index into components
+         * \return The number of samples in a component in a video flow, or 0
+         *      if the flow format indicates that this not an video flow or index is invalid.
+         */
+        [[nodiscard]]
+        std::size_t getVideoComponentSamples(uint32_t index) const;
+
+        /**
          * Generic accessor for json fields.
          *
          * \param in_field The field name.
@@ -89,6 +116,9 @@ namespace mxl::lib
         mxlRational _grainRate;
         /** The parsed flow object. */
         picojson::object _root;
+        /** The parsed flow object nlohmann . */
+        nlohmann::json n_root;
+        nlohmann::json n_components;
     };
 
     /**************************************************************************/

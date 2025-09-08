@@ -59,6 +59,58 @@ namespace mxl::lib
         throw std::runtime_error("No open flow.");
     }
 
+    mxlStatus PosixDiscreteFlowReader::getGrainRange(std::uint64_t &oldest_index, std::uint64_t &newest_index)
+    {
+        printf("getGrainRange:A\n");
+
+        if (_flowData)
+        {
+            printf("getGrainRange:A\n");
+
+            auto const flowInfo = _flowData->flowInfo();
+
+            printf("getGrainRange:B\n");
+
+            // get the oldest index first, do we have anyhting
+            uint64_t first_index = flowInfo->discrete.headIndex;
+            uint64_t grain_count = flowInfo->discrete.grainCount;
+
+            printf("getGrainRange:C first %lu count %lu\n", first_index, grain_count );
+
+            if( first_index >= grain_count )
+            {
+                // check each grain from here
+                for( uint64_t  i = 0; i < grain_count; i++ )
+                {
+                    // get grain info and check its valid
+                    uint64_t absolute_index = oldest_index + i;
+
+                    printf("getGrainRange:D i %lu abs index %lu\n", i, absolute_index );
+
+                    auto const grain = _flowData->grainAt(absolute_index%grain_count);
+
+                    log_grain(grain->header.info);
+
+                    // does grain have expected abolute index
+                    if(( grain->header.info.grainIndex != absolute_index ))
+                    {
+                        // update values for return
+                        oldest_index = first_index;
+                        newest_index = absolute_index;
+                    }
+                }
+
+                // no, we have already got the range so we stop looking, assume we are valid
+                printf("getGrainRange results oldest %lu newest %lu\n", oldest_index, newest_index);
+                return MXL_STATUS_OK;
+            }
+
+        }
+
+        return MXL_ERR_FLOW_NOT_FOUND;
+
+    }
+
     mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, std::uint64_t in_timeoutNs, mxlGrainInfo* out_grainInfo,
         std::uint8_t** out_payload)
     {

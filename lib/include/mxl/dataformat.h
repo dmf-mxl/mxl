@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <cstring>
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -19,6 +21,26 @@ extern "C"
         MXL_DATA_FORMAT_MUX,
     } mxlDataFormat;
 
+    typedef enum mxlVideoType
+    {
+        MXL_TYPE_V210 = 11,
+        MXL_TYPE_PLANAR = 12,
+        MXL_TYPE_UNKWOWN = -1
+    } mxlVideoType;
+
+    /**
+     * Return valid video type iv kwnown or unknown (-1) if not
+     * \param[in] type string value of type.
+     * \return mxlVideoFormat of type
+     */
+    inline int  mxlVideoTypeFromString(const char *Type)
+    {
+        if( strcmp(Type, "video/v210") == 0 ) return MXL_TYPE_V210;
+        if( strcmp(Type, "video/planar") == 0 ) return MXL_TYPE_PLANAR;
+
+        // no match
+        return MXL_TYPE_UNKWOWN;
+    }
     /**
      * Return whether the specified format is valid.
      * \param[in] format the mxlDataFormat of interest.

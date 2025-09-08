@@ -119,6 +119,10 @@ namespace mxl::lib
             throw std::invalid_argument{"Invalid JSON flow definition. " + err};
         }
 
+        // parse the json as nlohmann
+        n_root = nlohmann::json::parse(in_flowDef);
+        n_components = n_root["components"];
+
         // Confirm that the root is a json object
         if (!jsonValue.is<picojson::object>())
         {
@@ -199,6 +203,48 @@ namespace mxl::lib
         return _format;
     }
 
+    std::size_t FlowParser::getVideoComponentCount() const
+    {
+        std::size_t result = 0;
+
+        // if an array how many elements
+        result = n_components.size();
+
+        return result;
+    }
+
+    std::size_t FlowParser::getVideoComponentBitDepth(uint32_t index) const
+    {
+
+        std::size_t depth = 0;
+
+        // validate index
+        if( index < n_components.size() )
+        {
+            nlohmann::json component = n_components[index];
+            depth = component["bit_depth"];
+        }
+
+        return depth;
+    }
+
+    std::size_t FlowParser::getVideoComponentSamples(uint32_t index) const
+    {
+
+        std::size_t samples = 0;
+
+        // validate index
+        if( index < n_components.size() )
+        {
+            nlohmann::json component = n_components[index];
+            std::size_t width = component["width"];
+            std::size_t height = component["height"];
+            samples = width * height;
+        }
+
+        return samples;
+    }
+
     std::size_t FlowParser::getPayloadSize() const
     {
         auto payloadSize = std::size_t{0};
@@ -208,25 +254,44 @@ namespace mxl::lib
             auto const width = static_cast<std::size_t>(fetchAs<double>(_root, "frame_width"));
             auto const height = static_cast<std::size_t>(fetchAs<double>(_root, "frame_height"));
             auto const mediaType = fetchAs<std::string>(_root, "media_type");
+            auto const videoType = mxlVideoTypeFromString(mediaType.c_str());
 
-            if (mediaType == "video/v210")
+            switch(videoType)
             {
-                if (!_interlaced || ((height % 2) == 0))
-                {
-                    // Interlaced media is handled as separate fields.
-                    auto const h = _interlaced ? height / 2 : height;
-                    payloadSize = static_cast<std::size_t>((width + 47) / 48 * 128) * h;
-                }
-                else
-                {
-                    auto msg = std::string{"Invalid video height for interlaced v210. Must be even."};
-                    throw std::invalid_argument{std::move(msg)};
-                }
-            }
-            else
-            {
+                case MXL_TYPE_V210:
+                    if (!_interlaced || ((height % 2) == 0))
+                    {
+                        // Interlaced media is handled as separate fields.
+                        auto const h = _interlaced ? height / 2 : height;
+                        payloadSize = static_cast<std::size_t>((width + 47) / 48 * 128) * h;
+                    }
+                    else
+                    {
+                        auto msg = std::string{"Invalid video height for interlaced v210. Must be even."};
+                        throw std::invalid_argument{std::move(msg)};
+                    }
+
+                    break;
+
+                case MXL_TYPE_PLANAR:
+                        // get component count
+                    {
+                        std::size_t component_count = getVideoComponentCount();
+                        payloadSize = 0;
+
+                        for( uint32_t i = 0; i < component_count; i++ )
+                        {
+                            std::size_t bytes_per_sample = (getVideoComponentBitDepth(i) + 7) / 8;
+                            payloadSize += getVideoComponentSamples(i) * bytes_per_sample;
+                        }
+
+                    }
+                    break;
+
+                case MXL_TYPE_UNKWOWN:
                 auto msg = std::string{"Unsupported video media_type: "} + mediaType;
                 throw std::invalid_argument{std::move(msg)};
+                    break;
             }
         }
         else if (_format == MXL_DATA_FORMAT_DATA)

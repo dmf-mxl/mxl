@@ -15,6 +15,8 @@ namespace mxl::lib
         CREATE_READ_WRITE
     };
 
+    const char *AccessModeString(AccessMode mode);
+
     class SharedMemoryBase
     {
     public:
