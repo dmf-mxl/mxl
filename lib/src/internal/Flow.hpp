@@ -53,7 +53,5 @@ namespace mxl::lib
     ///
     /// \param[in] gInfo a grain info structure to log to stdout
     ///
-    MXL_EXPORT
-    void log_grain(const mxlGrainInfo &gInfo);
 
 } // namespace mxl::lib
