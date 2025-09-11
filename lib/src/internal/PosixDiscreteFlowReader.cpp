@@ -67,33 +67,41 @@ namespace mxl::lib
 
             auto const flowInfo = _flowData->flowInfo();
 
-            // get the oldest index first, do we have anyhting
-            uint64_t first_index = flowInfo->discrete.headIndex;
+            // scan all grains to get indexes, setup to oldest is max and newest is 0
+            oldest_index = INT64_MAX;
+            newest_index = 0;
+
+            // cache count
             uint64_t grain_count = flowInfo->discrete.grainCount;
 
-
-            if( first_index >= grain_count )
+            // check each grain from here
+            for( uint64_t  i = 0; i < grain_count; i++ )
             {
-                // check each grain from here
-                for( uint64_t  i = 0; i < grain_count; i++ )
+                auto const grain = _flowData->grainAt(i);
+
+                // is grain older than oldest so far
+                if(( grain->header.info.grainIndex < oldest_index ))
                 {
-                    // get grain info and check its valid
-                    uint64_t absolute_index = oldest_index + i;
-
-                    auto const grain = _flowData->grainAt(absolute_index%grain_count);
-
-
-                    // does grain have expected abolute index
-                    if(( grain->header.info.grainIndex != absolute_index ))
-                    {
-                        // update values for return
-                        oldest_index = first_index;
-                        newest_index = absolute_index;
-                    }
+                    // update values for return
+                    oldest_index = grain->header.info.grainIndex;
                 }
+                // is grain newer than newest so far
+                if(( grain->header.info.grainIndex > newest_index ))
+                {
+                    // update values for return
+                    newest_index = grain->header.info.grainIndex;
+                }
+            }
 
+            // must ahve got a value for oldest and newest
+            if( (oldest_index != INT64_MAX) && (newest_index != 0) )
+            {
                 // no, we have already got the range so we stop looking, assume we are valid
                 return MXL_STATUS_OK;
+            }
+            else
+            {
+                printf("error in range oldest_index %lu newest_index %lu\n", oldest_index, newest_index );
             }
 
         }
@@ -170,7 +178,8 @@ namespace mxl::lib
         if (_flowData)
         {
             auto const flowInfo = _flowData->flowInfo();
-            if (auto const headIndex = flowInfo->discrete.headIndex; in_index <= headIndex)
+            auto const headIndex = flowInfo->discrete.headIndex;
+            if (in_index <= headIndex)
             {
                 auto const grainCount = flowInfo->discrete.grainCount;
                 auto const minIndex = (headIndex >= grainCount) ? (headIndex - grainCount + 1U) : std::uint64_t{0};
@@ -188,6 +197,8 @@ namespace mxl::lib
 
                 return MXL_ERR_OUT_OF_RANGE_TOO_LATE;
             }
+
+            printf("MXL_ERR_OUT_OF_RANGE_TOO_EARLY: in_index %lu headIndex %lu\n", in_index, headIndex );
 
             return MXL_ERR_OUT_OF_RANGE_TOO_EARLY;
         }
