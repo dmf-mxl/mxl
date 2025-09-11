@@ -102,7 +102,7 @@ mxlStatus mxlGarbageCollectFlows(mxlInstance in_instance)
 
 extern "C"
 MXL_EXPORT
-const char * xmlStatus_to_string(mxlStatus status)
+const char * mxlStatus_to_string(mxlStatus status)
 {
     switch(status)
     {
@@ -116,6 +116,7 @@ const char * xmlStatus_to_string(mxlStatus status)
         case MXL_ERR_TIMEOUT: return "MXL_ERR_TIMEOUT";
         case MXL_ERR_INVALID_ARG: return "MXL_ERR_INVALID_ARG";
         case MXL_ERR_CONFLICT: return "MXL_ERR_CONFLICT";
+        case MXL_ERR_GRAIN_INDEX_INVALID: return "MXL_ERR_GRAIN_INDEX_INVALID";
 
         default: return "Unknown mxlStatus code";
     }

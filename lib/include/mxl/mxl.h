@@ -29,6 +29,7 @@ extern "C"
         MXL_ERR_TIMEOUT,
         MXL_ERR_INVALID_ARG,
         MXL_ERR_CONFLICT,
+        MXL_ERR_GRAIN_INDEX_INVALID,
     } mxlStatus;
 
     /// MXL SDK Semantic versionning structure.
@@ -89,7 +90,7 @@ extern "C"
     /// \return const char * representing status code
     ///
     MXL_EXPORT
-    const char * xmlStatus_to_string(mxlStatus status);
+    const char * mxlStatus_to_string(mxlStatus status);
 
 #ifdef __cplusplus
 }
