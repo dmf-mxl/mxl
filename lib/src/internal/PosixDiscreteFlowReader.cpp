@@ -89,7 +89,7 @@ namespace mxl::lib
 
                     auto const grain = _flowData->grainAt(absolute_index%grain_count);
 
-                    log_grain(grain->header.info);
+                    // log_grain(grain->header.info);
 
                     // does grain have expected abolute index
                     if(( grain->header.info.grainIndex != absolute_index ))
