@@ -401,8 +401,6 @@ extern "C"
 MXL_EXPORT
 mxlStatus mxlFlowReaderGetGrainRange(mxlFlowReader reader, std::uint64_t *oldest_index, std::uint64_t *newest_index)
 {
-    printf("mxlFlowReaderGetGrainRange:A\n");
-
     // use flow reader to access results
     try
     {
@@ -416,33 +414,26 @@ mxlStatus mxlFlowReaderGetGrainRange(mxlFlowReader reader, std::uint64_t *oldest
             return MXL_ERR_INVALID_ARG;
         }
 
-        printf("mxlFlowReaderGetGrainRange:B\n");
-
         if (auto const cppReader = dynamic_cast<DiscreteFlowReader*>(to_FlowReader(reader)); cppReader != nullptr)
         {
-            printf("mxlFlowReaderGetGrainRange:C\n");
 
             uint64_t oldest, newest;
             mxlStatus status = cppReader->getGrainRange(oldest, newest);
 
-            printf("mxlFlowReaderGetGrainRange:D status %d oldest %lu newest %lu\n", status, oldest, newest );
 
             if( status == MXL_STATUS_OK )
             {
-                printf("mxlFlowReaderGetGrainRange:E OK\n");
                 *oldest_index = oldest;
                 *newest_index = newest;
                 return MXL_STATUS_OK;
             }
             else
             {
-                printf("mxlFlowReaderGetGrainRange:F no data\n");
                 return status;
             }
         }
         else
         {
-            printf("mxlFlowReaderGetGrainRange:G\n");
             return MXL_ERR_INVALID_FLOW_READER;
         }
 
@@ -454,7 +445,6 @@ mxlStatus mxlFlowReaderGetGrainRange(mxlFlowReader reader, std::uint64_t *oldest
     }
     catch (...)
     {
-        printf("mxlFlowReaderGetGrainRange:H\n");
         return MXL_ERR_UNKNOWN;
     }
 }

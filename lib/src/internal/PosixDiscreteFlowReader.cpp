@@ -61,21 +61,16 @@ namespace mxl::lib
 
     mxlStatus PosixDiscreteFlowReader::getGrainRange(std::uint64_t &oldest_index, std::uint64_t &newest_index)
     {
-        printf("getGrainRange:A\n");
 
         if (_flowData)
         {
-            printf("getGrainRange:A\n");
 
             auto const flowInfo = _flowData->flowInfo();
-
-            printf("getGrainRange:B\n");
 
             // get the oldest index first, do we have anyhting
             uint64_t first_index = flowInfo->discrete.headIndex;
             uint64_t grain_count = flowInfo->discrete.grainCount;
 
-            printf("getGrainRange:C first %lu count %lu\n", first_index, grain_count );
 
             if( first_index >= grain_count )
             {
@@ -84,8 +79,6 @@ namespace mxl::lib
                 {
                     // get grain info and check its valid
                     uint64_t absolute_index = oldest_index + i;
-
-                    printf("getGrainRange:D i %lu abs index %lu\n", i, absolute_index );
 
                     auto const grain = _flowData->grainAt(absolute_index%grain_count);
 
@@ -100,7 +93,6 @@ namespace mxl::lib
                 }
 
                 // no, we have already got the range so we stop looking, assume we are valid
-                printf("getGrainRange results oldest %lu newest %lu\n", oldest_index, newest_index);
                 return MXL_STATUS_OK;
             }
 
