@@ -137,8 +137,8 @@ int main(int argc, char** argv)
         if (ret != MXL_STATUS_OK)
         {
             // Missed a grain. resync.
-            MXL_ERROR("Missed grain {}, err : {}", grain_index, (int)ret, xmlStatus_to_string(ret));
-            printf("%s\n", xmlStatus_to_string(ret));
+            MXL_ERROR("Missed grain {}, err : {}", grain_index, (int)ret, mxlStatus_to_string(ret));
+            printf("%s\n", mxlStatus_to_string(ret));
 
             grain_index = mxlGetCurrentIndex(&flow_info.discrete.grainRate);
             continue;
