@@ -73,7 +73,7 @@ extern "C"
      * \return The current time in nanoseconds since the epoch.
      */
     MXL_EXPORT
-    uint64_t mxlGetTime();
+    uint64_t mxlGetTime(void);
 
 #ifdef __cplusplus
 }
