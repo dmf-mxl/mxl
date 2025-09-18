@@ -99,3 +99,25 @@ catch_discover_tests(mxl-tests)
 
 # Copy test files to the build directory
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+# ----------------------------------------------------------------------------
+# Compile all public C headers (aggregated includes) with strict C17 warnings.
+# ----------------------------------------------------------------------------
+
+# OBJECT library to just compile (no link step)
+add_library(mxl-all-headers OBJECT all_headers.c)
+
+set_target_properties(mxl-all-headers PROPERTIES
+    C_STANDARD 17
+    C_STANDARD_REQUIRED ON
+    C_EXTENSIONS OFF
+)
+
+target_include_directories(mxl-all-headers PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/../include"
+)
+
+target_compile_options(mxl-all-headers PRIVATE
+    -Wall -Wextra -Werror -pedantic
+    -Wstrict-prototypes
+)
