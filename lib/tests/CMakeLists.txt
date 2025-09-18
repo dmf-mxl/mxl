@@ -118,7 +118,6 @@ target_include_directories(mxl-all-headers PRIVATE
 )
 
 target_compile_options(mxl-all-headers PRIVATE
-    -std=c17
     -Wall -Wextra -Werror -pedantic
     -Wstrict-prototypes
 )
