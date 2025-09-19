@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "PosixContinuousFlowReader.hpp"
+#include <sys/stat.h>
+#include "PathUtils.hpp"
 
 namespace mxl::lib
 {
-    PosixContinuousFlowReader::PosixContinuousFlowReader(FlowManager const& /* manager */, uuids::uuid const& flowId,
+    PosixContinuousFlowReader::PosixContinuousFlowReader(FlowManager const& manager, uuids::uuid const& flowId,
         std::unique_ptr<ContinuousFlowData>&& data)
-        : ContinuousFlowReader{flowId}
+        : ContinuousFlowReader{flowId, manager.getDomain()}
         , _flowData{std::move(data)}
         , _channelCount{_flowData->channelCount()}
         , _bufferLength{_flowData->channelBufferLength()}
@@ -53,12 +55,44 @@ namespace mxl::lib
                     return MXL_STATUS_OK;
                 }
 
-                return MXL_ERR_OUT_OF_RANGE_TOO_LATE;
+                // ouf of range. check if the flow is still valid.
+                if (!isFlowValid())
+                {
+                    return MXL_ERR_FLOW_INVALID;
+                }
+                else
+                {
+                    return MXL_ERR_OUT_OF_RANGE_TOO_LATE;
+                }
             }
 
-            return MXL_ERR_OUT_OF_RANGE_TOO_EARLY;
+            // ouf of range. check if the flow is still valid.
+            if (!isFlowValid())
+            {
+                return MXL_ERR_FLOW_INVALID;
+            }
+            else
+            {
+                return MXL_ERR_OUT_OF_RANGE_TOO_EARLY;
+            }
         }
 
         return MXL_ERR_UNKNOWN;
+    }
+
+    bool PosixContinuousFlowReader::isFlowValid() const
+    {
+        if (_flowData)
+        {
+            auto const flowInfo = _flowData->flowInfo();
+            auto const flowDataPath = makeFlowDataFilePath(getDomain(), to_string(getId()));
+            struct stat st;
+            if (stat(flowDataPath.string().c_str(), &st) != 0)
+            {
+                return false;
+            }
+            return (st.st_ino == flowInfo->common.inode);
+        }
+        return false;
     }
 }

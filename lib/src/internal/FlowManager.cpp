@@ -10,6 +10,7 @@
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
+#include <sys/stat.h>
 #include <system_error>
 #include "Logging.hpp"
 #include "PathUtils.hpp"
@@ -77,7 +78,7 @@ namespace mxl::lib
             }
         }
 
-        mxlCommonFlowInfo initCommonFlowInfo(uuids::uuid const& flowId, mxlDataFormat format)
+        mxlCommonFlowInfo initCommonFlowInfo(uuids::uuid const& flowId, mxlDataFormat format, std::filesystem::path const& flowDataPath)
         {
             auto result = mxlCommonFlowInfo{};
 
@@ -86,6 +87,20 @@ namespace mxl::lib
             result.lastWriteTime = mxlGetTime();
             result.lastReadTime = result.lastWriteTime;
             result.format = format;
+
+            // Get the inode of the flow data file
+            struct stat st;
+            if (stat(flowDataPath.string().c_str(), &st) != 0)
+            {
+                auto const error = errno;
+                throw std::filesystem::filesystem_error{
+                    "Could not stat flow data file.", flowDataPath, std::error_code{error, std::generic_category()}
+                };
+            }
+            else
+            {
+                result.inode = st.st_ino;
+            }
 
             return result;
         }
@@ -128,14 +143,13 @@ namespace mxl::lib
                     "Failed to create flow access file.", readAccessFile, std::make_error_code(std::errc::file_exists)};
             }
 
-            auto flowData = std::make_unique<DiscreteFlowData>(makeFlowDataFilePath(tempDirectory).string().c_str(), AccessMode::CREATE_READ_WRITE);
+            auto const flowDataPath = makeFlowDataFilePath(tempDirectory);
+            auto flowData = std::make_unique<DiscreteFlowData>(flowDataPath.string().c_str(), AccessMode::CREATE_READ_WRITE);
 
             auto& info = *flowData->flowInfo();
             info.version = 1;
             info.size = sizeof info;
-
-            info.common = initCommonFlowInfo(flowId, flowFormat);
-
+            info.common = initCommonFlowInfo(flowId, flowFormat, flowDataPath);
             info.discrete.grainRate = grainRate;
             info.discrete.grainCount = grainCount;
             info.discrete.syncCounter = 0;
@@ -195,14 +209,13 @@ namespace mxl::lib
             // Write the json file to disk.
             writeFlowDescriptor(tempDirectory, flowDef);
 
-            auto flowData = std::make_unique<ContinuousFlowData>(makeFlowDataFilePath(tempDirectory).string().c_str(), AccessMode::CREATE_READ_WRITE);
+            auto const flowDataPath = makeFlowDataFilePath(tempDirectory);
+            auto flowData = std::make_unique<ContinuousFlowData>(flowDataPath.string().c_str(), AccessMode::CREATE_READ_WRITE);
 
             auto& info = *flowData->flowInfo();
             info.version = 1;
             info.size = sizeof info;
-
-            info.common = initCommonFlowInfo(flowId, flowFormat);
-
+            info.common = initCommonFlowInfo(flowId, flowFormat, flowDataPath);
             info.continuous = {};
             info.continuous.sampleRate = sampleRate;
             info.continuous.channelCount = channelCount;

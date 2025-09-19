@@ -11,6 +11,7 @@
 
 #include <mxl/dataformat.h>
 #include <mxl/rational.h>
+#include <sys/types.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -40,8 +41,11 @@ extern "C"
         /** No flags defined yet. */
         uint32_t flags;
 
+        /** The flow data inode.  this is used to detect if the flow was recreated */
+        ino_t inode;
+
         /** Reserved space for future extensions.  */
-        uint8_t reserved[80];
+        uint8_t reserved[72];
     } mxlCommonFlowInfo;
 
     typedef struct mxlDiscreteFlowInfo_t

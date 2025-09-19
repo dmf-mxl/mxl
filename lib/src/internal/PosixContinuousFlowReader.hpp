@@ -52,6 +52,10 @@ namespace mxl::lib
          */
         virtual mxlStatus getSamples(std::uint64_t index, std::size_t count, mxlWrappedMultiBufferSlice& payloadBuffersSlices) override;
 
+    protected:
+        /// \see FlowReader::isFlowValid
+        virtual bool isFlowValid() const override;
+
     private:
         std::unique_ptr<ContinuousFlowData> _flowData;
         /** Cached copy of the numer of channels from mxlFlowInfo. */

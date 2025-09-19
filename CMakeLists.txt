@@ -14,7 +14,7 @@ cmake_policy(SET CMP0076 NEW)
 # Set the timestamps of all extracted contents to the time of the extraction
 cmake_policy(SET CMP0135 NEW)
 
-set(mxl_VERSION 0.7.3)
+set(mxl_VERSION 0.7.4)
 
 if(DEFINED MXL_BUILD_NUMBER)
     string(APPEND mxl_VERSION ".${MXL_BUILD_NUMBER}")

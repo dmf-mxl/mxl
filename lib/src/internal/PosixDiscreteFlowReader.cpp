@@ -38,7 +38,7 @@ namespace mxl::lib
     }
 
     PosixDiscreteFlowReader::PosixDiscreteFlowReader(FlowManager const& manager, uuids::uuid const& flowId, std::unique_ptr<DiscreteFlowData>&& data)
-        : DiscreteFlowReader{flowId}
+        : DiscreteFlowReader{flowId, manager.getDomain()}
         , _flowData{std::move(data)}
         , _accessFileFd{-1}
     {
@@ -112,11 +112,15 @@ namespace mxl::lib
 
             if (status == MXL_STATUS_OK)
             {
-                if (!updateFileAccessTime(_accessFileFd))
-                {
-                    MXL_ERROR("Failed to update access file times");
-                }
+                // We ignore the return value of updateFileAccessTime. It may fail if the domain is in a read-only volume.
+                updateFileAccessTime(_accessFileFd);
             }
+        }
+
+        // We may have timed out or attempted to read out of range on an invalid flow. let the reader know.
+        if (status != MXL_STATUS_OK && !isFlowValid())
+        {
+            status = MXL_ERR_FLOW_INVALID;
         }
 
         return status;
@@ -124,6 +128,7 @@ namespace mxl::lib
 
     mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload)
     {
+        mxlStatus status = MXL_ERR_UNKNOWN;
         if (_flowData)
         {
             auto const flowInfo = _flowData->flowInfo();
@@ -140,16 +145,38 @@ namespace mxl::lib
 
                     updateFileAccessTime(_accessFileFd);
 
-                    return MXL_STATUS_OK;
+                    status = MXL_STATUS_OK;
                 }
 
-                return MXL_ERR_OUT_OF_RANGE_TOO_LATE;
+                status = MXL_ERR_OUT_OF_RANGE_TOO_LATE;
             }
 
-            return MXL_ERR_OUT_OF_RANGE_TOO_EARLY;
+            status = MXL_ERR_OUT_OF_RANGE_TOO_EARLY;
         }
 
-        return MXL_ERR_UNKNOWN;
+        // We may have attempted to read out of range on an invalid flow. let the reader know.
+        if (status != MXL_STATUS_OK && !isFlowValid())
+        {
+            status = MXL_ERR_FLOW_INVALID;
+        }
+
+        return status;
+    }
+
+    bool PosixDiscreteFlowReader::isFlowValid() const
+    {
+        if (_flowData)
+        {
+            auto const flowInfo = _flowData->flowInfo();
+            auto const flowDataPath = makeFlowDataFilePath(getDomain(), to_string(getId()));
+            struct stat st;
+            if (stat(flowDataPath.string().c_str(), &st) != 0)
+            {
+                return false;
+            }
+            return (st.st_ino == flowInfo->common.inode);
+        }
+        return false;
     }
 
 } // namespace mxl::lib

@@ -136,6 +136,55 @@ TEST_CASE("Video Flow : Create/Destroy", "[mxl flows]")
     mxlDestroyInstance(instanceWriter);
 }
 
+TEST_CASE("Video Flow : Invalid flow (discrete)", "[mxl flows]")
+{
+    auto const opts = "{}";
+    auto const flowId = "5fbec3b1-1b0f-417d-9059-8b94a47197ed";
+    auto flowDef = mxl::tests::readFile("data/v210_flow.json");
+
+    auto domain = std::filesystem::path{"./mxl_unittest_domain"}; // Remove that path if it exists.
+    remove_all(domain);
+
+    create_directories(domain);
+    auto instanceReader = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instanceReader != nullptr);
+
+    auto instanceWriter = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instanceWriter != nullptr);
+
+    mxlFlowInfo fInfo;
+    REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), opts, &fInfo) == MXL_STATUS_OK);
+
+    mxlFlowReader reader;
+    REQUIRE(mxlCreateFlowReader(instanceReader, flowId, "", &reader) == MXL_STATUS_OK);
+
+    mxlFlowWriter writer;
+    REQUIRE(mxlCreateFlowWriter(instanceWriter, flowId, "", &writer) == MXL_STATUS_OK);
+
+    // The writer is now created. The flow should be active.
+    bool active = false;
+    REQUIRE(mxlIsFlowActive(instanceReader, flowId, &active) == MXL_STATUS_OK);
+    REQUIRE(active == true);
+
+    REQUIRE(mxlDestroyFlow(instanceWriter, flowId) == MXL_STATUS_OK);
+    REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), opts, &fInfo) == MXL_STATUS_OK);
+
+    /// Compute the grain index for the flow rate and current TAI time.
+    auto const rate = mxlRational{60000, 1001};
+    auto const now = mxlGetTime();
+    uint64_t index = mxlTimestampToIndex(&rate, now);
+    REQUIRE(index != MXL_UNDEFINED_INDEX);
+
+    /// Open the grain.
+    mxlGrainInfo gInfo;
+    uint8_t* buffer = nullptr;
+
+    REQUIRE(mxlFlowReaderGetGrain(reader, index, 16, &gInfo, &buffer) == MXL_ERR_FLOW_INVALID);
+
+    mxlDestroyInstance(instanceReader);
+    mxlDestroyInstance(instanceWriter);
+}
+
 TEST_CASE("Invalid flow definitions", "[mxl flows]")
 {
     char const* opts = "{}";
@@ -474,6 +523,66 @@ TEST_CASE("Audio Flow : Create/Destroy", "[mxl flows]")
 
     // This should be gone from the filesystem.
     REQUIRE(mxlDestroyFlow(instanceWriter, flowId) == MXL_ERR_FLOW_NOT_FOUND);
+
+    mxlDestroyInstance(instanceReader);
+    mxlDestroyInstance(instanceWriter);
+}
+
+TEST_CASE("Audio Flow : Invalid Flow (continuous)", "[mxl flows]")
+{
+    auto const opts = "{}";
+    auto const flowId = "b3bb5be7-9fe9-4324-a5bb-4c70e1084449";
+    auto const flowDef = mxl::tests::readFile("data/audio_flow.json");
+
+    auto domain = std::filesystem::path{"./mxl_unittest_domain"}; // Remove that path if it exists.
+    remove_all(domain);
+
+    create_directories(domain);
+    auto instanceReader = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instanceReader != nullptr);
+
+    auto instanceWriter = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instanceWriter != nullptr);
+
+    {
+        mxlFlowInfo flowInfo;
+        REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), opts, &flowInfo) == MXL_STATUS_OK);
+
+        REQUIRE(flowInfo.continuous.sampleRate.numerator == 48000U);
+        REQUIRE(flowInfo.continuous.sampleRate.denominator == 1U);
+        REQUIRE(flowInfo.continuous.channelCount == 1U);
+        REQUIRE(flowInfo.continuous.bufferLength > 128U);
+    }
+
+    mxlFlowReader reader;
+    REQUIRE(mxlCreateFlowReader(instanceReader, flowId, "", &reader) == MXL_STATUS_OK);
+
+    mxlFlowWriter writer;
+    REQUIRE(mxlCreateFlowWriter(instanceWriter, flowId, "", &writer) == MXL_STATUS_OK);
+
+    // This should be gone from the filesystem.
+    REQUIRE(mxlDestroyFlow(instanceWriter, flowId) == MXL_STATUS_OK);
+
+    /// Compute the grain index for the flow rate and current TAI time.
+    auto const rate = mxlRational{48000, 1};
+    auto const now = mxlGetTime();
+    auto const index = mxlTimestampToIndex(&rate, now);
+    REQUIRE(index != MXL_UNDEFINED_INDEX);
+
+    // Recreate the flow with the same id.
+    mxlFlowInfo flowInfo;
+    REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), opts, &flowInfo) == MXL_STATUS_OK);
+
+    {
+        /// Open a range of samples for reading. This should detect that the flow is invalid.
+        mxlWrappedMultiBufferSlice payloadBuffersSlices;
+        REQUIRE(mxlFlowReaderGetSamples(reader, index, 64U, &payloadBuffersSlices) == MXL_ERR_FLOW_INVALID);
+    }
+
+    /// Release the reader
+    REQUIRE(mxlReleaseFlowReader(instanceReader, reader) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowWriter(instanceWriter, writer) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyFlow(instanceWriter, flowId) == MXL_STATUS_OK);
 
     mxlDestroyInstance(instanceReader);
     mxlDestroyInstance(instanceWriter);
