@@ -1,0 +1,143 @@
+name: Test the rust bindings
+
+on:
+  pull_request:
+  workflow_dispatch:
+  workflow_call: # We would like this to be called by the main job
+
+jobs:
+  dependencies:
+    name: Check Rust dependencies
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./rust
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-deps-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: ${{ runner.os }}-cargo-deps-
+      - name: Use Rust stable 1.88
+        uses: dtolnay/rust-toolchain@1.88.0
+      - name: Install cargo audit
+        uses: baptiste0928/cargo-install@v3
+        with:
+          crate: cargo-audit
+      - name: Install cargo outdated
+        uses: baptiste0928/cargo-install@v3
+        with:
+          crate: cargo-outdated
+      - name: Install cargo udeps
+        uses: baptiste0928/cargo-install@v3
+        with:
+          crate: cargo-udeps
+      - name: Install cargo deny
+        uses: baptiste0928/cargo-install@v3
+        with:
+          crate: cargo-deny
+      - name: Audit dependencies
+        run: cargo audit -D warnings
+      - name: Outdated dependencies
+        run: cargo outdated -d 1 -w --exit-code 1
+      - name: Install nightly-2025-06-26 # Same date as 1.88 release
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          toolchain: nightly-2025-06-26
+      - name: Unused depedency check
+        run: cargo udeps --all-targets
+
+  lint:
+    name: Perform Rust linting and documentation
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./rust
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-lint-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: ${{ runner.os }}-cargo-lint-
+      - name: Use Rust stable 1.88
+        uses: dtolnay/rust-toolchain@1.88.0
+        with:
+          components: rustfmt, clippy
+      - name: build
+        run: cargo build --locked
+      - name: Format
+        run: cargo fmt -- --check
+      - name: Docs
+        run: cargo doc --all-features
+        env:
+          RUSTDOCFLAGS: "-D warnings"
+      - name: Clippy
+        run: cargo clippy --all-targets -F mxl-not-built -- -D warnings
+
+  tests:
+    name: Run the tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./rust
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-tests-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: ${{ runner.os }}-cargo-tests-
+      - name: Use Rust stable 1.88
+        uses: dtolnay/rust-toolchain@1.88.0
+        with:
+          components: rustfmt, clippy
+      - name: build
+        run: cargo build --locked -F mxl-not-built
+      - name: Test
+        run: cargo test --locked -F mxl-not-built
+      - name: Coverage
+        run: >
+          cargo llvm-cov --ignore-filename-regex "build.rs|ffi.rs|(.*)_test.rs"
+          --lcov --output-path lcov.info
+      - name: Report Coverage
+        uses: romeovs/lcov-reporter-action@v0.4.0
+        if: ${{ github.event_name == 'pull_request' }}
+        with:
+          lcov-file: ./lcov.info
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          delete-old-comments: true

@@ -22,6 +22,9 @@ else()
     string(APPEND mxl_VERSION ".0")
 endif()
 
+option(BUILD_TESTS "Build the tests" ON)
+option(BUILD_TOOLS "Build the tools" ON)
+
 project(mxl
     VERSION ${mxl_VERSION}
     LANGUAGES CXX C
@@ -54,8 +57,10 @@ if(APPLE)
 endif()
 
 add_subdirectory(lib)
-add_subdirectory(tools)
 add_subdirectory(utils)
+if (BUILD_TOOLS)
+    add_subdirectory(tools)
+endif()
 
 find_package(Doxygen)
 
