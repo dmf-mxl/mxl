@@ -30,6 +30,7 @@ extern "C"
         MXL_ERR_INVALID_ARG,
         MXL_ERR_CONFLICT,
         MXL_ERR_PERMISSION_DENIED,
+        MXL_ERR_INTERRUPTED,
 
         // A flow is invalid from a reader point of view if its data file has been replaced
         // (for example, if a writer restarted and recreated the flow)
