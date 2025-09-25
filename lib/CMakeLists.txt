@@ -68,6 +68,7 @@ target_sources(mxl
         PRIVATE
             src/flow.cpp
             src/mxl.cpp
+            src/syncobject.cpp
             src/time.cpp
     )
 
