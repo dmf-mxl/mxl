@@ -54,6 +54,20 @@ uint64_t mxlIndexToTimestamp(mxlRational const* editRate, uint64_t index)
 
 extern "C"
 MXL_EXPORT
+uint64_t mxlGetMatchingIndex(mxlRational const* fromRate, uint64_t index, mxlRational const* toRate)
+{
+    if ((fromRate == nullptr) || (fromRate->denominator == 0) || (fromRate->numerator == 0) || (toRate == nullptr) || (toRate->denominator == 0) ||
+        (toRate->numerator == 0))
+    {
+        return MXL_UNDEFINED_INDEX;
+    }
+
+    return static_cast<std::uint64_t>((index * __int128_t{fromRate->numerator} * __int128_t{toRate->denominator}) /
+                                      (__int128_t{fromRate->denominator} * __int128_t{toRate->numerator}));
+}
+
+extern "C"
+MXL_EXPORT
 uint64_t mxlGetNsUntilIndex(uint64_t index, mxlRational const* editRate)
 {
     // Validate the edit rate

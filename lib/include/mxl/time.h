@@ -61,6 +61,18 @@ extern "C"
     uint64_t mxlIndexToTimestamp(mxlRational const* editRate, uint64_t index);
 
     /**
+     * Given the index at a given rate compute the matching index at another rate specified.
+     *
+     * \param[in] fromRate The rate, to which index corresponds.
+     * \param[in] index The index to convert.
+     * \param[in] toRate The rate, for which to compute the mathcing index.
+     *
+     * \return The index or MXL_UNDEFINED_INDEX if fromRate or toRate are null or invalid
+     */
+    MXL_EXPORT
+    uint64_t mxlGetMatchingIndex(mxlRational const* fromRate, uint64_t index, mxlRational const* toRate);
+
+    /**
      * Sleep for a specific amount of time.
      * \param[in] ns How long to sleep for, in nanoseconds.
      */
