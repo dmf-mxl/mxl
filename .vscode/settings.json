@@ -1,6 +1,9 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project https://github.com/dmf-mxl/mxl/contributors.md
 // SPDX-License-Identifier: Apache-2.0
 {
+  "rust-analyzer.linkedProjects": [
+    "rust/Cargo.toml"
+  ],
   "files.associations": {
     "array": "cpp",
     "atomic": "cpp",
