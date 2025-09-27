@@ -3,7 +3,11 @@
   "$license": "SPDX-License-Identifier: Apache-2.0",
   "description": "MXL Audio Flow",
   "format": "urn:x-nmos:format:audio",
-  "tags": {},
+  "tags": {
+    "urn:x-nmos:tag:grouphint/v1.0": [
+      "Media Function XYZ:Audio"
+    ]
+  },
   "label": "MXL Audio Flow",
   "version": "1441812152:154331951",
   "id": "b3bb5be7-9fe9-4324-a5bb-4c70e1084449",

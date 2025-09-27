@@ -2,7 +2,11 @@
   "$copyright": "SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.",
   "$license": "SPDX-License-Identifier: Apache-2.0",
   "description": "MXL VANC Data",
-  "tags": {},
+  "tags": {
+    "urn:x-nmos:tag:grouphint/v1.0": [
+      "Media Function XYZ:Ancillary Data"
+    ]
+  },
   "format": "urn:x-nmos:format:data",
   "label": "MXL VANC Data",
   "version": "1453880607:123995943",

@@ -4,6 +4,7 @@
 #include "FlowParser.hpp"
 #include <cstddef>
 #include <cstdint>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -12,12 +13,20 @@
 #include <mxl/mxl.h>
 #include <picojson/picojson.h>
 #include <string_view>
+#include "Logging.hpp"
 #include "Rational.hpp"
 
 namespace mxl::lib
 {
+
     namespace
     {
+
+        // this are arbitrary limits, but we need to put a cap somewhere to prevent a bad json document
+        // from allocating all the RAM on the system.
+        constexpr auto MAX_WIDTH = 7680u;  // 8K UHD
+        constexpr auto MAX_HEIGHT = 4320u; // 8K UHD
+
         /**
          * Translate a NMOS IS-04 data format to a an mxlDataFormat enum.
          * \param[in] format a string view referring to the format.
@@ -97,7 +106,89 @@ namespace mxl::lib
             {
                 result.denominator = static_cast<std::int64_t>(it->second.get<double>());
             }
+
+            // Normalize the rational. We should realistically only see x/1 or x/1001 here.
+            auto g = std::gcd(result.numerator, result.denominator);
+            result.numerator /= g;
+            result.denominator /= g;
             return result;
+        }
+
+        //
+        // Validates that the group hint tag is present and valid
+        // See https://specs.amwa.tv/nmos-parameter-registers/branches/main/tags/grouphint.html
+        //
+        bool validateGroupHint(picojson::object const& in_object)
+        {
+            try
+            {
+                // obtain the tags object. Will throw if not found or not an object
+                auto const tags = fetchAs<picojson::object>(in_object, "tags");
+
+                // obtain the specific tag array from the tags object. Will throw if not found or not an array
+                auto const& groupHints = fetchAs<picojson::array>(tags, "urn:x-nmos:tag:grouphint/v1.0");
+
+                // we need at least a group hint
+                if (groupHints.empty())
+                {
+                    MXL_ERROR("Group hint tag found but empty.");
+                    return false;
+                }
+                else
+                {
+                    // iterate over the array and confirm that all values are strings and follow the
+                    // expected format.
+                    // "<group-name>:<role-in-group>[:<group-scope>]" where group-scope if present, is either device or node
+                    for (auto const& v : groupHints)
+                    {
+                        if (!v.is<std::string>())
+                        {
+                            MXL_ERROR("Invalid group hint value. Not a string.");
+                            return false;
+                        }
+
+                        // Get the array item
+                        auto const& s = v.get<std::string>();
+                        // Split the string into parts separated by ':'
+                        auto parts = s | std::views::split(':') |
+                                     std::views::transform([&](auto&& rng) { return std::string_view(&*rng.begin(), std::ranges::distance(rng)); });
+
+                        auto vec = std::vector<std::string_view>{parts.begin(), parts.end()};
+                        if ((vec.size() < 2) || (vec.size() > 3))
+                        {
+                            MXL_ERROR("Invalid group hint value '{}'. Expected format '<group-name>:<role-in-group>[:<group-scope>]'", s);
+                            return false;
+                        }
+
+                        // Validate the group name and role
+                        auto const& groupName = vec[0];
+                        auto const& role = vec[1];
+                        if (groupName.empty() || role.empty())
+                        {
+                            MXL_ERROR("Invalid group hint value '{}'. Group name and role must not be empty.", s);
+                            return false;
+                        }
+
+                        // Validate the group scope if present
+                        if (vec.size() == 3)
+                        {
+                            auto const& groupScope = vec[2];
+                            if (groupScope != "device" && groupScope != "node")
+                            {
+                                MXL_ERROR("Invalid group hint value '{}'. Group scope must be either 'device' or 'node'.", s);
+                                return false;
+                            }
+                        }
+                    }
+                    // all the tags passed validation
+                    return true;
+                }
+            }
+            catch (std::exception const& e)
+            {
+                MXL_ERROR("Invalid group hint tag. {}", e.what());
+                return false;
+            }
         }
 
     } // namespace
@@ -151,10 +242,32 @@ namespace mxl::lib
             throw std::domain_error{"Unsupported flow format."};
         }
 
+        // Validate that we have a non empty label
+        auto const label = fetchAs<std::string>(_root, "label");
+        if (label.empty())
+        {
+            throw std::domain_error{"Empty flow label."};
+        }
+
+        // Validate that we have a valid group hint tag
+        if (!validateGroupHint(_root))
+        {
+            throw std::domain_error{"Invalid or missing group hint tag."};
+        }
+
         // Validate that grain_rate if we are interlaced video
         // Grain rate must be either 30000/1001 or 25/1
         if (_format == MXL_DATA_FORMAT_VIDEO)
         {
+            auto const width = static_cast<std::size_t>(fetchAs<double>(_root, "frame_width"));
+            auto const height = static_cast<std::size_t>(fetchAs<double>(_root, "frame_height"));
+
+            if ((width < 2) || (width > MAX_WIDTH) || (height < 1) || (height > MAX_HEIGHT))
+            {
+                auto msg = fmt::format("Invalid video dimensions: {}x{}. range is 2x1 to {}x{}", width, height, MAX_WIDTH, MAX_HEIGHT);
+                throw std::invalid_argument{std::move(msg)};
+            }
+
             auto interlaceMode = std::string{};
             if (auto const it = _root.find("interlace_mode"); it != _root.end())
             {
@@ -164,8 +277,15 @@ namespace mxl::lib
             {
                 // the interlace_mode field is absent. This means that the flow is progressive.  No need to validate the grain rate.
                 // We will use the grain rate as is.
-
                 interlaceMode = "progressive";
+            }
+
+            constexpr auto validValues = std::array{"progressive", "interlaced_tff", "interlaced_bff"};
+            bool match = std::ranges::any_of(validValues, [&](auto v) { return interlaceMode == v; });
+            if (!match)
+            {
+                auto msg = fmt::format("Invalid interlace_mode: {}", interlaceMode);
+                throw std::invalid_argument{std::move(msg)};
             }
 
             if ((interlaceMode == "interlaced_tff") || (interlaceMode == "interlaced_bff"))

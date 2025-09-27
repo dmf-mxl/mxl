@@ -24,6 +24,7 @@
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
+#include <picojson/picojson.h>
 
 namespace fs = std::filesystem;
 
@@ -187,30 +188,110 @@ TEST_CASE("Video Flow : Invalid flow (discrete)", "[mxl flows]")
 
 TEST_CASE("Invalid flow definitions", "[mxl flows]")
 {
-    char const* opts = "{}";
-    auto noGrainRate = mxl::tests::readFile("data/no_grain_rate.json");
-    auto noId = mxl::tests::readFile("data/no_id.json");
-    auto noMediaType = mxl::tests::readFile("data/no_media_type.json");
-    auto malformed = mxl::tests::readFile("data/malformed.json");
-    auto invalidInterlaced = mxl::tests::readFile("data/invalid_interlaced_rate.json");
-    auto invalidInterlacedHeight = mxl::tests::readFile("data/invalid_interlaced_height.json");
-
+    //
+    // Prepare the domain
+    //
     char const* homeDir = getenv("HOME");
     REQUIRE(homeDir != nullptr);
     fs::path domain{"./mxl_unittest_domain"}; // Remove that path if it exists.
     fs::remove_all(domain);
 
+    // Create the instance
+    char const* opts = "{}";
     std::filesystem::create_directories(domain);
     auto instance = mxlCreateInstance(domain.string().c_str(), opts);
     REQUIRE(instance != nullptr);
 
+    //
+    // Parse a valid flow definition and keep it as a reference picojson object.
+    //
+    auto const flowDef = mxl::tests::readFile("data/v210_flow.json");
+    auto jsonValue = picojson::value{};
+    auto const err = picojson::parse(jsonValue, flowDef);
+    REQUIRE(err.empty());
+    REQUIRE(jsonValue.is<picojson::object>());
+    auto const validFlowObj = jsonValue.get<picojson::object>();
+
     mxlFlowInfo fInfo;
+
+    // Create a flow definition with no grain rate
+    auto noGrainRateObj = validFlowObj;
+    noGrainRateObj.erase("grain_rate");
+    auto const noGrainRate = picojson::value(noGrainRateObj).serialize();
     REQUIRE(mxlCreateFlow(instance, noGrainRate.c_str(), opts, &fInfo) != MXL_STATUS_OK);
+
+    // Create a flow definition with no id
+    auto noIdObj = validFlowObj;
+    noIdObj.erase("id");
+    auto const noId = picojson::value(noIdObj).serialize();
     REQUIRE(mxlCreateFlow(instance, noId.c_str(), opts, &fInfo) != MXL_STATUS_OK);
+
+    // Create a flow definition with no media type
+    auto noMediaTypeObj = validFlowObj;
+    noMediaTypeObj.erase("media_type");
+    auto const noMediaType = picojson::value(noMediaTypeObj).serialize();
     REQUIRE(mxlCreateFlow(instance, noMediaType.c_str(), opts, &fInfo) != MXL_STATUS_OK);
-    REQUIRE(mxlCreateFlow(instance, malformed.c_str(), opts, &fInfo) != MXL_STATUS_OK);
+
+    // Create a flow definition without label
+    auto labelObj = validFlowObj;
+    labelObj.erase("label");
+    auto const noLabel = picojson::value(labelObj).serialize();
+    REQUIRE(mxlCreateFlow(instance, noLabel.c_str(), opts, &fInfo) != MXL_STATUS_OK);
+
+    // Create an invalid flow definition with an empty label
+    labelObj["label"] = picojson::value{""};
+    auto const emptyLabel = picojson::value(labelObj).serialize();
+    REQUIRE(mxlCreateFlow(instance, emptyLabel.c_str(), opts, &fInfo) != MXL_STATUS_OK);
+
+    // Create a flow definition with an invalid tag
+    auto invalidTagObj = validFlowObj;
+    auto& tagObj = invalidTagObj.find("tags")->second.get<picojson::object>();
+    auto& tagArray = tagObj["urn:x-nmos:tag:grouphint/v1.0"].get<picojson::array>();
+    tagArray.push_back(picojson::value{"a/b/c"});
+    auto const invalidTag = picojson::value(invalidTagObj).serialize();
+    REQUIRE(mxlCreateFlow(instance, invalidTag.c_str(), opts, &fInfo) != MXL_STATUS_OK);
+
+    // Create a flow definition without tags
+    auto noTagsObj = validFlowObj;
+    noTagsObj.erase("tags");
+    auto const noTags = picojson::value(noTagsObj).serialize();
+    REQUIRE(mxlCreateFlow(instance, noTags.c_str(), opts, &fInfo) != MXL_STATUS_OK);
+
+    // Create an interlaced flow definition with an invalid grain rate
+    auto invalidInterlacedRateObj = validFlowObj;
+    invalidInterlacedRateObj["interlace_mode"] = picojson::value{"interlaced_tff"};
+    auto& rate = invalidInterlacedRateObj.find("grain_rate")->second.get<picojson::object>();
+    rate["numerator"] = picojson::value{60000.0};
+    auto const invalidInterlaced = picojson::value(invalidInterlacedRateObj).serialize();
     REQUIRE(mxlCreateFlow(instance, invalidInterlaced.c_str(), opts, &fInfo) != MXL_STATUS_OK);
+
+    // Create an interlaced flow definition with an invalid height
+    auto invalidInterlacedHeightObj = validFlowObj;
+    invalidInterlacedHeightObj["interlace_mode"] = picojson::value{"interlaced_tff"};
+    invalidInterlacedHeightObj["frame_height"] = picojson::value{1081.0};
+    auto const invalidInterlacedHeight = picojson::value(invalidInterlacedHeightObj).serialize();
     REQUIRE(mxlCreateFlow(instance, invalidInterlacedHeight.c_str(), opts, &fInfo) != MXL_STATUS_OK);
+
+    // Create a flow definition that is not json
+    char const* malformed = "{ this is not json";
+    REQUIRE(mxlCreateFlow(instance, malformed, opts, &fInfo) != MXL_STATUS_OK);
+
+    // Create a flow definition that has a non-normalized grain rate. it creating the flow
+    // should succeed but the grain rate should be normalized when we read the flow info back.
+    {
+        auto nonNormalizedRateObj = validFlowObj;
+        auto& rate = nonNormalizedRateObj.find("grain_rate")->second.get<picojson::object>();
+        // This is a dumb way to express 50/1.
+        rate["numerator"] = picojson::value{100000.0};
+        rate["denominator"] = picojson::value{2000.0};
+        auto const nonNormalizedRate = picojson::value(nonNormalizedRateObj).serialize();
+        REQUIRE(mxlCreateFlow(instance, nonNormalizedRate.c_str(), opts, &fInfo) == MXL_STATUS_OK);
+
+        // the rational value found in the json should be normalized to 50/1.
+        REQUIRE(fInfo.discrete.grainRate.numerator == 50);
+        REQUIRE(fInfo.discrete.grainRate.denominator == 1);
+        REQUIRE(mxlDestroyFlow(instance, "5fbec3b1-1b0f-417d-9059-8b94a47197ed") == MXL_STATUS_OK);
+    }
 
     mxlDestroyInstance(instance);
 }

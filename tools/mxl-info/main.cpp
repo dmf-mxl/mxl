@@ -128,18 +128,20 @@ std::ostream& operator<<(std::ostream& os, mxlFlowInfo const& info)
     return os;
 }
 
-std::string getFlowLabel(std::filesystem::path const& descPath)
+void getFlowDetails(std::filesystem::path const& descPath, std::string& label, std::string& groupHint)
 {
-    auto label = std::string{"Unnamed flow"};
+    label = std::string{"n/a"};
+    groupHint = std::string{"n/a"};
+
     if (!exists(descPath))
     {
-        return label;
+        return;
     }
 
     auto descFile = std::ifstream{descPath};
     if (!descFile)
     {
-        return label;
+        return;
     }
 
     auto const content = std::string((std::istreambuf_iterator<char>(descFile)), std::istreambuf_iterator<char>());
@@ -149,21 +151,35 @@ std::string getFlowLabel(std::filesystem::path const& descPath)
     std::string err = picojson::parse(v, content);
     if (!err.empty())
     {
-        return label;
+        return;
     }
 
     auto const& obj = v.get<picojson::object>();
     auto const flowTypeIt = obj.find("label");
     if ((flowTypeIt == obj.end()) || !flowTypeIt->second.is<std::string>())
     {
-        return label;
+        return;
     }
     else
     {
         label = flowTypeIt->second.get<std::string>();
     }
 
-    return label;
+    // try to get the group hint tag
+    auto const tagsIt = obj.find("tags");
+    if ((tagsIt != obj.end()) && tagsIt->second.is<picojson::object>())
+    {
+        auto const& tagsObj = tagsIt->second.get<picojson::object>();
+        auto const groupHintIt = tagsObj.find("urn:x-nmos:tag:grouphint/v1.0");
+        if ((groupHintIt != tagsObj.end()) && groupHintIt->second.is<picojson::array>())
+        {
+            auto const& groupHintArray = groupHintIt->second.get<picojson::array>();
+            if (!groupHintArray.empty() && groupHintArray[0].is<std::string>())
+            {
+                groupHint = groupHintArray[0].get<std::string>();
+            }
+        }
+    }
 }
 
 int listAllFlows(std::string const& in_domain)
@@ -181,7 +197,20 @@ int listAllFlows(std::string const& in_domain)
                 if (id.has_value())
                 {
                     auto descPath = mxl::lib::makeFlowDescriptorFilePath(base, entry.path().stem().string());
-                    std::cout << "\t" << *id << ", \"" << getFlowLabel(descPath) << "\"" << std::endl;
+                    std::string label;
+                    std::string groupHint;
+
+                    try
+                    {
+                        getFlowDetails(descPath, label, groupHint);
+                    }
+                    catch (std::exception const& e)
+                    {
+                        label = fmt::format("ERROR: {}", e.what());
+                        groupHint = "n/a";
+                    }
+                    // Output CSV format: id,label,group_hint
+                    std::cout << *id << ", \"" << label << "\", \"" << groupHint << "\"" << std::endl;
                 }
             }
         }
