@@ -22,6 +22,10 @@ else()
     string(APPEND mxl_VERSION ".0")
 endif()
 
+option(BUILD_DOCS "Build the docs" ON)
+option(BUILD_TESTS "Build the tests" ON)
+option(BUILD_TOOLS "Build the tools" ON)
+
 project(mxl
     VERSION ${mxl_VERSION}
     LANGUAGES CXX C
@@ -54,42 +58,46 @@ if(APPLE)
 endif()
 
 add_subdirectory(lib)
-add_subdirectory(tools)
 add_subdirectory(utils)
+if (BUILD_TOOLS)
+    add_subdirectory(tools)
+endif()
 
-find_package(Doxygen)
+if(BUILD_DOCS)
+    find_package(Doxygen)
 
-if(DOXYGEN_FOUND)
-    include(FetchContent)
+    if(DOXYGEN_FOUND)
+        include(FetchContent)
 
-    FetchContent_Declare(
-        doxygen-awesome-css
-        URL https://github.com/jothepro/doxygen-awesome-css/archive/refs/heads/main.zip
-    )
-    FetchContent_MakeAvailable(doxygen-awesome-css)
+        FetchContent_Declare(
+            doxygen-awesome-css
+            URL https://github.com/jothepro/doxygen-awesome-css/archive/refs/heads/main.zip
+        )
+        FetchContent_MakeAvailable(doxygen-awesome-css)
 
-    # Save the location the files were cloned into
-    # This allows us to get the path to doxygen-awesome.css
-    FetchContent_GetProperties(doxygen-awesome-css SOURCE_DIR AWESOME_CSS_DIR)
+        # Save the location the files were cloned into
+        # This allows us to get the path to doxygen-awesome.css
+        FetchContent_GetProperties(doxygen-awesome-css SOURCE_DIR AWESOME_CSS_DIR)
 
-    # Generate the Doxyfile
-    set(DOXYFILE_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
-    set(DOXYFILE_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
-    configure_file(${DOXYFILE_IN} ${DOXYFILE_OUT} @ONLY)
+        # Generate the Doxyfile
+        set(DOXYFILE_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
+        set(DOXYFILE_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+        configure_file(${DOXYFILE_IN} ${DOXYFILE_OUT} @ONLY)
 
-    set(DOXYGEN_OUTPUT_DIR "${CMAKE_BINARY_DIR}/docs")
+        set(DOXYGEN_OUTPUT_DIR "${CMAKE_BINARY_DIR}/docs")
 
-    add_custom_target(doc
-        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        COMMENT "Generating API documentation with Doxygen"
-        BYPRODUCTS "${DOXYGEN_OUTPUT_DIR}/html/index.html"
-        VERBATIM
-    )
+        add_custom_target(doc
+            COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            COMMENT "Generating API documentation with Doxygen"
+            BYPRODUCTS "${DOXYGEN_OUTPUT_DIR}/html/index.html"
+            VERBATIM
+        )
 
-    install(DIRECTORY "${CMAKE_BINARY_DIR}/docs/html"
-        DESTINATION share/doc/mxl
-        FILES_MATCHING PATTERN "*")
+        install(DIRECTORY "${CMAKE_BINARY_DIR}/docs/html"
+            DESTINATION share/doc/mxl
+            FILES_MATCHING PATTERN "*")
+    endif()
 endif()
 
 if(EXISTS "/etc/os-release")

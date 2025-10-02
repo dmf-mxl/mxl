@@ -30,7 +30,8 @@
                 "matepek.vscode-catch2-test-adapter",
                 "llvm-vs-code-extensions.vscode-clangd",
                 "xaver.clang-format",
-                "bierner.markdown-mermaid"
+                "bierner.markdown-mermaid",
+                "rust-lang.rust-analyzer"
             ],
             "settings": {
                 "C_Cpp.intelliSenseEngine": "disabled",
