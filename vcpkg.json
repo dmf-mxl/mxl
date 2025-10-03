@@ -1,39 +1,43 @@
 {
-  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
-  "dependencies": [
-    {
-      "name": "catch2",
-      "version>=": "3.10.0#0"
-    },
-    {
-      "name": "stduuid",
-      "version>=": "1.2.3",
-      "features": [
-        "system-gen",
-        "gsl-span"
-      ]
-    },
-    {
-      "name": "spdlog",
-      "version>=": "1.15.3#0"
-    },
-    {
-      "name": "fmt",
-      "version>=": "11.2.0#0"
-    },
-    {
-      "name": "picojson",
-      "version>=": "1.3.0#3"
-    },
-    {
-      "name": "cli11",
-      "version>=": "2.5.0#0"
-    },
-    {
-      "name": "pcapplusplus",
-      "version>=": "25.5#0",
-      "platform": "linux"
-    }
-  ],
-  "builtin-baseline": "4002e3abc6d3e468c73d2d9777a7dd96af5dc224"
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+    "dependencies": [
+        {
+            "name": "catch2",
+            "version>=": "3.10.0#0"
+        },
+        {
+            "name": "stduuid",
+            "version>=": "1.2.3",
+            "features": [
+                "system-gen",
+                "gsl-span"
+            ]
+        },
+        {
+            "name": "spdlog",
+            "version>=": "1.15.3#0"
+        },
+        {
+            "name": "fmt",
+            "version>=": "11.2.0#0"
+        },
+        {
+            "name": "picojson",
+            "version>=": "1.3.0#3"
+        },
+        {
+            "name": "cli11",
+            "version>=": "2.5.0#0"
+        },
+        {
+            "name": "pcapplusplus",
+            "version>=": "25.5#0",
+            "platform": "linux"
+        },
+        {
+            "name": "reflectcpp",
+            "version>=": "0.19.0"
+        }
+    ],
+    "builtin-baseline": "4002e3abc6d3e468c73d2d9777a7dd96af5dc224"
 }

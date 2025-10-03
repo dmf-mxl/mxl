@@ -4,9 +4,12 @@
 ARG BASE_IMAGE_VERSION=2023
 FROM amazonlinux:${BASE_IMAGE_VERSION}
 
-
 # Configure sysctl parameters
 RUN echo "vm.swappiness=0" >> /etc/sysctl.conf
+
+
+COPY ./scripts/ /tmp/scripts
+
 
 # Install dependencies
 RUN dnf install -y \
@@ -42,9 +45,12 @@ RUN dnf install -y \
     libubsan \
     bison \
     flex \
+    librdmacm-devel \
     && dnf clean all
 
 RUN pip install --upgrade cmake
+
+RUN /tmp/scripts/common/libfabric/install.sh
 
 # Set default user
 ARG USERNAME=devcontainer

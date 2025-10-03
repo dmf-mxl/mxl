@@ -3,6 +3,8 @@
 
 FROM almalinux:10
 
+COPY ./scripts/ /tmp/scripts
+
 # Configure sysctl parameters
 RUN echo "vm.swappiness=0" >> /etc/sysctl.conf
 RUN dnf install -y epel-release
@@ -49,9 +51,12 @@ RUN dnf install -y \
     flex \
     ccache \
     curl \
+    librdmacm-devel \
     && dnf clean all
 
 RUN pip install --upgrade cmake
+
+RUN /tmp/scripts/common/libfabric/install.sh
 
 # Set default user
 ARG USERNAME=devcontainer

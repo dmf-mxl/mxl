@@ -8,6 +8,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN echo 'vm.swappiness=0'          >> /etc/sysctl.conf
 
+COPY ./scripts/ /tmp/scripts
+
 # Install basic and runtime dependencies
 RUN apt clean all && apt-get update \
  && apt-get install -y --no-install-recommends \
@@ -36,7 +38,8 @@ RUN apt clean all && apt-get update \
     htop \
     bison \
     flex \
-    ccache
+    ccache \
+    librdmacm-dev
 
 RUN apt-get update || true \
  && apt-get -y install libgstreamer1.0-dev \
@@ -80,6 +83,8 @@ RUN wget https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION
 #  | tar --strip-components=1 --directory /opt/ccache -xJf - \
 # && ln -s /opt/ccache/ccache /usr/local/bin/ccache
 
+RUN /tmp/scripts/common/libfabric/install.sh
+
 # Create the user
 RUN getent group $USERNAME || groupadd --gid $USER_GID $USERNAME \
  && getent passwd $USERNAME || useradd --uid $USER_UID --gid $USER_GID -m -s /bin/bash $USERNAME \
@@ -97,7 +102,6 @@ RUN git clone https://github.com/microsoft/vcpkg \
 ENV VCPKG_ROOT=/home/$USERNAME/vcpkg
 
 # Make the selected clang version the default alternative
-COPY register-clang-version.sh /home/$USERNAME/register-clang-version.sh 
-RUN sudo /home/$USERNAME/register-clang-version.sh ${CLANG_VERSION} 100 && rm /home/$USERNAME/register-clang-version.sh
+RUN sudo /tmp/scripts/debian/register-clang-version.sh ${CLANG_VERSION} 100 
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain=1.88.0

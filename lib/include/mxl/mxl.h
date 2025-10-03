@@ -19,7 +19,7 @@ extern "C"
     /// MXL SDK Status codes.
     typedef enum mxlStatus
     {
-        MXL_STATUS_OK,
+        MXL_STATUS_OK = 0,
         MXL_ERR_UNKNOWN,
         MXL_ERR_FLOW_NOT_FOUND,
         MXL_ERR_OUT_OF_RANGE_TOO_LATE,
@@ -33,7 +33,17 @@ extern "C"
 
         // A flow is invalid from a reader point of view if its data file has been replaced
         // (for example, if a writer restarted and recreated the flow)
-        MXL_ERR_FLOW_INVALID
+        MXL_ERR_FLOW_INVALID,
+
+        /* fabrics.h errors */
+        MXL_ERR_STRLEN = 1024,
+        MXL_ERR_INTERRUPTED,
+        MXL_ERR_NO_FABRIC,
+        MXL_ERR_INVALID_STATE,
+        MXL_ERR_INTERNAL,
+        MXL_ERR_NOT_READY,
+        MXL_ERR_NOT_FOUND,
+        MXL_ERR_EXISTS,
     } mxlStatus;
 
     /// MXL SDK Semantic versionning structure.

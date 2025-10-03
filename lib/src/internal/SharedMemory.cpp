@@ -5,7 +5,6 @@
 #include <cerrno>
 #include <cstring>
 #include <array>
-#include <stdexcept>
 #include <fcntl.h>
 #include <unistd.h>
 #include <utime.h>

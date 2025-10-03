@@ -53,7 +53,7 @@ jobs:
         id: docker-hash
         run: |
           # Create a hash based on Dockerfile content and matrix parameters
-          HASH_INPUT=$(cat .devcontainer/Dockerfile .devcontainer/register-clang-version.sh vcpkg.json)
+          HASH_INPUT=$(cat .devcontainer/Dockerfile .devcontainer/scripts/debian/register-clang-version.sh vcpkg.json)
           HASH_INPUT="${HASH_INPUT}${{ matrix.version }}${{ matrix.architecture }}${{ matrix.compiler }}"
           DOCKER_HASH=$(echo -n "$HASH_INPUT" | sha256sum | cut -d' ' -f1)
           echo "hash=$DOCKER_HASH" >> $GITHUB_OUTPUT
