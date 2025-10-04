@@ -279,6 +279,7 @@ namespace mxl::lib
                 std::lock_guard<std::mutex> lock(_mutex);
                 watchCount = _watches.size();
                 eventsToMonitor.reserve(watchCount);
+                eventsToMonitor.resize(watchCount);
                 eventsToMonitorRecords.reserve(watchCount);
                 size_t index = 0;
                 for (auto const& [wd, rec] : _watches)
