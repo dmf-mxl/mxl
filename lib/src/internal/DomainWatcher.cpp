@@ -285,6 +285,7 @@ namespace mxl::lib
                 {
                     // keep the record alive.  this ensures that it is not released whilst waiting for an event.
                     eventsToMonitorRecords.push_back(rec);
+                    eventsToMonitor.resize(watchCount);
                     EV_SET(&eventsToMonitor[index], wd, EVFILT_VNODE, EV_ADD | EV_CLEAR, vnodeEvents, 0, rec.get());
                     index++;
                 }
