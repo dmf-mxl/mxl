@@ -1,0 +1,22 @@
+[package]
+name = "gst-plugin-src"
+version = "0.15.0-alpha.1"
+license = "Apache-2.0"
+edition = "2021"
+rust-version = "1.83"
+
+[dependencies]
+glib = { git = "https://github.com/gtk-rs/gtk-rs-core", branch = "main" }
+gst = { package = "gstreamer", git = "https://gitlab.freedesktop.org/gstreamer/gstreamer-rs", branch = "main" }
+gst-base = { package = "gstreamer-base", git = "https://gitlab.freedesktop.org/gstreamer/gstreamer-rs", branch = "main" }
+gst-audio = { package = "gstreamer-audio", git = "https://gitlab.freedesktop.org/gstreamer/gstreamer-rs", branch = "main" }
+byte-slice-cast = "1.0"
+num-traits = "0.2"
+
+[lib]
+name = "gstsrc"
+crate-type = ["cdylib", "rlib"]
+path = "src/lib.rs"
+
+[build-dependencies]
+gst-plugin-version-helper = { path = "./version-helper" }
