@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
+// SPDX-License-Identifier: Apache-2.0
+
 // Copyright (C) 2017 Sebastian Dröge <sebastian@centricular.com>
 //
 // Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
@@ -10,27 +13,24 @@
 #![allow(clippy::non_send_fields_in_send_ty, unused_doc_comments)]
 
 use gst::glib;
+use gstreamer as gst;
 
-mod sinesrc;
+mod flowdef;
+mod mxlsink;
+pub mod mxlsrc;
 
-// Plugin entry point that should register all elements provided by this plugin,
-// and everything else that this plugin might provide (e.g. typefinders or device providers).
 fn plugin_init(plugin: &gst::Plugin) -> Result<(), glib::BoolError> {
-    sinesrc::register(plugin)?;
+    mxlsrc::register(plugin)?;
+    mxlsink::register(plugin)?;
     Ok(())
 }
 
-// Static plugin metadata that is directly stored in the plugin shared object and read by GStreamer
-// upon loading.
-// Plugin name, plugin description, plugin entry point function, version number of this plugin,
-// license of the plugin, source package name, binary package name, origin where it comes from
-// and the date/time of release.
 gst::plugin_define!(
-    gstsrc,
+    mxl,
     env!("CARGO_PKG_DESCRIPTION"),
     plugin_init,
     concat!(env!("CARGO_PKG_VERSION"), "-", env!("COMMIT_ID")),
-    "MIT/X11",
+    "Apache-2.0",
     env!("CARGO_PKG_NAME"),
     env!("CARGO_PKG_NAME"),
     env!("CARGO_PKG_REPOSITORY"),

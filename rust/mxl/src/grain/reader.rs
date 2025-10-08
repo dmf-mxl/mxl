@@ -83,6 +83,7 @@ impl GrainReader {
         Ok(GrainData {
             payload,
             total_size: grain_info.grainSize as usize,
+            flags: grain_info.flags,
         })
     }
 
@@ -115,6 +116,7 @@ impl GrainReader {
         Ok(GrainData {
             payload,
             total_size: grain_info.grainSize as usize,
+            flags: grain_info.flags,
         })
     }
 

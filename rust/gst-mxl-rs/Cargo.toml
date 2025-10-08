@@ -1,22 +1,40 @@
+# SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
 [package]
-name = "gst-plugin-src"
-version = "0.15.0-alpha.1"
-license = "Apache-2.0"
-edition = "2021"
-rust-version = "1.83"
+name = "gst-mxl-src"
+description = "MXL plugin"
+repository.workspace = true
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+license.workspace = true
+
+[package.metadata.cargo-machete]
+ignored = ["regex"]
 
 [dependencies]
-glib = { git = "https://github.com/gtk-rs/gtk-rs-core", branch = "main" }
-gst = { package = "gstreamer", git = "https://gitlab.freedesktop.org/gstreamer/gstreamer-rs", branch = "main" }
-gst-base = { package = "gstreamer-base", git = "https://gitlab.freedesktop.org/gstreamer/gstreamer-rs", branch = "main" }
-gst-audio = { package = "gstreamer-audio", git = "https://gitlab.freedesktop.org/gstreamer/gstreamer-rs", branch = "main" }
-byte-slice-cast = "1.0"
-num-traits = "0.2"
+glib = "0.21.5"
+gstreamer = "0.24.4"
+gstreamer-audio = "0.24.4"
+gstreamer-base = "0.24.4"
+mxl = { path = "../mxl" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tracing = "0.1.43"
+tracing-subscriber = "0.3.20"
+tracing-test = "0.2.5"
+
+# If this is not included, tracing won't work while debugging
+regex = { version = "1", features = ["unicode-case"] }
+
+[features]
+tracing = []
 
 [lib]
-name = "gstsrc"
+name = "gstmxl"
 crate-type = ["cdylib", "rlib"]
 path = "src/lib.rs"
 
 [build-dependencies]
-gst-plugin-version-helper = { path = "./version-helper" }
+gst-plugin-version-helper = { path = "../version-helper" }

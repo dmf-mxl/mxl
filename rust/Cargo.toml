@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [workspace]
-members = ["mxl", "mxl-sys", "gst-mxl-rs"]
+members = ["mxl", "mxl-sys", "gst-mxl-rs", "version-helper"]
 
 resolver = "2"
 
@@ -12,6 +12,7 @@ publish = false
 version = "0.1.0"
 license = "Apache-2.0"
 license-file = "../LICENSE.txt"
+repository = "https://github.com/dmf-mxl/mxl"
 
 [workspace.dependencies]
 bindgen = { version = "0.72", features = ["experimental"] }

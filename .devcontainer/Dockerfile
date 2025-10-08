@@ -66,6 +66,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN /tmp/scripts/common/libfabric/install.sh
 
+# Install GST dependencies for plugins
+RUN apt-get install -y --no-install-recommends \
+    libglib2.0-dev \
+    libgdk-pixbuf2.0-dev \
+    libcairo2-dev \
+    libpango1.0-dev \
+    libgraphene-1.0-dev \
+    libgtk-4-dev \
+    libgirepository1.0-dev \
+    libatk1.0-dev
+
 # Remove the default ubuntu user if it exists
 RUN userdel --remove ubuntu >/dev/null 2>&1 || true
 RUN groupdel ubuntu >/dev/null 2>&1 || true

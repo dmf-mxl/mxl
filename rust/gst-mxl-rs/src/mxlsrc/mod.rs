@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
+// SPDX-License-Identifier: Apache-2.0
+
 // Copyright (C) 2020 Sebastian Dröge <sebastian@centricular.com>
 //
 // Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
@@ -10,22 +13,25 @@
 
 use gst::glib;
 use gst::prelude::*;
+use gstreamer as gst;
+use gstreamer_base as gst_base;
 
+mod create_audio;
+mod create_video;
 mod imp;
+mod mxl_helper;
+mod src_tests;
+mod state;
 
-// The public Rust wrapper type for our element
 glib::wrapper! {
-    pub struct SineSrc(ObjectSubclass<imp::SineSrc>) @extends gst_base::PushSrc, gst_base::BaseSrc, gst::Element, gst::Object;
+    pub struct MxlSrc(ObjectSubclass<imp::MxlSrc>) @extends gst_base::PushSrc, gst_base::BaseSrc, gst::Element, gst::Object;
 }
 
-// Registers the type for our element, and then registers in GStreamer under
-// the name "sinesrc" for being able to instantiate it via e.g.
-// gst::ElementFactory::make().
 pub fn register(plugin: &gst::Plugin) -> Result<(), glib::BoolError> {
     gst::Element::register(
         Some(plugin),
-        "rssinesrc",
+        "mxlsrc",
         gst::Rank::NONE,
-        SineSrc::static_type(),
+        MxlSrc::static_type(),
     )
 }

@@ -8,6 +8,8 @@ pub struct GrainData<'a> {
 
     /// The total size of the grain payload, which may be larger than `payload.len()` if the grain is partial.
     pub total_size: usize,
+
+    pub flags: u32,
 }
 
 impl<'a> GrainData<'a> {

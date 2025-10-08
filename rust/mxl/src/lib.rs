@@ -17,6 +17,7 @@ pub use grain::{
     data::*, reader::GrainReader, write_access::GrainWriteAccess, writer::GrainWriter,
 };
 pub use instance::MxlInstance;
+pub use mxl_sys::Rational;
 pub use samples::{
     data::*, reader::SamplesReader, write_access::SamplesWriteAccess, writer::SamplesWriter,
 };
