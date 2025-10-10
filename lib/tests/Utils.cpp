@@ -52,3 +52,23 @@ auto mxl::tests::makeTempDomain() -> std::filesystem::path
     }
     return std::filesystem::path{tmpl};
 }
+
+mxl::tests::mxlDomainFixture::mxlDomainFixture()
+    : domain{getDomainPath()}
+{
+    removeDomain();
+    std::filesystem::create_directories(domain);
+}
+
+mxl::tests::mxlDomainFixture::~mxlDomainFixture()
+{
+    removeDomain();
+}
+
+void mxl::tests::mxlDomainFixture::removeDomain()
+{
+    if (std::filesystem::exists(domain))
+    {
+        std::filesystem::remove_all(domain);
+    }
+}

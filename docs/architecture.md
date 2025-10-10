@@ -85,14 +85,28 @@ The following example demonstrates how a FlowWriter may write a grain as slices 
     }
 ```
 
-### Video
+# Grain formats
 
-- At the moment the only supported video media_type is "video/v210"
-- The optional IS-04 (but recommended) "grain_rate" attribute of the NMOS Flow resource is mandatory for video and data flows in MXL.
-- The grain_rate in NMOS expresses the frame rate. For interlaced video, users of the API must pass valid frame rates and not field rates. The only valid values for grain_rate for interlaced media is 25/1 or 30000/1001. Internally the SDK will convert it to a field rate (doubled rate)
+## Video
 
-### Audio
+Video grains can be of two different formats: video/v210 for video without transparency and video/v210+alpha for fill and key signals (video with alpha transparency).
+
+### video/v210
+
+The v210 format is an uncompressed buffer format carrying 10 bit 4:2:2 video. A detailed description of the format can be found [here](https://wiki.multimedia.cx/index.php/V210) and [here](https://developer.apple.com/library/archive/technotes/tn2162/_index.html#//apple_ref/doc/uid/DTS40013070-CH1-TNTAG8-V210__4_2_2_COMPRESSION_TYPE).
+
+#### video/v210+alpha
+
+This format contains both fill and key inside a single grain.  The fill part starts at byte 0 of the grain and follows the v210 definition above. The key buffer is found immediately after the fill buffer.  Samples are organized in blocks of 32 bit values in little-endian.  Each block contains 3 luma samples, one each in bits 0 - 9, 10 - 19 and 20 - 29, the remaining two bits are unused.  The start of each line is aligned to a multiple of 4 bytes, where unused blocks are padded with 0.    
+
+Alpha samples are 'straight' (not premultiplied) and follow the same data range as the fill.  For example, if the fill is _video range_ (64 to 960) then the samples of the key are also _video range_.
+
+## Audio
+
+### audio/float32
+
+Audio is stored as 32 bit IEEE754 float values in the range of -1.0 to +1.0.
 
 ### Ancillary Data
 
-Ancillary data payload is _exactly_ the SMPTE 2110-40 payload format without the RTP headers.
+Ancillary data payload is based on [RFC 8331](https://datatracker.ietf.org/doc/html/rfc8331#section-2).   Only the bytes starting at the *Length* field (See section 2 of RFC 8331) are stored in the grain. (the bytes 0 to 13 are redundant in the context of MXL and are not stored).

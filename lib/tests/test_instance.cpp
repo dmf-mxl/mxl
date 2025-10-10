@@ -7,12 +7,8 @@
 #include <mxl/mxl.h>
 #include "Utils.hpp"
 
-TEST_CASE("Flow readers / writers caching", "[instance]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow readers / writers caching", "[instance]")
 {
-    auto domain = std::filesystem::path{"./mxl_unittest_domain"};
-    remove_all(domain);
-    create_directories(domain);
-
     auto const opts = "{}";
     auto instance = mxlCreateInstance(domain.string().c_str(), opts);
     REQUIRE(instance != nullptr);

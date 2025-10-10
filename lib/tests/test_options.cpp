@@ -18,36 +18,15 @@ namespace
     auto const options_250 = R"({"urn:x-mxl:option:history_duration/v1.0": 250000000})";
 }
 
-TEST_CASE("Options : Default value", "[options]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : Default value", "[options]")
 {
-    // Use different domains per test to allow for concurrent execution of tests
-    auto const domain = mxl::tests::getDomainPath() / "options_test_1";
-
-    // Remove that path if it exists.
-    remove_all(domain);
-
-    // Create the mxl domain path.
-    REQUIRE(create_directories(domain));
-
     auto flowIoFactory = std::make_unique<mxl::lib::PosixFlowIoFactory>();
     auto const instance = std::make_shared<Instance>(domain, "", std::move(flowIoFactory));
-
     REQUIRE(instance->getHistoryDurationNs() == 100'000'000ULL); // default value
-
-    // cleanup
-    remove_all(domain);
 }
 
-TEST_CASE("Options : Domain config", "[options]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : Domain config", "[options]")
 {
-    auto const domain = mxl::tests::getDomainPath() / "options_test_2";
-
-    // Remove that path if it exists.
-    remove_all(domain);
-
-    // Create the mxl domain path.
-    REQUIRE(create_directories(domain));
-
     // write the domain options file
     auto const domainOptionsFile = domain / ".options";
     std::ofstream ofs(domainOptionsFile);
@@ -59,42 +38,20 @@ TEST_CASE("Options : Domain config", "[options]")
     auto const instance = std::make_shared<Instance>(domain, "", std::move(flowIoFactory));
 
     REQUIRE(instance->getHistoryDurationNs() == 500'000'000ULL); // domain value
-
-    // cleanup
-    remove_all(domain);
 }
 
-TEST_CASE("Options : Instance config", "[options]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : Instance config", "[options]")
 {
-    auto const domain = mxl::tests::getDomainPath() / "options_test_3";
-
-    // Remove that path if it exists.
-    remove_all(domain);
-
-    // Create the mxl domain path.
-    REQUIRE(create_directories(domain));
-
     auto flowIoFactory = std::make_unique<mxl::lib::PosixFlowIoFactory>();
     auto const instance = std::make_shared<Instance>(domain, options_250, std::move(flowIoFactory));
 
     // We should get the default value, not the instance config value.
     // We don't want per-instance history durations.
     REQUIRE(instance->getHistoryDurationNs() == 100'000'000ULL);
-
-    // cleanup
-    remove_all(domain);
 }
 
-TEST_CASE("Options : Domain + Instance config", "[options]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : Domain + Instance config", "[options]")
 {
-    auto const domain = mxl::tests::getDomainPath() / "options_test_4";
-
-    // Remove that path if it exists.
-    remove_all(domain);
-
-    // Create the mxl domain path.
-    REQUIRE(create_directories(domain));
-
     // write the domain options file
     auto const domainOptionsFile = domain / ".options";
     std::ofstream ofs(domainOptionsFile);
@@ -107,21 +64,10 @@ TEST_CASE("Options : Domain + Instance config", "[options]")
 
     // We should use the domain config, not the instance config.  We don't want per-instance history durations.
     REQUIRE(instance->getHistoryDurationNs() == 500'000'000ULL);
-
-    // cleanup
-    remove_all(domain);
 }
 
-TEST_CASE("Options : invalid configs", "[options]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : invalid configs", "[options]")
 {
-    auto const domain = mxl::tests::getDomainPath() / "options_test_5";
-
-    // Remove that path if it exists.
-    remove_all(domain);
-
-    // Create the mxl domain path.
-    REQUIRE(create_directories(domain));
-
     // write the domain options file
     auto const domainOptionsFile = domain / ".options";
     std::ofstream ofs(domainOptionsFile);
@@ -133,7 +79,4 @@ TEST_CASE("Options : invalid configs", "[options]")
     auto const instance = std::make_shared<Instance>(domain, "def", std::move(flowIoFactory));
 
     REQUIRE(instance->getHistoryDurationNs() == 100'000'000ULL); // default value
-
-    // Clean up the domain path
-    remove_all(domain);
 }

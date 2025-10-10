@@ -25,12 +25,8 @@
 
 /// The test simulates trying to read video data from the current head, while the writer is still
 /// 3 grains behind (~100 ms at the 30000/1001 rate).
-TEST_CASE("Video Flow : Wait for grain availability", "[mxl flows timing]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : Wait for grain availability", "[mxl flows timing]")
 {
-    auto domain = std::filesystem::path{"./mxl_unittest_domain"};
-    remove_all(domain);
-    create_directories(domain);
-
     auto const opts = "{}";
     auto instanceReader = mxlCreateInstance(domain.string().c_str(), opts);
     REQUIRE(instanceReader != nullptr);

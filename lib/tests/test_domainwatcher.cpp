@@ -14,19 +14,13 @@
 #include <sys/stat.h>
 #include "../src/internal/DomainWatcher.hpp"
 #include "../src/internal/PathUtils.hpp"
+#include "Utils.hpp"
 
 using namespace mxl::lib;
 namespace fs = std::filesystem;
 
-TEST_CASE("Directory Watcher", "[directory watcher]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Directory Watcher", "[directory watcher]")
 {
-    auto const homeDir = getenv("HOME");
-    REQUIRE(homeDir != nullptr);
-    auto domain = std::filesystem::path{std::string{homeDir} + "/mxl_domain"}; // Remove that path if it exists.
-    remove_all(domain);
-
-    create_directories(domain);
-
     auto watcher = DomainWatcher{domain.native(), nullptr};
 
     auto const* id = "5fbec3b1-1b0f-417d-9059-8b94a47197ed";
@@ -53,15 +47,8 @@ TEST_CASE("Directory Watcher", "[directory watcher]")
     REQUIRE(-1 == watcher.removeFlow(flowId, WatcherType::WRITER));
 }
 
-TEST_CASE("DomainWatcher triggers callback on file modifications", "[domainwatcher]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "DomainWatcher triggers callback on file modifications", "[domainwatcher]")
 {
-    // This test checks that modifying a watched file triggers the callback with correct UUID and WatcherType.
-    auto const homeDir = std::getenv("HOME");
-    REQUIRE(homeDir != nullptr);
-    auto domainPath = std::filesystem::path{homeDir} / "mxl_test_domain_events";
-    remove_all(domainPath);
-    create_directories(domainPath);
-
     // Variables to capture callback information
     auto eventMutex = std::mutex{};
     auto eventCV = std::condition_variable{};
@@ -70,7 +57,7 @@ TEST_CASE("DomainWatcher triggers callback on file modifications", "[domainwatch
     auto callbackType = mxl::lib::WatcherType{};
 
     // Set up DomainWatcher with a callback that notifies when a file change event is caught
-    mxl::lib::DomainWatcher watcher(domainPath,
+    mxl::lib::DomainWatcher watcher(domain,
         [&](uuids::uuid id, mxl::lib::WatcherType type)
         {
             auto lock = std::unique_lock<std::mutex>{eventMutex};
@@ -83,7 +70,7 @@ TEST_CASE("DomainWatcher triggers callback on file modifications", "[domainwatch
 
     // Create a flow directory and files, then add watchers for both Reader and Writer types
     auto const flowIdStr = std::string{"11111111-2222-3333-4444-555555555555"}; // test UUID
-    auto flowDir = mxl::lib::makeFlowDirectoryName(domainPath, flowIdStr);
+    auto flowDir = mxl::lib::makeFlowDirectoryName(domain, flowIdStr);
     create_directories(flowDir);
     auto flowId = *uuids::uuid::from_string(flowIdStr);
     auto dataFile = mxl::lib::makeFlowDataFilePath(flowDir);     // main data file
@@ -121,20 +108,13 @@ TEST_CASE("DomainWatcher triggers callback on file modifications", "[domainwatch
     REQUIRE(watcher.removeFlow(flowId, mxl::lib::WatcherType::WRITER) == 0);
 }
 
-TEST_CASE("DomainWatcher thread start/stop behavior", "[domainwatcher]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "DomainWatcher thread start/stop behavior", "[domainwatcher]")
 {
-    // This test ensures the internal event-processing thread starts on construction and stops on request.
-    auto const homeDir = std::getenv("HOME");
-    REQUIRE(homeDir != nullptr);
-    auto domainPath = std::filesystem::path{homeDir} / "mxl_test_domain_thread";
-    remove_all(domainPath);
-    create_directories(domainPath);
-
     // Set up a callback that will signal when an event is processed
     auto eventMutex = std::mutex{};
     auto eventCV = std::condition_variable{};
     auto eventReceived = bool{false};
-    mxl::lib::DomainWatcher watcher(domainPath,
+    mxl::lib::DomainWatcher watcher(domain,
         [&](uuids::uuid, mxl::lib::WatcherType)
         {
             auto lock = std::lock_guard<std::mutex>{eventMutex};
@@ -144,7 +124,7 @@ TEST_CASE("DomainWatcher thread start/stop behavior", "[domainwatcher]")
 
     // Prepare a flow and add a watch so that events can be generated
     auto const flowIdStr = std::string{"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"};
-    auto flowDir = mxl::lib::makeFlowDirectoryName(domainPath, flowIdStr);
+    auto flowDir = mxl::lib::makeFlowDirectoryName(domain, flowIdStr);
     create_directories(flowDir);
     auto flowId = *uuids::uuid::from_string(flowIdStr);
     auto dataFile = mxl::lib::makeFlowDataFilePath(flowDir);
@@ -186,17 +166,9 @@ TEST_CASE("DomainWatcher thread start/stop behavior", "[domainwatcher]")
     // DomainWatcher destructor will join the thread (if not already stopped) and close fds.
 }
 
-TEST_CASE("DomainWatcher error handling for invalid inputs", "[domainwatcher]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "DomainWatcher error handling for invalid inputs", "[domainwatcher]")
 {
-    // This test simulates error conditions: adding watches for non-existent files and removing non-existent watches.
-    auto const homeDir = std::getenv("HOME");
-    REQUIRE(homeDir != nullptr);
-
-    // Case 1: Using a valid domain path but adding a flow without creating the files
-    auto goodDomain = std::filesystem::path{homeDir} / "mxl_error_test_domain";
-    remove_all(goodDomain);
-    create_directories(goodDomain);
-    mxl::lib::DomainWatcher watcher(goodDomain, nullptr);
+    mxl::lib::DomainWatcher watcher(domain, nullptr);
 
     // Attempt to addFlow on a domain where the flow files don't exist (should throw because files are not present)
     uuids::uuid dummyId = *uuids::uuid::from_string("01234567-89ab-cdef-0123-456789abcdef");
@@ -213,12 +185,12 @@ TEST_CASE("DomainWatcher error handling for invalid inputs", "[domainwatcher]")
 
     // Case 3: Removing a non-existent watch on a brand new DomainWatcher (nothing added at all)
     uuids::uuid randomId = *uuids::uuid::from_string("00000000-0000-0000-0000-000000000000");
-    mxl::lib::DomainWatcher emptyWatcher(goodDomain, nullptr);
+    mxl::lib::DomainWatcher emptyWatcher(domain, nullptr);
     REQUIRE(emptyWatcher.removeFlow(randomId, mxl::lib::WatcherType::READER) == -1);
 }
 
 #ifdef __linux__ // This test uses /proc/self/fd which is Linux-specific
-TEST_CASE("DomainWatcher cleans up file descriptors on destruction", "[domainwatcher]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "DomainWatcher cleans up file descriptors on destruction", "[domainwatcher]")
 {
     // This test verifies that DomainWatcher closes its inotify/epoll descriptors upon destruction,
     // so no file descriptor leaks occur.
@@ -240,18 +212,12 @@ TEST_CASE("DomainWatcher cleans up file descriptors on destruction", "[domainwat
         return count;
     };
 
-    auto const homeDir = std::getenv("HOME");
-    REQUIRE(homeDir != nullptr);
-    auto domainPath = std::filesystem::path{homeDir} / "mxl_fd_test_domain";
-    remove_all(domainPath);
-    create_directories(domainPath);
-
     auto const fdsBefore = countOpenFDs();
     { // scope to ensure DomainWatcher destruction
-        mxl::lib::DomainWatcher watcher(domainPath, nullptr);
+        mxl::lib::DomainWatcher watcher(domain, nullptr);
         // Add a watch to force inotify initialization if not already done in constructor
         auto const flowIdStr = std::string{"12345678-1234-5678-1234-567812345678"};
-        auto flowDir = mxl::lib::makeFlowDirectoryName(domainPath, flowIdStr);
+        auto flowDir = mxl::lib::makeFlowDirectoryName(domain, flowIdStr);
         create_directories(flowDir);
         auto flowId = *uuids::uuid::from_string(flowIdStr);
         auto filePath = mxl::lib::makeFlowDataFilePath(flowDir);
@@ -267,20 +233,15 @@ TEST_CASE("DomainWatcher cleans up file descriptors on destruction", "[domainwat
 }
 #endif // __linux__
 
-TEST_CASE("DomainWatcher supports concurrent add/remove operations", "[domainwatcher]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "DomainWatcher supports concurrent add/remove operations", "[domainwatcher]")
 {
     // This test spawns multiple threads to add and remove flow watchers concurrently,
     // to ensure thread safety (no crashes or race conditions and correct final state).
-    auto const homeDir = std::getenv("HOME");
-    REQUIRE(homeDir != nullptr);
-    auto domainPath = std::filesystem::path{homeDir} / "mxl_concurrent_domain";
-    remove_all(domainPath);
-    create_directories(domainPath);
-    mxl::lib::DomainWatcher watcher(domainPath, nullptr);
+    mxl::lib::DomainWatcher watcher(domain, nullptr);
 
     // Prepare a flow file for watching
     auto const flowIdStr = std::string{"deadc0de-dead-beef-dead-beefdeadc0de"};
-    auto flowDir = mxl::lib::makeFlowDirectoryName(domainPath, flowIdStr);
+    auto flowDir = mxl::lib::makeFlowDirectoryName(domain, flowIdStr);
     create_directories(flowDir);
     auto flowId = *uuids::uuid::from_string(flowIdStr);
     auto filePath = mxl::lib::makeFlowDataFilePath(flowDir);
@@ -358,7 +319,7 @@ TEST_CASE("DomainWatcher supports concurrent add/remove operations", "[domainwat
     REQUIRE(watcher.removeFlow(flowId, mxl::lib::WatcherType::READER) >= 0);
 }
 
-TEST_CASE("DomainWatcher ctor throws on invalid domain path", "[domainwatcher]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "DomainWatcher ctor throws on invalid domain path", "[domainwatcher]")
 {
     // Point at a path that cannot be used as a directory (e.g. a regular file)
     auto tmp = std::filesystem::temp_directory_path() / "not_a_dir";
@@ -366,12 +327,8 @@ TEST_CASE("DomainWatcher ctor throws on invalid domain path", "[domainwatcher]")
     REQUIRE_THROWS_AS(mxl::lib::DomainWatcher(tmp, nullptr), std::filesystem::filesystem_error);
 }
 
-TEST_CASE("DomainWatcher allows re-add after full remove", "[domainwatcher]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "DomainWatcher allows re-add after full remove", "[domainwatcher]")
 {
-    // Create domain and file
-    auto domain = std::filesystem::temp_directory_path() / "mxl_dw_readd";
-    std::filesystem::remove_all(domain);
-    std::filesystem::create_directories(domain);
     auto flowId = *uuids::uuid::from_string("abcdefab-1234-5678-9abc-abcdefabcdef");
     auto flowDir = mxl::lib::makeFlowDirectoryName(domain, uuids::to_string(flowId));
     std::filesystem::create_directories(flowDir);
@@ -385,16 +342,8 @@ TEST_CASE("DomainWatcher allows re-add after full remove", "[domainwatcher]")
     REQUIRE(watcher.addFlow(flowId, WatcherType::READER) == 1);
 }
 
-TEST_CASE("DomainWatcher triggers WRITER callback on access file modifications", "[domainwatcher]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "DomainWatcher triggers WRITER callback on access file modifications", "[domainwatcher]")
 {
-    // Ensure a WRITER‐type watcher actually fires when the .access file changes
-    auto const homeDir = std::getenv("HOME");
-    REQUIRE(homeDir != nullptr);
-
-    auto domainPath = std::filesystem::path{homeDir} / "mxl_test_writer_event";
-    remove_all(domainPath);
-    create_directories(domainPath);
-
     // Synchronization primitives for the callback
     auto mtx = std::mutex{};
     auto cv = std::condition_variable{};
@@ -403,7 +352,7 @@ TEST_CASE("DomainWatcher triggers WRITER callback on access file modifications",
     auto cbType = mxl::lib::WatcherType{};
 
     // Install watcher
-    auto watcher = mxl::lib::DomainWatcher{domainPath,
+    auto watcher = mxl::lib::DomainWatcher{domain,
         [&](uuids::uuid id, mxl::lib::WatcherType type)
         {
             auto const lock = std::lock_guard{mtx};
@@ -415,7 +364,7 @@ TEST_CASE("DomainWatcher triggers WRITER callback on access file modifications",
 
     // Prepare flow directory & files
     auto const flowIdStr = std::string{"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"};
-    auto flowDir = makeFlowDirectoryName(domainPath, flowIdStr);
+    auto flowDir = makeFlowDirectoryName(domain, flowIdStr);
     create_directories(flowDir);
     auto flowId = *uuids::uuid::from_string(flowIdStr);
     auto dataFile = makeFlowDataFilePath(flowDir);

@@ -347,6 +347,29 @@ namespace mxl::lib
                     throw std::invalid_argument{std::move(msg)};
                 }
             }
+            else if (mediaType == "video/v210+alpha")
+            {
+                if (!_interlaced || ((height % 2) == 0))
+                {
+                    // Interlaced media is handled as separate fields.
+                    auto const h = _interlaced ? height / 2 : height;
+
+                    // Fill size
+                    auto fillPayloadSize = static_cast<std::size_t>((width + 47) / 48 * 128) * h;
+
+                    // Key is stored as 10 bits per pixel, 3x10 bit words in a 32 bit word, little-endian.
+                    // the last 2 bits of the 32 bit group of 3 pixels are unused.
+                    auto keyPayloadSize = static_cast<std::size_t>(4 * ((width + 2) / 3) * h);
+
+                    // Total payload size is the sum of the fill and key sizes
+                    payloadSize = fillPayloadSize + keyPayloadSize;
+                }
+                else
+                {
+                    auto msg = std::string{"Invalid video height for interlaced v210. Must be even."};
+                    throw std::invalid_argument{std::move(msg)};
+                }
+            }
             else
             {
                 auto msg = std::string{"Unsupported video media_type: "} + mediaType;

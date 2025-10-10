@@ -17,10 +17,8 @@
 
 using namespace mxl::lib;
 
-TEST_CASE("Flow Manager : Create Manager", "[flow manager]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow Manager : Create Manager", "[flow manager]")
 {
-    auto const domain = mxl::tests::getDomainPath();
-    // Remove that path if it exists.
     remove_all(domain);
 
     // This should throw since the folder should not exist.
@@ -37,13 +35,8 @@ TEST_CASE("Flow Manager : Create Manager", "[flow manager]")
     REQUIRE(manager->listFlows().size() == 0);
 }
 
-TEST_CASE("Flow Manager : Create Video Flow Structure", "[flow manager]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow Manager : Create Video Flow Structure", "[flow manager]")
 {
-    auto const domain = mxl::tests::getDomainPath();
-    // Clean out the mxl domain path, if it exists.
-    remove_all(domain);
-    REQUIRE(create_directory(domain));
-
     auto const flowDef = mxl::tests::readFile("data/v210_flow.json");
     auto const flowId = *uuids::uuid::from_string("5fbec3b1-1b0f-417d-9059-8b94a47197ed");
     auto const grainRate = mxlRational{60000, 1001};
@@ -128,13 +121,8 @@ TEST_CASE("Flow Manager : Create Video Flow Structure", "[flow manager]")
     REQUIRE(!exists(flowDirectory));
 }
 
-TEST_CASE("Flow Manager : Create Audio Flow Structure", "[flow manager]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow Manager : Create Audio Flow Structure", "[flow manager]")
 {
-    auto const domain = mxl::tests::getDomainPath();
-    // Clean out the mxl domain path, if it exists.
-    remove_all(domain);
-    REQUIRE(create_directory(domain));
-
     auto const flowDef = mxl::tests::readFile("data/audio_flow.json");
     auto const flowId = *uuids::uuid::from_string("b3bb5be7-9fe9-4324-a5bb-4c70e1084449");
     auto const flowString = to_string(flowId);
@@ -209,14 +197,8 @@ TEST_CASE("Flow Manager : Create Audio Flow Structure", "[flow manager]")
     REQUIRE(!exists(flowDirectory));
 }
 
-TEST_CASE("Flow Manager : Open, List, and Error Conditions", "[flow manager]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow Manager : Open, List, and Error Conditions", "[flow manager]")
 {
-    auto const domain = mxl::tests::getDomainPath();
-    // start clean
-    auto ec = std::error_code{};
-    remove_all(domain, ec);
-    REQUIRE(create_directory(domain));
-
     auto manager = std::make_shared<FlowManager>(domain);
 
     //
@@ -309,7 +291,7 @@ TEST_CASE("Flow Manager : Open, List, and Error Conditions", "[flow manager]")
     //
     // 9) listFlows on missing domain throws
     //
-    remove_all(domain, ec);
+    remove_all(domain);
     REQUIRE_THROWS_AS(manager->listFlows(), std::filesystem::filesystem_error);
 
     //
@@ -321,9 +303,8 @@ TEST_CASE("Flow Manager : Open, List, and Error Conditions", "[flow manager]")
 }
 
 // Re-creation after deletion
-TEST_CASE("FlowManager: re-create flow after deletion", "[flow manager][reuse]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: re-create flow after deletion", "[flow manager][reuse]")
 {
-    auto domain = mxl::tests::makeTempDomain();
     auto mgr = std::make_shared<FlowManager>(domain);
     auto const id = *uuids::uuid::from_string("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
     auto const def = mxl::tests::readFile("data/v210_flow.json");
@@ -342,15 +323,11 @@ TEST_CASE("FlowManager: re-create flow after deletion", "[flow manager][reuse]")
     auto f2 = mgr->createDiscreteFlow(id, def, MXL_DATA_FORMAT_VIDEO, 2, rate, 256);
     REQUIRE(f2);
     REQUIRE(mgr->listFlows().size() == 1);
-
-    // Cleanup
-    remove_all(domain);
 }
 
 // Test robustness: corrupted flow directory with missing descriptor
-TEST_CASE("FlowManager: corrupted flow with missing descriptor", "[flow manager][corruption]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: corrupted flow with missing descriptor", "[flow manager][corruption]")
 {
-    auto domain = mxl::tests::makeTempDomain();
     auto mgr = std::make_shared<FlowManager>(domain);
     auto const id = *uuids::uuid::from_string("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
     auto const def = mxl::tests::readFile("data/v210_flow.json");
@@ -376,14 +353,11 @@ TEST_CASE("FlowManager: corrupted flow with missing descriptor", "[flow manager]
     auto* d = dynamic_cast<DiscreteFlowData*>(rd.get());
     REQUIRE(d);
     REQUIRE(d->grainCount() == 1U);
-
-    remove_all(domain);
 }
 
 // Concurrent createDiscreteFlow with same UUID
-TEST_CASE("FlowManager: concurrent createDiscreteFlow same UUID", "[flow manager][concurrency]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: concurrent createDiscreteFlow same UUID", "[flow manager][concurrency]")
 {
-    auto domain = mxl::tests::makeTempDomain();
     auto mgr = std::make_shared<FlowManager>(domain);
     auto const id = *uuids::uuid::from_string("cccccccc-cccc-cccc-cccc-cccccccccccc");
     auto const def = mxl::tests::readFile("data/v210_flow.json");
@@ -416,14 +390,11 @@ TEST_CASE("FlowManager: concurrent createDiscreteFlow same UUID", "[flow manager
     REQUIRE(success.load() == 1);
     REQUIRE(failure.load() == 1);
     REQUIRE(mgr->listFlows().size() == 1);
-
-    remove_all(domain);
 }
 
 // deleteFlow on read-only domain
-TEST_CASE("FlowManager: deleteFlow on read-only domain", "[flow manager][deletion]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: deleteFlow on read-only domain", "[flow manager][deletion]")
 {
-    auto domain = mxl::tests::makeTempDomain();
     auto mgr = std::make_shared<FlowManager>(domain);
     auto const id = *uuids::uuid::from_string("dddddddd-dddd-dddd-dddd-dddddddddddd");
     auto const def = mxl::tests::readFile("data/v210_flow.json");
@@ -448,26 +419,20 @@ TEST_CASE("FlowManager: deleteFlow on read-only domain", "[flow manager][deletio
 
     // Since deletion failed due to permissions, the flow should still exist
     REQUIRE(mgr->listFlows().size() == 1);
-    remove_all(domain);
 }
 
-TEST_CASE("FlowManager: deleteFlow returns false for non-existent flow", "[flow manager][deletion]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: deleteFlow returns false for non-existent flow", "[flow manager][deletion]")
 {
-    auto domain = mxl::tests::makeTempDomain();
     auto mgr = std::make_shared<FlowManager>(domain);
     auto const nonExistentId = *uuids::uuid::from_string("99999999-9999-9999-9999-999999999999");
 
     // Try to delete a flow that doesn't exist
     REQUIRE(mgr->deleteFlow(nonExistentId) == false);
-
-    // Cleanup
-    remove_all(domain);
 }
 
 // Concurrent listFlows + deleteFlow does not crash
-TEST_CASE("FlowManager: concurrent listFlows and deleteFlow", "[flow manager][concurrency]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: concurrent listFlows and deleteFlow", "[flow manager][concurrency]")
 {
-    auto domain = mxl::tests::makeTempDomain();
     auto mgr = std::make_shared<FlowManager>(domain);
     auto ids = std::vector<uuids::uuid>{};
     for (int i = 0; i < 5; ++i)
@@ -499,13 +464,11 @@ TEST_CASE("FlowManager: concurrent listFlows and deleteFlow", "[flow manager][co
     lister.join();
 
     REQUIRE(mgr->listFlows().empty());
-    remove_all(domain);
 }
 
 // Multiple FlowManager instances on same domain
-TEST_CASE("FlowManager: multiple instances share domain", "[flow manager]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: multiple instances share domain", "[flow manager]")
 {
-    auto domain = mxl::tests::makeTempDomain();
     auto mgr1 = std::make_shared<FlowManager>(domain);
     auto mgr2 = std::make_shared<FlowManager>(domain);
 
@@ -522,14 +485,11 @@ TEST_CASE("FlowManager: multiple instances share domain", "[flow manager]")
     REQUIRE(mgr2->deleteFlow(id));
     REQUIRE(mgr1->listFlows().empty());
     REQUIRE(mgr2->listFlows().empty());
-
-    remove_all(domain);
 }
 
 // createFlow on unwritable domain
-TEST_CASE("FlowManager: createFlow throws on unwritable domain", "[flow manager][error]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: createFlow throws on unwritable domain", "[flow manager][error]")
 {
-    auto domain = mxl::tests::makeTempDomain();
     // remove write perms on domain
     permissions(domain, std::filesystem::perms::owner_write, std::filesystem::perm_options::remove);
 
@@ -545,5 +505,4 @@ TEST_CASE("FlowManager: createFlow throws on unwritable domain", "[flow manager]
 
     // restore perms so we can clean up
     permissions(domain, std::filesystem::perms::owner_all, std::filesystem::perm_options::add);
-    remove_all(domain);
 }
