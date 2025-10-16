@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <fmt/format.h>
+#include "Flow.hpp"
 #include "FlowData.hpp"
 
 namespace mxl::lib
@@ -56,7 +58,19 @@ namespace mxl::lib
     inline Grain* DiscreteFlowData::emplaceGrain(char const* grainFilePath, std::size_t grainPayloadSize)
     {
         auto const mode = this->created() ? AccessMode::CREATE_READ_WRITE : this->accessMode();
-        return _grains.emplace_back(grainFilePath, mode, grainPayloadSize).get();
+        auto grain = SharedMemoryInstance<Grain>{grainFilePath, mode, grainPayloadSize};
+
+        if (!this->created())
+        {
+            // Check for the version of the grain data structure in the memory that was just mapped.
+            if (grain.get()->header.info.version != GRAIN_HEADER_VERSION)
+            {
+                throw std::invalid_argument{
+                    fmt::format("Unsupported grain version: {}, supported version is: {}", grain.get()->header.info.version, GRAIN_HEADER_VERSION)};
+            }
+        }
+
+        return _grains.emplace_back(std::move(grain)).get();
     }
 
     inline Grain* DiscreteFlowData::grainAt(std::size_t i) noexcept

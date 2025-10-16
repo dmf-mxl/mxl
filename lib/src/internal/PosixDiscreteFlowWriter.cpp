@@ -73,7 +73,7 @@ namespace mxl::lib
             flowInfo->common.lastWriteTime = mxlGetTime();
 
             // If the grain is complete, reset the current index of the flow writer.
-            if (mxlGrainInfo.grainSize == mxlGrainInfo.commitedSize)
+            if (mxlGrainInfo.validSlices == mxlGrainInfo.totalSlices)
             {
                 _currentIndex = MXL_UNDEFINED_INDEX;
             }

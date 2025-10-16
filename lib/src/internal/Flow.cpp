@@ -38,6 +38,8 @@ namespace mxl::lib
            << '\t' << fmt::format("{: >18}: {}", "Last write time", flow.info.common.lastWriteTime) << '\n'
            << '\t' << fmt::format("{: >18}: {}", "Last read time", flow.info.common.lastReadTime) << '\n'
            << '\t' << fmt::format("{: >18}: {}", "Format", getFormatString(flow.info.common.format)) << '\n'
+           << '\t' << fmt::format("{: >18}: {}", "Commit batch size", flow.info.common.maxCommitBatchSizeHint) << '\n'
+           << '\t' << fmt::format("{: >18}: {}", "Sync batch size", flow.info.common.maxSyncBatchSizeHint) << '\n'
            << '\t' << fmt::format("{: >18}: {:0>8x}", "Flags", flow.info.common.flags) << '\n';
 
         if (mxlIsDiscreteDataFormat(flow.info.common.format))
@@ -55,8 +57,6 @@ namespace mxl::lib
                << '\n'
                << '\t' << fmt::format("{: >18}: {}", "Channel count", flow.info.continuous.channelCount) << '\n'
                << '\t' << fmt::format("{: >18}: {}", "Buffer length", flow.info.continuous.bufferLength) << '\n'
-               << '\t' << fmt::format("{: >18}: {}", "Commit batch size", flow.info.continuous.commitBatchSize) << '\n'
-               << '\t' << fmt::format("{: >18}: {}", "Sync batch size", flow.info.continuous.syncBatchSize) << '\n'
                << '\t' << fmt::format("{: >18}: {}", "Head index", flow.info.continuous.headIndex) << '\n';
         }
 

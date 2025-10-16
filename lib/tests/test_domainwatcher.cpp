@@ -74,7 +74,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "DomainWatcher trigge
     create_directories(flowDir);
     auto flowId = *uuids::uuid::from_string(flowIdStr);
     auto dataFile = mxl::lib::makeFlowDataFilePath(flowDir);     // main data file
-    auto accessFile = mxl::lib::makeFlowAccessFilePath(flowDir); // .access file
+    auto accessFile = mxl::lib::makeFlowAccessFilePath(flowDir); // access file
     std::ofstream{dataFile}.close();
     std::ofstream{accessFile}.close();
 

@@ -7,6 +7,7 @@
 #include <string>
 #include <catch2/catch_test_macros.hpp>
 #include "../src/internal/Instance.hpp"
+#include "../src/internal/PathUtils.hpp"
 #include "../src/internal/PosixFlowIoFactory.hpp"
 #include "Utils.hpp"
 
@@ -28,7 +29,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : Default va
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : Domain config", "[options]")
 {
     // write the domain options file
-    auto const domainOptionsFile = domain / ".options";
+    auto const domainOptionsFile = makeDomainOptionsFilePath(domain);
     std::ofstream ofs(domainOptionsFile);
     REQUIRE(ofs.is_open());
     ofs << options_500;
@@ -53,7 +54,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : Instance c
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : Domain + Instance config", "[options]")
 {
     // write the domain options file
-    auto const domainOptionsFile = domain / ".options";
+    auto const domainOptionsFile = makeDomainOptionsFilePath(domain);
     std::ofstream ofs(domainOptionsFile);
     REQUIRE(ofs.is_open());
     ofs << options_500;
@@ -69,7 +70,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : Domain + I
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : invalid configs", "[options]")
 {
     // write the domain options file
-    auto const domainOptionsFile = domain / ".options";
+    auto const domainOptionsFile = makeDomainOptionsFilePath(domain);
     std::ofstream ofs(domainOptionsFile);
     REQUIRE(ofs.is_open());
     ofs << "abc";

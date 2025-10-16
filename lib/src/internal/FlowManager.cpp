@@ -88,6 +88,10 @@ namespace mxl::lib
             result.lastReadTime = result.lastWriteTime;
             result.format = format;
 
+            // FIXME: there should be a way for the consumer to configure this
+            result.maxCommitBatchSizeHint = 1;
+            result.maxSyncBatchSizeHint = 1;
+
             // Get the inode of the flow data file
             struct ::stat st;
             if (::stat(flowDataPath.string().c_str(), &st) != 0)
@@ -118,7 +122,8 @@ namespace mxl::lib
     }
 
     std::unique_ptr<DiscreteFlowData> FlowManager::createDiscreteFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat,
-        std::size_t grainCount, mxlRational const& grainRate, std::size_t grainPayloadSize)
+        std::size_t grainCount, mxlRational const& grainRate, std::size_t grainPayloadSize, std::size_t grainNumOfSlices,
+        std::size_t grainSliceLength)
     {
         auto const uuidString = uuids::to_string(flowId);
         MXL_DEBUG("Create discrete flow. id: {}, grainCount: {}, grain payload size: {}", uuidString, grainCount, grainPayloadSize);
@@ -147,12 +152,13 @@ namespace mxl::lib
             auto flowData = std::make_unique<DiscreteFlowData>(flowDataPath.string().c_str(), AccessMode::CREATE_READ_WRITE);
 
             auto& info = *flowData->flowInfo();
-            info.version = 1;
+            info.version = FLOW_DATA_VERSION;
             info.size = sizeof info;
             info.common = initCommonFlowInfo(flowId, flowFormat, flowDataPath);
             info.discrete.grainRate = grainRate;
             info.discrete.grainCount = grainCount;
             info.discrete.syncCounter = 0;
+            info.discrete.sliceSize = grainSliceLength;
 
             auto const grainDir = makeGrainDirectoryName(tempDirectory);
             if (!create_directory(grainDir))
@@ -169,7 +175,9 @@ namespace mxl::lib
                 auto const grain = flowData->emplaceGrain(grainPath.string().c_str(), grainPayloadSize);
                 auto& gInfo = grain->header.info;
                 gInfo.grainSize = grainPayloadSize;
-                gInfo.version = 1;
+                gInfo.totalSlices = grainNumOfSlices;
+                gInfo.validSlices = 0;
+                gInfo.version = GRAIN_HEADER_VERSION;
                 gInfo.size = sizeof gInfo;
                 gInfo.deviceIndex = -1;
             }
@@ -213,7 +221,7 @@ namespace mxl::lib
             auto flowData = std::make_unique<ContinuousFlowData>(flowDataPath.string().c_str(), AccessMode::CREATE_READ_WRITE);
 
             auto& info = *flowData->flowInfo();
-            info.version = 1;
+            info.version = FLOW_DATA_VERSION;
             info.size = sizeof info;
             info.common = initCommonFlowInfo(flowId, flowFormat, flowDataPath);
             info.continuous = {};
@@ -250,6 +258,11 @@ namespace mxl::lib
         if (auto const flowFile = makeFlowDataFilePath(base); exists(flowFile))
         {
             auto flowSegment = SharedMemoryInstance<Flow>{flowFile.string().c_str(), in_mode, 0U};
+            if (flowSegment.get()->info.version != FLOW_DATA_VERSION)
+            {
+                throw std::invalid_argument{
+                    fmt::format("Unsupported flow data version: {}, supported is: {}", flowSegment.get()->info.version, FLOW_DATA_VERSION)};
+            }
 
             if (auto const flowFormat = flowSegment.get()->info.common.format; mxlIsDiscreteDataFormat(flowFormat))
             {
@@ -396,8 +409,8 @@ namespace mxl::lib
             }
             return result;
         }
-        // Here is a race condition, but plain C++ API does not provide a way to check whether it was not possible to open a file because it does not
-        // exist, or whether the access rights are wrong.
+        // Here is a race condition, but plain C++ API does not provide a way to check whether it was not possible to open a file because it does
+        // not exist, or whether the access rights are wrong.
         if (!exists(flowJsonFile))
         {
             throw std::filesystem::filesystem_error{"Failed to open flow resource definition - file not found.",

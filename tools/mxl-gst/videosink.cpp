@@ -494,7 +494,7 @@ int real_main(int argc, char** argv, void*)
             grain_index = mxlGetCurrentIndex(&videoFlowInfo.discrete.grainRate);
             continue;
         }
-        else if (grain_info.commitedSize != grain_info.grainSize)
+        else if (grain_info.validSlices != grain_info.totalSlices)
         {
             // we don't need partial grains. wait for the grain to be complete.
             continue;

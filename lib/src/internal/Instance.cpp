@@ -110,7 +110,7 @@ namespace mxl::lib
             if (type == WatcherType::WRITER)
 
             {
-                // Someone read the grain and touched the ".access" file.  let update the last read count.
+                // Someone read the grain and touched the "access" file.  let update the last read count.
                 if (auto const found = _writers.find(flowId); found != _writers.end())
                 {
                     found->second.get()->flowRead();
@@ -239,7 +239,14 @@ namespace mxl::lib
             // Compute the grain count based on our configured history duration
             auto const grainCount = _historyDuration * grainRate.numerator / (1'000'000'000ULL * grainRate.denominator);
 
-            return _flowManager.createDiscreteFlow(parser.getId(), flowDef, parser.getFormat(), grainCount, grainRate, parser.getPayloadSize());
+            return _flowManager.createDiscreteFlow(parser.getId(),
+                flowDef,
+                parser.getFormat(),
+                grainCount,
+                grainRate,
+                parser.getPayloadSize(),
+                parser.getTotalPayloadSlices(),
+                parser.getPayloadSliceLength());
         }
         else if (mxlIsContinuousDataFormat(format))
         {
@@ -354,10 +361,10 @@ namespace mxl::lib
         std::uint64_t historyDuration = _historyDuration;
 
         //
-        // Try to parse the .options file found in the MXL domain directory.
+        // Try to parse the options.json file found in the MXL domain directory.
         // If found and configured, it will override the default history duration.
         //
-        auto domainOptionsFile = _flowManager.getDomain() / ".options";
+        auto domainOptionsFile = makeDomainOptionsFilePath(_flowManager.getDomain());
         if (exists(domainOptionsFile))
         {
             std::ifstream ifs(domainOptionsFile);

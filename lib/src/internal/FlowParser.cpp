@@ -27,6 +27,9 @@ namespace mxl::lib
         constexpr auto MAX_WIDTH = 7680u;  // 8K UHD
         constexpr auto MAX_HEIGHT = 4320u; // 8K UHD
 
+        // Grain size when the grain data format is "data"
+        constexpr auto DATA_FORMAT_GRAIN_SIZE = 4096;
+
         /**
          * Translate a NMOS IS-04 data format to a an mxlDataFormat enum.
          * \param[in] format a string view referring to the format.
@@ -383,7 +386,7 @@ namespace mxl::lib
             {
                 // This is large enough to hold all the ANC data in a single grain.
                 // This size is an usual VFS page. no point at going smaller.
-                payloadSize = 4096;
+                payloadSize = DATA_FORMAT_GRAIN_SIZE;
             }
             else
             {
@@ -411,6 +414,74 @@ namespace mxl::lib
         }
 
         return payloadSize;
+    }
+
+    std::size_t FlowParser::getPayloadSliceLength() const
+    {
+        switch (_format)
+        {
+            case MXL_DATA_FORMAT_DATA:
+            {
+                // For "data" flows, the slice length is 1 byte
+                return 1;
+            }
+
+            case MXL_DATA_FORMAT_VIDEO:
+            {
+                // For video flows the slice length is the byte-length of a single
+                // line of v210 video.
+                auto const width = static_cast<std::size_t>(fetchAs<double>(_root, "frame_width"));
+                auto const mediaType = fetchAs<std::string>(_root, "media_type");
+
+                if (mediaType != "video/v210" && mediaType != "video/v210+alpha")
+                {
+                    auto msg = std::string{"Unsupported video media_type: "} + mediaType;
+                    throw std::invalid_argument{std::move(msg)};
+                }
+
+                return static_cast<std::size_t>((width + 47) / 48 * 128);
+            }
+
+            default:
+            {
+                throw std::invalid_argument{"Cannot compute slice length for this data format."};
+            }
+        }
+    }
+
+    std::size_t FlowParser::getTotalPayloadSlices() const
+    {
+        switch (_format)
+        {
+            case MXL_DATA_FORMAT_DATA:
+            {
+                // Since the slice length for data flows is 1 byte, the number of slices must be the
+                // grain size.
+                return DATA_FORMAT_GRAIN_SIZE;
+            }
+
+            case MXL_DATA_FORMAT_VIDEO:
+            {
+                if (auto const mediaType = fetchAs<std::string>(_root, "media_type"); mediaType != "video/v210" && mediaType != "video/v210+alpha")
+                {
+                    auto msg = std::string{"Unsupported video media_type: "} + mediaType;
+                    throw std::invalid_argument{std::move(msg)};
+                }
+
+                // For v210, the number of slices is always the number of video lines
+                auto h = static_cast<std::size_t>(fetchAs<double>(_root, "frame_height"));
+                if (_interlaced)
+                {
+                    return h / 2;
+                }
+
+                return h;
+            }
+            default:
+            {
+                throw std::invalid_argument{"Cannot compute slice length for this data format."};
+            }
+        }
     }
 
     std::size_t FlowParser::getChannelCount() const

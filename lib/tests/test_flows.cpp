@@ -541,12 +541,23 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : Slices"
     REQUIRE(mxlFlowReaderGetInfo(reader, &fInfo1) == MXL_STATUS_OK);
     REQUIRE(fInfo1.discrete.headIndex == 0);
 
-    size_t const maxSlice = 8;
-    auto sliceSize = gInfo.grainSize / maxSlice;
-    for (size_t slice = 0; slice < maxSlice; slice++)
+    // Total number of batches that will be written
+    auto const numBatches = (gInfo.totalSlices + fInfo1.common.maxCommitBatchSizeHint - 1U) / fInfo1.common.maxCommitBatchSizeHint;
+    std::size_t defaultBatchSize = fInfo1.common.maxCommitBatchSizeHint;
+
+    for (auto batchIndex = std::size_t{0}; batchIndex < numBatches; batchIndex++)
     {
+        auto batchSize = defaultBatchSize;
+
+        // If the total number of slices is not a multiple of the default batch size, the last batch must
+        // be the number of remaining slices
+        if ((batchIndex + 1) * batchSize > gInfo.totalSlices)
+        {
+            batchSize = gInfo.totalSlices - gInfo.validSlices;
+        }
+
         /// Write a slice to the grain.
-        gInfo.commitedSize += sliceSize;
+        gInfo.validSlices += batchSize;
         REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_STATUS_OK);
 
         mxlFlowInfo sliceFlowInfo;
@@ -557,10 +568,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : Slices"
         REQUIRE(sliceFlowInfo.common.lastWriteTime > fInfo1.common.lastWriteTime);
 
         /// Read back the partial grain using the flow reader.
-        REQUIRE(mxlFlowReaderGetGrain(reader, index, 8, &gInfo, &buffer) == MXL_STATUS_OK);
+        std::uint8_t* readBuffer = nullptr;
+        REQUIRE(mxlFlowReaderGetGrain(reader, index, 8, &gInfo, &readBuffer) == MXL_STATUS_OK);
 
         // Validate the commited size
-        REQUIRE(gInfo.commitedSize == sliceSize * (slice + 1));
+        auto const expectedValidSlices = std::min(defaultBatchSize * (batchIndex + 1), static_cast<std::size_t>(gInfo.totalSlices));
+        REQUIRE(gInfo.validSlices == expectedValidSlices);
 
         // Give some time to the inotify message to reach the directorywatcher.
         std::this_thread::sleep_for(std::chrono::milliseconds(5));

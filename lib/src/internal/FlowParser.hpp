@@ -60,6 +60,20 @@ namespace mxl::lib
         std::size_t getPayloadSize() const;
 
         /**
+         *  Computes the length of a slice of the payload.
+         *  \return The length of a slice
+         */
+        [[nodiscard]]
+        std::size_t getPayloadSliceLength() const;
+
+        /**
+         * Computes the number of slices that make up a full grain.
+         * \return The number of slices
+         */
+        [[nodiscard]]
+        std::size_t getTotalPayloadSlices() const;
+
+        /**
          * Get the number of channels in an audio flow.
          * \return The number of channels in an audio flow, or 0
          *      if the flow format indicates that this not an audio flow.

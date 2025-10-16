@@ -44,6 +44,19 @@ extern "C"
         /** The flow data inode.  this is used to detect if the flow was recreated */
         ino_t inode;
 
+        /**
+         * The largest expected batch size in samples (for continuous flows) or slices (for discrete flows), in which new data is written to this this
+         * flow by its producer. For continuous flows, this value must be less than half of the buffer length. For discrete flows, this must be
+         * greater or equal to 1.
+         */
+        uint32_t maxCommitBatchSizeHint;
+
+        /**
+         * The largest expected batch size in samples (for continuous flows) or slices (for discrete flows), at which availability of new data is
+         * signaled to waiting consumers. This must be a multiple of the commit batch size greater or equal to 1.
+         */
+        uint32_t maxSyncBatchSizeHint;
+
         /** Reserved space for future extensions.  */
         uint8_t reserved[72];
     } mxlCommonFlowInfo;
@@ -55,6 +68,15 @@ extern "C"
          * For VIDEO and DATA this value must match the 'grain_rate' found in the flow descriptor.
          */
         mxlRational grainRate;
+
+        /** The current head index of the ringbuffer. */
+        uint64_t headIndex;
+
+        /**
+         * Length of a slice in bytes. A slice refers to the elemental data type that can be written and comitted to a grain.
+         * For video, this is a line of a V210 picture including any padding. For data, this is just a single byte.
+         */
+        uint64_t sliceSize;
 
         /**
          * How many grains in the ring buffer. This should be identical to the number of entries in the {mxlDomain}/{flowId}/grains/ folder.
@@ -69,11 +91,8 @@ extern "C"
          */
         uint32_t syncCounter;
 
-        /** The current head index of the ringbuffer. */
-        uint64_t headIndex;
-
         /** Reserved space for future extensions.  */
-        uint8_t reserved[96];
+        uint8_t reserved[88];
     } mxlDiscreteFlowInfo;
 
     typedef struct mxlContinuousFlowInfo_t
@@ -95,24 +114,11 @@ extern "C"
          */
         uint32_t bufferLength;
 
-        /**
-         * The largest expected batch size in samples, in which new data is written to this this flow by its producer.
-         * This value must be less than half of the buffer length.
-         */
-        uint32_t commitBatchSize;
-
-        /**
-         * The largest expected batch size in samples, at which availability of new data is signaled to waiting consumers.
-         * This must be a multiple of the commit batch size greater or equal to 1.
-         * \todo Will quite probably be obsoleted by new timing model.
-         */
-        uint32_t syncBatchSize;
-
         /** The current head index within the per channel ring buffers. */
         uint64_t headIndex;
 
         /** Reserved space for future extensions.  */
-        uint8_t reserved[88];
+        uint8_t reserved[96];
     } mxlContinuousFlowInfo;
 
     /**
@@ -138,7 +144,7 @@ extern "C"
         };
 
         /** User data space. */
-        uint8_t userData[3840];
+        uint8_t userData[3832];
     } mxlFlowInfo;
 
 #ifdef __cplusplus

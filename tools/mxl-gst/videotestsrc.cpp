@@ -333,7 +333,7 @@ int main(int argc, char** argv)
 
                     ::memcpy(mxl_buffer, map_info.data, gInfo.grainSize);
 
-                    gInfo.commitedSize = gInfo.grainSize;
+                    gInfo.validSlices = gInfo.totalSlices;
                     if (mxlFlowWriterCommitGrain(writer, &gInfo) != MXL_STATUS_OK)
                     {
                         MXL_ERROR("Failed to open grain at index '{}'", grain_index);

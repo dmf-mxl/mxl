@@ -19,11 +19,11 @@ namespace mxl::lib
     ///
     /// CREATE
     /// Creates the flow resources in the base path (the MXL 'domain'). Flow resource contain
-    ///  - <mxl_domain>/<flow_id>.mxl-flow          : The toplevel for all files belonging to MXLs representation of a the flow
-    ///  - <mxl_domain>/<flow_id>.mxl-flow/.json    : A file containing the flow definition (NMOS Flow resource json)
-    ///  - <mxl_domain>/<flow_id>.mxl-flow/.access  : A file used for access notifications by consumers of the flow
-    ///  - <mxl_domain>/<flow_id>.mxl-flow/data     : The shared memory segment containing the `Flow`
-    ///  - <mxl_domain>/<flow_id>.mxl-flow/grains/  : A directory containing the per grain shared memory segments.
+    ///  - <mxl_domain>/<flow_id>.mxl-flow               : The toplevel for all files belonging to MXLs representation of a the flow
+    ///  - <mxl_domain>/<flow_id>.mxl-flow/flow_def.json : A file containing the flow definition (NMOS Flow resource json)
+    ///  - <mxl_domain>/<flow_id>.mxl-flow/access        : A file used for access notifications by consumers of the flow
+    ///  - <mxl_domain>/<flow_id>.mxl-flow/data          : The shared memory segment containing the `Flow`
+    ///  - <mxl_domain>/<flow_id>.mxl-flow/grains/       : A directory containing the per grain shared memory segments.
     ///
     /// After creation, the FlowData associated with the new flow is stored in an internal cache.
     ///
@@ -58,7 +58,8 @@ namespace mxl::lib
         /// \param[in] grainPayloadSize Size of the grain in host memory.  0 if the grain payload lives in device memory.
         ///
         std::unique_ptr<DiscreteFlowData> createDiscreteFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat,
-            std::size_t grainCount, mxlRational const& grainRate, std::size_t grainPayloadSize);
+            std::size_t grainCount, mxlRational const& grainRate, std::size_t grainPayloadSize, std::size_t grainNumOfSlices,
+            std::size_t grainSliceLength);
 
         ///
         /// Create a new continuous flow together with its associated channel store and open it in read-write mode.

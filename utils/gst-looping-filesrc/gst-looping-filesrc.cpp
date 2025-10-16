@@ -75,15 +75,18 @@ namespace
 
         switch (prop_id)
         {
-            case PROP_LOCATION: {
+            case PROP_LOCATION:
+            {
                 g_value_set_string(value, filesrc->location);
                 break;
             }
-            case PROP_LOOP: {
+            case PROP_LOOP:
+            {
                 g_value_set_boolean(value, filesrc->loop);
                 break;
             }
-            default: {
+            default:
+            {
                 G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
                 break;
             }

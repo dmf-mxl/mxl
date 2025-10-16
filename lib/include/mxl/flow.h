@@ -122,7 +122,7 @@ extern "C"
 
     typedef struct mxlGrainInfo_t
     {
-        /// Version of the structure. The only currently supported value is 1
+        /// Version of the structure. The only currently supported value is 2
         uint32_t version;
         /// Size of the structure
         uint32_t size;
@@ -134,9 +134,12 @@ extern "C"
         int32_t deviceIndex;
         /// Size in bytes of the complete payload of a grain
         uint32_t grainSize;
-        /// How many bytes in the grain are currently valid (commited).  This is typically used when writing slices.
-        /// A grain is complete when commitedSize == grainSize
-        uint32_t commitedSize;
+        /// Number of slices that make up a full grain. A slice is the elemental data type that can be comitted to a grain. For video, this is a
+        /// single line of a picture in the specified format. For data, this is a byte of data.
+        uint16_t totalSlices;
+        /// How many slices of the grain are currently valid (committed). This is typically used when writing individual slices instead of a full
+        /// grain. A grain is complete when validSlices == totalSlices
+        uint16_t validSlices;
         /// User data space
         uint8_t userData[4068];
     } mxlGrainInfo;

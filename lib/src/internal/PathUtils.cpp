@@ -40,4 +40,9 @@ namespace mxl::lib
     {
         return flowDirectory / CHANNEL_DATA_FILE_NAME;
     }
+
+    std::filesystem::path makeDomainOptionsFilePath(std::filesystem::path const& domain)
+    {
+        return domain / (DOMAIN_OPTIONS_FILE_NAME);
+    }
 }

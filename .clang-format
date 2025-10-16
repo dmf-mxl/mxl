@@ -41,6 +41,7 @@ BinPackArguments: false
 BinPackParameters: true
 BitFieldColonSpacing: Both
 BraceWrapping:
+  AfterCaseLabel:        true
   AfterClass:            true
   AfterControlStatement: Always
   AfterEnum:             true

@@ -61,6 +61,8 @@ std::ostream& operator<<(std::ostream& os, mxlFlowInfo const& info)
        << '\t' << fmt::format("{: >18}: {}", "Last write time", info.common.lastWriteTime) << '\n'
        << '\t' << fmt::format("{: >18}: {}", "Last read time", info.common.lastReadTime) << '\n'
        << '\t' << fmt::format("{: >18}: {}", "Format", getFormatString(info.common.format)) << '\n'
+       << '\t' << fmt::format("{: >18}: {}", "Commit batch size", info.common.maxCommitBatchSizeHint) << '\n'
+       << '\t' << fmt::format("{: >18}: {}", "Sync batch size", info.common.maxSyncBatchSizeHint) << '\n'
        << '\t' << fmt::format("{: >18}: {:0>8x}", "Flags", info.common.flags) << '\n';
 
     auto const now = mxlGetTime();
@@ -99,8 +101,6 @@ std::ostream& operator<<(std::ostream& os, mxlFlowInfo const& info)
            << '\n'
            << '\t' << fmt::format("{: >18}: {}", "Channel count", info.continuous.channelCount) << '\n'
            << '\t' << fmt::format("{: >18}: {}", "Buffer length", info.continuous.bufferLength) << '\n'
-           << '\t' << fmt::format("{: >18}: {}", "Commit batch size", info.continuous.commitBatchSize) << '\n'
-           << '\t' << fmt::format("{: >18}: {}", "Sync batch size", info.continuous.syncBatchSize) << '\n'
            << '\t' << fmt::format("{: >18}: {}", "Head index", info.continuous.headIndex) << '\n';
 
         auto const currentIndex = mxlTimestampToIndex(&info.continuous.sampleRate, now);
