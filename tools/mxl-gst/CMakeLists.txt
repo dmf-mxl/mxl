@@ -44,8 +44,8 @@ if (gstreamer_FOUND)
 
     target_link_libraries(mxl-gst-videotestsrc
             PRIVATE
-                mxl-internal
                 mxl
+                mxl-internal-headers
                 CLI11::CLI11
                 PkgConfig::gstreamer
                 PkgConfig::gstreamer-app
@@ -74,8 +74,8 @@ if (gstreamer_FOUND)
 
     target_link_libraries(mxl-gst-videosink
             PRIVATE
-                mxl-internal
                 mxl
+                mxl-internal-headers
                 CLI11::CLI11
                 spdlog::spdlog
                 PkgConfig::gstreamer
@@ -105,8 +105,8 @@ if (gstreamer_FOUND)
 
     target_link_libraries(mxl-gst-looping-filesrc
             PRIVATE
-                mxl-internal
                 mxl
+                mxl-internal-headers
                 CLI11::CLI11
                 PkgConfig::gstreamer
                 PkgConfig::gstreamer-app

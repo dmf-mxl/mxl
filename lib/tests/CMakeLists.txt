@@ -28,7 +28,7 @@ target_sources(mxl-tests
 target_link_libraries(mxl-tests
         PRIVATE
             mxl
-            mxl-internal
+            mxl-internal-headers
     )
 
 if (NOT TARGET Catch2::Catch2WithMain)

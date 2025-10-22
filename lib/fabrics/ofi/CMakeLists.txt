@@ -9,10 +9,9 @@ target_sources(mxl-fabrics
 
 target_link_libraries(mxl-fabrics
         PUBLIC
-            mxl-fabrics-headers
-            mxl-internal
+            mxl
         PRIVATE
-            mxl-headers
+            mxl-internal-headers
     )
 
 target_compile_features(mxl-fabrics

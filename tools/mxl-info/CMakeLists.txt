@@ -30,7 +30,7 @@ endif ()
 target_link_libraries(mxl-info
         PRIVATE
             mxl
-            mxl-internal
+            mxl-internal-headers
             CLI11::CLI11
     )
 

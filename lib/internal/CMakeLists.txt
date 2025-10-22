@@ -3,21 +3,43 @@
 
 include(GNUInstallDirs)
 
-add_library(mxl-internal SHARED)
-target_compile_features(mxl-internal
+# Interface library for all targets that need to consume
+# internal symbols from the mxl-internal/*.h header files
+add_library(mxl-internal-headers INTERFACE)
+target_compile_features(mxl-internal-headers
+        INTERFACE
+            cxx_std_20
+    )
+target_include_directories(mxl-internal-headers
+        INTERFACE
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    )
+target_link_libraries(mxl-internal-headers
+        INTERFACE
+            mxl-headers
+            stduuid
+            spdlog::spdlog
+            fmt::fmt
+            picojson::picojson
+    )
+
+# Common code, used by both the libmxl and libmxl-fabrics library
+# linking this does not give access to the internal headers.
+add_library(mxl-common SHARED)
+target_compile_features(mxl-common
         PUBLIC
             cxx_std_20
     )
-set_target_properties(mxl-internal
+set_target_properties(mxl-common
         PROPERTIES 
-            POSITION_INDEPENDENT_CODE ON      # Needed to bulid shared library later
+            POSITION_INDEPENDENT_CODE ON
             VISIBILITY_INLINES_HIDDEN ON
             C_EXTENSIONS              OFF
             CXX_EXTENSIONS            OFF
             VERSION                   "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
             SOVERSION                 "${PROJECT_VERSION_MAJOR}"
     )
-target_sources(mxl-internal
+target_sources(mxl-common
         PRIVATE
             src/DomainWatcher.cpp
             src/Flow.cpp
@@ -58,20 +80,16 @@ if (NOT TARGET picojson::picojson)
     find_package(picojson REQUIRED)
 endif()
 
-target_include_directories(mxl-internal
-        PUBLIC
+target_include_directories(mxl-common
+        PRIVATE
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )
-target_link_libraries(mxl-internal
-        PUBLIC
-            mxl-headers
-            stduuid
-            spdlog::spdlog
-            fmt::fmt
-            picojson::picojson
+target_link_libraries(mxl-common
+        PRIVATE
+            mxl-internal-headers
     )
 
-install(TARGETS mxl-internal EXPORT ${PROJECT_NAME}-targets
+install(TARGETS mxl-common EXPORT ${PROJECT_NAME}-targets
         COMPONENT ${PROJECT_NAME}-lib
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
