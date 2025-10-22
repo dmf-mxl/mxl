@@ -1,0 +1,13 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
+
+Name: libmxl-fabrics
+Version: @PROJECT_VERSION@
+Requires: libmxl libfabric
+Description: Media eXchange Layer SDK Fabrics library
+Libs: -L${libdir} -lmxl-fabrics
+Libs.private: -pthread 
+Cflags: -I${includedir}
+

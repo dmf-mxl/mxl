@@ -14,6 +14,8 @@ cmake_policy(SET CMP0076 NEW)
 # Set the timestamps of all extracted contents to the time of the extraction
 cmake_policy(SET CMP0135 NEW)
 
+option(MXL_ENABLE_FABRICS_OFI "Enable building the fabrics library with libfabric" OFF)
+
 set(mxl_VERSION 0.8.1)
 
 if(DEFINED MXL_BUILD_NUMBER)

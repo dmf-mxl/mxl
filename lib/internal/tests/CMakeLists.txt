@@ -57,7 +57,6 @@ endif()
 
 target_link_libraries(mxl-internal-tests
         PRIVATE
-            mxl-internal
             stduuid
             spdlog::spdlog
             fmt::fmt

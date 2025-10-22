@@ -3,7 +3,7 @@
 
 include(GNUInstallDirs)
 
-add_library(mxl-internal OBJECT)
+add_library(mxl-internal SHARED)
 target_compile_features(mxl-internal
         PUBLIC
             cxx_std_20
@@ -12,10 +12,10 @@ set_target_properties(mxl-internal
         PROPERTIES 
             POSITION_INDEPENDENT_CODE ON      # Needed to bulid shared library later
             VISIBILITY_INLINES_HIDDEN ON
-            C_VISIBILITY_PRESET       hidden
-            CXX_VISIBILITY_PRESET     hidden
             C_EXTENSIONS              OFF
             CXX_EXTENSIONS            OFF
+            VERSION                   "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
+            SOVERSION                 "${PROJECT_VERSION_MAJOR}"
     )
 target_sources(mxl-internal
         PRIVATE
@@ -69,6 +69,13 @@ target_link_libraries(mxl-internal
             spdlog::spdlog
             fmt::fmt
             picojson::picojson
+    )
+
+install(TARGETS mxl-internal EXPORT ${PROJECT_NAME}-targets
+        COMPONENT ${PROJECT_NAME}-lib
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
 
 add_subdirectory(tests)
