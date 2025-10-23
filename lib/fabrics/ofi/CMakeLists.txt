@@ -1,5 +1,9 @@
 message ("-- Building fabrics library with libfabric/ofi")
 
+find_package(PkgConfig REQUIRED)
+
+pkg_check_modules(libfabric REQUIRED IMPORTED_TARGET libfabric)
+
 add_library(mxl-fabrics SHARED)
 target_compile_features(mxl-fabrics
         PRIVATE
@@ -8,11 +12,30 @@ target_compile_features(mxl-fabrics
 target_sources(mxl-fabrics
         PRIVATE
             src/fabrics.cpp
+            src/internal/Exception.cpp
+            src/internal/Provider.cpp
+            src/internal/FIVersion.cpp
+            src/internal/FIInfo.cpp
+            src/internal/Fabric.cpp
+            src/internal/Domain.cpp
+            src/internal/Region.cpp
+            src/internal/MemoryRegion.cpp
+            src/internal/RegisteredRegion.cpp
+            src/internal/LocalRegion.cpp
+            src/internal/RemoteRegion.cpp
+            src/internal/Address.cpp
+            src/internal/AddressVector.cpp
+            src/internal/Completion.cpp
+            src/internal/CompletionQueue.cpp
+            src/internal/Event.cpp
+            src/internal/EventQueue.cpp
+            src/internal/Endpoint.cpp
     )
 target_link_libraries(mxl-fabrics
         PUBLIC
             mxl
             mxl-fabrics-headers
+            PkgConfig::libfabric
         PRIVATE
             mxl-internal-headers
     )
