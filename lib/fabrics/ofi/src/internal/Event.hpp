@@ -8,7 +8,7 @@
 #include <memory>
 #include <vector>
 #include <rdma/fi_eq.h>
-#include "FIInfo.hpp"
+#include "FabricInfo.hpp"
 #include "variant"
 
 namespace mxl::lib::fabrics::ofi
@@ -21,17 +21,17 @@ namespace mxl::lib::fabrics::ofi
         class ConnectionRequested final
         {
         public:
-            ConnectionRequested(::fid_t fid, FIInfo info);
+            ConnectionRequested(::fid_t fid, FabricInfo info);
 
             [[nodiscard]]
             ::fid_t fid() const noexcept;
 
             [[nodiscard]]
-            FIInfoView info() const noexcept;
+            FabricInfoView info() const noexcept;
 
         private:
             ::fid_t _fid;
-            FIInfo _info;
+            FabricInfo _info;
         };
 
         class Connected final
@@ -102,7 +102,7 @@ namespace mxl::lib::fabrics::ofi
         bool isError() const noexcept;
 
         [[nodiscard]]
-        FIInfoView info() const;
+        FabricInfoView info() const;
 
         [[nodiscard]]
         std::string errorString() const;

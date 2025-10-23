@@ -14,8 +14,8 @@ target_sources(mxl-fabrics
             src/fabrics.cpp
             src/internal/Exception.cpp
             src/internal/Provider.cpp
-            src/internal/FIVersion.cpp
-            src/internal/FIInfo.cpp
+            src/internal/FabricVersion.cpp
+            src/internal/FabricInfo.cpp
             src/internal/Fabric.cpp
             src/internal/Domain.cpp
             src/internal/Region.cpp

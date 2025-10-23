@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include "FIVersion.hpp"
+#include "FabricVersion.hpp"
 #include <rdma/fabric.h>
 
 namespace mxl::lib::fabrics::ofi

@@ -6,12 +6,12 @@
 #include <rdma/fabric.h>
 #include "EventQueue.hpp"
 #include "Exception.hpp"
-#include "FIInfo.hpp"
+#include "FabricInfo.hpp"
 #include "VariantUtils.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
-    Event::ConnectionRequested::ConnectionRequested(::fid_t fid, FIInfo info)
+    Event::ConnectionRequested::ConnectionRequested(::fid_t fid, FabricInfo info)
         : _fid(fid)
         , _info(std::move(info))
     {}
@@ -21,7 +21,7 @@ namespace mxl::lib::fabrics::ofi
         return _fid;
     }
 
-    FIInfoView Event::ConnectionRequested::info() const noexcept
+    FabricInfoView Event::ConnectionRequested::info() const noexcept
     {
         return _info.view();
     }
@@ -86,7 +86,7 @@ namespace mxl::lib::fabrics::ofi
         // clang-format off
         switch (eventType)
         {
-            case FI_CONNREQ:   return {ConnectionRequested{entry.fid, FIInfo::own(entry.info)}};
+            case FI_CONNREQ:   return {ConnectionRequested{entry.fid, FabricInfo::own(entry.info)}};
             case FI_CONNECTED: return {Connected{entry.fid}};
             case FI_SHUTDOWN:  return {Shutdown{entry.fid}};
             default:           throw Exception::internal("Unsupported event type returned from queue");
@@ -129,7 +129,7 @@ namespace mxl::lib::fabrics::ofi
         return std::holds_alternative<Error>(_event);
     }
 
-    FIInfoView Event::info() const
+    FabricInfoView Event::info() const
     {
         if (auto connReq = std::get_if<ConnectionRequested>(&_event); connReq != nullptr)
         {

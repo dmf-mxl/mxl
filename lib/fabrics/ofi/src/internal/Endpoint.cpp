@@ -20,7 +20,7 @@
 #include "Domain.hpp"
 #include "EventQueue.hpp"
 #include "Exception.hpp"
-#include "FIInfo.hpp"
+#include "FabricInfo.hpp"
 #include "LocalRegion.hpp"
 #include "RemoteRegion.hpp"
 
@@ -60,12 +60,12 @@ namespace mxl::lib::fabrics::ofi
         return Endpoint::create(std::move(domain), randomId());
     }
 
-    Endpoint Endpoint::create(std::shared_ptr<Domain> domain, FIInfoView info)
+    Endpoint Endpoint::create(std::shared_ptr<Domain> domain, FabricInfoView info)
     {
         return Endpoint::create(std::move(domain), randomId(), info);
     }
 
-    Endpoint Endpoint::create(std::shared_ptr<Domain> domain, Id epid, FIInfoView info)
+    Endpoint Endpoint::create(std::shared_ptr<Domain> domain, Id epid, FabricInfoView info)
     {
         ::fid_ep* raw;
 
@@ -74,7 +74,7 @@ namespace mxl::lib::fabrics::ofi
         // expose the private constructor to std::make_shared inside this function
         struct MakeSharedEnabler : public Endpoint
         {
-            MakeSharedEnabler(::fid_ep* raw, FIInfoView info, std::shared_ptr<Domain> domain)
+            MakeSharedEnabler(::fid_ep* raw, FabricInfoView info, std::shared_ptr<Domain> domain)
                 : Endpoint(raw, info, domain)
             {}
         };
@@ -97,7 +97,7 @@ namespace mxl::lib::fabrics::ofi
         close();
     }
 
-    Endpoint::Endpoint(::fid_ep* raw, FIInfoView info, std::shared_ptr<Domain> domain, std::optional<std::shared_ptr<CompletionQueue>> cq,
+    Endpoint::Endpoint(::fid_ep* raw, FabricInfoView info, std::shared_ptr<Domain> domain, std::optional<std::shared_ptr<CompletionQueue>> cq,
         std::optional<std::shared_ptr<EventQueue>> eq, std::optional<std::shared_ptr<AddressVector>> av)
         : _raw(raw)
         , _info(info.owned())
@@ -309,7 +309,7 @@ namespace mxl::lib::fabrics::ofi
         return _domain;
     }
 
-    FIInfoView Endpoint::info() const noexcept
+    FabricInfoView Endpoint::info() const noexcept
     {
         return _info.view();
     }

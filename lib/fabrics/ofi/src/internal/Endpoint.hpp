@@ -16,7 +16,7 @@
 #include "CompletionQueue.hpp"
 #include "Domain.hpp"
 #include "EventQueue.hpp"
-#include "FIInfo.hpp"
+#include "FabricInfo.hpp"
 #include "LocalRegion.hpp"
 #include "RemoteRegion.hpp"
 
@@ -61,14 +61,14 @@ namespace mxl::lib::fabrics::ofi
         /// Allocates (active) new endpoint. If the endpoint is allocated in order to accept a connection request. The
         /// fabric information obtained when accepting the connection must be passed via the info parameter.
         /// A random id will be chosen to identify the endpoint in completions and events.
-        static Endpoint create(std::shared_ptr<Domain> domain, FIInfoView info);
+        static Endpoint create(std::shared_ptr<Domain> domain, FabricInfoView info);
 
         // Allocates a new (active) endpoint. A new random id will be chosen to identify the endpoint in completions and events.
         static Endpoint create(std::shared_ptr<Domain> domain);
 
         /// Allocates (active) new endpoint. If the endpoint is allocated in order to accept a connection request. The
         /// fabric information obtained when accepting the connection must be passed via the info parameter.
-        static Endpoint create(std::shared_ptr<Domain> domain, Id id, FIInfoView);
+        static Endpoint create(std::shared_ptr<Domain> domain, Id id, FabricInfoView);
 
         /// Allocates an (active) endpoint.
         static Endpoint create(std::shared_ptr<Domain> domain, Id id);
@@ -144,7 +144,7 @@ namespace mxl::lib::fabrics::ofi
 
         /// Get the fabric information passed to Endpoint::create() initially.
         [[nodiscard]]
-        FIInfoView info() const noexcept;
+        FabricInfoView info() const noexcept;
 
         /**
          * Push a remote write work request to the endpoint work queue. When the write is complete, a Completion::Data will be pushed to the
@@ -196,12 +196,13 @@ namespace mxl::lib::fabrics::ofi
         void close();
 
         /// Construct the endpoint.
-        Endpoint(::fid_ep* raw, FIInfoView info, std::shared_ptr<Domain> domain, std::optional<std::shared_ptr<CompletionQueue>> cq = std::nullopt,
-            std::optional<std::shared_ptr<EventQueue>> eq = std::nullopt, std::optional<std::shared_ptr<AddressVector>> av = std::nullopt);
+        Endpoint(::fid_ep* raw, FabricInfoView info, std::shared_ptr<Domain> domain,
+            std::optional<std::shared_ptr<CompletionQueue>> cq = std::nullopt, std::optional<std::shared_ptr<EventQueue>> eq = std::nullopt,
+            std::optional<std::shared_ptr<AddressVector>> av = std::nullopt);
 
     private:
         ::fid_ep* _raw;                                      /// Raw resource reference
-        FIInfo _info;                                        /// Info passed via Endpoint::create()
+        FabricInfo _info;                                    /// Info passed via Endpoint::create()
         std::shared_ptr<Domain> _domain;                     /// Domain in which the endpoint was created
 
         std::optional<std::shared_ptr<CompletionQueue>> _cq; /// Completion queue lives here after Endpoint::bind()

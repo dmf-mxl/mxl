@@ -2,68 +2,68 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include "FIInfo.hpp"
+#include "FabricInfo.hpp"
 #include <cstdint>
 #include <rdma/fabric.h>
 #include <rdma/fi_errno.h>
 #include "Exception.hpp"
-#include "FIVersion.hpp"
+#include "FabricVersion.hpp"
 #include "Format.hpp" // IWYU pragma: keep; Includes template specializations of fmt::formatter for our types
 #include "Provider.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
     // Main constructor, takes ownership of the provided fi_info
-    FIInfo::FIInfo(::fi_info* raw) noexcept
+    FabricInfo::FabricInfo(::fi_info* raw) noexcept
         : _raw(raw)
     {}
 
     // Construct from a non-owning view of a fi_info
-    FIInfo::FIInfo(FIInfoView view) noexcept
+    FabricInfo::FabricInfo(FabricInfoView view) noexcept
         : _raw(::fi_dupinfo(view.raw()))
     {}
 
     // Clone a raw fi_info and take ownership
-    FIInfo FIInfo::clone(::fi_info const* info) noexcept
+    FabricInfo FabricInfo::clone(::fi_info const* info) noexcept
     {
-        return FIInfo{::fi_dupinfo(info)};
+        return FabricInfo{::fi_dupinfo(info)};
     }
 
     // Own a raw fi_info
-    FIInfo FIInfo::own(::fi_info* info) noexcept
+    FabricInfo FabricInfo::own(::fi_info* info) noexcept
     {
-        return FIInfo{info};
+        return FabricInfo{info};
     }
 
     // Allocate an empty fi_info
-    FIInfo FIInfo::empty() noexcept
+    FabricInfo FabricInfo::empty() noexcept
     {
-        return FIInfo{::fi_allocinfo()};
+        return FabricInfo{::fi_allocinfo()};
     }
 
-    FIInfo::~FIInfo() noexcept
+    FabricInfo::~FabricInfo() noexcept
     {
         free();
     }
 
-    FIInfo::FIInfo(FIInfo const& other) noexcept
+    FabricInfo::FabricInfo(FabricInfo const& other) noexcept
         : _raw(::fi_dupinfo(other._raw))
     {}
 
-    void FIInfo::operator=(FIInfo const& other) noexcept
+    void FabricInfo::operator=(FabricInfo const& other) noexcept
     {
         free();
 
         _raw = ::fi_dupinfo(other._raw);
     }
 
-    FIInfo::FIInfo(FIInfo&& other) noexcept
+    FabricInfo::FabricInfo(FabricInfo&& other) noexcept
         : _raw(other._raw)
     {
         other._raw = nullptr;
     }
 
-    FIInfo& FIInfo::operator=(FIInfo&& other) noexcept
+    FabricInfo& FabricInfo::operator=(FabricInfo&& other) noexcept
     {
         _raw = other._raw;
         other._raw = nullptr;
@@ -71,42 +71,42 @@ namespace mxl::lib::fabrics::ofi
         return *this;
     }
 
-    ::fi_info& FIInfo::operator*() noexcept
+    ::fi_info& FabricInfo::operator*() noexcept
     {
         return *_raw;
     }
 
-    ::fi_info const& FIInfo::operator*() const noexcept
+    ::fi_info const& FabricInfo::operator*() const noexcept
     {
         return *_raw;
     }
 
-    ::fi_info* FIInfo::operator->() noexcept
+    ::fi_info* FabricInfo::operator->() noexcept
     {
         return _raw;
     }
 
-    ::fi_info const* FIInfo::operator->() const noexcept
+    ::fi_info const* FabricInfo::operator->() const noexcept
     {
         return _raw;
     }
 
-    ::fi_info* FIInfo::raw() noexcept
+    ::fi_info* FabricInfo::raw() noexcept
     {
         return _raw;
     }
 
-    ::fi_info const* FIInfo::raw() const noexcept
+    ::fi_info const* FabricInfo::raw() const noexcept
     {
         return _raw;
     }
 
-    FIInfoView FIInfo::view() const noexcept
+    FabricInfoView FabricInfo::view() const noexcept
     {
-        return FIInfoView{_raw};
+        return FabricInfoView{_raw};
     }
 
-    void FIInfo::free() noexcept
+    void FabricInfo::free() noexcept
     {
         if (_raw != nullptr)
         {
@@ -115,49 +115,49 @@ namespace mxl::lib::fabrics::ofi
         }
     }
 
-    FIInfoView::FIInfoView(::fi_info const* raw)
+    FabricInfoView::FabricInfoView(::fi_info const* raw)
         : _raw(const_cast<::fi_info*>(raw))
     {}
 
-    ::fi_info& FIInfoView::operator*() noexcept
+    ::fi_info& FabricInfoView::operator*() noexcept
     {
         return *_raw;
     }
 
-    ::fi_info const& FIInfoView::operator*() const noexcept
+    ::fi_info const& FabricInfoView::operator*() const noexcept
     {
         return *_raw;
     }
 
-    ::fi_info* FIInfoView::operator->() noexcept
+    ::fi_info* FabricInfoView::operator->() noexcept
     {
         return _raw;
     }
 
-    ::fi_info const* FIInfoView::operator->() const noexcept
+    ::fi_info const* FabricInfoView::operator->() const noexcept
     {
         return _raw;
     }
 
-    ::fi_info* FIInfoView::raw() noexcept
+    ::fi_info* FabricInfoView::raw() noexcept
     {
         return _raw;
     }
 
-    ::fi_info const* FIInfoView::raw() const noexcept
+    ::fi_info const* FabricInfoView::raw() const noexcept
     {
         return _raw;
     }
 
-    FIInfo FIInfoView::owned() noexcept
+    FabricInfo FabricInfoView::owned() noexcept
     {
-        return FIInfo::clone(_raw);
+        return FabricInfo::clone(_raw);
     }
 
-    FIInfoList FIInfoList::get(std::string node, std::string service, Provider provider, uint64_t caps, ::fi_ep_type epType)
+    FabricInfoList FabricInfoList::get(std::string node, std::string service, Provider provider, uint64_t caps, ::fi_ep_type epType)
     {
         ::fi_info* info;
-        auto hints = FIInfo::empty();
+        auto hints = FabricInfo::empty();
 
         /// These are the memory registration modes we currently support
         hints->domain_attr->mr_mode = FI_MR_LOCAL | FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_HMEM;
@@ -171,30 +171,30 @@ namespace mxl::lib::fabrics::ofi
 
         fiCall(::fi_getinfo, "Failed to get provider information", fiVersion(), node.c_str(), service.c_str(), FI_SOURCE, hints.raw(), &info);
 
-        return FIInfoList{info};
+        return FabricInfoList{info};
     }
 
-    FIInfoList FIInfoList::own(::fi_info* info) noexcept
+    FabricInfoList FabricInfoList::own(::fi_info* info) noexcept
     {
-        return FIInfoList{info};
+        return FabricInfoList{info};
     }
 
-    FIInfoList::FIInfoList(::fi_info* begin) noexcept
+    FabricInfoList::FabricInfoList(::fi_info* begin) noexcept
         : _begin(begin)
     {}
 
-    FIInfoList::~FIInfoList()
+    FabricInfoList::~FabricInfoList()
     {
         free();
     }
 
-    FIInfoList::FIInfoList(FIInfoList&& other) noexcept
+    FabricInfoList::FabricInfoList(FabricInfoList&& other) noexcept
         : _begin(other._begin)
     {
         other._begin = nullptr;
     }
 
-    FIInfoList& FIInfoList::operator=(FIInfoList&& other) noexcept
+    FabricInfoList& FabricInfoList::operator=(FabricInfoList&& other) noexcept
     {
         free();
 
@@ -203,37 +203,37 @@ namespace mxl::lib::fabrics::ofi
         return *this;
     }
 
-    FIInfoList::iterator FIInfoList::begin() noexcept
+    FabricInfoList::iterator FabricInfoList::begin() noexcept
     {
         return iterator{_begin};
     }
 
-    FIInfoList::iterator FIInfoList::end() noexcept
+    FabricInfoList::iterator FabricInfoList::end() noexcept
     {
         return iterator{nullptr};
     }
 
-    FIInfoList::const_iterator FIInfoList::begin() const noexcept
+    FabricInfoList::const_iterator FabricInfoList::begin() const noexcept
     {
         return const_iterator{_begin};
     }
 
-    FIInfoList::const_iterator FIInfoList::end() const noexcept
+    FabricInfoList::const_iterator FabricInfoList::end() const noexcept
     {
         return const_iterator{nullptr};
     }
 
-    FIInfoList::const_iterator FIInfoList::cbegin() const noexcept
+    FabricInfoList::const_iterator FabricInfoList::cbegin() const noexcept
     {
         return const_iterator{_begin};
     }
 
-    FIInfoList::const_iterator FIInfoList::cend() const noexcept
+    FabricInfoList::const_iterator FabricInfoList::cend() const noexcept
     {
         return const_iterator{nullptr};
     }
 
-    void FIInfoList::free()
+    void FabricInfoList::free()
     {
         if (_begin != nullptr)
         {

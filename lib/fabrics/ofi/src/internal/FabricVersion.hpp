@@ -8,5 +8,6 @@
 
 namespace mxl::lib::fabrics::ofi
 {
+    /// Returns the libfabric version this library was compiled with.
     std::uint32_t fiVersion() noexcept;
 }
