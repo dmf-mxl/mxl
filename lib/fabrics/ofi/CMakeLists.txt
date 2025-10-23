@@ -1,24 +1,21 @@
 message ("-- Building fabrics library with libfabric/ofi")
 
 add_library(mxl-fabrics SHARED)
-
-target_sources(mxl-fabrics
-        PRIVATE
-            src/fabrics.cpp
-    )
-
-target_link_libraries(mxl-fabrics
-        PUBLIC
-            mxl
-        PRIVATE
-            mxl-internal-headers
-    )
-
 target_compile_features(mxl-fabrics
         PRIVATE
             cxx_std_20
     )
-
+target_sources(mxl-fabrics
+        PRIVATE
+            src/fabrics.cpp
+    )
+target_link_libraries(mxl-fabrics
+        PUBLIC
+            mxl
+            mxl-fabrics-headers
+        PRIVATE
+            mxl-internal-headers
+    )
 set_target_properties(mxl-fabrics
         PROPERTIES
             POSITION_INDEPENDENT_CODE ON
@@ -30,7 +27,6 @@ set_target_properties(mxl-fabrics
             VERSION                   "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
             SOVERSION                 "${PROJECT_VERSION_MAJOR}"
     )
-
 target_link_options(mxl-fabrics
         PRIVATE
             "-Wl,--exclude-libs,ALL"

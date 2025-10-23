@@ -9,8 +9,6 @@
 #include "mxl/flow.h"
 #include "mxl/platform.h"
 
-#define MXL_FABRICS_UNUSED(x) (void)x
-
 #ifdef __cplusplus
 extern "C"
 {
