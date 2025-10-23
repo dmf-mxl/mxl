@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+[package]
+name = "mxl"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+license.workspace = true
+
+[dependencies]
+mxl-sys = { path = "../mxl-sys" }
+
+dlopen2.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+clap.workspace = true
+tracing-subscriber.workspace = true
+
+[features]
+mxl-not-built = ["mxl-sys/mxl-not-built"]

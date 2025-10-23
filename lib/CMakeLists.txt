@@ -81,7 +81,9 @@ target_link_libraries(mxl
 # Alias mxl to mxl::mxl so that this library can be used
 # in lieu of a module from the local source tree
 add_library(${PROJECT_NAME}::mxl ALIAS mxl)
-add_subdirectory(tests)
+if (BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
 
 # Install targets
 install(TARGETS mxl EXPORT ${PROJECT_NAME}-targets

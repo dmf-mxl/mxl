@@ -1,0 +1,33 @@
+# SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+[workspace]
+members = ["mxl", "mxl-sys"]
+
+resolver = "2"
+
+[workspace.package]
+edition = "2024"
+publish = false
+version = "0.1.0"
+license = "Apache-2.0"
+license-file = "../LICENSE.txt"
+
+[workspace.dependencies]
+bindgen = { version = "0.72", features = ["experimental"] }
+dlopen2 = "0.8"
+# Will be used later, when we get to higher level streams based interfaces.
+futures = "0.3"
+thiserror = "2.0.12"
+tracing = { version = "0.1", features = ["log"] }
+tracing-subscriber = { version = "0.3.20", features = ["env-filter", "std"] }
+uuid = { version = "1.17" }
+
+[workspace.dependencies.clap]
+version = "4.1.4"
+default-features = false
+features = ["std", "derive", "cargo", "env", "help", "usage", "error-context"]
+
+[profile.release-with-debug]
+debug = true
+inherits = "release"
