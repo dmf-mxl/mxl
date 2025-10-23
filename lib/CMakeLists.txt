@@ -73,14 +73,20 @@ target_sources(mxl
 
 target_link_libraries(mxl
         PUBLIC
-            mxl-headers
+            mxl-headers # C Headers in <mxl/*.h>
+            mxl-common  # Common objects for libmxl and libmxl-fabrics
         PRIVATE
-            mxl-internal
+            mxl-internal-headers # Internal C++ headers in <mxl-internal/*.hpp>
     )
 
 # Alias mxl to mxl::mxl so that this library can be used
 # in lieu of a module from the local source tree
 add_library(${PROJECT_NAME}::mxl ALIAS mxl)
+
+if (MXL_ENABLE_FABRICS_OFI)
+    add_subdirectory(fabrics)
+endif ()
+
 add_subdirectory(tests)
 
 # Install targets

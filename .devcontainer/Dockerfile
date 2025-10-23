@@ -8,6 +8,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN echo 'vm.swappiness=0'          >> /etc/sysctl.conf
 
+COPY ./scripts/ /tmp/scripts
+
 # Install basic and runtime dependencies
 RUN apt clean all && apt-get update \
  && apt-get install -y --no-install-recommends \
@@ -37,7 +39,9 @@ RUN apt clean all && apt-get update \
     flex \
     htop \
     ccache \
-    rustup
+    rustup \
+    librdmacm-dev
+
 
 ARG CLANG_VERSION=19
 RUN apt-get install -y --no-install-recommends \
@@ -45,21 +49,22 @@ RUN apt-get install -y --no-install-recommends \
     "clang-tools-${CLANG_VERSION}" \
     "clang-tidy-${CLANG_VERSION}" \
     "clang-format-${CLANG_VERSION}" \
+    "llvm-${CLANG_VERSION}" \
     cmake \
     ninja-build
 
 # Make the selected clang version the default alternative
-COPY register-clang-version.sh ./register-clang-version.sh 
-RUN ./register-clang-version.sh "${CLANG_VERSION}" 100 \
- && rm ./register-clang-version.sh
+RUN /tmp/scripts/debian/register-clang-version.sh "${CLANG_VERSION}" 100 
 
-RUN apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libgstreamer1.0-dev \
     libgstreamer-plugins-base1.0-dev \
     gstreamer1.0-plugins-good \
     gstreamer1.0-plugins-bad \
     gstreamer1.0-plugins-ugly \
-    gstreamer1.0-x
+    gstreamer1.0-x 
+
+RUN /tmp/scripts/common/libfabric/install.sh
 
 # Remove the default ubuntu user if it exists
 RUN userdel --remove ubuntu >/dev/null 2>&1 || true

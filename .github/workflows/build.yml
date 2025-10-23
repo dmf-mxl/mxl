@@ -100,8 +100,19 @@ jobs:
             -f .devcontainer/Dockerfile \
             .devcontainer
 
+      - name: Check if PR comes from a fork
+        id: is-fork-check
+        run: |
+          if [[ "${{ github.event.pull_request.head.repo.fork }}" == "true" ]]; then
+            echo "This pull request originates from a forked repository."
+            echo "is-fork=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "This pull request originates from the base repository."
+            echo "is-fork=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Push Docker image to registry
-        if: steps.check-image.outputs.exists == 'false'
+        if: steps.check-image.outputs.exists == 'false' && steps.is-fork-check.outputs.is-fork == 'false'
         run: |
           docker push ${{ steps.docker-hash.outputs.image-tag }}
 
