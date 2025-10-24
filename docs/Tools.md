@@ -56,7 +56,7 @@ TODO. A generic GUI application based on gstreamer or ffmpeg to display flow(s).
 
 ## mxl-gst-videotestsrc
 
-A binary that uses the gstreamer element 'videotestsrc' to produce video grains which will be pushed to a MXL Flow. The video format is configured from a NMOS Flow json file. Here's an example of such file :
+A binary that uses the gstreamer element 'videotestsrc' to produce video grains and/or audio samples which will be pushed to a MXL Flow. The flow is configured from a NMOS Flow json file. Here's an example of such file :
 
 ```json
 {
@@ -99,15 +99,32 @@ A binary that uses the gstreamer element 'videotestsrc' to produce video grains 
 
 ```bash
 mxl-gst-videotestsrc
-Usage: ./build/Linux-GCC-Release/tools/mxl-gst/mxl-gst-videotestsrc [OPTIONS]
 
-Options:
-  -h,--help                   Print this help message and exit
-  -f,--flow-config-file TEXT REQUIRED
-                              The json file which contains the NMOS Flow configuration
-  -d,--domain TEXT:DIR REQUIRED
+
+./build/Linux-Clang-Debug/tools/mxl-gst/mxl-gst-videotestsrc [OPTIONS]
+
+
+OPTIONS:
+  -h,     --help              Print this help message and exit
+  -v,     --video-config-file TEXT
+                              The json file which contains the Video NMOS Flow configuration
+  -a,     --audio-config-file TEXT
+                              The json file which contains the Audio NMOS Flow configuration
+  -s,     --samples-per-batch UINT [48]
+                              Number of audio samples per batch
+          --audio-offset INT [0]
+                              Audio sample offset in number of samples. Positive value means
+                              you are adding a delay (commit in the past).
+          --video-offset INT [0]
+                              Video grain offset in number of grains. Positive value means you
+                              are adding a delay (commit in the past).
+  -d,     --domain TEXT:DIR REQUIRED
                               The MXL domain directory
-  -p,--pattern TEXT [smpte]   Test pattern to use. For available options see https://gstreamer.freedesktop.org/documentation/videotestsrc/index.html?gi-language=c#GstVideoTestSrcPattern
+  -p,     --pattern TEXT [smpte]
+                              Test pattern to use. For available options see
+                              https://gstreamer.freedesktop.org/documentation/videotestsrc/index.html?gi-language=c#GstVideoTestSrcPattern
+  -t,     --overlay-text TEXT [EBU DMF MXL]
+                              Change the text overlay of the test source
 ```
 
 ## mxl-gst-videosink
@@ -116,11 +133,27 @@ A binary that reads from a MXL Flow and display the flow using the gstreamer ele
 
 ```bash
 mxl-gst-videosink
-Usage: ./build/Linux-GCC-Release/tools/mxl-gst/mxl-gst-videosink [OPTIONS]
 
-Options:
-  -h,--help                   Print this help message and exit
-  -f,--flow-id TEXT REQUIRED  The flow ID
-  -d,--domain TEXT:DIR REQUIRED
+
+./build/Linux-Clang-Debug/tools/mxl-gst/mxl-gst-videosink [OPTIONS]
+
+
+OPTIONS:
+  -h,     --help              Print this help message and exit
+  -v,     --video-flow-id TEXT
+                              The video flow ID
+  -a,     --audio-flow-id TEXT
+                              The audio flow ID
+  -d,     --domain TEXT:DIR REQUIRED
                               The MXL domain directory
+  -t,     --timeout UINT      The read timeout in ns, frame interval + 1 ms used if not
+                              specified
+  -l,     --listen-channels UINT [[0,1]]  ...
+                              Audio channels to listen
+          --audio-offset INT [0]
+                              Audio offset in samples. Positive value means you are adding a
+                              delay
+          --video-offset INT [0]
+                              Video offset in grains. Positive value means you are adding a
+                              delay
 ```
