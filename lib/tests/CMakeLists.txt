@@ -28,7 +28,7 @@ target_sources(mxl-tests
 target_link_libraries(mxl-tests
         PRIVATE
             mxl
-            mxl-internal
+            mxl-internal-headers
     )
 
 if (NOT TARGET Catch2::Catch2WithMain)
@@ -102,3 +102,7 @@ target_compile_options(mxl-all-headers PRIVATE
     -Wall -Wextra -Werror -pedantic
     -Wstrict-prototypes
 )
+
+if (MXL_ENABLE_FABRICS_OFI)
+    add_subdirectory(fabrics)
+endif ()
