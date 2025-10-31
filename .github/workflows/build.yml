@@ -87,6 +87,9 @@ jobs:
           mkdir -p ${{ github.workspace }}/install
           chmod 777 ${{ github.workspace }}/install
           chmod g+s ${{ github.workspace }}/install
+          mkdir -p ${{ github.workspace }}/rust/target
+          chmod 777 ${{ github.workspace }}/rust/target
+          chmod g+s ${{ github.workspace }}/rust/target
 
       - name: Build Docker image
         if: steps.check-image.outputs.exists == 'false'
@@ -100,8 +103,19 @@ jobs:
             -f .devcontainer/Dockerfile \
             .devcontainer
 
+      - name: Check if PR comes from a fork
+        id: is-fork-check
+        run: |
+          if [[ "${{ github.event.pull_request.head.repo.fork }}" == "true" ]]; then
+            echo "This pull request originates from a forked repository."
+            echo "is-fork=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "This pull request originates from the base repository."
+            echo "is-fork=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Push Docker image to registry
-        if: steps.check-image.outputs.exists == 'false'
+        if: steps.check-image.outputs.exists == 'false' && steps.is-fork-check.outputs.is-fork == 'false'
         run: |
           docker push ${{ steps.docker-hash.outputs.image-tag }}
 
@@ -160,6 +174,52 @@ jobs:
             bash -c "
               cd /workspace/mxl/build/${{ matrix.compiler }} && \
               ctest --output-junit test-results.xml
+            "
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-lint-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: ${{ runner.os }}-cargo-lint-
+
+      - name: Check the Rust bindings
+        env:
+          RUSTFLAGS: "-Dwarnings"
+        run: |
+          docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
+            -i mxl_build_container_with_source \
+            bash -c "
+              cd /workspace/mxl/rust && \
+              cargo fmt -- --check && \
+              cargo clippy --all-targets --all-features --locked -- -D warnings && \
+              cargo audit && \
+              cargo outdated && \
+              cargo machete && \
+              cargo deny check all
+            "
+
+      - name: Build Rust bindings
+        run: |
+          docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
+            -i mxl_build_container_with_source \
+            bash -c "
+              cd /workspace/mxl/rust && \
+              cargo build --release --all-targets --locked
+            "
+
+      - name: Test the Rust bindings
+        run: |
+          docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
+            -i mxl_build_container_with_source \
+            bash -c "
+              cd /workspace/mxl/rust && \
+              cargo nextest run --release --locked
             "
 
       - name: Publish Test Results

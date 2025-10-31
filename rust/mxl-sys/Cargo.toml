@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+[package]
+name = "mxl-sys"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+license.workspace = true
+
+[dependencies]
+
+[build-dependencies]
+bindgen.workspace = true
+cmake = "0.1.54"
+
+[features]
+mxl-not-built = []
