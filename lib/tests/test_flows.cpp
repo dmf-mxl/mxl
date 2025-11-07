@@ -732,7 +732,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Audio Flow : Create/
     {
         /// Open a range of samples for reading
         mxlWrappedMultiBufferSlice payloadBuffersSlices;
-        REQUIRE(mxlFlowReaderGetSamples(reader, index, 64U, &payloadBuffersSlices) == MXL_STATUS_OK);
+        REQUIRE(mxlFlowReaderGetSamplesNonBlocking(reader, index, 64U, &payloadBuffersSlices) == MXL_STATUS_OK);
 
         // Verify that the returned info looks alright
         REQUIRE(payloadBuffersSlices.count == 2U);
@@ -821,9 +821,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Audio Flow : Invalid
     REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), opts, &configInfo) == MXL_STATUS_OK);
 
     {
-        /// Open a range of samples for reading. This should detect that the flow is invalid.
+        /// Open a range of samples for reading.
+        /// Since we never commited to the stale stream this read attempt should
+        /// come early, thus triggering the validity check, which in turn should
+        /// detect the stream to be stale.
         mxlWrappedMultiBufferSlice payloadBuffersSlices;
-        REQUIRE(mxlFlowReaderGetSamples(reader, index, 64U, &payloadBuffersSlices) == MXL_ERR_FLOW_INVALID);
+        REQUIRE(mxlFlowReaderGetSamplesNonBlocking(reader, index, 64U, &payloadBuffersSlices) == MXL_ERR_FLOW_INVALID);
     }
 
     /// Release the reader
@@ -908,7 +911,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Audio Flow : Differe
         for (auto const& batch : batches)
         {
             mxlWrappedMultiBufferSlice payloadBuffersSlices;
-            REQUIRE(mxlFlowReaderGetSamples(reader, batch.index, batch.size, &payloadBuffersSlices) == MXL_STATUS_OK);
+            REQUIRE(mxlFlowReaderGetSamplesNonBlocking(reader, batch.index, batch.size, &payloadBuffersSlices) == MXL_STATUS_OK);
             REQUIRE((payloadBuffersSlices.base.fragments[0].size + payloadBuffersSlices.base.fragments[1].size) / 4 == batch.size);
             std::uint64_t index = batch.index - batch.size + 1;
             for (std::size_t i = 0U; i < payloadBuffersSlices.base.fragments[0].size / 4; ++i)
@@ -922,7 +925,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Audio Flow : Differe
             REQUIRE(index == batch.index + 1);
         }
     };
-    // When checking the batches, we can only check the second half of the buffer (this is what mxlFlowReaderGetSamples allows us).
+    // When checking the batches, we can only check the second half of the buffer (this is what mxlFlowReaderGetSamples and friends allow us).
     writeBatches.erase(writeBatches.begin(), writeBatches.begin() + writeBatches.size() / 2);
     readCheckFn(reader, writeBatches);
     auto const readBatches = planAudioBatches(writeBatches.size() + 1, configInfo.continuous.bufferLength / 2, lastIndex);

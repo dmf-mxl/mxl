@@ -479,7 +479,7 @@ namespace
             {
                 auto requestedIndex = index - readDelay;
 
-                auto ret = mxlFlowReaderGetSamples(_reader, requestedIndex, windowSize, &payload);
+                auto ret = mxlFlowReaderGetSamplesNonBlocking(_reader, requestedIndex, windowSize, &payload);
                 if (ret == MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
                 {
                     // We are too early somehow, keep trying the same index
