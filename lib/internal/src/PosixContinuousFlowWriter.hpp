@@ -53,6 +53,9 @@ namespace mxl::lib
         virtual void flowRead() override;
 
     private:
+        bool signalCompletedBatch() noexcept;
+
+    private:
         /** The FlowData for the currently opened flow. null if no flow is opened. */
         std::unique_ptr<ContinuousFlowData> _flowData;
         /** Cached copy of the numer of channels from mxlFlowInfo. */
@@ -61,5 +64,13 @@ namespace mxl::lib
         std::size_t _bufferLength;
         /** The currently opened sample range head index. MXL_UNDEFINED_INDEX if no range is currently opened. */
         std::uint64_t _currentIndex;
+
+        /** Cached preprocessed copy of mxlCommonFlowInfo::maxSyncBatchSizeHint. */
+        std::uint32_t _syncBatchSize;
+        /** The threshold at which to signal even before _syncBatchSize is reached, in order to not exceed the maximum. */
+        std::uint32_t _earlySyncThreshold;
+
+        /** The last sample batch (as a factor of _syncBatchSize) that has been signaled. */
+        std::uint64_t _lastSyncSampleBatch;
     };
 }
