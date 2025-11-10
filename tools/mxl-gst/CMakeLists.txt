@@ -113,6 +113,7 @@ if (gstreamer_FOUND)
                 CLI11::CLI11
                 PkgConfig::gstreamer
                 PkgConfig::gstreamer-app
+                PkgConfig::gstreamer-audio
                 PkgConfig::gstreamer-video
         )
 

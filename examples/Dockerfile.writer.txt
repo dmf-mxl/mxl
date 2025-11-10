@@ -17,4 +17,4 @@ COPY build/Linux-Clang-Release/tools/mxl-gst/mxl-gst-testsrc /app/
 
 RUN patchelf --set-rpath /app mxl-gst-testsrc
 
-CMD ["/app/mxl-gst-testsrc", "-d", "/domain", "-v", "/app/v210_flow.json", "-a", "/app/audio_flow.json"]
+CMD ["/app/mxl-gst-videotestsrc", "-d", "/shared_memory/mxl", "-v", "/app/v210_flow.json", "-a", "/app/audio_flow.json"]
