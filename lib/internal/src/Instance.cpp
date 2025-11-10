@@ -26,6 +26,7 @@
 #include <mxl/time.h>
 #include "mxl-internal/DomainWatcher.hpp"
 #include "mxl-internal/FlowManager.hpp"
+#include "mxl-internal/FlowOptionsParser.hpp"
 #include "mxl-internal/FlowParser.hpp"
 #include "mxl-internal/Logging.hpp"
 #include "mxl-internal/PathUtils.hpp"
@@ -224,10 +225,11 @@ namespace mxl::lib
         }
     }
 
-    std::unique_ptr<FlowData> Instance::createFlow(std::string const& flowDef)
+    std::unique_ptr<FlowData> Instance::createFlow(std::string const& flowDef, std::string const& options)
     {
         // Parse the json flow resource
         auto const parser = FlowParser{flowDef};
+        auto const optionsParser = FlowOptionsParser{options};
 
         // Create the flow using the flow manager
         if (auto const format = parser.getFormat(); mxlIsDiscreteDataFormat(format))
@@ -244,7 +246,9 @@ namespace mxl::lib
                 grainRate,
                 parser.getPayloadSize(),
                 parser.getTotalPayloadSlices(),
-                parser.getPayloadSliceLengths());
+                parser.getPayloadSliceLengths(),
+                optionsParser.getMaxSyncBatchSizeHint(),
+                optionsParser.getMaxCommitBatchSizeHint());
         }
         else if (mxlIsContinuousDataFormat(format))
         {
@@ -259,8 +263,15 @@ namespace mxl::lib
 
             auto const pageAlignedLength = ((bufferLength + lengthPerPage - 1U) / lengthPerPage) * lengthPerPage;
 
-            return _flowManager.createContinuousFlow(
-                parser.getId(), flowDef, parser.getFormat(), sampleRate, parser.getChannelCount(), sampleWordSize, pageAlignedLength);
+            return _flowManager.createContinuousFlow(parser.getId(),
+                flowDef,
+                parser.getFormat(),
+                sampleRate,
+                parser.getChannelCount(),
+                sampleWordSize,
+                pageAlignedLength,
+                optionsParser.getMaxSyncBatchSizeHint(),
+                optionsParser.getMaxCommitBatchSizeHint());
         }
         throw std::runtime_error("Unsupported flow format.");
     }

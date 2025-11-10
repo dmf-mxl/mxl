@@ -47,6 +47,7 @@ target_sources(mxl-common
             src/FlowData.cpp
             src/FlowIoFactory.cpp
             src/FlowManager.cpp
+            src/FlowOptionsParser.cpp
             src/FlowParser.cpp
             src/FlowReader.cpp
             src/FlowWriter.cpp

@@ -17,7 +17,7 @@ using namespace mxl::lib;
 
 extern "C"
 MXL_EXPORT
-mxlStatus mxlCreateFlow(mxlInstance instance, char const* flowDef, char const* /*options*/, mxlFlowInfo* flowInfo)
+mxlStatus mxlCreateFlow(mxlInstance instance, char const* flowDef, char const* options, mxlFlowInfo* flowInfo)
 {
     try
     {
@@ -25,7 +25,7 @@ mxlStatus mxlCreateFlow(mxlInstance instance, char const* flowDef, char const* /
         {
             if (auto const cppInstance = to_Instance(instance); cppInstance != nullptr)
             {
-                auto const flowData = cppInstance->createFlow(flowDef);
+                auto const flowData = cppInstance->createFlow(flowDef, options ? options : "");
                 *flowInfo = *flowData->flowInfo();
                 return MXL_STATUS_OK;
             }
@@ -308,13 +308,21 @@ extern "C"
 MXL_EXPORT
 mxlStatus mxlFlowReaderGetGrain(mxlFlowReader reader, uint64_t index, uint64_t timeoutNs, mxlGrainInfo* grainInfo, uint8_t** payload)
 {
+    return mxlFlowReaderGetGrainSlice(reader, index, UINT16_MAX, timeoutNs, grainInfo, payload);
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowReaderGetGrainSlice(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, uint64_t timeoutNs, mxlGrainInfo* grainInfo,
+    uint8_t** payload)
+{
     try
     {
         if ((grainInfo != nullptr) && (payload != nullptr))
         {
             if (auto const cppReader = dynamic_cast<DiscreteFlowReader*>(to_FlowReader(reader)); cppReader != nullptr)
             {
-                return cppReader->getGrain(index, timeoutNs, grainInfo, payload);
+                return cppReader->getGrain(index, minValidSlices, timeoutNs, grainInfo, payload);
             }
             return MXL_ERR_INVALID_FLOW_READER;
         }

@@ -532,6 +532,49 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Data Flow : Create/D
     mxlDestroyInstance(instanceWriter);
 }
 
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : Options", "[mxl flows]")
+{
+    auto flowDef = mxl::tests::readFile("data/v210_flow.json");
+
+    auto instanceOpts = "";
+    auto instanceWriter = mxlCreateInstance(domain.string().c_str(), instanceOpts);
+    REQUIRE(instanceWriter != nullptr);
+
+    mxlFlowInfo fInfo;
+
+    picojson::object optsObj;
+    optsObj["maxCommitBatchSizeHint"] = picojson::value{0.0}; // Invalid value
+
+    auto optsStr = picojson::value(optsObj).serialize();
+    REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), optsStr.c_str(), &fInfo) == MXL_ERR_UNKNOWN);
+
+    optsObj.clear();
+    optsObj["maxSyncBatchSizeHint"] = picojson::value{-1.0}; // Invalid value
+    optsStr = picojson::value(optsObj).serialize();
+    REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), optsStr.c_str(), &fInfo) == MXL_ERR_UNKNOWN);
+
+    optsObj.clear();
+    optsObj["maxCommitBatchSizeHint"] = picojson::value{5.0};
+    optsObj["maxSyncBatchSizeHint"] = picojson::value{6.0}; // Not a multiple of maxCommitBatchSizeHint
+    optsStr = picojson::value(optsObj).serialize();
+    REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), optsStr.c_str(), &fInfo) == MXL_ERR_UNKNOWN);
+
+    optsObj.clear();
+    optsObj["maxCommitBatchSizeHint"] = picojson::value{5.0};
+    optsObj["maxSyncBatchSizeHint"] = picojson::value{10.0};
+    optsStr = picojson::value(optsObj).serialize();
+    REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), optsStr.c_str(), &fInfo) == MXL_STATUS_OK);
+    REQUIRE(fInfo.common.maxCommitBatchSizeHint == 5U);
+    REQUIRE(fInfo.common.maxSyncBatchSizeHint == 10U);
+    REQUIRE(mxlDestroyFlow(instanceWriter, uuids::to_string(fInfo.common.id).c_str()) == MXL_STATUS_OK);
+
+    REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), NULL, &fInfo) == MXL_STATUS_OK);
+    REQUIRE(fInfo.common.maxCommitBatchSizeHint == 1U);
+    REQUIRE(fInfo.common.maxSyncBatchSizeHint == 1U);
+    REQUIRE(mxlDestroyFlow(instanceWriter, uuids::to_string(fInfo.common.id).c_str()) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instanceWriter) == MXL_STATUS_OK);
+}
+
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : Slices", "[mxl flows]")
 {
     char const* opts = "{}";
@@ -597,10 +640,10 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : Slices"
 
         /// Read back the partial grain using the flow reader.
         std::uint8_t* readBuffer = nullptr;
-        REQUIRE(mxlFlowReaderGetGrain(reader, index, 8, &gInfo, &readBuffer) == MXL_STATUS_OK);
+        auto const expectedValidSlices = std::min(defaultBatchSize * (batchIndex + 1), static_cast<std::size_t>(gInfo.totalSlices));
+        REQUIRE(mxlFlowReaderGetGrainSlice(reader, index, expectedValidSlices, 8, &gInfo, &readBuffer) == MXL_STATUS_OK);
 
         // Validate the commited size
-        auto const expectedValidSlices = std::min(defaultBatchSize * (batchIndex + 1), static_cast<std::size_t>(gInfo.totalSlices));
         REQUIRE(gInfo.validSlices == expectedValidSlices);
 
         // Give some time to the inotify message to reach the directorywatcher.
@@ -886,6 +929,49 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Audio Flow : Differe
 
     REQUIRE(mxlDestroyFlow(instance, flowId.c_str()) == MXL_STATUS_OK);
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+}
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Audio Flow : Options", "[mxl flows]")
+{
+    auto flowDef = mxl::tests::readFile("data/audio_flow.json");
+
+    auto instanceOpts = "";
+    auto instanceWriter = mxlCreateInstance(domain.string().c_str(), instanceOpts);
+    REQUIRE(instanceWriter != nullptr);
+
+    mxlFlowInfo fInfo;
+
+    picojson::object optsObj;
+    optsObj["maxCommitBatchSizeHint"] = picojson::value{-1.0}; // Invalid value
+
+    auto optsStr = picojson::value(optsObj).serialize();
+    REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), optsStr.c_str(), &fInfo) == MXL_ERR_UNKNOWN);
+
+    optsObj.clear();
+    optsObj["maxSyncBatchSizeHint"] = picojson::value{0.0}; // Invalid value
+    optsStr = picojson::value(optsObj).serialize();
+    REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), optsStr.c_str(), &fInfo) == MXL_ERR_UNKNOWN);
+
+    optsObj.clear();
+    optsObj["maxCommitBatchSizeHint"] = picojson::value{10.0};
+    optsObj["maxSyncBatchSizeHint"] = picojson::value{2.0}; // Not a multiple of maxCommitBatchSizeHint
+    optsStr = picojson::value(optsObj).serialize();
+    REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), optsStr.c_str(), &fInfo) == MXL_ERR_UNKNOWN);
+
+    optsObj.clear();
+    optsObj["maxCommitBatchSizeHint"] = picojson::value{5.0};
+    optsObj["maxSyncBatchSizeHint"] = picojson::value{10.0};
+    optsStr = picojson::value(optsObj).serialize();
+    REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), optsStr.c_str(), &fInfo) == MXL_STATUS_OK);
+    REQUIRE(fInfo.common.maxCommitBatchSizeHint == 5U);
+    REQUIRE(fInfo.common.maxSyncBatchSizeHint == 10U);
+    REQUIRE(mxlDestroyFlow(instanceWriter, uuids::to_string(fInfo.common.id).c_str()) == MXL_STATUS_OK);
+
+    REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), NULL, &fInfo) == MXL_STATUS_OK);
+    REQUIRE(fInfo.common.maxCommitBatchSizeHint == 1U);
+    REQUIRE(fInfo.common.maxSyncBatchSizeHint == 1U);
+    REQUIRE(mxlDestroyFlow(instanceWriter, uuids::to_string(fInfo.common.id).c_str()) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instanceWriter) == MXL_STATUS_OK);
 }
 
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlGetFlowDef", "[mxl flows]")

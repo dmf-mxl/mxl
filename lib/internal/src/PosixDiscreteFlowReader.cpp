@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <array>
 #include <filesystem>
+#include <iostream>
 #include <mutex>
 #include <stdexcept>
 #include <fcntl.h>
@@ -68,8 +69,8 @@ namespace mxl::lib
         throw std::runtime_error("No open flow.");
     }
 
-    mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, std::uint64_t in_timeoutNs, mxlGrainInfo* out_grainInfo,
-        std::uint8_t** out_payload)
+    mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, std::uint64_t in_timeoutNs,
+        mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload)
     {
         auto const deadline = currentTime(Clock::Realtime) + Duration{static_cast<std::int64_t>(in_timeoutNs)};
         auto status = MXL_ERR_TIMEOUT;
@@ -93,11 +94,15 @@ namespace mxl::lib
                     {
                         auto const offset = in_index % flowInfo->discrete.grainCount;
                         auto const grain = _flowData->grainAt(offset);
-                        *out_grainInfo = grain->header.info;
-                        *out_payload = reinterpret_cast<std::uint8_t*>(&grain->header + 1);
+                        if (grain->header.info.validSlices >= std::min(in_minValidSlices, grain->header.info.totalSlices) ||
+                            grain->header.info.flags & MXL_GRAIN_FLAG_INVALID)
+                        {
+                            *out_grainInfo = grain->header.info;
+                            *out_payload = reinterpret_cast<std::uint8_t*>(&grain->header + 1);
 
-                        status = MXL_STATUS_OK;
-                        break;
+                            status = MXL_STATUS_OK;
+                            break;
+                        }
                     }
                     else
                     {
@@ -105,17 +110,11 @@ namespace mxl::lib
                         break;
                     }
                 }
-                else
+
+                if (!waitUntilChanged(&flowInfo->discrete.syncCounter, previousSyncCounter, deadline))
                 {
-                    if (waitUntilChanged(&flowInfo->discrete.syncCounter, previousSyncCounter, deadline))
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        status = MXL_ERR_TIMEOUT;
-                        break;
-                    }
+                    status = MXL_ERR_TIMEOUT;
+                    break;
                 }
             }
 

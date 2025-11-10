@@ -23,7 +23,7 @@ namespace mxl::lib
         /**
          * Attempt to create a temporary directory to prepare a new flow.
          * The temporary name is structured in a way that prevents is from
-         * clashing with directory names that belkong to established flows.
+         * clashing with directory names that belong to established flows.
          *
          * \param[in] base the base directory, below which the temporary
          *      directory should be created,
@@ -78,7 +78,9 @@ namespace mxl::lib
             }
         }
 
-        mxlCommonFlowInfo initCommonFlowInfo(uuids::uuid const& flowId, mxlDataFormat format, std::filesystem::path const& flowDataPath)
+        mxlCommonFlowInfo initCommonFlowInfo(uuids::uuid const& flowId, mxlDataFormat format, std::filesystem::path const& flowDataPath,
+            std::optional<std::uint32_t> const& maxSyncBatchSizeHintOpt = std::nullopt,
+            std::optional<std::uint32_t> const& maxCommitBatchSizeHintOpt = std::nullopt)
         {
             auto result = mxlCommonFlowInfo{};
 
@@ -88,9 +90,8 @@ namespace mxl::lib
             result.lastReadTime = result.lastWriteTime;
             result.format = format;
 
-            // FIXME: there should be a way for the consumer to configure this
-            result.maxCommitBatchSizeHint = 1;
-            result.maxSyncBatchSizeHint = 1;
+            result.maxCommitBatchSizeHint = maxCommitBatchSizeHintOpt.value_or(1);
+            result.maxSyncBatchSizeHint = maxSyncBatchSizeHintOpt.value_or(1);
 
             // FIXME: This should come from the configuration when device memory is supported
             result.payloadLocation = MXL_PAYLOAD_LOCATION_HOST_MEMORY;
@@ -127,7 +128,8 @@ namespace mxl::lib
 
     std::unique_ptr<DiscreteFlowData> FlowManager::createDiscreteFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat,
         std::size_t grainCount, mxlRational const& grainRate, std::size_t grainPayloadSize, std::size_t grainNumOfSlices,
-        std::array<uint32_t, MXL_MAX_PLANES_PER_GRAIN> grainSliceLengths)
+        std::array<uint32_t, MXL_MAX_PLANES_PER_GRAIN> grainSliceLengths, std::optional<std::uint32_t> maxSyncBatchSizeHintOpt,
+        std::optional<std::uint32_t> maxCommitBatchSizeHintOpt)
     {
         auto const uuidString = uuids::to_string(flowId);
         MXL_DEBUG("Create discrete flow. id: {}, grainCount: {}, grain payload size: {}", uuidString, grainCount, grainPayloadSize);
@@ -158,7 +160,7 @@ namespace mxl::lib
             auto& info = *flowData->flowInfo();
             info.version = FLOW_DATA_VERSION;
             info.size = sizeof info;
-            info.common = initCommonFlowInfo(flowId, flowFormat, flowDataPath);
+            info.common = initCommonFlowInfo(flowId, flowFormat, flowDataPath, maxSyncBatchSizeHintOpt, maxCommitBatchSizeHintOpt);
             info.discrete.grainRate = grainRate;
             info.discrete.grainCount = grainCount;
             info.discrete.syncCounter = 0;
@@ -199,7 +201,8 @@ namespace mxl::lib
     }
 
     std::unique_ptr<ContinuousFlowData> FlowManager::createContinuousFlow(uuids::uuid const& flowId, std::string const& flowDef,
-        mxlDataFormat flowFormat, mxlRational const& sampleRate, std::size_t channelCount, std::size_t sampleWordSize, std::size_t bufferLength)
+        mxlDataFormat flowFormat, mxlRational const& sampleRate, std::size_t channelCount, std::size_t sampleWordSize, std::size_t bufferLength,
+        std::optional<std::uint32_t> maxSyncBatchSizeHintOpt, std::optional<std::uint32_t> maxCommitBatchSizeHintOpt)
     {
         auto const uuidString = uuids::to_string(flowId);
         MXL_DEBUG("Create continuous flow. id: {}, channel count: {}, word size: {}, buffer length: {}",
@@ -226,7 +229,7 @@ namespace mxl::lib
             auto& info = *flowData->flowInfo();
             info.version = FLOW_DATA_VERSION;
             info.size = sizeof info;
-            info.common = initCommonFlowInfo(flowId, flowFormat, flowDataPath);
+            info.common = initCommonFlowInfo(flowId, flowFormat, flowDataPath, maxSyncBatchSizeHintOpt, maxCommitBatchSizeHintOpt);
             info.continuous = {};
             info.continuous.sampleRate = sampleRate;
             info.continuous.channelCount = channelCount;

@@ -60,10 +60,14 @@ namespace mxl::lib
         /// \param[in] grainPayloadSize Size of the grain in host memory.  0 if the grain payload lives in device memory.
         /// \param[in] grainNumOfSlices Number of slices per grain.
         /// \param[in] grainSliceLengths Length of each slice in bytes.
+        /// \param[in] maxSyncBatchSizeHintOpt Optional max sync batch size hint.
+        /// \param[in] maxCommitBatchSizeHintOpt Optional max commit batch size hint
         ///
         std::unique_ptr<DiscreteFlowData> createDiscreteFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat,
             std::size_t grainCount, mxlRational const& grainRate, std::size_t grainPayloadSize, std::size_t grainNumOfSlices,
-            std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN> grainSliceLengths);
+            std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN> grainSliceLengths,
+            std::optional<std::uint32_t> maxSyncBatchSizeHintOpt = std::nullopt,
+            std::optional<std::uint32_t> maxCommitBatchSizeHintOpt = std::nullopt);
 
         ///
         /// Create a new continuous flow together with its associated channel store and open it in read-write mode.
@@ -75,9 +79,13 @@ namespace mxl::lib
         /// \param[in] channelCount The number of channels in the flow.
         /// \param[in] sampleWordSize The size of one sample in bytes.
         /// \param[in] bufferLength The length of each channel buffer in samples.
+        /// \param[in] maxSyncBatchSizeHintOpt Optional max sync batch size hint.
+        /// \param[in] maxCommitBatchSizeHintOpt Optional max commit batch size hint
         ///
         std::unique_ptr<ContinuousFlowData> createContinuousFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat,
-            mxlRational const& sampleRate, std::size_t channelCount, std::size_t sampleWordSize, std::size_t bufferLength);
+            mxlRational const& sampleRate, std::size_t channelCount, std::size_t sampleWordSize, std::size_t bufferLength,
+            std::optional<std::uint32_t> maxSyncBatchSizeHintOpt = std::nullopt,
+            std::optional<std::uint32_t> maxCommitBatchSizeHintOpt = std::nullopt);
 
         /// Open an existing flow by id.
         ///

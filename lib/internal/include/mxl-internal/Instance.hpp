@@ -46,10 +46,11 @@ namespace mxl::lib
         /// Create a flow
         ///
         /// \param[in] flowDef The json flow definition according to the NMOS Flow Resource json schema
+        /// \param[in] options Additional options for flow creation
         /// \return The created flow resources in shared memory
         /// \throw std::runtime_error On any error (parse exception, shared memory conflicts, etc)
         ///
-        std::unique_ptr<FlowData> createFlow(std::string const& flowDef);
+        std::unique_ptr<FlowData> createFlow(std::string const& flowDef, std::string const& options = {});
 
         /// Delete a flow by id
         ///
