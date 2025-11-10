@@ -1,0 +1,30 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+FROM debian:trixie-slim
+
+WORKDIR /app
+
+RUN apt update && apt-get -y install \
+        gstreamer1.0-libav \
+        gstreamer1.0-plugins-base \
+        gstreamer1.0-plugins-good \
+        gstreamer1.0-plugins-bad \
+        gstreamer1.0-x \
+        patchelf && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir /app/gst-plugins
+
+COPY build/Linux-Clang-Release/lib/*.so* /app/
+COPY build/Linux-Clang-Release/lib/internal/*.so* /app/
+COPY build/Linux-Clang-Release/tools/mxl-gst/mxl-gst-looping-filesrc /app/
+COPY build/Linux-Clang-Release/utils/gst-looping-filesrc /app/gst-plugins
+ADD https://tsduck.io/streams/uk-freeview/546000000.ts /app/video.ts
+
+RUN patchelf --set-rpath /app mxl-gst-looping-filesrc 
+
+ENV GST_PLUGIN_PATH="/app/gst-plugins:${GST_PLUGIN_PATH}"
+
+CMD ["/app/mxl-gst-looping-filesrc", "-d", "/shared_memory/mxl", "-i", "/app/video.ts"]
+
+
