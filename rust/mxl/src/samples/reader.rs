@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use crate::{
     Error, Result, SamplesData,
@@ -44,10 +44,30 @@ impl SamplesReader {
         get_runtime_info(&self.context, self.reader)
     }
 
-    pub fn get_samples(&self, index: u64, count: usize) -> Result<SamplesData<'_>> {
+    pub fn get_samples(
+        &self,
+        index: u64,
+        count: usize,
+        timeout: Duration,
+    ) -> Result<SamplesData<'_>> {
+        let timeout_ns = timeout.as_nanos() as u64;
         let mut buffer_slice: mxl_sys::mxlWrappedMultiBufferSlice = unsafe { std::mem::zeroed() };
         unsafe {
             Error::from_status(self.context.api.flow_reader_get_samples(
+                self.reader,
+                index,
+                count,
+                timeout_ns,
+                &mut buffer_slice,
+            ))?;
+        }
+        Ok(SamplesData::new(buffer_slice))
+    }
+
+    pub fn get_samples_non_blocking(&self, index: u64, count: usize) -> Result<SamplesData<'_>> {
+        let mut buffer_slice: mxl_sys::mxlWrappedMultiBufferSlice = unsafe { std::mem::zeroed() };
+        unsafe {
+            Error::from_status(self.context.api.flow_reader_get_samples_non_blocking(
                 self.reader,
                 index,
                 count,

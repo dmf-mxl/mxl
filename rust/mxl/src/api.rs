@@ -134,6 +134,15 @@ pub struct MxlApi {
         reader: mxl_sys::mxlFlowReader,
         index: u64,
         count: usize,
+        timeout_ns: u64,
+        payload_buffers_slices: *mut mxl_sys::mxlWrappedMultiBufferSlice,
+    ) -> mxl_sys::mxlStatus,
+
+    #[dlopen2_name = "mxlFlowReaderGetSamplesNonBlocking"]
+    flow_reader_get_samples_non_blocking: unsafe extern "C" fn(
+        reader: mxl_sys::mxlFlowReader,
+        index: u64,
+        count: usize,
         payload_buffers_slices: *mut mxl_sys::mxlWrappedMultiBufferSlice,
     ) -> mxl_sys::mxlStatus,
 
