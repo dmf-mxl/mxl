@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "PosixContinuousFlowReader.hpp"
+#include <atomic>
 #include <sys/stat.h>
 #include "mxl-internal/PathUtils.hpp"
 #include "mxl-internal/Sync.hpp"
@@ -45,10 +46,15 @@ namespace mxl::lib
         auto const deadline = currentTime(Clock::Realtime) + Duration{static_cast<std::int64_t>(timeoutNs)};
         auto result = MXL_ERR_UNKNOWN;
         auto const flow = _flowData->flow();
+        auto const syncObject = std::atomic_ref{flow->state.syncCounter};
         while (true)
         {
-            auto const previousSyncCounter = flow->state.syncCounter;
+            auto const previousSyncCounter = syncObject.load(std::memory_order_acquire);
             result = getSamplesImpl(index, count, payloadBuffersSlices);
+            // NOTE: Before C++26 there is no way to access the address of the object wrapped
+            //      by an atomic_ref. If there were it would be much more appropriate to pass
+            //      syncObject by reference here and only unwrap the underlying integer in the
+            //      implementation of waitUntilChanged.
             if ((result != MXL_ERR_OUT_OF_RANGE_TOO_EARLY) || !waitUntilChanged(&flow->state.syncCounter, previousSyncCounter, deadline))
             {
                 break;
