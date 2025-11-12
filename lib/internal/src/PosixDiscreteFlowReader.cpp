@@ -112,15 +112,8 @@ namespace mxl::lib
 
                 if (!waitUntilChanged(&flow->state.syncCounter, previousSyncCounter, deadline))
                 {
-                    if (waitUntilChanged(&flow->state.syncCounter, previousSyncCounter, deadline))
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        status = MXL_ERR_TIMEOUT;
-                        break;
-                    }
+                    status = MXL_ERR_TIMEOUT;
+                    break;
                 }
             }
 
