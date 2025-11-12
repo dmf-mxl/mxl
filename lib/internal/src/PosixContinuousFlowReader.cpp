@@ -26,13 +26,19 @@ namespace mxl::lib
         throw std::runtime_error("No open flow.");
     }
 
-    mxlFlowInfo PosixContinuousFlowReader::getFlowInfo()
+    mxlFlowInfo PosixContinuousFlowReader::getFlowInfo() const
     {
-        if (_flowData)
-        {
-            return *_flowData->flowInfo();
-        }
-        throw std::runtime_error("No open flow.");
+        return *getFlowData().flowInfo();
+    }
+
+    mxlFlowConfigInfo PosixContinuousFlowReader::getFlowConfigInfo() const
+    {
+        return getFlowData().flowInfo()->config;
+    }
+
+    mxlFlowRuntimeInfo PosixContinuousFlowReader::getFlowRuntimeInfo() const
+    {
+        return getFlowData().flowInfo()->runtime;
     }
 
     mxlStatus PosixContinuousFlowReader::getSamples(std::uint64_t index, std::size_t count, std::uint64_t timeoutNs,

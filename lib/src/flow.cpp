@@ -412,7 +412,8 @@ mxlStatus mxlFlowWriterGetGrainInfo(mxlFlowWriter writer, uint64_t index, mxlGra
         {
             if (auto const cppWriter = dynamic_cast<DiscreteFlowWriter*>(to_FlowWriter(writer)); cppWriter != nullptr)
             {
-                return cppWriter->getGrainInfo(index, grainInfo);
+                *grainInfo = cppWriter->getGrainInfo(index);
+                return MXL_STATUS_OK;
             }
 
             return MXL_ERR_INVALID_FLOW_WRITER;
