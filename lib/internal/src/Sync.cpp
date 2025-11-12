@@ -62,40 +62,38 @@ namespace mxl::lib
     {
         static_assert(sizeof(T) == sizeof(std::uint32_t), "Only 32-bit types are supported.");
 
-        while (true)
+        while (*in_addr == in_expected)
         {
             auto const now = currentTime(Clock::Realtime);
             if (now >= in_deadline)
             {
                 MXL_DEBUG("Deadline already reached");
-                return false; // Timeout
+                return false;
             }
 
-            auto const ret = do_wait(in_addr, in_expected, in_deadline - now);
-            if (ret == 0)
-            {
-                // TODO: This should probably be an atomic ...
-                if (*in_addr != static_cast<T>(in_expected))
-                {
-                    return true;
-                }
-            }
-            else
+            // ATTENTION: Do not check for != 0, as positive values are success indicators
+            //      in the macOS implementation of this function.
+            if (auto const ret = do_wait(in_addr, in_expected, in_deadline - now); ret == -1)
             {
                 switch (errno)
                 {
-                    case EAGAIN:    MXL_TRACE("EAGAIN. returning true"); return true;
-
-                    case ETIMEDOUT: MXL_TRACE("ETIMEDOUT. returning false"); return false;
+                    case EAGAIN:
+                        // On linux EAGAIN indicates that the kernel detected *in_addr to
+                        // not be equal to in_expected.
+                        continue;
 
                     case EINTR:
                         // Interrupted. try again.
                         continue;
-                }
 
+                    case ETIMEDOUT: MXL_TRACE("ETIMEDOUT. returning false"); break;
+
+                    default:        break;
+                }
                 return false;
             }
         }
+        return true;
     }
 
     template<typename T>
