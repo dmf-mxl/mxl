@@ -129,7 +129,9 @@ fn basic_mxl_samples_writing_reading() {
     let current_index = mxl_instance.get_current_index(&rate);
     let samples_write_access = samples_writer.open_samples(current_index, 42).unwrap();
     samples_write_access.commit().unwrap();
-    let samples_data = samples_reader.get_samples(current_index, 42).unwrap();
+    let samples_data = samples_reader
+        .get_samples(current_index, 42, Duration::from_secs(5))
+        .unwrap();
     let samples_data: OwnedSamplesData = samples_data.into();
     info!(
         "Samples data contains {} channels(s), channel 0 has {} byte(s).",

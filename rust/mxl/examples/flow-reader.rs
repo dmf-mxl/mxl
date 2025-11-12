@@ -113,7 +113,7 @@ fn read_samples(
         sample_rate.numerator, sample_rate.denominator
     );
     loop {
-        let samples_data = reader.get_samples(read_head, batch_size)?;
+        let samples_data = reader.get_samples_non_blocking(read_head, batch_size)?;
         info!(
             "Read samples for {} channel(s) at index {}.",
             samples_data.num_of_channels(),
@@ -127,8 +127,9 @@ fn read_samples(
                 channel_data.1.len()
             );
         }
-        // MXL currently does not have any samples reading mechanism which would wait for data to be
-        // available.
+        // TODO:
+        //      Switch to the recently introduced reading mechanism that waits for data to be
+        //      available.
         // We will just blindly assume that more data will be available when we need them.
         // This, of course, does not have to be true, because the write batch size may be larger
         // than our reading batch size.
