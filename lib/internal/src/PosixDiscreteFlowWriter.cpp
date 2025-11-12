@@ -32,25 +32,26 @@ namespace mxl::lib
         throw std::runtime_error("No open flow.");
     }
 
-    mxlFlowInfo PosixDiscreteFlowWriter::getFlowInfo()
+    mxlFlowInfo PosixDiscreteFlowWriter::getFlowInfo() const
     {
-        if (_flowData)
-        {
-            return *_flowData->flowInfo();
-        }
-        throw std::runtime_error("No open flow.");
+        return *getFlowData().flowInfo();
     }
 
-    mxlStatus PosixDiscreteFlowWriter::getGrainInfo(std::uint64_t in_index, mxlGrainInfo* out_grainInfo)
+    mxlFlowConfigInfo PosixDiscreteFlowWriter::getFlowConfigInfo() const
     {
-        if (_flowData)
-        {
-            auto offset = in_index % _flowData->flowInfo()->config.discrete.grainCount;
-            auto const grain = _flowData->grainAt(offset);
-            *out_grainInfo = grain->header.info;
-            return MXL_STATUS_OK;
-        }
-        return MXL_ERR_UNKNOWN;
+        return getFlowData().flowInfo()->config;
+    }
+
+    mxlFlowRuntimeInfo PosixDiscreteFlowWriter::getFlowRuntimeInfo() const
+    {
+        return getFlowData().flowInfo()->runtime;
+    }
+
+    mxlGrainInfo PosixDiscreteFlowWriter::getGrainInfo(std::uint64_t in_index) const
+    {
+        auto& flowData = static_cast<DiscreteFlowData const&>(getFlowData());
+        auto const offset = in_index % flowData.flowInfo()->config.discrete.grainCount;
+        return flowData.grainAt(offset)->header.info;
     }
 
     mxlStatus PosixDiscreteFlowWriter::openGrain(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload)

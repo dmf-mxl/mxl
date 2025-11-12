@@ -28,20 +28,22 @@ namespace mxl::lib
          */
         PosixContinuousFlowReader(FlowManager const& manager, uuids::uuid const& flowId, std::unique_ptr<ContinuousFlowData>&& data);
 
-        /**
-         * Accessor for the underlying flow data.
-         * The flow reader must first open the flow before invoking this method.
-         */
+        /** \see FlowReader::getFlowData */
         [[nodiscard]]
-        FlowData const& getFlowData() const final;
+        virtual FlowData const& getFlowData() const override;
 
     public:
-        /**
-         * Accessor for the current mxlFlowInfo. A copy of the current structure is returned.
-         * The reader must be properly attached to the flow before invoking this method.
-         * \return A copy of the mxlFlowInfo
-         */
-        virtual mxlFlowInfo getFlowInfo() override;
+        /** \see FlowReader::getFlowInfo */
+        [[nodiscard]]
+        virtual mxlFlowInfo getFlowInfo() const override;
+
+        /** \see FlowReader::getFlowConfigInfo */
+        [[nodiscard]]
+        virtual mxlFlowConfigInfo getFlowConfigInfo() const override;
+
+        /** \see FlowReader::getFlowRuntimeInfo */
+        [[nodiscard]]
+        virtual mxlFlowRuntimeInfo getFlowRuntimeInfo() const override;
 
         /** \see ContinuousFlowReader::getSamples */
         virtual mxlStatus getSamples(std::uint64_t index, std::size_t count, std::uint64_t timeoutNs,
@@ -52,6 +54,7 @@ namespace mxl::lib
 
     protected:
         /** \see FlowReader::isFlowValid */
+        [[nodiscard]]
         virtual bool isFlowValid() const override;
 
     private:
@@ -60,6 +63,7 @@ namespace mxl::lib
          * that have previously asserted that we're operating on a valid flow
          * (i.e. that _flowData is a valid pointer).
          */
+        [[nodiscard]]
         bool isFlowValidImpl() const;
 
         /**
