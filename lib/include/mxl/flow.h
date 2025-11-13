@@ -273,7 +273,7 @@ extern "C"
         uint8_t** payload);
 
     /**
-     * Non-blocking accessors for a flow grain at a specific index
+     * Non-blocking accessor for a flow grain at a specific index
      *
      * \param[in] reader A valid flow reader
      * \param[in] index The index of the grain to obtain
@@ -287,6 +287,24 @@ extern "C"
      */
     MXL_EXPORT
     mxlStatus mxlFlowReaderGetGrainNonBlocking(mxlFlowReader reader, uint64_t index, mxlGrainInfo* grain, uint8_t** payload);
+
+    /**
+     * Non-blocking accessor for a flow grain at a specific index, with a minimum number of valid slices.
+     *
+     * \param[in] reader A valid discrete flow reader.
+     * \param[in] index The index of the grain to obtain
+     * \param[in] minValidSlices The minimum number of valid slices required in the returned grain.
+     * \param[out] grain The requested mxlGrainInfo structure.
+     * \param[out] payload The requested grain payload.
+     * \return The result code. \see mxlStatus
+     * \note Please note that this function can only be called on readers that
+     *      operate on discrete flows. Any attempt to call this function on a
+     *      reader that operates on another type of flow will result in an
+     *      error.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowReaderGetGrainSliceNonBlocking(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, mxlGrainInfo* grain,
+        uint8_t** payload);
 
     /**
      * Get grain info for a given index. This is used to inspect the grain info without opening the grain for mutation.
