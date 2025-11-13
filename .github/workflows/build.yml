@@ -18,8 +18,8 @@ permissions:
   packages: write
 
 jobs:
-  build:
-    name: Build on Ubuntu ${{ matrix.os }} - ${{matrix.version}} - ${{ matrix.architecture }} - ${{ matrix.compiler }}
+  build_c_cxx:
+    name: Build C library on Ubuntu ${{ matrix.os }} - ${{matrix.version}} - ${{ matrix.architecture }} - ${{ matrix.compiler }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -75,9 +75,6 @@ jobs:
         run: |
           echo "uid=$(id -u)" >> $GITHUB_OUTPUT
           echo "gid=$(id -g)" >> $GITHUB_OUTPUT
-          mkdir -p ${{ github.workspace }}/build
-          chmod 777 ${{ github.workspace }}/build
-          chmod g+s ${{ github.workspace }}/build
 
       - name: Set workspace permissions for access in the devcontainer
         run: |
@@ -87,9 +84,6 @@ jobs:
           mkdir -p ${{ github.workspace }}/install
           chmod 777 ${{ github.workspace }}/install
           chmod g+s ${{ github.workspace }}/install
-          mkdir -p ${{ github.workspace }}/rust/target
-          chmod 777 ${{ github.workspace }}/rust/target
-          chmod g+s ${{ github.workspace }}/rust/target
 
       - name: Build Docker image
         if: steps.check-image.outputs.exists == 'false'
@@ -176,6 +170,122 @@ jobs:
               ctest --output-junit test-results.xml
             "
 
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: |
+            **/test-results.xml
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-ubuntu-${{ matrix.os }}-${{ matrix.architecture }}-${{matrix.compiler}} artifacts
+          path: |
+            ${{ github.workspace }}/build/${{ matrix.compiler }}/*.deb
+            ${{ github.workspace }}/install/
+
+  build_rust:
+    name: Build Rust bindings on Ubuntu ${{ matrix.os }} - ${{matrix.version}} - ${{ matrix.architecture }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+          os: [ubuntu]
+          version: [24.04]
+          architecture: [x86_64, arm64]
+          compiler: [Linux-GCC-Release, Linux-Clang-Release]
+
+    env:
+      DOCKER_BUILDKIT: 1
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg_cache,readwrite
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: REUSE Compliance Check
+        uses: fsfe/reuse-action@v5
+
+      - name: Initialize Git Submodules (if needed)
+        run: git submodule update --init --recursive
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Calculate Docker image hash
+        id: docker-hash
+        run: |
+          # Create a hash based on Dockerfile content and matrix parameters
+          HASH_INPUT=$(cat -- .devcontainer/Dockerfile $(find .devcontainer/scripts/ -type f) vcpkg.json)
+          HASH_INPUT="${HASH_INPUT}${{ matrix.version }}${{ matrix.architecture }}${{ matrix.compiler }}"
+          DOCKER_HASH=$(echo -n "$HASH_INPUT" | sha256sum | cut -d' ' -f1)
+          echo "hash=$DOCKER_HASH" >> $GITHUB_OUTPUT
+          echo "image-tag=ghcr.io/${{ github.repository_owner }}/mxl-build:$DOCKER_HASH" >> $GITHUB_OUTPUT
+
+      - name: Check if Docker image exists
+        id: check-image
+        run: |
+          if docker manifest inspect ${{ steps.docker-hash.outputs.image-tag }} >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Docker image ${{ steps.docker-hash.outputs.image-tag }} already exists"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Docker image ${{ steps.docker-hash.outputs.image-tag }} does not exist"
+          fi
+
+      - name: Get runner UID and GID
+        id: vars
+        run: |
+          echo "uid=$(id -u)" >> $GITHUB_OUTPUT
+          echo "gid=$(id -g)" >> $GITHUB_OUTPUT
+          mkdir -p ${{ github.workspace }}/build
+          chmod 777 ${{ github.workspace }}/build
+          chmod g+s ${{ github.workspace }}/build
+
+      - name: Set workspace permissions for access in the devcontainer
+        run: |
+          mkdir -p ${{ github.workspace }}/rust/target
+          chmod 777 ${{ github.workspace }}/rust/target
+          chmod g+s ${{ github.workspace }}/rust/target
+
+      - name: Build Docker image
+        if: steps.check-image.outputs.exists == 'false'
+        run: |
+          docker build \
+            --build-arg BASE_IMAGE_VERSION=${{ matrix.version }} \
+            --build-arg USER_UID=${{ steps.vars.outputs.uid }} \
+            --build-arg USER_GID=${{ steps.vars.outputs.gid }} \
+            -t ${{ steps.docker-hash.outputs.image-tag }} \
+            -t mxl_build_container_with_source \
+            -f .devcontainer/Dockerfile \
+            .devcontainer
+
+      - name: Check if PR comes from a fork
+        id: is-fork-check
+        run: |
+          if [[ "${{ github.event.pull_request.head.repo.fork }}" == "true" ]]; then
+            echo "This pull request originates from a forked repository."
+            echo "is-fork=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "This pull request originates from the base repository."
+            echo "is-fork=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push Docker image to registry
+        if: steps.check-image.outputs.exists == 'false' && steps.is-fork-check.outputs.is-fork == 'false'
+        run: |
+          docker push ${{ steps.docker-hash.outputs.image-tag }}
+
+      - name: Pull Docker image from registry
+        if: steps.check-image.outputs.exists == 'true'
+        run: |
+          docker pull ${{ steps.docker-hash.outputs.image-tag }}
+          docker tag ${{ steps.docker-hash.outputs.image-tag }} mxl_build_container_with_source
+
       - name: Cache Cargo registry
         uses: actions/cache@v3
         with:
@@ -221,19 +331,3 @@ jobs:
               cd /workspace/mxl/rust && \
               cargo nextest run --release --locked
             "
-
-      - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        if: always()
-        with:
-          files: |
-            **/test-results.xml
-
-
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-ubuntu-${{ matrix.os }}-${{ matrix.architecture }}-${{matrix.compiler}} artifacts
-          path: |
-            ${{ github.workspace }}/build/${{ matrix.compiler }}/*.deb
-            ${{ github.workspace }}/install/
