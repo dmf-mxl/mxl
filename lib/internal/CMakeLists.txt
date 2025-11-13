@@ -43,8 +43,8 @@ set_target_properties(mxl-common
 target_sources(mxl-common
         PRIVATE
             src/DomainWatcher.cpp
-            src/Flow.cpp
             src/FlowData.cpp
+            src/FlowInfo.cpp
             src/FlowIoFactory.cpp
             src/FlowManager.cpp
             src/FlowOptionsParser.cpp
