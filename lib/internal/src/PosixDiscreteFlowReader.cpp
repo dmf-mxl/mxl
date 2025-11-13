@@ -77,11 +77,10 @@ namespace mxl::lib
     mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, std::uint64_t in_timeoutNs,
         mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload)
     {
-        auto const deadline = currentTime(Clock::Realtime) + Duration{static_cast<std::int64_t>(in_timeoutNs)};
-        auto status = MXL_ERR_TIMEOUT;
-
+        auto result = MXL_ERR_TIMEOUT;
         if (_flowData)
         {
+            auto const deadline = currentTime(Clock::Realtime) + Duration{static_cast<std::int64_t>(in_timeoutNs)};
             auto const flow = _flowData->flow();
             auto const syncObject = std::atomic_ref{flow->state.syncCounter};
             while (true)
@@ -91,111 +90,117 @@ namespace mxl::lib
                 // 2. Writer writes the data and updates the counter.
                 // 3. If we used the current value of the counter for the futex, we would delay everything by 1 grain.
                 auto const previousSyncCounter = syncObject.load(std::memory_order_acquire);
-                if (auto const headIndex = flow->info.runtime.headIndex; in_index <= headIndex)
+                result = getGrainImpl(in_index, in_minValidSlices, out_grainInfo, out_payload);
+                // NOTE: Before C++26 there is no way to access the address of the object wrapped
+                //      by an atomic_ref. If there were it would be much more appropriate to pass
+                //      syncObject by reference here and only unwrap the underlying integer in the
+                //      implementation of waitUntilChanged.
+                if ((result != MXL_ERR_OUT_OF_RANGE_TOO_EARLY) || !waitUntilChanged(&flow->state.syncCounter, previousSyncCounter, deadline))
                 {
-                    auto const grainCount = flow->info.config.discrete.grainCount;
-                    auto const minIndex = (headIndex >= grainCount) ? (headIndex - grainCount + 1U) : std::uint64_t{0};
-
-                    if (in_index >= minIndex)
-                    {
-                        auto const offset = in_index % flow->info.config.discrete.grainCount;
-                        auto const grain = _flowData->grainAt(offset);
-                        if (grain->header.info.validSlices >= std::min(in_minValidSlices, grain->header.info.totalSlices) ||
-                            grain->header.info.flags & MXL_GRAIN_FLAG_INVALID)
-                        {
-                            *out_grainInfo = grain->header.info;
-                            *out_payload = reinterpret_cast<std::uint8_t*>(&grain->header + 1);
-
-                            status = MXL_STATUS_OK;
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        status = MXL_ERR_OUT_OF_RANGE_TOO_LATE;
-                        break;
-                    }
-                }
-
-                // NOTE: Before C++26 there is no way to access the address of the object
-                //      wrapped by an atomic_ref. If there were it would be much more
-                //      appropriate to pass syncObject by reference here and only unwrap the
-                //      underlying integer in the implementation of waitUntilChanged.
-                if (!waitUntilChanged(&flow->state.syncCounter, previousSyncCounter, deadline))
-                {
-                    status = MXL_ERR_TIMEOUT;
                     break;
                 }
             }
 
-            if (status == MXL_STATUS_OK)
+            if (result == MXL_STATUS_OK)
             {
                 // We ignore the return value of updateFileAccessTime. It may fail if the domain is in a read-only volume.
-                updateFileAccessTime(_accessFileFd);
+                (void)updateFileAccessTime(_accessFileFd);
+            }
+            else if (result == MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
+            {
+                // If we were ultimately too early, even with blocking for a certain amount
+                // of time it could very well be that we're operating on a stale flow, so we
+                // use the opportunity to check whether it's valid.
+                if (!isFlowValidImpl())
+                {
+                    result = MXL_ERR_FLOW_INVALID;
+                }
             }
         }
-
-        // We may have timed out or attempted to read out of range on an invalid flow. let the reader know.
-        if (status != MXL_STATUS_OK && !isFlowValid())
-        {
-            status = MXL_ERR_FLOW_INVALID;
-        }
-
-        return status;
+        return result;
     }
 
-    mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload)
+    mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo,
+        std::uint8_t** out_payload)
     {
-        mxlStatus status = MXL_ERR_UNKNOWN;
+        auto result = MXL_ERR_UNKNOWN;
         if (_flowData)
         {
-            auto const flow = _flowData->flow();
-            if (auto const headIndex = flow->info.runtime.headIndex; in_index <= headIndex)
+            result = getGrainImpl(in_index, in_minValidSlices, out_grainInfo, out_payload);
+            if (result == MXL_STATUS_OK)
             {
-                auto const grainCount = flow->info.config.discrete.grainCount;
-                auto const minIndex = (headIndex >= grainCount) ? (headIndex - grainCount + 1U) : std::uint64_t{0};
-                if (in_index >= minIndex)
+                // We ignore the return value of updateFileAccessTime. It may fail if the domain is in a read-only volume.
+                (void)updateFileAccessTime(_accessFileFd);
+            }
+            else if (result == MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
+            {
+                // If we were too early it could very well be that we're operating
+                // on a stale flow, so we use the opportunity to check whether it's
+                // valid.
+                if (!isFlowValidImpl())
                 {
-                    auto const offset = in_index % grainCount;
-                    auto const grain = _flowData->grainAt(offset);
+                    result = MXL_ERR_FLOW_INVALID;
+                }
+            }
+        }
+        return result;
+    }
+
+    mxlStatus PosixDiscreteFlowReader::getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo,
+        std::uint8_t** out_payload) const
+    {
+        auto result = MXL_ERR_UNKNOWN;
+        auto const flow = _flowData->flow();
+        if (auto const headIndex = flow->info.runtime.headIndex; in_index <= headIndex)
+        {
+            auto const grainCount = flow->info.config.discrete.grainCount;
+            auto const minIndex = (headIndex >= grainCount) ? (headIndex - grainCount + 1U) : std::uint64_t{0};
+            if (in_index >= minIndex)
+            {
+                auto const offset = in_index % grainCount;
+                auto const grain = _flowData->grainAt(offset);
+
+                if ((grain->header.info.validSlices >= std::min(in_minValidSlices, grain->header.info.totalSlices)) ||
+                    ((grain->header.info.flags & MXL_GRAIN_FLAG_INVALID) != 0))
+                {
                     *out_grainInfo = grain->header.info;
                     *out_payload = reinterpret_cast<std::uint8_t*>(&grain->header + 1);
 
-                    updateFileAccessTime(_accessFileFd);
-
-                    status = MXL_STATUS_OK;
+                    result = MXL_STATUS_OK;
                 }
-
-                status = MXL_ERR_OUT_OF_RANGE_TOO_LATE;
+                else
+                {
+                    result = MXL_ERR_OUT_OF_RANGE_TOO_EARLY;
+                }
             }
-
-            status = MXL_ERR_OUT_OF_RANGE_TOO_EARLY;
+            else
+            {
+                result = MXL_ERR_OUT_OF_RANGE_TOO_LATE;
+            }
         }
-
-        // We may have attempted to read out of range on an invalid flow. let the reader know.
-        if (status != MXL_STATUS_OK && !isFlowValid())
+        else
         {
-            status = MXL_ERR_FLOW_INVALID;
+            result = MXL_ERR_OUT_OF_RANGE_TOO_EARLY;
         }
 
-        return status;
+        return result;
     }
 
     bool PosixDiscreteFlowReader::isFlowValid() const
     {
-        if (_flowData)
-        {
-            auto const flowState = _flowData->flowState();
-            auto const flowDataPath = makeFlowDataFilePath(getDomain(), to_string(getId()));
-
-            struct stat st;
-            if (::stat(flowDataPath.string().c_str(), &st) != 0)
-            {
-                return false;
-            }
-            return (st.st_ino == flowState->inode);
-        }
-        return false;
+        return _flowData && isFlowValidImpl();
     }
 
-} // namespace mxl::lib
+    bool PosixDiscreteFlowReader::isFlowValidImpl() const
+    {
+        auto const flowState = _flowData->flowState();
+        auto const flowDataPath = makeFlowDataFilePath(getDomain(), to_string(getId()));
+
+        struct stat st;
+        if (::stat(flowDataPath.string().c_str(), &st) != 0)
+        {
+            return false;
+        }
+        return (st.st_ino == flowState->inode);
+    }
+}

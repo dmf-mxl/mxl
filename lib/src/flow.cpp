@@ -384,13 +384,21 @@ extern "C"
 MXL_EXPORT
 mxlStatus mxlFlowReaderGetGrainNonBlocking(mxlFlowReader reader, uint64_t index, mxlGrainInfo* grainInfo, uint8_t** payload)
 {
+    return mxlFlowReaderGetGrainSliceNonBlocking(reader, index, UINT16_MAX, grainInfo, payload);
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowReaderGetGrainSliceNonBlocking(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, mxlGrainInfo* grainInfo,
+    uint8_t** payload)
+{
     try
     {
         if ((grainInfo != nullptr) && (payload != nullptr))
         {
             if (auto const cppReader = dynamic_cast<DiscreteFlowReader*>(to_FlowReader(reader)); cppReader != nullptr)
             {
-                return cppReader->getGrain(index, grainInfo, payload);
+                return cppReader->getGrain(index, minValidSlices, grainInfo, payload);
             }
             return MXL_ERR_INVALID_FLOW_READER;
         }

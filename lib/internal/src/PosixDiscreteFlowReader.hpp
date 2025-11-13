@@ -49,12 +49,30 @@ namespace mxl::lib
             std::uint8_t** out_payload) override;
 
         /** \see DiscreteFlowReader::getGrain */
-        virtual mxlStatus getGrain(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload) override;
+        virtual mxlStatus getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo,
+            std::uint8_t** out_payload) override;
 
     protected:
         /** \see FlowReader::isFlowValid */
         [[nodiscard]]
         virtual bool isFlowValid() const override;
+
+    private:
+        /**
+         * Implementation of isFlowValid() that can be used by other methods
+         * that have previously asserted that we're operating on a valid flow
+         * (i.e. that _flowData is a valid pointer).
+         */
+        [[nodiscard]]
+        bool isFlowValidImpl() const;
+
+        /**
+         * Implementation of the various forms of getGrain() that can also be
+         * used by other methods that have previously asserted that we're
+         * operating on a valid flow (i.e. that _flowData is a valid pointer).
+         */
+        mxlStatus getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo,
+            std::uint8_t** out_payload) const;
 
     private:
         std::unique_ptr<DiscreteFlowData> _flowData;
