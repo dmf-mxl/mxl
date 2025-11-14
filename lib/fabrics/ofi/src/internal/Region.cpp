@@ -124,15 +124,21 @@ namespace mxl::lib::fabrics::ofi
         return _regions;
     }
 
-    MxlRegions mxlRegionsFromFlow(FlowData& flow)
+    MxlRegions mxlRegionsFromFlow(FlowData const& flow)
     {
         static_assert(sizeof(GrainHeader) == 8192,
             "GrainHeader type size changed! The Fabrics API makes assumptions on the memory layout of a flow, please review the code below if the "
             "change is intended!");
 
+        if (flow.flowInfo()->config.common.payloadLocation != MXL_PAYLOAD_LOCATION_HOST_MEMORY)
+        {
+            throw Exception::make(MXL_ERR_UNKNOWN,
+                "GPU memory is not currently supported in the Flow API of MXL. Edit the code below when it is supported");
+        }
+
         if (mxlIsDiscreteDataFormat(flow.flowInfo()->config.common.format))
         {
-            auto& discreteFlow = static_cast<DiscreteFlowData&>(flow);
+            auto& discreteFlow = static_cast<DiscreteFlowData const&>(flow);
             std::vector<Region> regions;
 
             for (std::size_t i = 0; i < discreteFlow.grainCount(); ++i)
@@ -152,24 +158,18 @@ namespace mxl::lib::fabrics::ofi
                 regions.emplace_back(grainInfoBaseAddr, grainInfoSize + grainPayloadSize, Region::Location::host());
             }
 
-            return {std::move(regions),
-                /*DataLayout::fromVideo(false)*/};
+            return {std::move(regions)};
         }
         else if (mxlIsContinuousDataFormat(flow.flowInfo()->config.common.format))
         {
-            auto& continuousFlow = static_cast<ContinuousFlowData&>(flow);
+            auto& continuousFlow = static_cast<ContinuousFlowData const&>(flow);
             std::vector<Region> regions;
 
             // For the continuous flow, the data layout is a single contiguous buffer
             regions.emplace_back(
                 reinterpret_cast<std::uintptr_t>(continuousFlow.channelData()), continuousFlow.channelDataLength(), Region::Location::host());
 
-            return {
-                std::move(regions),
-                /*DataLayout::fromAudio(continuousFlow.channelCount(),
-                                      continuousFlow.channelBufferLength(),
-                                      continuousFlow.sampleWordSize()),*/
-            };
+            return {std::move(regions)};
         }
 
         else
