@@ -55,9 +55,3 @@ struct fmt::formatter<ofi::Provider>
         }
     }
 };
-
-namespace mxl::lib::fabrics::ofi
-
-{
-    std::string fiProtocolToString(std::uint64_t) noexcept;
-}

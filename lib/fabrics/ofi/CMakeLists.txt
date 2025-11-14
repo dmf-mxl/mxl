@@ -15,24 +15,35 @@ target_compile_features(mxl-fabrics-objects
 target_sources(mxl-fabrics-objects
         PRIVATE
             src/fabrics.cpp
-            src/internal/Exception.cpp
-            src/internal/Provider.cpp
-            src/internal/FabricVersion.cpp
-            src/internal/FabricInfo.cpp
-            src/internal/Fabric.cpp
-            src/internal/Domain.cpp
-            src/internal/Region.cpp
-            src/internal/MemoryRegion.cpp
-            src/internal/RegisteredRegion.cpp
-            src/internal/LocalRegion.cpp
-            src/internal/RemoteRegion.cpp
             src/internal/Address.cpp
             src/internal/AddressVector.cpp
             src/internal/Completion.cpp
             src/internal/CompletionQueue.cpp
+            src/internal/Domain.cpp
+            src/internal/Endpoint.cpp
             src/internal/Event.cpp
             src/internal/EventQueue.cpp
-            src/internal/Endpoint.cpp
+            src/internal/Exception.cpp
+            src/internal/FILogging.cpp
+            src/internal/Fabric.cpp
+            src/internal/FabricInfo.cpp
+            src/internal/FabricInstance.cpp
+            src/internal/FabricVersion.cpp
+            src/internal/ImmData.cpp
+            src/internal/Initiator.cpp
+            src/internal/LocalRegion.cpp
+            src/internal/MemoryRegion.cpp
+            src/internal/PassiveEndpoint.cpp
+            src/internal/Provider.cpp
+            src/internal/RCInitiator.cpp
+            src/internal/RCTarget.cpp
+            src/internal/RDMInitiator.cpp
+            src/internal/RDMTarget.cpp
+            src/internal/Region.cpp
+            src/internal/RegisteredRegion.cpp
+            src/internal/RemoteRegion.cpp
+            src/internal/Target.cpp
+            src/internal/TargetInfo.cpp
     )
 target_link_libraries(mxl-fabrics-objects
         PUBLIC

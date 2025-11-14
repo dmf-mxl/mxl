@@ -188,21 +188,23 @@ extern "C"
     /**
      * Non-blocking accessor for a flow grain at a specific index.
      * \param in_target A valid fabrics target
-     * \param out_index The index of the grain that is ready, if any.
+     * \param out_entryIndex The index of the grain ring buffer index that is ready, if any.
+     * \param out_sliceIndex The last valid slice index that is ready, if any.
      * \return The result code. MXL_ERR_NOT_READY if no grain was available at the time of the call, and the call should be retried. \see mxlStatus
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsTargetTryNewGrain(mxlFabricsTarget in_target, uint64_t* out_index);
+    mxlStatus mxlFabricsTargetTryNewGrain(mxlFabricsTarget in_target, uint16_t* out_entryIndex, uint16_t* out_sliceIndex);
 
     /**
      * Blocking accessor for a flow grain at a specific index.
      * \param in_target A valid fabrics target
-     * \param out_index The index of the grain that is ready, if any.
+     * \param out_entryIndex The index of the grain ring buffer index that is ready, if any.
+     * \param out_sliceIndex The last valid slice index that is ready, if any.
      * \param in_timeoutMs How long should we wait for the grain (in milliseconds)
      * \return The result code. MXL_ERR_NOT_READY if no grain was available before the timeout. \see mxlStatus
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsTargetWaitForNewGrain(mxlFabricsTarget in_target, uint64_t* out_index, uint16_t in_timeoutMs);
+    mxlStatus mxlFabricsTargetWaitForNewGrain(mxlFabricsTarget in_target, uint16_t* out_entryIndex, uint16_t* out_sliceIndex, uint16_t in_timeoutMs);
 
     /**
      * Create a fabrics initiator instance.
@@ -252,14 +254,42 @@ extern "C"
     mxlStatus mxlFabricsInitiatorRemoveTarget(mxlFabricsInitiator in_initiator, mxlTargetInfo const in_targetInfo);
 
     /**
+     * Enqueue a transfer operation to a specific target. This function is always non-blocking. The transfer operation might be started right
+     * away, but is only guaranteed to have completed after mxlFabricsInitiatorMakeProgress*() no longer returns MXL_ERR_NOT_READY.
+     * \param in_initiator A valid fabrics initiator
+     * \param in_targetInfo The target information of the specific target. This should be the same as the one returned from "mxlFabricsTargetSetup".
+     * \param in_localIndex The index of the memory region (local) to transfer. The ordering was given when mxlRegions object was created.
+     * \param in_localOffset Offset in bytes inside the local memory region. For full grain transfer, use 0.
+     * \param in_remoteIndex The index of the memory region (remote) to receive the transfer at the target side. The ordering was given when
+     * mxlRegions object was created.
+     * \param in_remoteOffset Offset in bytes inside the remote memory region. For full grain transfer, use 0.
+     * \param in_size Transfer size in bytes.
+     * \param in_validSlices The number of valid slices in the transfer.
+     * \return The result code. \see mxlStatus
+     * \note This function is useful when the underlying buffer layout does not match the MXL grain data layout. Otherwise \see
+     * mxlFabricsInitiatorTransferGrain()
+     */
+    MXL_EXPORT
+    mxlStatus mxlFabricsInitiatorTransferGrainToTarget(mxlFabricsInitiator in_initiator, mxlTargetInfo const in_targetInfo, uint64_t in_localIndex,
+        uint64_t in_localOffset, uint64_t in_remoteIndex, uint64_t in_remoteOffset, uint32_t in_size, std::uint16_t in_validSlices);
+
+    /**
      * Enqueue a transfer operation to all added targets. This function is always non-blocking. The transfer operation might be started right
      * away, but is only guaranteed to have completed after mxlFabricsInitiatorMakeProgress*() no longer returns MXL_ERR_NOT_READY.
      * \param in_initiator A valid fabrics initiator
-     * \param in_grainIndex The index of the grain to transfer.
+     * \param in_grainIndex The  grain index to transfer. The ordering was given when mxlRegions object were created. This is true for both local and
+     * remote memory regions.
+     * \param in_offset Offset in bytes inside the memory region. For full grain transfer, use 0.
+     * \param in_size Transfer size in bytes.
+     * \param in_validSlices The number of valid slices in the transfer.
      * \return The result code. \see mxlStatus
+     * \note This function assumes: (1) the underlying buffer layout matches the MXL grain data layout, and (2) ring buffer entries for local and
+     * remote regions can be calculated via modulo operation: `grainIndex % regions.size()`.If these assumptions do not hold, use
+     * mxlFabricsInitiatorTransferGrainToTarget() instead.
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsInitiatorTransferGrain(mxlFabricsInitiator in_initiator, uint64_t in_grainIndex);
+    mxlStatus mxlFabricsInitiatorTransferGrain(mxlFabricsInitiator in_initiator, uint64_t in_grainIndex, uint64_t in_offset, uint32_t in_size,
+        std::uint16_t in_validSlices);
 
     /**
      * This function must be called regularly for the initiator to make progress on queued transfer operations, connection establishment
