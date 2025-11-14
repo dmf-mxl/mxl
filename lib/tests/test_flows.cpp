@@ -569,8 +569,8 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : Options
     REQUIRE(mxlDestroyFlow(instanceWriter, uuids::to_string(configInfo.common.id).c_str()) == MXL_STATUS_OK);
 
     REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), NULL, &configInfo) == MXL_STATUS_OK);
-    REQUIRE(configInfo.common.maxCommitBatchSizeHint == 1U);
-    REQUIRE(configInfo.common.maxSyncBatchSizeHint == 1U);
+    REQUIRE(configInfo.common.maxCommitBatchSizeHint == 1080U);
+    REQUIRE(configInfo.common.maxSyncBatchSizeHint == 1080U);
     REQUIRE(mxlDestroyFlow(instanceWriter, uuids::to_string(configInfo.common.id).c_str()) == MXL_STATUS_OK);
     REQUIRE(mxlDestroyInstance(instanceWriter) == MXL_STATUS_OK);
 }
@@ -970,8 +970,8 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Audio Flow : Options
     REQUIRE(mxlDestroyFlow(instanceWriter, uuids::to_string(configInfo.common.id).c_str()) == MXL_STATUS_OK);
 
     REQUIRE(mxlCreateFlow(instanceWriter, flowDef.c_str(), NULL, &configInfo) == MXL_STATUS_OK);
-    REQUIRE(configInfo.common.maxCommitBatchSizeHint == 1U);
-    REQUIRE(configInfo.common.maxSyncBatchSizeHint == 1U);
+    REQUIRE(configInfo.common.maxCommitBatchSizeHint == 480U);
+    REQUIRE(configInfo.common.maxSyncBatchSizeHint == 480U);
     REQUIRE(mxlDestroyFlow(instanceWriter, uuids::to_string(configInfo.common.id).c_str()) == MXL_STATUS_OK);
     REQUIRE(mxlDestroyInstance(instanceWriter) == MXL_STATUS_OK);
 }

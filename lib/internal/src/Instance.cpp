@@ -239,6 +239,8 @@ namespace mxl::lib
             // Compute the grain count based on our configured history duration
             auto const grainCount = _historyDuration * grainRate.numerator / (1'000'000'000ULL * grainRate.denominator);
 
+            auto const batchSizeDefault = parser.getTotalPayloadSlices();
+
             return _flowManager.createDiscreteFlow(parser.getId(),
                 flowDef,
                 parser.getFormat(),
@@ -247,8 +249,8 @@ namespace mxl::lib
                 parser.getPayloadSize(),
                 parser.getTotalPayloadSlices(),
                 parser.getPayloadSliceLengths(),
-                optionsParser.getMaxSyncBatchSizeHint(),
-                optionsParser.getMaxCommitBatchSizeHint());
+                optionsParser.getMaxSyncBatchSizeHint().value_or(batchSizeDefault),
+                optionsParser.getMaxCommitBatchSizeHint().value_or(batchSizeDefault));
         }
         else if (mxlIsContinuousDataFormat(format))
         {
@@ -263,6 +265,9 @@ namespace mxl::lib
 
             auto const pageAlignedLength = ((bufferLength + lengthPerPage - 1U) / lengthPerPage) * lengthPerPage;
 
+            // Default to 10ms worth of samples
+            auto batchSizeDefault = parser.getGrainRate().numerator / (100U * parser.getGrainRate().denominator);
+
             return _flowManager.createContinuousFlow(parser.getId(),
                 flowDef,
                 parser.getFormat(),
@@ -270,8 +275,8 @@ namespace mxl::lib
                 parser.getChannelCount(),
                 sampleWordSize,
                 pageAlignedLength,
-                optionsParser.getMaxSyncBatchSizeHint(),
-                optionsParser.getMaxCommitBatchSizeHint());
+                optionsParser.getMaxSyncBatchSizeHint().value_or(batchSizeDefault),
+                optionsParser.getMaxCommitBatchSizeHint().value_or(batchSizeDefault));
         }
         throw std::runtime_error("Unsupported flow format.");
     }

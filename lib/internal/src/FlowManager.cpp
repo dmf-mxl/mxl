@@ -79,8 +79,7 @@ namespace mxl::lib
         }
 
         mxlCommonFlowConfigInfo initCommonFlowConfigInfo(uuids::uuid const& flowId, mxlDataFormat format, mxlRational grainRate,
-            std::optional<std::uint32_t> const& maxSyncBatchSizeHintOpt = std::nullopt,
-            std::optional<std::uint32_t> const& maxCommitBatchSizeHintOpt = std::nullopt)
+            std::uint32_t maxSyncBatchSizeHintOpt, std::uint32_t maxCommitBatchSizeHintOpt)
         {
             auto result = mxlCommonFlowConfigInfo{};
 
@@ -89,8 +88,8 @@ namespace mxl::lib
             result.format = format;
             result.grainRate = grainRate;
 
-            result.maxCommitBatchSizeHint = maxCommitBatchSizeHintOpt.value_or(1);
-            result.maxSyncBatchSizeHint = maxSyncBatchSizeHintOpt.value_or(1);
+            result.maxCommitBatchSizeHint = maxCommitBatchSizeHintOpt;
+            result.maxSyncBatchSizeHint = maxSyncBatchSizeHintOpt;
 
             // FIXME: This should come from the configuration when device memory is supported
             result.payloadLocation = MXL_PAYLOAD_LOCATION_HOST_MEMORY;
@@ -143,8 +142,8 @@ namespace mxl::lib
 
     std::unique_ptr<DiscreteFlowData> FlowManager::createDiscreteFlow(uuids::uuid const& flowId, std::string const& flowDef, mxlDataFormat flowFormat,
         std::size_t grainCount, mxlRational const& grainRate, std::size_t grainPayloadSize, std::size_t grainNumOfSlices,
-        std::array<uint32_t, MXL_MAX_PLANES_PER_GRAIN> grainSliceLengths, std::optional<std::uint32_t> maxSyncBatchSizeHintOpt,
-        std::optional<std::uint32_t> maxCommitBatchSizeHintOpt)
+        std::array<uint32_t, MXL_MAX_PLANES_PER_GRAIN> grainSliceLengths, std::uint32_t maxSyncBatchSizeHintOpt,
+        std::uint32_t maxCommitBatchSizeHintOpt)
     {
         auto const uuidString = uuids::to_string(flowId);
         MXL_DEBUG("Create discrete flow. id: {}, grainCount: {}, grain payload size: {}", uuidString, grainCount, grainPayloadSize);
@@ -221,7 +220,7 @@ namespace mxl::lib
 
     std::unique_ptr<ContinuousFlowData> FlowManager::createContinuousFlow(uuids::uuid const& flowId, std::string const& flowDef,
         mxlDataFormat flowFormat, mxlRational const& sampleRate, std::size_t channelCount, std::size_t sampleWordSize, std::size_t bufferLength,
-        std::optional<std::uint32_t> maxSyncBatchSizeHintOpt, std::optional<std::uint32_t> maxCommitBatchSizeHintOpt)
+        std::uint32_t maxSyncBatchSizeHintOpt, std::uint32_t maxCommitBatchSizeHintOpt)
     {
         auto const uuidString = uuids::to_string(flowId);
         MXL_DEBUG("Create continuous flow. id: {}, channel count: {}, word size: {}, buffer length: {}",
