@@ -32,13 +32,15 @@ namespace mxl::lib
          * The index must be greater than or equal to the current tail index of the flow.
          *
          * \param in_index The grain index.
+         * \param in_minValidSlices The expected number of valid slices in the returned mxlGrainInfo.
          * \param out_grainInfo A valid pointer to mxlGrainInfo that will be copied to
          * \param out_payload A valid void pointer to pointer that will be set to the first byte of the grain payload.
          *     Payload size is available in the mxlGrainInfo structure.
          *
          * \return A status code describing the outcome of the call.
          */
-        virtual mxlStatus getGrain(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload) = 0;
+        virtual mxlStatus getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo,
+            std::uint8_t** out_payload) = 0;
 
     protected:
         using FlowReader::FlowReader;
