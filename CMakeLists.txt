@@ -16,7 +16,7 @@ cmake_policy(SET CMP0135 NEW)
 
 option(MXL_ENABLE_FABRICS_OFI "Enable building the fabrics library with libfabric" OFF)
 
-set(mxl_VERSION 0.9.1)
+set(mxl_VERSION 0.10.0)
 
 if(DEFINED MXL_BUILD_NUMBER)
     string(APPEND mxl_VERSION ".${MXL_BUILD_NUMBER}")

@@ -59,13 +59,19 @@ namespace mxl::lib
         throw std::runtime_error("No open flow.");
     }
 
-    mxlFlowInfo PosixDiscreteFlowReader::getFlowInfo()
+    mxlFlowInfo PosixDiscreteFlowReader::getFlowInfo() const
     {
-        if (_flowData)
-        {
-            return *_flowData->flowInfo();
-        }
-        throw std::runtime_error("No open flow.");
+        return *getFlowData().flowInfo();
+    }
+
+    mxlFlowConfigInfo PosixDiscreteFlowReader::getFlowConfigInfo() const
+    {
+        return getFlowData().flowInfo()->config;
+    }
+
+    mxlFlowRuntimeInfo PosixDiscreteFlowReader::getFlowRuntimeInfo() const
+    {
+        return getFlowData().flowInfo()->runtime;
     }
 
     mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, std::uint64_t in_timeoutNs,
@@ -77,13 +83,14 @@ namespace mxl::lib
         if (_flowData)
         {
             auto const flow = _flowData->flow();
+            auto const syncObject = std::atomic_ref{flow->state.syncCounter};
             while (true)
             {
                 // We remember the sync counter before checking the head index, otherwise we would introduce a race condition:
                 // 1. We check the header index, data won't be available yet.
                 // 2. Writer writes the data and updates the counter.
                 // 3. If we used the current value of the counter for the futex, we would delay everything by 1 grain.
-                auto previousSyncCounter = flow->state.syncCounter;
+                auto const previousSyncCounter = syncObject.load(std::memory_order_acquire);
                 if (auto const headIndex = flow->info.runtime.headIndex; in_index <= headIndex)
                 {
                     auto const grainCount = flow->info.config.discrete.grainCount;
@@ -110,17 +117,14 @@ namespace mxl::lib
                     }
                 }
 
+                // NOTE: Before C++26 there is no way to access the address of the object
+                //      wrapped by an atomic_ref. If there were it would be much more
+                //      appropriate to pass syncObject by reference here and only unwrap the
+                //      underlying integer in the implementation of waitUntilChanged.
                 if (!waitUntilChanged(&flow->state.syncCounter, previousSyncCounter, deadline))
                 {
-                    if (waitUntilChanged(&flow->state.syncCounter, previousSyncCounter, deadline))
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        status = MXL_ERR_TIMEOUT;
-                        break;
-                    }
+                    status = MXL_ERR_TIMEOUT;
+                    break;
                 }
             }
 

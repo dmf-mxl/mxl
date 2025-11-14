@@ -346,6 +346,30 @@ extern "C"
      *
      * \param[in] index The head index of the samples to obtain.
      * \param[in] count The number of samples to obtain.
+     * \param[in] timeoutNs How long to wait in nanoseconds for the range of
+     *      samples to become available.
+     * \param[out] payloadBuffersSlices A pointer to a wrapped multi buffer
+     *      slice that represents the requested range across all channel
+     *      buffers.
+     *
+     * \return A status code describing the outcome of the call. Please note
+     *      that this method will never return MXL_ERR_TIMEOUT, because the
+     *      actual error that is being encountered in this case is
+     *      MXL_ERR_OUT_OF_RANGE_TOO_EARLY, even after waiting.
+     * \note No guarantees are made as to how long the caller may
+     *      safely hang on to the returned range of samples without the
+     *      risk of these samples being overwritten.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowReaderGetSamples(mxlFlowReader reader, uint64_t index, size_t count, uint64_t timeoutNs,
+        mxlWrappedMultiBufferSlice* payloadBuffersSlices);
+
+    /**
+     * Non-blocking accessor for a specific set of samples across all channels
+     * ending at a specific index (`count` samples up to `index`).
+     *
+     * \param[in] index The head index of the samples to obtain.
+     * \param[in] count The number of samples to obtain.
      * \param[out] payloadBuffersSlices A pointer to a wrapped multi buffer
      *      slice that represents the requested range across all channel
      *      buffers.
@@ -356,7 +380,8 @@ extern "C"
      *      risk of these samples being overwritten.
      */
     MXL_EXPORT
-    mxlStatus mxlFlowReaderGetSamples(mxlFlowReader reader, uint64_t index, size_t count, mxlWrappedMultiBufferSlice* payloadBuffersSlices);
+    mxlStatus mxlFlowReaderGetSamplesNonBlocking(mxlFlowReader reader, uint64_t index, size_t count,
+        mxlWrappedMultiBufferSlice* payloadBuffersSlices);
 
     /**
      * Open a specific set of mutable samples across all channels starting at a

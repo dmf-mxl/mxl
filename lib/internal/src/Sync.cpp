@@ -5,6 +5,7 @@
 #include <cerrno>
 #include <climits>
 #include <cstdint>
+#include <atomic>
 #include <unistd.h>
 #if defined(__linux__)
 #   include <sys/syscall.h>
@@ -19,6 +20,12 @@ namespace mxl::lib
 {
     namespace
     {
+        template<typename T, typename U>
+        constexpr inline auto const same_properties_as_v = (sizeof(T) == sizeof(U)) && (alignof(T) == alignof(U));
+
+        template<typename T>
+        constexpr inline auto const valid_specialization_v = same_properties_as_v<T, std::int32_t>;
+
 #if defined(__linux__)
         int do_wait(void const* futex, std::uint32_t expected, Duration timeout)
         {
@@ -60,48 +67,48 @@ namespace mxl::lib
     template<typename T>
     bool waitUntilChanged(T const* in_addr, T in_expected, Timepoint in_deadline)
     {
-        static_assert(sizeof(T) == sizeof(std::uint32_t), "Only 32-bit types are supported.");
+        static_assert(valid_specialization_v<T>, "Only 32 bit types with natural alignment are supported.");
 
-        while (true)
+        auto syncObject = std::atomic_ref{*in_addr};
+        while (syncObject.load(std::memory_order_acquire) == in_expected)
         {
             auto const now = currentTime(Clock::Realtime);
             if (now >= in_deadline)
             {
                 MXL_DEBUG("Deadline already reached");
-                return false; // Timeout
+                return false;
             }
 
-            auto const ret = do_wait(in_addr, in_expected, in_deadline - now);
-            if (ret == 0)
-            {
-                // TODO: This should probably be an atomic ...
-                if (*in_addr != static_cast<T>(in_expected))
-                {
-                    return true;
-                }
-            }
-            else
+            // ATTENTION: Do not check for != 0, as positive values are success indicators
+            //      in the macOS implementation of this function.
+            // NOTE: Unfortunately syncObject.address() is only available from C++26 onwards
+            if (auto const ret = do_wait(in_addr, in_expected, in_deadline - now); ret == -1)
             {
                 switch (errno)
                 {
-                    case EAGAIN:    MXL_TRACE("EAGAIN. returning true"); return true;
-
-                    case ETIMEDOUT: MXL_TRACE("ETIMEDOUT. returning false"); return false;
+                    case EAGAIN:
+                        // On linux EAGAIN indicates that the kernel detected *in_addr to
+                        // not be equal to in_expected.
+                        continue;
 
                     case EINTR:
                         // Interrupted. try again.
                         continue;
-                }
 
+                    case ETIMEDOUT: MXL_TRACE("ETIMEDOUT. returning false"); break;
+
+                    default:        break;
+                }
                 return false;
             }
         }
+        return true;
     }
 
     template<typename T>
     bool waitUntilChanged(T const* in_addr, T in_expected, Duration in_timeout)
     {
-        static_assert(sizeof(T) == sizeof(std::uint32_t), "Only 32-bit types are supported.");
+        static_assert(valid_specialization_v<T>, "Only 32 bit types with natural alignment are supported.");
 
         return waitUntilChanged(in_addr, in_expected, currentTime(Clock::Realtime) + in_timeout);
     }
@@ -109,7 +116,7 @@ namespace mxl::lib
     template<typename T>
     void wakeOne(T const* in_addr)
     {
-        static_assert(sizeof(T) == sizeof(std::uint32_t), "Only 32-bit types are supported.");
+        static_assert(valid_specialization_v<T>, "Only 32 bit types with natural alignment are supported.");
 
         MXL_TRACE("Wake one waiting on = {}, val : {}", static_cast<void const*>(in_addr), *in_addr);
         do_wake_one(in_addr);
@@ -118,7 +125,7 @@ namespace mxl::lib
     template<typename T>
     void wakeAll(T const* in_addr)
     {
-        static_assert(sizeof(T) == sizeof(std::uint32_t), "Only 32-bit types are supported.");
+        static_assert(valid_specialization_v<T>, "Only 32 bit types with natural alignment are supported.");
 
         MXL_TRACE("Wake all waiting on = {}, val : {}", static_cast<void const*>(in_addr), *in_addr);
         do_wake_all(in_addr);

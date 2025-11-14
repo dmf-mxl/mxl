@@ -28,40 +28,49 @@ namespace mxl::lib
          */
         PosixContinuousFlowReader(FlowManager const& manager, uuids::uuid const& flowId, std::unique_ptr<ContinuousFlowData>&& data);
 
-        /**
-         * Accessor for the underlying flow data.
-         * The flow reader must first open the flow before invoking this method.
-         */
+        /** \see FlowReader::getFlowData */
         [[nodiscard]]
-        FlowData const& getFlowData() const final;
+        virtual FlowData const& getFlowData() const override;
 
-        /**
-         * Accessor for the current mxlFlowInfo. A copy of the current structure is returned.
-         * The reader must be properly attached to the flow before invoking this method.
-         * \return A copy of the mxlFlowInfo
-         */
-        virtual mxlFlowInfo getFlowInfo() override;
+    public:
+        /** \see FlowReader::getFlowInfo */
+        [[nodiscard]]
+        virtual mxlFlowInfo getFlowInfo() const override;
 
-        /**
-         * Accessor for a specific set of samples across all channels
-         * ending at a specific index (`count` samples up to `index`).
-         *
-         * \param[in] index The head index of the samples to obtain.
-         * \param[in] count The number of samples to obtain.
-         * \param[out] payloadBuffersSlices A reference to a wrapped multi
-         *      buffer slice that represents the requested range across all
-         *      channel buffers.
-         *
-         * \return A status code describing the outcome of the call.
-         * \note No guarantees are made as to how long the caller may
-         *      safely hang on to the returned range of samples without the
-         *      risk of these samples being overwritten.
-         */
+        /** \see FlowReader::getFlowConfigInfo */
+        [[nodiscard]]
+        virtual mxlFlowConfigInfo getFlowConfigInfo() const override;
+
+        /** \see FlowReader::getFlowRuntimeInfo */
+        [[nodiscard]]
+        virtual mxlFlowRuntimeInfo getFlowRuntimeInfo() const override;
+
+        /** \see ContinuousFlowReader::getSamples */
+        virtual mxlStatus getSamples(std::uint64_t index, std::size_t count, std::uint64_t timeoutNs,
+            mxlWrappedMultiBufferSlice& payloadBuffersSlices) override;
+
+        /** \see ContinuousFlowReader::getSamples */
         virtual mxlStatus getSamples(std::uint64_t index, std::size_t count, mxlWrappedMultiBufferSlice& payloadBuffersSlices) override;
 
     protected:
-        /// \see FlowReader::isFlowValid
+        /** \see FlowReader::isFlowValid */
+        [[nodiscard]]
         virtual bool isFlowValid() const override;
+
+    private:
+        /**
+         * Implementation of isFlowValid() that can be used by other methods
+         * that have previously asserted that we're operating on a valid flow.
+         */
+        [[nodiscard]]
+        bool isFlowValidImpl() const;
+
+        /**
+         * Implementation of the various forms of getSamples() that can also be
+         * used by other methods that habe previously asserted that we're
+         * operating on a valid flow.
+         */
+        mxlStatus getSamplesImpl(std::uint64_t index, std::size_t count, mxlWrappedMultiBufferSlice& payloadBuffersSlices) const;
 
     private:
         std::unique_ptr<ContinuousFlowData> _flowData;

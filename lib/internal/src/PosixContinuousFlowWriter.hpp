@@ -19,7 +19,7 @@ namespace mxl::lib
     /**
      * Implementation of a FlowWriter based on POSIX shared memory mapping.
      */
-    class PosixContinuousFlowWriter : public ContinuousFlowWriter
+    class PosixContinuousFlowWriter final : public ContinuousFlowWriter
     {
     public:
         /**
@@ -30,15 +30,22 @@ namespace mxl::lib
          */
         PosixContinuousFlowWriter(FlowManager const& manager, uuids::uuid const& flowId, std::unique_ptr<ContinuousFlowData>&& data);
 
-        /**
-         * Accessor for the underlying flow data.
-         * The flow writer must first open the flow before invoking this method.
-         */
+    public:
+        /** \see FlowWriter::getFlowData */
         [[nodiscard]]
-        FlowData const& getFlowData() const final;
+        virtual FlowData const& getFlowData() const override;
 
         /** \see FlowWriter::getFlowInfo */
-        virtual mxlFlowInfo getFlowInfo() override;
+        [[nodiscard]]
+        virtual mxlFlowInfo getFlowInfo() const override;
+
+        /** \see FlowWriter::getFlowConfigInfo */
+        [[nodiscard]]
+        virtual mxlFlowConfigInfo getFlowConfigInfo() const override;
+
+        /** \see FlowWriter::getFlowRuntimeInfo */
+        [[nodiscard]]
+        virtual mxlFlowRuntimeInfo getFlowRuntimeInfo() const override;
 
         /** \see ContinuousFlowWriter::openSamples */
         virtual mxlStatus openSamples(std::uint64_t index, std::size_t count, mxlMutableWrappedMultiBufferSlice& payloadBufferSlices) override;
@@ -53,6 +60,9 @@ namespace mxl::lib
         virtual void flowRead() override;
 
     private:
+        bool signalCompletedBatch() noexcept;
+
+    private:
         /** The FlowData for the currently opened flow. null if no flow is opened. */
         std::unique_ptr<ContinuousFlowData> _flowData;
         /** Cached copy of the numer of channels from mxlFlowInfo. */
@@ -61,5 +71,13 @@ namespace mxl::lib
         std::size_t _bufferLength;
         /** The currently opened sample range head index. MXL_UNDEFINED_INDEX if no range is currently opened. */
         std::uint64_t _currentIndex;
+
+        /** Cached preprocessed copy of mxlCommonFlowInfo::maxSyncBatchSizeHint. */
+        std::uint32_t _syncBatchSize;
+        /** The threshold at which to signal even before _maxSyncBatchSizeHint is reached, in order to not exceed the maximum. */
+        std::uint32_t _earlySyncThreshold;
+
+        /** The last sample batch (as a factor of _maxSyncBatchSizeHint) that has been signaled. */
+        std::uint64_t _lastSyncSampleBatch;
     };
 }

@@ -8,6 +8,7 @@
 #include <iosfwd>
 #include <mxl/flow.h>
 #include <mxl/platform.h>
+#include "FlowInfo.hpp"
 #include "FlowState.hpp"
 
 namespace mxl::lib
@@ -27,8 +28,6 @@ namespace mxl::lib
         mxlFlowInfo info;
         mxl::lib::FlowState state;
     };
-
-    std::ostream& operator<<(std::ostream& os, Flow const& obj);
 
     /// The first 8KiB of a grain are reserved for the mxlGrainInfo structure, including user data.  Ample padding is provided
     /// between the header and the payload.  Payload is page aligned AND AVX512 (64 bytes) aligned.

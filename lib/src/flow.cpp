@@ -412,7 +412,8 @@ mxlStatus mxlFlowWriterGetGrainInfo(mxlFlowWriter writer, uint64_t index, mxlGra
         {
             if (auto const cppWriter = dynamic_cast<DiscreteFlowWriter*>(to_FlowWriter(writer)); cppWriter != nullptr)
             {
-                return cppWriter->getGrainInfo(index, grainInfo);
+                *grainInfo = cppWriter->getGrainInfo(index);
+                return MXL_STATUS_OK;
             }
 
             return MXL_ERR_INVALID_FLOW_WRITER;
@@ -491,7 +492,31 @@ mxlStatus mxlFlowWriterCommitGrain(mxlFlowWriter writer, mxlGrainInfo const* gra
 
 extern "C"
 MXL_EXPORT
-mxlStatus mxlFlowReaderGetSamples(mxlFlowReader reader, uint64_t index, size_t count, mxlWrappedMultiBufferSlice* payloadBuffersSlices)
+mxlStatus mxlFlowReaderGetSamples(mxlFlowReader reader, uint64_t index, size_t count, uint64_t timeoutNs,
+    mxlWrappedMultiBufferSlice* payloadBuffersSlices)
+{
+    try
+    {
+        if (payloadBuffersSlices != nullptr)
+        {
+            if (auto const cppReader = dynamic_cast<ContinuousFlowReader*>(to_FlowReader(reader)); cppReader != nullptr)
+            {
+                return cppReader->getSamples(index, count, timeoutNs, *payloadBuffersSlices);
+            }
+
+            return MXL_ERR_INVALID_FLOW_WRITER;
+        }
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowReaderGetSamplesNonBlocking(mxlFlowReader reader, uint64_t index, size_t count, mxlWrappedMultiBufferSlice* payloadBuffersSlices)
 {
     try
     {

@@ -10,9 +10,11 @@ namespace mxl::lib
     class DiscreteFlowWriter : public FlowWriter
     {
     public:
-        /** \brief Used to get the grain info for a specific grain index without opening the grain for mutation.
+        /**
+         * Get the grain info for a specific grain index without opening the grain for mutation.
          */
-        virtual mxlStatus getGrainInfo(std::uint64_t in_index, mxlGrainInfo* out_grainInfo) = 0;
+        [[nodiscard]]
+        virtual mxlGrainInfo getGrainInfo(std::uint64_t in_index) const = 0;
 
         virtual mxlStatus openGrain(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload) = 0;
 
