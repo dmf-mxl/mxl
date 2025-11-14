@@ -3,10 +3,22 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "RemoteRegion.hpp"
+#include <cassert>
 #include <algorithm>
 
 namespace mxl::lib::fabrics::ofi
 {
+
+    RemoteRegion RemoteRegion::sub(std::uint64_t offset, std::size_t length) const noexcept
+    {
+        assert(offset + length <= len);
+
+        return RemoteRegion{
+            .addr = addr + offset,
+            .len = length,
+            .rkey = rkey,
+        };
+    }
 
     ::fi_rma_iov RemoteRegion::toRmaIov() const noexcept
     {

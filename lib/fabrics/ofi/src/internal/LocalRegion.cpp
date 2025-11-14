@@ -7,6 +7,18 @@
 
 namespace mxl::lib::fabrics::ofi
 {
+
+    LocalRegion LocalRegion::sub(std::uint64_t offset, std::size_t length) const noexcept
+    {
+        assert(offset + length <= len);
+
+        return LocalRegion{
+            .addr = addr + offset,
+            .len = length,
+            .desc = desc,
+        };
+    }
+
     ::iovec LocalRegion::toIovec() const noexcept
     {
         return ::iovec{.iov_base = reinterpret_cast<void*>(addr), .iov_len = len};

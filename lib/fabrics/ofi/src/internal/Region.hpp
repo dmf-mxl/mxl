@@ -212,7 +212,7 @@ namespace mxl::lib::fabrics::ofi
         // DataLayout const& dataLayout() const noexcept;
 
     private:
-        friend MxlRegions mxlRegionsFromFlow(FlowData& flow);
+        friend MxlRegions mxlRegionsFromFlow(FlowData const& flow);
         friend MxlRegions mxlRegionsFromUser(mxlFabricsMemoryRegion const* regions, size_t count);
 
     private:
@@ -230,7 +230,7 @@ namespace mxl::lib::fabrics::ofi
      *
      * FlowData are obtained from an MXL FlowWriter or FlowReader.
      */
-    MxlRegions mxlRegionsFromFlow(FlowData& flow);
+    MxlRegions mxlRegionsFromFlow(FlowData const& flow);
 
     /** \brief Convert user-provided memory regions to MxlRegions.
      *

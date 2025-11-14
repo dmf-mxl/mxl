@@ -127,20 +127,44 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         bool isConnReq() const noexcept;
 
+        /** \brief get a connection request representation of the event. Throws if the event is not a connection request. Users should previously
+         * check if the event is a connection request, see isConnReq().
+         */
+        [[nodiscard]]
+        ConnectionRequested const& connReq() const;
+
         /** \brief returns true if this event is a FI_CONNECTED
          */
         [[nodiscard]]
         bool isConnected() const noexcept;
+
+        /** \brief get a connected representation of the event. Throws if the event is not a connected event. Users should previously check if the
+         * event is a connected event, see isConnected().
+         */
+        [[nodiscard]]
+        Connected const& connected() const;
 
         /** \brief returns true if this event is a FI_SHUTDOWN
          */
         [[nodiscard]]
         bool isShutdown() const noexcept;
 
+        /** \brief get a shutdown representation of the event. Throws if the event is not a shutdown event. Users should previously check if the event
+         * is a shutdown event, see isShutdown().
+         */
+        [[nodiscard]]
+        Shutdown const& shutdown() const;
+
         /** \brief returns true if this event is an error entry
          */
         [[nodiscard]]
         bool isError() const noexcept;
+
+        /** \brief get an error representation of the event. Throws if the event is an error. Users should previously check if the event is an error,
+         * see isError().
+         */
+        [[nodiscard]]
+        Error const& error() const;
 
         /** \brief fabric descriptor associated with the event
          */
