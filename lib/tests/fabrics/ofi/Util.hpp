@@ -11,7 +11,6 @@
 #include <fmt/format.h>
 #include <rdma/fabric.h>
 #include "mxl/fabrics.h"
-#include "mxl/flow.h"
 #include "Domain.hpp"
 #include "Region.hpp"
 
@@ -105,9 +104,12 @@ namespace mxl::lib::fabrics::ofi
             }
         };
 
+
+        auto config = mxlFabricsUserRegionsConfig{.regions=mxlRegions.data(), .regionsCount = mxlRegions.size(), .sliceSize={8,0,0,0}};
+
         // clang-format on
 
-        return {mxlRegionsFromUser(mxlRegions.data(), mxlRegions.size()), innerRegions};
+        return {mxlRegionsFromUser(config), innerRegions};
     }
 
     inline std::pair<mxlRegions, InnerRegions> getUserMxlRegions()
@@ -118,11 +120,13 @@ namespace mxl::lib::fabrics::ofi
                                    .size = regions[0].size(),
                                    .loc = {.type = MXL_PAYLOAD_LOCATION_HOST_MEMORY, .deviceId = 0}},
         };
+        auto config = mxlFabricsUserRegionsConfig{
+            .regions = memoryRegions.data(), .regionsCount = memoryRegions.size(), .sliceSize = {8, 0, 0, 0}
+        };
 
         mxlRegions outRegions;
-        mxlFabricsRegionsFromUserBuffers(memoryRegions.data(), memoryRegions.size(), &outRegions);
+        mxlFabricsRegionsFromUserBuffers(&config, &outRegions);
 
         return {outRegions, regions};
     }
-
 }

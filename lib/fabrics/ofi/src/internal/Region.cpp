@@ -9,7 +9,7 @@
 #include <bits/types/struct_iovec.h>
 #include <mxl-internal/DiscreteFlowData.hpp>
 #include <mxl-internal/Flow.hpp>
-#include "mxl-internal/ContinuousFlowData.hpp"
+#include "mxl/fabrics.h"
 #include "mxl/flow.h"
 #include "mxl/mxl.h"
 #include "Exception.hpp"
@@ -124,6 +124,11 @@ namespace mxl::lib::fabrics::ofi
         return _regions;
     }
 
+    DataLayout const& MxlRegions::dataLayout() const noexcept
+    {
+        return _layout;
+    }
+
     MxlRegions mxlRegionsFromFlow(FlowData const& flow)
     {
         static_assert(sizeof(GrainHeader) == 8192,
@@ -158,34 +163,35 @@ namespace mxl::lib::fabrics::ofi
                 regions.emplace_back(grainInfoBaseAddr, grainInfoSize + grainPayloadSize, Region::Location::host());
             }
 
-            return {std::move(regions)};
+            // TODO: Add an utility function to retrieve the number of available planes when alpha support is added.
+            return {std::move(regions), DataLayout::fromVideo(std::to_array(discreteFlow.flowInfo()->config.discrete.sliceSizes))};
         }
-        else if (mxlIsContinuousDataFormat(flow.flowInfo()->config.common.format))
-        {
-            auto& continuousFlow = static_cast<ContinuousFlowData const&>(flow);
-            std::vector<Region> regions;
-
-            // For the continuous flow, the data layout is a single contiguous buffer
-            regions.emplace_back(
-                reinterpret_cast<std::uintptr_t>(continuousFlow.channelData()), continuousFlow.channelDataLength(), Region::Location::host());
-
-            return {std::move(regions)};
-        }
-
+        // else if (mxlIsContinuousDataFormat(flow.flowInfo()->config.common.format))
+        // {
+        //     auto& continuousFlow = static_cast<ContinuousFlowData const&>(flow);
+        //     std::vector<Region> regions;
+        //
+        //     // For the continuous flow, the data layout is a single contiguous buffer
+        //     regions.emplace_back(
+        //         reinterpret_cast<std::uintptr_t>(continuousFlow.channelData()), continuousFlow.channelDataLength(), Region::Location::host());
+        //
+        //     return {std::move(regions)};
+        // }
+        //
         else
         {
             throw Exception::make(MXL_ERR_UNKNOWN, "Unsupported flow fromat {}", flow.flowInfo()->config.common.format);
         }
     }
 
-    MxlRegions mxlRegionsFromUser(mxlFabricsMemoryRegion const* regions, size_t count)
+    MxlRegions mxlRegionsFromUser(mxlFabricsUserRegionsConfig const& config)
     {
         std::vector<Region> outRegions;
-        for (size_t i = 0; i < count; i++)
+        for (size_t i = 0; i < config.regionsCount; i++)
         {
-            outRegions.emplace_back(regions[i].addr, regions[i].size, Region::Location::fromAPI(regions[i].loc));
+            outRegions.emplace_back(config.regions[i].addr, config.regions[i].size, Region::Location::fromAPI(config.regions[i].loc));
         }
 
-        return {std::move(outRegions) /*, DataLayout::fromVideo(false)*/}; // TODO: datalayout struct definition at API level
+        return {std::move(outRegions), DataLayout::fromVideo(std::to_array(config.sliceSize))}; // TODO: datalayout struct definition at API level
     }
 }

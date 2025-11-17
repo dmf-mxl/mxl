@@ -27,6 +27,7 @@ target_sources(mxl-fabrics-objects
             src/internal/AddressVector.cpp
             src/internal/Completion.cpp
             src/internal/CompletionQueue.cpp
+            src/internal/DataLayout.cpp
             src/internal/Domain.cpp
             src/internal/Endpoint.cpp
             src/internal/Event.cpp
@@ -42,6 +43,9 @@ target_sources(mxl-fabrics-objects
             src/internal/LocalRegion.cpp
             src/internal/MemoryRegion.cpp
             src/internal/PassiveEndpoint.cpp
+            src/internal/Protocol.cpp
+            src/internal/ProtocolEgress.cpp
+            src/internal/ProtocolIngress.cpp
             src/internal/Provider.cpp
             src/internal/RCInitiator.cpp
             src/internal/RCTarget.cpp
@@ -50,6 +54,7 @@ target_sources(mxl-fabrics-objects
             src/internal/Region.cpp
             src/internal/RegisteredRegion.cpp
             src/internal/RemoteRegion.cpp
+            src/internal/GrainSlices.cpp
             src/internal/Target.cpp
             src/internal/TargetInfo.cpp
     )

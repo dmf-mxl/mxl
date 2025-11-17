@@ -38,10 +38,10 @@ namespace mxl::lib::fabrics::ofi
          *
          * \param grainIndex The index of the grain to transfer.
          * \param offset The offset within the grain to start the transfer.
-         * \param size The size of the data to transfer.
-         * \param validSlices This is the total number of valid slices in the grain, not the number of valid slices for the given transfer.
+         * \param startSlice The start slice in the slice range to transfer. This is inclusive.
+         * \param endSlice The end slice in the slice range to transfer. This is exclusive.
          */
-        virtual void transferGrain(std::uint64_t grainIndex, std::uint64_t offset, std::uint32_t size, std::uint16_t validSlices) = 0;
+        virtual void transferGrain(std::uint64_t grainIndex, std::uint64_t offset, std::uint16_t startSlice, std::uint16_t endSlice) = 0;
 
         /** \brief Transfer a grain to a specific target.
          *
@@ -49,14 +49,13 @@ namespace mxl::lib::fabrics::ofi
          *
          * \param targetId The ID of the target to transfer the grain to.
          * \param localIndex The index of the local grain to transfer from.
-         * \param localOffset The offset within the local grain..
          * \param remoteIndex The index of the remote grain to transfer to.
-         * \param remoteOffset The offset within the remote grain.
-         * \param size The size of the data to transfer.
-         * \param validSlices This is the total number of valid slices in the grain, not the number of valid slices for the given transfer.
+         * \param payloadOffset The payload offset within the grain.
+         * \param startSlice The start slice in the slice range to transfer. This is inclusive.
+         * \param endSlice The end slice in the slice range to transfer. This is exclusive.
          */
-        virtual void transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t localOffset, std::uint64_t remoteIndex,
-            std::uint64_t remoteOffset, std::uint32_t size, std::uint16_t validSlices) = 0;
+        virtual void transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t payloadOffset,
+            std::uint16_t startSlice, std::uint16_t endSlice) = 0;
 
         /** \brief Attempts to progress execution, including connection management and data operations.
          *
@@ -101,23 +100,22 @@ namespace mxl::lib::fabrics::ofi
          */
         void setup(mxlInitiatorConfig const& config);
 
-        /** \copydoc Initiator::addTarget(TargetInfo const&)
+        /** \copydoc Initiator::addTarget()
          */
         void addTarget(TargetInfo const& targetInfo);
 
-        /** \copydoc Initiator::removeTarget(TargetInfo const&)
+        /** \copydoc Initiator::removeTarget()
          */
         void removeTarget(TargetInfo const& targetInfo);
 
-        /** \copydoc Initiator::transferGrain(std::uint64_t, std::uint64_t, std::uint32_t, std::uint16_t)
+        /** \copydoc Initiator::transferGrain()
          */
-        void transferGrain(std::uint64_t grainIndex, std::uint64_t offset, std::uint32_t size, std::uint16_t validSlices);
+        void transferGrain(std::uint64_t grainIndex, std::uint64_t offset, std::uint16_t startSlice, std::uint16_t endSlice);
 
-        /** \copydoc Initiator::transferGrainToTarget(Endpoint::Id, std::uint64_t, std::uint64_t, std::uint64_t, std::uint64_t, std::uint32_t,
-         * std::uint16_t)
+        /** \copydoc Initiator::transferGrainToTarget()
          */
-        void transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t localOffset, std::uint64_t remoteIndex,
-            std::uint64_t remoteOffset, std::uint32_t size, std::uint16_t validSlices);
+        void transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t payloadOffset,
+            std::uint16_t startSlice, std::uint16_t endSlice);
 
         /** \copydoc Initiator::makeProgress()
          */

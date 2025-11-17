@@ -11,10 +11,12 @@
 #include <memory>
 #include <rdma/fabric.h>
 #include "mxl/fabrics.h"
-#include "Address.hpp"
+#include "DataLayout.hpp"
 #include "Endpoint.hpp"
+#include "GrainSlices.hpp"
 #include "Initiator.hpp"
 #include "LocalRegion.hpp"
+#include "Protocol.hpp"
 #include "TargetInfo.hpp"
 
 namespace mxl::lib::fabrics::ofi
@@ -30,7 +32,7 @@ namespace mxl::lib::fabrics::ofi
          * \param addr The fabric address of the remote endpoint.
          * \param regions The remote memory regions to transfer data to.
          */
-        RDMInitiatorEndpoint(std::shared_ptr<Endpoint> ep, FabricAddress, std::vector<RemoteRegion>);
+        RDMInitiatorEndpoint(std::shared_ptr<Endpoint> ep, DataLayout const& layout, TargetInfo info);
 
         /** \brief Returns true if the endpoint is idle and could be actived.
          */
@@ -54,15 +56,10 @@ namespace mxl::lib::fabrics::ofi
          */
         void shutdown();
 
-        /** \brief Post a data transfer request to this endpoint where the user have to supply the remote region grain index and offset directly.
+        /** \brief Post a data transfer request to this endpoint.
          */
-        void postTransferWithRemoteIndex(LocalRegion const& localRegion, std::uint64_t remoteIndex, std::uint64_t remoteOffset, std::uint32_t size,
-            std::uint16_t validSlices);
-
-        /** \brief Post a data transfer request to this endpoint using the grain index to select the remote region.
-         */
-        void postTransferWithGrainIndex(LocalRegion const& localRegion, std::uint64_t grainIndex, std::uint64_t remoteOffset, std::uint32_t size,
-            std::uint16_t validSlices);
+        std::size_t postTransfer(LocalRegion const& localRegion, std::uint64_t remoteIndex, std::uint64_t remotePayloadOffset,
+            SliceRange const& sliceRange);
 
     private:
         /** \brief The idle state.
@@ -78,7 +75,8 @@ namespace mxl::lib::fabrics::ofi
          */
         struct Activated
         {
-            ::fi_addr_t fiAddr; /**< Address index in address vector. */
+            ::fi_addr_t fiAddr;                    /**< Address index in address vector. */
+            std::unique_ptr<EgressProtocol> proto; /**< Selected protocol for data transfers. */
         };
 
         /** \brief The endpoint is done and can be evicted from the initiator.
@@ -95,8 +93,9 @@ namespace mxl::lib::fabrics::ofi
         State _state;                  /**< The current state of the endpoint. */
         std::shared_ptr<Endpoint> _ep; /** The endpoint used to post transfer with. There is only one endpoint shared for all targets in constrast to
                                         * the RCInitiator where each target will have their own endpoint. */
-        FabricAddress _addr;           /**< The remote fabric address to transfer data to */
-        std::vector<RemoteRegion> _regions; /**< Descriptions of the remote memory regions where data shall be written. */
+        DataLayout const&
+            _dataLayout;  /**< Data layout inherited by the parent RDMInitiator. RDMInitiatorEndpoint's can't outlive the parent RDMInitiator.*/
+        TargetInfo _info; /**< Target information for this endpoint. */
     };
 
     /** \brief An initiator that uses reliable datagram (RDM) endpoints for data transfers.
@@ -108,38 +107,37 @@ namespace mxl::lib::fabrics::ofi
     public:
         static std::unique_ptr<RDMInitiator> setup(mxlInitiatorConfig const&);
 
-        /** \copydoc Initiator::addTarget(TargetInfo const&)
+        /** \copydoc Initiator::addTarget()
          */
-        void addTarget(TargetInfo const&) final;
+        void addTarget(TargetInfo const&) override;
 
-        /** \copydoc Initiator::removeTarget(TargetInfo const&)
+        /** \copydoc Initiator::removeTarget()
          */
-        void removeTarget(TargetInfo const&) final;
+        void removeTarget(TargetInfo const&) override;
 
-        /** \copydoc Initiator::transferGrain(std::uint64_t, std::uint64_t, std::uint32_t, std::uint16_t)
+        /** \copydoc Initiator::transferGrain()
          */
-        void transferGrain(std::uint64_t grainIndex, std::uint64_t offset, std::uint32_t size, std::uint16_t validSlices) final;
+        void transferGrain(std::uint64_t grainIndex, std::uint64_t offset, std::uint16_t startSlice, std::uint16_t endSlice) override;
 
-        /** \copydoc Initiator::transferGrainToTarget(Endpoint::Id, std::uint64_t, std::uint64_t, std::uint64_t, std::uint64_t, std::uint32_t,
-         * std::uint16_t)
+        /** \copydoc Initiator::transferGrainToTarget()
          */
-        void transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t localOffset, std::uint64_t remoteIndex,
-            std::uint64_t remoteOffset, std::uint32_t size, std::uint16_t validSlices) final;
+        void transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t payloadOffset,
+            std::uint16_t startSlice, std::uint16_t endSlice) override;
 
         /** \copydoc Initiator::makeProgress()
          */
-        bool makeProgress() final;
+        bool makeProgress() override;
 
         /** \copydoc Initiator::makeProgressBlocking()
          */
-        bool makeProgressBlocking(std::chrono::steady_clock::duration) final;
+        bool makeProgressBlocking(std::chrono::steady_clock::duration) override;
 
     private:
         /** \brief Construct a new RDMInitiator object.
          *
          * \param ep The local endpoint to use for all transfers.
          */
-        RDMInitiator(std::shared_ptr<Endpoint>);
+        RDMInitiator(std::shared_ptr<Endpoint>, DataLayout dataLayout);
 
         /** \brief Returns true if any of the endpoints contained in this initiator have pending work.
          */
@@ -181,6 +179,7 @@ namespace mxl::lib::fabrics::ofi
     private:
         std::shared_ptr<Endpoint> _endpoint;    /** Shared endpoint used for all transfers. */
 
+        DataLayout _dataLayout;                 /**< Data layout used for all transfers. */
         std::vector<LocalRegion> _localRegions; /**< Local memory regions registered for data transfers. */
 
         std::map<Endpoint::Id, RDMInitiatorEndpoint>

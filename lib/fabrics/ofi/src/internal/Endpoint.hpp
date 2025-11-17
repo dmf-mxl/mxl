@@ -220,8 +220,9 @@ namespace mxl::lib::fabrics::ofi
          * \param remoteGroup Destination memory regions to write to
          * \param destAddr The destination address of the target endpoint. This is unused when using connected endpoints.
          * \param immData 64 bits of user data that will be available in the completion entry associated with this transfer.
+         * \return The number of requests posted to the endpoint work queue
          */
-        void write(LocalRegion const& local, RemoteRegion const& remote, ::fi_addr_t destAddr = FI_ADDR_UNSPEC,
+        std::size_t write(LocalRegion const& local, RemoteRegion const& remote, ::fi_addr_t destAddr = FI_ADDR_UNSPEC,
             std::optional<std::uint32_t> immData = std::nullopt);
 
         /** \brief Push a remote write work request of a scatter-gather list to the endpoint work queue.
@@ -232,8 +233,9 @@ namespace mxl::lib::fabrics::ofi
          * \param remoteGroup Destination memory regions to write to
          * \param destAddr The destination address of the target endpoint. This is unused when using connected endpoints.
          * \param 64 bits of user data that will be available in the completion entry associated with this transfer.
+         * \return The number of requests posted to the endpoint work queue
          */
-        void write(LocalRegionGroup const& localGroup, RemoteRegion const& remote, ::fi_addr_t destAddr = FI_ADDR_UNSPEC,
+        std::size_t write(LocalRegionGroup const& localGroup, RemoteRegion const& remote, ::fi_addr_t destAddr = FI_ADDR_UNSPEC,
             std::optional<std::uint32_t> immData = std::nullopt);
 
         /** \brief Push a recv work request to the endpoint work queue.
@@ -258,7 +260,7 @@ namespace mxl::lib::fabrics::ofi
     private:
         /** \brief Internal implementation of the  remote write request
          */
-        void writeImpl(::iovec const* msgIov, std::size_t iovCount, void** desc, ::fi_rma_iov const* rmaIov, ::fi_addr_t destAddr,
+        std::size_t writeImpl(::iovec const* msgIov, std::size_t iovCount, void** desc, ::fi_rma_iov const* rmaIov, ::fi_addr_t destAddr,
             std::optional<std::uint32_t> immData);
 
         /** \brief Close the endpoint and release all resources. Called from the destructor and the move assignment operator.
