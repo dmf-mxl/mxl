@@ -9,6 +9,7 @@
 #include "mxl/fabrics.h"
 #include "Endpoint.hpp"
 #include "PassiveEndpoint.hpp"
+#include "Protocol.hpp"
 #include "QueueHelpers.hpp"
 #include "Target.hpp"
 
@@ -76,7 +77,7 @@ namespace mxl::lib::fabrics::ofi
          * \param domain The domain to create the RCTarget on.
          * \param pep The passive endpoint to use for listening for incoming connection requests.
          */
-        RCTarget(std::shared_ptr<Domain> domain, PassiveEndpoint pep);
+        RCTarget(std::shared_ptr<Domain> domain, std::unique_ptr<IngressProtocol> proto, PassiveEndpoint pep);
 
         /** \brief Internal method to drive progress based on the current state.
          *
@@ -88,6 +89,7 @@ namespace mxl::lib::fabrics::ofi
 
     private:
         std::shared_ptr<Domain> _domain;
+        std::unique_ptr<IngressProtocol> _proto;
 
         State _state; /**< The current state of the RCTarget. */
     };

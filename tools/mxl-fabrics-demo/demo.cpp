@@ -187,34 +187,6 @@ public:
         return MXL_STATUS_OK;
     }
 
-    /** \brief Calculate the offset and size for a given slice range.
-      * \param grainInfo Pointer to the mxlGrainInfo structure.
-      * \param startSlice The starting slice index (inclusive).
-      * \param endSlice The ending slice index (exclusive).
-      *\ return A pair containing the offset and size.
-      /*/
-    std::pair<std::uint64_t, std::uint32_t> getOffsetAndSize(mxlGrainInfo const* grainInfo, std::uint16_t startSlice, std::uint16_t endSlice)
-    {
-        if (endSlice < startSlice || endSlice > grainInfo->totalSlices)
-        {
-            throw std::invalid_argument("Invalid slice range");
-        }
-
-        std::uint64_t offset = startSlice * _config.flowParser.getPayloadSliceLengths()[0];
-        std::uint32_t size = (endSlice - startSlice) * _config.flowParser.getPayloadSliceLengths()[0];
-        if (startSlice == 0)
-        {
-            // we must include the header
-            size += mxl::lib::MXL_GRAIN_PAYLOAD_OFFSET;
-        }
-        else
-        {
-            offset += mxl::lib::MXL_GRAIN_PAYLOAD_OFFSET;
-        }
-
-        return {offset, size};
-    }
-
     mxlStatus run()
     { // Extract the FlowInfo structure.
         mxlFlowConfigInfo configInfo;
@@ -262,10 +234,8 @@ public:
                 continue;
             }
 
-            auto [offset, size] = getOffsetAndSize(&grainInfo, startSlice, grainInfo.validSlices);
-
             // Okay the grain is ready, we can transfer it to the targets.
-            ret = mxlFabricsInitiatorTransferGrain(_initiator, grainIndex, offset, size, grainInfo.validSlices);
+            ret = mxlFabricsInitiatorTransferGrain(_initiator, grainIndex, mxl::lib::MXL_GRAIN_PAYLOAD_OFFSET, startSlice, grainInfo.validSlices);
             if (ret == MXL_ERR_NOT_READY)
             {
                 continue;

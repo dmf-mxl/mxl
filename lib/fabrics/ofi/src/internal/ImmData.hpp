@@ -8,21 +8,21 @@ namespace mxl::lib::fabrics::ofi
 
     /** \brief Immediate data representation for discrete flow transfers.
      */
-    class ImmDataDiscrete
+    class ImmDataGrain
     {
     public:
         /** \brief Create immediate data from packed data.
          *
          * \param data The packed immediate data.
          */
-        ImmDataDiscrete(std::uint32_t data) noexcept;
+        ImmDataGrain(std::uint32_t data) noexcept;
 
         /** \brief Create immediate data from ring buffer index and slice index.
          *
          * \param index The ring buffer index.
          * \param sliceIndex The slice index within the ring buffer.
          */
-        ImmDataDiscrete(std::uint64_t index, std::uint16_t sliceIndex) noexcept;
+        ImmDataGrain(std::uint64_t index, std::uint16_t sliceIndex) noexcept;
 
         /** \brief Unpack the immediate data into ring buffer index and slice index.
          *

@@ -10,6 +10,7 @@
 #include "Exception.hpp"
 #include "FabricInfo.hpp"
 #include "Format.hpp" // IWYU pragma: keep; Includes template specializations of fmt::formatter for our types
+#include "Protocol.hpp"
 #include "Region.hpp"
 #include "VariantUtils.hpp"
 
@@ -50,10 +51,8 @@ namespace mxl::lib::fabrics::ofi
 
         auto const mxlRegions = MxlRegions::fromAPI(config.regions);
 
-        if (mxlRegions && !mxlRegions->regions().empty())
-        {
-            domain->registerRegions(mxlRegions->regions(), FI_REMOTE_WRITE);
-        }
+        // Select the "protocol" when a data transfer completes
+        auto proto = selectProtocol(domain, mxlRegions->dataLayout(), mxlRegions->regions());
 
         // Create a passive endpoint. A passive endpoint can be viewed like a bound TCP socket listening for
         // incoming connections
@@ -69,8 +68,8 @@ namespace mxl::lib::fabrics::ofi
         // Helper struct to enable the std::make_unique function to access the private constructor of this class
         struct MakeUniqueEnabler : RCTarget
         {
-            MakeUniqueEnabler(std::shared_ptr<Domain> domain, PassiveEndpoint pep)
-                : RCTarget(std::move(domain), std::move(pep))
+            MakeUniqueEnabler(std::shared_ptr<Domain> domain, std::unique_ptr<IngressProtocol> proto, PassiveEndpoint pep)
+                : RCTarget(std::move(domain), std::move(proto), std::move(pep))
             {}
         };
 
@@ -78,12 +77,13 @@ namespace mxl::lib::fabrics::ofi
         auto remoteRegions = domain->remoteRegions();
 
         // Return the constructed RCTarget and associated TargetInfo for remote peers to connect.
-        return {std::make_unique<MakeUniqueEnabler>(std::move(domain), std::move(pep)),
+        return {std::make_unique<MakeUniqueEnabler>(std::move(domain), std::move(proto), std::move(pep)),
             std::make_unique<TargetInfo>(std::move(localAddress), std::move(remoteRegions))};
     }
 
-    RCTarget::RCTarget(std::shared_ptr<Domain> domain, PassiveEndpoint ep)
+    RCTarget::RCTarget(std::shared_ptr<Domain> domain, std::unique_ptr<IngressProtocol> proto, PassiveEndpoint ep)
         : _domain(std::move(domain))
+        , _proto(std::move(proto))
         , _state(WaitForConnectionRequest{std::move(ep)})
     {}
 
@@ -180,6 +180,8 @@ namespace mxl::lib::fabrics::ofi
                                 // the immmediate data (in our case the grain index), will be returned in the registered region.
                                 state.ep.recv(state.immData->toLocalRegion());
                             }
+
+                            _proto->processCompletion(result.immData.value());
                         }
                         else
                         {

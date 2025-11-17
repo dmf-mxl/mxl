@@ -10,19 +10,21 @@
 #include <uuid.h>
 #include <mxl-internal/Logging.hpp>
 #include <rdma/fabric.h>
+#include "DataLayout.hpp"
 #include "Domain.hpp"
 #include "Exception.hpp"
 #include "FabricInfo.hpp"
-#include "ImmData.hpp"
+#include "Protocol.hpp"
 #include "Region.hpp"
+#include "GrainSlices.hpp"
 #include "VariantUtils.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
-    RCInitiatorEndpoint::RCInitiatorEndpoint(Endpoint ep, FabricAddress remote, std::vector<RemoteRegion> rr)
+    RCInitiatorEndpoint::RCInitiatorEndpoint(Endpoint ep, DataLayout const& layout, TargetInfo info)
         : _state(Idle{.ep = std::move(ep), .idleSince = std::chrono::steady_clock::time_point{}})
-        , _addr(std::move(remote))
-        , _regions(std::move(rr))
+        , _layout(layout)
+        , _info(std::move(info))
     {}
 
     bool RCInitiatorEndpoint::isIdle() const noexcept
@@ -67,8 +69,13 @@ namespace mxl::lib::fabrics::ofi
                 [](Connected state) -> State
                 {
                     MXL_INFO("Shutting down");
-                    state.ep.shutdown();
-                    return Shutdown{.ep = std::move(state.ep)};
+                    state.ep->shutdown();
+
+                    // It is fine to steal the inner value. We will not need the shared pointer anymore since we are transitioning to shutdown state.
+                    auto ep = std::move(*state.ep);
+                    state.ep.reset();
+
+                    return Shutdown{.ep = std::move(ep)};
                 },
                 [](Shutdown) -> State
                 {
@@ -101,7 +108,7 @@ namespace mxl::lib::fabrics::ofi
                     state.ep.bind(cq, FI_TRANSMIT);
 
                     // Transition into the connecting state
-                    state.ep.connect(_addr);
+                    state.ep.connect(_info.fabricAddress);
                     return Connecting{.ep = std::move(state.ep)};
                 },
                 [](Connecting state) -> State { return state; },
@@ -130,7 +137,9 @@ namespace mxl::lib::fabrics::ofi
                     {
                         MXL_INFO("Endpoint is now connected");
 
-                        return Connected{.ep = std::move(state.ep), .pending = 0};
+                        auto ep = std::make_shared<Endpoint>(std::move(state.ep));
+
+                        return Connected{.ep = ep, .proto = selectProtocol(ep, _layout, _info), .pending = 0};
                     }
                     else if (ev.isShutdown())
                     {
@@ -148,13 +157,13 @@ namespace mxl::lib::fabrics::ofi
                     if (ev.isError())
                     {
                         MXL_WARN("Received an error event in connected state, going idle. Error: {}", ev.error().toString());
-                        return restart(state.ep);
+                        return restart(*state.ep);
                     }
                     else if (ev.isShutdown())
                     {
                         MXL_INFO("Remote endpoint has closed the connection");
 
-                        return restart(state.ep);
+                        return restart(*state.ep);
                     }
 
                     return state;
@@ -194,27 +203,13 @@ namespace mxl::lib::fabrics::ofi
         }
     }
 
-    void RCInitiatorEndpoint::postTransferWithRemoteGrainIndex(LocalRegion const& localRegion, std::uint64_t remoteIndex, std::uint64_t remoteOffset,
-        std::uint32_t size, std::uint16_t validSlices)
+    void RCInitiatorEndpoint::postTransfer(LocalRegion const& localRegion, std::uint64_t remoteIndex, std::uint64_t remotePayloadOffset,
+        SliceRange const& sliceRange)
     {
-        assert(remoteIndex < _regions.size());
-
         if (auto state = std::get_if<Connected>(&_state); state != nullptr)
         {
-            // Find the remote region to which this grain should be written.
-            auto remoteRegion = _regions[remoteIndex].sub(remoteOffset, size);
-
-            // Post a write work item to the endpoint and increment the pending counter. When the write is complete, a completion will be posted
-            // to the completion queue, after which the counter will be decremented again if the target is still in the connected state.
-            state->ep.write(localRegion, remoteRegion, FI_ADDR_UNSPEC, ImmDataDiscrete{remoteIndex, validSlices}.data());
-            ++state->pending;
+            state->pending += state->proto->transferGrain(localRegion, remoteIndex, remotePayloadOffset, sliceRange);
         }
-    }
-
-    void RCInitiatorEndpoint::postTransferWithGrainIndex(LocalRegion const& localRegion, std::uint64_t grainIndex, std::uint64_t remoteOffset,
-        std::uint32_t size, std::uint16_t validSlices)
-    {
-        return postTransferWithRemoteGrainIndex(localRegion, grainIndex % _regions.size(), remoteOffset, size, validSlices);
     }
 
     void RCInitiatorEndpoint::handleCompletionData(Completion::Data)
@@ -301,25 +296,28 @@ namespace mxl::lib::fabrics::ofi
 
         struct MakeUniqueEnabler : RCInitiator
         {
-            MakeUniqueEnabler(std::shared_ptr<Domain> domain, std::shared_ptr<CompletionQueue> cq, std::shared_ptr<EventQueue> eq)
-                : RCInitiator(std::move(domain), std::move(cq), std::move(eq))
+            MakeUniqueEnabler(std::shared_ptr<Domain> domain, std::shared_ptr<CompletionQueue> cq, std::shared_ptr<EventQueue> eq,
+                DataLayout dataLayout)
+                : RCInitiator(std::move(domain), std::move(cq), std::move(eq), std::move(dataLayout))
+
             {}
         };
 
-        return std::make_unique<MakeUniqueEnabler>(std::move(domain), std::move(cq), std::move(eq));
+        return std::make_unique<MakeUniqueEnabler>(std::move(domain), std::move(cq), std::move(eq), mxlRegions->dataLayout());
     }
 
-    RCInitiator::RCInitiator(std::shared_ptr<Domain> domain, std::shared_ptr<CompletionQueue> cq, std::shared_ptr<EventQueue> eq)
+    RCInitiator::RCInitiator(std::shared_ptr<Domain> domain, std::shared_ptr<CompletionQueue> cq, std::shared_ptr<EventQueue> eq,
+        DataLayout dataLayout)
         : _domain(std::move(domain))
         , _cq(std::move(cq))
         , _eq(std::move(eq))
+        , _dataLayout(std::move(dataLayout))
         , _localRegions(_domain->localRegions())
     {}
 
     void RCInitiator::addTarget(TargetInfo const& targetInfo)
     {
-        _targets.emplace(targetInfo.id,
-            RCInitiatorEndpoint{Endpoint::create(_domain, targetInfo.id), targetInfo.fabricAddress, targetInfo.remoteRegions});
+        _targets.emplace(targetInfo.id, RCInitiatorEndpoint{Endpoint::create(_domain, targetInfo.id), _dataLayout, targetInfo});
     }
 
     void RCInitiator::removeTarget(TargetInfo const& targetInfo)
@@ -334,8 +332,15 @@ namespace mxl::lib::fabrics::ofi
         }
     }
 
-    void RCInitiator::transferGrain(std::uint64_t grainIndex, std::uint64_t offset, std::uint32_t size, std::uint16_t validSlices)
+    void RCInitiator::transferGrain(std::uint64_t grainIndex, std::uint64_t payloadOffset, std::uint16_t startSlice, std::uint16_t endSlice)
     {
+        auto range = SliceRange::make(startSlice, endSlice);
+
+        auto size = range.transferSize(payloadOffset, _dataLayout.asVideo().sliceSizes[0]);
+        auto offset = range.transferOffset(payloadOffset, _dataLayout.asVideo().sliceSizes[0]);
+
+        MXL_INFO("Transferring grain {} to all targets, offset {}, size {}", grainIndex, offset, size);
+
         // Find the local region in which the grain with this index is stored.
         auto localRegion = _localRegions[grainIndex % _localRegions.size()].sub(offset, size);
 
@@ -343,22 +348,25 @@ namespace mxl::lib::fabrics::ofi
         // this is a no-op.
         for (auto& [_, target] : _targets)
         {
-            target.postTransferWithGrainIndex(localRegion, grainIndex, offset, size, validSlices);
+            target.postTransfer(localRegion, grainIndex, payloadOffset, range);
         }
     }
 
-    void RCInitiator::transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t localOffset, std::uint64_t remoteIndex,
-        std::uint64_t remoteOffset, std::uint32_t size, std::uint16_t validSlices)
+    void RCInitiator::transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t payloadOffset,
+        std::uint16_t startSlice, std::uint16_t endSlice)
     {
-        assert(localIndex < _localRegions.size());
+        auto range = SliceRange::make(startSlice, endSlice);
+
+        auto size = range.transferSize(payloadOffset, _dataLayout.asVideo().sliceSizes[0]);
+        auto offset = range.transferOffset(payloadOffset, _dataLayout.asVideo().sliceSizes[0]);
 
         // Find the local region in which the grain with this index is stored.
-        auto localRegion = _localRegions[localIndex].sub(localOffset, size);
+        auto localRegion = _localRegions[localIndex % _localRegions.size()].sub(offset, size);
 
         auto it = _targets.find(targetId);
         if (it == _targets.end())
         {
-            it->second.postTransferWithRemoteGrainIndex(localRegion, remoteIndex, remoteOffset, size, validSlices);
+            it->second.postTransfer(localRegion, remoteIndex, payloadOffset, range);
         }
         else
         {

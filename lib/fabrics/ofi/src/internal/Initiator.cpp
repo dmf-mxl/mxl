@@ -69,25 +69,25 @@ namespace mxl::lib::fabrics::ofi
         _inner->removeTarget(targetInfo);
     }
 
-    void InitiatorWrapper::transferGrain(std::uint64_t grainIndex, std::uint64_t offset, std::uint32_t size, std::uint16_t validSlices)
+    void InitiatorWrapper::transferGrain(std::uint64_t grainIndex, std::uint64_t offset, std::uint16_t startSlice, std::uint16_t endSlice)
     {
         if (!_inner)
         {
             throw Exception::invalidState("Initiator is not set up");
         }
 
-        _inner->transferGrain(grainIndex, offset, size, validSlices);
+        _inner->transferGrain(grainIndex, offset, startSlice, endSlice);
     }
 
-    void InitiatorWrapper::transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t localOffset,
-        std::uint64_t remoteIndex, std::uint64_t remoteOffset, std::uint32_t size, std::uint16_t validSlices)
+    void InitiatorWrapper::transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t remoteIndex,
+        std::uint64_t payloadOffset, std::uint16_t startSlice, std::uint16_t endSlice)
     {
         if (!_inner)
         {
             throw Exception::invalidState("Initiator is not set up");
         }
 
-        _inner->transferGrainToTarget(targetId, localIndex, localOffset, remoteIndex, remoteOffset, size, validSlices);
+        _inner->transferGrainToTarget(targetId, localIndex, remoteIndex, payloadOffset, startSlice, endSlice);
     }
 
     bool InitiatorWrapper::makeProgress()

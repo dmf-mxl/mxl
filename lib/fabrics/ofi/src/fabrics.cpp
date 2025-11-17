@@ -111,16 +111,16 @@ mxlStatus mxlFabricsRegionsForFlowWriter(mxlFlowWriter in_writer, mxlRegions* ou
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsRegionsFromUserBuffers(mxlFabricsMemoryRegion const* in_regions, size_t in_count, mxlRegions* out_regions)
+mxlStatus mxlFabricsRegionsFromUserBuffers(mxlFabricsUserRegionsConfig const* in_config, mxlRegions* out_regions)
 {
-    if (in_regions == nullptr || out_regions == nullptr)
+    if (in_config == nullptr || out_regions == nullptr)
     {
         return MXL_ERR_INVALID_ARG;
     }
 
     try
     {
-        auto regions = ofi::mxlRegionsFromUser(in_regions, in_count);
+        auto regions = ofi::mxlRegionsFromUser(*in_config);
 
         // We are leaking the ownership, the user is responsible for calling mxlFabricsRegionsFree to free the memory.
         auto regionPtr = std::make_unique<ofi::MxlRegions>(regions).release();
@@ -364,7 +364,7 @@ mxlStatus mxlFabricsTargetTryNewGrain(mxlFabricsTarget in_target, uint16_t* out_
         auto res = target->read();
         if (res.immData)
         {
-            auto [entryIndex, sliceIndex] = ofi::ImmDataDiscrete{*res.immData}.unpack();
+            auto [entryIndex, sliceIndex] = ofi::ImmDataGrain{*res.immData}.unpack();
             *out_entryIndex = entryIndex;
             *out_sliceIndex = sliceIndex;
 
@@ -410,7 +410,7 @@ mxlStatus mxlFabricsTargetWaitForNewGrain(mxlFabricsTarget in_target, uint16_t* 
         auto res = target->readBlocking(std::chrono::milliseconds(in_timeoutMs));
         if (res.immData)
         {
-            auto [entryIndex, sliceIndex] = ofi::ImmDataDiscrete{*res.immData}.unpack();
+            auto [entryIndex, sliceIndex] = ofi::ImmDataGrain{*res.immData}.unpack();
             *out_entryIndex = entryIndex;
             *out_sliceIndex = sliceIndex;
 
@@ -609,7 +609,7 @@ mxlStatus mxlFabricsInitiatorRemoveTarget(mxlFabricsInitiator in_initiator, mxlT
 
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsInitiatorTransferGrainToTarget(mxlFabricsInitiator in_initiator, mxlTargetInfo const in_targetInfo, uint64_t in_localIndex,
-    uint64_t in_localOffset, uint64_t in_remoteIndex, uint64_t in_remoteOffset, uint32_t in_size, uint16_t in_validSlices)
+    uint64_t in_remoteIndex, uint64_t in_payloadOffset, std::uint16_t in_startSlice, std::uint16_t in_endSlice)
 {
     if (in_initiator == nullptr)
     {
@@ -620,7 +620,7 @@ mxlStatus mxlFabricsInitiatorTransferGrainToTarget(mxlFabricsInitiator in_initia
     {
         auto targetInfo = ofi::TargetInfo::fromAPI(in_targetInfo);
         ofi::InitiatorWrapper::fromAPI(in_initiator)
-            ->transferGrainToTarget(targetInfo->id, in_localIndex, in_localOffset, in_remoteIndex, in_remoteOffset, in_size, in_validSlices);
+            ->transferGrainToTarget(targetInfo->id, in_localIndex, in_remoteIndex, in_payloadOffset, in_startSlice, in_endSlice);
 
         return MXL_STATUS_OK;
     }
@@ -646,8 +646,8 @@ mxlStatus mxlFabricsInitiatorTransferGrainToTarget(mxlFabricsInitiator in_initia
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsInitiatorTransferGrain(mxlFabricsInitiator in_initiator, uint64_t in_grainIndex, uint64_t in_offset, uint32_t in_size,
-    std::uint16_t in_validSlices)
+mxlStatus mxlFabricsInitiatorTransferGrain(mxlFabricsInitiator in_initiator, uint64_t in_grainIndex, uint64_t in_payloadOffset,
+    std::uint16_t in_startSlice, std::uint16_t in_endSlice)
 {
     if (in_initiator == nullptr)
     {
@@ -656,7 +656,7 @@ mxlStatus mxlFabricsInitiatorTransferGrain(mxlFabricsInitiator in_initiator, uin
 
     try
     {
-        ofi::InitiatorWrapper::fromAPI(in_initiator)->transferGrain(in_grainIndex, in_offset, in_size, in_validSlices);
+        ofi::InitiatorWrapper::fromAPI(in_initiator)->transferGrain(in_grainIndex, in_payloadOffset, in_startSlice, in_endSlice);
 
         return MXL_STATUS_OK;
     }

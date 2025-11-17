@@ -13,13 +13,12 @@
 #include <rdma/fabric.h>
 #include "mxl/fabrics.h"
 #include "mxl/mxl.h"
-#include "Address.hpp"
 #include "AddressVector.hpp"
 #include "CompletionQueue.hpp"
+#include "DataLayout.hpp"
 #include "Endpoint.hpp"
 #include "Exception.hpp"
 #include "Fabric.hpp"
-#include "ImmData.hpp"
 #include "Provider.hpp"
 #include "Region.hpp"
 #include "TargetInfo.hpp"
@@ -27,11 +26,11 @@
 
 namespace mxl::lib::fabrics::ofi
 {
-    RDMInitiatorEndpoint::RDMInitiatorEndpoint(std::shared_ptr<Endpoint> ep, FabricAddress remote, std::vector<RemoteRegion> remoteRegions)
+    RDMInitiatorEndpoint::RDMInitiatorEndpoint(std::shared_ptr<Endpoint> ep, DataLayout const& dataLayout, TargetInfo info)
         : _state(Idle{})
         , _ep(std::move(ep))
-        , _addr(std::move(remote))
-        , _regions(std::move(remoteRegions))
+        , _dataLayout(dataLayout)
+        , _info(std::move(info))
     {}
 
     bool RDMInitiatorEndpoint::isIdle() const noexcept
@@ -50,8 +49,11 @@ namespace mxl::lib::fabrics::ofi
             overloaded{
                 [&](Idle) -> State
                 {
-                    auto fiAddr = _ep->addressVector()->insert(_addr);
-                    return Activated{.fiAddr = fiAddr};
+                    auto fiAddr = _ep->addressVector()->insert(_info.fabricAddress);
+                    return Activated{
+                        .fiAddr = fiAddr,
+                        .proto = selectProtocol(_ep, _dataLayout, _info),
+                    };
                 },
                 [](Activated state) -> State { return state; },
                 [](Done state) -> State { return state; },
@@ -78,25 +80,15 @@ namespace mxl::lib::fabrics::ofi
             std::move(_state));
     }
 
-    void RDMInitiatorEndpoint::postTransferWithRemoteIndex(LocalRegion const& localRegion, std::uint64_t remoteIndex, std::uint64_t remoteOffset,
-        std::uint32_t size, std::uint16_t validSlices)
+    std::size_t RDMInitiatorEndpoint::postTransfer(LocalRegion const& localRegion, std::uint64_t remoteIndex, std::uint64_t remoteOffset,
+        SliceRange const& sliceRange)
     {
-        assert(remoteIndex < _regions.size());
-
         if (auto state = std::get_if<Activated>(&_state); state != nullptr)
         {
-            // Find the remote region to which this grain should be written.
-            auto const& remoteRegion = _regions[remoteIndex].sub(remoteOffset, size);
-
-            // Post a write work item to the endpoint and increment the pending counter. When the write is complete,
-            _ep->write(localRegion, remoteRegion, state->fiAddr, ImmDataDiscrete{remoteIndex, validSlices}.data()); // TODO: handle sliceIndex
+            return state->proto->transferGrain(localRegion, remoteIndex, remoteOffset, sliceRange);
         }
-    }
 
-    void RDMInitiatorEndpoint::postTransferWithGrainIndex(LocalRegion const& localRegion, std::uint64_t grainIndex, std::uint64_t remoteOffset,
-        std::uint32_t size, std::uint16_t validSlices)
-    {
-        return postTransferWithRemoteIndex(localRegion, grainIndex % _regions.size(), remoteOffset, size, validSlices);
+        return 0;
     }
 
     std::unique_ptr<RDMInitiator> RDMInitiator::setup(mxlInitiatorConfig const& config)
@@ -141,17 +133,17 @@ namespace mxl::lib::fabrics::ofi
 
         struct MakeUniqueEnabler : RDMInitiator
         {
-            MakeUniqueEnabler(std::shared_ptr<Endpoint> ep)
-                : RDMInitiator(std::move(ep))
+            MakeUniqueEnabler(std::shared_ptr<Endpoint> ep, DataLayout dataLayout)
+                : RDMInitiator(std::move(ep), std::move(dataLayout))
             {}
         };
 
-        return std::make_unique<MakeUniqueEnabler>(std::move(endpoint));
+        return std::make_unique<MakeUniqueEnabler>(std::move(endpoint), mxlRegions->dataLayout());
     }
 
     void RDMInitiator::addTarget(TargetInfo const& targetInfo)
     {
-        _targets.emplace(targetInfo.id, RDMInitiatorEndpoint(_endpoint, targetInfo.fabricAddress, targetInfo.remoteRegions));
+        _targets.emplace(targetInfo.id, RDMInitiatorEndpoint(_endpoint, _dataLayout, targetInfo));
     }
 
     void RDMInitiator::removeTarget(TargetInfo const& targetInfo)
@@ -166,8 +158,23 @@ namespace mxl::lib::fabrics::ofi
         }
     }
 
-    void RDMInitiator::transferGrain(std::uint64_t grainIndex, std::uint64_t offset, std::uint32_t size, std::uint16_t validSlices)
+    void RDMInitiator::transferGrain(std::uint64_t grainIndex, std::uint64_t payloadOffset, std::uint16_t startSlice, std::uint16_t endSlice)
     {
+        if (_localRegions.empty())
+        {
+            throw Exception::internal("transferGrain called, but no region registered.");
+        }
+
+        if (!_dataLayout.isVideo())
+        {
+            throw Exception::internal("transferGrain called, but the data layout for that endpoint is not video.");
+        }
+
+        auto range = SliceRange::make(startSlice, endSlice);
+
+        auto size = range.transferSize(payloadOffset, _dataLayout.asVideo().sliceSizes[0]);
+        auto offset = range.transferOffset(payloadOffset, _dataLayout.asVideo().sliceSizes[0]);
+
         // Find the local region in which the grain with this index is stored.
         auto localRegion = _localRegions[grainIndex % _localRegions.size()].sub(offset, size);
 
@@ -175,29 +182,38 @@ namespace mxl::lib::fabrics::ofi
         // this is a no-op.
         for (auto& [_, target] : _targets)
         {
-            target.postTransferWithGrainIndex(localRegion, grainIndex, offset, size, validSlices);
-
             // A completion will be posted to the completion queue, after which the counter will be decremented again
-            pending++;
+            pending += target.postTransfer(localRegion, grainIndex, payloadOffset, range);
         }
     }
 
-    void RDMInitiator::transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t localOffset, std::uint64_t remoteIndex,
-        std::uint64_t remoteOffset, std::uint32_t size, std::uint16_t validSlices)
+    void RDMInitiator::transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t payloadOffset,
+        std::uint16_t startSlice, std::uint16_t endSlice)
     {
-        assert(localIndex < _localRegions.size());
+        if (_localRegions.empty())
+        {
+            throw Exception::internal("transferGrain called, but no region registered.");
+        }
+
+        if (!_dataLayout.isVideo())
+        {
+            throw Exception::internal("transferGrain called, but the data layout for that endpoint is not video.");
+        }
+
+        auto range = SliceRange::make(startSlice, endSlice);
+
+        auto size = range.transferSize(payloadOffset, _dataLayout.asVideo().sliceSizes[0]);
+        auto offset = range.transferOffset(payloadOffset, _dataLayout.asVideo().sliceSizes[0]);
 
         // Find the local region in which the grain with this index is stored.
-        auto localRegion = _localRegions[localIndex].sub(localOffset, size);
+        auto localRegion = _localRegions[localIndex % _localRegions.size()].sub(offset, size);
 
         // If the target is not in "Added" state this is a no-op.
         auto it = _targets.find(targetId);
         if (it != _targets.end())
         {
-            it->second.postTransferWithRemoteIndex(localRegion, remoteIndex, remoteOffset, size, validSlices);
-
-            // A completion will be posted to the completion queue, after which the counter will be decremented again
-            pending++;
+            // A completion will be posted to the completion queue per transfer, after which the counter will be decremented again
+            pending += it->second.postTransfer(localRegion, remoteIndex, payloadOffset, range);
         }
         else
         {
@@ -233,8 +249,9 @@ namespace mxl::lib::fabrics::ofi
         return hasPendingWork();
     }
 
-    RDMInitiator::RDMInitiator(std::shared_ptr<Endpoint> ep)
+    RDMInitiator::RDMInitiator(std::shared_ptr<Endpoint> ep, DataLayout dataLayout)
         : _endpoint(std::move(ep))
+        , _dataLayout(std::move(dataLayout))
         , _localRegions(_endpoint->domain()->localRegions())
     {}
 

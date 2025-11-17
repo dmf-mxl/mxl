@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Endpoint.hpp"
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -324,7 +325,7 @@ namespace mxl::lib::fabrics::ofi
         return _raw;
     }
 
-    void Endpoint::writeImpl(::iovec const* msgIov, std::size_t iovCount, void** desc, ::fi_rma_iov const* rmaIov, ::fi_addr_t destAddr,
+    std::size_t Endpoint::writeImpl(::iovec const* msgIov, std::size_t iovCount, void** desc, ::fi_rma_iov const* rmaIov, ::fi_addr_t destAddr,
         std::optional<std::uint32_t> immData)
     {
         std::uint64_t data = immData.value_or(0);
@@ -343,9 +344,11 @@ namespace mxl::lib::fabrics::ofi
         };
 
         fiCall(::fi_writemsg, "Failed to push rma write to work queue.", _raw, &msg, flags);
+
+        return 1;
     }
 
-    void Endpoint::write(LocalRegion const& local, RemoteRegion const& remote, ::fi_addr_t destAddr, std::optional<std::uint32_t> immData)
+    std::size_t Endpoint::write(LocalRegion const& local, RemoteRegion const& remote, ::fi_addr_t destAddr, std::optional<std::uint32_t> immData)
     {
         std::vector<void*> descs{local.desc};
 
@@ -355,7 +358,8 @@ namespace mxl::lib::fabrics::ofi
         return writeImpl(&msgIov, 1, descs.data(), &rmaIov, destAddr, immData);
     }
 
-    void Endpoint::write(LocalRegionGroup const& localGroup, RemoteRegion const& remote, ::fi_addr_t destAddr, std::optional<std::uint32_t> immData)
+    std::size_t Endpoint::write(LocalRegionGroup const& localGroup, RemoteRegion const& remote, ::fi_addr_t destAddr,
+        std::optional<std::uint32_t> immData)
     {
         auto rmaIov = remote.toRmaIov();
         return writeImpl(localGroup.asIovec(), localGroup.size(), const_cast<void**>(localGroup.desc()), &rmaIov, destAddr, immData);

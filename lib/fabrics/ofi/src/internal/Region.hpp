@@ -13,6 +13,7 @@
 #include <mxl-internal/FlowData.hpp>
 #include <rdma/fi_domain.h>
 #include "mxl/fabrics.h"
+#include "DataLayout.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
@@ -208,22 +209,22 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         std::vector<Region> const& regions() const noexcept;
 
-        // [[nodiscard]]
-        // DataLayout const& dataLayout() const noexcept;
+        [[nodiscard]]
+        DataLayout const& dataLayout() const noexcept;
 
     private:
         friend MxlRegions mxlRegionsFromFlow(FlowData const& flow);
-        friend MxlRegions mxlRegionsFromUser(mxlFabricsMemoryRegion const* regions, size_t count);
+        friend MxlRegions mxlRegionsFromUser(mxlFabricsUserRegionsConfig const& config);
 
     private:
-        MxlRegions(std::vector<Region> regions /*,  DataLayout dataLayout*/)
+        MxlRegions(std::vector<Region> regions, DataLayout dataLayout)
             : _regions(std::move(regions))
-        // , _layout(std::move(dataLayout))
+            , _layout(std::move(dataLayout))
         {}
 
     private:
         std::vector<Region> _regions;
-        // DataLayout _layout;
+        DataLayout _layout;
     };
 
     /** \brief Convert a FlowData's memory regions to MxlRegions.
@@ -236,5 +237,5 @@ namespace mxl::lib::fabrics::ofi
      *
      * Used to convert mxlFabricsMemoryRegion arrays provided by the user.
      */
-    MxlRegions mxlRegionsFromUser(mxlFabricsMemoryRegion const* regions, size_t count);
+    MxlRegions mxlRegionsFromUser(mxlFabricsUserRegionsConfig const& config);
 }

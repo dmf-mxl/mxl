@@ -10,10 +10,12 @@
 #include <variant>
 #include <vector>
 #include "Completion.hpp"
+#include "DataLayout.hpp"
 #include "Domain.hpp"
 #include "Endpoint.hpp"
 #include "Event.hpp"
 #include "Initiator.hpp"
+#include "Protocol.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
@@ -29,7 +31,7 @@ namespace mxl::lib::fabrics::ofi
          * \param FabricAddress The fabric address of the remote target.
          * \param RemoteRegions The remote memory regions on the target where data must be written to.
          */
-        RCInitiatorEndpoint(Endpoint, FabricAddress, std::vector<RemoteRegion>);
+        RCInitiatorEndpoint(Endpoint, DataLayout const& layout, TargetInfo info);
 
         /** \brief Returns true if there is any pending events that the endpoint is waiting for, and for which
          * the queues must be polled.
@@ -69,15 +71,9 @@ namespace mxl::lib::fabrics::ofi
          */
         void consume(Completion);
 
-        /** \brief Post a data transfer request to this endpoint where the user have to supply the remote region grain index and offset directly.
+        /** \brief Post a data transfer request to this endpoint.
          */
-        void postTransferWithRemoteGrainIndex(LocalRegion const& localRegion, std::uint64_t remoteIndex, std::uint64_t remoteOffset,
-            std::uint32_t size, std::uint16_t validSlices);
-
-        /** \brief Post a data transfer request to this endpoint using the grain index to select the remote region.
-         */
-        void postTransferWithGrainIndex(LocalRegion const& localRegion, std::uint64_t grainIndex, std::uint64_t remoteOffset, std::uint32_t size,
-            std::uint16_t validSlices);
+        void postTransfer(LocalRegion const& localRegion, std::uint64_t remoteIndex, std::uint64_t remotePayloadOffset, SliceRange const& sliceRange);
 
     private:
         /** \brief The idle state.
@@ -106,8 +102,9 @@ namespace mxl::lib::fabrics::ofi
          */
         struct Connected
         {
-            Endpoint ep;
-            std::size_t pending; /// The number of currently pending write requests.
+            std::shared_ptr<Endpoint> ep;
+            std::unique_ptr<EgressProtocol> proto; /**< Selected protocol for data transfers. */
+            std::size_t pending;                   /**< The number of currently pending write requests. */
         };
 
         /** \brief The shutdown state.
@@ -143,9 +140,9 @@ namespace mxl::lib::fabrics::ofi
         Idle restart(Endpoint const&);
 
     private:
-        State _state;                       /**< The internal state object. */
-        FabricAddress _addr;                /**< The remote fabric address to connect to. */
-        std::vector<RemoteRegion> _regions; /**< Descriptions of the remote memory regions where we need to write our grains. */
+        State _state;              /**< The internal state object. */
+        DataLayout const& _layout; /**< Data layout inherited by the parent RCInitiator. RCInitiatorEndpoint's can't outlive the parent RCInitiator*/
+        TargetInfo _info;          /**< The target info of the remote endpoint */
     };
 
     /** \brief An initiator that uses reliable connected endpoints to transfer data to targets.
@@ -163,31 +160,30 @@ namespace mxl::lib::fabrics::ofi
          */
         static std::unique_ptr<RCInitiator> setup(mxlInitiatorConfig const& config);
 
-        /** \copydoc Initiator::addTarget(TargetInfo const&)
+        /** \copydoc Initiator::addTarget()
          */
-        void addTarget(TargetInfo const& targetInfo) final;
+        void addTarget(TargetInfo const& targetInfo) override;
 
-        /** \copydoc Initiator::removeTarget(TargetInfo const&)
+        /** \copydoc Initiator::removeTarget()
          */
-        void removeTarget(TargetInfo const& targetInfo) final;
+        void removeTarget(TargetInfo const& targetInfo) override;
 
-        /** \copydoc Initiator::transferGrain(std::uint64_t, std::uint64_t, std::uint32_t, std::uint16_t)
+        /** \copydoc Initiator::transferGrain()
          */
-        void transferGrain(std::uint64_t grainIndex, std::uint64_t offset, std::uint32_t size, std::uint16_t validSlices) final;
+        void transferGrain(std::uint64_t grainIndex, std::uint64_t offset, std::uint16_t startSlice, std::uint16_t endSlice) override;
 
-        /** \copydoc Initiator::transferGrainToTarget(Endpoint::Id, std::uint64_t, std::uint64_t, std::uint64_t, std::uint64_t, std::uint32_t,
-         * std::uint16_t)
+        /** \copydoc Initiator::transferGrainToTarget()
          */
-        void transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t localOffset, std::uint64_t remoteIndex,
-            std::uint64_t remoteOffset, std::uint32_t size, std::uint16_t validSlices) final;
+        void transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t payloadOffset,
+            std::uint16_t startSlice, std::uint16_t endSlice) override;
 
         /** \copydoc Initiator::makeProgress()
          */
-        bool makeProgress() final;
+        bool makeProgress() override;
 
         /** \copydoc Initiator::makeProgressBlocking()
          */
-        bool makeProgressBlocking(std::chrono::steady_clock::duration) final;
+        bool makeProgressBlocking(std::chrono::steady_clock::duration) override;
 
     private:
         /** \brief Returns true if any of the endpoints contained in this initiator have pending work.
@@ -205,7 +201,7 @@ namespace mxl::lib::fabrics::ofi
          * \param cq The completion queue to use for all endpoints created by this initiator.
          * \param eq The event queue to use for all endpoints created by this initiator.
          */
-        RCInitiator(std::shared_ptr<Domain>, std::shared_ptr<CompletionQueue>, std::shared_ptr<EventQueue>);
+        RCInitiator(std::shared_ptr<Domain>, std::shared_ptr<CompletionQueue>, std::shared_ptr<EventQueue>, DataLayout);
 
         /** \brief Block on the completion queue with a timeout.
          */
@@ -232,6 +228,7 @@ namespace mxl::lib::fabrics::ofi
         std::shared_ptr<CompletionQueue> _cq;                   /**< Completion Queue shared by all endpoints. */
         std::shared_ptr<EventQueue> _eq;                        /**< Event Queue shared by all endpoints. */
 
+        DataLayout _dataLayout;                                 /**< Data layout used by this initiator. */
         std::vector<LocalRegion> _localRegions;                 /**< Local registered memory regions used for data transfers. */
 
         std::map<Endpoint::Id, RCInitiatorEndpoint> _targets{}; /**< Targets managed by this initiator. */
