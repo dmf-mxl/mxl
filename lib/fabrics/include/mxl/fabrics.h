@@ -8,6 +8,7 @@
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/platform.h>
+#include "mxl/flowinfo.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -97,6 +98,16 @@ extern "C"
         mxlFabricsMemoryRegionLocation loc; /**< Location information for that memory region. */
     } mxlFabricsMemoryRegion;
 
+    /** User configuration for a collection of memory regions.
+     */
+    typedef struct mxlFabricsUserRegionsConfig_t
+    {
+        mxlFabricsMemoryRegion const* regions;             /**< Pointer to an array of memory regions. */
+        size_t regionsCount;                               /**< The number of memory regions in the array. */
+
+        std::uint32_t sliceSize[MXL_MAX_PLANES_PER_GRAIN]; /**< The size of a single slice in bytes. */
+    } mxlFabricsUserRegionsConfig;
+
     /**
      * Get the backing memory regions of a flow associated with a flow reader.
      * The regions will be used to register the shared memory of the reader as source of data transfer operations.
@@ -119,14 +130,13 @@ extern "C"
 
     /**
      * Create a regions object from a list of memory region groups.
-     * \param in_regions A pointer to an array of memory region groups.
-     * \param in_count The number of memory region groups in the array.
+     * \param in_config User configuiration for the memory regions.
      * \param out_regions Returns a pointer to the created regions object. The user is responsible for freeing this object by calling
      * `mxlFabricsRegionsFree()`.
      * \return MXL_STATUS_OK if the regions object was successfully created.
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsRegionsFromUserBuffers(mxlFabricsMemoryRegion const* in_regions, size_t in_count, mxlRegions* out_regions);
+    mxlStatus mxlFabricsRegionsFromUserBuffers(mxlFabricsUserRegionsConfig const* in_config, mxlRegions* out_regions);
 
     /**
      * Free a regions object previously allocated by mxlFabricsRegionsForFlowReader(), mxlFabricsRegionsForFlowWriter() or
@@ -259,19 +269,19 @@ extern "C"
      * \param in_initiator A valid fabrics initiator
      * \param in_targetInfo The target information of the specific target. This should be the same as the one returned from "mxlFabricsTargetSetup".
      * \param in_localIndex The index of the memory region (local) to transfer. The ordering was given when mxlRegions object was created.
-     * \param in_localOffset Offset in bytes inside the local memory region. For full grain transfer, use 0.
      * \param in_remoteIndex The index of the memory region (remote) to receive the transfer at the target side. The ordering was given when
      * mxlRegions object was created.
-     * \param in_remoteOffset Offset in bytes inside the remote memory region. For full grain transfer, use 0.
-     * \param in_size Transfer size in bytes.
-     * \param in_validSlices The number of valid slices in the transfer.
+     * \param in_payloadOffset Offset in bytes inside the remote memory region before the payload starts. This is typically the header if any. In MXL,
+     * this corresponds to MXL_GRAIN_PAYLOAD_OFFSET.
+     * \param in_startSlice The start slice in the slice range to transfer. This is inclusive.
+     * \param in_endSlice The end slice in the slice range to transfer. This is exclusive.
      * \return The result code. \see mxlStatus
      * \note This function is useful when the underlying buffer layout does not match the MXL grain data layout. Otherwise \see
      * mxlFabricsInitiatorTransferGrain()
      */
     MXL_EXPORT
     mxlStatus mxlFabricsInitiatorTransferGrainToTarget(mxlFabricsInitiator in_initiator, mxlTargetInfo const in_targetInfo, uint64_t in_localIndex,
-        uint64_t in_localOffset, uint64_t in_remoteIndex, uint64_t in_remoteOffset, uint32_t in_size, std::uint16_t in_validSlices);
+        uint64_t in_remoteIndex, uint64_t in_payloadOffset, std::uint16_t in_startSlice, std::uint16_t in_endSlice);
 
     /**
      * Enqueue a transfer operation to all added targets. This function is always non-blocking. The transfer operation might be started right
@@ -279,17 +289,18 @@ extern "C"
      * \param in_initiator A valid fabrics initiator
      * \param in_grainIndex The  grain index to transfer. The ordering was given when mxlRegions object were created. This is true for both local and
      * remote memory regions.
-     * \param in_offset Offset in bytes inside the memory region. For full grain transfer, use 0.
-     * \param in_size Transfer size in bytes.
-     * \param in_validSlices The number of valid slices in the transfer.
+     * \param in_payloadOffset Offset in bytes inside the remote memory region before the payload starts. In MXL, this corresponds to
+     * MXL_GRAIN_PAYLOAD_OFFSET.
+     * \param in_startSlice The start slice in the slice range to transfer. This is inclusive.
+     * \param in_endSlice The end slice in the slice range to transfer. This is exclusive.
      * \return The result code. \see mxlStatus
      * \note This function assumes: (1) the underlying buffer layout matches the MXL grain data layout, and (2) ring buffer entries for local and
      * remote regions can be calculated via modulo operation: `grainIndex % regions.size()`.If these assumptions do not hold, use
      * mxlFabricsInitiatorTransferGrainToTarget() instead.
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsInitiatorTransferGrain(mxlFabricsInitiator in_initiator, uint64_t in_grainIndex, uint64_t in_offset, uint32_t in_size,
-        std::uint16_t in_validSlices);
+    mxlStatus mxlFabricsInitiatorTransferGrain(mxlFabricsInitiator in_initiator, uint64_t in_grainIndex, uint64_t in_payloadOffset,
+        std::uint16_t in_startSlice, std::uint16_t in_endSlice);
 
     /**
      * This function must be called regularly for the initiator to make progress on queued transfer operations, connection establishment

@@ -11,6 +11,7 @@
 #include "Exception.hpp"
 #include "FabricInfo.hpp"
 #include "Format.hpp" // IWYU pragma: keep; Includes template specializations of fmt::formatter for our types
+#include "Protocol.hpp"
 #include "Region.hpp"
 
 namespace mxl::lib::fabrics::ofi
@@ -42,10 +43,7 @@ namespace mxl::lib::fabrics::ofi
 
         auto mxlRegions = MxlRegions::fromAPI(config.regions);
 
-        if (mxlRegions && !mxlRegions->regions().empty())
-        {
-            domain->registerRegions(mxlRegions->regions(), FI_REMOTE_WRITE);
-        }
+        auto proto = selectProtocol(domain, mxlRegions->dataLayout(), mxlRegions->regions());
 
         auto endpoint = Endpoint::create(domain);
 
@@ -73,17 +71,19 @@ namespace mxl::lib::fabrics::ofi
 
         struct MakeUniqueEnabler : RDMTarget
         {
-            MakeUniqueEnabler(Endpoint endpoint, std::unique_ptr<ImmediateDataLocation> immData)
-                : RDMTarget(std::move(endpoint), std::move(immData))
+            MakeUniqueEnabler(Endpoint endpoint, std::unique_ptr<IngressProtocol> proto, std::unique_ptr<ImmediateDataLocation> immData)
+
+                : RDMTarget(std::move(endpoint), std::move(proto), std::move(immData))
             {}
         };
 
-        return {std::make_unique<MakeUniqueEnabler>(std::move(endpoint), std::move(dataRegion)),
+        return {std::make_unique<MakeUniqueEnabler>(std::move(endpoint), std::move(proto), std::move(dataRegion)),
             std::make_unique<TargetInfo>(std::move(localAddress), domain->remoteRegions())};
     }
 
-    RDMTarget::RDMTarget(Endpoint endpoint, std::unique_ptr<ImmediateDataLocation> immData)
+    RDMTarget::RDMTarget(Endpoint endpoint, std::unique_ptr<IngressProtocol> proto, std::unique_ptr<ImmediateDataLocation> immData)
         : _endpoint(std::move(endpoint))
+        , _proto(std::move(proto))
         , _immData(std::move(immData))
     {}
 
@@ -118,6 +118,12 @@ namespace mxl::lib::fabrics::ofi
                     // the immmediate data (in our case the grain index), will be returned in the registered region.
                     _endpoint.recv(_immData->toLocalRegion());
                 }
+
+                _proto->processCompletion(*result.immData);
+            }
+            else
+            {
+                MXL_ERROR("Completion error: {}", completion->err().toString());
             }
         }
         return result;

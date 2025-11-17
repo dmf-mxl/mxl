@@ -48,10 +48,15 @@ TEST_CASE("ofi: RegionGroups fromGroups and view", "[ofi][RegionGroups]")
                     .size = 256,
                     .loc = {.type = MXL_PAYLOAD_LOCATION_HOST_MEMORY, .deviceId = 0},
                 }};
-
     // clang-format on
 
-    auto mxlRegions = mxlRegionsFromUser(inputRegions.data(), 1);
+    auto config = mxlFabricsUserRegionsConfig{
+        .regions = inputRegions.data(),
+        .regionsCount = 1,
+        .sliceSize = {8, 0, 0, 0},
+    };
+
+    auto mxlRegions = mxlRegionsFromUser(config);
 
     REQUIRE(mxlRegions.regions().size() == 1);
 
@@ -59,4 +64,11 @@ TEST_CASE("ofi: RegionGroups fromGroups and view", "[ofi][RegionGroups]")
     REQUIRE(region.base == 0x3000);
     REQUIRE(region.size == 256);
     REQUIRE(region.loc.isHost());
+
+    auto dataLayout = mxlRegions.dataLayout();
+
+    REQUIRE(dataLayout.isVideo());
+
+    auto videoLayout = dataLayout.asVideo();
+    REQUIRE(videoLayout.sliceSizes[0] == 8);
 }

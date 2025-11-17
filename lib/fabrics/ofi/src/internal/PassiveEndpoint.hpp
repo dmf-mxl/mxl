@@ -6,6 +6,7 @@
 
 #include <rdma/fi_endpoint.h>
 #include "Address.hpp"
+#include "Domain.hpp"
 #include "Event.hpp"
 #include "EventQueue.hpp"
 #include "Fabric.hpp"
@@ -62,6 +63,11 @@ namespace mxl::lib::fabrics::ofi
          */
         [[nodiscard]]
         std::shared_ptr<EventQueue> eventQueue() const;
+
+        /** \brief Get the domain that the endpoint has beed created on.
+         */
+        [[nodiscard]]
+        std::shared_ptr<Domain> domain() const;
 
         /** \brief Obtain the local fabric address for this passive endpoint.
          */
