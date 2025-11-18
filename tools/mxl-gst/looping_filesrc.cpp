@@ -636,13 +636,13 @@ private:
                 if (buffer)
                 {
                     auto pts = GST_BUFFER_PTS(buffer);
-                    if (!_internalOffset)
+                    if (!videoAppSinkOffset)
                     {
-                        _internalOffset = mxlGetTime() - (pts + gstBaseTime);
-                        MXL_INFO("media-pipeline: Set internal offset to {} ns", *_internalOffset);
+                        videoAppSinkOffset = mxlGetTime() - (pts + gstBaseTime);
+                        MXL_INFO("appSinkVideo: Set internal offset to {} ns", *videoAppSinkOffset);
                     }
 
-                    GST_BUFFER_PTS(buffer) = pts + gstBaseTime + *_internalOffset;
+                    GST_BUFFER_PTS(buffer) = pts + gstBaseTime + *videoAppSinkOffset;
                     auto grainIndex = mxlTimestampToIndex(&videoGrainRate, GST_BUFFER_PTS(buffer));
 
                     lastVideoGrainIndex = grainIndex;
@@ -715,13 +715,13 @@ private:
                 if (buffer)
                 {
                     auto pts = GST_BUFFER_PTS(buffer);
-                    if (!_internalOffset)
+                    if (!audioAppSinkOffset)
                     {
-                        _internalOffset = mxlGetTime() - (pts + gstBaseTime);
-                        MXL_INFO("media-pipeline: Set internal offset to {} ns", *_internalOffset);
+                        audioAppSinkOffset = mxlGetTime() - (pts + gstBaseTime);
+                        MXL_INFO("appSinkAudio: Set internal offset to {} ns", *audioAppSinkOffset);
                     }
 
-                    GST_BUFFER_PTS(buffer) = pts + gstBaseTime + *_internalOffset;
+                    GST_BUFFER_PTS(buffer) = pts + gstBaseTime + *audioAppSinkOffset;
                     auto grainIndex = mxlTimestampToIndex(&audioGrainRate, GST_BUFFER_PTS(buffer));
 
                     lastAudioGrainIndex = grainIndex;
@@ -803,8 +803,10 @@ private:
     ::mxlFlowWriter flowWriterAudio = nullptr;
     // The MXL instance
     ::mxlInstance mxlInstance = nullptr;
-    // Offset between Gstreamer and MXL
-    std::optional<std::uint64_t> _internalOffset{std::nullopt};
+    // Offset between video appsink and MXL
+    std::optional<std::uint64_t> videoAppSinkOffset{std::nullopt};
+    // Offset between audio appsink and MXL
+    std::optional<std::uint64_t> audioAppSinkOffset{std::nullopt};
     // GStreamer media pipeline
     ::GstElement* pipeline = nullptr;
     // GStreamer appsink for Video
