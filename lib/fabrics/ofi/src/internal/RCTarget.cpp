@@ -10,6 +10,7 @@
 #include "Exception.hpp"
 #include "FabricInfo.hpp"
 #include "Format.hpp" // IWYU pragma: keep; Includes template specializations of fmt::formatter for our types
+#include "PassiveEndpoint.hpp"
 #include "Protocol.hpp"
 #include "Region.hpp"
 #include "VariantUtils.hpp"
@@ -54,16 +55,7 @@ namespace mxl::lib::fabrics::ofi
         // Select the "protocol" when a data transfer completes
         auto proto = selectProtocol(domain, mxlRegions->dataLayout(), mxlRegions->regions());
 
-        // Create a passive endpoint. A passive endpoint can be viewed like a bound TCP socket listening for
-        // incoming connections
-        auto pep = PassiveEndpoint::create(fabric);
-
-        // Create an event queue for the passive endpoint. Incoming connections generate an entry in the event queue
-        // and be picked up when the Target tries to make progress.
-        pep.bind(EventQueue::open(fabric, EventQueue::Attributes::defaults()));
-
-        // Transition the PassiveEndpoint into a listening state. Connections will be accepted from now on.
-        pep.listen();
+        auto pep = makeListener(fabric);
 
         // Helper struct to enable the std::make_unique function to access the private constructor of this class
         struct MakeUniqueEnabler : RCTarget
@@ -162,7 +154,8 @@ namespace mxl::lib::fabrics::ofi
 
                     if (event && event.value().isShutdown())
                     {
-                        throw Exception::interrupted("Target received a shutdown event.");
+                        MXL_INFO("Remote endpoint has shutdown the connection. Transitioning to listening to new connection.");
+                        return WaitForConnectionRequest{.pep = makeListener(_domain->fabric())};
                     }
 
                     if (completion)
@@ -194,6 +187,22 @@ namespace mxl::lib::fabrics::ofi
             std::move(_state));
 
         return result;
+    }
+
+    PassiveEndpoint RCTarget::makeListener(std::shared_ptr<Fabric> fabric)
+    {
+        // Create a passive endpoint. A passive endpoint can be viewed like a bound TCP socket listening for
+        // incoming connections
+        auto pep = PassiveEndpoint::create(fabric);
+
+        // Create an event queue for the passive endpoint. Incoming connections generate an entry in the event queue
+        // and be picked up when the Target tries to make progress.
+        pep.bind(EventQueue::open(fabric, EventQueue::Attributes::defaults()));
+
+        // Transition the PassiveEndpoint into a listening state. Connections will be accepted from now on.
+        pep.listen();
+
+        return pep;
     }
 
 }
