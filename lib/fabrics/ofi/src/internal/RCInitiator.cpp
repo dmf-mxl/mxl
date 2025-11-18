@@ -14,9 +14,9 @@
 #include "Domain.hpp"
 #include "Exception.hpp"
 #include "FabricInfo.hpp"
+#include "GrainSlices.hpp"
 #include "Protocol.hpp"
 #include "Region.hpp"
-#include "GrainSlices.hpp"
 #include "VariantUtils.hpp"
 
 namespace mxl::lib::fabrics::ofi
@@ -339,7 +339,7 @@ namespace mxl::lib::fabrics::ofi
         auto size = range.transferSize(payloadOffset, _dataLayout.asVideo().sliceSizes[0]);
         auto offset = range.transferOffset(payloadOffset, _dataLayout.asVideo().sliceSizes[0]);
 
-        MXL_INFO("Transferring grain {} to all targets, offset {}, size {}", grainIndex, offset, size);
+        MXL_DEBUG("Transferring grain {} to all targets, offset {}, size {}", grainIndex, offset, size);
 
         // Find the local region in which the grain with this index is stored.
         auto localRegion = _localRegions[grainIndex % _localRegions.size()].sub(offset, size);
