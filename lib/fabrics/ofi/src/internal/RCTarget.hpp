@@ -87,6 +87,9 @@ namespace mxl::lib::fabrics::ofi
         template<QueueReadMode>
         Target::ReadResult makeProgress(std::chrono::steady_clock::duration timeout);
 
+        [[nodiscard]]
+        static PassiveEndpoint makeListener(std::shared_ptr<Fabric> fabric);
+
     private:
         std::shared_ptr<Domain> _domain;
         std::unique_ptr<IngressProtocol> _proto;
