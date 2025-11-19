@@ -56,7 +56,7 @@ TODO. A generic GUI application based on gstreamer or ffmpeg to display flow(s).
 
 ## mxl-gst-videotestsrc
 
-A binary that uses the gstreamer element 'videotestsrc' to produce video grains and/or audio samples which will be pushed to a MXL Flow. The flow is configured from a NMOS Flow json file. Here's an example of such file :
+A binary that uses the gstreamer element 'videotestsrc' to produce video grains and/or audio samples which will be pushed to a MXL Flow. The flow is configured from a NMOS Flow json file. Here's an example of such file for a video flow:
 
 ```json
 {
@@ -94,6 +94,34 @@ A binary that uses the gstreamer element 'videotestsrc' to produce video grains 
       "bit_depth": 10
     }
   ]
+}
+```
+
+And here is an example of the NMOS Flow json file for an audio flow. To modify the number of audio channels present in the flow, modify the *"channel_count"* parameter to the desired value.
+
+```json
+{
+  "$copyright": "SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.",
+  "$license": "SPDX-License-Identifier: Apache-2.0",
+  "description": "MXL Audio Flow",
+  "format": "urn:x-nmos:format:audio",
+  "tags": {
+    "urn:x-nmos:tag:grouphint/v1.0": [
+      "Media Function XYZ:Audio"
+    ]
+  },
+  "label": "MXL Audio Flow",
+  "version": "1441812152:154331951",
+  "id": "b3bb5be7-9fe9-4324-a5bb-4c70e1084449",
+  "media_type": "audio/float32",
+  "sample_rate": {
+    "numerator": 48000
+  },
+  "channel_count": 2,
+  "bit_depth": 32,
+  "parents": [],
+  "source_id": "2aa143ac-0ab7-4d75-bc32-5c00c13d186f",
+  "device_id": "169feb2c-3fae-42a5-ae2e-f6f8cbce29cf"
 }
 ```
 
