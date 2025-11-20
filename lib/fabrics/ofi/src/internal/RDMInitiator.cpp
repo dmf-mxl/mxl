@@ -85,7 +85,7 @@ namespace mxl::lib::fabrics::ofi
     {
         if (auto state = std::get_if<Activated>(&_state); state != nullptr)
         {
-            return state->proto->transferGrain(localRegion, remoteIndex, remoteOffset, sliceRange);
+            return state->proto->transferGrain(localRegion, remoteIndex, remoteOffset, sliceRange, state->fiAddr);
         }
 
         return 0;
