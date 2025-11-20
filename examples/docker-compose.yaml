@@ -4,37 +4,72 @@
 services:
   init:
     image: alpine
+    profiles: [test-source, looping-file-source]
     command: ["sh", "-c", "mkdir -p /dev/shm/mxl"]
     volumes:
       - type: bind
         source: /dev/shm
         target: /dev/shm
-    restart: "no"
+    restart: no
 
   writer-media-function:
     image: mxl-writer
+    profiles: [test-source]
     depends_on:
-      - init
+      init:
+        condition: service_completed_successfully
     build:
       context: ..
       dockerfile: examples/Dockerfile.writer.txt
     restart: unless-stopped
     volumes:
       - type: bind
-        source: /dev/shm/mxl
-        target: /domain
-        
+        source: /dev/shm
+        target: /shared_memory
+
+  writer-looper-video-media-function:
+    image: mxl-writer-video-looper
+    profiles: [looping-file-source]
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    build:
+      context: ..
+      dockerfile: examples/Dockerfile.writer.video.loop.txt
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /dev/shm
+        target: /shared_memory
+
+  writer-looper-audio-media-function:
+    image: mxl-writer-audio-looper
+    profiles: [looping-file-source]
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    build:
+      context: ..
+      dockerfile: examples/Dockerfile.writer.audio.loop.txt
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /dev/shm
+        target: /shared_memory
+
   reader-media-function:
     image: mxl-reader
+    profiles: [test-source, looping-file-source]
     depends_on:
-      - init
+      init:
+        condition: service_completed_successfully
     build:
       context: ..
       dockerfile: examples/Dockerfile.reader.txt
     restart: unless-stopped
     volumes:
       - type: bind
-        source: /dev/shm/mxl
-        target: /domain
+        source: /dev/shm
+        target: /shared_memory
     stdin_open: true
     tty: true
