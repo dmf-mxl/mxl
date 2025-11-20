@@ -21,7 +21,7 @@ namespace
 {
     std::sig_atomic_t volatile g_exit_requested = 0;
 
-    void signal_handler(int)
+    void signal_handler(int) noexcept
     {
         g_exit_requested = 1;
     }
@@ -36,7 +36,7 @@ namespace
         std::uint32_t sliceSize;
 
         [[nodiscard]]
-        std::string display() const noexcept
+        std::string display() const
         {
             return fmt::format("frame_width={} frame_height={} frame_rate={}/{} pattern={} textoverlay={}",
                 frame_width,
@@ -57,7 +57,7 @@ namespace
         int64_t offset{0};
 
         [[nodiscard]]
-        std::string display() const noexcept
+        std::string display() const
         {
             return fmt::format("rate={} channelCount={}  samplesPerBatch={} wave={}", rate.numerator, channelCount, samplesPerBatch, wave);
         }
