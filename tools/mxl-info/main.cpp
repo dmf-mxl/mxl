@@ -19,6 +19,7 @@
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
+#include "mxl-internal/FlowInfo.hpp"
 #include "mxl-internal/PathUtils.hpp"
 
 namespace
@@ -27,7 +28,7 @@ namespace
     {
         struct LatencyPrinter
         {
-            constexpr LatencyPrinter(mxlFlowInfo const& info) noexcept
+            constexpr explicit LatencyPrinter(mxlFlowInfo const& info) noexcept
                 : flowInfo{&info}
             {}
 
@@ -92,7 +93,7 @@ namespace
 
     detail::LatencyPrinter formatWithLatency(mxlFlowInfo const& info)
     {
-        return info;
+        return detail::LatencyPrinter{info};
     }
 
     void getFlowDetails(std::filesystem::path const& descPath, std::string& label, std::string& groupHint)
