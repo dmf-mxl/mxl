@@ -1,0 +1,95 @@
+name: Link Requirement Issue
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  link-requirement:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Print raw issue body
+        run: |
+          echo "${{ github.event.issue.body }}"
+    
+      - name: Parse issue form
+        id: parse
+        uses: cssnr/parse-issue-form-action@v1
+        with:
+          body: ${{ github.event.issue.body }}
+      
+      - name: Debug requirement_link
+        run: |
+          echo "Parsed requirement_link: ${{ steps.parse.outputs.requirement_link }}"
+
+      - name: Extract owner, repo, and issue number
+        id: extract
+        run: |
+          LINK="${{ steps.parse.outputs.requirement_link }}"
+          echo "Raw LINK: $LINK"
+          if [[ "$LINK" =~ ^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+#[0-9]+$ ]]; then
+            OWNER_REPO=$(echo "$LINK" | cut -d'#' -f1)
+            ISSUE_NUM=$(echo "$LINK" | grep -o '#[0-9]*' | cut -c2-)
+            echo "owner_repo=$OWNER_REPO" >> $GITHUB_OUTPUT
+            echo "issue_num=$ISSUE_NUM" >> $GITHUB_OUTPUT
+          else
+            echo "Invalid requirement_link format: $LINK"
+          fi
+          
+      - name: Debug token presence
+        run: |
+          if [ -z "${{ secrets.GH_TOKEN }}" ]; then
+            echo "GH_TOKEN is empty or not set!"
+            exit 1
+          else
+            echo "GH_TOKEN is set."
+          fi
+
+      - name: Comment on parent issue
+        if: steps.extract.outputs.issue_num != ''
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ steps.extract.outputs.owner_repo }}/issues/${{ steps.extract.outputs.issue_num }}/comments \
+            -d "{\"body\": \"Linked feature: ${{ github.repository }}#${{ github.event.issue.number }}\"}"
+
+      - name: Set 'Type' field to 'Feature' in GitHub Project
+        env:
+          : ${{ secrets.GH_TOKEN}}
+        run: |
+          curl -X POST -H "Authorization: bearer $GITHUB_TOKEN" -H "Content-Type: application/json" \
+          -d '{
+            "query": "mutation { updateProjectV2ItemFieldValue(input: {projectId: \"PROJECT_ID\", itemId: \"ITEM_ID\", fieldId: \"TYPE_FIELD_ID\", value: { singleSelectOptionId: \"FEATURE_OPTION_ID\" }}) { projectV2Item { id } } }"
+          }' https://api.github.com/graphql
+          
+      - name: Link as sub-issue using gh CLI
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          PARENT_REPO: ${{ steps.extract.outputs.owner_repo }}
+          PARENT_NUMBER: ${{ steps.extract.outputs.issue_num }}
+          CHILD_REPO: ${{ github.repository }}
+          CHILD_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          echo "Fetching node IDs..."
+
+          PARENT_NODE_ID=$(gh issue view https://github.com/$PARENT_REPO/issues/$PARENT_NUMBER --json id --jq .id)
+          CHILD_NODE_ID=$(gh issue view https://github.com/$CHILD_REPO/issues/$CHILD_NUMBER --json id --jq .id)
+
+          echo "Parent Node ID: $PARENT_NODE_ID"
+          echo "Child Node ID: $CHILD_NODE_ID"
+
+          echo "Linking child to parent..."
+          gh api graphql \
+            -H "GraphQL-Features: sub_issues" \
+            -f query='
+            mutation {
+              addSubIssue(input: {
+                issueId: "'$PARENT_NODE_ID'",
+                subIssueId: "'$CHILD_NODE_ID'"
+              }) {
+                issue { title }
+                subIssue { title }
+              }
+            }'
+       
