@@ -7,7 +7,7 @@
 
 using namespace mxl::lib::fabrics::ofi;
 
-TEST_CASE("FabricAddress default construction", "[FabricAddress]")
+TEST_CASE("ofi: FabricAddress default construction", "[ofi][FabricAddress]")
 {
     FabricAddress empty;
     REQUIRE(empty.size() == 0);
@@ -16,7 +16,7 @@ TEST_CASE("FabricAddress default construction", "[FabricAddress]")
     REQUIRE(empty.toBase64().empty());
 }
 
-TEST_CASE("FabricAddress base64 decode", "[FabricAddress]")
+TEST_CASE("ofi: FabricAddress base64 decode", "[ofi][FabricAddress]")
 {
     FabricAddress addr = FabricAddress::fromBase64("AQIDBAU="); // base64 for {1,2,3,4,5}
     auto* addrInner = static_cast<uint8_t const*>(addr.raw());

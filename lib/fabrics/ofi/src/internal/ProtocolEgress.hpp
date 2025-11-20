@@ -1,5 +1,6 @@
 #pragma once
 
+#include <rdma/fabric.h>
 #include "Endpoint.hpp"
 #include "Protocol.hpp"
 #include "RemoteRegion.hpp"
@@ -24,7 +25,7 @@ namespace mxl::lib::fabrics::ofi
 
         /** \copydoc Protocol::transferGrain() */
         std::size_t transferGrain(LocalRegion const& localRegion, std::uint64_t remoteIndex, std::uint32_t remotePayloadOffset,
-            SliceRange const& sliceRange) override;
+            SliceRange const& sliceRange, ::fi_addr_t destAddr) override;
 
     private:
         std::shared_ptr<Endpoint> _ep;

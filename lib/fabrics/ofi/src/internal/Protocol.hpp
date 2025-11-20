@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <rdma/fabric.h>
 #include "DataLayout.hpp"
 #include "Domain.hpp"
 #include "Endpoint.hpp"
@@ -43,10 +44,11 @@ namespace mxl::lib::fabrics::ofi
          * \param remoteIndex The index of the remote grain to transfer to.
          * \param payloadOffset The payload offset within the grain.
          * \param sliceRange The range of slices to transfer.
+         * \param destAddr The destination address. This is ignored for connection-oriented endpoints.
          * \return The number of requests posted to the endpoint work queue.
          */
         virtual std::size_t transferGrain(LocalRegion const& localRegion, std::uint64_t remoteIndex, std::uint32_t payloadOffset,
-            SliceRange const& sliceRange) = 0;
+            SliceRange const& sliceRange, ::fi_addr_t destAddr = FI_ADDR_UNSPEC) = 0;
     };
 
     /** \brief Select an appropriate ingress protocol based on the data layout

@@ -1,8 +1,8 @@
 #include "ProtocolEgress.hpp"
 #include <cstddef>
 #include <utility>
-#include "ImmData.hpp"
 #include "GrainSlices.hpp"
+#include "ImmData.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
@@ -15,13 +15,13 @@ namespace mxl::lib::fabrics::ofi
     {}
 
     std::size_t EgressProtocolWriter::transferGrain(LocalRegion const& localRegion, std::uint64_t remoteIndex, std::uint32_t remotePayloadOffset,
-        SliceRange const& sliceRange)
+        SliceRange const& sliceRange, ::fi_addr_t destAddr)
     {
         auto ringIndex = remoteIndex % _remoteRegions.size();
         auto offset = sliceRange.transferOffset(remotePayloadOffset, _layout.sliceSizes[0]);
         auto size = sliceRange.transferSize(remotePayloadOffset, _layout.sliceSizes[0]);
         auto const& remoteRegion = _remoteRegions[ringIndex].sub(offset, size);
 
-        return _ep->write(localRegion, remoteRegion, FI_ADDR_UNSPEC, ImmDataGrain{ringIndex, sliceRange.end()}.data());
+        return _ep->write(localRegion, remoteRegion, destAddr, ImmDataGrain{ringIndex, sliceRange.end()}.data());
     }
 }
