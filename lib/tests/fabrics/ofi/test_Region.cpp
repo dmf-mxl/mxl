@@ -4,7 +4,6 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include "mxl/fabrics.h"
-#include "mxl/flow.h"
 #include "Region.hpp"
 
 using namespace mxl::lib::fabrics::ofi;
