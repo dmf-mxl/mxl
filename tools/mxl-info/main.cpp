@@ -28,11 +28,11 @@ namespace
     {
         struct LatencyPrinter
         {
-            constexpr explicit LatencyPrinter(mxlFlowInfo const& info) noexcept
+            constexpr explicit LatencyPrinter(::mxlFlowInfo const& info) noexcept
                 : flowInfo{&info}
             {}
 
-            mxlFlowInfo const* flowInfo;
+            ::mxlFlowInfo const* flowInfo;
         };
 
         bool isTerminal(std::ostream& os) noexcept
@@ -48,11 +48,11 @@ namespace
             return false; // treat all other ostreams as non-terminal
         }
 
-        void outputLatency(std::ostream& os, std::uint64_t headIndex, mxlRational const& grainRate, std::uint64_t limit)
+        void outputLatency(std::ostream& os, std::uint64_t headIndex, ::mxlRational const& grainRate, std::uint64_t limit)
         {
-            auto const now = mxlGetTime();
+            auto const now = ::mxlGetTime();
 
-            auto const currentIndex = mxlTimestampToIndex(&grainRate, now);
+            auto const currentIndex = ::mxlTimestampToIndex(&grainRate, now);
             auto const latency = currentIndex - headIndex;
 
             if (isTerminal(os))
@@ -79,11 +79,11 @@ namespace
         {
             os << *lp.flowInfo;
 
-            if (mxlIsDiscreteDataFormat(lp.flowInfo->config.common.format))
+            if (::mxlIsDiscreteDataFormat(lp.flowInfo->config.common.format))
             {
                 outputLatency(os, lp.flowInfo->runtime.headIndex, lp.flowInfo->config.common.grainRate, lp.flowInfo->config.discrete.grainCount);
             }
-            else if (mxlIsContinuousDataFormat(lp.flowInfo->config.common.format))
+            else if (::mxlIsContinuousDataFormat(lp.flowInfo->config.common.format))
             {
                 outputLatency(os, lp.flowInfo->runtime.headIndex, lp.flowInfo->config.common.grainRate, lp.flowInfo->config.continuous.bufferLength);
             }
@@ -91,94 +91,119 @@ namespace
         }
     }
 
-    detail::LatencyPrinter formatWithLatency(mxlFlowInfo const& info)
+    detail::LatencyPrinter formatWithLatency(::mxlFlowInfo const& info)
     {
         return detail::LatencyPrinter{info};
     }
 
-    void getFlowDetails(std::filesystem::path const& descPath, std::string& label, std::string& groupHint)
+    class ScopedMxlInstance
     {
-        label = std::string{"n/a"};
-        groupHint = std::string{"n/a"};
-
-        if (!exists(descPath))
+    public:
+        explicit ScopedMxlInstance(std::string const& domain)
+            : _instance{::mxlCreateInstance(domain.c_str(), "")}
         {
-            return;
-        }
-
-        auto descFile = std::ifstream{descPath};
-        if (!descFile)
-        {
-            return;
-        }
-
-        auto const content = std::string((std::istreambuf_iterator<char>(descFile)), std::istreambuf_iterator<char>());
-        descFile.close();
-
-        auto v = picojson::value{};
-        std::string err = picojson::parse(v, content);
-        if (!err.empty())
-        {
-            return;
-        }
-
-        auto const& obj = v.get<picojson::object>();
-        auto const flowTypeIt = obj.find("label");
-        if ((flowTypeIt == obj.end()) || !flowTypeIt->second.is<std::string>())
-        {
-            return;
-        }
-        else
-        {
-            label = flowTypeIt->second.get<std::string>();
-        }
-
-        // try to get the group hint tag
-        auto const tagsIt = obj.find("tags");
-        if ((tagsIt != obj.end()) && tagsIt->second.is<picojson::object>())
-        {
-            auto const& tagsObj = tagsIt->second.get<picojson::object>();
-            auto const groupHintIt = tagsObj.find("urn:x-nmos:tag:grouphint/v1.0");
-            if ((groupHintIt != tagsObj.end()) && groupHintIt->second.is<picojson::array>())
+            if (_instance == nullptr)
             {
-                auto const& groupHintArray = groupHintIt->second.get<picojson::array>();
-                if (!groupHintArray.empty() && groupHintArray[0].is<std::string>())
+                throw std::runtime_error{"Failed to create MXL instance."};
+            }
+        }
+
+        ScopedMxlInstance(ScopedMxlInstance&&) = delete;
+        ScopedMxlInstance(ScopedMxlInstance const&) = delete;
+
+        ScopedMxlInstance& operator=(ScopedMxlInstance&&) = delete;
+        ScopedMxlInstance& operator=(ScopedMxlInstance const&) = delete;
+
+        ~ScopedMxlInstance()
+        {
+            // Guarateed to be non-null if the destructor runs
+            ::mxlDestroyInstance(_instance);
+        }
+
+        constexpr ::mxlInstance get() const noexcept
+        {
+            return _instance;
+        }
+
+        constexpr operator ::mxlInstance() const noexcept
+        {
+            return _instance;
+        }
+
+    private:
+        ::mxlInstance _instance;
+    };
+
+    std::string readFile(std::string const& filepath)
+    {
+        if (auto file = std::ifstream{filepath, std::ios::in | std::ios::binary}; file)
+        {
+            auto reader = std::stringstream{};
+            reader << file.rdbuf();
+            return reader.str();
+        }
+
+        throw std::runtime_error{"Failed to open file: " + filepath};
+    }
+
+    std::pair<std::string, std::string> getFlowDetails(std::filesystem::path const& descPath) noexcept
+    {
+        auto result = std::pair<std::string, std::string>{"n/a", "n/a"};
+
+        try
+        {
+            auto const content = readFile(descPath);
+
+            auto v = picojson::value{};
+            if (auto const errorString = picojson::parse(v, content); errorString.empty())
+            {
+                auto const& obj = v.get<picojson::object>();
+
+                if (auto const labelIt = obj.find("label"); (labelIt != obj.end()) && labelIt->second.is<std::string>())
                 {
-                    groupHint = groupHintArray[0].get<std::string>();
+                    result.first = labelIt->second.get<std::string>();
+                }
+
+                // try to get the group hint tag
+                if (auto const tagsIt = obj.find("tags"); (tagsIt != obj.end()) && tagsIt->second.is<picojson::object>())
+                {
+                    auto const& tagsObj = tagsIt->second.get<picojson::object>();
+
+                    if (auto const groupHintIt = tagsObj.find("urn:x-nmos:tag:grouphint/v1.0");
+                        (groupHintIt != tagsObj.end()) && groupHintIt->second.is<picojson::array>())
+                    {
+                        auto const& groupHintArray = groupHintIt->second.get<picojson::array>();
+                        if (!groupHintArray.empty() && groupHintArray[0].is<std::string>())
+                        {
+                            result.second = groupHintArray[0].get<std::string>();
+                        }
+                    }
                 }
             }
         }
+        catch (...)
+        {}
+
+        return result;
     }
 
     int listAllFlows(std::string const& in_domain)
     {
-        auto base = std::filesystem::path{in_domain};
-
-        if (exists(base) && is_directory(base))
+        if (auto const base = std::filesystem::path{in_domain}; is_directory(base))
         {
             for (auto const& entry : std::filesystem::directory_iterator{base})
             {
                 if (is_directory(entry) && (entry.path().extension() == mxl::lib::FLOW_DIRECTORY_NAME_SUFFIX))
                 {
                     // this looks like a uuid. try to parse it an confirm it is valid.
-                    auto id = uuids::uuid::from_string(entry.path().stem().string());
+                    auto const id = uuids::uuid::from_string(entry.path().stem().string());
                     if (id.has_value())
                     {
-                        auto descPath = mxl::lib::makeFlowDescriptorFilePath(base, entry.path().stem().string());
-                        std::string label;
-                        std::string groupHint;
+                        auto const descPath = mxl::lib::makeFlowDescriptorFilePath(base, entry.path().stem().string());
+                        auto const [label, groupHint] = getFlowDetails(descPath);
 
-                        try
-                        {
-                            getFlowDetails(descPath, label, groupHint);
-                        }
-                        catch (std::exception const& e)
-                        {
-                            label = fmt::format("ERROR: {}", e.what());
-                            groupHint = "n/a";
-                        }
                         // Output CSV format: id,label,group_hint
-                        std::cout << *id << ", \"" << label << "\", \"" << groupHint << "\"" << std::endl;
+                        std::cout << *id << ", " << std::quoted(label) << ", " << std::quoted(groupHint) << '\n';
                     }
                 }
             }
@@ -190,104 +215,90 @@ namespace
 
     int printFlow(std::string const& in_domain, std::string const& in_id)
     {
-        int ret = EXIT_SUCCESS;
-
         // Create the SDK instance with a specific domain.
-        auto instance = mxlCreateInstance(in_domain.c_str(), "");
-        if (instance == nullptr)
-        {
-            std::cerr << "Failed to create MXL instance" << std::endl;
-            return EXIT_FAILURE;
-        }
+        auto const instance = ScopedMxlInstance{in_domain};
 
         // Create a flow reader for the given flow id.
-        mxlFlowReader reader;
-        mxlStatus status = mxlCreateFlowReader(instance, in_id.c_str(), "", &reader);
-        if (status != MXL_STATUS_OK)
+        auto reader = ::mxlFlowReader{};
+        if (::mxlCreateFlowReader(instance, in_id.c_str(), "", &reader) == MXL_STATUS_OK)
         {
-            std::cerr << "Failed to create flow reader" << std::endl;
-            mxlDestroyInstance(instance);
-            return EXIT_FAILURE;
-        }
+            // Extract the mxlFlowInfo structure.
+            auto info = ::mxlFlowInfo{};
+            auto const getInfoStatus = ::mxlFlowReaderGetInfo(reader, &info);
+            ::mxlReleaseFlowReader(instance, reader);
 
-        // Extract the mxlFlowInfo structure.
-        mxlFlowInfo info;
-        status = mxlFlowReaderGetInfo(reader, &info);
-        if (status != MXL_STATUS_OK)
-        {
-            std::cerr << "Failed to get flow info" << std::endl;
-            ret = EXIT_FAILURE;
-        }
-        else
-        {
-            std::cout << formatWithLatency(info);
-
-            auto active = false;
-            status = mxlIsFlowActive(instance, in_id.c_str(), &active);
-            if (status != MXL_STATUS_OK)
+            if (getInfoStatus == MXL_STATUS_OK)
             {
-                std::cerr << "Failed to check if flow is active: " << status << std::endl;
+                std::cout << formatWithLatency(info);
+
+                auto active = false;
+                if (auto const status = ::mxlIsFlowActive(instance, in_id.c_str(), &active); status == MXL_STATUS_OK)
+                {
+                    // Print the status of the flow.
+                    std::cout << '\t' << fmt::format("{: >18}: {}", "Active", active) << std::endl;
+                }
+                else
+                {
+                    std::cerr << "ERROR" << ": "
+                              << "Failed to check if flow is active: " << status << std::endl;
+                }
+
+                return EXIT_SUCCESS;
             }
             else
             {
-                // Print the status of the flow.
-                std::cout << '\t' << fmt::format("{: >18}: {}", "Active", active) << std::endl;
+                std::cerr << "ERROR: " << "Failed to get flow info" << std::endl;
             }
-
-            ret = EXIT_SUCCESS;
+        }
+        else
+        {
+            std::cerr << "ERROR" << ": "
+                      << "Failed to create flow reader." << std::endl;
         }
 
-        // Cleanup
-        mxlReleaseFlowReader(instance, reader);
-        mxlDestroyInstance(instance);
-
-        return ret;
+        return EXIT_FAILURE;
     }
 
     // Perform garbage collection on the MXL domain.
     int garbageCollect(std::string const& in_domain)
     {
         // Create the SDK instance with a specific domain.
-        auto instance = mxlCreateInstance(in_domain.c_str(), "");
-        if (instance == nullptr)
+        auto const instance = ScopedMxlInstance{in_domain};
+
+        if (auto const status = ::mxlGarbageCollectFlows(instance); status == MXL_STATUS_OK)
         {
-            std::cerr << "Failed to create MXL instance" << std::endl;
+            return EXIT_SUCCESS;
+        }
+        else
+        {
+            std::cerr << "ERROR" << ": "
+                      << "Failed to perform garbage collection" << ": " << status << std::endl;
             return EXIT_FAILURE;
         }
-
-        auto status = mxlGarbageCollectFlows(instance);
-        if (status != MXL_STATUS_OK)
-        {
-            std::cerr << "Failed to perform garbage collection : " << status << std::endl;
-            mxlDestroyInstance(instance);
-            return EXIT_FAILURE;
-        }
-
-        mxlDestroyInstance(instance);
-
-        return EXIT_SUCCESS;
     }
 }
 
 int main(int argc, char** argv)
 {
-    CLI::App app("mxl-info");
+    auto app = CLI::App{"mxl-info"};
 
-    mxlVersionType version;
-    mxlGetVersion(&version);
+    auto version = ::mxlVersionType{};
+    ::mxlGetVersion(&version);
 
-    std::stringstream ss;
-    ss << version.major << "." << version.minor << "." << version.bugfix << "." << version.build;
+    {
+        auto ss = std::stringstream{};
+        ss << version.major << '.' << version.minor << '.' << version.bugfix << '.' << version.build;
 
-    // add version output
-    app.set_version_flag("--version", ss.str());
+        // add version output
+        app.set_version_flag("--version", ss.str());
+    }
 
-    std::string domain = "";
+    auto domain = std::string{};
     auto domainOpt = app.add_option("-d,--domain", domain, "The MXL domain directory");
     domainOpt->required(true);
     domainOpt->check(CLI::ExistingDirectory);
 
-    std::string flowId = "";
+    auto flowId = std::string{};
     auto flowIdOpt = app.add_option("-f,--flow", flowId, "The flow id to analyse");
 
     auto allOpt = app.add_flag("-l,--list", "List all flows in the MXL domain");
@@ -295,8 +306,7 @@ int main(int argc, char** argv)
 
     CLI11_PARSE(app, argc, argv);
 
-    int status = EXIT_SUCCESS;
-
+    auto status = EXIT_SUCCESS;
     if (gcOpt->count() > 0)
     {
         status = garbageCollect(domain);
