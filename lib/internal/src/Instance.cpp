@@ -164,6 +164,7 @@ namespace mxl::lib
                     {
                         _watcher->removeFlow(id, WatcherType::READER);
                     }
+                    // TODO: Remove from the synchronization groups
                     _readers.erase(pos);
                 }
             }
