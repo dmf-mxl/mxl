@@ -19,7 +19,7 @@ Options:
   -l,--list                   List all flows in the MXL domain
 ```
 
-Example 1 : listing all flows in a domain
+Example 1 : listing all flows in a domain.
 
 ```bash
 ./mxl-info -d ~/mxl_domain/ -l
@@ -28,7 +28,7 @@ Example 1 : listing all flows in a domain
 
 ```
 
-Example 2 : Printing details about a specific flow
+Example 2 : Printing details about a specific flow.
 
 ```bash
 ./mxl-info -d ~/mxl_domain/ -f 5fbec3b1-1b0f-417d-9059-8b94a47197ed
