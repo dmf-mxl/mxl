@@ -60,8 +60,6 @@ A binary that uses the gstreamer 'videotestsrc' and 'audiotestsrc' elements to p
 
 ```json
 {
-  "$copyright": "SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.",
-  "$license": "SPDX-License-Identifier: Apache-2.0",
   "description": "MXL Test Flow, 1080p29",
   "id": "5fbec3b1-1b0f-417d-9059-8b94a47197ed",
   "tags": {
@@ -107,8 +105,6 @@ And here is an example of the NMOS FLow json file for an audio flow. To modify t
 
 ```json
 {
-  "$copyright": "SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.",
-  "$license": "SPDX-License-Identifier: Apache-2.0",
   "description": "MXL Audio Flow",
   "format": "urn:x-nmos:format:audio",
   "tags": {
