@@ -60,19 +60,26 @@ A binary that uses the gstreamer 'videotestsrc' and 'audiotestsrc' elements to p
 
 ```json
 {
-  "description": "MXL Test File",
-  "id": "5fbec3b1-1b0f-417d-9059-8b94a47197ef",
-  "tags": {},
+  "$copyright": "SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.",
+  "$license": "SPDX-License-Identifier: Apache-2.0",
+  "description": "MXL Test Flow, 1080p29",
+  "id": "5fbec3b1-1b0f-417d-9059-8b94a47197ed",
+  "tags": {
+    "urn:x-nmos:tag:grouphint/v1.0": [
+      "Media Function XYZ:Video"
+    ]
+  },
   "format": "urn:x-nmos:format:video",
-  "label": "MXL Test File",
+  "label": "MXL Test Flow, 1080p29",
   "parents": [],
   "media_type": "video/v210",
   "grain_rate": {
-    "numerator": 50,
-    "denominator": 1
+    "numerator": 30000,
+    "denominator": 1001
   },
   "frame_width": 1920,
   "frame_height": 1080,
+  "interlace_mode": "progressive",
   "colorspace": "BT709",
   "components": [
     {
@@ -94,6 +101,33 @@ A binary that uses the gstreamer 'videotestsrc' and 'audiotestsrc' elements to p
       "bit_depth": 10
     }
   ]
+}
+```
+And here is an example of the NMOS FLow json file for an audio flow. To modify the number of audio channels present in a flow, modify the *"channel_count"* parameter to the desired value.
+
+```json
+{
+  "$copyright": "SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.",
+  "$license": "SPDX-License-Identifier: Apache-2.0",
+  "description": "MXL Audio Flow",
+  "format": "urn:x-nmos:format:audio",
+  "tags": {
+    "urn:x-nmos:tag:grouphint/v1.0": [
+      "Media Function XYZ:Audio"
+    ]
+  },
+  "label": "MXL Audio Flow",
+  "version": "1441812152:154331951",
+  "id": "b3bb5be7-9fe9-4324-a5bb-4c70e1084449",
+  "media_type": "audio/float32",
+  "sample_rate": {
+    "numerator": 48000
+  },
+  "channel_count": 2,
+  "bit_depth": 32,
+  "parents": [],
+  "source_id": "2aa143ac-0ab7-4d75-bc32-5c00c13d186f",
+  "device_id": "169feb2c-3fae-42a5-ae2e-f6f8cbce29cf"
 }
 ```
 
