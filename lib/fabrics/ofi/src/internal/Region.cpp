@@ -192,6 +192,6 @@ namespace mxl::lib::fabrics::ofi
             outRegions.emplace_back(config.regions[i].addr, config.regions[i].size, Region::Location::fromAPI(config.regions[i].loc));
         }
 
-        return {std::move(outRegions), DataLayout::fromVideo(std::to_array(config.sliceSize))}; // TODO: datalayout struct definition at API level
+        return {std::move(outRegions), DataLayout::fromVideo(std::to_array(config.sliceSize))};
     }
 }
