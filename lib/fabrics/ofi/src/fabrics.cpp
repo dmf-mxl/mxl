@@ -26,6 +26,36 @@
 
 namespace ofi = mxl::lib::fabrics::ofi;
 
+template<typename F>
+mxlStatus try_run(F func, std::string_view errMsg)
+{
+    try
+    {
+        return func();
+    }
+
+    catch (ofi::Exception& e)
+    {
+        MXL_ERROR("{}: {}", errMsg, e.what());
+
+        return e.status();
+    }
+
+    catch (std::exception& e)
+    {
+        MXL_ERROR("{}: {}", errMsg, e.what());
+
+        return MXL_ERR_UNKNOWN;
+    }
+
+    catch (...)
+    {
+        MXL_ERROR("{}", errMsg);
+
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsRegionsForFlowReader(mxlFlowReader in_reader, mxlRegions* out_regions)
 {
@@ -34,38 +64,19 @@ mxlStatus mxlFabricsRegionsForFlowReader(mxlFlowReader in_reader, mxlRegions* ou
         return MXL_ERR_INVALID_ARG;
     }
 
-    try
-    {
-        auto reader = ::mxl::lib::to_FlowReader(in_reader);
+    return try_run(
+        [&]()
+        {
+            auto reader = ::mxl::lib::to_FlowReader(in_reader);
 
-        // We are leaking the ownership, the user is responsible for calling mxlFabricsRegionsFree to free the memory.
-        auto regionPtr = std::make_unique<ofi::MxlRegions>(ofi::mxlRegionsFromFlow(reader->getFlowData())).release();
+            // We are leaking the ownership, the user is responsible for calling mxlFabricsRegionsFree to free the memory.
+            auto regionPtr = std::make_unique<ofi::MxlRegions>(ofi::mxlRegionsFromFlow(reader->getFlowData())).release();
 
-        *out_regions = regionPtr->toAPI();
+            *out_regions = regionPtr->toAPI();
 
-        return MXL_STATUS_OK;
-    }
-
-    catch (ofi::Exception& e)
-    {
-        MXL_ERROR("Failed to create regions object: {}", e.what());
-
-        return e.status();
-    }
-
-    catch (std::exception& e)
-    {
-        MXL_ERROR("Failed to create Regions object: {}", e.what());
-
-        return MXL_ERR_UNKNOWN;
-    }
-
-    catch (...)
-    {
-        MXL_ERROR("Failed to create Regions object.");
-
-        return MXL_ERR_UNKNOWN;
-    }
+            return MXL_STATUS_OK;
+        },
+        "Failed to create regions object");
 }
 
 extern "C" MXL_EXPORT
@@ -76,38 +87,19 @@ mxlStatus mxlFabricsRegionsForFlowWriter(mxlFlowWriter in_writer, mxlRegions* ou
         return MXL_ERR_INVALID_ARG;
     }
 
-    try
-    {
-        auto reader = ::mxl::lib::to_FlowWriter(in_writer);
+    return try_run(
+        [&]()
+        {
+            auto writer = ::mxl::lib::to_FlowWriter(in_writer);
 
-        // We are leaking the ownership, the user is responsible for calling mxlFabricsRegionsFree to free the memory.
-        auto regionPtr = std::make_unique<ofi::MxlRegions>(ofi::mxlRegionsFromFlow(reader->getFlowData())).release();
+            // We are leaking the ownership, the user is responsible for calling mxlFabricsRegionsFree to free the memory.
+            auto regionPtr = std::make_unique<ofi::MxlRegions>(ofi::mxlRegionsFromFlow(writer->getFlowData())).release();
 
-        *out_regions = regionPtr->toAPI();
+            *out_regions = regionPtr->toAPI();
 
-        return MXL_STATUS_OK;
-    }
-
-    catch (ofi::Exception& e)
-    {
-        MXL_ERROR("Failed to create regions object: {}", e.what());
-
-        return e.status();
-    }
-
-    catch (std::exception& e)
-    {
-        MXL_ERROR("Failed to create Regions object: {}", e.what());
-
-        return MXL_ERR_UNKNOWN;
-    }
-
-    catch (...)
-    {
-        MXL_ERROR("Failed to create Regions object.");
-
-        return MXL_ERR_UNKNOWN;
-    }
+            return MXL_STATUS_OK;
+        },
+        "Failed to create regions object");
 }
 
 extern "C" MXL_EXPORT
@@ -118,38 +110,19 @@ mxlStatus mxlFabricsRegionsFromUserBuffers(mxlFabricsUserRegionsConfig const* in
         return MXL_ERR_INVALID_ARG;
     }
 
-    try
-    {
-        auto regions = ofi::mxlRegionsFromUser(*in_config);
+    return try_run(
+        [&]()
+        {
+            auto regions = ofi::mxlRegionsFromUser(*in_config);
 
-        // We are leaking the ownership, the user is responsible for calling mxlFabricsRegionsFree to free the memory.
-        auto regionPtr = std::make_unique<ofi::MxlRegions>(regions).release();
+            // We are leaking the ownership, the user is responsible for calling mxlFabricsRegionsFree to free the memory.
+            auto regionPtr = std::make_unique<ofi::MxlRegions>(regions).release();
 
-        *out_regions = regionPtr->toAPI();
+            *out_regions = regionPtr->toAPI();
 
-        return MXL_STATUS_OK;
-    }
-
-    catch (ofi::Exception& e)
-    {
-        MXL_ERROR("Failed to create regions object: {}", e.what());
-
-        return e.status();
-    }
-
-    catch (std::exception& e)
-    {
-        MXL_ERROR("Failed to create Regions object: {}", e.what());
-
-        return MXL_ERR_UNKNOWN;
-    }
-
-    catch (...)
-    {
-        MXL_ERROR("Failed to create Regions object.");
-
-        return MXL_ERR_UNKNOWN;
-    }
+            return MXL_STATUS_OK;
+        },
+        "Failed to create regions object");
 }
 
 extern "C" MXL_EXPORT
@@ -160,31 +133,15 @@ mxlStatus mxlFabricsRegionsFree(mxlRegions in_regions)
         return MXL_ERR_INVALID_ARG;
     }
 
-    try
-    {
-        auto regions = ofi::MxlRegions::fromAPI(in_regions);
-        delete regions;
+    return try_run(
+        [&]()
+        {
+            auto regions = ofi::MxlRegions::fromAPI(in_regions);
+            delete regions;
 
-        return MXL_STATUS_OK;
-    }
-    catch (ofi::Exception& e)
-    {
-        MXL_ERROR("Failed to free regions object: {}", e.what());
-
-        return e.status();
-    }
-    catch (std::exception& e)
-    {
-        MXL_ERROR("Failed to free Regions object: {}", e.what());
-
-        return MXL_ERR_UNKNOWN;
-    }
-    catch (...)
-    {
-        MXL_ERROR("Failed to free Regions object.");
-
-        return MXL_ERR_UNKNOWN;
-    }
+            return MXL_STATUS_OK;
+        },
+        "Failed to free regions object");
 }
 
 extern "C" MXL_EXPORT
@@ -195,26 +152,15 @@ mxlStatus mxlFabricsCreateInstance(mxlInstance in_instance, mxlFabricsInstance* 
         return MXL_ERR_INVALID_ARG;
     }
 
-    try
-    {
-        *out_fabricsInstance = reinterpret_cast<mxlFabricsInstance>(new ofi::FabricsInstance(reinterpret_cast<::mxl::lib::Instance*>(in_instance)));
+    return try_run(
+        [&]()
+        {
+            *out_fabricsInstance = reinterpret_cast<mxlFabricsInstance>(
+                new ofi::FabricsInstance(reinterpret_cast<::mxl::lib::Instance*>(in_instance)));
 
-        return MXL_STATUS_OK;
-    }
-    catch (ofi::Exception& e)
-    {
-        MXL_ERROR("Failed to create instance: {}", e.what());
-
-        return e.status();
-    }
-    catch (std::exception& e)
-    {
-        return MXL_ERR_UNKNOWN;
-    }
-    catch (...)
-    {
-        return MXL_ERR_UNKNOWN;
-    }
+            return MXL_STATUS_OK;
+        },
+        "Failed to create fabrics instance");
 }
 
 extern "C" MXL_EXPORT
@@ -225,30 +171,14 @@ mxlStatus mxlFabricsDestroyInstance(mxlFabricsInstance in_instance)
         return MXL_ERR_INVALID_ARG;
     }
 
-    try
-    {
-        delete ofi::FabricsInstance::fromAPI(in_instance);
+    return try_run(
+        [&]()
+        {
+            delete ofi::FabricsInstance::fromAPI(in_instance);
 
-        return MXL_STATUS_OK;
-    }
-    catch (ofi::Exception& e)
-    {
-        MXL_ERROR("Failed to destroy instance: {}", e.what());
-
-        return e.status();
-    }
-    catch (std::exception& e)
-    {
-        MXL_ERROR("Failed to destroy fabrics instance: {}", e.what());
-
-        return MXL_ERR_UNKNOWN;
-    }
-    catch (...)
-    {
-        MXL_ERROR("Failed to destroy fabrics instance.");
-
-        return MXL_ERR_UNKNOWN;
-    }
+            return MXL_STATUS_OK;
+        },
+        "Failed to destroy fabrics instance");
 }
 
 extern "C" MXL_EXPORT
@@ -259,61 +189,36 @@ mxlStatus mxlFabricsCreateTarget(mxlFabricsInstance in_fabricsInstance, mxlFabri
         return MXL_ERR_INVALID_ARG;
     }
 
-    try
-    {
-        auto instance = ofi::FabricsInstance::fromAPI(in_fabricsInstance);
-        *out_target = instance->createTarget()->toAPI();
-    }
-    catch (ofi::Exception& e)
-    {
-        MXL_ERROR("Failed to create target: {}", e.what());
+    return try_run(
+        [&]()
+        {
+            auto instance = ofi::FabricsInstance::fromAPI(in_fabricsInstance);
+            *out_target = instance->createTarget()->toAPI();
 
-        return e.status();
-    }
-    catch (std::exception& e)
-    {
-        MXL_ERROR("Failed to create target : {}", e.what());
-        return MXL_ERR_UNKNOWN;
-    }
-    catch (...)
-    {
-        MXL_ERROR("Failed to create target");
-        return MXL_ERR_UNKNOWN;
-    }
-
-    return MXL_STATUS_OK;
+            return MXL_STATUS_OK;
+        },
+        "Failed to create target");
 }
 
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsDestroyTarget(mxlFabricsInstance in_fabricsInstance, mxlFabricsTarget in_target)
 {
-    try
+    if (in_fabricsInstance == nullptr || in_target == nullptr)
     {
-        auto instance = ofi::FabricsInstance::fromAPI(in_fabricsInstance);
-        auto target = ofi::TargetWrapper::fromAPI(in_target);
-
-        instance->destroyTarget(target);
-
-        return MXL_STATUS_OK;
-    }
-    catch (ofi::Exception& e)
-    {
-        MXL_ERROR("Failed to destroy target: {}", e.what());
-
-        return e.status();
-    }
-    catch (std::exception& e)
-    {
-        MXL_ERROR("Failed to destroy target : {}", e.what());
-        return MXL_ERR_UNKNOWN;
-    }
-    catch (...)
-    {
-        MXL_ERROR("Failed to destroy target");
-        return MXL_ERR_UNKNOWN;
+        return MXL_ERR_INVALID_ARG;
     }
 
-    return MXL_STATUS_OK;
+    return try_run(
+        [&]()
+        {
+            auto instance = ofi::FabricsInstance::fromAPI(in_fabricsInstance);
+            auto target = ofi::TargetWrapper::fromAPI(in_target);
+
+            instance->destroyTarget(target);
+
+            return MXL_STATUS_OK;
+        },
+        "Failed to destroy target");
 }
 
 extern "C" MXL_EXPORT
@@ -324,30 +229,16 @@ mxlStatus mxlFabricsTargetSetup(mxlFabricsTarget in_target, mxlTargetConfig* in_
         return MXL_ERR_INVALID_ARG;
     }
 
-    try
-    {
-        // Set up the target, release the returned unique_ptr, convert to external API type, assign the the pointer location
-        // passed by the user.
-        *out_info = ofi::TargetWrapper::fromAPI(in_target)->setup(*in_config).release()->toAPI();
+    return try_run(
+        [&]()
+        {
+            // Set up the target, release the returned unique_ptr, convert to external API type, assign the the pointer location
+            // passed by the user.
+            *out_info = ofi::TargetWrapper::fromAPI(in_target)->setup(*in_config).release()->toAPI();
 
-        return MXL_STATUS_OK;
-    }
-    catch (ofi::Exception& e)
-    {
-        MXL_ERROR("Failed to set up target: {}", e.what());
-
-        return e.status();
-    }
-    catch (std::exception& e)
-    {
-        MXL_ERROR("Failed to set up target : {}", e.what());
-        return MXL_ERR_UNKNOWN;
-    }
-    catch (...)
-    {
-        MXL_ERROR("Failed to set up target");
-        return MXL_ERR_UNKNOWN;
-    }
+            return MXL_STATUS_OK;
+        },
+        "Failed to set up target");
 }
 
 extern "C" MXL_EXPORT
@@ -358,42 +249,22 @@ mxlStatus mxlFabricsTargetTryNewGrain(mxlFabricsTarget in_target, uint16_t* out_
         return MXL_ERR_INVALID_ARG;
     }
 
-    try
-    {
-        auto target = ofi::TargetWrapper::fromAPI(in_target);
-        auto res = target->read();
-        if (res.immData)
+    return try_run(
+        [&]()
         {
-            auto [entryIndex, sliceIndex] = ofi::ImmDataGrain{*res.immData}.unpack();
-            *out_entryIndex = entryIndex;
-            *out_sliceIndex = sliceIndex;
+            auto target = ofi::TargetWrapper::fromAPI(in_target);
+            if (auto res = target->read(); res.immData)
+            {
+                auto [entryIndex, sliceIndex] = ofi::ImmDataGrain{*res.immData}.unpack();
+                *out_entryIndex = entryIndex;
+                *out_sliceIndex = sliceIndex;
 
-            return MXL_STATUS_OK;
-        }
+                return MXL_STATUS_OK;
+            }
 
-        return MXL_ERR_NOT_READY;
-    }
-
-    catch (ofi::Exception& e)
-    {
-        MXL_ERROR("Failed to try for new grain: {}", e.what());
-
-        return e.status();
-    }
-
-    catch (std::exception& e)
-    {
-        MXL_ERROR("Failed to try for new grain : {}", e.what());
-        return MXL_ERR_UNKNOWN;
-    }
-
-    catch (...)
-    {
-        MXL_ERROR("Failed to try for new grain");
-        return MXL_ERR_UNKNOWN;
-    }
-
-    return MXL_STATUS_OK;
+            return MXL_ERR_NOT_READY;
+        },
+        "Failed to try for new grain");
 }
 
 extern "C" MXL_EXPORT
@@ -404,40 +275,22 @@ mxlStatus mxlFabricsTargetWaitForNewGrain(mxlFabricsTarget in_target, uint16_t* 
         return MXL_ERR_INVALID_ARG;
     }
 
-    try
-    {
-        auto target = ofi::TargetWrapper::fromAPI(in_target);
-        auto res = target->readBlocking(std::chrono::milliseconds(in_timeoutMs));
-        if (res.immData)
+    return try_run(
+        [&]()
         {
-            auto [entryIndex, sliceIndex] = ofi::ImmDataGrain{*res.immData}.unpack();
-            *out_entryIndex = entryIndex;
-            *out_sliceIndex = sliceIndex;
+            auto target = ofi::TargetWrapper::fromAPI(in_target);
+            if (auto res = target->readBlocking(std::chrono::milliseconds(in_timeoutMs)); res.immData)
+            {
+                auto [entryIndex, sliceIndex] = ofi::ImmDataGrain{*res.immData}.unpack();
+                *out_entryIndex = entryIndex;
+                *out_sliceIndex = sliceIndex;
 
-            return MXL_STATUS_OK;
-        }
+                return MXL_STATUS_OK;
+            }
 
-        return MXL_ERR_NOT_READY;
-    }
-
-    catch (ofi::Exception& e)
-    {
-        MXL_ERROR("Failed to try for new grain: {}", e.what());
-
-        return e.status();
-    }
-
-    catch (std::exception& e)
-    {
-        MXL_ERROR("Failed to try for new grain : {}", e.what());
-        return MXL_ERR_UNKNOWN;
-    }
-
-    catch (...)
-    {
-        MXL_ERROR("Failed to try for new grain");
-        return MXL_ERR_UNKNOWN;
-    }
+            return MXL_ERR_NOT_READY;
+        },
+        "Failed to wait for new grain");
 }
 
 extern "C" MXL_EXPORT
@@ -448,30 +301,15 @@ mxlStatus mxlFabricsCreateInitiator(mxlFabricsInstance in_fabricsInstance, mxlFa
         return MXL_ERR_INVALID_ARG;
     }
 
-    try
-    {
-        auto instance = ofi::FabricsInstance::fromAPI(in_fabricsInstance);
+    return try_run(
+        [&]()
+        {
+            auto instance = ofi::FabricsInstance::fromAPI(in_fabricsInstance);
+            *out_initiator = instance->createInitiator()->toAPI();
 
-        *out_initiator = instance->createInitiator()->toAPI();
-    }
-    catch (ofi::Exception& e)
-    {
-        MXL_ERROR("Failed to create initiator: {}", e.what());
-
-        return e.status();
-    }
-    catch (std::exception& e)
-    {
-        MXL_ERROR("Failed to create initiator : {}", e.what());
-        return MXL_ERR_UNKNOWN;
-    }
-    catch (...)
-    {
-        MXL_ERROR("Failed to create initiator");
-        return MXL_ERR_UNKNOWN;
-    }
-
-    return MXL_STATUS_OK;
+            return MXL_STATUS_OK;
+        },
+        "Failed to create initiator");
 }
 
 extern "C" MXL_EXPORT
@@ -482,29 +320,14 @@ mxlStatus mxlFabricsDestroyInitiator(mxlFabricsInstance in_fabricsInstance, mxlF
         return MXL_ERR_INVALID_ARG;
     }
 
-    try
-    {
-        auto instance = ofi::FabricsInstance::fromAPI(in_fabricsInstance);
-        instance->destroyInitiator(ofi::InitiatorWrapper::fromAPI(in_initiator));
-    }
-    catch (ofi::Exception& e)
-    {
-        MXL_ERROR("Failed to create initiator: {}", e.what());
+    return try_run(
+        [&]()
+        {
+            ofi::FabricsInstance::fromAPI(in_fabricsInstance)->destroyInitiator(ofi::InitiatorWrapper::fromAPI(in_initiator));
 
-        return e.status();
-    }
-    catch (std::exception& e)
-    {
-        MXL_ERROR("Failed to create initiator : {}", e.what());
-        return MXL_ERR_UNKNOWN;
-    }
-    catch (...)
-    {
-        MXL_ERROR("Failed to create initiator");
-        return MXL_ERR_UNKNOWN;
-    }
-
-    return MXL_STATUS_OK;
+            return MXL_STATUS_OK;
+        },
+        "Failed to destroy initiator");
 }
 
 extern "C" MXL_EXPORT
@@ -515,28 +338,14 @@ mxlStatus mxlFabricsInitiatorSetup(mxlFabricsInitiator in_initiator, mxlInitiato
         return MXL_ERR_INVALID_ARG;
     }
 
-    try
-    {
-        ofi::InitiatorWrapper::fromAPI(in_initiator)->setup(*in_config);
+    return try_run(
+        [&]()
+        {
+            ofi::InitiatorWrapper::fromAPI(in_initiator)->setup(*in_config);
 
-        return MXL_STATUS_OK;
-    }
-    catch (ofi::Exception& e)
-    {
-        MXL_ERROR("Failed to set up initiator: {}", e.what());
-
-        return e.status();
-    }
-    catch (std::exception& e)
-    {
-        MXL_ERROR("Failed to set up initiator : {}", e.what());
-        return MXL_ERR_UNKNOWN;
-    }
-    catch (...)
-    {
-        MXL_ERROR("Failed to set up initiator");
-        return MXL_ERR_UNKNOWN;
-    }
+            return MXL_STATUS_OK;
+        },
+        "Failed to set up initiator");
 }
 
 extern "C" MXL_EXPORT
@@ -547,30 +356,15 @@ mxlStatus mxlFabricsInitiatorAddTarget(mxlFabricsInitiator in_initiator, mxlTarg
         return MXL_ERR_INVALID_ARG;
     }
 
-    try
-    {
-        auto initiator = ofi::InitiatorWrapper::fromAPI(in_initiator);
-        auto targetInfo = ofi::TargetInfo::fromAPI(in_targetInfo);
-        initiator->addTarget(*targetInfo);
+    return try_run(
+        [&]()
+        {
+            auto targetInfo = ofi::TargetInfo::fromAPI(in_targetInfo);
+            ofi::InitiatorWrapper::fromAPI(in_initiator)->addTarget(*targetInfo);
 
-        return MXL_STATUS_OK;
-    }
-    catch (ofi::Exception& e)
-    {
-        MXL_ERROR("Failed to add target to initator: {}", e.what());
-
-        return e.status();
-    }
-    catch (std::exception& e)
-    {
-        MXL_ERROR("Failed to add target to initiator: {}", e.what());
-        return MXL_ERR_UNKNOWN;
-    }
-    catch (...)
-    {
-        MXL_ERROR("Failed to add target to initiator");
-        return MXL_ERR_UNKNOWN;
-    }
+            return MXL_STATUS_OK;
+        },
+        "Failed to add target to initiator");
 }
 
 extern "C" MXL_EXPORT
@@ -580,69 +374,37 @@ mxlStatus mxlFabricsInitiatorRemoveTarget(mxlFabricsInitiator in_initiator, mxlT
     {
         return MXL_ERR_INVALID_ARG;
     }
-    try
-    {
-        auto initiator = ofi::InitiatorWrapper::fromAPI(in_initiator);
-        auto targetInfo = ofi::TargetInfo::fromAPI(in_targetInfo);
 
-        initiator->removeTarget(*targetInfo);
+    return try_run(
+        [&]()
+        {
+            auto targetInfo = ofi::TargetInfo::fromAPI(in_targetInfo);
+            ofi::InitiatorWrapper::fromAPI(in_initiator)->removeTarget(*targetInfo);
 
-        return MXL_STATUS_OK;
-    }
-    catch (ofi::Exception& e)
-    {
-        MXL_ERROR("Failed to remove target from initiator: {}", e.what());
-
-        return e.status();
-    }
-    catch (std::exception& e)
-    {
-        MXL_ERROR("Failed to remove target from initiator : {}", e.what());
-        return MXL_ERR_UNKNOWN;
-    }
-    catch (...)
-    {
-        MXL_ERROR("Failed to remove target from initiator");
-        return MXL_ERR_UNKNOWN;
-    }
+            return MXL_STATUS_OK;
+        },
+        "Failed to remove target from initiator");
 }
 
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsInitiatorTransferGrainToTarget(mxlFabricsInitiator in_initiator, mxlTargetInfo const in_targetInfo, uint64_t in_localIndex,
     uint64_t in_remoteIndex, uint64_t in_payloadOffset, std::uint16_t in_startSlice, std::uint16_t in_endSlice)
 {
-    if (in_initiator == nullptr)
+    if (in_initiator == nullptr || in_targetInfo == nullptr)
     {
         return MXL_ERR_INVALID_ARG;
     }
 
-    try
-    {
-        auto targetInfo = ofi::TargetInfo::fromAPI(in_targetInfo);
-        ofi::InitiatorWrapper::fromAPI(in_initiator)
-            ->transferGrainToTarget(targetInfo->id, in_localIndex, in_remoteIndex, in_payloadOffset, in_startSlice, in_endSlice);
-
-        return MXL_STATUS_OK;
-    }
-    catch (ofi::Exception& e)
-    {
-        if (e.status() == MXL_ERR_UNKNOWN)
+    return try_run(
+        [&]()
         {
-            MXL_ERROR("Failed to transfer grain: {}", e.what());
-        }
+            auto targetInfo = ofi::TargetInfo::fromAPI(in_targetInfo);
+            ofi::InitiatorWrapper::fromAPI(in_initiator)
+                ->transferGrainToTarget(targetInfo->id, in_localIndex, in_remoteIndex, in_payloadOffset, in_startSlice, in_endSlice);
 
-        return e.status();
-    }
-    catch (std::exception& e)
-    {
-        MXL_ERROR("Failed to transfer grain: {}", e.what());
-        return MXL_ERR_UNKNOWN;
-    }
-    catch (...)
-    {
-        MXL_ERROR("Failed to transfer grain");
-        return MXL_ERR_UNKNOWN;
-    }
+            return MXL_STATUS_OK;
+        },
+        "Failed to transfer grain to target");
 }
 
 extern "C" MXL_EXPORT
@@ -654,31 +416,14 @@ mxlStatus mxlFabricsInitiatorTransferGrain(mxlFabricsInitiator in_initiator, uin
         return MXL_ERR_INVALID_ARG;
     }
 
-    try
-    {
-        ofi::InitiatorWrapper::fromAPI(in_initiator)->transferGrain(in_grainIndex, in_payloadOffset, in_startSlice, in_endSlice);
-
-        return MXL_STATUS_OK;
-    }
-    catch (ofi::Exception& e)
-    {
-        if (e.status() == MXL_ERR_UNKNOWN)
+    return try_run(
+        [&]()
         {
-            MXL_ERROR("Failed to transfer grain: {}", e.what());
-        }
+            ofi::InitiatorWrapper::fromAPI(in_initiator)->transferGrain(in_grainIndex, in_payloadOffset, in_startSlice, in_endSlice);
 
-        return e.status();
-    }
-    catch (std::exception& e)
-    {
-        MXL_ERROR("Failed to transfer grain: {}", e.what());
-        return MXL_ERR_UNKNOWN;
-    }
-    catch (...)
-    {
-        MXL_ERROR("Failed to transfer grain");
-        return MXL_ERR_UNKNOWN;
-    }
+            return MXL_STATUS_OK;
+        },
+        "Failed to transfer grain");
 }
 
 extern "C" MXL_EXPORT
@@ -689,31 +434,17 @@ mxlStatus mxlFabricsInitiatorMakeProgressNonBlocking(mxlFabricsInitiator in_init
         return MXL_ERR_INVALID_ARG;
     }
 
-    try
-    {
-        if (ofi::InitiatorWrapper::fromAPI(in_initiator)->makeProgress())
+    return try_run(
+        [&]()
         {
-            return MXL_ERR_NOT_READY;
-        }
+            if (ofi::InitiatorWrapper::fromAPI(in_initiator)->makeProgress())
+            {
+                return MXL_ERR_NOT_READY;
+            }
 
-        return MXL_STATUS_OK;
-    }
-    catch (ofi::Exception& e)
-    {
-        MXL_ERROR("Failed to make progress : {}", e.what());
-
-        return e.status();
-    }
-    catch (std::exception& e)
-    {
-        MXL_ERROR("Failed to make progress : {}", e.what());
-        return MXL_ERR_UNKNOWN;
-    }
-    catch (...)
-    {
-        MXL_ERROR("Failed to make progress in the initiator");
-        return MXL_ERR_UNKNOWN;
-    }
+            return MXL_STATUS_OK;
+        },
+        "Failed to make progress in the initiator");
 }
 
 extern "C" MXL_EXPORT
@@ -724,77 +455,82 @@ mxlStatus mxlFabricsInitiatorMakeProgressBlocking(mxlFabricsInitiator in_initiat
         return MXL_ERR_INVALID_ARG;
     }
 
-    try
-    {
-        if (ofi::InitiatorWrapper::fromAPI(in_initiator)->makeProgressBlocking(std::chrono::milliseconds(in_timeoutMs)))
+    return try_run(
+        [&]()
         {
-            return MXL_ERR_NOT_READY;
-        }
+            if (ofi::InitiatorWrapper::fromAPI(in_initiator)->makeProgressBlocking(std::chrono::milliseconds(in_timeoutMs)))
+            {
+                return MXL_ERR_NOT_READY;
+            }
 
-        return MXL_STATUS_OK;
-    }
-    catch (ofi::Exception& e)
-    {
-        MXL_ERROR("Failed to make progress : {}", e.what());
-
-        return e.status();
-    }
-    catch (std::exception& e)
-    {
-        MXL_ERROR("Failed to make progress : {}", e.what());
-        return MXL_ERR_UNKNOWN;
-    }
-    catch (...)
-    {
-        MXL_ERROR("Failed to make progress in the initiator");
-        return MXL_ERR_UNKNOWN;
-    }
+            return MXL_STATUS_OK;
+        },
+        "Failed to make progress in the initiator");
 }
 
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsProviderFromString(char const* in_string, mxlFabricsProvider* out_provider)
 {
-    if (auto provider = ofi::providerFromString(in_string); provider)
+    if (in_string == nullptr || out_provider == nullptr)
     {
-        *out_provider = ofi::providerToAPI(provider.value());
-        return MXL_STATUS_OK;
+        return MXL_ERR_INVALID_ARG;
     }
 
-    return MXL_ERR_INVALID_ARG;
+    return try_run(
+        [&]()
+        {
+            if (auto provider = ofi::providerFromString(in_string); provider)
+            {
+                *out_provider = ofi::providerToAPI(*provider);
+                return MXL_STATUS_OK;
+            }
+
+            return MXL_ERR_INVALID_ARG;
+        },
+        "Failed to convert string to provider");
 }
 
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsProviderToString(mxlFabricsProvider in_provider, char* out_string, size_t* in_out_stringSize)
 {
-    // TODO: review if this can be simplified, should we instead allocate in this function and provider a free ?
-    auto providerEnumValueToString = [](char* outString, size_t* inOutStringSize, char const* providerString)
+    if (in_out_stringSize == nullptr)
     {
-        if (outString == nullptr)
-        {
-            *inOutStringSize = ::strlen(providerString) + 1; // Null terminated.
-        }
-        else
-        {
-            if (*inOutStringSize <= ::strlen(providerString))
-            {
-                return MXL_ERR_STRLEN;
-            }
-
-            ::strncpy(outString, providerString, *inOutStringSize);
-        }
-
-        return MXL_STATUS_OK;
-    };
-
-    switch (in_provider)
-    {
-        case MXL_SHARING_PROVIDER_AUTO:  return providerEnumValueToString(out_string, in_out_stringSize, "auto");
-        case MXL_SHARING_PROVIDER_TCP:   return providerEnumValueToString(out_string, in_out_stringSize, "tcp");
-        case MXL_SHARING_PROVIDER_EFA:   return providerEnumValueToString(out_string, in_out_stringSize, "efa");
-        case MXL_SHARING_PROVIDER_VERBS: return providerEnumValueToString(out_string, in_out_stringSize, "verbs");
-        case MXL_SHARING_PROVIDER_SHM:   return providerEnumValueToString(out_string, in_out_stringSize, "shm");
-        default:                         return MXL_ERR_INVALID_ARG;
+        return MXL_ERR_INVALID_ARG;
     }
+
+    return try_run(
+        [&]()
+        {
+            auto providerEnumValueToString = [](char* outString, size_t* inOutStringSize, char const* providerString)
+            {
+                if (outString == nullptr)
+                {
+                    *inOutStringSize = ::strlen(providerString) + 1; // Null terminated.
+                }
+                else
+                {
+                    if (*inOutStringSize <= ::strlen(providerString))
+                    {
+                        return MXL_ERR_STRLEN;
+                    }
+
+                    ::strncpy(outString, providerString, *inOutStringSize);
+                }
+
+                return MXL_STATUS_OK;
+            };
+
+            switch (in_provider)
+            {
+                case MXL_SHARING_PROVIDER_AUTO:  return providerEnumValueToString(out_string, in_out_stringSize, "auto");
+                case MXL_SHARING_PROVIDER_TCP:   return providerEnumValueToString(out_string, in_out_stringSize, "tcp");
+                case MXL_SHARING_PROVIDER_EFA:   return providerEnumValueToString(out_string, in_out_stringSize, "efa");
+                case MXL_SHARING_PROVIDER_VERBS: return providerEnumValueToString(out_string, in_out_stringSize, "verbs");
+                case MXL_SHARING_PROVIDER_SHM:   return providerEnumValueToString(out_string, in_out_stringSize, "shm");
+                default:                         return MXL_ERR_INVALID_ARG;
+            }
+        },
+        "Failed to convert provider to string");
 }
 
 extern "C" MXL_EXPORT
@@ -805,29 +541,14 @@ mxlStatus mxlFabricsTargetInfoFromString(char const* in_string, mxlTargetInfo* o
         return MXL_ERR_INVALID_ARG;
     }
 
-    try
-    {
-        auto targetInfo = std::make_unique<ofi::TargetInfo>(ofi::TargetInfo::fromJSON(in_string));
-        *out_targetInfo = targetInfo.release()->toAPI();
+    return try_run(
+        [&]()
+        {
+            *out_targetInfo = std::make_unique<ofi::TargetInfo>(ofi::TargetInfo::fromJSON(in_string)).release()->toAPI();
 
-        return MXL_STATUS_OK;
-    }
-    catch (ofi::Exception& e)
-    {
-        MXL_ERROR("Failed to read target info from string: {}", e.what());
-
-        return e.status();
-    }
-    catch (std::exception& e)
-    {
-        return MXL_ERR_UNKNOWN;
-    }
-    catch (...)
-    {
-        return MXL_ERR_UNKNOWN;
-    }
-
-    return MXL_ERR_INVALID_ARG;
+            return MXL_STATUS_OK;
+        },
+        "Failed to read target info from string");
 }
 
 extern "C" MXL_EXPORT
@@ -838,48 +559,31 @@ mxlStatus mxlFabricsTargetInfoToString(mxlTargetInfo const in_targetInfo, char* 
         return MXL_ERR_INVALID_ARG;
     }
 
-    try
-    {
-        std::stringstream ss;
-        auto targetInfoString = ofi::TargetInfo::fromAPI(in_targetInfo)->toJSON();
+    return try_run(
+        [&]()
+        {
+            std::stringstream ss;
+            auto targetInfoString = ofi::TargetInfo::fromAPI(in_targetInfo)->toJSON();
 
-        if (out_string == nullptr)
-        {
-            *in_stringSize = targetInfoString.length() + 1;
-        }
-        else
-        {
-            if (*in_stringSize <= targetInfoString.length())
+            if (out_string == nullptr)
             {
-                return MXL_ERR_STRLEN;
+                *in_stringSize = targetInfoString.length() + 1;
             }
             else
             {
-                ::strncpy(out_string, targetInfoString.c_str(), *in_stringSize);
+                if (*in_stringSize <= targetInfoString.length())
+                {
+                    return MXL_ERR_STRLEN;
+                }
+                else
+                {
+                    ::strncpy(out_string, targetInfoString.c_str(), *in_stringSize);
+                }
             }
-        }
 
-        return MXL_STATUS_OK;
-    }
-
-    catch (ofi::Exception& e)
-    {
-        MXL_ERROR("Failed to serialize target info: {}", e.what());
-
-        return e.status();
-    }
-
-    catch (std::exception& e)
-    {
-        return MXL_ERR_UNKNOWN;
-    }
-
-    catch (...)
-    {
-        return MXL_ERR_UNKNOWN;
-    }
-
-    return MXL_STATUS_OK;
+            return MXL_STATUS_OK;
+        },
+        "Failed to serialize target info");
 }
 
 extern "C" MXL_EXPORT
@@ -890,28 +594,12 @@ mxlStatus mxlFabricsFreeTargetInfo(mxlTargetInfo in_info)
         return MXL_ERR_INVALID_ARG;
     }
 
-    try
-    {
-        auto info = ofi::TargetInfo::fromAPI(in_info);
+    return try_run(
+        [&]()
+        {
+            delete ofi::TargetInfo::fromAPI(in_info);
 
-        delete info;
-    }
-    catch (ofi::Exception& e)
-    {
-        MXL_ERROR("Failed to destroy target info object : {}", e.what());
-
-        return e.status();
-    }
-    catch (std::exception& e)
-    {
-        MXL_ERROR("Failed to destroy target info object: {}", e.what());
-        return MXL_ERR_UNKNOWN;
-    }
-    catch (...)
-    {
-        MXL_ERROR("Failed to destroy target info object");
-        return MXL_ERR_UNKNOWN;
-    }
-
-    return MXL_STATUS_OK;
+            return MXL_STATUS_OK;
+        },
+        "Failed to free target info object");
 }

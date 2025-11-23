@@ -11,8 +11,6 @@ namespace mxl::lib::fabrics::ofi
     class IngressProtocolWriter final : public IngressProtocol
     {
     public:
-        IngressProtocolWriter() = default;
-
         /** \copydoc Protocol::processCompletion() */
         void processCompletion(std::uint32_t immData) override;
     };
