@@ -408,8 +408,7 @@ mxlStatus mxlFabricsInitiatorTransferGrainToTarget(mxlFabricsInitiator in_initia
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsInitiatorTransferGrain(mxlFabricsInitiator in_initiator, uint64_t in_grainIndex, uint64_t in_payloadOffset,
-    uint16_t in_startSlice, uint16_t in_endSlice)
+mxlStatus mxlFabricsInitiatorTransferGrain(mxlFabricsInitiator in_initiator, uint64_t in_grainIndex, uint16_t in_startSlice, uint16_t in_endSlice)
 {
     if (in_initiator == nullptr)
     {
@@ -419,7 +418,7 @@ mxlStatus mxlFabricsInitiatorTransferGrain(mxlFabricsInitiator in_initiator, uin
     return try_run(
         [&]()
         {
-            ofi::InitiatorWrapper::fromAPI(in_initiator)->transferGrain(in_grainIndex, in_payloadOffset, in_startSlice, in_endSlice);
+            ofi::InitiatorWrapper::fromAPI(in_initiator)->transferGrain(in_grainIndex, in_startSlice, in_endSlice);
 
             return MXL_STATUS_OK;
         },

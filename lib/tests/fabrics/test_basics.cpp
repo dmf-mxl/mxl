@@ -368,7 +368,7 @@ TEST_CASE("Fabrics: transfer grain with user buffers", "[fabrics][transfer][user
             {
                 mxlFabricsTargetTryNewGrain(target, &dummyIndex, &dummyValidSlices); // target make progress
                 mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
-                if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 0, 1) == MXL_STATUS_OK)
+                if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
                 {
                     // transfer started
                     break;
@@ -411,7 +411,7 @@ TEST_CASE("Fabrics: transfer grain with user buffers", "[fabrics][transfer][user
                 mxlFabricsTargetWaitForNewGrain(
                     target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // target make progress
                 mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
-                if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 0, 1) == MXL_STATUS_OK)
+                if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
                 {
                     // transfer started
                     break;
@@ -505,7 +505,7 @@ TEST_CASE("Fabrics: transfer grain with user buffers", "[fabrics][transfer][user
             {
                 mxlFabricsTargetTryNewGrain(target, &dummyIndex, &dummyValidSlices); // target make progress
                 mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
-                if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 0, 1) == MXL_STATUS_OK)
+                if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
                 {
                     // transfer started
                     break;
@@ -548,7 +548,7 @@ TEST_CASE("Fabrics: transfer grain with user buffers", "[fabrics][transfer][user
                 mxlFabricsTargetWaitForNewGrain(
                     target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // target make progress
                 mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
-                if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 0, 1) == MXL_STATUS_OK)
+                if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
                 {
                     // transfer started
                     break;
@@ -682,7 +682,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             {
                 mxlFabricsTargetTryNewGrain(target, &dummyIndex, &dummyValidSlices); // target make progress
                 mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
-                if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 0, 1) == MXL_STATUS_OK)
+                if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
                 {
                     // transfer started
                     break;
@@ -725,7 +725,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
                 mxlFabricsTargetWaitForNewGrain(
                     target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // target make progress
                 mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
-                if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 0, 1) == MXL_STATUS_OK)
+                if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
                 {
                     // transfer started
                     break;
@@ -816,7 +816,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             {
                 mxlFabricsTargetTryNewGrain(target, &dummyIndex, &dummyValidSlices); // target make progress
                 mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
-                if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 0, 1) == MXL_STATUS_OK)
+                if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
                 {
                     // transfer started
                     break;
@@ -859,7 +859,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
                 mxlFabricsTargetWaitForNewGrain(
                     target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // target make progress
                 mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
-                if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 0, 1) == MXL_STATUS_OK)
+                if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
                 {
                     // transfer started
                     break;

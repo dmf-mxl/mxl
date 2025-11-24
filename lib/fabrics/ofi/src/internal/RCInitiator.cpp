@@ -10,6 +10,7 @@
 #include <uuid.h>
 #include <mxl-internal/Logging.hpp>
 #include <rdma/fabric.h>
+#include "mxl-internal/Flow.hpp"
 #include "DataLayout.hpp"
 #include "Domain.hpp"
 #include "Exception.hpp"
@@ -332,12 +333,12 @@ namespace mxl::lib::fabrics::ofi
         }
     }
 
-    void RCInitiator::transferGrain(std::uint64_t grainIndex, std::uint64_t payloadOffset, std::uint16_t startSlice, std::uint16_t endSlice)
+    void RCInitiator::transferGrain(std::uint64_t grainIndex, std::uint16_t startSlice, std::uint16_t endSlice)
     {
         auto range = SliceRange::make(startSlice, endSlice);
 
-        auto size = range.transferSize(payloadOffset, _dataLayout.asVideo().sliceSizes[0]);
-        auto offset = range.transferOffset(payloadOffset, _dataLayout.asVideo().sliceSizes[0]);
+        auto size = range.transferSize(MXL_GRAIN_PAYLOAD_OFFSET, _dataLayout.asVideo().sliceSizes[0]);
+        auto offset = range.transferOffset(MXL_GRAIN_PAYLOAD_OFFSET, _dataLayout.asVideo().sliceSizes[0]);
 
         MXL_DEBUG("Transferring grain {} to all targets, offset {}, size {}", grainIndex, offset, size);
 
@@ -348,7 +349,7 @@ namespace mxl::lib::fabrics::ofi
         // this is a no-op.
         for (auto& [_, target] : _targets)
         {
-            target.postTransfer(localRegion, grainIndex, payloadOffset, range);
+            target.postTransfer(localRegion, grainIndex, MXL_GRAIN_PAYLOAD_OFFSET, range);
         }
     }
 

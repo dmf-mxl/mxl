@@ -235,7 +235,7 @@ public:
             }
 
             // Okay the grain is ready, we can transfer it to the targets.
-            ret = mxlFabricsInitiatorTransferGrain(_initiator, grainIndex, mxl::lib::MXL_GRAIN_PAYLOAD_OFFSET, startSlice, grainInfo.validSlices);
+            ret = mxlFabricsInitiatorTransferGrain(_initiator, grainIndex, startSlice, grainInfo.validSlices);
             if (ret == MXL_ERR_NOT_READY)
             {
                 continue;

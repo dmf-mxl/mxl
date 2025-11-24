@@ -170,7 +170,7 @@ namespace mxl::lib::fabrics::ofi
 
         /** \copydoc Initiator::transferGrain()
          */
-        void transferGrain(std::uint64_t grainIndex, std::uint64_t offset, std::uint16_t startSlice, std::uint16_t endSlice) override;
+        void transferGrain(std::uint64_t grainIndex, std::uint16_t startSlice, std::uint16_t endSlice) override;
 
         /** \copydoc Initiator::transferGrainToTarget()
          */
