@@ -37,11 +37,10 @@ namespace mxl::lib::fabrics::ofi
          * This is a non-blocking operation. The transfer is complete only after makeProgress() or makeProgressBlocking() returns false.
          *
          * \param grainIndex The index of the grain to transfer.
-         * \param offset The offset within the grain to start the transfer.
          * \param startSlice The start slice in the slice range to transfer. This is inclusive.
          * \param endSlice The end slice in the slice range to transfer. This is exclusive.
          */
-        virtual void transferGrain(std::uint64_t grainIndex, std::uint64_t offset, std::uint16_t startSlice, std::uint16_t endSlice) = 0;
+        virtual void transferGrain(std::uint64_t grainIndex, std::uint16_t startSlice, std::uint16_t endSlice) = 0;
 
         /** \brief Transfer a grain to a specific target.
          *
@@ -110,7 +109,7 @@ namespace mxl::lib::fabrics::ofi
 
         /** \copydoc Initiator::transferGrain()
          */
-        void transferGrain(std::uint64_t grainIndex, std::uint64_t offset, std::uint16_t startSlice, std::uint16_t endSlice);
+        void transferGrain(std::uint64_t grainIndex, std::uint16_t startSlice, std::uint16_t endSlice);
 
         /** \copydoc Initiator::transferGrainToTarget()
          */

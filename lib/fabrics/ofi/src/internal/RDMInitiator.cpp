@@ -11,6 +11,7 @@
 #include <variant>
 #include <mxl-internal/Logging.hpp>
 #include <rdma/fabric.h>
+#include "mxl-internal/Flow.hpp"
 #include "mxl/fabrics.h"
 #include "mxl/mxl.h"
 #include "AddressVector.hpp"
@@ -158,7 +159,7 @@ namespace mxl::lib::fabrics::ofi
         }
     }
 
-    void RDMInitiator::transferGrain(std::uint64_t grainIndex, std::uint64_t payloadOffset, std::uint16_t startSlice, std::uint16_t endSlice)
+    void RDMInitiator::transferGrain(std::uint64_t grainIndex, std::uint16_t startSlice, std::uint16_t endSlice)
     {
         if (_localRegions.empty())
         {
@@ -172,8 +173,8 @@ namespace mxl::lib::fabrics::ofi
 
         auto range = SliceRange::make(startSlice, endSlice);
 
-        auto size = range.transferSize(payloadOffset, _dataLayout.asVideo().sliceSizes[0]);
-        auto offset = range.transferOffset(payloadOffset, _dataLayout.asVideo().sliceSizes[0]);
+        auto size = range.transferSize(MXL_GRAIN_PAYLOAD_OFFSET, _dataLayout.asVideo().sliceSizes[0]);
+        auto offset = range.transferOffset(MXL_GRAIN_PAYLOAD_OFFSET, _dataLayout.asVideo().sliceSizes[0]);
 
         // Find the local region in which the grain with this index is stored.
         auto localRegion = _localRegions[grainIndex % _localRegions.size()].sub(offset, size);
@@ -183,7 +184,7 @@ namespace mxl::lib::fabrics::ofi
         for (auto& [_, target] : _targets)
         {
             // A completion will be posted to the completion queue, after which the counter will be decremented again
-            pending += target.postTransfer(localRegion, grainIndex, payloadOffset, range);
+            pending += target.postTransfer(localRegion, grainIndex, MXL_GRAIN_PAYLOAD_OFFSET, range);
         }
     }
 
