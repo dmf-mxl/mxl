@@ -287,8 +287,6 @@ extern "C"
      * \param in_initiator A valid fabrics initiator
      * \param in_grainIndex The  grain index to transfer. The ordering was given when mxlRegions object were created. This is true for both local and
      * remote memory regions.
-     * \param in_payloadOffset Offset in bytes inside the remote memory region before the payload starts. In MXL, this corresponds to
-     * MXL_GRAIN_PAYLOAD_OFFSET.
      * \param in_startSlice The start slice in the slice range to transfer. This is inclusive.
      * \param in_endSlice The end slice in the slice range to transfer. This is exclusive.
      * \return The result code. \see mxlStatus
@@ -297,8 +295,8 @@ extern "C"
      * mxlFabricsInitiatorTransferGrainToTarget() instead.
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsInitiatorTransferGrain(mxlFabricsInitiator in_initiator, uint64_t in_grainIndex, uint64_t in_payloadOffset,
-        uint16_t in_startSlice, uint16_t in_endSlice);
+    mxlStatus mxlFabricsInitiatorTransferGrain(mxlFabricsInitiator in_initiator, uint64_t in_grainIndex, uint16_t in_startSlice,
+        uint16_t in_endSlice);
 
     /**
      * This function must be called regularly for the initiator to make progress on queued transfer operations, connection establishment

@@ -69,14 +69,14 @@ namespace mxl::lib::fabrics::ofi
         _inner->removeTarget(targetInfo);
     }
 
-    void InitiatorWrapper::transferGrain(std::uint64_t grainIndex, std::uint64_t offset, std::uint16_t startSlice, std::uint16_t endSlice)
+    void InitiatorWrapper::transferGrain(std::uint64_t grainIndex, std::uint16_t startSlice, std::uint16_t endSlice)
     {
         if (!_inner)
         {
             throw Exception::invalidState("Initiator is not set up");
         }
 
-        _inner->transferGrain(grainIndex, offset, startSlice, endSlice);
+        _inner->transferGrain(grainIndex, startSlice, endSlice);
     }
 
     void InitiatorWrapper::transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t remoteIndex,
