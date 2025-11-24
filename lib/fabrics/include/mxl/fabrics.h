@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include <cstddef>
-#include <cstdint>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/platform.h>
@@ -93,7 +91,7 @@ extern "C"
      */
     typedef struct mxlFabricsMemoryRegion_t
     {
-        std::uintptr_t addr;                /**< Start address of the contiguous memory region. */
+        uintptr_t addr;                     /**< Start address of the contiguous memory region. */
         size_t size;                        /**< Size of that memory region */
         mxlFabricsMemoryRegionLocation loc; /**< Location information for that memory region. */
     } mxlFabricsMemoryRegion;
@@ -102,10 +100,10 @@ extern "C"
      */
     typedef struct mxlFabricsUserRegionsConfig_t
     {
-        mxlFabricsMemoryRegion const* regions;             /**< Pointer to an array of memory regions. */
-        size_t regionsCount;                               /**< The number of memory regions in the array. */
+        mxlFabricsMemoryRegion const* regions;        /**< Pointer to an array of memory regions. */
+        size_t regionsCount;                          /**< The number of memory regions in the array. */
 
-        std::uint32_t sliceSize[MXL_MAX_PLANES_PER_GRAIN]; /**< The size of a single slice in bytes. */
+        uint32_t sliceSize[MXL_MAX_PLANES_PER_GRAIN]; /**< The size of a single slice in bytes. */
     } mxlFabricsUserRegionsConfig;
 
     /**
@@ -281,7 +279,7 @@ extern "C"
      */
     MXL_EXPORT
     mxlStatus mxlFabricsInitiatorTransferGrainToTarget(mxlFabricsInitiator in_initiator, mxlTargetInfo const in_targetInfo, uint64_t in_localIndex,
-        uint64_t in_remoteIndex, uint64_t in_payloadOffset, std::uint16_t in_startSlice, std::uint16_t in_endSlice);
+        uint64_t in_remoteIndex, uint64_t in_payloadOffset, uint16_t in_startSlice, uint16_t in_endSlice);
 
     /**
      * Enqueue a transfer operation to all added targets. This function is always non-blocking. The transfer operation might be started right
@@ -300,7 +298,7 @@ extern "C"
      */
     MXL_EXPORT
     mxlStatus mxlFabricsInitiatorTransferGrain(mxlFabricsInitiator in_initiator, uint64_t in_grainIndex, uint64_t in_payloadOffset,
-        std::uint16_t in_startSlice, std::uint16_t in_endSlice);
+        uint16_t in_startSlice, uint16_t in_endSlice);
 
     /**
      * This function must be called regularly for the initiator to make progress on queued transfer operations, connection establishment
