@@ -388,7 +388,7 @@ mxlStatus mxlFabricsInitiatorRemoveTarget(mxlFabricsInitiator in_initiator, mxlT
 
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsInitiatorTransferGrainToTarget(mxlFabricsInitiator in_initiator, mxlTargetInfo const in_targetInfo, uint64_t in_localIndex,
-    uint64_t in_remoteIndex, uint64_t in_payloadOffset, std::uint16_t in_startSlice, std::uint16_t in_endSlice)
+    uint64_t in_remoteIndex, uint64_t in_payloadOffset, uint16_t in_startSlice, uint16_t in_endSlice)
 {
     if (in_initiator == nullptr || in_targetInfo == nullptr)
     {
@@ -409,7 +409,7 @@ mxlStatus mxlFabricsInitiatorTransferGrainToTarget(mxlFabricsInitiator in_initia
 
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsInitiatorTransferGrain(mxlFabricsInitiator in_initiator, uint64_t in_grainIndex, uint64_t in_payloadOffset,
-    std::uint16_t in_startSlice, std::uint16_t in_endSlice)
+    uint16_t in_startSlice, uint16_t in_endSlice)
 {
     if (in_initiator == nullptr)
     {
