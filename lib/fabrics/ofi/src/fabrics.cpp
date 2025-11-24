@@ -36,7 +36,10 @@ mxlStatus try_run(F func, std::string_view errMsg)
 
     catch (ofi::Exception& e)
     {
-        MXL_ERROR("{}: {}", errMsg, e.what());
+        if (e.status() == MXL_ERR_UNKNOWN)
+        {
+            MXL_ERROR("{}: {}", errMsg, e.what());
+        }
 
         return e.status();
     }

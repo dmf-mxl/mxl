@@ -144,6 +144,11 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         bool hasPendingWork() const noexcept;
 
+        /** \brief Returns true if the initiator has at least 1 target added no matter what the state is.
+         */
+        [[nodiscard]]
+        bool hasTarget() const noexcept;
+
         /** \brief Block on the completion queue with a timeout.
          */
         void blockOnCQ(std::chrono::steady_clock::duration);

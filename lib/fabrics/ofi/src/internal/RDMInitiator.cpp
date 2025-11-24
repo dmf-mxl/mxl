@@ -261,6 +261,11 @@ namespace mxl::lib::fabrics::ofi
         return pending > 0;
     }
 
+    bool RDMInitiator::hasTarget() const noexcept
+    {
+        return _targets.size() > 0;
+    }
+
     void RDMInitiator::blockOnCQ(std::chrono::system_clock::duration timeout)
     {
         // A zero timeout would cause the queue to block indefinetly, which
@@ -301,6 +306,11 @@ namespace mxl::lib::fabrics::ofi
 
     void RDMInitiator::consolidateState()
     {
+        if (!hasTarget())
+        {
+            throw Exception::interrupted("No more targets available while calling makeProgress.");
+        }
+
         activateIdleEndpoints();
         evictDeadEndpoints();
     }
