@@ -23,7 +23,7 @@ namespace mxl::lib::fabrics::ofi
 
     PassiveEndpoint::~PassiveEndpoint()
     {
-        close();
+        catchErrorAndLog([this]() { close(); }, "Failed to close passive endpoint");
     }
 
     PassiveEndpoint::PassiveEndpoint(::fid_pep* raw, std::shared_ptr<Fabric> fabric, std::optional<std::shared_ptr<EventQueue>> eq)

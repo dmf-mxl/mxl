@@ -86,7 +86,7 @@ namespace mxl::lib::fabrics::ofi
 
     CompletionQueue::~CompletionQueue()
     {
-        close();
+        catchErrorAndLog([this]() { close(); }, "Failed to close completion queue");
     }
 
     ::fid_cq* CompletionQueue::raw() noexcept

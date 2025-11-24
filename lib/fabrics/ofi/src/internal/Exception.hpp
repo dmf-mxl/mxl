@@ -9,6 +9,7 @@
 #include <fmt/format.h>
 #include <rdma/fi_errno.h>
 #include <mxl/mxl.h>
+#include "mxl-internal/Logging.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
@@ -146,5 +147,18 @@ namespace mxl::lib::fabrics::ofi
         }
 
         return result;
+    }
+
+    template<typename F>
+    void catchErrorAndLog(F fun, std::string_view msg)
+    {
+        try
+        {
+            fun();
+        }
+        catch (FabricException const& e)
+        {
+            MXL_ERROR("FabricException caught: {}", msg, e.what());
+        }
     }
 }
