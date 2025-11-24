@@ -49,6 +49,11 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         bool canEvict() const noexcept;
 
+        /** \brief Called to transition the endpoint out of the flushing state to the done state. If the endpoint is in any other state, this is a
+         * no-op.
+         */
+        void doneFlushing() noexcept;
+
         /** \brief Initiate a shutdown process.
          *
          * The endpoint will have pending work until a shutdown or error event will be received. After which it can be evicted from the initiator.
@@ -107,11 +112,11 @@ namespace mxl::lib::fabrics::ofi
             std::size_t pending;                   /**< The number of currently pending write requests. */
         };
 
-        /** \brief The shutdown state.
+        /** \brief The flushing state.
          *
          * The endpoint is shutting down and is waiting for a Event::Shutdown event.
          */
-        struct Shutdown
+        struct Flushing
         {
             Endpoint ep;
         };
@@ -124,7 +129,7 @@ namespace mxl::lib::fabrics::ofi
         /** \brief The various states that the endpoint can be in are stored inside a variant that we move from and then back into when processing
          * events.
          */
-        using State = std::variant<Idle, Connecting, Connected, Shutdown, Done>;
+        using State = std::variant<Idle, Connecting, Connected, Flushing, Done>;
 
     private:
         /** \brief Handle a completion error event.
@@ -190,6 +195,11 @@ namespace mxl::lib::fabrics::ofi
          */
         [[nodiscard]]
         bool hasPendingWork() const noexcept;
+
+        /** \brief Returns true if the initiator has at least 1 target added no matter what the state is.
+         */
+        [[nodiscard]]
+        bool hasTarget() const noexcept;
 
         /** \brief When making progress and using blocking queue reads, this is the minimum interval at which the event queue will be read.
          */

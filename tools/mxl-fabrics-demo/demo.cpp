@@ -17,7 +17,6 @@
 #include <mxl/mxl.h>
 #include <mxl/time.h>
 #include "CLI/CLI.hpp"
-#include "mxl-internal/Flow.hpp"
 #include "../../lib/fabrics/ofi/src/internal/Base64.hpp"
 
 /*
