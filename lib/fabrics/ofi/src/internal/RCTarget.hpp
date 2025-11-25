@@ -28,7 +28,7 @@ namespace mxl::lib::fabrics::ofi
          * \param config The configuration to use for setting up the target.
          * \return A pair consisting of the newly setup RCTarget and its associated TargetInfo.
          */
-        static std::pair<std::unique_ptr<RCTarget>, std::unique_ptr<TargetInfo>> setup(mxlTargetConfig const&);
+        static std::pair<std::unique_ptr<RCTarget>, std::unique_ptr<TargetInfo>> setup(mxlFabricsTargetConfig const&);
 
         /** \copydoc Target::read()
          */

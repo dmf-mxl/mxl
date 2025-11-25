@@ -163,7 +163,7 @@ namespace mxl::lib::fabrics::ofi
          * \param config The configuration to use for setting up the target.
          * \return A newly setup RCInitiator object.
          */
-        static std::unique_ptr<RCInitiator> setup(mxlInitiatorConfig const& config);
+        static std::unique_ptr<RCInitiator> setup(mxlFabricsInitiatorConfig const& config);
 
         /** \copydoc Initiator::addTarget()
          */

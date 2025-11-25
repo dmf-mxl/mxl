@@ -132,7 +132,7 @@ public:
             return status;
         }
 
-        mxlRegions regions;
+        mxlFabricsRegions regions;
         status = mxlFabricsRegionsForFlowReader(_reader, &regions);
         if (status != MXL_STATUS_OK)
         {
@@ -140,7 +140,7 @@ public:
             return status;
         }
 
-        mxlInitiatorConfig initiatorConfig = {
+        mxlFabricsInitiatorConfig initiatorConfig = {
             .endpointAddress = {.node = _config.node ? _config.node.value().c_str() : nullptr,
                                 .service = _config.service ? _config.service.value().c_str() : nullptr},
             .provider = _config.provider,
@@ -303,7 +303,7 @@ public:
 private:
     mxlStatus makeProgress(std::chrono::steady_clock::duration timeout)
     {
-        if (_config.provider == MXL_SHARING_PROVIDER_EFA)
+        if (_config.provider == MXL_FABRICS_PROVIDER_EFA)
         {
             return mxlFabricsInitiatorMakeProgressNonBlocking(_initiator);
         }
@@ -320,7 +320,7 @@ private:
     mxlFabricsInstance _fabricsInstance;
     mxlFlowReader _reader;
     mxlFabricsInitiator _initiator;
-    mxlTargetInfo _targetInfo;
+    mxlFabricsTargetInfo _targetInfo;
 };
 
 class AppTarget
@@ -366,14 +366,6 @@ public:
             }
         }
 
-        if (_flowExits)
-        {
-            if (status = mxlDestroyFlow(_instance, _config.flowID.c_str()); status != MXL_STATUS_OK)
-            {
-                MXL_ERROR("Failed to destroy flow with status '{}'", static_cast<int>(status));
-            }
-        }
-
         if (_instance != nullptr)
         {
             if (status = mxlDestroyInstance(_instance); status != MXL_STATUS_OK)
@@ -399,37 +391,9 @@ public:
             return status;
         }
 
-<<<<<<< HEAD
         mxlFlowConfigInfo configInfo;
         bool flowCreated = false;
-||||||| parent of 3266787 (Add libfabric implementation of the Fabrics API for grains. Modify demo app to support grain slices)
-        mxlFlowConfigInfo configInfo;
-        status = mxlCreateFlow(_instance, flowDescriptor.c_str(), nullptr, &configInfo);
-        if (status != MXL_STATUS_OK)
-        {
-            MXL_ERROR("Failed to create flow with status '{}'", static_cast<int>(status));
-            return status;
-        }
-        _flowExits = true;
-
-=======
-        status = mxlCreateFlow(_instance, flowDescriptor.c_str(), flowOptions.c_str(), &_configInfo);
-        if (status != MXL_STATUS_OK)
-        {
-            MXL_ERROR("Failed to create flow with status '{}'", static_cast<int>(status));
-            return status;
-        }
-        _flowExits = true;
-
->>>>>>> 3266787 (Add libfabric implementation of the Fabrics API for grains. Modify demo app to support grain slices)
-        // Create a flow writer for the given flow id.
-<<<<<<< HEAD
         status = mxlCreateFlowWriter(_instance, flowDescriptor.c_str(), "", &_writer, &configInfo, &flowCreated);
-||||||| parent of 3266787 (Add libfabric implementation of the Fabrics API for grains. Modify demo app to support grain slices)
-        status = mxlCreateFlowWriter(_instance, _config.flowID.c_str(), "", &_writer);
-=======
-        status = mxlCreateFlowWriter(_instance, uuids::to_string(_config.flowParser.getId()).c_str(), "", &_writer);
->>>>>>> 3266787 (Add libfabric implementation of the Fabrics API for grains. Modify demo app to support grain slices)
         if (status != MXL_STATUS_OK)
         {
             MXL_ERROR("Failed to create flow writer with status '{}'", static_cast<int>(status));
@@ -440,7 +404,7 @@ public:
             MXL_WARN("Reusing existing flow");
         }
 
-        mxlRegions memoryRegions;
+        mxlFabricsRegions memoryRegions;
         status = mxlFabricsRegionsForFlowWriter(_writer, &memoryRegions);
         if (status != MXL_STATUS_OK)
         {
@@ -455,7 +419,7 @@ public:
             return status;
         }
 
-        mxlTargetConfig targetConfig = {
+        mxlFabricsTargetConfig targetConfig = {
             .endpointAddress = {.node = _config.node ? _config.node.value().c_str() : nullptr,
                                 .service = _config.service ? _config.service.value().c_str() : nullptr},
             .provider = _config.provider,
@@ -575,7 +539,7 @@ public:
 private:
     mxlStatus targetReadGrain(std::uint16_t* entryIndex, std::uint16_t* validSlices, std::chrono::steady_clock::duration timeout)
     {
-        if (_config.provider == MXL_SHARING_PROVIDER_EFA)
+        if (_config.provider == MXL_FABRICS_PROVIDER_EFA)
         {
             return mxlFabricsTargetReadNonBlocking(_target, entryIndex, validSlices);
         }
@@ -592,16 +556,8 @@ private:
     mxlFabricsInstance _fabricsInstance;
     mxlFlowWriter _writer;
     mxlFabricsTarget _target;
-    mxlTargetInfo _targetInfo;
-<<<<<<< HEAD
-||||||| parent of 3266787 (Add libfabric implementation of the Fabrics API for grains. Modify demo app to support grain slices)
-
-    bool _flowExits{false};
-=======
+    mxlFabricsTargetInfo _targetInfo;
     mxlFlowConfigInfo _configInfo;
-
-    bool _flowExits{false};
->>>>>>> 3266787 (Add libfabric implementation of the Fabrics API for grains. Modify demo app to support grain slices)
 };
 
 int main(int argc, char** argv)

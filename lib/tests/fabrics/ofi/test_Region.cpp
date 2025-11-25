@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <catch2/catch_test_macros.hpp>
-#include "mxl/fabrics.h"
 #include "Region.hpp"
 
 using namespace mxl::lib::fabrics::ofi;
@@ -41,30 +40,31 @@ TEST_CASE("ofi: RegionGroup view and iovec conversion", "[ofi][RegionGroup]")
 TEST_CASE("ofi: RegionGroups fromGroups and view", "[ofi][RegionGroups]")
 {
     // clang-format off
-    auto inputRegions = std::array<mxlFabricsMemoryRegion, 1>{
-                mxlFabricsMemoryRegion{
+    auto inputRegions = std::array<mxlFabricsExtMemoryRegion, 1>{
+                mxlFabricsExtMemoryRegion{
                     .addr = 0x3000,
                     .size = 256,
                     .loc = {.type = MXL_PAYLOAD_LOCATION_HOST_MEMORY, .deviceId = 0},
                 }};
     // clang-format on
 
-    auto config = mxlFabricsUserRegionsConfig{
+    auto config = mxlFabricsExtRegionsConfig{
         .regions = inputRegions.data(),
         .regionsCount = 1,
         .sliceSize = {8, 0, 0, 0},
+        .format = MXL_DATA_FORMAT_VIDEO,
     };
 
-    auto mxlRegions = mxlRegionsFromUser(config);
+    auto mxlFabricsRegions = mxlFabricsRegionsFromUser(config);
 
-    REQUIRE(mxlRegions.regions().size() == 1);
+    REQUIRE(mxlFabricsRegions.regions().size() == 1);
 
-    auto const& region = mxlRegions.regions()[0];
+    auto const& region = mxlFabricsRegions.regions()[0];
     REQUIRE(region.base == 0x3000);
     REQUIRE(region.size == 256);
     REQUIRE(region.loc.isHost());
 
-    auto dataLayout = mxlRegions.dataLayout();
+    auto dataLayout = mxlFabricsRegions.dataLayout();
 
     REQUIRE(dataLayout.isVideo());
 

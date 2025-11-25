@@ -9,6 +9,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <rdma/fabric.h>
 #include <mxl/fabrics.h>
+#include "mxl/dataformat.h"
 #include "mxl/flow.h"
 #include "mxl/mxl.h"
 #include "../Utils.hpp"
@@ -23,9 +24,9 @@
 TEST_CASE("Fabrics basic creation/destroy", "[fabrics][basics]")
 {
     // Create an empty region, because management tests does not need to do transfers
-    auto regionsConfig = mxlFabricsUserRegionsConfig{.regions = nullptr, .regionsCount = 0, .sliceSize = {}};
-    mxlRegions regions;
-    mxlFabricsRegionsFromUserBuffers(&regionsConfig, &regions);
+    auto regionsConfig = mxlFabricsExtRegionsConfig{.regions = nullptr, .regionsCount = 0, .sliceSize = {}, .format = MXL_DATA_FORMAT_UNSPECIFIED};
+    mxlFabricsRegions regions;
+    mxlFabricsExtGetRegions(&regionsConfig, &regions);
 
     auto instance = mxlCreateInstance("/dev/shm/", "");
 
@@ -55,9 +56,9 @@ TEST_CASE("Fabrics basic creation/destroy", "[fabrics][basics]")
 TEST_CASE("Fabrics connection oriented activation tests", "[fabrics][connected][activation]")
 {
     // Create an empty region, because management tests does not need to do transfers
-    auto regionsConfig = mxlFabricsUserRegionsConfig{.regions = nullptr, .regionsCount = 0, .sliceSize = {}};
-    mxlRegions regions;
-    mxlFabricsRegionsFromUserBuffers(&regionsConfig, &regions);
+    auto regionsConfig = mxlFabricsExtRegionsConfig{.regions = nullptr, .regionsCount = 0, .sliceSize = {}, .format = MXL_DATA_FORMAT_VIDEO};
+    mxlFabricsRegions regions;
+    mxlFabricsExtGetRegions(&regionsConfig, &regions);
 
     auto instance = mxlCreateInstance("/dev/shm/", "");
 
@@ -72,18 +73,18 @@ TEST_CASE("Fabrics connection oriented activation tests", "[fabrics][connected][
 
     SECTION("target/initiator setup")
     {
-        auto targetConfig = mxlTargetConfig{
-            .endpointAddress = mxlEndpointAddress{.node = "127.0.0.1", .service = "0"},
-            .provider = MXL_SHARING_PROVIDER_TCP,
+        auto targetConfig = mxlFabricsTargetConfig{
+            .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
+            .provider = MXL_FABRICS_PROVIDER_TCP,
             .regions = regions,
             .deviceSupport = false
         };
-        mxlTargetInfo targetInfo;
+        mxlFabricsTargetInfo targetInfo;
         REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, &targetInfo) == MXL_STATUS_OK);
 
-        auto initiatorConfig = mxlInitiatorConfig{
-            .endpointAddress = mxlEndpointAddress{.node = "127.0.0.1", .service = "0"},
-            .provider = MXL_SHARING_PROVIDER_TCP,
+        auto initiatorConfig = mxlFabricsInitiatorConfig{
+            .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
+            .provider = MXL_FABRICS_PROVIDER_TCP,
             .regions = regions,
             .deviceSupport = false
         };
@@ -128,8 +129,7 @@ TEST_CASE("Fabrics connection oriented activation tests", "[fabrics][connected][
                 std::uint16_t dummyValidSlices;
                 do
                 {
-                    mxlFabricsTargetRead(
-                        target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // make progress on target
+                    mxlFabricsTargetRead(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // make progress on target
 
                     auto status = mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
                     if (status != MXL_STATUS_OK && status != MXL_ERR_NOT_READY)
@@ -163,9 +163,9 @@ TEST_CASE("Fabrics connection oriented activation tests", "[fabrics][connected][
 TEST_CASE("Fabrics connectionless activation tests", "[fabrics][connectionless][activation]")
 {
     // Create an empty region, because management tests does not need to do transfers
-    auto regionsConfig = mxlFabricsUserRegionsConfig{.regions = nullptr, .regionsCount = 0, .sliceSize = {}};
-    mxlRegions regions;
-    mxlFabricsRegionsFromUserBuffers(&regionsConfig, &regions);
+    auto regionsConfig = mxlFabricsExtRegionsConfig{.regions = nullptr, .regionsCount = 0, .sliceSize = {}, .format = MXL_DATA_FORMAT_VIDEO};
+    mxlFabricsRegions regions;
+    mxlFabricsExtGetRegions(&regionsConfig, &regions);
 
     auto instance = mxlCreateInstance("/dev/shm/", "");
 
@@ -178,13 +178,13 @@ TEST_CASE("Fabrics connectionless activation tests", "[fabrics][connectionless][
     mxlFabricsInitiator initiator;
     REQUIRE(mxlFabricsCreateInitiator(fabrics, &initiator) == MXL_STATUS_OK);
 
-    auto targetConfig = mxlTargetConfig{
-        .endpointAddress = mxlEndpointAddress{.node = "target", .service = "activation"},
-        .provider = MXL_SHARING_PROVIDER_SHM,
+    auto targetConfig = mxlFabricsTargetConfig{
+        .endpointAddress = mxlFabricsEndpointAddress{.node = "target", .service = "activation"},
+        .provider = MXL_FABRICS_PROVIDER_SHM,
         .regions = regions,
         .deviceSupport = false
     };
-    mxlTargetInfo targetInfo;
+    mxlFabricsTargetInfo targetInfo;
     SECTION("target setup")
     {
         REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, &targetInfo) == MXL_STATUS_OK);
@@ -192,9 +192,9 @@ TEST_CASE("Fabrics connectionless activation tests", "[fabrics][connectionless][
     }
     REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, &targetInfo) == MXL_STATUS_OK);
 
-    auto initiatorConfig = mxlInitiatorConfig{
-        .endpointAddress = mxlEndpointAddress{.node = "initiator", .service = "activation"},
-        .provider = MXL_SHARING_PROVIDER_SHM,
+    auto initiatorConfig = mxlFabricsInitiatorConfig{
+        .endpointAddress = mxlFabricsEndpointAddress{.node = "initiator", .service = "activation"},
+        .provider = MXL_FABRICS_PROVIDER_SHM,
         .regions = regions,
         .deviceSupport = false
     };
@@ -288,46 +288,47 @@ TEST_CASE("Fabrics: transfer grain with user buffers", "[fabrics][transfer][user
     REQUIRE(mxlFabricsCreateInitiator(fabrics, &initiator) == MXL_STATUS_OK);
 
     // Setup target regions
-    mxlRegions mxlTargetRegions;
+    mxlFabricsRegions mxlTargetRegions;
     auto targetRegion = std::vector<std::uint8_t>(1e6);
-    auto targetRegions = std::vector<mxlFabricsMemoryRegion>{
+    auto targetRegions = std::vector<mxlFabricsExtMemoryRegion>{
         {
          .addr = reinterpret_cast<std::uintptr_t>(targetRegion.data()),
          .size = targetRegion.size(),
          .loc = {.type = MXL_PAYLOAD_LOCATION_HOST_MEMORY, .deviceId = 0},
          }
     };
-    auto config = mxlFabricsUserRegionsConfig{.regions = targetRegions.data(), .regionsCount = targetRegions.size(), .sliceSize = {720}};
-    mxlFabricsRegionsFromUserBuffers(&config, &mxlTargetRegions);
+    auto config = mxlFabricsExtRegionsConfig{
+        .regions = targetRegions.data(), .regionsCount = targetRegions.size(), .sliceSize = {720}, .format = MXL_DATA_FORMAT_VIDEO};
+    mxlFabricsExtGetRegions(&config, &mxlTargetRegions);
 
-    mxlRegions mxlInitiatorRegions;
+    mxlFabricsRegions mxlInitiatorRegions;
     auto initiatorRegion = std::vector<std::uint8_t>(1e6);
-    auto initiatorRegions = std::vector<mxlFabricsMemoryRegion>{
+    auto initiatorRegions = std::vector<mxlFabricsExtMemoryRegion>{
         {
          .addr = reinterpret_cast<std::uintptr_t>(initiatorRegion.data()),
          .size = initiatorRegion.size(),
          .loc = {.type = MXL_PAYLOAD_LOCATION_HOST_MEMORY, .deviceId = 0},
          }
     };
-    mxlFabricsRegionsFromUserBuffers(&config, &mxlInitiatorRegions);
+    mxlFabricsExtGetRegions(&config, &mxlInitiatorRegions);
 
     SECTION("RC")
     {
-        auto targetConfig = mxlTargetConfig{
-            .endpointAddress = mxlEndpointAddress{.node = "127.0.0.1", .service = "0"},
-            .provider = MXL_SHARING_PROVIDER_TCP,
+        auto targetConfig = mxlFabricsTargetConfig{
+            .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
+            .provider = MXL_FABRICS_PROVIDER_TCP,
             .regions = mxlTargetRegions,
             .deviceSupport = false
         };
 
-        mxlTargetInfo targetInfo;
+        mxlFabricsTargetInfo targetInfo;
         REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, &targetInfo) == MXL_STATUS_OK);
 
         // Setup initiator regions
 
-        auto initiatorConfig = mxlInitiatorConfig{
-            .endpointAddress = mxlEndpointAddress{.node = "127.0.0.1", .service = "0"},
-            .provider = MXL_SHARING_PROVIDER_TCP,
+        auto initiatorConfig = mxlFabricsInitiatorConfig{
+            .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
+            .provider = MXL_FABRICS_PROVIDER_TCP,
             .regions = mxlInitiatorRegions,
             .deviceSupport = false
         };
@@ -408,8 +409,7 @@ TEST_CASE("Fabrics: transfer grain with user buffers", "[fabrics][transfer][user
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             do
             {
-                mxlFabricsTargetRead(
-                    target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // target make progress
+                mxlFabricsTargetRead(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // target make progress
                 mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
                 if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
                 {
@@ -450,21 +450,21 @@ TEST_CASE("Fabrics: transfer grain with user buffers", "[fabrics][transfer][user
 
     SECTION("RDM")
     {
-        auto targetConfig = mxlTargetConfig{
-            .endpointAddress = mxlEndpointAddress{.node = "target", .service = "0"},
-            .provider = MXL_SHARING_PROVIDER_SHM,
+        auto targetConfig = mxlFabricsTargetConfig{
+            .endpointAddress = mxlFabricsEndpointAddress{.node = "target", .service = "0"},
+            .provider = MXL_FABRICS_PROVIDER_SHM,
             .regions = mxlTargetRegions,
             .deviceSupport = false
         };
 
-        mxlTargetInfo targetInfo;
+        mxlFabricsTargetInfo targetInfo;
         REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, &targetInfo) == MXL_STATUS_OK);
 
         // Setup initiator regions
 
-        auto initiatorConfig = mxlInitiatorConfig{
-            .endpointAddress = mxlEndpointAddress{.node = "initiator", .service = "0"},
-            .provider = MXL_SHARING_PROVIDER_SHM,
+        auto initiatorConfig = mxlFabricsInitiatorConfig{
+            .endpointAddress = mxlFabricsEndpointAddress{.node = "initiator", .service = "0"},
+            .provider = MXL_FABRICS_PROVIDER_SHM,
             .regions = mxlInitiatorRegions,
             .deviceSupport = false
         };
@@ -545,8 +545,7 @@ TEST_CASE("Fabrics: transfer grain with user buffers", "[fabrics][transfer][user
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             do
             {
-                mxlFabricsTargetRead(
-                    target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // target make progress
+                mxlFabricsTargetRead(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // target make progress
                 mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
                 if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
                 {
@@ -617,7 +616,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
     mxlFlowWriter writer;
     REQUIRE(mxlCreateFlowWriter(instance, flowId, "", &writer) == MXL_STATUS_OK);
 
-    mxlRegions mxlTargetRegions;
+    mxlFabricsRegions mxlTargetRegions;
     REQUIRE(mxlFabricsRegionsForFlowWriter(writer, &mxlTargetRegions) == MXL_STATUS_OK);
 
     // Initiator
@@ -625,23 +624,23 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
     REQUIRE(mxlCreateFlowReader(instance, flowId, "", &reader) == MXL_STATUS_OK);
 
     // Setup initiator regions
-    mxlRegions mxlInitiatorRegions;
+    mxlFabricsRegions mxlInitiatorRegions;
     REQUIRE(mxlFabricsRegionsForFlowReader(reader, &mxlInitiatorRegions) == MXL_STATUS_OK);
 
     SECTION("RC")
     {
-        auto targetConfig = mxlTargetConfig{
-            .endpointAddress = mxlEndpointAddress{.node = "127.0.0.1", .service = "0"},
-            .provider = MXL_SHARING_PROVIDER_TCP,
+        auto targetConfig = mxlFabricsTargetConfig{
+            .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
+            .provider = MXL_FABRICS_PROVIDER_TCP,
             .regions = mxlTargetRegions,
             .deviceSupport = false
         };
-        mxlTargetInfo targetInfo;
+        mxlFabricsTargetInfo targetInfo;
         REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, &targetInfo) == MXL_STATUS_OK);
 
-        auto initiatorConfig = mxlInitiatorConfig{
-            .endpointAddress = mxlEndpointAddress{.node = "127.0.0.1", .service = "0"},
-            .provider = MXL_SHARING_PROVIDER_TCP,
+        auto initiatorConfig = mxlFabricsInitiatorConfig{
+            .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
+            .provider = MXL_FABRICS_PROVIDER_TCP,
             .regions = mxlInitiatorRegions,
             .deviceSupport = false
         };
@@ -722,8 +721,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             do
             {
-                mxlFabricsTargetRead(
-                    target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // target make progress
+                mxlFabricsTargetRead(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // target make progress
                 mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
                 if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
                 {
@@ -764,18 +762,18 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
 
     SECTION("RDM")
     {
-        auto targetConfig = mxlTargetConfig{
-            .endpointAddress = mxlEndpointAddress{.node = "target", .service = "test"},
-            .provider = MXL_SHARING_PROVIDER_SHM,
+        auto targetConfig = mxlFabricsTargetConfig{
+            .endpointAddress = mxlFabricsEndpointAddress{.node = "target", .service = "test"},
+            .provider = MXL_FABRICS_PROVIDER_SHM,
             .regions = mxlTargetRegions,
             .deviceSupport = false
         };
-        mxlTargetInfo targetInfo;
+        mxlFabricsTargetInfo targetInfo;
         REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, &targetInfo) == MXL_STATUS_OK);
 
-        auto initiatorConfig = mxlInitiatorConfig{
-            .endpointAddress = mxlEndpointAddress{.node = "initiator", .service = "test"},
-            .provider = MXL_SHARING_PROVIDER_SHM,
+        auto initiatorConfig = mxlFabricsInitiatorConfig{
+            .endpointAddress = mxlFabricsEndpointAddress{.node = "initiator", .service = "test"},
+            .provider = MXL_FABRICS_PROVIDER_SHM,
             .regions = mxlInitiatorRegions,
             .deviceSupport = false
         };
@@ -856,8 +854,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             do
             {
-                mxlFabricsTargetRead(
-                    target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // target make progress
+                mxlFabricsTargetRead(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // target make progress
                 mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
                 if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
                 {
@@ -915,18 +912,18 @@ TEST_CASE("Fabrics: TargetInfo serialize/deserialize", "[fabrics][ofi][target-in
     auto instance = mxlCreateInstance("/dev/shm/", "");
     mxlFabricsInstance fabrics;
     mxlFabricsTarget target;
-    mxlTargetInfo targetInfo;
+    mxlFabricsTargetInfo targetInfo;
 
     REQUIRE(mxlFabricsCreateInstance(instance, &fabrics) == MXL_STATUS_OK);
     REQUIRE(mxlFabricsCreateTarget(fabrics, &target) == MXL_STATUS_OK);
 
-    auto regionsConfig = mxlFabricsUserRegionsConfig{.regions = nullptr, .regionsCount = 0, .sliceSize = {}};
-    mxlRegions regions;
-    mxlFabricsRegionsFromUserBuffers(&regionsConfig, &regions);
+    auto regionsConfig = mxlFabricsExtRegionsConfig{.regions = nullptr, .regionsCount = 0, .sliceSize = {}, .format = MXL_DATA_FORMAT_VIDEO};
+    mxlFabricsRegions regions;
+    mxlFabricsExtGetRegions(&regionsConfig, &regions);
 
-    auto config = mxlTargetConfig{
-        .endpointAddress = mxlEndpointAddress{.node = "127.0.0.1", .service = "0"},
-        .provider = MXL_SHARING_PROVIDER_TCP,
+    auto config = mxlFabricsTargetConfig{
+        .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
+        .provider = MXL_FABRICS_PROVIDER_TCP,
         .regions = regions,
         .deviceSupport = false
     };
@@ -942,7 +939,7 @@ TEST_CASE("Fabrics: TargetInfo serialize/deserialize", "[fabrics][ofi][target-in
     REQUIRE(mxlFabricsTargetInfoToString(targetInfo, targetInfoStr.data(), &targetInfoStrSize) == MXL_STATUS_OK);
 
     // Deserialize the target info from the string
-    mxlTargetInfo deserializedTargetInfo;
+    mxlFabricsTargetInfo deserializedTargetInfo;
     REQUIRE(mxlFabricsTargetInfoFromString(targetInfoStr.c_str(), &deserializedTargetInfo) == MXL_STATUS_OK);
 
     // Now compare that the original and deserialized target info are the same

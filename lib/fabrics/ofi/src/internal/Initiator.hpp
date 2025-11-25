@@ -97,7 +97,7 @@ namespace mxl::lib::fabrics::ofi
          *
          * \param config The configuration to use for setting up the initiator.
          */
-        void setup(mxlInitiatorConfig const& config);
+        void setup(mxlFabricsInitiatorConfig const& config);
 
         /** \copydoc Initiator::addTarget()
          */
