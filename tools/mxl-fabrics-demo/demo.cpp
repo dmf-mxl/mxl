@@ -552,12 +552,11 @@ private:
     {
         if (_config.provider == MXL_SHARING_PROVIDER_EFA)
         {
-            return mxlFabricsTargetTryNewGrain(_target, entryIndex, validSlices);
+            return mxlFabricsTargetReadNonBlocking(_target, entryIndex, validSlices);
         }
         else
         {
-            return mxlFabricsTargetWaitForNewGrain(
-                _target, entryIndex, validSlices, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
+            return mxlFabricsTargetRead(_target, entryIndex, validSlices, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
         }
     }
 

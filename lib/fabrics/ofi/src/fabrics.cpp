@@ -245,7 +245,7 @@ mxlStatus mxlFabricsTargetSetup(mxlFabricsTarget in_target, mxlTargetConfig* in_
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsTargetTryNewGrain(mxlFabricsTarget in_target, uint16_t* out_entryIndex, uint16_t* out_sliceIndex)
+mxlStatus mxlFabricsTargetReadNonBlocking(mxlFabricsTarget in_target, uint16_t* out_entryIndex, uint16_t* out_sliceIndex)
 {
     if (in_target == nullptr || out_entryIndex == nullptr || out_sliceIndex == nullptr)
     {
@@ -271,7 +271,7 @@ mxlStatus mxlFabricsTargetTryNewGrain(mxlFabricsTarget in_target, uint16_t* out_
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsTargetWaitForNewGrain(mxlFabricsTarget in_target, uint16_t* out_entryIndex, uint16_t* out_sliceIndex, uint16_t in_timeoutMs)
+mxlStatus mxlFabricsTargetRead(mxlFabricsTarget in_target, uint16_t* out_entryIndex, uint16_t* out_sliceIndex, uint16_t in_timeoutMs)
 {
     if (in_target == nullptr || out_entryIndex == nullptr || out_sliceIndex == nullptr)
     {
