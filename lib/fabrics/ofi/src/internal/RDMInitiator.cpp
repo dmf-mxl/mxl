@@ -11,6 +11,7 @@
 #include <variant>
 #include <mxl-internal/Logging.hpp>
 #include <rdma/fabric.h>
+#include <rdma/fi_eq.h>
 #include "mxl-internal/Flow.hpp"
 #include "mxl/fabrics.h"
 #include "mxl/mxl.h"
@@ -123,6 +124,13 @@ namespace mxl::lib::fabrics::ofi
         }
 
         auto endpoint = std::make_shared<Endpoint>(Endpoint::create(std::move(domain)));
+
+        // For EFA, wait objects are not supported on completion queues.
+        auto cqAttr = CompletionQueue::Attributes::defaults();
+        if (*provider == Provider::EFA)
+        {
+            cqAttr.waitObject = FI_WAIT_NONE;
+        }
 
         auto cq = CompletionQueue::open(endpoint->domain());
         endpoint->bind(cq, FI_TRANSMIT | FI_RECV);
