@@ -5,9 +5,9 @@ namespace mxl::lib::fabrics::ofi
 {
     SliceRange SliceRange::make(std::uint16_t start, std::uint16_t end)
     {
-        if (start >= end)
+        if (start > end)
         {
-            throw Exception::invalidArgument("Invalid SliceRange: start must be less than end");
+            throw Exception::invalidArgument("Invalid SliceRange: start must be less or equal to end");
         }
 
         return SliceRange{start, end};

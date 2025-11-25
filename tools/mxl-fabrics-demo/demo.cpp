@@ -234,6 +234,14 @@ public:
                 continue;
             }
 
+            if (grainInfo.flags & MXL_GRAIN_FLAG_INVALID)
+            {
+                // If we've got an invalid grain, do not waster bandwidth, transfer only the grain header and go to the next grain.
+                ret = mxlFabricsInitiatorTransferGrain(_initiator, grainIndex, 0, 0);
+                ++grainIndex;
+                continue;
+            }
+
             // Okay the grain is ready, we can transfer it to the targets.
             ret = mxlFabricsInitiatorTransferGrain(_initiator, grainIndex, startSlice, grainInfo.validSlices);
             if (ret == MXL_ERR_NOT_READY)
@@ -274,7 +282,7 @@ public:
             // If we get here, we have transfered the grain completely, we can work on the next grain.
             startSlice = 0;
             endSlice = slicesPerBatch;
-            grainIndex++;
+            ++grainIndex;
         }
 
         status = mxlFabricsInitiatorRemoveTarget(_initiator, _targetInfo);
@@ -538,10 +546,11 @@ public:
                 return status;
             }
 
-            MXL_DEBUG("Comitted grain with index={} current index={} validSlices={}",
+            MXL_DEBUG("Comitted grain with index={} current index={} validSlices={} flags={}",
                 grainIndex,
                 mxlGetCurrentIndex(&_configInfo.common.grainRate),
-                validSlices);
+                validSlices,
+                grainInfo.flags);
         }
 
         return MXL_STATUS_OK;
