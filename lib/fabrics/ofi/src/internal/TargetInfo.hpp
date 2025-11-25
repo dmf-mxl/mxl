@@ -19,14 +19,14 @@ namespace mxl::lib::fabrics::ofi
     struct TargetInfo
     {
     public:
-        /** \brief Cast an `mxlTargetInfo` opaque pointer to a TargetInfo pointer.
+        /** \brief Cast an `mxlFabricsTargetInfo` opaque pointer to a TargetInfo pointer.
          */
-        static TargetInfo* fromAPI(mxlTargetInfo api) noexcept;
+        static TargetInfo* fromAPI(mxlFabricsTargetInfo api) noexcept;
 
-        /** \brief Cast a pointer to a `TargetInfo` instance to an `mxlTargetInfo` opaque pointer
+        /** \brief Cast a pointer to a `TargetInfo` instance to an `mxlFabricsTargetInfo` opaque pointer
          */
         [[nodiscard]]
-        ::mxlTargetInfo toAPI() noexcept;
+        ::mxlFabricsTargetInfo toAPI() noexcept;
 
         /** \brief Serialize a TargetInfo instance to a JSON representation
          */

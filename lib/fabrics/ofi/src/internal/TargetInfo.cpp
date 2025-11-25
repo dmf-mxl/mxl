@@ -13,14 +13,14 @@
 namespace mxl::lib::fabrics::ofi
 {
 
-    TargetInfo* TargetInfo::fromAPI(mxlTargetInfo api) noexcept
+    TargetInfo* TargetInfo::fromAPI(mxlFabricsTargetInfo api) noexcept
     {
         return reinterpret_cast<TargetInfo*>(api);
     }
 
-    ::mxlTargetInfo TargetInfo::toAPI() noexcept
+    ::mxlFabricsTargetInfo TargetInfo::toAPI() noexcept
     {
-        return reinterpret_cast<mxlTargetInfo>(this);
+        return reinterpret_cast<mxlFabricsTargetInfo>(this);
     }
 
     std::string TargetInfo::toJSON() const

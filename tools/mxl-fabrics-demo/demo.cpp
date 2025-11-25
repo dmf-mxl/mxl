@@ -132,7 +132,7 @@ public:
             return status;
         }
 
-        mxlRegions regions;
+        mxlFabricsRegions regions;
         status = mxlFabricsRegionsForFlowReader(_reader, &regions);
         if (status != MXL_STATUS_OK)
         {
@@ -140,7 +140,7 @@ public:
             return status;
         }
 
-        mxlInitiatorConfig initiatorConfig = {
+        mxlFabricsInitiatorConfig initiatorConfig = {
             .endpointAddress = {.node = _config.node ? _config.node.value().c_str() : nullptr,
                                 .service = _config.service ? _config.service.value().c_str() : nullptr},
             .provider = _config.provider,
@@ -303,7 +303,7 @@ public:
 private:
     mxlStatus makeProgress(std::chrono::steady_clock::duration timeout)
     {
-        if (_config.provider == MXL_SHARING_PROVIDER_EFA)
+        if (_config.provider == MXL_FABRICS_PROVIDER_EFA)
         {
             return mxlFabricsInitiatorMakeProgressNonBlocking(_initiator);
         }
@@ -320,7 +320,7 @@ private:
     mxlFabricsInstance _fabricsInstance;
     mxlFlowReader _reader;
     mxlFabricsInitiator _initiator;
-    mxlTargetInfo _targetInfo;
+    mxlFabricsTargetInfo _targetInfo;
 };
 
 class AppTarget
@@ -415,7 +415,7 @@ public:
             return status;
         }
 
-        mxlRegions memoryRegions;
+        mxlFabricsRegions memoryRegions;
         status = mxlFabricsRegionsForFlowWriter(_writer, &memoryRegions);
         if (status != MXL_STATUS_OK)
         {
@@ -430,7 +430,7 @@ public:
             return status;
         }
 
-        mxlTargetConfig targetConfig = {
+        mxlFabricsTargetConfig targetConfig = {
             .endpointAddress = {.node = _config.node ? _config.node.value().c_str() : nullptr,
                                 .service = _config.service ? _config.service.value().c_str() : nullptr},
             .provider = _config.provider,
@@ -550,7 +550,7 @@ public:
 private:
     mxlStatus targetReadGrain(std::uint16_t* entryIndex, std::uint16_t* validSlices, std::chrono::steady_clock::duration timeout)
     {
-        if (_config.provider == MXL_SHARING_PROVIDER_EFA)
+        if (_config.provider == MXL_FABRICS_PROVIDER_EFA)
         {
             return mxlFabricsTargetReadNonBlocking(_target, entryIndex, validSlices);
         }
@@ -567,7 +567,7 @@ private:
     mxlFabricsInstance _fabricsInstance;
     mxlFlowWriter _writer;
     mxlFabricsTarget _target;
-    mxlTargetInfo _targetInfo;
+    mxlFabricsTargetInfo _targetInfo;
     mxlFlowConfigInfo _configInfo;
 
     bool _flowExits{false};

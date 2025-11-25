@@ -18,7 +18,7 @@
 namespace mxl::lib::fabrics::ofi
 {
 
-    std::pair<std::unique_ptr<RCTarget>, std::unique_ptr<TargetInfo>> RCTarget::setup(mxlTargetConfig const& config)
+    std::pair<std::unique_ptr<RCTarget>, std::unique_ptr<TargetInfo>> RCTarget::setup(mxlFabricsTargetConfig const& config)
     {
         MXL_INFO("setting up target [endpoint = {}:{}, provider = {}]", config.endpointAddress.node, config.endpointAddress.service, config.provider);
 
@@ -50,10 +50,10 @@ namespace mxl::lib::fabrics::ofi
         auto fabric = Fabric::open(*fabricInfoList.begin());
         auto domain = Domain::open(fabric);
 
-        auto const mxlRegions = MxlRegions::fromAPI(config.regions);
+        auto const mxlFabricsRegions = MxlRegions::fromAPI(config.regions);
 
         // Select the "protocol" when a data transfer completes
-        auto proto = selectProtocol(domain, mxlRegions->dataLayout(), mxlRegions->regions());
+        auto proto = selectProtocol(domain, mxlFabricsRegions->dataLayout(), mxlFabricsRegions->regions());
 
         auto pep = makeListener(fabric);
 

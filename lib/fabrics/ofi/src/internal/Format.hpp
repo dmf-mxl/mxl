@@ -24,11 +24,11 @@ struct fmt::formatter<mxlFabricsProvider>
     {
         switch (provider)
         {
-            case MXL_SHARING_PROVIDER_AUTO:  return fmt::format_to(ctx.out(), "auto");
-            case MXL_SHARING_PROVIDER_TCP:   return fmt::format_to(ctx.out(), "tcp");
-            case MXL_SHARING_PROVIDER_VERBS: return fmt::format_to(ctx.out(), "verbs");
-            case MXL_SHARING_PROVIDER_EFA:   return fmt::format_to(ctx.out(), "efa");
-            case MXL_SHARING_PROVIDER_SHM:   return fmt::format_to(ctx.out(), "shm");
+            case MXL_FABRICS_PROVIDER_AUTO:  return fmt::format_to(ctx.out(), "auto");
+            case MXL_FABRICS_PROVIDER_TCP:   return fmt::format_to(ctx.out(), "tcp");
+            case MXL_FABRICS_PROVIDER_VERBS: return fmt::format_to(ctx.out(), "verbs");
+            case MXL_FABRICS_PROVIDER_EFA:   return fmt::format_to(ctx.out(), "efa");
+            case MXL_FABRICS_PROVIDER_SHM:   return fmt::format_to(ctx.out(), "shm");
             default:                         return fmt::format_to(ctx.out(), "unknown");
         }
     }

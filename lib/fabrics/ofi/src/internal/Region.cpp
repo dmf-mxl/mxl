@@ -60,7 +60,7 @@ namespace mxl::lib::fabrics::ofi
         return std::holds_alternative<Host>(_inner);
     }
 
-    Region::Location Region::Location::fromAPI(mxlFabricsMemoryRegionLocation loc)
+    Region::Location Region::Location::fromAPI(mxlFabricsExtMemoryRegionLocation loc)
     {
         switch (loc.type)
         {
@@ -109,14 +109,14 @@ namespace mxl::lib::fabrics::ofi
         return iovecs;
     }
 
-    MxlRegions* MxlRegions::fromAPI(mxlRegions regions) noexcept
+    MxlRegions* MxlRegions::fromAPI(mxlFabricsRegions regions) noexcept
     {
         return reinterpret_cast<MxlRegions*>(regions);
     }
 
-    mxlRegions MxlRegions::toAPI() noexcept
+    mxlFabricsRegions MxlRegions::toAPI() noexcept
     {
-        return reinterpret_cast<mxlRegions>(this);
+        return reinterpret_cast<mxlFabricsRegions>(this);
     }
 
     std::vector<Region> const& MxlRegions::regions() const noexcept
@@ -129,7 +129,7 @@ namespace mxl::lib::fabrics::ofi
         return _layout;
     }
 
-    MxlRegions mxlRegionsFromFlow(FlowData const& flow)
+    MxlRegions mxlFabricsRegionsFromFlow(FlowData const& flow)
     {
         static_assert(sizeof(GrainHeader) == 8192,
             "GrainHeader type size changed! The Fabrics API makes assumptions on the memory layout of a flow, please review the code below if the "
@@ -184,14 +184,20 @@ namespace mxl::lib::fabrics::ofi
         }
     }
 
-    MxlRegions mxlRegionsFromUser(mxlFabricsUserRegionsConfig const& config)
+    MxlRegions mxlFabricsRegionsFromUser(mxlFabricsExtRegionsConfig const& config)
     {
         std::vector<Region> outRegions;
         for (size_t i = 0; i < config.regionsCount; i++)
         {
             outRegions.emplace_back(config.regions[i].addr, config.regions[i].size, Region::Location::fromAPI(config.regions[i].loc));
         }
-
-        return {std::move(outRegions), DataLayout::fromVideo(std::to_array(config.sliceSize))};
+        if (config.format == MXL_DATA_FORMAT_VIDEO)
+        {
+            return {std::move(outRegions), DataLayout::fromVideo(std::to_array(config.sliceSize))};
+        }
+        else
+        {
+            throw Exception::invalidArgument("Unsupported data format {}", static_cast<int>(config.format));
+        }
     }
 }

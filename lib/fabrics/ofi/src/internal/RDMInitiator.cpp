@@ -93,7 +93,7 @@ namespace mxl::lib::fabrics::ofi
         return 0;
     }
 
-    std::unique_ptr<RDMInitiator> RDMInitiator::setup(mxlInitiatorConfig const& config)
+    std::unique_ptr<RDMInitiator> RDMInitiator::setup(mxlFabricsInitiatorConfig const& config)
     {
         auto provider = providerFromAPI(config.provider);
         if (!provider)
@@ -116,11 +116,11 @@ namespace mxl::lib::fabrics::ofi
         auto fabric = Fabric::open(info);
         auto domain = Domain::open(fabric);
 
-        auto mxlRegions = MxlRegions::fromAPI(config.regions);
+        auto mxlFabricsRegions = MxlRegions::fromAPI(config.regions);
 
-        if (mxlRegions && !mxlRegions->regions().empty())
+        if (mxlFabricsRegions && !mxlFabricsRegions->regions().empty())
         {
-            domain->registerRegions(mxlRegions->regions(), FI_WRITE);
+            domain->registerRegions(mxlFabricsRegions->regions(), FI_WRITE);
         }
 
         auto endpoint = std::make_shared<Endpoint>(Endpoint::create(std::move(domain)));
@@ -147,7 +147,7 @@ namespace mxl::lib::fabrics::ofi
             {}
         };
 
-        return std::make_unique<MakeUniqueEnabler>(std::move(endpoint), mxlRegions->dataLayout());
+        return std::make_unique<MakeUniqueEnabler>(std::move(endpoint), mxlFabricsRegions->dataLayout());
     }
 
     void RDMInitiator::addTarget(TargetInfo const& targetInfo)
