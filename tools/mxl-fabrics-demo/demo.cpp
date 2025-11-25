@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <chrono>
 #include <csignal>
 #include <cstdint>
 #include <cstdlib>
@@ -170,7 +171,7 @@ public:
 
         do
         {
-            status = mxlFabricsInitiatorMakeProgressBlocking(_initiator, 250);
+            status = makeProgress(std::chrono::milliseconds(250));
             if (status == MXL_ERR_INTERRUPTED)
             {
                 return MXL_STATUS_OK;
@@ -247,7 +248,7 @@ public:
 
             do
             {
-                status = mxlFabricsInitiatorMakeProgressBlocking(_initiator, 10);
+                status = makeProgress(std::chrono::milliseconds(10));
                 if (status == MXL_ERR_INTERRUPTED)
                 {
                     return MXL_STATUS_OK;
@@ -284,7 +285,7 @@ public:
 
         do
         {
-            status = mxlFabricsInitiatorMakeProgressBlocking(_initiator, 250);
+            status = makeProgress(std::chrono::milliseconds(250));
             if (status == MXL_ERR_INTERRUPTED)
             {
                 return MXL_STATUS_OK;
@@ -297,6 +298,19 @@ public:
         while (status == MXL_ERR_NOT_READY);
 
         return MXL_STATUS_OK;
+    }
+
+private:
+    mxlStatus makeProgress(std::chrono::steady_clock::duration timeout)
+    {
+        if (_config.provider == MXL_SHARING_PROVIDER_EFA)
+        {
+            return mxlFabricsInitiatorMakeProgressNonBlocking(_initiator);
+        }
+        else
+        {
+            return mxlFabricsInitiatorMakeProgressBlocking(_initiator, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
+        }
     }
 
 private:
@@ -475,7 +489,7 @@ public:
 
         while (!g_exit_requested)
         {
-            status = mxlFabricsTargetWaitForNewGrain(_target, &entryIndex, &validSlices, 200);
+            status = targetReadGrain(&entryIndex, &validSlices, std::chrono::milliseconds(200));
             if (status == MXL_ERR_TIMEOUT)
             {
                 // No completion before a timeout was triggered, most likely a problem upstream.
@@ -531,6 +545,20 @@ public:
         }
 
         return MXL_STATUS_OK;
+    }
+
+private:
+    mxlStatus targetReadGrain(std::uint16_t* entryIndex, std::uint16_t* validSlices, std::chrono::steady_clock::duration timeout)
+    {
+        if (_config.provider == MXL_SHARING_PROVIDER_EFA)
+        {
+            return mxlFabricsTargetTryNewGrain(_target, entryIndex, validSlices);
+        }
+        else
+        {
+            return mxlFabricsTargetWaitForNewGrain(
+                _target, entryIndex, validSlices, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
+        }
     }
 
 private:
