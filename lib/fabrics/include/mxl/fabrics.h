@@ -1,5 +1,5 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
-// SPDX-License-Identifier: Apache-2.0
+// spdx-filecopyrighttext: 2025 contributors to the media exchange layer project.
+// spdx-license-identifier: apache-2.0
 
 #pragma once
 
@@ -14,7 +14,6 @@
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/platform.h>
-#include "mxl/flowinfo.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -33,7 +32,7 @@ extern "C"
     /** The TargetInfo object holds the local fabric address, keys and memory region addresses for a target. It is returned after setting
      *  up a new target and must be passed to the initiator to connect it.
      */
-    typedef struct mxlTargetInfo_t* mxlTargetInfo;
+    typedef struct mxlFabricsTargetInfo_t* mxlFabricsTargetInfo;
 
     /** The initiator is the logical sender of grains over the network. It is the initiator of transfer requests
      *  to registered memory regions of a target.
@@ -44,15 +43,15 @@ extern "C"
      * Can be obtained by using a flow reader or writer, and converting it to a regions collection
      * with mxlFabricsRegionsForFlowReader() or mxlFabricsRegionsForFlowWriter().
      */
-    typedef struct mxlRegions_t* mxlRegions;
+    typedef struct mxlFabricsRegions_t* mxlFabricsRegions;
 
-    typedef enum mxlFabricsProvider
+    typedef enum mxlFabricsProvider_t
     {
-        MXL_SHARING_PROVIDER_AUTO = 0,  /**< Auto select the best provider. ** This might not be supported by all implementations. */
-        MXL_SHARING_PROVIDER_TCP = 1,   /**< Provider that uses linux tcp sockets. */
-        MXL_SHARING_PROVIDER_VERBS = 2, /**< Provider for userspace verbs (libibverbs) and librdmcm for connection management. */
-        MXL_SHARING_PROVIDER_EFA = 3,   /**< Provider for AWS Elastic Fabric Adapter. */
-        MXL_SHARING_PROVIDER_SHM = 4,   /**< Provider used for moving data between 2 memory regions inside the same system. Supported */
+        MXL_FABRICS_PROVIDER_AUTO = 0,  /**< Auto select the best provider. ** This might not be supported by all implementations. */
+        MXL_FABRICS_PROVIDER_TCP = 1,   /**< Provider that uses linux tcp sockets. */
+        MXL_FABRICS_PROVIDER_VERBS = 2, /**< Provider for userspace verbs (libibverbs) and librdmcm for connection management. */
+        MXL_FABRICS_PROVIDER_EFA = 3,   /**< Provider for AWS Elastic Fabric Adapter. */
+        MXL_FABRICS_PROVIDER_SHM = 4,   /**< Provider used for moving data between 2 memory regions inside the same system. Supported */
     } mxlFabricsProvider;
 
     /** Address of a logical network endpoint. This is analogous to a hostname and port number in classic ipv4 networking.
@@ -61,58 +60,31 @@ extern "C"
      * `node` and `service` pointers are expected to live at least until the target or initiator `setup` function is executed and are
      * internally cloned.
      */
-    typedef struct mxlEndpointAddress_t
+    typedef struct mxlFabricsEndpointAddress_t
     {
         char const* node;
         char const* service;
-    } mxlEndpointAddress;
+    } mxlFabricsEndpointAddress;
 
     /** Configuration object required to set up a new target.
      */
-    typedef struct mxlTargetConfig_t
+    typedef struct mxlFabricsTargetConfig_t
     {
-        mxlEndpointAddress endpointAddress; /**< Bind address for the local endpoint. */
-        mxlFabricsProvider provider;        /**< The provider that should be used */
-        mxlRegions regions;                 /**< Local memory regions of the flow that grains should be written to. */
-        bool deviceSupport;                 /**< Require support of transfers involving device memory. */
-    } mxlTargetConfig;
+        mxlFabricsEndpointAddress endpointAddress; /**< Bind address for the local endpoint. */
+        mxlFabricsProvider provider;               /**< The provider that should be used */
+        mxlFabricsRegions regions;                 /**< Local memory regions of the flow that grains should be written to. */
+        bool deviceSupport;                        /**< Require support of transfers involving device memory. */
+    } mxlFabricsTargetConfig;
 
     /** Configuration object required to set up an initiator.
      */
-    typedef struct mxlInitiatorConfig_t
+    typedef struct mxlFabricsInitiatorConfig_t
     {
-        mxlEndpointAddress endpointAddress; /**< Bind address for the local endpoint. */
-        mxlFabricsProvider provider;        /**< The provider that should be used. */
-        mxlRegions regions;                 /**< Local memory regions of the flow that grains should source of remote write requests. */
-        bool deviceSupport;                 /**< Require support of transfers involving device memory. */
-    } mxlInitiatorConfig;
-
-    /** Configuration for a memory region location.
-     */
-    typedef struct mxlFabricsMemoryRegionLocation_t
-    {
-        mxlPayloadLocation type; /**< Memory type of the payload. */
-        uint64_t deviceId;       /**< Device Index when device memory is used, otherwise it is ignored. */
-    } mxlFabricsMemoryRegionLocation;
-
-    /** Configuration for a user supplied memory region.
-     */
-    typedef struct mxlFabricsMemoryRegion_t
-    {
-        uintptr_t addr;                     /**< Start address of the contiguous memory region. */
-        size_t size;                        /**< Size of that memory region */
-        mxlFabricsMemoryRegionLocation loc; /**< Location information for that memory region. */
-    } mxlFabricsMemoryRegion;
-
-    /** User configuration for a collection of memory regions.
-     */
-    typedef struct mxlFabricsUserRegionsConfig_t
-    {
-        mxlFabricsMemoryRegion const* regions;        /**< Pointer to an array of memory regions. */
-        size_t regionsCount;                          /**< The number of memory regions in the array. */
-
-        uint32_t sliceSize[MXL_MAX_PLANES_PER_GRAIN]; /**< The size of a single slice in bytes. */
-    } mxlFabricsUserRegionsConfig;
+        mxlFabricsEndpointAddress endpointAddress; /**< Bind address for the local endpoint. */
+        mxlFabricsProvider provider;               /**< The provider that should be used. */
+        mxlFabricsRegions regions;                 /**< Local memory regions of the flow that grains should source of remote write requests. */
+        bool deviceSupport;                        /**< Require support of transfers involving device memory. */
+    } mxlFabricsInitiatorConfig;
 
     /**
      * Get the backing memory regions of a flow associated with a flow reader.
@@ -122,7 +94,7 @@ extern "C"
      * \param out_regions A pointer to a memory location where the address of the returned collection of memory regions will be written.
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsRegionsForFlowReader(mxlFlowReader in_reader, mxlRegions* out_regions);
+    mxlStatus mxlFabricsRegionsForFlowReader(mxlFlowReader in_reader, mxlFabricsRegions* out_regions);
 
     /**
      * Get the backing memory regions of a flow associated with a flow writer.
@@ -132,17 +104,7 @@ extern "C"
      * \param out_regions A pointer to a memory location where the address of the returned collection of memory regions will be written.
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsRegionsForFlowWriter(mxlFlowWriter in_writer, mxlRegions* out_regions);
-
-    /**
-     * Create a regions object from a list of memory region groups.
-     * \param in_config User configuiration for the memory regions.
-     * \param out_regions Returns a pointer to the created regions object. The user is responsible for freeing this object by calling
-     * `mxlFabricsRegionsFree()`.
-     * \return MXL_STATUS_OK if the regions object was successfully created.
-     */
-    MXL_EXPORT
-    mxlStatus mxlFabricsRegionsFromUserBuffers(mxlFabricsUserRegionsConfig const* in_config, mxlRegions* out_regions);
+    mxlStatus mxlFabricsRegionsForFlowWriter(mxlFlowWriter in_writer, mxlFabricsRegions* out_regions);
 
     /**
      * Free a regions object previously allocated by mxlFabricsRegionsForFlowReader(), mxlFabricsRegionsForFlowWriter() or
@@ -151,7 +113,7 @@ extern "C"
      * \return MXL_STATUS_OK if the regions object was freed
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsRegionsFree(mxlRegions in_regions);
+    mxlStatus mxlFabricsRegionsFree(mxlFabricsRegions in_regions);
 
     /**
      * Create a new mxl-fabrics from an mxl instance. Targets and initiators created from this mxl-fabrics instance
@@ -194,12 +156,12 @@ extern "C"
      * \param in_target A valid fabrics target
      * \param in_config The target configuration. This will be used to create an endpoint and register a memory region. The memory region
      * corresponds to the one that will be written to by the initiator.
-     * \param out_info An mxlTargetInfo_t object which should be shared to a remote initiator which this target should receive data from. The
+     * \param out_info An mxlFabricsTargetInfo_t object which should be shared to a remote initiator which this target should receive data from. The
      * object must be freed with mxlFabricsFreeTargetInfo().
      * \return The result code. \see mxlStatus
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsTargetSetup(mxlFabricsTarget in_target, mxlTargetConfig* in_config, mxlTargetInfo* out_info);
+    mxlStatus mxlFabricsTargetSetup(mxlFabricsTarget in_target, mxlFabricsTargetConfig* in_config, mxlFabricsTargetInfo* out_info);
 
     /**
      * Non-blocking accessor for a flow grain at a specific index.
@@ -246,7 +208,7 @@ extern "C"
      * \return The result code. \see mxlStatus
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsInitiatorSetup(mxlFabricsInitiator in_initiator, mxlInitiatorConfig const* in_config);
+    mxlStatus mxlFabricsInitiatorSetup(mxlFabricsInitiator in_initiator, mxlFabricsInitiatorConfig const* in_config);
 
     /**
      * Add a target to the initiator. This will allow the initiator to send data to the target in subsequent calls to
@@ -256,7 +218,7 @@ extern "C"
      * \param in_targetInfo The target information. This should be the same as the one returned from "mxlFabricsTargetSetup".
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsInitiatorAddTarget(mxlFabricsInitiator in_initiator, mxlTargetInfo const in_targetInfo);
+    mxlStatus mxlFabricsInitiatorAddTarget(mxlFabricsInitiator in_initiator, mxlFabricsTargetInfo const in_targetInfo);
 
     /**
      * Remove a target from the initiator. This function is always non-blocking. If any additional communication for a graceful shutdown is
@@ -267,40 +229,20 @@ extern "C"
      * \param in_targetInfo The target information. This should be the same as the one returned from "mxlFabricsTargetSetup".
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsInitiatorRemoveTarget(mxlFabricsInitiator in_initiator, mxlTargetInfo const in_targetInfo);
-
-    /**
-     * Enqueue a transfer operation to a specific target. This function is always non-blocking. The transfer operation might be started right
-     * away, but is only guaranteed to have completed after mxlFabricsInitiatorMakeProgress*() no longer returns MXL_ERR_NOT_READY.
-     * \param in_initiator A valid fabrics initiator
-     * \param in_targetInfo The target information of the specific target. This should be the same as the one returned from "mxlFabricsTargetSetup".
-     * \param in_localIndex The index of the memory region (local) to transfer. The ordering was given when mxlRegions object was created.
-     * \param in_remoteIndex The index of the memory region (remote) to receive the transfer at the target side. The ordering was given when
-     * mxlRegions object was created.
-     * \param in_payloadOffset Offset in bytes inside the remote memory region before the payload starts. This is typically the header if any. In MXL,
-     * this corresponds to MXL_GRAIN_PAYLOAD_OFFSET.
-     * \param in_startSlice The start slice in the slice range to transfer. This is inclusive.
-     * \param in_endSlice The end slice in the slice range to transfer. This is exclusive.
-     * \return The result code. \see mxlStatus
-     * \note This function is useful when the underlying buffer layout does not match the MXL grain data layout. Otherwise \see
-     * mxlFabricsInitiatorTransferGrain()
-     */
-    MXL_EXPORT
-    mxlStatus mxlFabricsInitiatorTransferGrainToTarget(mxlFabricsInitiator in_initiator, mxlTargetInfo const in_targetInfo, uint64_t in_localIndex,
-        uint64_t in_remoteIndex, uint64_t in_payloadOffset, uint16_t in_startSlice, uint16_t in_endSlice);
+    mxlStatus mxlFabricsInitiatorRemoveTarget(mxlFabricsInitiator in_initiator, mxlFabricsTargetInfo const in_targetInfo);
 
     /**
      * Enqueue a transfer operation to all added targets. This function is always non-blocking. The transfer operation might be started right
      * away, but is only guaranteed to have completed after mxlFabricsInitiatorMakeProgress*() no longer returns MXL_ERR_NOT_READY.
      * \param in_initiator A valid fabrics initiator
-     * \param in_grainIndex The  grain index to transfer. The ordering was given when mxlRegions object were created. This is true for both local and
-     * remote memory regions.
+     * \param in_grainIndex The  grain index to transfer. The ordering was given when mxlFabricsRegions object were created. This is true for both
+     * local and remote memory regions.
      * \param in_startSlice The start slice in the slice range to transfer. This is inclusive.
      * \param in_endSlice The end slice in the slice range to transfer. This is exclusive.
      * \return The result code. \see mxlStatus
      * \note This function assumes: (1) the underlying buffer layout matches the MXL grain data layout, and (2) ring buffer entries for local and
      * remote regions can be calculated via modulo operation: `grainIndex % regions.size()`.If these assumptions do not hold, use
-     * mxlFabricsInitiatorTransferGrainToTarget() instead.
+     * mxlFabricsExtInitiatorTransferGrain() instead, see fabrics_ext.h.
      */
     MXL_EXPORT
     mxlStatus mxlFabricsInitiatorTransferGrain(mxlFabricsInitiator in_initiator, uint64_t in_grainIndex, uint16_t in_startSlice,
@@ -353,7 +295,7 @@ extern "C"
      * \param in_stringSize The size of the output string.
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsTargetInfoToString(mxlTargetInfo const in_targetInfo, char* out_string, size_t* in_stringSize);
+    mxlStatus mxlFabricsTargetInfoToString(mxlFabricsTargetInfo const in_targetInfo, char* out_string, size_t* in_stringSize);
 
     /**
      * Parse a targetInfo object from its string representation.
@@ -361,15 +303,15 @@ extern "C"
      * \param out_targetInfo A valid target info to deserialize to
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsTargetInfoFromString(char const* in_string, mxlTargetInfo* out_targetInfo);
+    mxlStatus mxlFabricsTargetInfoFromString(char const* in_string, mxlFabricsTargetInfo* out_targetInfo);
 
     /**
-     * Free a mxlTargetInfo object obtained from mxlFabricsTargetSetup() or mxlFabricsTargetInfoFromString().
-     * \param in_info A mxlTargetInfo object
-     * \return MXL_STATUS_OK if the mxlTargetInfo object was freed.
+     * Free a mxlFabricsTargetInfo object obtained from mxlFabricsTargetSetup() or mxlFabricsTargetInfoFromString().
+     * \param in_info A mxlFabricsTargetInfo object
+     * \return MXL_STATUS_OK if the mxlFabricsTargetInfo object was freed.
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsFreeTargetInfo(mxlTargetInfo in_info);
+    mxlStatus mxlFabricsFreeTargetInfo(mxlFabricsTargetInfo in_info);
 
 #ifdef __cplusplus
 }

@@ -105,7 +105,7 @@ namespace mxl::lib::fabrics::ofi
     class RDMInitiator : public Initiator
     {
     public:
-        static std::unique_ptr<RDMInitiator> setup(mxlInitiatorConfig const&);
+        static std::unique_ptr<RDMInitiator> setup(mxlFabricsInitiatorConfig const&);
 
         /** \copydoc Initiator::addTarget()
          */

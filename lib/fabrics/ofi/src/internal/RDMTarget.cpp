@@ -16,7 +16,7 @@
 
 namespace mxl::lib::fabrics::ofi
 {
-    std::pair<std::unique_ptr<RDMTarget>, std::unique_ptr<TargetInfo>> RDMTarget::setup(mxlTargetConfig const& config)
+    std::pair<std::unique_ptr<RDMTarget>, std::unique_ptr<TargetInfo>> RDMTarget::setup(mxlFabricsTargetConfig const& config)
     {
         MXL_INFO("setting up target [endpoint = {}:{}, provider = {}]", config.endpointAddress.node, config.endpointAddress.service, config.provider);
 
@@ -41,9 +41,9 @@ namespace mxl::lib::fabrics::ofi
         auto fabric = Fabric::open(info);
         auto domain = Domain::open(fabric);
 
-        auto mxlRegions = MxlRegions::fromAPI(config.regions);
+        auto mxlFabricsRegions = MxlRegions::fromAPI(config.regions);
 
-        auto proto = selectProtocol(domain, mxlRegions->dataLayout(), mxlRegions->regions());
+        auto proto = selectProtocol(domain, mxlFabricsRegions->dataLayout(), mxlFabricsRegions->regions());
 
         auto endpoint = Endpoint::create(domain);
 

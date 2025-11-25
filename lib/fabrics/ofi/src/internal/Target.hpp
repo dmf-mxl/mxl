@@ -89,7 +89,7 @@ namespace mxl::lib::fabrics::ofi
          *
          * \param config The configuration to use for setting up the target.
          */
-        std::unique_ptr<TargetInfo> setup(mxlTargetConfig const& config);
+        std::unique_ptr<TargetInfo> setup(mxlFabricsTargetConfig const& config);
 
     private:
         std::unique_ptr<Target> _inner; /**< The underlying target implementation. */

@@ -21,7 +21,7 @@ namespace mxl::lib::fabrics::ofi
         return reinterpret_cast<mxlFabricsInitiator>(this);
     }
 
-    void InitiatorWrapper::setup(mxlInitiatorConfig const& config)
+    void InitiatorWrapper::setup(mxlFabricsInitiatorConfig const& config)
     {
         if (_inner)
         {
@@ -30,16 +30,16 @@ namespace mxl::lib::fabrics::ofi
 
         switch (config.provider)
         {
-            case MXL_SHARING_PROVIDER_AUTO:
-            case MXL_SHARING_PROVIDER_TCP:
-            case MXL_SHARING_PROVIDER_VERBS:
+            case MXL_FABRICS_PROVIDER_AUTO:
+            case MXL_FABRICS_PROVIDER_TCP:
+            case MXL_FABRICS_PROVIDER_VERBS:
             {
                 _inner = RCInitiator::setup(config);
                 return;
             }
 
-            case MXL_SHARING_PROVIDER_SHM:
-            case MXL_SHARING_PROVIDER_EFA:
+            case MXL_FABRICS_PROVIDER_SHM:
+            case MXL_FABRICS_PROVIDER_EFA:
             {
                 _inner = RDMInitiator::setup(config);
                 return;

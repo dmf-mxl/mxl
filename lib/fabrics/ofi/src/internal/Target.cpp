@@ -57,7 +57,7 @@ namespace mxl::lib::fabrics::ofi
         return _inner->readBlocking(timeout);
     }
 
-    std::unique_ptr<TargetInfo> TargetWrapper::setup(mxlTargetConfig const& config)
+    std::unique_ptr<TargetInfo> TargetWrapper::setup(mxlFabricsTargetConfig const& config)
     {
         if (_inner)
         {
@@ -66,17 +66,17 @@ namespace mxl::lib::fabrics::ofi
 
         switch (config.provider)
         {
-            case MXL_SHARING_PROVIDER_AUTO:
-            case MXL_SHARING_PROVIDER_TCP:
-            case MXL_SHARING_PROVIDER_VERBS:
+            case MXL_FABRICS_PROVIDER_AUTO:
+            case MXL_FABRICS_PROVIDER_TCP:
+            case MXL_FABRICS_PROVIDER_VERBS:
             {
                 auto [target, info] = RCTarget::setup(config);
                 _inner = std::move(target);
                 return std::move(info);
             }
 
-            case MXL_SHARING_PROVIDER_SHM:
-            case MXL_SHARING_PROVIDER_EFA:
+            case MXL_FABRICS_PROVIDER_SHM:
+            case MXL_FABRICS_PROVIDER_EFA:
             {
                 auto [target, info] = RDMTarget::setup(config);
                 _inner = std::move(target);

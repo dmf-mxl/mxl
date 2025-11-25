@@ -274,7 +274,7 @@ namespace mxl::lib::fabrics::ofi
         return Idle{.ep = Endpoint::create(old.domain(), old.id(), old.info()), .idleSince = std::chrono::steady_clock::now()};
     }
 
-    std::unique_ptr<RCInitiator> RCInitiator::setup(mxlInitiatorConfig const& config)
+    std::unique_ptr<RCInitiator> RCInitiator::setup(mxlFabricsInitiatorConfig const& config)
     {
         auto provider = providerFromAPI(config.provider);
         if (!provider)
@@ -298,11 +298,11 @@ namespace mxl::lib::fabrics::ofi
         auto fabric = Fabric::open(info);
         auto domain = Domain::open(fabric);
 
-        auto mxlRegions = MxlRegions::fromAPI(config.regions);
+        auto mxlFabricsRegions = MxlRegions::fromAPI(config.regions);
 
-        if (mxlRegions && !mxlRegions->regions().empty())
+        if (mxlFabricsRegions && !mxlFabricsRegions->regions().empty())
         {
-            domain->registerRegions(mxlRegions->regions(), FI_WRITE);
+            domain->registerRegions(mxlFabricsRegions->regions(), FI_WRITE);
         }
 
         auto eq = EventQueue::open(fabric);
@@ -317,7 +317,7 @@ namespace mxl::lib::fabrics::ofi
             {}
         };
 
-        return std::make_unique<MakeUniqueEnabler>(std::move(domain), std::move(cq), std::move(eq), mxlRegions->dataLayout());
+        return std::make_unique<MakeUniqueEnabler>(std::move(domain), std::move(cq), std::move(eq), mxlFabricsRegions->dataLayout());
     }
 
     RCInitiator::RCInitiator(std::shared_ptr<Domain> domain, std::shared_ptr<CompletionQueue> cq, std::shared_ptr<EventQueue> eq,

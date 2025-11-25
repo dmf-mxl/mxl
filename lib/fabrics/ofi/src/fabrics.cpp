@@ -60,7 +60,7 @@ mxlStatus try_run(F func, std::string_view errMsg)
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsRegionsForFlowReader(mxlFlowReader in_reader, mxlRegions* out_regions)
+mxlStatus mxlFabricsRegionsForFlowReader(mxlFlowReader in_reader, mxlFabricsRegions* out_regions)
 {
     if (in_reader == nullptr || out_regions == nullptr)
     {
@@ -73,7 +73,7 @@ mxlStatus mxlFabricsRegionsForFlowReader(mxlFlowReader in_reader, mxlRegions* ou
             auto reader = ::mxl::lib::to_FlowReader(in_reader);
 
             // We are leaking the ownership, the user is responsible for calling mxlFabricsRegionsFree to free the memory.
-            auto regionPtr = std::make_unique<ofi::MxlRegions>(ofi::mxlRegionsFromFlow(reader->getFlowData())).release();
+            auto regionPtr = std::make_unique<ofi::MxlRegions>(ofi::mxlFabricsRegionsFromFlow(reader->getFlowData())).release();
 
             *out_regions = regionPtr->toAPI();
 
@@ -83,7 +83,7 @@ mxlStatus mxlFabricsRegionsForFlowReader(mxlFlowReader in_reader, mxlRegions* ou
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsRegionsForFlowWriter(mxlFlowWriter in_writer, mxlRegions* out_regions)
+mxlStatus mxlFabricsRegionsForFlowWriter(mxlFlowWriter in_writer, mxlFabricsRegions* out_regions)
 {
     if (in_writer == nullptr || out_regions == nullptr)
     {
@@ -96,7 +96,7 @@ mxlStatus mxlFabricsRegionsForFlowWriter(mxlFlowWriter in_writer, mxlRegions* ou
             auto writer = ::mxl::lib::to_FlowWriter(in_writer);
 
             // We are leaking the ownership, the user is responsible for calling mxlFabricsRegionsFree to free the memory.
-            auto regionPtr = std::make_unique<ofi::MxlRegions>(ofi::mxlRegionsFromFlow(writer->getFlowData())).release();
+            auto regionPtr = std::make_unique<ofi::MxlRegions>(ofi::mxlFabricsRegionsFromFlow(writer->getFlowData())).release();
 
             *out_regions = regionPtr->toAPI();
 
@@ -106,30 +106,7 @@ mxlStatus mxlFabricsRegionsForFlowWriter(mxlFlowWriter in_writer, mxlRegions* ou
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsRegionsFromUserBuffers(mxlFabricsUserRegionsConfig const* in_config, mxlRegions* out_regions)
-{
-    if (in_config == nullptr || out_regions == nullptr)
-    {
-        return MXL_ERR_INVALID_ARG;
-    }
-
-    return try_run(
-        [&]()
-        {
-            auto regions = ofi::mxlRegionsFromUser(*in_config);
-
-            // We are leaking the ownership, the user is responsible for calling mxlFabricsRegionsFree to free the memory.
-            auto regionPtr = std::make_unique<ofi::MxlRegions>(regions).release();
-
-            *out_regions = regionPtr->toAPI();
-
-            return MXL_STATUS_OK;
-        },
-        "Failed to create regions object");
-}
-
-extern "C" MXL_EXPORT
-mxlStatus mxlFabricsRegionsFree(mxlRegions in_regions)
+mxlStatus mxlFabricsRegionsFree(mxlFabricsRegions in_regions)
 {
     if (in_regions == nullptr)
     {
@@ -225,7 +202,7 @@ mxlStatus mxlFabricsDestroyTarget(mxlFabricsInstance in_fabricsInstance, mxlFabr
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsTargetSetup(mxlFabricsTarget in_target, mxlTargetConfig* in_config, mxlTargetInfo* out_info)
+mxlStatus mxlFabricsTargetSetup(mxlFabricsTarget in_target, mxlFabricsTargetConfig* in_config, mxlFabricsTargetInfo* out_info)
 {
     if (in_target == nullptr || in_config == nullptr || out_info == nullptr)
     {
@@ -334,7 +311,7 @@ mxlStatus mxlFabricsDestroyInitiator(mxlFabricsInstance in_fabricsInstance, mxlF
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsInitiatorSetup(mxlFabricsInitiator in_initiator, mxlInitiatorConfig const* in_config)
+mxlStatus mxlFabricsInitiatorSetup(mxlFabricsInitiator in_initiator, mxlFabricsInitiatorConfig const* in_config)
 {
     if (in_initiator == nullptr || in_config == nullptr)
     {
@@ -352,7 +329,7 @@ mxlStatus mxlFabricsInitiatorSetup(mxlFabricsInitiator in_initiator, mxlInitiato
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsInitiatorAddTarget(mxlFabricsInitiator in_initiator, mxlTargetInfo const in_targetInfo)
+mxlStatus mxlFabricsInitiatorAddTarget(mxlFabricsInitiator in_initiator, mxlFabricsTargetInfo const in_targetInfo)
 {
     if (in_initiator == nullptr || in_targetInfo == nullptr)
     {
@@ -371,7 +348,7 @@ mxlStatus mxlFabricsInitiatorAddTarget(mxlFabricsInitiator in_initiator, mxlTarg
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsInitiatorRemoveTarget(mxlFabricsInitiator in_initiator, mxlTargetInfo const in_targetInfo)
+mxlStatus mxlFabricsInitiatorRemoveTarget(mxlFabricsInitiator in_initiator, mxlFabricsTargetInfo const in_targetInfo)
 {
     if (in_initiator == nullptr || in_targetInfo == nullptr)
     {
@@ -387,27 +364,6 @@ mxlStatus mxlFabricsInitiatorRemoveTarget(mxlFabricsInitiator in_initiator, mxlT
             return MXL_STATUS_OK;
         },
         "Failed to remove target from initiator");
-}
-
-extern "C" MXL_EXPORT
-mxlStatus mxlFabricsInitiatorTransferGrainToTarget(mxlFabricsInitiator in_initiator, mxlTargetInfo const in_targetInfo, uint64_t in_localIndex,
-    uint64_t in_remoteIndex, uint64_t in_payloadOffset, uint16_t in_startSlice, uint16_t in_endSlice)
-{
-    if (in_initiator == nullptr || in_targetInfo == nullptr)
-    {
-        return MXL_ERR_INVALID_ARG;
-    }
-
-    return try_run(
-        [&]()
-        {
-            auto targetInfo = ofi::TargetInfo::fromAPI(in_targetInfo);
-            ofi::InitiatorWrapper::fromAPI(in_initiator)
-                ->transferGrainToTarget(targetInfo->id, in_localIndex, in_remoteIndex, in_payloadOffset, in_startSlice, in_endSlice);
-
-            return MXL_STATUS_OK;
-        },
-        "Failed to transfer grain to target");
 }
 
 extern "C" MXL_EXPORT
@@ -524,11 +480,11 @@ mxlStatus mxlFabricsProviderToString(mxlFabricsProvider in_provider, char* out_s
 
             switch (in_provider)
             {
-                case MXL_SHARING_PROVIDER_AUTO:  return providerEnumValueToString(out_string, in_out_stringSize, "auto");
-                case MXL_SHARING_PROVIDER_TCP:   return providerEnumValueToString(out_string, in_out_stringSize, "tcp");
-                case MXL_SHARING_PROVIDER_EFA:   return providerEnumValueToString(out_string, in_out_stringSize, "efa");
-                case MXL_SHARING_PROVIDER_VERBS: return providerEnumValueToString(out_string, in_out_stringSize, "verbs");
-                case MXL_SHARING_PROVIDER_SHM:   return providerEnumValueToString(out_string, in_out_stringSize, "shm");
+                case MXL_FABRICS_PROVIDER_AUTO:  return providerEnumValueToString(out_string, in_out_stringSize, "auto");
+                case MXL_FABRICS_PROVIDER_TCP:   return providerEnumValueToString(out_string, in_out_stringSize, "tcp");
+                case MXL_FABRICS_PROVIDER_EFA:   return providerEnumValueToString(out_string, in_out_stringSize, "efa");
+                case MXL_FABRICS_PROVIDER_VERBS: return providerEnumValueToString(out_string, in_out_stringSize, "verbs");
+                case MXL_FABRICS_PROVIDER_SHM:   return providerEnumValueToString(out_string, in_out_stringSize, "shm");
                 default:                         return MXL_ERR_INVALID_ARG;
             }
         },
@@ -536,7 +492,7 @@ mxlStatus mxlFabricsProviderToString(mxlFabricsProvider in_provider, char* out_s
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsTargetInfoFromString(char const* in_string, mxlTargetInfo* out_targetInfo)
+mxlStatus mxlFabricsTargetInfoFromString(char const* in_string, mxlFabricsTargetInfo* out_targetInfo)
 {
     if (in_string == nullptr || out_targetInfo == nullptr)
     {
@@ -554,7 +510,7 @@ mxlStatus mxlFabricsTargetInfoFromString(char const* in_string, mxlTargetInfo* o
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsTargetInfoToString(mxlTargetInfo const in_targetInfo, char* out_string, size_t* in_stringSize)
+mxlStatus mxlFabricsTargetInfoToString(mxlFabricsTargetInfo const in_targetInfo, char* out_string, size_t* in_stringSize)
 {
     if (in_targetInfo == nullptr || in_stringSize == nullptr)
     {
@@ -589,7 +545,7 @@ mxlStatus mxlFabricsTargetInfoToString(mxlTargetInfo const in_targetInfo, char* 
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsFreeTargetInfo(mxlTargetInfo in_info)
+mxlStatus mxlFabricsFreeTargetInfo(mxlFabricsTargetInfo in_info)
 {
     if (in_info == nullptr)
     {
@@ -604,4 +560,48 @@ mxlStatus mxlFabricsFreeTargetInfo(mxlTargetInfo in_info)
             return MXL_STATUS_OK;
         },
         "Failed to free target info object");
+}
+
+extern "C" MXL_EXPORT
+mxlStatus mxlFabricsExtGetRegions(mxlFabricsExtRegionsConfig const* in_config, mxlFabricsRegions* out_regions)
+{
+    if (in_config == nullptr || out_regions == nullptr)
+    {
+        return MXL_ERR_INVALID_ARG;
+    }
+
+    return try_run(
+        [&]()
+        {
+            auto regions = ofi::mxlFabricsRegionsFromUser(*in_config);
+
+            // We are leaking the ownership, the user is responsible for calling mxlFabricsRegionsFree to free the memory.
+            auto regionPtr = std::make_unique<ofi::MxlRegions>(regions).release();
+
+            *out_regions = regionPtr->toAPI();
+
+            return MXL_STATUS_OK;
+        },
+        "Failed to create regions object");
+}
+
+extern "C" MXL_EXPORT
+mxlStatus mxlFabricsExtInitiatorTransferGrain(mxlFabricsInitiator in_initiator, mxlFabricsTargetInfo const in_targetInfo, uint64_t in_localIndex,
+    uint64_t in_remoteIndex, uint64_t in_payloadOffset, uint16_t in_startSlice, uint16_t in_endSlice)
+{
+    if (in_initiator == nullptr || in_targetInfo == nullptr)
+    {
+        return MXL_ERR_INVALID_ARG;
+    }
+
+    return try_run(
+        [&]()
+        {
+            auto targetInfo = ofi::TargetInfo::fromAPI(in_targetInfo);
+            ofi::InitiatorWrapper::fromAPI(in_initiator)
+                ->transferGrainToTarget(targetInfo->id, in_localIndex, in_remoteIndex, in_payloadOffset, in_startSlice, in_endSlice);
+
+            return MXL_STATUS_OK;
+        },
+        "Failed to transfer grain to target");
 }
