@@ -175,13 +175,13 @@ public:
 
     ~LoopingFilePlayer()
     {
-        // Join video threads if they were created
+        // Join the video thread if it was created
         if (videoThreadPtr && videoThreadPtr->joinable())
         {
             videoThreadPtr->join();
         }
 
-        // Join audio threads if they were created
+        // Join the audio thread if it was created
         if (audioThreadPtr && audioThreadPtr->joinable())
         {
             audioThreadPtr->join();
@@ -691,7 +691,6 @@ private:
                             mxlGrainInfo gInfo;
                             uint8_t* mxlBuffer = nullptr;
 
-                            /// Open the grain for writing.
                             if (mxlFlowWriterOpenGrain(flowWriterVideo, *grainIndex, &gInfo, &mxlBuffer) != MXL_STATUS_OK)
                             {
                                 MXL_ERROR("Failed to open grain at index '{}'", *grainIndex);
@@ -715,11 +714,9 @@ private:
                         GstMapInfo map_info;
                         if (gst_buffer_map(buffer, &map_info, GST_MAP_READ))
                         {
-                            /// Open the grain.
                             mxlGrainInfo gInfo;
                             uint8_t* mxl_buffer = nullptr;
 
-                            /// Open the grain for writing.
                             if (mxlFlowWriterOpenGrain(flowWriterVideo, *grainIndex, &gInfo, &mxl_buffer) != MXL_STATUS_OK)
                             {
                                 MXL_ERROR("Failed to open grain at index '{}'", *grainIndex);
@@ -799,7 +796,7 @@ private:
                         MXL_INFO("audioThread: Set initial sample index to {} (GST_BUFFER_PTS={} ns)", *sampleIndex, adjGstBufferPts);
                     }
 
-                    // Verify that we didnt miss any samples
+                    // Verify that we didn't miss any samples
                     if (gstSampleIndex < *sampleIndex) // gstreamer index is smaller than we expected. time went backward??
                     {
                         MXL_ERROR("Unexpected sample index from gstreamer PTS {} expected sample index {}. Time went backward??",
