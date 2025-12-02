@@ -41,10 +41,6 @@ namespace mxl::lib::fabrics::ofi
         auto fabric = Fabric::open(info);
         auto domain = Domain::open(fabric);
 
-        auto mxlFabricsRegions = MxlRegions::fromAPI(config.regions);
-
-        auto proto = selectProtocol(domain, mxlFabricsRegions->dataLayout(), mxlFabricsRegions->regions());
-
         auto endpoint = Endpoint::create(domain);
 
         auto cq = CompletionQueue::open(domain, CompletionQueue::Attributes::defaults());
@@ -54,37 +50,26 @@ namespace mxl::lib::fabrics::ofi
         auto av = AddressVector::open(domain);
         endpoint.bind(av);
 
-        // Connectionless endpoints must be explictely enabled when ready to used.
+        // Connectionless endpoints must be explictely enabled when they are ready to be used.
         endpoint.enable();
 
-        std::unique_ptr<ImmediateDataLocation> dataRegion;
-        if (endpoint.domain()->usingRecvBufForCqData())
-        {
-            // Create a local memory region. The grain indices will be written here when a transfer arrives.
-            dataRegion = std::make_unique<ImmediateDataLocation>();
-
-            // Post a receive for the first incoming grain. Pass a region to receive the grain index.
-            endpoint.recv(dataRegion->toLocalRegion());
-        }
-
-        auto localAddress = endpoint.localAddress();
+        auto mxlRegions = MxlRegions::fromAPI(config.regions);
+        auto protocol = selectIngressProtocol(mxlRegions->dataLayout(), mxlRegions->regions());
+        auto targetInfo = std::make_unique<TargetInfo>(endpoint.id(), endpoint.localAddress(), protocol->registerMemory(domain));
 
         struct MakeUniqueEnabler : RDMTarget
         {
-            MakeUniqueEnabler(Endpoint endpoint, std::unique_ptr<IngressProtocol> proto, std::unique_ptr<ImmediateDataLocation> immData)
-
-                : RDMTarget(std::move(endpoint), std::move(proto), std::move(immData))
+            MakeUniqueEnabler(Endpoint ep, std::unique_ptr<IngressProtocol> proto)
+                : RDMTarget(std::move(ep), std::move(proto))
             {}
         };
 
-        return {std::make_unique<MakeUniqueEnabler>(std::move(endpoint), std::move(proto), std::move(dataRegion)),
-            std::make_unique<TargetInfo>(std::move(localAddress), domain->remoteRegions())};
+        return {std::make_unique<MakeUniqueEnabler>(std::move(endpoint), std::move(protocol)), std::move(targetInfo)};
     }
 
-    RDMTarget::RDMTarget(Endpoint endpoint, std::unique_ptr<IngressProtocol> proto, std::unique_ptr<ImmediateDataLocation> immData)
-        : _endpoint(std::move(endpoint))
-        , _proto(std::move(proto))
-        , _immData(std::move(immData))
+    RDMTarget::RDMTarget(Endpoint ep, std::unique_ptr<IngressProtocol> ingress)
+        : _ep(std::move(ep))
+        , _protocol(std::move(ingress))
     {}
 
     Target::ReadResult RDMTarget::read()
@@ -97,35 +82,19 @@ namespace mxl::lib::fabrics::ofi
         return makeProgress<QueueReadMode::Blocking>(timeout);
     }
 
+    void RDMTarget::shutdown()
+    {}
+
     template<QueueReadMode queueReadMode>
     Target::ReadResult RDMTarget::makeProgress(std::chrono::steady_clock::duration timeout)
     {
-        Target::ReadResult result;
-
-        auto completion = readCompletionQueue<queueReadMode>(*_endpoint.completionQueue(), timeout);
+        auto completion = readCompletionQueue<queueReadMode>(*_ep.completionQueue(), timeout);
         if (completion)
         {
-            if (auto dataEntry = completion.value().tryData(); dataEntry)
-            {
-                // The written grain index is sent as immediate data, and was returned
-                // from the completion queue.
-                result.immData = dataEntry->data();
-
-                // Need to post receive buffers for immediate data
-                if (_endpoint.domain()->usingRecvBufForCqData())
-                {
-                    // Post another receive for the next incoming grain. When another transfer arrives,
-                    // the immmediate data (in our case the grain index), will be returned in the registered region.
-                    _endpoint.recv(_immData->toLocalRegion());
-                }
-
-                _proto->processCompletion(*result.immData);
-            }
-            else
-            {
-                MXL_ERROR("Completion error: {}", completion->err().toString());
-            }
+            return _protocol->processCompletion(_ep, *completion);
         }
-        return result;
+
+        return ReadResult{std::nullopt};
     }
+
 }

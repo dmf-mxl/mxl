@@ -46,9 +46,9 @@ namespace mxl::lib::fabrics::ofi
         return ::fi_cq_strerror(_cq->raw(), _raw.prov_errno, _raw.err_data, nullptr, 0);
     }
 
-    ::fid_ep* Completion::Error::fid() const noexcept
+    Completion::Token Completion::Error::token() const noexcept
     {
-        return reinterpret_cast<::fid_ep*>(_raw.op_context);
+        return tokenFromContextValue(_raw.op_context);
     }
 
     Completion::Data Completion::data() const
@@ -61,9 +61,9 @@ namespace mxl::lib::fabrics::ofi
         throw Exception::invalidState("Failed to unwrap completion queue entry as data entry.");
     }
 
-    ::fid_ep* Completion::Data::fid() const noexcept
+    Completion::Token Completion::Data::token() const noexcept
     {
-        return reinterpret_cast<::fid_ep*>(_raw.op_context);
+        return tokenFromContextValue(_raw.op_context);
     }
 
     Completion::Completion(Data entry)
@@ -73,6 +73,15 @@ namespace mxl::lib::fabrics::ofi
     Completion::Completion(Error entry)
         : _inner(entry)
     {}
+
+    Completion::Token Completion::randomToken()
+    {
+        std::uniform_int_distribution<Completion::Token> dist;
+        std::random_device rd;
+        std::mt19937 eng{rd()};
+
+        return dist(eng);
+    }
 
     Completion::Error Completion::err() const
     {
@@ -114,12 +123,12 @@ namespace mxl::lib::fabrics::ofi
         return std::holds_alternative<Error>(_inner);
     }
 
-    ::fid_ep* Completion::fid() const noexcept
+    Completion::Token Completion::token() const noexcept
     {
         return std::visit(
             overloaded{
-                [](Completion::Data const& data) -> ::fid_ep* { return data.fid(); },
-                [](Completion::Error const& err) -> ::fid_ep* { return err.fid(); },
+                [](Completion::Data const& data) { return data.token(); },
+                [](Completion::Error const& err) { return err.token(); },
             },
             _inner);
     }

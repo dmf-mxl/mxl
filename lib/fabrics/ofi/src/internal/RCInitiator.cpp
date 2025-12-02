@@ -11,7 +11,6 @@
 #include <mxl-internal/Logging.hpp>
 #include <rdma/fabric.h>
 #include "mxl-internal/Flow.hpp"
-#include "DataLayout.hpp"
 #include "Domain.hpp"
 #include "Exception.hpp"
 #include "FabricInfo.hpp"
@@ -22,10 +21,10 @@
 
 namespace mxl::lib::fabrics::ofi
 {
-    RCInitiatorEndpoint::RCInitiatorEndpoint(Endpoint ep, DataLayout const& layout, TargetInfo info)
+    RCInitiatorEndpoint::RCInitiatorEndpoint(Endpoint ep, std::unique_ptr<EgressProtocol> proto, TargetInfo info)
         : _state(Idle{.ep = std::move(ep), .idleSince = std::chrono::steady_clock::time_point{}})
-        , _layout(layout)
         , _info(std::move(info))
+        , _proto(std::move(proto))
     {}
 
     bool RCInitiatorEndpoint::isIdle() const noexcept
@@ -45,21 +44,14 @@ namespace mxl::lib::fabrics::ofi
                 [](std::monostate) { return false; },   // Something went wrong with this target, but there is probably no work to do.
                 [](Idle const&) { return true; },       // An idle target means there is no work to do right now.
                 [](Connecting const&) { return true; }, // In the connecting state, the target is waiting for a connected event.
-                [](Connected const& state)
-                { return state.pending > 0; }, // While connected, a target has pending work when there are transfers that have not yet completed.
+                [&](Connected const&)
+                {
+                    return _proto->hasPendingWork();
+                }, // While connected, a target has pending work when there are transfers that have not yet completed.
                 [](Flushing const&) { return true; }, // In the shutdown state, the target is waiting for a FI_SHUTDOWN event.
                 [](Done const&) { return false; },    // In the done state, there is no pending work.
             },
             _state);
-    }
-
-    void RCInitiatorEndpoint::doneFlushing() noexcept
-    {
-        if (auto state = std::get_if<Flushing>(&_state); state)
-        {
-            MXL_INFO("Flushing complete, transitioning to done state.");
-            _state = Done{};
-        }
     }
 
     void RCInitiatorEndpoint::shutdown()
@@ -76,16 +68,13 @@ namespace mxl::lib::fabrics::ofi
                     MXL_INFO("Shutdown requested while trying to connect, aborting.");
                     return Done{};
                 },
-                [](Connected state) -> State
+                [&](Connected state) -> State
                 {
                     MXL_INFO("Shutting down");
-                    state.ep->shutdown();
+                    auto pending = _proto->destroy();
+                    state.ep.shutdown();
 
-                    // It is fine to steal the inner value. We will not need the shared pointer anymore since we are transitioning to shutdown state.
-                    auto ep = std::move(*state.ep);
-                    state.ep.reset();
-
-                    return Flushing{.ep = std::move(ep)};
+                    return Flushing{.ep = std::move(state.ep), .pending = pending};
                 },
                 [](Flushing state) -> State
                 {
@@ -95,6 +84,15 @@ namespace mxl::lib::fabrics::ofi
                 [](Done state) -> State { return state; },
             },
             std::move(_state));
+    }
+
+    void RCInitiatorEndpoint::terminate() noexcept
+    {
+        if (auto state = std::get_if<Flushing>(&_state); state)
+        {
+            MXL_INFO("Flushing complete, transitioning to done state.");
+            _state = Done{};
+        }
     }
 
     void RCInitiatorEndpoint::activate(std::shared_ptr<CompletionQueue> const& cq, std::shared_ptr<EventQueue> const& eq)
@@ -129,7 +127,7 @@ namespace mxl::lib::fabrics::ofi
             std::move(_state));
     }
 
-    void RCInitiatorEndpoint::consume(Event ev)
+    void RCInitiatorEndpoint::processCompletion(Event ev)
     {
         _state = std::visit(
             overloaded{
@@ -146,10 +144,7 @@ namespace mxl::lib::fabrics::ofi
                     else if (ev.isConnected())
                     {
                         MXL_INFO("Endpoint is now connected");
-
-                        auto ep = std::make_shared<Endpoint>(std::move(state.ep));
-
-                        return Connected{.ep = ep, .proto = selectProtocol(ep, _layout, _info), .pending = 0};
+                        return Connected{.ep = std::move(state.ep)};
                     }
                     else if (ev.isShutdown())
                     {
@@ -167,18 +162,12 @@ namespace mxl::lib::fabrics::ofi
                     if (ev.isError())
                     {
                         MXL_WARN("Received an error event in connected state, going idle. Error: {}", ev.error().toString());
-                        return restart(*state.ep);
+                        return restart(state.ep);
                     }
                     else if (ev.isShutdown())
                     {
                         MXL_INFO("Remote endpoint has closed the connection");
-
-                        // It is fine to steal the inner value. We will not need the shared pointer anymore since we are transitioning to shutdown
-                        // state.
-                        auto ep = std::move(*state.ep);
-                        state.ep.reset();
-
-                        return Flushing{.ep = std::move(ep)};
+                        return Flushing{.ep = std::move(state.ep), .pending = _proto->destroy()};
                     }
 
                     return state;
@@ -217,16 +206,16 @@ namespace mxl::lib::fabrics::ofi
         }
     }
 
-    void RCInitiatorEndpoint::postTransfer(LocalRegion const& localRegion, std::uint64_t remoteIndex, std::uint64_t remotePayloadOffset,
+    void RCInitiatorEndpoint::transferGrain(std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t remotePayloadOffset,
         SliceRange const& sliceRange)
     {
         if (auto state = std::get_if<Connected>(&_state); state != nullptr)
         {
-            state->pending += state->proto->transferGrain(localRegion, remoteIndex, remotePayloadOffset, sliceRange);
+            _proto->transferGrain(state->ep, localIndex, remoteIndex, remotePayloadOffset, sliceRange);
         }
     }
 
-    void RCInitiatorEndpoint::handleCompletionData(Completion::Data)
+    void RCInitiatorEndpoint::handleCompletionData(Completion::Data completion)
     {
         _state = std::visit(
             overloaded{[](Idle state) -> State
@@ -239,21 +228,14 @@ namespace mxl::lib::fabrics::ofi
                     MXL_WARN("Received a completion event while connecting, ignoring");
                     return state;
                 },
-                [](Connected state) -> State
+                [&](Connected state) -> State
                 {
-                    if (state.pending == 0)
-                    {
-                        MXL_WARN("Received a completion but no transfer was pending");
-                        return state;
-                    }
-
-                    --state.pending;
-
+                    _proto->processCompletion(completion);
                     return state;
                 },
                 [](Flushing state) -> State
                 {
-                    MXL_DEBUG("Ignoring data completion while shutting down");
+                    state.pending--; // Decrease the counter of completions that must still be flushed.
                     return state;
                 },
                 [](Done state) -> State
@@ -298,40 +280,38 @@ namespace mxl::lib::fabrics::ofi
         auto fabric = Fabric::open(info);
         auto domain = Domain::open(fabric);
 
-        auto mxlFabricsRegions = MxlRegions::fromAPI(config.regions);
-
-        if (mxlFabricsRegions && !mxlFabricsRegions->regions().empty())
-        {
-            domain->registerRegions(mxlFabricsRegions->regions(), FI_WRITE);
-        }
-
         auto eq = EventQueue::open(fabric);
         auto cq = CompletionQueue::open(domain);
+
+        auto regions = MxlRegions::fromAPI(config.regions);
+        auto proto = selectEgressProtocol(regions->dataLayout(), regions->regions());
+        proto->registerMemory(domain);
 
         struct MakeUniqueEnabler : RCInitiator
         {
             MakeUniqueEnabler(std::shared_ptr<Domain> domain, std::shared_ptr<CompletionQueue> cq, std::shared_ptr<EventQueue> eq,
-                DataLayout dataLayout)
-                : RCInitiator(std::move(domain), std::move(cq), std::move(eq), std::move(dataLayout))
-
+                std::unique_ptr<EgressProtocolTemplate> proto)
+                : RCInitiator(std::move(domain), std::move(cq), std::move(eq), std::move(proto))
             {}
         };
 
-        return std::make_unique<MakeUniqueEnabler>(std::move(domain), std::move(cq), std::move(eq), mxlFabricsRegions->dataLayout());
+        return std::make_unique<MakeUniqueEnabler>(std::move(domain), std::move(cq), std::move(eq), std::move(proto));
     }
 
     RCInitiator::RCInitiator(std::shared_ptr<Domain> domain, std::shared_ptr<CompletionQueue> cq, std::shared_ptr<EventQueue> eq,
-        DataLayout dataLayout)
+        std::unique_ptr<EgressProtocolTemplate> proto)
         : _domain(std::move(domain))
         , _cq(std::move(cq))
         , _eq(std::move(eq))
-        , _dataLayout(std::move(dataLayout))
-        , _localRegions(_domain->localRegions())
+        , _proto(std::move(proto))
     {}
 
     void RCInitiator::addTarget(TargetInfo const& targetInfo)
     {
-        _targets.emplace(targetInfo.id, RCInitiatorEndpoint{Endpoint::create(_domain, targetInfo.id), _dataLayout, targetInfo});
+        auto endpoint = Endpoint::create(_domain);
+        auto proto = _proto->createInstance(Endpoint::tokenFromId(endpoint.id()), targetInfo);
+
+        _targets.emplace(endpoint.id(), RCInitiatorEndpoint{std::move(endpoint), std::move(proto), targetInfo});
     }
 
     void RCInitiator::removeTarget(TargetInfo const& targetInfo)
@@ -348,44 +328,24 @@ namespace mxl::lib::fabrics::ofi
 
     void RCInitiator::transferGrain(std::uint64_t grainIndex, std::uint16_t startSlice, std::uint16_t endSlice)
     {
-        auto range = SliceRange::make(startSlice, endSlice);
-
-        auto size = range.transferSize(MXL_GRAIN_PAYLOAD_OFFSET, _dataLayout.asVideo().sliceSizes[0]);
-        auto offset = range.transferOffset(MXL_GRAIN_PAYLOAD_OFFSET, _dataLayout.asVideo().sliceSizes[0]);
-
-        MXL_DEBUG("Transferring grain {} to all targets, offset {}, size {}", grainIndex, offset, size);
-
-        // Find the local region in which the grain with this index is stored.
-        auto localRegion = _localRegions[grainIndex % _localRegions.size()].sub(offset, size);
-
         // Post a transfer work item to all targets. If the target is not in a connected state
         // this is a no-op.
         for (auto& [_, target] : _targets)
         {
-            target.postTransfer(localRegion, grainIndex, MXL_GRAIN_PAYLOAD_OFFSET, range);
+            target.transferGrain(grainIndex, grainIndex, MXL_GRAIN_PAYLOAD_OFFSET, SliceRange::make(startSlice, endSlice));
         }
     }
 
     void RCInitiator::transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t payloadOffset,
         std::uint16_t startSlice, std::uint16_t endSlice)
     {
-        auto range = SliceRange::make(startSlice, endSlice);
-
-        auto size = range.transferSize(payloadOffset, _dataLayout.asVideo().sliceSizes[0]);
-        auto offset = range.transferOffset(payloadOffset, _dataLayout.asVideo().sliceSizes[0]);
-
-        // Find the local region in which the grain with this index is stored.
-        auto localRegion = _localRegions[localIndex % _localRegions.size()].sub(offset, size);
-
         auto it = _targets.find(targetId);
         if (it == _targets.end())
         {
-            it->second.postTransfer(localRegion, remoteIndex, payloadOffset, range);
-        }
-        else
-        {
             throw Exception::notFound("Target with id {} not found", targetId);
         }
+
+        it->second.transferGrain(localIndex, remoteIndex, payloadOffset, SliceRange::make(startSlice, endSlice));
     }
 
     bool RCInitiator::hasPendingWork() const noexcept
@@ -441,13 +401,13 @@ namespace mxl::lib::fabrics::ofi
                 // No completion available, if we were flushing any endpoint, transition their state to done
                 for (auto& [_, target] : _targets)
                 {
-                    target.doneFlushing();
+                    target.terminate();
                 }
                 return;
             }
 
             // Find the endpoint that this completion was generated from
-            auto ep = _targets.find(Endpoint::idFromFID(completion->fid()));
+            auto ep = _targets.find(Endpoint::idFromToken(completion->token()));
             if (ep == _targets.end())
             {
                 MXL_WARN("Received completion for an unknown endpoint");
@@ -467,13 +427,13 @@ namespace mxl::lib::fabrics::ofi
                 // No completion available, if we were flushing any endpoint, transition their state to done
                 for (auto& [_, target] : _targets)
                 {
-                    target.doneFlushing();
+                    target.terminate();
                 }
                 break;
             }
 
             // Find the endpoint this completion was generated from.
-            auto ep = _targets.find(Endpoint::idFromFID(completion->fid()));
+            auto ep = _targets.find(Endpoint::idFromToken(completion->token()));
             if (ep == _targets.end())
             {
                 MXL_WARN("Received completion for an unknown endpoint");
@@ -504,7 +464,7 @@ namespace mxl::lib::fabrics::ofi
                 continue;
             }
 
-            ep->second.consume(*event);
+            ep->second.processCompletion(*event);
         }
     }
 
@@ -565,5 +525,13 @@ namespace mxl::lib::fabrics::ofi
         }
 
         return hasPendingWork();
+    }
+
+    void RCInitiator::shutdown()
+    {
+        for (auto& target : _targets)
+        {
+            target.second.shutdown();
+        }
     }
 }

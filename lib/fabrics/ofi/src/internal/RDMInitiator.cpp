@@ -17,7 +17,6 @@
 #include "mxl/mxl.h"
 #include "AddressVector.hpp"
 #include "CompletionQueue.hpp"
-#include "DataLayout.hpp"
 #include "Endpoint.hpp"
 #include "Exception.hpp"
 #include "Fabric.hpp"
@@ -28,42 +27,33 @@
 
 namespace mxl::lib::fabrics::ofi
 {
-    RDMInitiatorEndpoint::RDMInitiatorEndpoint(std::shared_ptr<Endpoint> ep, DataLayout const& dataLayout, TargetInfo info)
+    RDMInitiatorTarget::RDMInitiatorTarget(std::unique_ptr<EgressProtocol> proto, TargetInfo remoteInfo)
         : _state(Idle{})
-        , _ep(std::move(ep))
-        , _dataLayout(dataLayout)
-        , _info(std::move(info))
+        , _proto(std::move(proto))
+        , _remoteInfo(std::move(remoteInfo))
     {}
 
-    bool RDMInitiatorEndpoint::isIdle() const noexcept
+    bool RDMInitiatorTarget::isIdle() const noexcept
     {
         return std::holds_alternative<Idle>(_state);
     }
 
-    bool RDMInitiatorEndpoint::canEvict() const noexcept
-    {
-        return std::holds_alternative<Done>(_state);
-    }
-
-    void RDMInitiatorEndpoint::activate()
+    void RDMInitiatorTarget::activate(Endpoint& ep)
     {
         _state = std::visit(
             overloaded{
                 [&](Idle) -> State
                 {
-                    auto fiAddr = _ep->addressVector()->insert(_info.fabricAddress);
-                    return Activated{
-                        .fiAddr = fiAddr,
-                        .proto = selectProtocol(_ep, _dataLayout, _info),
-                    };
+                    auto fiAddr = ep.addressVector()->insert(_remoteInfo.fabricAddress);
+                    return Activated{.fiAddr = fiAddr};
                 },
                 [](Activated state) -> State { return state; },
-                [](Done state) -> State { return state; },
+                [](Done) -> State { throw Exception::invalidState("Endpoint has been shutdown and can no longer be used."); },
             },
             std::move(_state));
     }
 
-    void RDMInitiatorEndpoint::shutdown()
+    void RDMInitiatorTarget::shutdown(Endpoint& ep)
     {
         _state = std::visit(
             overloaded{
@@ -74,7 +64,7 @@ namespace mxl::lib::fabrics::ofi
                 },
                 [&](Activated state) -> State
                 {
-                    _ep->addressVector()->remove(state.fiAddr);
+                    ep.addressVector()->remove(state.fiAddr);
                     return Done{};
                 },
                 [](Done state) -> State { return state; },
@@ -82,15 +72,41 @@ namespace mxl::lib::fabrics::ofi
             std::move(_state));
     }
 
-    std::size_t RDMInitiatorEndpoint::postTransfer(LocalRegion const& localRegion, std::uint64_t remoteIndex, std::uint64_t remoteOffset,
+    void RDMInitiatorTarget::transfer(Endpoint& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t remoteOffset,
         SliceRange const& sliceRange)
     {
         if (auto state = std::get_if<Activated>(&_state); state != nullptr)
         {
-            return state->proto->transferGrain(localRegion, remoteIndex, remoteOffset, sliceRange, state->fiAddr);
+            _proto->transferGrain(ep, localIndex, remoteIndex, remoteOffset, sliceRange, state->fiAddr);
+        }
+    }
+
+    bool RDMInitiatorTarget::hasPendingWork() const noexcept
+    {
+        return std::visit(
+            overloaded{
+                [](Idle const&) { return true; },
+                [&](Activated const&) { return _proto->hasPendingWork(); },
+                [](Done const&) { return false; },
+            },
+            _state);
+    }
+
+    void RDMInitiatorTarget::handleCompletion(Endpoint&, Completion completion)
+    {
+        if (completion.isErrEntry())
+        {
+            MXL_ERROR("Completion error.");
+            return;
         }
 
-        return 0;
+        std::visit(
+            overloaded{
+                [](Idle const&) {},
+                [&](Activated const&) { _proto->processCompletion(completion.data()); },
+                [](Done const&) {},
+            },
+            _state);
     }
 
     std::unique_ptr<RDMInitiator> RDMInitiator::setup(mxlFabricsInitiatorConfig const& config)
@@ -116,124 +132,82 @@ namespace mxl::lib::fabrics::ofi
         auto fabric = Fabric::open(info);
         auto domain = Domain::open(fabric);
 
-        auto mxlFabricsRegions = MxlRegions::fromAPI(config.regions);
+        auto endpoint = Endpoint::create(domain);
 
-        if (mxlFabricsRegions && !mxlFabricsRegions->regions().empty())
-        {
-            domain->registerRegions(mxlFabricsRegions->regions(), FI_WRITE);
-        }
+        auto cq = CompletionQueue::open(endpoint.domain());
+        endpoint.bind(cq, FI_TRANSMIT | FI_RECV);
 
-        auto endpoint = std::make_shared<Endpoint>(Endpoint::create(std::move(domain)));
+        auto av = AddressVector::open(endpoint.domain());
+        endpoint.bind(av);
 
-        // For EFA, wait objects are not supported on completion queues.
-        auto cqAttr = CompletionQueue::Attributes::defaults();
-        if (*provider == Provider::EFA)
-        {
-            cqAttr.waitObject = FI_WAIT_NONE;
-        }
+        endpoint.enable();
 
-        auto cq = CompletionQueue::open(endpoint->domain());
-        endpoint->bind(cq, FI_TRANSMIT | FI_RECV);
+        auto regions = MxlRegions::fromAPI(config.regions);
+        auto proto = selectEgressProtocol(regions->dataLayout(), regions->regions());
 
-        auto av = AddressVector::open(endpoint->domain());
-        endpoint->bind(av);
-
-        endpoint->enable();
+        proto->registerMemory(domain);
 
         struct MakeUniqueEnabler : RDMInitiator
         {
-            MakeUniqueEnabler(std::shared_ptr<Endpoint> ep, DataLayout dataLayout)
-                : RDMInitiator(std::move(ep), std::move(dataLayout))
+            MakeUniqueEnabler(Endpoint ep, std::unique_ptr<EgressProtocolTemplate> proto)
+                : RDMInitiator(std::move(ep), std::move(proto))
             {}
         };
 
-        return std::make_unique<MakeUniqueEnabler>(std::move(endpoint), mxlFabricsRegions->dataLayout());
+        return std::make_unique<MakeUniqueEnabler>(std::move(endpoint), std::move(proto));
     }
+
+    RDMInitiator::RDMInitiator(Endpoint ep, std::unique_ptr<EgressProtocolTemplate> proto)
+        : _endpoint(std::move(ep))
+        , _proto(std::move(proto))
+    {}
 
     void RDMInitiator::addTarget(TargetInfo const& targetInfo)
     {
-        _targets.emplace(targetInfo.id, RDMInitiatorEndpoint(_endpoint, _dataLayout, targetInfo));
+        if (_remoteEndpoints.find(targetInfo.id) != _remoteEndpoints.end())
+        {
+            throw Exception::exists("A target with endpoint id {} has already been added to this initiator.", targetInfo.id);
+        }
+
+        auto token = Completion::randomToken();
+        auto proto = _proto->createInstance(token, targetInfo);
+
+        _remoteEndpoints.emplace(targetInfo.id, token);
+        _targets.emplace(token, RDMInitiatorTarget(std::move(proto), targetInfo));
     }
 
     void RDMInitiator::removeTarget(TargetInfo const& targetInfo)
     {
-        if (auto it = _targets.find(targetInfo.id); it != _targets.end())
-        {
-            it->second.shutdown();
-        }
-        else
-        {
-            throw Exception::notFound("Target with id {} not found", targetInfo.id);
-        }
+        auto& remote = findRemoteByEndpoint(targetInfo.id);
+        remote.shutdown(_endpoint);
+        _targets.erase(_remoteEndpoints.extract(targetInfo.id).mapped());
     }
+
+    void RDMInitiator::shutdown()
+    {}
 
     void RDMInitiator::transferGrain(std::uint64_t grainIndex, std::uint16_t startSlice, std::uint16_t endSlice)
     {
-        if (_localRegions.empty())
-        {
-            throw Exception::internal("transferGrain called, but no region registered.");
-        }
-
-        if (!_dataLayout.isVideo())
-        {
-            throw Exception::internal("transferGrain called, but the data layout for that endpoint is not video.");
-        }
-
-        auto range = SliceRange::make(startSlice, endSlice);
-
-        auto size = range.transferSize(MXL_GRAIN_PAYLOAD_OFFSET, _dataLayout.asVideo().sliceSizes[0]);
-        auto offset = range.transferOffset(MXL_GRAIN_PAYLOAD_OFFSET, _dataLayout.asVideo().sliceSizes[0]);
-
-        // Find the local region in which the grain with this index is stored.
-        auto localRegion = _localRegions[grainIndex % _localRegions.size()].sub(offset, size);
-
         // Post a transfer work item to all targets. If the target is not in "Added" state
         // this is a no-op.
         for (auto& [_, target] : _targets)
         {
             // A completion will be posted to the completion queue, after which the counter will be decremented again
-            pending += target.postTransfer(localRegion, grainIndex, MXL_GRAIN_PAYLOAD_OFFSET, range);
+            target.transfer(_endpoint, grainIndex, grainIndex, MXL_GRAIN_PAYLOAD_OFFSET, SliceRange::make(startSlice, endSlice));
         }
     }
 
     void RDMInitiator::transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t payloadOffset,
         std::uint16_t startSlice, std::uint16_t endSlice)
     {
-        if (_localRegions.empty())
-        {
-            throw Exception::internal("transferGrain called, but no region registered.");
-        }
-
-        if (!_dataLayout.isVideo())
-        {
-            throw Exception::internal("transferGrain called, but the data layout for that endpoint is not video.");
-        }
-
-        auto range = SliceRange::make(startSlice, endSlice);
-
-        auto size = range.transferSize(payloadOffset, _dataLayout.asVideo().sliceSizes[0]);
-        auto offset = range.transferOffset(payloadOffset, _dataLayout.asVideo().sliceSizes[0]);
-
-        // Find the local region in which the grain with this index is stored.
-        auto localRegion = _localRegions[localIndex % _localRegions.size()].sub(offset, size);
-
-        // If the target is not in "Added" state this is a no-op.
-        auto it = _targets.find(targetId);
-        if (it != _targets.end())
-        {
-            // A completion will be posted to the completion queue per transfer, after which the counter will be decremented again
-            pending += it->second.postTransfer(localRegion, remoteIndex, payloadOffset, range);
-        }
-        else
-        {
-            throw Exception::notFound("Target with id {} not found", targetId);
-        }
+        // A completion will be posted to the completion queue per transfer, after which the counter will be decremented again
+        findRemoteByEndpoint(targetId).transfer(_endpoint, localIndex, remoteIndex, payloadOffset, SliceRange::make(startSlice, endSlice));
     }
 
     // makeProgress
     bool RDMInitiator::makeProgress()
     {
-        consolidateState();
+        activateIdleEndpoints();
         pollCQ();
         return hasPendingWork();
     }
@@ -242,7 +216,7 @@ namespace mxl::lib::fabrics::ofi
     bool RDMInitiator::makeProgressBlocking(std::chrono::steady_clock::duration timeout)
     {
         auto now = std::chrono::steady_clock::now();
-        consolidateState();
+        activateIdleEndpoints();
         auto elapsed = std::chrono::steady_clock::now() - now;
 
         auto remaining = timeout - elapsed;
@@ -258,20 +232,39 @@ namespace mxl::lib::fabrics::ofi
         return hasPendingWork();
     }
 
-    RDMInitiator::RDMInitiator(std::shared_ptr<Endpoint> ep, DataLayout dataLayout)
-        : _endpoint(std::move(ep))
-        , _dataLayout(std::move(dataLayout))
-        , _localRegions(_endpoint->domain()->localRegions())
-    {}
+    RDMInitiatorTarget& RDMInitiator::findRemoteByEndpoint(Endpoint::Id id)
+    {
+        auto it = _remoteEndpoints.find(id);
+        if (it == _remoteEndpoints.end())
+        {
+            throw Exception::notFound("No target found for endpoint id {}", id);
+        }
+
+        return findRemoteByToken(it->second);
+    }
+
+    RDMInitiatorTarget& RDMInitiator::findRemoteByToken(Completion::Token token)
+    {
+        auto it = _targets.find(token);
+        if (it == _targets.end())
+        {
+            throw Exception::invalidState("No target found for completion token value");
+        }
+
+        return it->second;
+    }
 
     bool RDMInitiator::hasPendingWork() const noexcept
     {
-        return pending > 0;
-    }
+        for (auto const& [_, remote] : _targets)
+        {
+            if (remote.hasPendingWork())
+            {
+                return true;
+            }
+        }
 
-    bool RDMInitiator::hasTarget() const noexcept
-    {
-        return _targets.size() > 0;
+        return false;
     }
 
     void RDMInitiator::blockOnCQ(std::chrono::system_clock::duration timeout)
@@ -285,17 +278,17 @@ namespace mxl::lib::fabrics::ofi
             return;
         }
 
-        if (auto completion = _endpoint->completionQueue()->readBlocking(timeout); completion)
+        if (auto completion = _endpoint.completionQueue()->readBlocking(timeout); completion)
         {
-            consume(*completion);
+            processCompletion(*completion);
         }
     }
 
     void RDMInitiator::pollCQ()
     {
-        if (auto completion = _endpoint->completionQueue()->read(); completion)
+        if (auto completion = _endpoint.completionQueue()->read(); completion)
         {
-            consume(*completion);
+            processCompletion(*completion);
         }
     }
 
@@ -303,52 +296,20 @@ namespace mxl::lib::fabrics::ofi
     {
         for (auto& [_, target] : _targets)
         {
-            target.activate();
+            target.activate(_endpoint);
         }
     }
 
-    void RDMInitiator::evictDeadEndpoints()
+    void RDMInitiator::processCompletion(Completion completion)
     {
-        std::erase_if(_targets, [](auto const& item) { return item.second.canEvict(); });
-    }
-
-    void RDMInitiator::consolidateState()
-    {
-        if (!hasTarget())
+        auto it = _targets.find(completion.token());
+        if (it == _targets.end())
         {
-            throw Exception::interrupted("No more targets available while calling makeProgress.");
-        }
-
-        activateIdleEndpoints();
-        evictDeadEndpoints();
-    }
-
-    void RDMInitiator::consume(Completion completion)
-    {
-        if (auto error = completion.tryErr(); error)
-        {
-            handleCompletionError(*error);
-        }
-        else if (auto data = completion.tryData(); data)
-        {
-            handleCompletionData(*data);
-        }
-    }
-
-    void RDMInitiator::handleCompletionData(Completion::Data)
-    {
-        if (pending == 0)
-        {
-            MXL_WARN("Received a completion but no transfer was pending");
+            MXL_ERROR("Dropping completion for unknown target.");
             return;
         }
 
-        --pending;
-    }
-
-    void RDMInitiator::handleCompletionError(Completion::Error err)
-    {
-        MXL_ERROR("TODO: handle completion error: {}", err.toString());
+        it->second.handleCompletion(_endpoint, completion);
     }
 
 } // namespace mxl::lib::fabrics::ofi

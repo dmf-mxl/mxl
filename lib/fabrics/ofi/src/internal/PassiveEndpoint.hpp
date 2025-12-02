@@ -7,6 +7,7 @@
 #include <rdma/fi_endpoint.h>
 #include "Address.hpp"
 #include "Domain.hpp"
+#include "Endpoint.hpp"
 #include "Event.hpp"
 #include "EventQueue.hpp"
 #include "Fabric.hpp"
@@ -37,6 +38,18 @@ namespace mxl::lib::fabrics::ofi
          */
         static PassiveEndpoint create(std::shared_ptr<Fabric>);
 
+        /** \brief Allocate a new PassiveEndpoint associated with the given Fabric.
+         *
+         * \param fabric The Fabric to create the PassiveEndpoint on.
+         * \return A new PassiveEndpoint object.
+         */
+        static PassiveEndpoint create(std::shared_ptr<Fabric>, Endpoint::Id);
+
+        /** \brief Get the endpoints id.
+         */
+        [[nodiscard]]
+        Endpoint::Id id() const noexcept;
+
         /** \brief Bind the endpoint to an event queue.
          *
          * The endpoint can be bound to an event queue only once. The Endpoint object will take ownership of
@@ -63,11 +76,6 @@ namespace mxl::lib::fabrics::ofi
          */
         [[nodiscard]]
         std::shared_ptr<EventQueue> eventQueue() const;
-
-        /** \brief Get the domain that the endpoint has beed created on.
-         */
-        [[nodiscard]]
-        std::shared_ptr<Domain> domain() const;
 
         /** \brief Obtain the local fabric address for this passive endpoint.
          */
@@ -96,11 +104,13 @@ namespace mxl::lib::fabrics::ofi
          * \param fabric The Fabric the passive endpoint is associated with.
          * \param eq Optional event queue associated with the passive endpoint.
          */
-        PassiveEndpoint(::fid_pep* raw, std::shared_ptr<Fabric> fabric, std::optional<std::shared_ptr<EventQueue>> eq = std::nullopt);
+        PassiveEndpoint(::fid_pep* raw, std::shared_ptr<Fabric> fabric, Endpoint::Id id,
+            std::optional<std::shared_ptr<EventQueue>> eq = std::nullopt);
 
     private:
-        ::fid_pep* _raw;                                /**< Raw resource reference */
-        std::shared_ptr<Fabric> _fabric;                /**< Pointer to the fabric for which the passive endpoint was created. */
+        ::fid_pep* _raw;                 /**< Raw resource reference */
+        std::shared_ptr<Fabric> _fabric; /**< Pointer to the fabric for which the passive endpoint was created. */
+        Endpoint::Id _id;
 
         std::optional<std::shared_ptr<EventQueue>> _eq; /**< Event queue lives here after PassiveEndpoint::bind() */
     };

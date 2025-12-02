@@ -8,9 +8,6 @@
 #include <map>
 #include <memory>
 #include <variant>
-#include <vector>
-#include "Completion.hpp"
-#include "DataLayout.hpp"
 #include "Domain.hpp"
 #include "Endpoint.hpp"
 #include "Event.hpp"
@@ -31,7 +28,7 @@ namespace mxl::lib::fabrics::ofi
          * \param FabricAddress The fabric address of the remote target.
          * \param RemoteRegions The remote memory regions on the target where data must be written to.
          */
-        RCInitiatorEndpoint(Endpoint, DataLayout const& layout, TargetInfo info);
+        RCInitiatorEndpoint(Endpoint, std::unique_ptr<EgressProtocol> proto, TargetInfo info);
 
         /** \brief Returns true if there is any pending events that the endpoint is waiting for, and for which
          * the queues must be polled.
@@ -52,7 +49,7 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Called to transition the endpoint out of the flushing state to the done state. If the endpoint is in any other state, this is a
          * no-op.
          */
-        void doneFlushing() noexcept;
+        void terminate() noexcept;
 
         /** \brief Initiate a shutdown process.
          *
@@ -70,7 +67,7 @@ namespace mxl::lib::fabrics::ofi
 
         /** \brief Consume an event that was posted to the associated event queue.
          */
-        void consume(Event);
+        void processCompletion(Event);
 
         /** \brief Consume a completion that was posted to the associated completion queue.
          */
@@ -78,7 +75,7 @@ namespace mxl::lib::fabrics::ofi
 
         /** \brief Post a data transfer request to this endpoint.
          */
-        void postTransfer(LocalRegion const& localRegion, std::uint64_t remoteIndex, std::uint64_t remotePayloadOffset, SliceRange const& sliceRange);
+        void transferGrain(std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t remotePayloadOffset, SliceRange const& sliceRange);
 
     private:
         /** \brief The idle state.
@@ -107,9 +104,7 @@ namespace mxl::lib::fabrics::ofi
          */
         struct Connected
         {
-            std::shared_ptr<Endpoint> ep;
-            std::unique_ptr<EgressProtocol> proto; /**< Selected protocol for data transfers. */
-            std::size_t pending;                   /**< The number of currently pending write requests. */
+            Endpoint ep;
         };
 
         /** \brief The flushing state.
@@ -119,6 +114,7 @@ namespace mxl::lib::fabrics::ofi
         struct Flushing
         {
             Endpoint ep;
+            std::size_t pending;
         };
 
         /** \brief The endpoint is done and can be evicted from the initiator.
@@ -145,9 +141,9 @@ namespace mxl::lib::fabrics::ofi
         Idle restart(Endpoint const&);
 
     private:
-        State _state;              /**< The internal state object. */
-        DataLayout const& _layout; /**< Data layout inherited by the parent RCInitiator. RCInitiatorEndpoint's can't outlive the parent RCInitiator*/
-        TargetInfo _info;          /**< The target info of the remote endpoint */
+        State _state;     /**< The internal state object. */
+        TargetInfo _info; /**< The target info of the remote endpoint */
+        std::unique_ptr<EgressProtocol> _proto;
     };
 
     /** \brief An initiator that uses reliable connected endpoints to transfer data to targets.
@@ -190,6 +186,8 @@ namespace mxl::lib::fabrics::ofi
          */
         bool makeProgressBlocking(std::chrono::steady_clock::duration) override;
 
+        void shutdown() override;
+
     private:
         /** \brief Returns true if any of the endpoints contained in this initiator have pending work.
          */
@@ -211,7 +209,8 @@ namespace mxl::lib::fabrics::ofi
          * \param cq The completion queue to use for all endpoints created by this initiator.
          * \param eq The event queue to use for all endpoints created by this initiator.
          */
-        RCInitiator(std::shared_ptr<Domain>, std::shared_ptr<CompletionQueue>, std::shared_ptr<EventQueue>, DataLayout);
+        RCInitiator(std::shared_ptr<Domain>, std::shared_ptr<CompletionQueue>, std::shared_ptr<EventQueue>,
+            std::unique_ptr<EgressProtocolTemplate> proto);
 
         /** \brief Block on the completion queue with a timeout.
          */
@@ -235,12 +234,10 @@ namespace mxl::lib::fabrics::ofi
 
     private:
         std::shared_ptr<Domain> _domain;
-        std::shared_ptr<CompletionQueue> _cq;                   /**< Completion Queue shared by all endpoints. */
-        std::shared_ptr<EventQueue> _eq;                        /**< Event Queue shared by all endpoints. */
+        std::shared_ptr<CompletionQueue> _cq; /**< Completion Queue shared by all endpoints. */
+        std::shared_ptr<EventQueue> _eq;      /**< Event Queue shared by all endpoints. */
+        std::unique_ptr<EgressProtocolTemplate> _proto;
 
-        DataLayout _dataLayout;                                 /**< Data layout used by this initiator. */
-        std::vector<LocalRegion> _localRegions;                 /**< Local registered memory regions used for data transfers. */
-
-        std::map<Endpoint::Id, RCInitiatorEndpoint> _targets{}; /**< Targets managed by this initiator. */
+        std::map<Completion::Token, RCInitiatorEndpoint> _targets{}; /**< Targets managed by this initiator. */
     };
 }

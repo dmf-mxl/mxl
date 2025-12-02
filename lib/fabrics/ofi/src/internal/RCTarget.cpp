@@ -50,33 +50,28 @@ namespace mxl::lib::fabrics::ofi
         auto fabric = Fabric::open(*fabricInfoList.begin());
         auto domain = Domain::open(fabric);
 
-        auto const mxlFabricsRegions = MxlRegions::fromAPI(config.regions);
-
-        // Select the "protocol" when a data transfer completes
-        auto proto = selectProtocol(domain, mxlFabricsRegions->dataLayout(), mxlFabricsRegions->regions());
-
         auto pep = makeListener(fabric);
+
+        auto const mxlRegions = MxlRegions::fromAPI(config.regions);
+        auto proto = selectIngressProtocol(mxlRegions->dataLayout(), mxlRegions->regions());
+        auto targetInfo = std::make_unique<TargetInfo>(pep.id(), pep.localAddress(), proto->registerMemory(domain));
 
         // Helper struct to enable the std::make_unique function to access the private constructor of this class
         struct MakeUniqueEnabler : RCTarget
         {
-            MakeUniqueEnabler(std::shared_ptr<Domain> domain, std::unique_ptr<IngressProtocol> proto, PassiveEndpoint pep)
-                : RCTarget(std::move(domain), std::move(proto), std::move(pep))
+            MakeUniqueEnabler(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain)
+                : RCTarget(std::move(pep), std::move(proto), std::move(domain))
             {}
         };
 
-        auto localAddress = pep.localAddress();
-        auto remoteRegions = domain->remoteRegions();
-
         // Return the constructed RCTarget and associated TargetInfo for remote peers to connect.
-        return {std::make_unique<MakeUniqueEnabler>(std::move(domain), std::move(proto), std::move(pep)),
-            std::make_unique<TargetInfo>(std::move(localAddress), std::move(remoteRegions))};
+        return {std::make_unique<MakeUniqueEnabler>(std::move(pep), std::move(proto), std::move(domain)), std::move(targetInfo)};
     }
 
-    RCTarget::RCTarget(std::shared_ptr<Domain> domain, std::unique_ptr<IngressProtocol> proto, PassiveEndpoint ep)
-        : _domain(std::move(domain))
-        , _proto(std::move(proto))
-        , _state(WaitForConnectionRequest{std::move(ep)})
+    RCTarget::RCTarget(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain)
+        : _proto(std::move(proto))
+        , _domain(std::move(domain))
+        , _state(WaitForConnectionRequest{std::move(pep)})
     {}
 
     Target::ReadResult RCTarget::read()
@@ -88,6 +83,9 @@ namespace mxl::lib::fabrics::ofi
     {
         return makeProgress<QueueReadMode::Blocking>(timeout);
     }
+
+    void RCTarget::shutdown()
+    {}
 
     template<QueueReadMode queueReadMode>
     Target::ReadResult RCTarget::makeProgress(std::chrono::steady_clock::duration timeout)
@@ -104,7 +102,7 @@ namespace mxl::lib::fabrics::ofi
                     if (event && event->isConnReq())
                     {
                         MXL_DEBUG("Connection request received, creating endpoint for remote address: {}", event->connReq().info().raw()->dest_addr);
-                        auto endpoint = Endpoint::create(_domain, event->connReq().info());
+                        auto endpoint = Endpoint::create(_domain, state.pep.id(), event->connReq().info());
 
                         auto cq = CompletionQueue::open(_domain, CompletionQueue::Attributes::defaults());
                         endpoint.bind(cq, FI_RECV);
@@ -128,22 +126,15 @@ namespace mxl::lib::fabrics::ofi
 
                     if (event && event->isConnected())
                     {
-                        std::unique_ptr<RCTarget::ImmediateDataLocation> dataRegion;
-
-                        // Need to post a receive buffer to get immediate data.
-                        if (_domain->usingRecvBufForCqData())
-                        {
-                            // Create a local memory region. The grain indices will be written here when a transfer arrives.
-                            dataRegion = std::make_unique<RCTarget::ImmediateDataLocation>();
-
-                            // Post a receive for the first incoming grain. Pass a region to receive the grain index.
-                            state.ep.recv(dataRegion->toLocalRegion());
-                        }
-
                         MXL_INFO("Received connected event notification, now connected.");
 
                         // We have a connected event, so we can transition to the connected state
-                        return Connected{.ep = std::move(state.ep), .immData = std::move(dataRegion)};
+                        auto connected = Connected{.ep = std::move(state.ep)};
+
+                        // The endpoint is now ready, initialize the protocol.
+                        _proto->start(connected.ep);
+
+                        return connected;
                     }
 
                     return WaitForConnection{std::move(state.ep)};
@@ -155,34 +146,15 @@ namespace mxl::lib::fabrics::ofi
                     if (event && event.value().isShutdown())
                     {
                         MXL_INFO("Remote endpoint has shutdown the connection. Transitioning to listening to new connection.");
-                        return WaitForConnectionRequest{.pep = makeListener(_domain->fabric())};
+                        return WaitForConnectionRequest{.pep = makeListener(state.ep.domain()->fabric())};
                     }
 
                     if (completion)
                     {
-                        if (auto dataEntry = completion.value().tryData(); dataEntry)
-                        {
-                            // The written grain index is sent as immediate data, and was returned
-                            // from the completion queue.
-                            result.immData = dataEntry->data();
-
-                            // Need to post receive buffers for immediate data
-                            if (_domain->usingRecvBufForCqData())
-                            {
-                                // Post another receive for the next incoming grain. When another transfer arrives,
-                                // the immmediate data (in our case the grain index), will be returned in the registered region.
-                                state.ep.recv(state.immData->toLocalRegion());
-                            }
-
-                            _proto->processCompletion(result.immData.value());
-                        }
-                        else
-                        {
-                            MXL_ERROR("CQ Error={}", completion->err().toString());
-                        }
+                        result = _proto->processCompletion(state.ep, *completion);
                     }
 
-                    return Connected{.ep = std::move(state.ep), .immData = std::move(state.immData)};
+                    return Connected{.ep = std::move(state.ep)};
                 }},
             std::move(_state));
 
@@ -204,5 +176,4 @@ namespace mxl::lib::fabrics::ofi
 
         return pep;
     }
-
 }

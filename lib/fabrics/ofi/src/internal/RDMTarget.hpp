@@ -6,7 +6,6 @@
 
 #include <memory>
 #include "mxl/fabrics.h"
-#include "Endpoint.hpp"
 #include "Protocol.hpp"
 #include "QueueHelpers.hpp"
 #include "Target.hpp"
@@ -35,13 +34,18 @@ namespace mxl::lib::fabrics::ofi
          */
         Target::ReadResult readBlocking(std::chrono::steady_clock::duration timeout) override;
 
+        /**
+         */
+        void shutdown() override;
+
     private:
         /** \brief Construct an RDMTarget with the given endpoint and immediate data location.
          *
          * \param endpoint The endpoint to use for communication.
          * \param immData The immediate data location to use for transfers.
          */
-        RDMTarget(Endpoint endpoint, std::unique_ptr<IngressProtocol> proto, std::unique_ptr<ImmediateDataLocation> immData);
+        RDMTarget(Endpoint ep, std::unique_ptr<IngressProtocol>);
+        RDMTarget(Endpoint ep, std::unique_ptr<void> /* sample ingress */);
 
         /** \brief Internal method to drive progress based on the current state.
          *
@@ -52,9 +56,8 @@ namespace mxl::lib::fabrics::ofi
         Target::ReadResult makeProgress(std::chrono::steady_clock::duration timeout);
 
     private:
-        Endpoint _endpoint;
-        std::unique_ptr<IngressProtocol> _proto;         /**< Protocol used for processing incoming transfers */
-
-        std::unique_ptr<ImmediateDataLocation> _immData; /**< Immediate data for transfers */
+        Endpoint _ep;
+        std::unique_ptr<IngressProtocol> _protocol = {};
+        // TODO: Sample protocol
     };
 }

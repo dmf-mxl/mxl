@@ -41,7 +41,7 @@ namespace mxl::lib::fabrics::ofi
     {
         if (!_inner)
         {
-            Exception::invalidState("Target is not set up");
+            throw Exception::invalidState("Target is not set up");
         }
 
         return _inner->read();
@@ -51,7 +51,7 @@ namespace mxl::lib::fabrics::ofi
     {
         if (!_inner)
         {
-            Exception::invalidState("Target is not set up");
+            throw Exception::invalidState("Target is not set up");
         }
 
         return _inner->readBlocking(timeout);
