@@ -38,6 +38,8 @@ namespace mxl::lib::fabrics::ofi
          */
         Target::ReadResult readBlocking(std::chrono::steady_clock::duration timeout) final;
 
+        void shutdown() override;
+
     private:
         /** \brief The wait for connection request state.
          *
@@ -64,7 +66,6 @@ namespace mxl::lib::fabrics::ofi
         struct Connected
         {
             Endpoint ep;
-            std::unique_ptr<ImmediateDataLocation> immData;
         };
 
         /** \brief The internal state of the RCTarget.
@@ -77,7 +78,7 @@ namespace mxl::lib::fabrics::ofi
          * \param domain The domain to create the RCTarget on.
          * \param pep The passive endpoint to use for listening for incoming connection requests.
          */
-        RCTarget(std::shared_ptr<Domain> domain, std::unique_ptr<IngressProtocol> proto, PassiveEndpoint pep);
+        RCTarget(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain);
 
         /** \brief Internal method to drive progress based on the current state.
          *
@@ -91,9 +92,8 @@ namespace mxl::lib::fabrics::ofi
         static PassiveEndpoint makeListener(std::shared_ptr<Fabric> fabric);
 
     private:
-        std::shared_ptr<Domain> _domain;
         std::unique_ptr<IngressProtocol> _proto;
-
+        std::shared_ptr<Domain> _domain;
         State _state; /**< The current state of the RCTarget. */
     };
 }

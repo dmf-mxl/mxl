@@ -397,6 +397,7 @@ mxlStatus mxlFabricsInitiatorMakeProgressNonBlocking(mxlFabricsInitiator in_init
         {
             if (ofi::InitiatorWrapper::fromAPI(in_initiator)->makeProgress())
             {
+                MXL_INFO("Not ready!!");
                 return MXL_ERR_NOT_READY;
             }
 

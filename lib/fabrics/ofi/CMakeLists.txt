@@ -44,8 +44,8 @@ target_sources(mxl-fabrics-objects
             src/internal/MemoryRegion.cpp
             src/internal/PassiveEndpoint.cpp
             src/internal/Protocol.cpp
-            src/internal/ProtocolEgress.cpp
-            src/internal/ProtocolIngress.cpp
+            src/internal/ProtocolEgressRMA.cpp
+            src/internal/ProtocolIngressRMA.cpp
             src/internal/Provider.cpp
             src/internal/RCInitiator.cpp
             src/internal/RCTarget.cpp

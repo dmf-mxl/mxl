@@ -9,6 +9,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <rdma/fabric.h>
 #include <mxl/fabrics.h>
+#include "mxl-internal/Logging.hpp"
 #include "mxl/dataformat.h"
 #include "mxl/flow.h"
 #include "mxl/mxl.h"

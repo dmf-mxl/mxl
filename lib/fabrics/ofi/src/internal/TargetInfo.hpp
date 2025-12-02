@@ -40,9 +40,9 @@ namespace mxl::lib::fabrics::ofi
         bool operator==(TargetInfo const& other) const noexcept;
 
     public:
+        Endpoint::Id id;             /**< A unique identifier of the target's endpoint */
         FabricAddress fabricAddress; /**< Target's endpoint libfabric address */
         std::vector<RemoteRegion>
             remoteRegions; /**< Target's memory regions (and keys) which an initiator can operate on. This is used only for RMA operations */
-        Endpoint::Id id;   /**< A unique identifier of the target's endpoint */
     };
 }

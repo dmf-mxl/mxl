@@ -38,7 +38,13 @@ namespace mxl::lib::fabrics::ofi
          */
         virtual ReadResult readBlocking(std::chrono::steady_clock::duration timeout) = 0;
 
-    protected:
+        /** \brief Shut down the target gracefully.
+         * Initiates a graceful shutdown of the target and blocks until the shutdown is complete.
+         * Can throw an exception if the shutdown is not successful. If this function throws the
+         * target can now longer be used.
+         */
+        virtual void shutdown() = 0;
+
         /** \brief Represent an immediate data
          */
         struct ImmediateDataLocation

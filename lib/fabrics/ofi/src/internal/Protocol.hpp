@@ -5,29 +5,35 @@
 #include <memory>
 #include <rdma/fabric.h>
 #include "DataLayout.hpp"
-#include "Domain.hpp"
 #include "Endpoint.hpp"
 #include "GrainSlices.hpp"
-#include "LocalRegion.hpp"
+#include "Region.hpp"
+#include "Target.hpp"
 #include "TargetInfo.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
-
     /** \brief Interface for post-processing on transfer reception.
      *
-     * Allows to abstract away any post-processing that needs to be done after a transfer completes.
-     */
+     * Allows to abstract away any post-processing that needs to be done after a transfer completes. */
     class IngressProtocol
-
     {
     public:
         virtual ~IngressProtocol() = default;
 
+        virtual std::vector<RemoteRegion> registerMemory(std::shared_ptr<Domain> domain) = 0;
+
+        virtual void start(Endpoint&) = 0;
+
         /** \brief Process a completion with the given immediate data.
          * \param immData The immediate data from the completion.
          */
-        virtual void processCompletion(std::uint32_t immData) = 0;
+        virtual Target::ReadResult processCompletion(Endpoint&, Completion const&) = 0;
+
+        /** \brief Destroy the protocol object.
+         * \return The endpoint associated with the protocol and the number of pending transfers.
+         */
+        virtual void destroy() = 0;
     };
 
     /** \brief Interface for transfer operations.
@@ -47,8 +53,32 @@ namespace mxl::lib::fabrics::ofi
          * \param destAddr The destination address. This is ignored for connection-oriented endpoints.
          * \return The number of requests posted to the endpoint work queue.
          */
-        virtual std::size_t transferGrain(LocalRegion const& localRegion, std::uint64_t remoteIndex, std::uint32_t payloadOffset,
+        virtual void transferGrain(Endpoint& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint32_t payloadOffset,
             SliceRange const& sliceRange, ::fi_addr_t destAddr = FI_ADDR_UNSPEC) = 0;
+
+        /**
+         */
+        virtual void processCompletion(Completion::Data const&) = 0;
+
+        /**
+         */
+        [[nodiscard]]
+        virtual bool hasPendingWork() const = 0;
+
+        /** \brief Destroy the protocol object.
+         * \return The endpoint associated with the protocol and the number of pending transfers.
+         */
+        virtual std::size_t destroy() = 0;
+    };
+
+    class EgressProtocolTemplate
+    {
+    public:
+        virtual ~EgressProtocolTemplate() = default;
+
+        virtual std::vector<LocalRegion> registerMemory(std::shared_ptr<Domain> domain) = 0;
+
+        virtual std::unique_ptr<EgressProtocol> createInstance(Completion::Token token, TargetInfo remoteInfo) = 0;
     };
 
     /** \brief Select an appropriate ingress protocol based on the data layout
@@ -57,7 +87,7 @@ namespace mxl::lib::fabrics::ofi
      * \param regions The regions involved.
      * \return A unique pointer to the selected ingress protocol.
      */
-    std::unique_ptr<IngressProtocol> selectProtocol(std::shared_ptr<Domain> domain, DataLayout const& layout, std::vector<Region> const& regions);
+    std::unique_ptr<IngressProtocol> selectIngressProtocol(DataLayout const& layout, std::vector<Region> regions);
 
     /** \brief Select an appropriate egress protocol based on the data layout
      * \param ep The endpoint to use.
@@ -65,6 +95,5 @@ namespace mxl::lib::fabrics::ofi
      * \param targetInfo The target information.
      * \return A unique pointer to the selected egress protocol.
      */
-    std::unique_ptr<EgressProtocol> selectProtocol(std::shared_ptr<Endpoint> ep, DataLayout const& layout, TargetInfo const& targetInfo);
-
+    std::unique_ptr<EgressProtocolTemplate> selectEgressProtocol(DataLayout const& layout, std::vector<Region> regions);
 }
