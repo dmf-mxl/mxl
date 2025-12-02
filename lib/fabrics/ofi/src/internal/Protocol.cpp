@@ -1,35 +1,29 @@
 #include "Protocol.hpp"
 #include <cassert>
-#include <memory>
-#include "DataLayout.hpp"
-#include "Domain.hpp"
 #include "Exception.hpp"
-#include "ProtocolEgress.hpp"
-#include "ProtocolIngress.hpp"
+#include "ProtocolEgressRMA.hpp"
+#include "ProtocolIngressRMA.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
-    std::unique_ptr<IngressProtocol> selectProtocol(std::shared_ptr<Domain> domain, DataLayout const& layout, std::vector<Region> const& dstRegions)
+    std::unique_ptr<IngressProtocol> selectIngressProtocol(DataLayout const& layout, std::vector<Region> regions)
     {
-        if (layout.isVideo())
+        if (!layout.isVideo())
         {
-            auto proto = std::make_unique<IngressProtocolWriter>();
-            domain->registerRegions(dstRegions, FI_REMOTE_WRITE);
-
-            return proto;
+            throw Exception::internal("Only grain transport supported for now.");
         }
 
-        throw Exception::invalidArgument("Unsupported data layout for ingress protocol selection.");
+        return std::make_unique<RMAGrainIngressProtocol>(std::move(regions));
     }
 
-    std::unique_ptr<EgressProtocol> selectProtocol(std::shared_ptr<Endpoint> ep, DataLayout const& layout, TargetInfo const& info)
+    std::unique_ptr<EgressProtocolTemplate> selectEgressProtocol(DataLayout const& layout, std::vector<Region> regions)
     {
-        if (layout.isVideo())
+        if (!layout.isVideo())
         {
-            return std::make_unique<EgressProtocolWriter>(std::move(ep), info.remoteRegions, layout.asVideo());
+            throw Exception::internal("Only grain transport supported for now.");
         }
 
-        throw Exception::invalidArgument("Unsupported data layout for egress protocol selection.");
+        return std::make_unique<RMAGrainEgressProtocolTemplate>(layout, std::move(regions));
     }
 
 }

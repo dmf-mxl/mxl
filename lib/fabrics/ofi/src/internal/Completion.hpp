@@ -19,6 +19,8 @@ namespace mxl::lib::fabrics::ofi
     class Completion
     {
     public:
+        using Token = std::uintptr_t;
+
         /** \brief Data variant of the completion entry instance
          */
         class Data
@@ -32,7 +34,7 @@ namespace mxl::lib::fabrics::ofi
             /** \brief This used to associate a completion entry with an endpoint when multiple endpoints use the same completion queue.
              */
             [[nodiscard]]
-            ::fid_ep* fid() const noexcept;
+            Completion::Token token() const noexcept;
 
             /** \brief Indicates whether the completion entry represents a remote write operation.
              */
@@ -68,7 +70,7 @@ namespace mxl::lib::fabrics::ofi
             /** \brief This used to associate a completion entry with an endpoint when multiple endpoints use the same completion queue.
              */
             [[nodiscard]]
-            ::fid_ep* fid() const noexcept;
+            Token token() const noexcept;
 
         private:
             friend class CompletionQueue;
@@ -84,6 +86,18 @@ namespace mxl::lib::fabrics::ofi
     public:
         explicit Completion(Data entry);
         explicit Completion(Error entry);
+
+        static Token randomToken();
+
+        constexpr static void* tokenToContextValue(Token token)
+        {
+            return std::bit_cast<void*>(token);
+        }
+
+        constexpr static Token tokenFromContextValue(void* contextValue)
+        {
+            return std::bit_cast<Token>(contextValue);
+        }
 
         /** \brief Accessor for the data variant. Calling this on an error entry will throw
          */
@@ -115,10 +129,11 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         bool isErrEntry() const noexcept;
 
-        /** \brief Endpoint's fid associated with this completion entry
+        /** \brief Get the token that was associated with the operation that
+         * has completed.
          */
         [[nodiscard]]
-        ::fid_ep* fid() const noexcept;
+        Token token() const noexcept;
 
     private:
         friend class CompletionQueue;

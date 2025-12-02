@@ -67,6 +67,14 @@ namespace mxl::lib::fabrics::ofi
          * This is the blocking version of the progress function.
          */
         virtual bool makeProgressBlocking(std::chrono::steady_clock::duration) = 0;
+
+        /** \brief Shut down the initiator gracefully.
+         *
+         * Initiates a graceful shutdown of the initiator and blocks until the shutdown is complete.
+         * Can throw an exception if the shutdown is not successful. If this function throws the
+         * initiator can now longer be used.
+         */
+        virtual void shutdown() = 0;
     };
 
     /** \brief A wrapper around Initiator implementations.

@@ -75,7 +75,7 @@ namespace mxl::lib::fabrics::ofi
 
         auto id = std::stoull(root.at("id").get<std::string>());
 
-        return {.fabricAddress = fabricAddress, .remoteRegions = regions, .id = id};
+        return {.id = id, .fabricAddress = fabricAddress, .remoteRegions = regions};
     }
 
     bool TargetInfo::operator==(TargetInfo const& other) const noexcept

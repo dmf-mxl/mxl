@@ -36,16 +36,6 @@ namespace mxl::lib::fabrics::ofi
         return dist(eng);
     }
 
-    void* Endpoint::idToContextValue(Id id) noexcept
-    {
-        return reinterpret_cast<void*>(id);
-    }
-
-    Endpoint::Id Endpoint::contextValueToId(void* contextValue) noexcept
-    {
-        return reinterpret_cast<Endpoint::Id>(contextValue);
-    }
-
     Endpoint::Id Endpoint::idFromFID(::fid_t fid) noexcept
     {
         return contextValueToId(fid->context);
@@ -325,8 +315,8 @@ namespace mxl::lib::fabrics::ofi
         return _raw;
     }
 
-    std::size_t Endpoint::writeImpl(::iovec const* msgIov, std::size_t iovCount, void** desc, ::fi_rma_iov const* rmaIov, ::fi_addr_t destAddr,
-        std::optional<std::uint32_t> immData)
+    std::size_t Endpoint::writeImpl(Completion::Token token, ::iovec const* msgIov, std::size_t iovCount, void** desc, ::fi_rma_iov const* rmaIov,
+        ::fi_addr_t destAddr, std::optional<std::uint32_t> immData)
     {
         std::uint64_t data = immData.value_or(0);
         std::uint64_t flags = FI_DELIVERY_COMPLETE;
@@ -339,7 +329,7 @@ namespace mxl::lib::fabrics::ofi
             .addr = destAddr,
             .rma_iov = rmaIov,
             .rma_iov_count = 1,
-            .context = _raw,
+            .context = Completion::tokenToContextValue(token),
             .data = data,
         };
 
@@ -348,21 +338,22 @@ namespace mxl::lib::fabrics::ofi
         return 1;
     }
 
-    std::size_t Endpoint::write(LocalRegion const& local, RemoteRegion const& remote, ::fi_addr_t destAddr, std::optional<std::uint32_t> immData)
+    std::size_t Endpoint::write(Completion::Token token, LocalRegion const& local, RemoteRegion const& remote, ::fi_addr_t destAddr,
+        std::optional<std::uint32_t> immData)
     {
         std::vector<void*> descs{local.desc};
 
         auto msgIov = local.toIovec();
         auto rmaIov = remote.toRmaIov();
 
-        return writeImpl(&msgIov, 1, descs.data(), &rmaIov, destAddr, immData);
+        return writeImpl(token, &msgIov, 1, descs.data(), &rmaIov, destAddr, immData);
     }
 
-    std::size_t Endpoint::write(LocalRegionGroup const& localGroup, RemoteRegion const& remote, ::fi_addr_t destAddr,
+    std::size_t Endpoint::write(Completion::Token token, LocalRegionGroup const& localGroup, RemoteRegion const& remote, ::fi_addr_t destAddr,
         std::optional<std::uint32_t> immData)
     {
         auto rmaIov = remote.toRmaIov();
-        return writeImpl(localGroup.asIovec(), localGroup.size(), const_cast<void**>(localGroup.desc()), &rmaIov, destAddr, immData);
+        return writeImpl(token, localGroup.asIovec(), localGroup.size(), const_cast<void**>(localGroup.desc()), &rmaIov, destAddr, immData);
     }
 
     void Endpoint::recv(LocalRegion region)
