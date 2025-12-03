@@ -6,7 +6,6 @@
 
 #include <rdma/fi_endpoint.h>
 #include "Address.hpp"
-#include "Domain.hpp"
 #include "Endpoint.hpp"
 #include "Event.hpp"
 #include "EventQueue.hpp"

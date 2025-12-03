@@ -13,21 +13,19 @@ namespace mxl::lib::fabrics::ofi
     public:
         RMAGrainIngressProtocol(std::vector<Region> regions);
 
-        /** \brief
+        /** \copydoc IngressProtocol::registerMemory()
          */
         std::vector<RemoteRegion> registerMemory(std::shared_ptr<Domain> domain) override;
 
-        /** \brief Start receiving
+        /** \copydoc IngressProtocol::start()
          */
         void start(Endpoint&) override;
 
-        /** \brief Process a completion with the given immediate data.
-         * \param immData The immediate data from the completion.
+        /** \copydoc IngressProtocol::processCompletion()
          */
         Target::ReadResult processCompletion(Endpoint&, Completion const&) override;
 
-        /** \brief Destroy the protocol object.
-         * \return The endpoint associated with the protocol and the number of pending transfers.
+        /** \copydoc IngressProtocol::destroy()
          */
         void destroy() override;
 

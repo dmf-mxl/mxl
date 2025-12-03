@@ -4,6 +4,10 @@
 
 namespace mxl::lib::fabrics::ofi
 {
+    /** \brief A SliceRange represents a range of slices within a grain.
+     *
+     * The range is represented as [start, end), where start is inclusive and end is exclusive.
+     */
     class SliceRange
     {
     public:

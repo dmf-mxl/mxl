@@ -4,20 +4,28 @@
 #include "DataLayout.hpp"
 #include "Endpoint.hpp"
 #include "Protocol.hpp"
-#include "RemoteRegion.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
     class RMAGrainEgressProtocol : public EgressProtocol
     {
     public:
+        /** \copydoc EgressProtocol::transferGrain()
+         */
         void transferGrain(Endpoint& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint32_t payloadOffset,
             SliceRange const& sliceRange, ::fi_addr_t destAddr = FI_ADDR_UNSPEC) override;
 
+        /** \copydoc EgressProtocol::processCompletion()
+         */
         void processCompletion(Completion::Data const&) override;
 
+        /** \copydoc EgressProtocol::hasPendingWork()
+         */
+        [[nodiscard]]
         bool hasPendingWork() const override;
 
+        /** \copydoc EgressProtocol::destroy()
+         */
         std::size_t destroy() override;
 
     private:
