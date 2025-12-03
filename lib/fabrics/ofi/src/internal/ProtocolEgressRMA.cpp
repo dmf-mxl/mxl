@@ -54,7 +54,7 @@ namespace mxl::lib::fabrics::ofi
             throw Exception::invalidState("Memory already registered.");
         }
 
-        domain->registerRegions(_regions, FI_READ);
+        domain->registerRegions(_regions, FI_WRITE);
         _localRegions = domain->localRegions();
 
         return domain->localRegions();
