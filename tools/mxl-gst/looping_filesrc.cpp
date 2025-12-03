@@ -643,7 +643,7 @@ private:
 
                     if (!videoAppSinkOffset)
                     {
-                        videoAppSinkOffset = mxlGetTime() - (gstBufferPts + gstBaseTime);
+                        videoAppSinkOffset = static_cast<std::int64_t>(__int128_t{mxlGetTime()} - __int128_t{gstBufferPts + gstBaseTime});
                         MXL_INFO("appSinkVideo: Set internal offset to {} ns", *videoAppSinkOffset);
                     }
 
@@ -780,7 +780,7 @@ private:
 
                     if (!audioAppSinkOffset)
                     {
-                        audioAppSinkOffset = mxlGetTime() - (gstBufferPts + gstBaseTime);
+                        audioAppSinkOffset = static_cast<std::int64_t>(__int128_t{mxlGetTime()} - __int128_t{gstBufferPts + gstBaseTime});
                         MXL_INFO("appSinkAudio: Set internal offset to {} ns", *audioAppSinkOffset);
                     }
 
@@ -802,6 +802,16 @@ private:
                         MXL_ERROR("Unexpected sample index from gstreamer PTS {} expected sample index {}. Time went backward??",
                             gstSampleIndex,
                             *sampleIndex);
+
+                        // Allow for a small drift (less than an audio batch size)
+                        if (*sampleIndex - gstSampleIndex < audioBatchSize)
+                        {
+                            MXL_ERROR("audioThread: Unexpected sample index drift of {} samples. Resetting sample index.",
+                                *sampleIndex - gstSampleIndex);
+                            sampleIndex.reset();
+                            gst_sample_unref(sample);
+                            continue;
+                        }
                     }
                     // Generate the skipped samples as silenced samples.
                     // ** A production application should apply a fade when inserting silence to avoid audio artefacts
@@ -936,9 +946,9 @@ private:
     // The MXL instance
     ::mxlInstance mxlInstance = nullptr;
     // Offset between video appsink and MXL
-    std::optional<std::uint64_t> videoAppSinkOffset{std::nullopt};
+    std::optional<std::int64_t> videoAppSinkOffset{std::nullopt};
     // Offset between audio appsink and MXL
-    std::optional<std::uint64_t> audioAppSinkOffset{std::nullopt};
+    std::optional<std::int64_t> audioAppSinkOffset{std::nullopt};
     // GStreamer media pipeline
     ::GstElement* pipeline = nullptr;
     // GStreamer appsink for Video
