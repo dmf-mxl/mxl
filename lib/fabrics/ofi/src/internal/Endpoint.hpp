@@ -67,6 +67,12 @@ namespace mxl::lib::fabrics::ofi
             return id;
         }
 
+        /** \brief Convert a completion token value to an endpoint id value.
+         * Convert a completion token to an endpoint id value. This does not perform any lookups,
+         * it just converts the types. This is a pure function and will always return the same endpoint id
+         * for the same completion token.
+         * This function enables using the endpoint id as a completion token.
+         */
         constexpr static Id idFromToken(Completion::Token token) noexcept
         {
             static_assert(std::is_same_v<Completion::Token, Id>, "Completion token and endpoint id should be the same underlying type.");
@@ -239,7 +245,8 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Push a remote write work request of a single contiguous buffer to the endpoint work queue.
          *
          * When the write is complete, a Completion::Data will be pushed to the
-         * completion queue associated with the endpoint. Before a write request can be made, the endpoint must have beed enabled,
+         * completion queue associated with the endpoint. Before a write request can be made, the endpoint must have been enabled.
+         * \param token Completion token to associate with the write operation
          * \param local Source memory region to write from
          * \param remoteGroup Destination memory regions to write to
          * \param destAddr The destination address of the target endpoint. This is unused when using connected endpoints.
@@ -252,7 +259,8 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Push a remote write work request of a scatter-gather list to the endpoint work queue.
          *
          * When the write is complete, a Completion::Data will be pushed to the
-         * completion queue associated with the endpoint. Before a write request can be made, the endpoint must have beed enabled,
+         * completion queue associated with the endpoint. Before a write request can be made, the endpoint must have been enabled.
+         * \param token Completion token to associate with the write operation
          * \param localGroup Source memory regions to write from (scatter-gather version)
          * \param remoteGroup Destination memory regions to write to
          * \param destAddr The destination address of the target endpoint. This is unused when using connected endpoints.
