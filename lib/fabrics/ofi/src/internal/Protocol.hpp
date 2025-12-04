@@ -32,13 +32,14 @@ namespace mxl::lib::fabrics::ofi
         virtual void start(Endpoint&) = 0;
 
         /** \brief Process a completion with the given immediate data.
-         * \param immData The immediate data from the completion.
+         * \param endpoint The endpoint associated with the completion
+         * \param completion The completion object to process.
          */
-        virtual Target::ReadResult processCompletion(Endpoint&, Completion const&) = 0;
+        virtual Target::ReadResult processCompletion(Endpoint& endpoint, Completion const& completion) = 0;
 
         /** \brief Destroy the protocol object.
          */
-        virtual void destroy() = 0;
+        virtual void reset() = 0;
     };
 
     /** \brief Interface for transfer operations.
@@ -73,7 +74,7 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Destroy the protocol object.
          * \return The number of pending transfers.
          */
-        virtual std::size_t destroy() = 0;
+        virtual std::size_t reset() = 0;
     };
 
     class EgressProtocolTemplate
