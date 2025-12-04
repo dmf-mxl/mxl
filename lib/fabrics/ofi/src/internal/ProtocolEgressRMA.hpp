@@ -49,7 +49,7 @@ namespace mxl::lib::fabrics::ofi
     public:
         RMAGrainEgressProtocolTemplate(DataLayout layout, std::vector<Region> regions);
 
-        std::vector<LocalRegion> registerMemory(std::shared_ptr<Domain> domain) override;
+        void registerMemory(std::shared_ptr<Domain> domain) override;
         std::unique_ptr<EgressProtocol> createInstance(Completion::Token, TargetInfo remoteInfo) override;
 
     private:

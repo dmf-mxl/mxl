@@ -33,7 +33,6 @@ mxlStatus try_run(F func, std::string_view errMsg)
     {
         return func();
     }
-
     catch (ofi::Exception& e)
     {
         if (e.status() == MXL_ERR_UNKNOWN)
@@ -43,14 +42,12 @@ mxlStatus try_run(F func, std::string_view errMsg)
 
         return e.status();
     }
-
     catch (std::exception& e)
     {
         MXL_ERROR("{}: {}", errMsg, e.what());
 
         return MXL_ERR_UNKNOWN;
     }
-
     catch (...)
     {
         MXL_ERROR("{}", errMsg);
@@ -397,7 +394,6 @@ mxlStatus mxlFabricsInitiatorMakeProgressNonBlocking(mxlFabricsInitiator in_init
         {
             if (ofi::InitiatorWrapper::fromAPI(in_initiator)->makeProgress())
             {
-                MXL_INFO("Not ready!!");
                 return MXL_ERR_NOT_READY;
             }
 
