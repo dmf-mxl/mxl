@@ -127,7 +127,7 @@ namespace mxl::lib::fabrics::ofi
             std::move(_state));
     }
 
-    void RCInitiatorEndpoint::processCompletion(Event ev)
+    void RCInitiatorEndpoint::consume(Event ev)
     {
         _state = std::visit(
             overloaded{
@@ -464,7 +464,7 @@ namespace mxl::lib::fabrics::ofi
                 continue;
             }
 
-            ep->second.processCompletion(*event);
+            ep->second.consume(*event);
         }
     }
 

@@ -19,6 +19,8 @@ namespace mxl::lib::fabrics::ofi
     class Completion
     {
     public:
+        /** \brief A token used to associate a completion entry with an endpoint.
+         */
         using Token = std::uintptr_t;
 
         /** \brief Data variant of the completion entry instance
@@ -89,11 +91,15 @@ namespace mxl::lib::fabrics::ofi
 
         static Token randomToken();
 
+        /** \brief Convert between completion tokens and context values that can be written to and read from raw libfabric queue entries.
+         */
         constexpr static void* tokenToContextValue(Token token)
         {
             return std::bit_cast<void*>(token);
         }
 
+        /** \copydoc tokenToContextValue(Token)
+         */
         constexpr static Token tokenFromContextValue(void* contextValue)
         {
             return std::bit_cast<Token>(contextValue);

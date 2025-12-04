@@ -5,7 +5,6 @@
 #pragma once
 
 #include <chrono>
-#include <cstddef>
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -54,9 +53,13 @@ namespace mxl::lib::fabrics::ofi
         void transfer(Endpoint& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t remotePayloadOffset,
             SliceRange const& sliceRange);
 
+        /** \brief Returns true if there's pending work for this target.
+         */
         [[nodiscard]]
         bool hasPendingWork() const noexcept;
 
+        /** \brief Handle a completion event for this endpoint.
+         */
         void handleCompletion(Endpoint& ep, Completion completion);
 
     private:
@@ -136,7 +139,16 @@ namespace mxl::lib::fabrics::ofi
          */
         RDMInitiator(Endpoint, std::unique_ptr<EgressProtocolTemplate>);
 
+        /** \brief Find a remote target by its endpoint id.
+         *
+         * \throws Exception::notFound if the Endpoint::Id does not map to any known remote endpoints.
+         */
         RDMInitiatorTarget& findRemoteByEndpoint(Endpoint::Id id);
+
+        /** \brief Find a remote target by its completion token.
+         *
+         * \throws Exception::notFound if the Completion::Token does not map to any known target.
+         */
         RDMInitiatorTarget& findRemoteByToken(Completion::Token token);
 
         /** \brief Returns true if any of the endpoints contained in this initiator have pending work.

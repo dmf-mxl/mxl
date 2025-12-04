@@ -18,7 +18,7 @@ namespace mxl::lib::fabrics::ofi
          */
         struct VideoDataLayout
         {
-            std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN> sliceSizes;
+            std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN> sliceSizes; /**< Number of slices per plane. \see MXL_MAX_PLANES_PER_GRAIN */
         };
 
     public:

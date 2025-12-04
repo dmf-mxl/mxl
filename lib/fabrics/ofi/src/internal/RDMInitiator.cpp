@@ -248,7 +248,7 @@ namespace mxl::lib::fabrics::ofi
         auto it = _targets.find(token);
         if (it == _targets.end())
         {
-            throw Exception::invalidState("No target found for completion token value");
+            throw Exception::notFound("No target found for completion token value");
         }
 
         return it->second;
