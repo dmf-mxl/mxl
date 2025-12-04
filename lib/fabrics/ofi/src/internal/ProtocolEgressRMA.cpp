@@ -37,7 +37,7 @@ namespace mxl::lib::fabrics::ofi
         return _pending > 0;
     }
 
-    std::size_t RMAGrainEgressProtocol::destroy()
+    std::size_t RMAGrainEgressProtocol::reset()
     {
         return std::exchange(_pending, 0);
     }

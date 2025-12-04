@@ -71,7 +71,7 @@ namespace mxl::lib::fabrics::ofi
                 [&](Connected state) -> State
                 {
                     MXL_INFO("Shutting down");
-                    auto pending = _proto->destroy();
+                    auto pending = _proto->reset();
                     state.ep.shutdown();
 
                     return Flushing{.ep = std::move(state.ep), .pending = pending};
@@ -167,7 +167,7 @@ namespace mxl::lib::fabrics::ofi
                     else if (ev.isShutdown())
                     {
                         MXL_INFO("Remote endpoint has closed the connection");
-                        return Flushing{.ep = std::move(state.ep), .pending = _proto->destroy()};
+                        return Flushing{.ep = std::move(state.ep), .pending = _proto->reset()};
                     }
 
                     return state;

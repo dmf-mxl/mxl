@@ -27,7 +27,7 @@ namespace mxl::lib::fabrics::ofi
 
         /** \copydoc IngressProtocol::destroy()
          */
-        void destroy() override;
+        void reset() override;
 
     private:
         LocalRegion immDataRegion();
