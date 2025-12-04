@@ -27,7 +27,7 @@ namespace mxl::lib::fabrics::ofi
          */
         virtual std::vector<RemoteRegion> registerMemory(std::shared_ptr<Domain> domain) = 0;
 
-        /** \brief Start receiving on the given endpoint.
+        /** \brief Start receiving.
          */
         virtual void start(Endpoint&) = 0;
 
@@ -37,7 +37,6 @@ namespace mxl::lib::fabrics::ofi
         virtual Target::ReadResult processCompletion(Endpoint&, Completion const&) = 0;
 
         /** \brief Destroy the protocol object.
-         * \return The endpoint associated with the protocol and the number of pending transfers.
          */
         virtual void destroy() = 0;
     };
@@ -72,7 +71,7 @@ namespace mxl::lib::fabrics::ofi
         virtual bool hasPendingWork() const = 0;
 
         /** \brief Destroy the protocol object.
-         * \return The endpoint associated with the protocol and the number of pending transfers.
+         * \return The number of pending transfers.
          */
         virtual std::size_t destroy() = 0;
     };

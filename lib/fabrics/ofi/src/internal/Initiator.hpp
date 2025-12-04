@@ -72,7 +72,7 @@ namespace mxl::lib::fabrics::ofi
          *
          * Initiates a graceful shutdown of the initiator and blocks until the shutdown is complete.
          * Can throw an exception if the shutdown is not successful. If this function throws the
-         * initiator can now longer be used.
+         * initiator can no longer be used.
          */
         virtual void shutdown() = 0;
     };

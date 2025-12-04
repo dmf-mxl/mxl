@@ -34,7 +34,7 @@ namespace mxl::lib::fabrics::ofi
          */
         Target::ReadResult readBlocking(std::chrono::steady_clock::duration timeout) override;
 
-        /**
+        /** \copydoc Target::shutdown()
          */
         void shutdown() override;
 
@@ -58,6 +58,5 @@ namespace mxl::lib::fabrics::ofi
     private:
         Endpoint _ep;
         std::unique_ptr<IngressProtocol> _protocol = {};
-        // TODO: Sample protocol
     };
 }
