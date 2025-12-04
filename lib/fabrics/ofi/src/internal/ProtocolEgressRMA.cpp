@@ -47,7 +47,7 @@ namespace mxl::lib::fabrics::ofi
         , _regions(std::move(regions))
     {}
 
-    std::vector<LocalRegion> RMAGrainEgressProtocolTemplate::registerMemory(std::shared_ptr<Domain> domain)
+    void RMAGrainEgressProtocolTemplate::registerMemory(std::shared_ptr<Domain> domain)
     {
         if (_localRegions)
         {
@@ -56,8 +56,6 @@ namespace mxl::lib::fabrics::ofi
 
         domain->registerRegions(_regions, FI_WRITE);
         _localRegions = domain->localRegions();
-
-        return domain->localRegions();
     }
 
     std::unique_ptr<EgressProtocol> RMAGrainEgressProtocolTemplate::createInstance(Completion::Token token, TargetInfo remoteInfo)
