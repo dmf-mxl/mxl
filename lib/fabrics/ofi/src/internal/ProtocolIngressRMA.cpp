@@ -44,7 +44,7 @@ namespace mxl::lib::fabrics::ofi
         return {};
     }
 
-    void RMAGrainIngressProtocol::destroy()
+    void RMAGrainIngressProtocol::reset()
     {}
 
     LocalRegion RMAGrainIngressProtocol::immDataRegion()

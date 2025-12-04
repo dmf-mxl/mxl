@@ -26,7 +26,7 @@ namespace mxl::lib::fabrics::ofi
 
         /** \copydoc EgressProtocol::destroy()
          */
-        std::size_t destroy() override;
+        std::size_t reset() override;
 
     private:
         friend class RMAGrainEgressProtocolTemplate;
