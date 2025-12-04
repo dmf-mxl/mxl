@@ -145,7 +145,8 @@ jobs:
               cmake -S /workspace/mxl -B /workspace/mxl/build/${{ matrix.compiler }} \
                 --preset ${{ matrix.compiler }} \
                 -DMXL_BUILD_NUMBER=${{ github.run_number }} \
-                -DCMAKE_INSTALL_PREFIX=/workspace/mxl/install
+                -DCMAKE_INSTALL_PREFIX=/workspace/mxl/install \
+                -DMXL_ENABLE_FABRICS_OFI=ON  
             "
 
       - name: Save vcpkg cache
