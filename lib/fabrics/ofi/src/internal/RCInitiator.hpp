@@ -67,7 +67,7 @@ namespace mxl::lib::fabrics::ofi
 
         /** \brief Consume an event that was posted to the associated event queue.
          */
-        void processCompletion(Event);
+        void consume(Event);
 
         /** \brief Consume a completion that was posted to the associated completion queue.
          */
