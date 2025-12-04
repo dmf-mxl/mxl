@@ -309,9 +309,10 @@ namespace mxl::lib::fabrics::ofi
     void RCInitiator::addTarget(TargetInfo const& targetInfo)
     {
         auto endpoint = Endpoint::create(_domain);
-        auto proto = _proto->createInstance(Endpoint::tokenFromId(endpoint.id()), targetInfo);
+        auto id = endpoint.id();
+        auto proto = _proto->createInstance(Endpoint::tokenFromId(id), targetInfo);
 
-        _targets.emplace(endpoint.id(), RCInitiatorEndpoint{std::move(endpoint), std::move(proto), targetInfo});
+        _targets.emplace(id, RCInitiatorEndpoint{std::move(endpoint), std::move(proto), targetInfo});
     }
 
     void RCInitiator::removeTarget(TargetInfo const& targetInfo)
