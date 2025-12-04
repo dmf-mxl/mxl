@@ -9,13 +9,12 @@ namespace mxl::lib::fabrics::ofi
 
     std::vector<RemoteRegion> RMAGrainIngressProtocol::registerMemory(std::shared_ptr<Domain> domain)
     {
-        if (_localRegions)
+        if (_isMemoryRegistered)
         {
             throw Exception::invalidState("Memory is already registered.");
         }
 
         domain->registerRegions(_regions, FI_REMOTE_WRITE);
-        _localRegions = domain->localRegions();
         return domain->remoteRegions();
     }
 
@@ -38,7 +37,6 @@ namespace mxl::lib::fabrics::ofi
             }
             else
             {
-                MXL_INFO("Data in completion: {}", data->data().value_or(1000));
                 return Target::ReadResult{data->data()};
             }
         }

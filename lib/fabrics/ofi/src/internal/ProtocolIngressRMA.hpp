@@ -33,7 +33,7 @@ namespace mxl::lib::fabrics::ofi
         LocalRegion immDataRegion();
 
         std::vector<Region> _regions;
-        std::optional<std::vector<LocalRegion>> _localRegions{};
+        bool _isMemoryRegistered{false};
         std::optional<Target::ImmediateDataLocation> _immDataBuffer{};
     };
 

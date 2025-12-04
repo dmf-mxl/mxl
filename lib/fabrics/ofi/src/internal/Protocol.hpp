@@ -81,7 +81,7 @@ namespace mxl::lib::fabrics::ofi
     public:
         virtual ~EgressProtocolTemplate() = default;
 
-        virtual std::vector<LocalRegion> registerMemory(std::shared_ptr<Domain> domain) = 0;
+        virtual void registerMemory(std::shared_ptr<Domain> domain) = 0;
 
         virtual std::unique_ptr<EgressProtocol> createInstance(Completion::Token token, TargetInfo remoteInfo) = 0;
     };
