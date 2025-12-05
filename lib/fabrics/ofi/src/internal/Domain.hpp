@@ -87,6 +87,10 @@ namespace mxl::lib::fabrics::ofi
          */
         void close();
 
+        /** \brief Register a single memory region to this domain.
+         *
+         * The domain will own its own version of the registered memory region.
+         */
         [[nodiscard]]
         RegisteredRegion registerRegion(Region const& region, std::uint64_t access);
 

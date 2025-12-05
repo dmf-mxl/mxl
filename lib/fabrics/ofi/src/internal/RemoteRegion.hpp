@@ -19,6 +19,15 @@ namespace mxl::lib::fabrics::ofi
     struct RemoteRegion
     {
     public:
+        /** \brief Create a sub-region of this RemoteRegion.
+         *
+         * \param offset The offset within this region where the sub-region starts.
+         * \param length The length of the sub-region.
+         * \return A new RemoteRegion representing the specified sub-region.
+         */
+        [[nodiscard]]
+        RemoteRegion sub(std::uint64_t offset, std::size_t length) const noexcept;
+
         /** \brief Convert this RemoteRegion to a struct fi_rma_iov used by libfabric RMA transfer functions.
          */
         [[nodiscard]]
@@ -32,6 +41,8 @@ namespace mxl::lib::fabrics::ofi
         std::uint64_t rkey;
     };
 
+    /** \brief Represent a group of remote memory regions used for data transfer.
+     */
     class RemoteRegionGroup
     {
     public:
@@ -39,11 +50,17 @@ namespace mxl::lib::fabrics::ofi
         using const_iterator = std::vector<RemoteRegion>::const_iterator;
 
     public:
+        /** \brief Convert a vector of RemoteRegion into a RemoteRegionGroup
+         */
         RemoteRegionGroup(std::vector<RemoteRegion> group)
             : _inner(std::move(group))
             , _rmaIovs(rmaIovsFromGroup(_inner))
         {}
 
+        /** \brief Get a pointer to an array of fi_rma_iov structures representing the remote regions.
+         *
+         * The returned pointer is valid as long as this RemoteRegionGroup object is alive.
+         */
         [[nodiscard]]
         ::fi_rma_iov const* asRmaIovs() const noexcept;
 
@@ -88,17 +105,14 @@ namespace mxl::lib::fabrics::ofi
         }
 
     private:
+        /** \brief Convert a vector of RemoteRegion into a vector of fi_rma_iov structures. Used by the constructor.
+         */
         static std::vector<::fi_rma_iov> rmaIovsFromGroup(std::vector<RemoteRegion> group) noexcept;
 
-        [[nodiscard]]
-        std::vector<RemoteRegion> clone() const
-        {
-            return _inner;
-        }
-
     private:
-        std::vector<RemoteRegion> _inner;
+        std::vector<RemoteRegion> _inner; /**< The underlying remote regions */
 
-        std::vector<::fi_rma_iov> _rmaIovs;
+        std::vector<::fi_rma_iov>
+            _rmaIovs; /**< An alternative representation of the remote regions as fi_rma_iov structures. Must be kept synchronized with _inner. */
     };
 }
