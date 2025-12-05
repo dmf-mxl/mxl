@@ -7,6 +7,7 @@
 #include <memory>
 #include <mxl-internal/Logging.hpp>
 #include <rdma/fabric.h>
+#include <rdma/fi_eq.h>
 #include "AddressVector.hpp"
 #include "Exception.hpp"
 #include "FabricInfo.hpp"
@@ -43,7 +44,12 @@ namespace mxl::lib::fabrics::ofi
 
         auto endpoint = Endpoint::create(domain);
 
-        auto cq = CompletionQueue::open(domain, CompletionQueue::Attributes::defaults());
+        auto cqAttr = CompletionQueue::Attributes::defaults();
+        if (provider == Provider::EFA)
+        {
+            cqAttr.waitObject = FI_WAIT_NONE;
+        }
+        auto cq = CompletionQueue::open(domain, cqAttr);
         endpoint.bind(cq, FI_RECV | FI_TRANSMIT);
 
         // Connectionless endpoints must be bound to an address vector. Even if it is not using the address vector.
