@@ -11,11 +11,7 @@
     },
     "runArgs": [
         "--security-opt",
-        "apparmor:unconfined",
-        "-e",
-        "NVIDIA_DRIVER_CAPABILITIES=all",
-        "-e",
-        "NVIDIA_VISIBLE_DEVICES=all"
+        "apparmor:unconfined"
     ],
     "mounts": [
         // These 2 mount points are required for GUI applications to work in WSL2. Remove them if you are not using WSL2.
