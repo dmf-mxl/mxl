@@ -166,6 +166,7 @@ jobs:
       - name: Run Tests
         run: |
           docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
+            --shm-size=1g \
             -i mxl_build_container_with_source \
             bash -c "
               cd /workspace/mxl/build/${{ matrix.compiler }} && \
