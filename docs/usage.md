@@ -132,7 +132,7 @@ A few important rules fall straight out of the data structure:
 
 - Readers can only observe up to `bufferLength / 2` samples in one call. The other half of the buffer is considered “write in progress”, which prevents races when a writer is wrapping around.
 - `index` is inclusive: asking for `(headIndex, 256)` returns samples `headIndex - 255` through `headIndex`.
-- Always look at `slices.base.fragments[1].size` before assuming the sample window is contiguous.
+- Never assume the sample window is contiguous. Instead always treat the window as two contiguous slices, that may or may not be empty (i.e. have a `size` of `0`).
 - Continuous flows ride on the same slice/fragment helpers as discrete flows. `fragments[0]` and `fragments[1]` are slices of bytes, and `stride`
   identifies how far you have to slide (hence “stride”) to reach the same sample in the next channel.
 
