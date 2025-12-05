@@ -602,7 +602,7 @@ int main(int argc, char** argv)
     std::string flowOptionsFile;
     app.add_option("--flow-options", flowOptionsFile, "Flow options file. (Only used when invoking a Target)");
 
-    bool runAsInitiator;
+    bool runAsInitiator = false;
     auto runAsInitiatorOpt = app.add_flag("-i,--initiator",
         runAsInitiator,
         "Run as an initiator (flow reader + fabrics initiator). If not set, run as a receiver (fabrics target + flow writer).");
