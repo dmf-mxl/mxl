@@ -595,18 +595,18 @@ int main(int argc, char** argv)
         "Run as an initiator (flow reader + fabrics initiator). If not set, run as a receiver (fabrics target + flow writer).");
     runAsInitiatorOpt->default_val(false);
 
-    std::optional<std::string> node;
+    std::string node;
     auto nodeOpt = app.add_option("-n,--node",
         node,
         "This corresponds to the interface identifier of the fabrics endpoint, it can also be a logical address. This can be seen as the bind "
         "address when using sockets.");
-    nodeOpt->default_val(std::nullopt);
+    nodeOpt->default_val("");
 
-    std::optional<std::string> service;
+    std::string service;
     auto serviceOpt = app.add_option("--service",
         service,
         "This corresponds to a service identifier for the fabrics endpoint. This can be seen as the bind port when using sockets.");
-    serviceOpt->default_val(std::nullopt);
+    serviceOpt->default_val("");
 
     std::string provider;
     auto providerOpt = app.add_option("-p,--provider", provider, "The fabrics provider. One of (tcp, verbs or efa). Default is 'tcp'.");
@@ -644,8 +644,8 @@ int main(int argc, char** argv)
             Config{
                    .domain = domain,
                    .flowParser = descriptorParser,
-                   .node = node,
-                   .service = service,
+                   .node = node.empty() ? std::nullopt : std::optional<std::string>(node),
+                   .service = service.empty() ? std::nullopt : std::optional<std::string>(service),
                    .provider = mxlProvider,
                    },
         };
@@ -693,8 +693,8 @@ int main(int argc, char** argv)
             Config{
                    .domain = domain,
                    .flowParser = descriptorParser,
-                   .node = node,
-                   .service = service,
+                   .node = node.empty() ? std::nullopt : std::optional<std::string>(node),
+                   .service = service.empty() ? std::nullopt : std::optional<std::string>(service),
                    .provider = mxlProvider,
                    },
         };

@@ -154,7 +154,7 @@ namespace mxl::lib::fabrics::ofi
         return FabricInfo::clone(_raw);
     }
 
-    FabricInfoList FabricInfoList::get(std::string node, std::string service, Provider provider, uint64_t caps, ::fi_ep_type epType)
+    FabricInfoList FabricInfoList::get(char const* node, char const* service, Provider provider, uint64_t caps, ::fi_ep_type epType)
     {
         ::fi_info* info;
         auto hints = FabricInfo::empty();
@@ -169,7 +169,7 @@ namespace mxl::lib::fabrics::ofi
 
         // hints: add condition to append FI_HMEM capability if needed!
 
-        fiCall(::fi_getinfo, "Failed to get provider information", fiVersion(), node.c_str(), service.c_str(), FI_SOURCE, hints.raw(), &info);
+        fiCall(::fi_getinfo, "Failed to get provider information", fiVersion(), node, service, FI_SOURCE, hints.raw(), &info);
 
         return FabricInfoList{info};
     }

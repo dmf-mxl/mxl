@@ -117,7 +117,7 @@ namespace mxl::lib::fabrics::ofi
             throw Exception::make(MXL_ERR_NO_FABRIC, "No provider available.");
         }
 
-        auto caps = FI_WRITE;
+        auto caps = FI_RMA | FI_WRITE;
         caps |= config.deviceSupport ? FI_HMEM : 0;
 
         auto fabricInfoList = FabricInfoList::get(config.endpointAddress.node, config.endpointAddress.service, provider.value(), caps, FI_EP_RDM);
@@ -134,7 +134,12 @@ namespace mxl::lib::fabrics::ofi
 
         auto endpoint = Endpoint::create(domain);
 
-        auto cq = CompletionQueue::open(endpoint.domain());
+        auto cqAttr = CompletionQueue::Attributes::defaults();
+        if (provider == Provider::EFA)
+        {
+            cqAttr.waitObject = FI_WAIT_NONE;
+        }
+        auto cq = CompletionQueue::open(endpoint.domain(), cqAttr);
         endpoint.bind(cq, FI_TRANSMIT | FI_RECV);
 
         auto av = AddressVector::open(endpoint.domain());
