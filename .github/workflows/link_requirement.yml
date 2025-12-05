@@ -59,9 +59,9 @@ jobs:
 
       - name: Set 'Type' field to 'Feature' in GitHub Project
         env:
-          : ${{ secrets.GH_TOKEN}}
+          GH_TOKEN: ${{ secrets.GH_TOKEN}}
         run: |
-          curl -X POST -H "Authorization: bearer $GITHUB_TOKEN" -H "Content-Type: application/json" \
+          curl -X POST -H "Authorization: bearer $GH_TOKEN" -H "Content-Type: application/json" \
           -d '{
             "query": "mutation { updateProjectV2ItemFieldValue(input: {projectId: \"PROJECT_ID\", itemId: \"ITEM_ID\", fieldId: \"TYPE_FIELD_ID\", value: { singleSelectOptionId: \"FEATURE_OPTION_ID\" }}) { projectV2Item { id } } }"
           }' https://api.github.com/graphql
