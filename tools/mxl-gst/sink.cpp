@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+#include <chrono>
 #include <csignal>
 #include <cstddef>
 #include <cstdint>
@@ -441,7 +442,37 @@ namespace
                         expectedSlices = std::min<std::uint16_t>(grainInfo.totalSlices, grainInfo.validSlices + slicesPerBatch);
                     }
                 }
-                // TODO: Explicitly handle MXL_ERR_FLOW_INVALID
+                else if (ret == MXL_ERR_FLOW_INVALID)
+                {
+                    // The upstream flow writer has been closed or recreated. Try to reopen the flow reader.
+                    MXL_WARN("Flow became invalid at requested index {}. Attempting to reopen reader.", requestedIndex);
+
+                    // Clean up existing reader
+                    ::mxlReleaseFlowReader(_instance, _reader);
+                    _reader = nullptr;
+
+                    // Create a new reader
+                    auto const flowId = uuids::to_string(_configInfo.common.id);
+                    if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), "", &_reader); ret != MXL_STATUS_OK)
+                    {
+                        MXL_WARN("Failed to reopen flow reader with status code {}.", static_cast<int>(ret));
+                    }
+                    else
+                    {
+                        // Get the flow config info again
+                        if (auto const ret = mxlFlowReaderGetConfigInfo(_reader, &_configInfo); ret != MXL_STATUS_OK)
+                        {
+                            // Something is very wrong. we cannot recover from this.
+                            MXL_ERROR("Failed to get flow config info with status code {}. Exiting.", static_cast<int>(ret));
+                            return;
+                        }
+
+                        // Realign to current index.
+                        currentIndex = ::mxlGetCurrentIndex(&rate);
+                        requestedIndex = currentIndex - readDelayGrains;
+                        deliveryDeadline = ::mxlIndexToTimestamp(&rate, currentIndex + 1U);
+                    }
+                }
                 else if (ret == MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
                 {
                     // We are too early somehow, keep trying the same grain index
@@ -463,8 +494,43 @@ namespace
                 }
                 else
                 {
-                    MXL_ERROR("Unexpected error when reading the grain {} with status {}. Exiting.", requestedIndex, static_cast<int>(ret));
-                    return;
+                    // On any other error, verify if the _reader is nullptr (which indicates that the flow may have been invalidated).
+                    // In that case, try to recreate it. Otherwise, exit.
+                    if (_reader == nullptr)
+                    {
+                        // Create a new reader
+                        auto const flowId = uuids::to_string(_configInfo.common.id);
+                        if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), "", &_reader); ret != MXL_STATUS_OK)
+                        {
+                            MXL_WARN("Failed to reopen flow reader with status code {}.", static_cast<int>(ret));
+                            // Arbitrary wait time before retrying.
+                            std::this_thread::sleep_for(std::chrono::milliseconds{500});
+                        }
+                        else
+                        {
+                            // Get the flow config info again
+                            if (auto const ret = mxlFlowReaderGetConfigInfo(_reader, &_configInfo); ret != MXL_STATUS_OK)
+                            {
+                                // Something is very wrong. we cannot recover from this.
+                                MXL_ERROR("Failed to get flow config info with status code {}. Exiting.", static_cast<int>(ret));
+                                return;
+                            }
+                        }
+
+                        // Realign to current index. GStreamer repeats the last valid frame for missing data; consuming applications
+                        // should do the same.
+                        if (_reader != nullptr)
+                        {
+                            currentIndex = ::mxlGetCurrentIndex(&rate);
+                            requestedIndex = currentIndex - readDelayGrains;
+                            deliveryDeadline = ::mxlIndexToTimestamp(&rate, currentIndex + 1U);
+                        }
+                    }
+                    else
+                    {
+                        MXL_ERROR("Unexpected error when reading the grain {} with status {}. Exiting...", requestedIndex, static_cast<int>(ret));
+                        return;
+                    }
                 }
             }
         }
@@ -551,7 +617,37 @@ namespace
                     requestedIndex += windowSize;
                     deliveryDeadline = ::mxlIndexToTimestamp(&rate, currentIndex + windowSize);
                 }
-                // TODO: Explicitly handle MXL_ERR_FLOW_INVALID
+                else if (ret == MXL_ERR_FLOW_INVALID)
+                {
+                    // The upstream flow writer has been closed or recreated. Try to reopen the flow reader.
+                    MXL_WARN("Flow became invalid at requested index {}. Attempting to reopen reader.", requestedIndex);
+
+                    // Clean up existing reader
+                    ::mxlReleaseFlowReader(_instance, _reader);
+                    _reader = nullptr;
+
+                    // Create a new reader
+                    auto const flowId = uuids::to_string(_configInfo.common.id);
+                    if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), "", &_reader); ret != MXL_STATUS_OK)
+                    {
+                        MXL_WARN("Failed to reopen flow reader with status code {}.", static_cast<int>(ret));
+                    }
+                    else
+                    {
+                        // Get the flow config info again
+                        if (auto const ret = mxlFlowReaderGetConfigInfo(_reader, &_configInfo); ret != MXL_STATUS_OK)
+                        {
+                            // Something is very wrong. we cannot recover from this.
+                            MXL_ERROR("Failed to get flow config info with status code {}. Exiting.", static_cast<int>(ret));
+                            return;
+                        }
+
+                        // Realign to current index.
+                        currentIndex = ((::mxlTimestampToIndex(&rate, startTime) + (windowSize / 2U)) / windowSize) * windowSize;
+                        requestedIndex = currentIndex - readDelayGrains;
+                        deliveryDeadline = ::mxlIndexToTimestamp(&rate, currentIndex + windowSize);
+                    }
+                }
                 else if (ret == MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
                 {
                     // We are too early somehow, keep trying the same index
@@ -576,8 +672,45 @@ namespace
                 }
                 else
                 {
-                    MXL_ERROR("Unexpected error when reading samples at index {} with status {}. Exiting.", requestedIndex, static_cast<int>(ret));
-                    return;
+                    // On any other error, verify if the _reader is nullptr (which indicates that the flow may have been invalidated).
+                    // In that case, try to recreate it. Otherwise, exit.
+                    if (_reader == nullptr)
+                    {
+                        // Create a new reader
+                        auto const flowId = uuids::to_string(_configInfo.common.id);
+                        if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), "", &_reader); ret != MXL_STATUS_OK)
+                        {
+                            MXL_WARN("Failed to reopen flow reader with status code {}.", static_cast<int>(ret));
+                            // Arbitrary wait time before retrying.
+                            std::this_thread::sleep_for(std::chrono::milliseconds{500});
+                        }
+                        else
+                        {
+                            // Get the flow config info again
+                            if (auto const ret = ::mxlFlowReaderGetConfigInfo(_reader, &_configInfo); ret != MXL_STATUS_OK)
+                            {
+                                // Something is very wrong. we cannot recover from this.
+                                MXL_ERROR("Failed to get flow config info with status code {}. Exiting.", static_cast<int>(ret));
+                                return;
+                            }
+                        }
+
+                        // Realign to current index. GStreamer repeats the last valid frame for missing data; consuming applications
+                        // should do the same.
+                        if (_reader != nullptr)
+                        {
+                            currentIndex = ((::mxlTimestampToIndex(&rate, startTime) + (windowSize / 2U)) / windowSize) * windowSize;
+                            requestedIndex = currentIndex - readDelayGrains;
+                            deliveryDeadline = ::mxlIndexToTimestamp(&rate, currentIndex + windowSize);
+                        }
+                    }
+                    else
+                    {
+                        MXL_ERROR("Unexpected error when reading the samples at index {} with status {}. Exiting...",
+                            requestedIndex,
+                            static_cast<int>(ret));
+                        return;
+                    }
                 }
             }
         }
