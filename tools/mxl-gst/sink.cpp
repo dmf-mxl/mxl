@@ -1,12 +1,10 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <chrono>
 #include <csignal>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <filesystem>
 #include <fstream>
 #include <stdexcept>
 #include <string>
@@ -455,10 +453,11 @@ namespace
                     auto const flowId = uuids::to_string(_configInfo.common.id);
                     if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), "", &_reader); ret != MXL_STATUS_OK)
                     {
-                        MXL_WARN("Failed to reopen flow reader with status code {}.", static_cast<int>(ret));
+                        MXL_TRACE("Failed to reopen video flow reader with status code {}.", static_cast<int>(ret));
                     }
                     else
                     {
+                        MXL_INFO("Reconnected to video flow: {}.", flowId);
                         // Get the flow config info again
                         if (auto const ret = mxlFlowReaderGetConfigInfo(_reader, &_configInfo); ret != MXL_STATUS_OK)
                         {
@@ -484,7 +483,7 @@ namespace
                 {
                     auto runtimeInfo = ::mxlFlowRuntimeInfo{};
                     (void)::mxlFlowReaderGetRuntimeInfo(_reader, &runtimeInfo);
-                    MXL_WARN("Failed to get grain at index {}: TOO LATE. Last published {}", requestedIndex, runtimeInfo.headIndex);
+                    // MXL_WARN("Failed to get grain at index {}: TOO LATE. Last published {}", requestedIndex, runtimeInfo.headIndex);
 
                     // Grain expired. Realign to current index. GStreamer repeats the last valid frame for missing data; consuming applications
                     // should do the same.
@@ -502,12 +501,13 @@ namespace
                         auto const flowId = uuids::to_string(_configInfo.common.id);
                         if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), "", &_reader); ret != MXL_STATUS_OK)
                         {
-                            MXL_WARN("Failed to reopen flow reader with status code {}.", static_cast<int>(ret));
+                            MXL_TRACE("Failed to reopen video flow reader with status code {}.", static_cast<int>(ret));
                             // Arbitrary wait time before retrying.
                             std::this_thread::sleep_for(std::chrono::milliseconds{500});
                         }
                         else
                         {
+                            MXL_INFO("Reconnected to video flowId {}.", flowId);
                             // Get the flow config info again
                             if (auto const ret = mxlFlowReaderGetConfigInfo(_reader, &_configInfo); ret != MXL_STATUS_OK)
                             {
@@ -630,10 +630,11 @@ namespace
                     auto const flowId = uuids::to_string(_configInfo.common.id);
                     if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), "", &_reader); ret != MXL_STATUS_OK)
                     {
-                        MXL_WARN("Failed to reopen flow reader with status code {}.", static_cast<int>(ret));
+                        MXL_TRACE("Failed to reopen sound flow reader with status code {}.", static_cast<int>(ret));
                     }
                     else
                     {
+                        MXL_INFO("Reconnected to sound flow: {}.", flowId);
                         // Get the flow config info again
                         if (auto const ret = mxlFlowReaderGetConfigInfo(_reader, &_configInfo); ret != MXL_STATUS_OK)
                         {
@@ -643,7 +644,8 @@ namespace
                         }
 
                         // Realign to current index.
-                        currentIndex = ((::mxlTimestampToIndex(&rate, startTime) + (windowSize / 2U)) / windowSize) * windowSize;
+                        auto const curTime = ::mxlGetTime();
+                        currentIndex = ((::mxlTimestampToIndex(&rate, curTime) + (windowSize / 2U)) / windowSize) * windowSize;
                         requestedIndex = currentIndex - readDelayGrains;
                         deliveryDeadline = ::mxlIndexToTimestamp(&rate, currentIndex + windowSize);
                     }
@@ -653,10 +655,11 @@ namespace
                     // We are too early somehow, keep trying the same index
                     auto runtimeInfo = ::mxlFlowRuntimeInfo{};
                     (void)::mxlFlowReaderGetRuntimeInfo(_reader, &runtimeInfo);
+
                     // Please note that it can occasionally happen that the last published index in this report is beyond
                     // the requested index, because the flow has been commited to in between the point in time, when the
                     // call to mxlFlowReaderGetSamples() returned and the flow runtime info was fetched.
-                    MXL_WARN("Failed to get samples at index {}: TOO EARLY. Last published {}", requestedIndex, runtimeInfo.headIndex);
+                    MXL_TRACE("Failed to get samples at index {}: TOO EARLY. Last published {}", requestedIndex, runtimeInfo.headIndex);
                 }
                 else if (ret == MXL_ERR_OUT_OF_RANGE_TOO_LATE)
                 {
@@ -664,7 +667,7 @@ namespace
                     // should handle this better by inserting silence with a micro fades to prevent clicks and pops.
                     auto runtimeInfo = ::mxlFlowRuntimeInfo{};
                     (void)::mxlFlowReaderGetRuntimeInfo(_reader, &runtimeInfo);
-                    MXL_WARN("Failed to get samples at index {}: TOO LATE. Last published {}", requestedIndex, runtimeInfo.headIndex);
+                    MXL_TRACE("Failed to get samples at index {}: TOO LATE. Last published {}", requestedIndex, runtimeInfo.headIndex);
 
                     currentIndex = ((::mxlTimestampToIndex(&rate, startTime) + (windowSize / 2U)) / windowSize) * windowSize;
                     requestedIndex = currentIndex - readDelayGrains;
@@ -680,12 +683,13 @@ namespace
                         auto const flowId = uuids::to_string(_configInfo.common.id);
                         if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), "", &_reader); ret != MXL_STATUS_OK)
                         {
-                            MXL_WARN("Failed to reopen flow reader with status code {}.", static_cast<int>(ret));
+                            MXL_TRACE("Failed to reopen sound flow reader with status code {}.", static_cast<int>(ret));
                             // Arbitrary wait time before retrying.
                             std::this_thread::sleep_for(std::chrono::milliseconds{500});
                         }
                         else
                         {
+                            MXL_INFO("Reconnected to sound flow: {}.", flowId);
                             // Get the flow config info again
                             if (auto const ret = ::mxlFlowReaderGetConfigInfo(_reader, &_configInfo); ret != MXL_STATUS_OK)
                             {
@@ -699,7 +703,9 @@ namespace
                         // should do the same.
                         if (_reader != nullptr)
                         {
-                            currentIndex = ((::mxlTimestampToIndex(&rate, startTime) + (windowSize / 2U)) / windowSize) * windowSize;
+                            MXL_DEBUG("Realigning sound flow: {}.", flowId);
+                            auto const curTime = ::mxlGetTime();
+                            currentIndex = ((::mxlTimestampToIndex(&rate, curTime) + (windowSize / 2U)) / windowSize) * windowSize;
                             requestedIndex = currentIndex - readDelayGrains;
                             deliveryDeadline = ::mxlIndexToTimestamp(&rate, currentIndex + windowSize);
                         }
