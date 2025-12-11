@@ -144,7 +144,8 @@ jobs:
               cmake -S /workspace/mxl -B /workspace/mxl/build/${{ matrix.compiler }} \
                 --preset ${{ matrix.compiler }} \
                 -DMXL_BUILD_NUMBER=${{ github.run_number }} \
-                -DCMAKE_INSTALL_PREFIX=/workspace/mxl/install
+                -DCMAKE_INSTALL_PREFIX=/workspace/mxl/install \
+                -DMXL_ENABLE_FABRICS_OFI=ON  
             "
 
       - name: Save vcpkg cache
@@ -164,6 +165,7 @@ jobs:
       - name: Run Tests
         run: |
           docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
+            --shm-size=1g \
             -i mxl_build_container_with_source \
             bash -c "
               cd /workspace/mxl/build/${{ matrix.compiler }} && \

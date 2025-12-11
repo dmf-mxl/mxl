@@ -86,7 +86,7 @@ namespace mxl::lib::fabrics::ofi
 
     EventQueue::~EventQueue()
     {
-        close();
+        catchErrorAndLog([this]() { close(); }, "Failed to close event queue");
     }
 
     ::fid_eq* EventQueue::raw() noexcept

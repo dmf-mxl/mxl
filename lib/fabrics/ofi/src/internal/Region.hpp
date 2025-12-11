@@ -13,6 +13,8 @@
 #include <mxl-internal/FlowData.hpp>
 #include <rdma/fi_domain.h>
 #include "mxl/fabrics.h"
+#include "mxl/fabrics_ext.h"
+#include "DataLayout.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
@@ -37,7 +39,7 @@ namespace mxl::lib::fabrics::ofi
             static Location cuda(int deviceId) noexcept;
             /** \brief Convert between external and internal versions of this type
              */
-            static Location fromAPI(mxlFabricsMemoryRegionLocation loc);
+            static Location fromAPI(mxlFabricsExtMemoryRegionLocation loc);
 
             /** \brief Return the device id. For host location 0 is returned.
              */
@@ -191,50 +193,50 @@ namespace mxl::lib::fabrics::ofi
 
     /** \brief Represent a collection of memory regions.
      *
-     * This is the internal strucure representing mxlRegions API type.
+     * This is the internal strucure representing mxlFabricsRegions API type.
      */
     class MxlRegions
     {
     public:
         /** \brief Convert between external and internal versions of this type
          */
-        static MxlRegions* fromAPI(mxlRegions) noexcept;
+        static MxlRegions* fromAPI(mxlFabricsRegions) noexcept;
         /** \copydoc fromAPI() */
         [[nodiscard]]
-        mxlRegions toAPI() noexcept;
+        mxlFabricsRegions toAPI() noexcept;
 
         /** \brief View accessor for the underlying regions.
          */
         [[nodiscard]]
         std::vector<Region> const& regions() const noexcept;
 
-        // [[nodiscard]]
-        // DataLayout const& dataLayout() const noexcept;
+        [[nodiscard]]
+        DataLayout const& dataLayout() const noexcept;
 
     private:
-        friend MxlRegions mxlRegionsFromFlow(FlowData& flow);
-        friend MxlRegions mxlRegionsFromUser(mxlFabricsMemoryRegion const* regions, size_t count);
+        friend MxlRegions mxlFabricsRegionsFromFlow(FlowData const& flow);
+        friend MxlRegions mxlFabricsRegionsFromUser(mxlFabricsExtRegionsConfig const& config);
 
     private:
-        MxlRegions(std::vector<Region> regions /*,  DataLayout dataLayout*/)
+        MxlRegions(std::vector<Region> regions, DataLayout dataLayout)
             : _regions(std::move(regions))
-        // , _layout(std::move(dataLayout))
+            , _layout(std::move(dataLayout))
         {}
 
     private:
         std::vector<Region> _regions;
-        // DataLayout _layout;
+        DataLayout _layout;
     };
 
     /** \brief Convert a FlowData's memory regions to MxlRegions.
      *
      * FlowData are obtained from an MXL FlowWriter or FlowReader.
      */
-    MxlRegions mxlRegionsFromFlow(FlowData& flow);
+    MxlRegions mxlFabricsRegionsFromFlow(FlowData const& flow);
 
     /** \brief Convert user-provided memory regions to MxlRegions.
      *
      * Used to convert mxlFabricsMemoryRegion arrays provided by the user.
      */
-    MxlRegions mxlRegionsFromUser(mxlFabricsMemoryRegion const* regions, size_t count);
+    MxlRegions mxlFabricsRegionsFromUser(mxlFabricsExtRegionsConfig const& config);
 }
