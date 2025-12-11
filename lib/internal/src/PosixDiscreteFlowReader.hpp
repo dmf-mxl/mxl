@@ -44,6 +44,9 @@ namespace mxl::lib
         [[nodiscard]]
         virtual mxlFlowRuntimeInfo getFlowRuntimeInfo() const override;
 
+        /** \see DiscreteFlowReader::waitForGrain */
+        virtual mxlStatus waitForGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, std::uint64_t in_timeoutNs) const override;
+
         /** \see DiscreteFlowReader::getGrain */
         virtual mxlStatus getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, std::uint64_t in_timeoutNs, mxlGrainInfo* out_grainInfo,
             std::uint8_t** out_payload) override;
@@ -72,6 +75,15 @@ namespace mxl::lib
          * operating on a valid flow (i.e. that _flowData is a valid pointer).
          */
         mxlStatus getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo,
+            std::uint8_t** out_payload) const;
+
+        /**
+         * Implementation of the blocking form of getGrain() and waitForGrain()
+         * that can also be used by other methods that have previously asserted
+         * that we're operating on a valid flow (i.e. that _flowData is a valid
+         * pointer).
+         */
+        mxlStatus getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, std::uint64_t in_timeoutNs, mxlGrainInfo* out_grainInfo,
             std::uint8_t** out_payload) const;
 
     private:
