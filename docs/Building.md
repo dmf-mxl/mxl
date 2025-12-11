@@ -55,6 +55,24 @@ cmake .. --preset Linux-Clang-Debug
 cmake --build build/Linux-Clang-Debug --target all
 ```
 
+## Static build notes
+
+By default, the CMake presets build MXL as shared libraries. To build
+MXL as static libraries instead, use the CMake option
+`-DBUILD_SHARED_LIBS=OFF`.
+
+For example:
+
+```
+mkdir build
+cd build
+cmake .. --preset Linux-GCC-Debug -DBUILD_SHARED_LIBS=OFF
+cmake --build build/Linux-GCC-Debug --target all
+```
+
+PIC is enabled by default and can be disabled with
+`-DMXL_ENABLE_PIC=OFF`.
+
 ## macOS notes
 
 1. Install the [Homebrew](https://brew.sh) package manager

@@ -84,6 +84,20 @@ if(APPLE)
     set(ENV{PKG_CONFIG_PATH} "/Library/Frameworks/GStreamer.framework/Versions/1.0/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
 endif()
 
+# Default build is shared libraries.
+# Use '-DBUILD_SHARED_LIBS=OFF' for static build.
+option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
+
+# Default PIC ON for static builds.
+# Use -DMXL_ENABLE_PIC=OFF to disable PIC
+option(MXL_ENABLE_PIC "Enable PIC for static libraries" ON)
+
+# Policy: shared always PIC, static set to MXL_ENABLE_PIC.
+set(MXL_POSITION_INDEPENDENT_CODE ON)
+if(NOT BUILD_SHARED_LIBS)
+  set(MXL_POSITION_INDEPENDENT_CODE ${MXL_ENABLE_PIC})
+endif()
+
 add_subdirectory(lib)
 add_subdirectory(utils)
 if (BUILD_TOOLS)

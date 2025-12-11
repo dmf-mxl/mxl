@@ -1,12 +1,13 @@
-prefix=@CMAKE_INSTALL_PREFIX@
+prefix=@MXL_PKGCONFIG_PREFIX@
 exec_prefix=${prefix}
-libdir=@CMAKE_INSTALL_FULL_LIBDIR@
-includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
+libdir=@MXL_PKGCONFIG_LIBDIR@
+includedir=@MXL_PKGCONFIG_INCLUDEDIR@
 
 Name: libmxl
 Version: @PROJECT_VERSION@
 Description: Media eXchange Layer SDK
 Libs: -L${libdir} -lmxl
-Libs.private: -pthread -lmxl-common
+Requires.private: spdlog
+Libs.private: -pthread -lmxl-common -lstdc++ -lm
 Cflags: -I${includedir}
 

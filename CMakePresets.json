@@ -102,7 +102,8 @@
                 "CMAKE_EXE_LINKER_FLAGS": "-Wl,--exclude-libs=ALL -Wl,-z,defs -Wl,--as-needed",
                 "CMAKE_MODULE_LINKER_FLAGS": "-Wl,--exclude-libs=ALL -Wl,-z,defs -Wl,--as-needed",
                 "CMAKE_SHARED_LINKER_FLAGS": "-Wl,--exclude-libs=ALL -Wl,-z,defs -Wl,--as-needed",
-                "CMAKE_CXX_SCAN_FOR_MODULES": "OFF"
+                "CMAKE_CXX_SCAN_FOR_MODULES": "OFF",
+                "CMAKE_LINKER_TYPE": "LLD"
             }
         },
         {

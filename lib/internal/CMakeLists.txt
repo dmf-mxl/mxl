@@ -25,13 +25,14 @@ target_link_libraries(mxl-internal-headers
 
 # Common code, used by both the libmxl and libmxl-fabrics library
 # linking this does not give access to the internal headers.
-add_library(mxl-common SHARED)
+add_library(mxl-common)
 target_compile_features(mxl-common
         PUBLIC
             cxx_std_20
     )
 set_target_properties(mxl-common
         PROPERTIES 
+            POSITION_INDEPENDENT_CODE ${MXL_POSITION_INDEPENDENT_CODE}
             VISIBILITY_INLINES_HIDDEN ON
             C_VISIBILITY_PRESET       hidden
             CXX_VISIBILITY_PRESET     hidden
@@ -100,6 +101,13 @@ install(TARGETS mxl-common EXPORT ${PROJECT_NAME}-targets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+
+# Exported because mxl-common depends on this INTERFACE
+# target. INTERFACE targets install no files.
+install(TARGETS mxl-internal-headers
+        EXPORT ${PROJECT_NAME}-targets
+        COMPONENT ${PROJECT_NAME}-dev
     )
 
 add_subdirectory(tests)

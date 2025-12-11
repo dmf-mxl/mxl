@@ -44,7 +44,7 @@ target_link_libraries(mxl-fabrics-objects
     )
 set_target_properties(mxl-fabrics-objects
         PROPERTIES
-            POSITION_INDEPENDENT_CODE ON
+            POSITION_INDEPENDENT_CODE ${MXL_POSITION_INDEPENDENT_CODE}
             C_EXTENSIONS              OFF
             CXX_EXTENSIONS            OFF
     )
@@ -52,14 +52,14 @@ set_target_properties(mxl-fabrics-objects
 # Enable LTO/IPO on target if enabled and supported
 mxl_enable_target_ipo(mxl-fabrics-objects)
 
-add_library(mxl-fabrics SHARED)
+add_library(mxl-fabrics)
 target_link_libraries(mxl-fabrics
         PRIVATE
             mxl-fabrics-objects
     )
 set_target_properties(mxl-fabrics-objects
         PROPERTIES
-            POSITION_INDEPENDENT_CODE ON
+            POSITION_INDEPENDENT_CODE ${MXL_POSITION_INDEPENDENT_CODE}
             VISIBILITY_INLINES_HIDDEN ON
             C_VISIBILITY_PRESET       hidden
             CXX_VISIBILITY_PRESET     hidden

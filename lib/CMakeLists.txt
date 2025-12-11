@@ -43,14 +43,14 @@ install(DIRECTORY
 
 
 
-add_library(mxl SHARED)
+add_library(mxl)
 target_compile_features(mxl
         PRIVATE
             cxx_std_20
     )
 set_target_properties(mxl
         PROPERTIES
-            POSITION_INDEPENDENT_CODE ON      # Needed to bulid shared library later
+            POSITION_INDEPENDENT_CODE ${MXL_POSITION_INDEPENDENT_CODE}
             VISIBILITY_INLINES_HIDDEN ON
             C_VISIBILITY_PRESET       hidden
             CXX_VISIBILITY_PRESET     hidden
@@ -135,11 +135,29 @@ install(FILES
     )
 
 # Generate a pkg-config file
+set(MXL_PKGCONFIG_PREFIX     "${CMAKE_INSTALL_PREFIX}")
+set(MXL_PKGCONFIG_LIBDIR     "${CMAKE_INSTALL_FULL_LIBDIR}")
+set(MXL_PKGCONFIG_INCLUDEDIR "${CMAKE_INSTALL_FULL_INCLUDEDIR}")
 configure_file(
         ${CMAKE_CURRENT_LIST_DIR}/cmake/libmxl.pc.in
         ${CMAKE_CURRENT_BINARY_DIR}/libmxl.pc
         @ONLY
     )
+# Test-only .pc file in the build dir for pre-install test.
+if (BUILD_TESTING)
+    set(MXL_PKGCONFIG_PREFIX     "${CMAKE_CURRENT_BINARY_DIR}")
+    set(MXL_PKGCONFIG_LIBDIR     "${CMAKE_CURRENT_BINARY_DIR}")
+    set(MXL_PKGCONFIG_INCLUDEDIR "${CMAKE_SOURCE_DIR}/lib/include")
+
+    set(MXL_PKGCONFIG_TEST_DIR  "${CMAKE_BINARY_DIR}/pkgconfig_test")
+    file(MAKE_DIRECTORY "${MXL_PKGCONFIG_TEST_DIR}")
+
+    configure_file(
+        ${CMAKE_CURRENT_LIST_DIR}/cmake/libmxl.pc.in
+        ${MXL_PKGCONFIG_TEST_DIR}/libmxl.pc
+        @ONLY
+    )
+endif()
 
 # Install the generated pkg-config file
 install(FILES

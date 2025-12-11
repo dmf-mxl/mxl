@@ -79,6 +79,20 @@ include(CTest)
 include(Catch)
 catch_discover_tests(mxl-tests)
 
+set(MXL_LINKER_FLAG "")
+if(CMAKE_LINKER_TYPE STREQUAL "LLD")
+  set(MXL_LINKER_FLAG "${CMAKE_C_USING_LINKER_LLD}")
+endif()
+add_test(
+  NAME "pkg-config C consumer can link and run"
+  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_pkgconfig_c_link.sh
+          ${CMAKE_BINARY_DIR}
+          ${VCPKG_TARGET_TRIPLET}
+          ${BUILD_SHARED_LIBS}
+          MXL_LINKER_FLAG=${MXL_LINKER_FLAG}
+          ${CMAKE_C_COMPILER}
+)
+
 # Copy test files to the build directory
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
