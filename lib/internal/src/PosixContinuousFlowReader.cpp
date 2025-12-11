@@ -41,44 +41,44 @@ namespace mxl::lib
         return getFlowData().flowInfo()->runtime;
     }
 
+    mxlStatus PosixContinuousFlowReader::waitForSamples(std::uint64_t index, std::uint64_t timeoutNs) const
+    {
+        if (_flowData)
+        {
+            auto const result = getSamplesImpl(index, 0U, timeoutNs, nullptr);
+
+            // If we were ultimately too early, even with blocking for a
+            // certain amount of time it could very well be that we're
+            // operating on a stale flow, so we use the opportunity to check
+            // whether it's valid.
+            return ((result != MXL_ERR_OUT_OF_RANGE_TOO_EARLY) || isFlowValidImpl()) ? result : MXL_ERR_FLOW_INVALID;
+        }
+
+        return MXL_ERR_UNKNOWN;
+    }
+
     mxlStatus PosixContinuousFlowReader::getSamples(std::uint64_t index, std::size_t count, std::uint64_t timeoutNs,
         mxlWrappedMultiBufferSlice& payloadBuffersSlices)
     {
-        if (!_flowData)
+        if (_flowData)
         {
-            return MXL_ERR_UNKNOWN;
+            auto const result = getSamplesImpl(index, count, timeoutNs, &payloadBuffersSlices);
+
+            // If we were ultimately too early, even with blocking for a
+            // certain amount of time it could very well be that we're
+            // operating on a stale flow, so we use the opportunity to check
+            // whether it's valid.
+            return ((result != MXL_ERR_OUT_OF_RANGE_TOO_EARLY) || isFlowValidImpl()) ? result : MXL_ERR_FLOW_INVALID;
         }
 
-        auto const deadline = currentTime(Clock::Realtime) + Duration{static_cast<std::int64_t>(timeoutNs)};
-        auto result = MXL_ERR_UNKNOWN;
-        auto const flow = _flowData->flow();
-        auto const syncObject = std::atomic_ref{flow->state.syncCounter};
-        while (true)
-        {
-            auto const previousSyncCounter = syncObject.load(std::memory_order_acquire);
-            result = getSamplesImpl(index, count, payloadBuffersSlices);
-            // NOTE: Before C++26 there is no way to access the address of the object wrapped
-            //      by an atomic_ref. If there were it would be much more appropriate to pass
-            //      syncObject by reference here and only unwrap the underlying integer in the
-            //      implementation of waitUntilChanged.
-            if ((result != MXL_ERR_OUT_OF_RANGE_TOO_EARLY) || !waitUntilChanged(&flow->state.syncCounter, previousSyncCounter, deadline))
-            {
-                break;
-            }
-        }
-
-        // If we were ultimately too early, even with blocking for a
-        // certain amount of time it could very well be that we're
-        // operating on a stale flow, so we use the opportunity to check
-        // whether it's valid.
-        return ((result != MXL_ERR_OUT_OF_RANGE_TOO_EARLY) || isFlowValidImpl()) ? static_cast<mxlStatus>(result) : MXL_ERR_FLOW_INVALID;
+        return MXL_ERR_UNKNOWN;
     }
 
     mxlStatus PosixContinuousFlowReader::getSamples(std::uint64_t index, std::size_t count, mxlWrappedMultiBufferSlice& payloadBuffersSlices)
     {
         if (_flowData)
         {
-            auto const result = getSamplesImpl(index, count, payloadBuffersSlices);
+            auto const result = getSamplesImpl(index, count, &payloadBuffersSlices);
 
             // If we were too early it could very well be that we're operating
             // on a stale flow, so we use the opportunity to check whether it's
@@ -108,7 +108,7 @@ namespace mxl::lib
     }
 
     mxlStatus PosixContinuousFlowReader::getSamplesImpl(std::uint64_t index, std::size_t count,
-        mxlWrappedMultiBufferSlice& payloadBuffersSlices) const
+        mxlWrappedMultiBufferSlice* payloadBuffersSlices) const
     {
         if (auto const headIndex = _flowData->flowInfo()->runtime.headIndex; index <= headIndex)
         {
@@ -116,23 +116,26 @@ namespace mxl::lib
 
             if ((index >= minIndex) && ((index - minIndex) >= count))
             {
-                auto const startOffset = (index + _bufferLength - count) % _bufferLength;
-                auto const endOffset = (index % _bufferLength);
+                if (payloadBuffersSlices != nullptr)
+                {
+                    auto const startOffset = (index + _bufferLength - count) % _bufferLength;
+                    auto const endOffset = (index % _bufferLength);
 
-                auto const firstLength = (startOffset < endOffset) ? count : _bufferLength - startOffset;
-                auto const secondLength = count - firstLength;
+                    auto const firstLength = (startOffset < endOffset) ? count : _bufferLength - startOffset;
+                    auto const secondLength = count - firstLength;
 
-                auto const baseBufferPtr = static_cast<std::uint8_t const*>(_flowData->channelData());
-                auto const sampleWordSize = _flowData->sampleWordSize();
+                    auto const baseBufferPtr = static_cast<std::uint8_t const*>(_flowData->channelData());
+                    auto const sampleWordSize = _flowData->sampleWordSize();
 
-                payloadBuffersSlices.base.fragments[0].pointer = baseBufferPtr + sampleWordSize * startOffset;
-                payloadBuffersSlices.base.fragments[0].size = sampleWordSize * firstLength;
+                    payloadBuffersSlices->base.fragments[0].pointer = baseBufferPtr + sampleWordSize * startOffset;
+                    payloadBuffersSlices->base.fragments[0].size = sampleWordSize * firstLength;
 
-                payloadBuffersSlices.base.fragments[1].pointer = baseBufferPtr;
-                payloadBuffersSlices.base.fragments[1].size = sampleWordSize * secondLength;
+                    payloadBuffersSlices->base.fragments[1].pointer = baseBufferPtr;
+                    payloadBuffersSlices->base.fragments[1].size = sampleWordSize * secondLength;
 
-                payloadBuffersSlices.stride = sampleWordSize * _bufferLength;
-                payloadBuffersSlices.count = _channelCount;
+                    payloadBuffersSlices->stride = sampleWordSize * _bufferLength;
+                    payloadBuffersSlices->count = _channelCount;
+                }
 
                 return MXL_STATUS_OK;
             }
@@ -143,4 +146,24 @@ namespace mxl::lib
         return MXL_ERR_OUT_OF_RANGE_TOO_EARLY;
     }
 
+    mxlStatus PosixContinuousFlowReader::getSamplesImpl(std::uint64_t index, std::size_t count, std::uint64_t timeoutNs,
+        mxlWrappedMultiBufferSlice* payloadBuffersSlices) const
+    {
+        auto const deadline = currentTime(Clock::Realtime) + Duration{static_cast<std::int64_t>(timeoutNs)};
+        auto const flow = _flowData->flow();
+        auto const syncObject = std::atomic_ref{flow->state.syncCounter};
+        while (true)
+        {
+            auto const previousSyncCounter = syncObject.load(std::memory_order_acquire);
+            auto const result = getSamplesImpl(index, count, payloadBuffersSlices);
+            // NOTE: Before C++26 there is no way to access the address of the object wrapped
+            //      by an atomic_ref. If there were it would be much more appropriate to pass
+            //      syncObject by reference here and only unwrap the underlying integer in the
+            //      implementation of waitUntilChanged.
+            if ((result != MXL_ERR_OUT_OF_RANGE_TOO_EARLY) || !waitUntilChanged(&flow->state.syncCounter, previousSyncCounter, deadline))
+            {
+                return result;
+            }
+        }
+    }
 }
