@@ -12,10 +12,10 @@
 #include <gst/app/gstappsink.h>
 #include <gst/gst.h>
 #include <gst/gstsystemclock.h>
+#include <picojson/picojson.h>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
-#include "mxl-internal/FlowOptionsParser.hpp"
 #include "mxl-internal/FlowParser.hpp"
 #include "mxl-internal/Logging.hpp"
 
@@ -783,6 +783,35 @@ namespace
     }
 }
 
+/**
+ * Update the group-hint tag in the provided nmos flow json definition.
+ *
+ * @param nmosFlow The json nmos flow.
+ * @param groupHint The group-hint value to set.
+ * @param roleInGroup The role-in-group vaue to set in the group-hint tag.
+ * @return The updated nmos flow json definition.
+ */
+std::string updateGroupHintInFlow(std::string const& nmosFlow, std::string const& groupHint, std::string const& roleInGroup)
+{
+    // Parse the nmos flow json
+    auto jsonValue = picojson::value{};
+    auto const err = picojson::parse(jsonValue, nmosFlow);
+    if (!err.empty())
+    {
+        throw std::invalid_argument{"Failed to parse nmos flow: " + err};
+    }
+
+    // Add (or replace) the group-hint tag
+    auto& jsonObj = jsonValue.get<picojson::object>();
+    auto& tagsObj = jsonObj.find("tags")->second.get<picojson::object>();
+    auto& tagsArray = tagsObj["urn:x-nmos:tag:grouphint/v1.0"].get<picojson::array>();
+    tagsArray.clear();
+    tagsArray.emplace_back(groupHint + ":" + roleInGroup);
+
+    // Serialize back to json string
+    return picojson::value(jsonObj).serialize();
+}
+
 int main(int argc, char** argv)
 {
     std::signal(SIGINT, &signal_handler);
@@ -834,6 +863,10 @@ int main(int argc, char** argv)
     auto textOverlayOpt = app.add_option("-t,--overlay-text", textOverlay, "Change the text overlay of the test source");
     textOverlayOpt->default_val("EBU DMF MXL");
 
+    auto groupHint = std::string{};
+    auto groupHintOpt = app.add_option("-g, --group-hint", groupHint, "The group-hint value to use in the flow json definition");
+    groupHintOpt->default_val("mxl-gst-testsrc-group");
+
     CLI11_PARSE(app, argc, argv);
 
     ::gst_init(nullptr, nullptr);
@@ -856,7 +889,9 @@ int main(int argc, char** argv)
 
                     auto const flowOptions = !videoFlowOptionFile.empty() ? readFile(videoFlowOptionFile) : std::string{};
 
-                    auto mxlWriter = MxlWriter{domain, flowNmosDesc, flowOptions};
+                    auto const updatedFlowNmosDesc = updateGroupHintInFlow(flowNmosDesc, groupHint, "video");
+
+                    auto mxlWriter = MxlWriter{domain, updatedFlowNmosDesc, flowOptions};
 
                     auto const frameHeight = static_cast<std::uint64_t>(flowNmos.get<double>("frame_height"));
                     if (mxlWriter.maxCommitBatchSizeHint() > frameHeight)
@@ -899,10 +934,10 @@ int main(int argc, char** argv)
                 {
                     auto const flowNmosDesc = readFile(audioFlowConfigFile);
                     auto flowNmos = mxl::lib::FlowParser{flowNmosDesc};
-
                     auto const flowOptions = !audioFlowOptionFile.empty() ? readFile(audioFlowOptionFile) : std::string{};
+                    auto const updatedFlowNmosDesc = updateGroupHintInFlow(flowNmosDesc, groupHint, "audio");
 
-                    auto mxlWriter = MxlWriter{domain, flowNmosDesc, flowOptions};
+                    auto mxlWriter = MxlWriter{domain, updatedFlowNmosDesc, flowOptions};
 
                     auto const gstConfig = AudioPipelineConfig{
                         .sampleRate = flowNmos.getGrainRate(),
