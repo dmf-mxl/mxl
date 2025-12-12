@@ -335,7 +335,7 @@ extern "C"
 MXL_EXPORT
 mxlStatus mxlFlowReaderGetGrain(mxlFlowReader reader, uint64_t index, uint64_t timeoutNs, mxlGrainInfo* grainInfo, uint8_t** payload)
 {
-    return mxlFlowReaderGetGrainSlice(reader, index, UINT16_MAX, timeoutNs, grainInfo, payload);
+    return mxlFlowReaderGetGrainSlice(reader, index, MXL_GRAIN_VALID_SLICES_ALL, timeoutNs, grainInfo, payload);
 }
 
 extern "C"
@@ -365,7 +365,7 @@ extern "C"
 MXL_EXPORT
 mxlStatus mxlFlowReaderGetGrainNonBlocking(mxlFlowReader reader, uint64_t index, mxlGrainInfo* grainInfo, uint8_t** payload)
 {
-    return mxlFlowReaderGetGrainSliceNonBlocking(reader, index, UINT16_MAX, grainInfo, payload);
+    return mxlFlowReaderGetGrainSliceNonBlocking(reader, index, MXL_GRAIN_VALID_SLICES_ALL, grainInfo, payload);
 }
 
 extern "C"
