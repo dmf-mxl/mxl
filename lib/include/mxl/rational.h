@@ -14,6 +14,8 @@ extern "C"
 {
 #endif
 
+#define MXL_UNDEFINED_INDEX UINT64_MAX
+
     typedef struct mxlRational_t
     {
         int64_t numerator;
