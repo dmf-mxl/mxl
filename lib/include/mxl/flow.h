@@ -150,6 +150,8 @@ extern "C"
     typedef struct mxlFlowReader_t* mxlFlowReader;
     typedef struct mxlFlowWriter_t* mxlFlowWriter;
 
+    typedef struct mxlFlowSynchronizationGroup_t* mxlFlowSynchronizationGroup;
+
     /**
      * Attempt to create a flow writer for a given flow definition. If the flow does not exist already, it is created and 'created' will be set to
      * true. If the flow exists, it will be opened and 'created' will be set to false. If the flow exists already it is not guaranteed that the flow
@@ -442,6 +444,105 @@ extern "C"
      */
     MXL_EXPORT
     mxlStatus mxlFlowWriterCommitSamples(mxlFlowWriter writer);
+
+    /**
+     * Create a new, empty synchronization group that can be used to synchronize on data availability across multiple flows in parallel.
+     * \param[in] instance The instance to which the flow readers handled by this group belong.
+     * \param[out] group A handle referring to the newly created group.
+     *
+     * \return MXL_STATUS_OK if the group was successfully created.
+     */
+    MXL_EXPORT
+    mxlStatus mxlCreateFlowSynchronizationGroup(mxlInstance instance, mxlFlowSynchronizationGroup* group);
+
+    /**
+     * Release a synchronization group that is no longer needed and free all underlying resources associated with it.
+     * \param[in] instance the instance on which the group was previously created.
+     * \param[in] group A handle referring to the group that should be released.
+     *
+     * \return MXL_STATUS_OK if the group was successfully released.
+     */
+    MXL_EXPORT
+    mxlStatus mxlReleaseFlowSynchronizationGroup(mxlInstance instance, mxlFlowSynchronizationGroup group);
+
+    /**
+     * Add a flow reader to a synchronization group. This can either be a reader
+     * for a continuous, sample based flow or a discrete, grain based flow. For
+     * sample based flows this causes the wait operation of the group to wait
+     * for the sample belonging to the specified timestamp to become available.
+     * For grain based flows this causes the wait operation of the group to wait
+     * for the grain belonging to the specified timestamp to become fully
+     * available.
+     *
+     * \param[in] group A handle to the synchronization group, to which the flow
+     *      reader shall be added.
+     * \param[in] reader A handle to a flow reader that shall be added to the
+     *      synchronization group.
+     *
+     * \return MXL_STATUS_OK if the reader was successfully added to the
+     *      synchronization group.
+     *
+     * \note Please note that a reader can only be added to a group once and
+     *      attempts to add the same reader multiple times are ignored, except
+     *      that for grain based readers the number of valid slices to wait for
+     *      is updated to the value matching the last add operation.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowSynchronizationGroupAddReader(mxlFlowSynchronizationGroup group, mxlFlowReader reader);
+
+    /**
+     * Add a grain based flow reader to a synchronization group. This causes the
+     * wait operation of the group to wait for at least \p minValidSlices of the
+     * grain belonging to the specified timestamp to become.
+     *
+     * \param[in] group A handle to the synchronization group, to which the flow
+     *      reader shall be added.
+     * \param[in] reader A handle to a discrete flow reader that shall be added
+     *      to the synchronization group.
+     * \param[in] minValidSlices The number of valid slices to wait for within a
+     *      grain of the flow the reader operates on.
+     *
+     * \return MXL_STATUS_OK if the reader was successfully added to the
+     *      synchronization group.
+     *
+     * \note Please note that a reader can only be added to a group once and
+     *      attempts to add the same reader multiple times are ignored, except
+     *      that the number of valid slices to wait for is updated to the value
+     *      matching the last add operation.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowSynchronizationGroupAddPartialGrainReader(mxlFlowSynchronizationGroup group, mxlFlowReader reader, uint16_t minValidSlices);
+
+    /**
+     * Remove a flow reader from a synchronization group.
+     *
+     * \param[in] group A handle to the synchronization group, from which the
+     *      flow reader shall be removed.
+     * \param[in] reader A handle to a flow reader that shall be removed from
+     *      the synchronization group.
+     *
+     * \return MXL_STATUS_OK if the reader was successfully removed from the
+     *      synchronization group.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowSynchronizationGroupRemoveReader(mxlFlowSynchronizationGroup group, mxlFlowReader reader);
+
+    /**
+     * Wait for the data corresponding to the specified timestamp to become
+     * available accross all flows currently added to the group.
+     *
+     * \param[in] group A handle to the synchronization group that specifies the
+     *      flows on which to wait for data.
+     * \param[in] timestamp The timestamp for which to wait for corresponding
+     *      data on each flow.
+     * \param[in] timeoutNs How long to wait for all data to become available
+     *      (in nanoseconds).
+     *
+     * \return MXL_STATUS_OK if the data corresponding to the specified
+     *      timestamp has become available.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowSynchronizationGroupWaitForDataAt(mxlFlowSynchronizationGroup group, uint64_t timestamp, uint64_t timeoutNs);
 #ifdef __cplusplus
 }
 #endif

@@ -584,3 +584,145 @@ mxlStatus mxlFlowWriterCommitSamples(mxlFlowWriter writer)
         return MXL_ERR_UNKNOWN;
     }
 }
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlCreateFlowSynchronizationGroup(mxlInstance instance, mxlFlowSynchronizationGroup* group)
+{
+    try
+    {
+        auto const cppInstance = to_Instance(instance);
+        if (cppInstance != nullptr)
+        {
+            *group = reinterpret_cast<mxlFlowSynchronizationGroup>(cppInstance->createFlowSynchronizationGroup());
+            return MXL_STATUS_OK;
+        }
+
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlReleaseFlowSynchronizationGroup(mxlInstance instance, mxlFlowSynchronizationGroup group)
+{
+    try
+    {
+        auto const cppInstance = to_Instance(instance);
+        auto const cppGroup = to_FlowSynchronizationGroup(group);
+        if ((cppInstance != nullptr) && (cppGroup != nullptr))
+        {
+            cppInstance->releaseFlowSynchronizationGroup(cppGroup);
+            return MXL_STATUS_OK;
+        }
+
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowSynchronizationGroupAddReader(mxlFlowSynchronizationGroup group, mxlFlowReader reader)
+{
+    try
+    {
+        if (auto const cppGroup = to_FlowSynchronizationGroup(group); cppGroup != nullptr)
+        {
+            if (auto const cppReader = to_FlowReader(reader); cppReader != nullptr)
+            {
+                if (auto const discreteReader = dynamic_cast<DiscreteFlowReader const*>(cppReader); discreteReader != nullptr)
+                {
+                    cppGroup->addReader(*discreteReader, MXL_GRAIN_VALID_SLICES_ALL);
+                    return MXL_STATUS_OK;
+                }
+                if (auto const continuousReader = dynamic_cast<ContinuousFlowReader const*>(cppReader); continuousReader != nullptr)
+                {
+                    cppGroup->addReader(*continuousReader);
+                    return MXL_STATUS_OK;
+                }
+            }
+
+            return MXL_ERR_INVALID_FLOW_READER;
+        }
+
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowSynchronizationGroupAddPartialGrainReader(mxlFlowSynchronizationGroup group, mxlFlowReader reader, uint16_t minValidSlices)
+{
+    try
+    {
+        if (auto const cppGroup = to_FlowSynchronizationGroup(group); cppGroup != nullptr)
+        {
+            if (auto const cppReader = dynamic_cast<DiscreteFlowReader const*>(to_FlowReader(reader)); cppReader != nullptr)
+            {
+                cppGroup->addReader(*cppReader, minValidSlices);
+                return MXL_STATUS_OK;
+            }
+
+            return MXL_ERR_INVALID_FLOW_READER;
+        }
+
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowSynchronizationGroupRemoveReader(mxlFlowSynchronizationGroup group, mxlFlowReader reader)
+{
+    try
+    {
+        auto const cppGroup = to_FlowSynchronizationGroup(group);
+        auto const cppReader = to_FlowReader(reader);
+        if ((cppGroup != nullptr) && (cppReader != nullptr))
+        {
+            cppGroup->removeReader(*cppReader);
+            return MXL_STATUS_OK;
+        }
+
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowSynchronizationGroupWaitForDataAt(mxlFlowSynchronizationGroup group, uint64_t timestamp, uint64_t timeoutNs)
+{
+    try
+    {
+        if (auto const cppGroup = to_FlowSynchronizationGroup(group); cppGroup != nullptr)
+        {
+            return cppGroup->waitForDataAt(Timepoint{static_cast<std::int64_t>(timestamp)}, toDeadline(timeoutNs));
+        }
+
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}

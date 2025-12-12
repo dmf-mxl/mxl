@@ -194,11 +194,14 @@ namespace mxl::lib
     /// Utility function to convert from a C mxlInstance handle to a C++ Instance class
     Instance* to_Instance(mxlInstance instance) noexcept;
 
-    /// Utility function to convert from a C mxlFlowReader handle to a C++ FlowReaders instance.
+    /// Utility function to convert from a C mxlFlowReader handle to a C++ FlowReader instance.
     FlowReader* to_FlowReader(mxlFlowReader reader) noexcept;
 
     /// Utility function to convert from a C mxlFlowWriter handle to a C++ FlowWriter instance.
     FlowWriter* to_FlowWriter(mxlFlowWriter writer) noexcept;
+
+    /// Utility function to convert from a C mxlFlowSynchronizationGroup handle to a C++ FlowSynchronizationGroup instance.
+    FlowSynchronizationGroup* to_FlowSynchronizationGroup(mxlFlowSynchronizationGroup group) noexcept;
 
     /**************************************************************************/
     /* Inline implementation.                                                 */
@@ -254,6 +257,11 @@ namespace mxl::lib
     inline FlowWriter* to_FlowWriter(mxlFlowWriter writer) noexcept
     {
         return reinterpret_cast<FlowWriter*>(writer);
+    }
+
+    inline FlowSynchronizationGroup* to_FlowSynchronizationGroup(mxlFlowSynchronizationGroup group) noexcept
+    {
+        return reinterpret_cast<FlowSynchronizationGroup*>(group);
     }
 
 } // namespace mxl::lib
