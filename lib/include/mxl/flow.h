@@ -21,12 +21,24 @@ extern "C"
 #endif
 
 /*
- * A grain can be marked as invalid for multiple reasons. for example, an input application may have
+ * A grain can be marked as invalid for multiple reasons. For example, an input application may have
  * timed out before receiving a grain in time, etc.  Writing grain marked as invalid is the proper way
  * to make the ringbuffer <move forward> whilst letting consumers know that the grain is invalid. A consumer
  * may choose to repeat the previous grain, insert silence, etc.
  */
 #define MXL_GRAIN_FLAG_INVALID 0x00000001 // 1 << 0.
+
+/**
+ * A symbolic constant that may be passed to functions as their "min valid slices" parameter, in order to
+ * indicate that no minimum is imposed and any number of valid slices will do.
+ */
+#define MXL_GRAIN_VALID_SLICES_ANY ((uint16_t)0)
+
+/**
+ * A symbolic constant that may be passed to functions as their "min valid slices" parameter, in order to
+ * indicate that all slices need to be available and partial grains are not acceptable.
+ */
+#define MXL_GRAIN_VALID_SLICES_ALL ((uint16_t)UINT16_MAX)
 
     /**
      * A helper type used to describe consecutive sequences of bytes in memory.
@@ -53,7 +65,7 @@ extern "C"
 
     /**
      * A helper type used to describe consecutive sequences of bytes
-     * in a ring buffer that may potentially straddle the wrapraround
+     * in a ring buffer that may potentially straddle the wraparound
      * point of the buffer.
      */
     typedef struct mxlWrappedBufferSlice_t
@@ -63,7 +75,7 @@ extern "C"
 
     /**
      * A helper type used to describe consecutive sequences of mutable bytes in
-     * a ring buffer that may potentially straddle the wrapraround point of the
+     * a ring buffer that may potentially straddle the wraparound point of the
      * buffer.
      */
     typedef struct mxlMutableWrappedBufferSlice_t
@@ -125,7 +137,7 @@ extern "C"
         uint32_t flags;
         /// Size in bytes of the complete payload of a grain
         uint32_t grainSize;
-        /// Number of slices that make up a full grain. A slice is the elemental data type that can be comitted to a grain. For video, this is a
+        /// Number of slices that make up a full grain. A slice is the elemental data type that can be committed to a grain. For video, this is a
         /// single line of a picture in the specified format. For data, this is a byte of data.
         uint16_t totalSlices;
         /// How many slices of the grain are currently valid (committed). This is typically used when writing individual slices instead of a full
@@ -147,7 +159,7 @@ extern "C"
      * \param[in] options Additional options (undefined).
      *     \todo Specify and used the additional options.
      * \param[out] info A pointer to an mxlFlowConfigInfo structure.
-     *     If not the nullptr, this structure will be updated with the flow
+     *     If not the null pointer, this structure will be updated with the flow
      *     information after the flow is created.
      */
     MXL_EXPORT
@@ -350,7 +362,7 @@ extern "C"
 
     /**
      * Inform mxl that a user is done writing the grain that was previously opened.  This will in turn signal all readers waiting on the ringbuffer
-     * that a new grain is available.  The mxlGrainInfo flags field in shared memory will be updated based on grain->flags This will increase the head
+     * that a new grain is available. The mxlGrainInfo flags field in shared memory will be updated based on grain->flags This will increase the head
      * and potentially the tail IF this grain is the new head.
      *
      * \return The result code. \see mxlStatus
