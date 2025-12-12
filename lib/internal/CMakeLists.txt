@@ -50,6 +50,7 @@ target_sources(mxl-common
             src/FlowOptionsParser.cpp
             src/FlowParser.cpp
             src/FlowReader.cpp
+            src/FlowSynchronizationGroup.cpp
             src/FlowWriter.cpp
             src/Instance.cpp
             src/Logging.cpp
