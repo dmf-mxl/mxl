@@ -80,6 +80,7 @@ namespace mxl::lib
         , _readers{}
         , _writers{}
         , _mutex{}
+        , _syncGroups{}
         , _options{options}
         , _historyDuration{200'000'000ULL}
         , _watcher{}
@@ -182,7 +183,11 @@ namespace mxl::lib
                     {
                         _watcher->removeFlow(id, WatcherType::READER);
                     }
-                    // TODO: Remove from the synchronization groups
+                    // Remove from the synchronization groups
+                    for (auto& group : _syncGroups)
+                    {
+                        group.removeReader(*reader);
+                    }
                     _readers.erase(pos);
                 }
             }
@@ -476,4 +481,22 @@ namespace mxl::lib
         return _historyDuration;
     }
 
+    FlowSynchronizationGroup* Instance::createFlowSynchronizationGroup()
+    {
+        return &_syncGroups.emplace_front();
+    }
+
+    void Instance::releaseFlowSynchronizationGroup(FlowSynchronizationGroup const* group)
+    {
+        auto prev = _syncGroups.before_begin();
+        for (auto current = std::next(prev); current != _syncGroups.end(); ++current)
+        {
+            if (&(*current) == group)
+            {
+                _syncGroups.erase_after(prev);
+                return;
+            }
+            prev = current;
+        }
+    }
 } // namespace mxl::lib
