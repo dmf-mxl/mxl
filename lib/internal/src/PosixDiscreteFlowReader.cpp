@@ -74,12 +74,12 @@ namespace mxl::lib
         return getFlowData().flowInfo()->runtime;
     }
 
-    mxlStatus PosixDiscreteFlowReader::waitForGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, std::uint64_t in_timeoutNs) const
+    mxlStatus PosixDiscreteFlowReader::waitForGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, Timepoint in_deadline) const
     {
         auto result = MXL_ERR_UNKNOWN;
         if (_flowData)
         {
-            result = getGrainImpl(in_index, in_minValidSlices, in_timeoutNs, nullptr, nullptr);
+            result = getGrainImpl(in_index, in_minValidSlices, in_deadline, nullptr, nullptr);
             if (result == MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
             {
                 // If we were ultimately too early, even with blocking for a certain amount
@@ -94,13 +94,13 @@ namespace mxl::lib
         return result;
     }
 
-    mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, std::uint64_t in_timeoutNs,
+    mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, Timepoint in_deadline,
         mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload)
     {
         auto result = MXL_ERR_UNKNOWN;
         if (_flowData)
         {
-            result = getGrainImpl(in_index, in_minValidSlices, in_timeoutNs, out_grainInfo, out_payload);
+            result = getGrainImpl(in_index, in_minValidSlices, in_deadline, out_grainInfo, out_payload);
             if (result == MXL_STATUS_OK)
             {
                 // We ignore the return value of updateFileAccessTime. It may fail if the domain is in a read-only volume.
@@ -192,10 +192,9 @@ namespace mxl::lib
         return result;
     }
 
-    mxlStatus PosixDiscreteFlowReader::getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, std::uint64_t in_timeoutNs,
+    mxlStatus PosixDiscreteFlowReader::getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, Timepoint in_deadline,
         mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload) const
     {
-        auto const deadline = currentTime(Clock::Realtime) + Duration{static_cast<std::int64_t>(in_timeoutNs)};
         auto const flow = _flowData->flow();
         auto const syncObject = std::atomic_ref{flow->state.syncCounter};
         while (true)
@@ -210,7 +209,7 @@ namespace mxl::lib
             //      by an atomic_ref. If there were it would be much more appropriate to pass
             //      syncObject by reference here and only unwrap the underlying integer in the
             //      implementation of waitUntilChanged.
-            if ((result != MXL_ERR_OUT_OF_RANGE_TOO_EARLY) || !waitUntilChanged(&flow->state.syncCounter, previousSyncCounter, deadline))
+            if ((result != MXL_ERR_OUT_OF_RANGE_TOO_EARLY) || !waitUntilChanged(&flow->state.syncCounter, previousSyncCounter, in_deadline))
             {
                 return result;
             }

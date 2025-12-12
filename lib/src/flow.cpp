@@ -13,6 +13,14 @@
 #include "mxl-internal/Logging.hpp"
 #include "mxl-internal/PathUtils.hpp"
 
+namespace
+{
+    mxl::lib::Timepoint toDeadline(std::uint64_t timeoutNs) noexcept
+    {
+        return currentTime(mxl::lib::Clock::Realtime) + mxl::lib::Duration{static_cast<std::int64_t>(timeoutNs)};
+    }
+}
+
 using namespace mxl::lib;
 
 extern "C"
@@ -341,7 +349,7 @@ mxlStatus mxlFlowReaderGetGrainSlice(mxlFlowReader reader, uint64_t index, uint1
         {
             if (auto const cppReader = dynamic_cast<DiscreteFlowReader*>(to_FlowReader(reader)); cppReader != nullptr)
             {
-                return cppReader->getGrain(index, minValidSlices, timeoutNs, grainInfo, payload);
+                return cppReader->getGrain(index, minValidSlices, toDeadline(timeoutNs), grainInfo, payload);
             }
             return MXL_ERR_INVALID_FLOW_READER;
         }
@@ -482,7 +490,7 @@ mxlStatus mxlFlowReaderGetSamples(mxlFlowReader reader, uint64_t index, size_t c
         {
             if (auto const cppReader = dynamic_cast<ContinuousFlowReader*>(to_FlowReader(reader)); cppReader != nullptr)
             {
-                return cppReader->getSamples(index, count, timeoutNs, *payloadBuffersSlices);
+                return cppReader->getSamples(index, count, toDeadline(timeoutNs), *payloadBuffersSlices);
             }
 
             return MXL_ERR_INVALID_FLOW_WRITER;

@@ -45,10 +45,10 @@ namespace mxl::lib
         virtual mxlFlowRuntimeInfo getFlowRuntimeInfo() const override;
 
         /** \see DiscreteFlowReader::waitForGrain */
-        virtual mxlStatus waitForGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, std::uint64_t in_timeoutNs) const override;
+        virtual mxlStatus waitForGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, Timepoint in_deadline) const override;
 
         /** \see DiscreteFlowReader::getGrain */
-        virtual mxlStatus getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, std::uint64_t in_timeoutNs, mxlGrainInfo* out_grainInfo,
+        virtual mxlStatus getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, Timepoint in_deadline, mxlGrainInfo* out_grainInfo,
             std::uint8_t** out_payload) override;
 
         /** \see DiscreteFlowReader::getGrain */
@@ -83,7 +83,7 @@ namespace mxl::lib
          * that we're operating on a valid flow (i.e. that _flowData is a valid
          * pointer).
          */
-        mxlStatus getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, std::uint64_t in_timeoutNs, mxlGrainInfo* out_grainInfo,
+        mxlStatus getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, Timepoint in_deadline, mxlGrainInfo* out_grainInfo,
             std::uint8_t** out_payload) const;
 
     private:
