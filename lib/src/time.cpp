@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "mxl/time.h"
+#include "mxl-internal/IndexConversion.hpp"
 #include "mxl-internal/Thread.hpp"
 #include "mxl-internal/Timing.hpp"
 
@@ -29,27 +30,19 @@ extern "C"
 MXL_EXPORT
 uint64_t mxlTimestampToIndex(mxlRational const* editRate, uint64_t timestamp)
 {
-    if ((editRate == nullptr) || (editRate->denominator == 0) || (editRate->numerator == 0))
-    {
-        return MXL_UNDEFINED_INDEX;
-    }
-
-    return static_cast<uint64_t>((timestamp * __int128_t{editRate->numerator} + 500'000'000 * __int128_t{editRate->denominator}) /
-                                 (1'000'000'000 * __int128_t{editRate->denominator}));
+    return (editRate != nullptr) ? mxl::lib::timestampToIndex(*editRate, mxl::lib::Timepoint(timestamp)) : MXL_UNDEFINED_INDEX;
 }
 
 extern "C"
 MXL_EXPORT
 uint64_t mxlIndexToTimestamp(mxlRational const* editRate, uint64_t index)
 {
-    // Validate the edit rate
-    if ((editRate == nullptr) || (editRate->denominator == 0) || (editRate->numerator == 0))
+    if (editRate != nullptr)
     {
-        return MXL_UNDEFINED_INDEX;
+        auto const res = mxl::lib::indexToTimestamp(*editRate, index);
+        return (res || (index == 0)) ? res.value : MXL_UNDEFINED_INDEX;
     }
-
-    return static_cast<uint64_t>(
-        (index * __int128_t{editRate->denominator} * 1'000'000'000 + __int128_t{editRate->numerator} / 2) / __int128_t{editRate->numerator});
+    return MXL_UNDEFINED_INDEX;
 }
 
 extern "C"

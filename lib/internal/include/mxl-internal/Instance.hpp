@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <atomic>
 #include <filesystem>
+#include <forward_list>
 #include <limits>
 #include <map>
 #include <memory>
@@ -17,6 +18,7 @@
 #include "DomainWatcher.hpp"
 #include "FlowIoFactory.hpp"
 #include "FlowManager.hpp"
+#include "FlowSynchronizationGroup.hpp"
 
 namespace mxl::lib
 {
@@ -115,6 +117,23 @@ namespace mxl::lib
         /// \return The path to the MXL domain of this instance
         std::string getDomain() const;
 
+        ///
+        /// Create a flow synchronization group.
+        /// \return A pointer to the created flow synchronization group.
+        /// \note Please note that each successful call to this method must be
+        ///     paired with a corresponding call to releaseFlowSynchronizationGroup().
+        ///
+        FlowSynchronizationGroup* createFlowSynchronizationGroup();
+
+        ///
+        /// Release a reference to a flow synchronization group in order to free all
+        /// resources associated with it.
+        ///
+        /// \param[in] group a pointer to a flow synchronization group
+        ///     previously obtained by a call to createFlowSynchronizationGroup().
+        ///
+        void releaseFlowSynchronizationGroup(FlowSynchronizationGroup const* group);
+
     private:
         template<typename T>
         class RefCounted
@@ -168,6 +187,9 @@ namespace mxl::lib
         /// Protects the maps
         std::mutex _mutex;
 
+        /// The set of active flow synchronization groups
+        std::forward_list<FlowSynchronizationGroup> _syncGroups;
+
         /// For future use.
         std::string _options;
 
@@ -182,11 +204,14 @@ namespace mxl::lib
     /// Utility function to convert from a C mxlInstance handle to a C++ Instance class
     Instance* to_Instance(mxlInstance instance) noexcept;
 
-    /// Utility function to convert from a C mxlFlowReader handle to a C++ FlowReaders instance.
+    /// Utility function to convert from a C mxlFlowReader handle to a C++ FlowReader instance.
     FlowReader* to_FlowReader(mxlFlowReader reader) noexcept;
 
     /// Utility function to convert from a C mxlFlowWriter handle to a C++ FlowWriter instance.
     FlowWriter* to_FlowWriter(mxlFlowWriter writer) noexcept;
+
+    /// Utility function to convert from a C mxlFlowSynchronizationGroup handle to a C++ FlowSynchronizationGroup instance.
+    FlowSynchronizationGroup* to_FlowSynchronizationGroup(mxlFlowSynchronizationGroup group) noexcept;
 
     /**************************************************************************/
     /* Inline implementation.                                                 */
@@ -242,6 +267,11 @@ namespace mxl::lib
     inline FlowWriter* to_FlowWriter(mxlFlowWriter writer) noexcept
     {
         return reinterpret_cast<FlowWriter*>(writer);
+    }
+
+    inline FlowSynchronizationGroup* to_FlowSynchronizationGroup(mxlFlowSynchronizationGroup group) noexcept
+    {
+        return reinterpret_cast<FlowSynchronizationGroup*>(group);
     }
 
 } // namespace mxl::lib

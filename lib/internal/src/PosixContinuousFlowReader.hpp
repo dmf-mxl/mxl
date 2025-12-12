@@ -45,8 +45,11 @@ namespace mxl::lib
         [[nodiscard]]
         virtual mxlFlowRuntimeInfo getFlowRuntimeInfo() const override;
 
+        /** \see ContinuousFlowReader::waitForSamples */
+        virtual mxlStatus waitForSamples(std::uint64_t index, Timepoint deadline) const override;
+
         /** \see ContinuousFlowReader::getSamples */
-        virtual mxlStatus getSamples(std::uint64_t index, std::size_t count, std::uint64_t timeoutNs,
+        virtual mxlStatus getSamples(std::uint64_t index, std::size_t count, Timepoint deadline,
             mxlWrappedMultiBufferSlice& payloadBuffersSlices) override;
 
         /** \see ContinuousFlowReader::getSamples */
@@ -71,7 +74,16 @@ namespace mxl::lib
          * used by other methods that have previously asserted that we're
          * operating on a valid flow (i.e. that _flowData is a valid pointer).
          */
-        mxlStatus getSamplesImpl(std::uint64_t index, std::size_t count, mxlWrappedMultiBufferSlice& payloadBuffersSlices) const;
+        mxlStatus getSamplesImpl(std::uint64_t index, std::size_t count, mxlWrappedMultiBufferSlice* payloadBuffersSlices) const;
+
+        /**
+         * Implementation of the blocking form of getSamples() and waitForSamples()
+         * that can also be used by other methods that have previously asserted
+         * that we're operating on a valid flow (i.e. that _flowData is a valid
+         * pointer).
+         */
+        mxlStatus getSamplesImpl(std::uint64_t index, std::size_t count, Timepoint deadline,
+            mxlWrappedMultiBufferSlice* payloadBuffersSlices) const;
 
     private:
         std::unique_ptr<ContinuousFlowData> _flowData;

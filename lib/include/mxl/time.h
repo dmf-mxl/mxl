@@ -16,9 +16,6 @@
 extern "C"
 {
 #endif
-
-#define MXL_UNDEFINED_INDEX UINT64_MAX
-
     /**
      * Get the current ringbuffer index based on the current system TAI time
      * Index 0 is defined to be index at the beginning of the epoch as defined by SMPTE ST 2059

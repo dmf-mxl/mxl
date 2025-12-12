@@ -21,12 +21,24 @@ extern "C"
 #endif
 
 /*
- * A grain can be marked as invalid for multiple reasons. for example, an input application may have
+ * A grain can be marked as invalid for multiple reasons. For example, an input application may have
  * timed out before receiving a grain in time, etc.  Writing grain marked as invalid is the proper way
  * to make the ringbuffer <move forward> whilst letting consumers know that the grain is invalid. A consumer
  * may choose to repeat the previous grain, insert silence, etc.
  */
 #define MXL_GRAIN_FLAG_INVALID 0x00000001 // 1 << 0.
+
+/**
+ * A symbolic constant that may be passed to functions as their "min valid slices" parameter, in order to
+ * indicate that no minimum is imposed and any number of valid slices will do.
+ */
+#define MXL_GRAIN_VALID_SLICES_ANY ((uint16_t)0)
+
+/**
+ * A symbolic constant that may be passed to functions as their "min valid slices" parameter, in order to
+ * indicate that all slices need to be available and partial grains are not acceptable.
+ */
+#define MXL_GRAIN_VALID_SLICES_ALL ((uint16_t)UINT16_MAX)
 
     /**
      * A helper type used to describe consecutive sequences of bytes in memory.
@@ -53,7 +65,7 @@ extern "C"
 
     /**
      * A helper type used to describe consecutive sequences of bytes
-     * in a ring buffer that may potentially straddle the wrapraround
+     * in a ring buffer that may potentially straddle the wraparound
      * point of the buffer.
      */
     typedef struct mxlWrappedBufferSlice_t
@@ -63,7 +75,7 @@ extern "C"
 
     /**
      * A helper type used to describe consecutive sequences of mutable bytes in
-     * a ring buffer that may potentially straddle the wrapraround point of the
+     * a ring buffer that may potentially straddle the wraparound point of the
      * buffer.
      */
     typedef struct mxlMutableWrappedBufferSlice_t
@@ -125,7 +137,7 @@ extern "C"
         uint32_t flags;
         /// Size in bytes of the complete payload of a grain
         uint32_t grainSize;
-        /// Number of slices that make up a full grain. A slice is the elemental data type that can be comitted to a grain. For video, this is a
+        /// Number of slices that make up a full grain. A slice is the elemental data type that can be committed to a grain. For video, this is a
         /// single line of a picture in the specified format. For data, this is a byte of data.
         uint16_t totalSlices;
         /// How many slices of the grain are currently valid (committed). This is typically used when writing individual slices instead of a full
@@ -138,6 +150,8 @@ extern "C"
     typedef struct mxlFlowReader_t* mxlFlowReader;
     typedef struct mxlFlowWriter_t* mxlFlowWriter;
 
+    typedef struct mxlFlowSynchronizationGroup_t* mxlFlowSynchronizationGroup;
+
     /**
      * Create a flow using a json flow definition
      *
@@ -147,7 +161,7 @@ extern "C"
      * \param[in] options Additional options (undefined).
      *     \todo Specify and used the additional options.
      * \param[out] info A pointer to an mxlFlowConfigInfo structure.
-     *     If not the nullptr, this structure will be updated with the flow
+     *     If not the null pointer, this structure will be updated with the flow
      *     information after the flow is created.
      */
     MXL_EXPORT
@@ -350,7 +364,7 @@ extern "C"
 
     /**
      * Inform mxl that a user is done writing the grain that was previously opened.  This will in turn signal all readers waiting on the ringbuffer
-     * that a new grain is available.  The mxlGrainInfo flags field in shared memory will be updated based on grain->flags This will increase the head
+     * that a new grain is available. The mxlGrainInfo flags field in shared memory will be updated based on grain->flags This will increase the head
      * and potentially the tail IF this grain is the new head.
      *
      * \return The result code. \see mxlStatus
@@ -433,6 +447,105 @@ extern "C"
      */
     MXL_EXPORT
     mxlStatus mxlFlowWriterCommitSamples(mxlFlowWriter writer);
+
+    /**
+     * Create a new, empty synchronization group that can be used to synchronize on data availability across multiple flows in parallel.
+     * \param[in] instance The instance to which the flow readers handled by this group belong.
+     * \param[out] group A handle referring to the newly created group.
+     *
+     * \return MXL_STATUS_OK if the group was successfully created.
+     */
+    MXL_EXPORT
+    mxlStatus mxlCreateFlowSynchronizationGroup(mxlInstance instance, mxlFlowSynchronizationGroup* group);
+
+    /**
+     * Release a synchronization group that is no longer needed and free all underlying resources associated with it.
+     * \param[in] instance the instance on which the group was previously created.
+     * \param[in] group A handle referring to the group that should be released.
+     *
+     * \return MXL_STATUS_OK if the group was successfully released.
+     */
+    MXL_EXPORT
+    mxlStatus mxlReleaseFlowSynchronizationGroup(mxlInstance instance, mxlFlowSynchronizationGroup group);
+
+    /**
+     * Add a flow reader to a synchronization group. This can either be a reader
+     * for a continuous, sample based flow or a discrete, grain based flow. For
+     * sample based flows this causes the wait operation of the group to wait
+     * for the sample belonging to the specified timestamp to become available.
+     * For grain based flows this causes the wait operation of the group to wait
+     * for the grain belonging to the specified timestamp to become fully
+     * available.
+     *
+     * \param[in] group A handle to the synchronization group, to which the flow
+     *      reader shall be added.
+     * \param[in] reader A handle to a flow reader that shall be added to the
+     *      synchronization group.
+     *
+     * \return MXL_STATUS_OK if the reader was successfully added to the
+     *      synchronization group.
+     *
+     * \note Please note that a reader can only be added to a group once and
+     *      attempts to add the same reader multiple times are ignored, except
+     *      that for grain based readers the number of valid slices to wait for
+     *      is updated to the value matching the last add operation.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowSynchronizationGroupAddReader(mxlFlowSynchronizationGroup group, mxlFlowReader reader);
+
+    /**
+     * Add a grain based flow reader to a synchronization group. This causes the
+     * wait operation of the group to wait for at least \p minValidSlices of the
+     * grain belonging to the specified timestamp to become.
+     *
+     * \param[in] group A handle to the synchronization group, to which the flow
+     *      reader shall be added.
+     * \param[in] reader A handle to a discrete flow reader that shall be added
+     *      to the synchronization group.
+     * \param[in] minValidSlices The number of valid slices to wait for within a
+     *      grain of the flow the reader operates on.
+     *
+     * \return MXL_STATUS_OK if the reader was successfully added to the
+     *      synchronization group.
+     *
+     * \note Please note that a reader can only be added to a group once and
+     *      attempts to add the same reader multiple times are ignored, except
+     *      that the number of valid slices to wait for is updated to the value
+     *      matching the last add operation.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowSynchronizationGroupAddPartialGrainReader(mxlFlowSynchronizationGroup group, mxlFlowReader reader, uint16_t minValidSlices);
+
+    /**
+     * Remove a flow reader from a synchronization group.
+     *
+     * \param[in] group A handle to the synchronization group, from which the
+     *      flow reader shall be removed.
+     * \param[in] reader A handle to a flow reader that shall be removed from
+     *      the synchronization group.
+     *
+     * \return MXL_STATUS_OK if the reader was successfully removed from the
+     *      synchronization group.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowSynchronizationGroupRemoveReader(mxlFlowSynchronizationGroup group, mxlFlowReader reader);
+
+    /**
+     * Wait for the data corresponding to the specified timestamp to become
+     * available accross all flows currently added to the group.
+     *
+     * \param[in] group A handle to the synchronization group that specifies the
+     *      flows on which to wait for data.
+     * \param[in] timestamp The timestamp for which to wait for corresponding
+     *      data on each flow.
+     * \param[in] timeoutNs How long to wait for all data to become available
+     *      (in nanoseconds).
+     *
+     * \return MXL_STATUS_OK if the data corresponding to the specified
+     *      timestamp has become available.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowSynchronizationGroupWaitForDataAt(mxlFlowSynchronizationGroup group, uint64_t timestamp, uint64_t timeoutNs);
 #ifdef __cplusplus
 }
 #endif

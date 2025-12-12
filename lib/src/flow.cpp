@@ -13,6 +13,14 @@
 #include "mxl-internal/Logging.hpp"
 #include "mxl-internal/PathUtils.hpp"
 
+namespace
+{
+    mxl::lib::Timepoint toDeadline(std::uint64_t timeoutNs) noexcept
+    {
+        return currentTime(mxl::lib::Clock::Realtime) + mxl::lib::Duration{static_cast<std::int64_t>(timeoutNs)};
+    }
+}
+
 using namespace mxl::lib;
 
 extern "C"
@@ -354,7 +362,7 @@ extern "C"
 MXL_EXPORT
 mxlStatus mxlFlowReaderGetGrain(mxlFlowReader reader, uint64_t index, uint64_t timeoutNs, mxlGrainInfo* grainInfo, uint8_t** payload)
 {
-    return mxlFlowReaderGetGrainSlice(reader, index, UINT16_MAX, timeoutNs, grainInfo, payload);
+    return mxlFlowReaderGetGrainSlice(reader, index, MXL_GRAIN_VALID_SLICES_ALL, timeoutNs, grainInfo, payload);
 }
 
 extern "C"
@@ -368,7 +376,7 @@ mxlStatus mxlFlowReaderGetGrainSlice(mxlFlowReader reader, uint64_t index, uint1
         {
             if (auto const cppReader = dynamic_cast<DiscreteFlowReader*>(to_FlowReader(reader)); cppReader != nullptr)
             {
-                return cppReader->getGrain(index, minValidSlices, timeoutNs, grainInfo, payload);
+                return cppReader->getGrain(index, minValidSlices, toDeadline(timeoutNs), grainInfo, payload);
             }
             return MXL_ERR_INVALID_FLOW_READER;
         }
@@ -384,7 +392,7 @@ extern "C"
 MXL_EXPORT
 mxlStatus mxlFlowReaderGetGrainNonBlocking(mxlFlowReader reader, uint64_t index, mxlGrainInfo* grainInfo, uint8_t** payload)
 {
-    return mxlFlowReaderGetGrainSliceNonBlocking(reader, index, UINT16_MAX, grainInfo, payload);
+    return mxlFlowReaderGetGrainSliceNonBlocking(reader, index, MXL_GRAIN_VALID_SLICES_ALL, grainInfo, payload);
 }
 
 extern "C"
@@ -509,7 +517,7 @@ mxlStatus mxlFlowReaderGetSamples(mxlFlowReader reader, uint64_t index, size_t c
         {
             if (auto const cppReader = dynamic_cast<ContinuousFlowReader*>(to_FlowReader(reader)); cppReader != nullptr)
             {
-                return cppReader->getSamples(index, count, timeoutNs, *payloadBuffersSlices);
+                return cppReader->getSamples(index, count, toDeadline(timeoutNs), *payloadBuffersSlices);
             }
 
             return MXL_ERR_INVALID_FLOW_WRITER;
@@ -597,6 +605,148 @@ mxlStatus mxlFlowWriterCommitSamples(mxlFlowWriter writer)
             return cppWriter->commit();
         }
         return MXL_ERR_INVALID_FLOW_WRITER;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlCreateFlowSynchronizationGroup(mxlInstance instance, mxlFlowSynchronizationGroup* group)
+{
+    try
+    {
+        auto const cppInstance = to_Instance(instance);
+        if (cppInstance != nullptr)
+        {
+            *group = reinterpret_cast<mxlFlowSynchronizationGroup>(cppInstance->createFlowSynchronizationGroup());
+            return MXL_STATUS_OK;
+        }
+
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlReleaseFlowSynchronizationGroup(mxlInstance instance, mxlFlowSynchronizationGroup group)
+{
+    try
+    {
+        auto const cppInstance = to_Instance(instance);
+        auto const cppGroup = to_FlowSynchronizationGroup(group);
+        if ((cppInstance != nullptr) && (cppGroup != nullptr))
+        {
+            cppInstance->releaseFlowSynchronizationGroup(cppGroup);
+            return MXL_STATUS_OK;
+        }
+
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowSynchronizationGroupAddReader(mxlFlowSynchronizationGroup group, mxlFlowReader reader)
+{
+    try
+    {
+        if (auto const cppGroup = to_FlowSynchronizationGroup(group); cppGroup != nullptr)
+        {
+            if (auto const cppReader = to_FlowReader(reader); cppReader != nullptr)
+            {
+                if (auto const discreteReader = dynamic_cast<DiscreteFlowReader const*>(cppReader); discreteReader != nullptr)
+                {
+                    cppGroup->addReader(*discreteReader, MXL_GRAIN_VALID_SLICES_ALL);
+                    return MXL_STATUS_OK;
+                }
+                if (auto const continuousReader = dynamic_cast<ContinuousFlowReader const*>(cppReader); continuousReader != nullptr)
+                {
+                    cppGroup->addReader(*continuousReader);
+                    return MXL_STATUS_OK;
+                }
+            }
+
+            return MXL_ERR_INVALID_FLOW_READER;
+        }
+
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowSynchronizationGroupAddPartialGrainReader(mxlFlowSynchronizationGroup group, mxlFlowReader reader, uint16_t minValidSlices)
+{
+    try
+    {
+        if (auto const cppGroup = to_FlowSynchronizationGroup(group); cppGroup != nullptr)
+        {
+            if (auto const cppReader = dynamic_cast<DiscreteFlowReader const*>(to_FlowReader(reader)); cppReader != nullptr)
+            {
+                cppGroup->addReader(*cppReader, minValidSlices);
+                return MXL_STATUS_OK;
+            }
+
+            return MXL_ERR_INVALID_FLOW_READER;
+        }
+
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowSynchronizationGroupRemoveReader(mxlFlowSynchronizationGroup group, mxlFlowReader reader)
+{
+    try
+    {
+        auto const cppGroup = to_FlowSynchronizationGroup(group);
+        auto const cppReader = to_FlowReader(reader);
+        if ((cppGroup != nullptr) && (cppReader != nullptr))
+        {
+            cppGroup->removeReader(*cppReader);
+            return MXL_STATUS_OK;
+        }
+
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowSynchronizationGroupWaitForDataAt(mxlFlowSynchronizationGroup group, uint64_t timestamp, uint64_t timeoutNs)
+{
+    try
+    {
+        if (auto const cppGroup = to_FlowSynchronizationGroup(group); cppGroup != nullptr)
+        {
+            return cppGroup->waitForDataAt(Timepoint{static_cast<std::int64_t>(timestamp)}, toDeadline(timeoutNs));
+        }
+
+        return MXL_ERR_INVALID_ARG;
     }
     catch (...)
     {
