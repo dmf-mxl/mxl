@@ -41,11 +41,11 @@ namespace mxl::lib
         return getFlowData().flowInfo()->runtime;
     }
 
-    mxlStatus PosixContinuousFlowReader::waitForSamples(std::uint64_t index, std::uint64_t timeoutNs) const
+    mxlStatus PosixContinuousFlowReader::waitForSamples(std::uint64_t index, Timepoint deadline) const
     {
         if (_flowData)
         {
-            auto const result = getSamplesImpl(index, 0U, timeoutNs, nullptr);
+            auto const result = getSamplesImpl(index, 0U, deadline, nullptr);
 
             // If we were ultimately too early, even with blocking for a
             // certain amount of time it could very well be that we're
@@ -57,12 +57,12 @@ namespace mxl::lib
         return MXL_ERR_UNKNOWN;
     }
 
-    mxlStatus PosixContinuousFlowReader::getSamples(std::uint64_t index, std::size_t count, std::uint64_t timeoutNs,
+    mxlStatus PosixContinuousFlowReader::getSamples(std::uint64_t index, std::size_t count, Timepoint deadline,
         mxlWrappedMultiBufferSlice& payloadBuffersSlices)
     {
         if (_flowData)
         {
-            auto const result = getSamplesImpl(index, count, timeoutNs, &payloadBuffersSlices);
+            auto const result = getSamplesImpl(index, count, deadline, &payloadBuffersSlices);
 
             // If we were ultimately too early, even with blocking for a
             // certain amount of time it could very well be that we're
@@ -146,10 +146,9 @@ namespace mxl::lib
         return MXL_ERR_OUT_OF_RANGE_TOO_EARLY;
     }
 
-    mxlStatus PosixContinuousFlowReader::getSamplesImpl(std::uint64_t index, std::size_t count, std::uint64_t timeoutNs,
+    mxlStatus PosixContinuousFlowReader::getSamplesImpl(std::uint64_t index, std::size_t count, Timepoint deadline,
         mxlWrappedMultiBufferSlice* payloadBuffersSlices) const
     {
-        auto const deadline = currentTime(Clock::Realtime) + Duration{static_cast<std::int64_t>(timeoutNs)};
         auto const flow = _flowData->flow();
         auto const syncObject = std::atomic_ref{flow->state.syncCounter};
         while (true)

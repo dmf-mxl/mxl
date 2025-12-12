@@ -4,6 +4,7 @@
 #pragma once
 
 #include "FlowReader.hpp"
+#include "Timing.hpp"
 
 namespace mxl::lib
 {
@@ -16,7 +17,7 @@ namespace mxl::lib
          *
          * \param in_index The grain index.
          * \param in_minValidSlices The expected number of valid slices in the returned mxlGrainInfo.
-         * \param in_timeoutNs How long to wait in nanoseconds for the grain if in_index is > mxlFlowRuntimeInfo.headIndex
+         * \param in_deadline The point in time of Clock::Realtime at which to stop waiting.
          *
          * \return A status code describing the outcome of the call. Please note
          *      that this method will never return MXL_ERR_TIMEOUT, because the
@@ -25,7 +26,7 @@ namespace mxl::lib
          *
          * \note Please note that contrary to the various overloads of getGrain, this method does not update the flow access time.
          */
-        virtual mxlStatus waitForGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, std::uint64_t in_timeoutNs) const = 0;
+        virtual mxlStatus waitForGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, Timepoint in_deadline) const = 0;
 
         /**
          * Accessor for a specific grain at a specific index.
@@ -33,7 +34,7 @@ namespace mxl::lib
          *
          * \param in_index The grain index.
          * \param in_minValidSlices The expected number of valid slices in the returned mxlGrainInfo.
-         * \param in_timeoutNs How long to wait in nanoseconds for the grain if in_index is > mxlFlowRuntimeInfo.headIndex
+         * \param in_deadline The point in time of Clock::Realtime at which to stop waiting.
          * \param out_grainInfo A valid pointer to mxlGrainInfo that will be copied to
          * \param out_payload A valid void pointer to pointer that will be set to the first byte of the grain payload.
          *     Payload size is available in the mxlGrainInfo structure.
@@ -43,7 +44,7 @@ namespace mxl::lib
          *      actual error that is being encountered in this case is
          *      MXL_ERR_OUT_OF_RANGE_TOO_EARLY, even after waiting.
          */
-        virtual mxlStatus getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, std::uint64_t in_timeoutNs, mxlGrainInfo* out_grainInfo,
+        virtual mxlStatus getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, Timepoint in_deadline, mxlGrainInfo* out_grainInfo,
             std::uint8_t** out_payload) = 0;
 
         /**
