@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <cstdint>
+#include <memory>
 #include <optional>
 #include "TargetInfo.hpp"
 
@@ -52,6 +54,7 @@ namespace mxl::lib::fabrics::ofi
         public:
             /** \brief Get the underlying local region of the immediate data.
              */
+            [[nodiscard]]
             LocalRegion toLocalRegion() noexcept;
 
         public:
@@ -72,12 +75,14 @@ namespace mxl::lib::fabrics::ofi
          * \param api The mxlFabricsTarget to convert.
          * \return The TargetWrapper underlying the given mxlFabricsTarget.
          */
+        [[nodiscard]]
         static TargetWrapper* fromAPI(mxlFabricsTarget api) noexcept;
 
         /** \brief Convert this TargetWrapper to its API representation.
          *
          * \return The mxlFabricsTarget representing this TargetWrapper.
          */
+        [[nodiscard]]
         mxlFabricsTarget toAPI() noexcept;
 
         /** \copydoc Target::read()

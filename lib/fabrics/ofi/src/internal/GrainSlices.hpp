@@ -23,6 +23,7 @@ namespace mxl::lib::fabrics::ofi
          *
          * \throws Exception::invalidArgument if start is not less than end.
          */
+        [[nodiscard]]
         static SliceRange make(std::uint16_t start, std::uint16_t end);
 
         /** \brief Get the inclusive start of the range.

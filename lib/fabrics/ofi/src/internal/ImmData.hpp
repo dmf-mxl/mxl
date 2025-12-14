@@ -43,16 +43,13 @@ namespace mxl::lib::fabrics::ofi
         std::uint32_t data() const noexcept;
 
     private:
-        union
+        struct ImmDataPacked //**< Unpacked representation of immediate data. */
         {
-            struct /**< Unpacked representation of immediate data. */
-            {
-                std::uint16_t ringBufferIndex;
-                std::uint16_t sliceIndex;
-            } packed;
+            std::uint16_t ringBufferIndex;
+            std::uint16_t sliceIndex;
+        };
 
-            uint32_t data; /**< Packed representation of immediate data. */
-        } _inner;
+        uint32_t _inner; /**< Packed representation of immediate data. */
     };
 
 }

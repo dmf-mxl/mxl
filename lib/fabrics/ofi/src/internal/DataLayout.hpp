@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <array>
 #include <variant>
-#include "mxl/flowinfo.h"
+#include <mxl/flowinfo.h>
 
 namespace mxl::lib::fabrics::ofi
 {
@@ -31,7 +31,7 @@ namespace mxl::lib::fabrics::ofi
          * \return A DataLayout representing the specified video layout.
          */
         [[nodiscard]]
-        static DataLayout fromVideo(std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN> sliceSizes) noexcept; // NOLINT
+        static DataLayout fromVideo(std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN> const& sliceSizes) noexcept; // NOLINT
 
         /** \brief Check if the DataLayout is of video type.
          * \return true if the DataLayout is of video type, false otherwise.

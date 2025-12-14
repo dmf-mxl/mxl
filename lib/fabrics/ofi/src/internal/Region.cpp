@@ -186,8 +186,8 @@ namespace mxl::lib::fabrics::ofi
 
     MxlRegions mxlFabricsRegionsFromUser(mxlFabricsExtRegionsConfig const& config)
     {
-        std::vector<Region> outRegions;
-        for (size_t i = 0; i < config.regionsCount; i++)
+        auto outRegions = std::vector<Region>{};
+        for (std::size_t i = 0; i < config.regionsCount; i++)
         {
             outRegions.emplace_back(config.regions[i].addr, config.regions[i].size, Region::Location::fromAPI(config.regions[i].loc));
         }

@@ -34,9 +34,9 @@ namespace mxl::lib::fabrics::ofi
     template<QueueReadMode qrm>
     std::pair<std::optional<Completion>, std::optional<Event>> readEndpointQueues(Endpoint& ep, std::chrono::steady_clock::duration timeout)
     {
-        static_assert(qrm == QueueReadMode::Blocking || qrm == QueueReadMode::NonBlocking, "Unsupported queue behaviour parameter");
+        static_assert((qrm == QueueReadMode::Blocking) || (qrm == QueueReadMode::NonBlocking), "Unsupported queue behaviour parameter");
 
-        std::pair<std::optional<Completion>, std::optional<Event>> result;
+        auto result = std::pair<std::optional<Completion>, std::optional<Event>>{};
 
         if constexpr (qrm == QueueReadMode::Blocking)
         {
@@ -60,9 +60,9 @@ namespace mxl::lib::fabrics::ofi
     template<QueueReadMode qrm>
     std::optional<Event> readEventQueue(EventQueue& eq, std::chrono::steady_clock::duration timeout)
     {
-        static_assert(qrm == QueueReadMode::Blocking || qrm == QueueReadMode::NonBlocking, "Unsupported queue behaviour parameter");
+        static_assert((qrm == QueueReadMode::Blocking) || (qrm == QueueReadMode::NonBlocking), "Unsupported queue behaviour parameter");
 
-        std::optional<Event> event;
+        auto event = std::optional<Event>{};
 
         if constexpr (qrm == QueueReadMode::Blocking)
         {
@@ -86,9 +86,9 @@ namespace mxl::lib::fabrics::ofi
     template<QueueReadMode qrm>
     std::optional<Completion> readCompletionQueue(CompletionQueue& eq, std::chrono::steady_clock::duration timeout)
     {
-        static_assert(qrm == QueueReadMode::Blocking || qrm == QueueReadMode::NonBlocking, "Unsupported queue behaviour parameter");
+        static_assert((qrm == QueueReadMode::Blocking) || (qrm == QueueReadMode::NonBlocking), "Unsupported queue behaviour parameter");
 
-        std::optional<Completion> completion;
+        auto completion = std::optional<Completion>{};
 
         if constexpr (qrm == QueueReadMode::Blocking)
         {

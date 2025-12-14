@@ -24,7 +24,7 @@ namespace mxl::lib::fabrics::ofi
 
     Domain::~Domain()
     {
-        catchErrorAndLog([this]() { close(); }, "Failed to close domain");
+        catchAndLogFabricError([this]() { close(); }, "Failed to close domain");
     }
 
     std::shared_ptr<Domain> Domain::open(std::shared_ptr<Fabric> fabric)

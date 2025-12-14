@@ -21,6 +21,7 @@ namespace mxl::lib::fabrics::ofi
     public:
         /** \brief Cast an `mxlFabricsTargetInfo` opaque pointer to a TargetInfo pointer.
          */
+        [[nodiscard]]
         static TargetInfo* fromAPI(mxlFabricsTargetInfo api) noexcept;
 
         /** \brief Cast a pointer to a `TargetInfo` instance to an `mxlFabricsTargetInfo` opaque pointer
@@ -35,6 +36,7 @@ namespace mxl::lib::fabrics::ofi
 
         /** \brief Construct a TargetInfo instance from a JSON representation
          */
+        [[nodiscard]]
         static TargetInfo fromJSON(std::string const& s);
 
         bool operator==(TargetInfo const& other) const noexcept;

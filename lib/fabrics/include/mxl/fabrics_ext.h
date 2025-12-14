@@ -12,10 +12,6 @@
  * The rest of the API remains valid.
  */
 
-#ifndef __cplusplus
-#else
-#endif
-
 #include <mxl/fabrics.h>
 #include <mxl/flowinfo.h>
 #include <mxl/platform.h>

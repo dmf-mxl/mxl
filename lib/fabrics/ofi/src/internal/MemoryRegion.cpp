@@ -81,7 +81,7 @@ namespace mxl::lib::fabrics::ofi
 
     MemoryRegion::~MemoryRegion()
     {
-        catchErrorAndLog([this]() { close(); }, "Failed to close memory region");
+        catchAndLogFabricError([this]() { close(); }, "Failed to close memory region");
     }
 
     MemoryRegion::MemoryRegion(MemoryRegion&& other) noexcept
