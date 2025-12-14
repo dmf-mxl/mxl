@@ -26,45 +26,48 @@
 
 namespace ofi = mxl::lib::fabrics::ofi;
 
-template<typename F>
-mxlStatus try_run(F func, std::string_view errMsg)
+namespace mxl::lib::fabrics::ofi
 {
-    try
+    template<typename F>
+    mxlStatus try_run(F&& func, std::string_view errMsg)
     {
-        return func();
-    }
-    catch (ofi::Exception& e)
-    {
-        if (e.status() == MXL_ERR_UNKNOWN)
+        try
+        {
+            return func();
+        }
+        catch (ofi::Exception& e)
+        {
+            if (e.status() == MXL_ERR_UNKNOWN)
+            {
+                MXL_ERROR("{}: {}", errMsg, e.what());
+            }
+
+            return e.status();
+        }
+        catch (std::exception& e)
         {
             MXL_ERROR("{}: {}", errMsg, e.what());
+
+            return MXL_ERR_UNKNOWN;
         }
+        catch (...)
+        {
+            MXL_ERROR("{}", errMsg);
 
-        return e.status();
-    }
-    catch (std::exception& e)
-    {
-        MXL_ERROR("{}: {}", errMsg, e.what());
-
-        return MXL_ERR_UNKNOWN;
-    }
-    catch (...)
-    {
-        MXL_ERROR("{}", errMsg);
-
-        return MXL_ERR_UNKNOWN;
+            return MXL_ERR_UNKNOWN;
+        }
     }
 }
 
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsRegionsForFlowReader(mxlFlowReader in_reader, mxlFabricsRegions* out_regions)
 {
-    if (in_reader == nullptr || out_regions == nullptr)
+    if ((in_reader == nullptr) || (out_regions == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             auto reader = ::mxl::lib::to_FlowReader(in_reader);
@@ -82,12 +85,12 @@ mxlStatus mxlFabricsRegionsForFlowReader(mxlFlowReader in_reader, mxlFabricsRegi
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsRegionsForFlowWriter(mxlFlowWriter in_writer, mxlFabricsRegions* out_regions)
 {
-    if (in_writer == nullptr || out_regions == nullptr)
+    if ((in_writer == nullptr) || (out_regions == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             auto writer = ::mxl::lib::to_FlowWriter(in_writer);
@@ -110,7 +113,7 @@ mxlStatus mxlFabricsRegionsFree(mxlFabricsRegions in_regions)
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             auto regions = ofi::MxlRegions::fromAPI(in_regions);
@@ -124,12 +127,12 @@ mxlStatus mxlFabricsRegionsFree(mxlFabricsRegions in_regions)
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsCreateInstance(mxlInstance in_instance, mxlFabricsInstance* out_fabricsInstance)
 {
-    if (in_instance == nullptr || out_fabricsInstance == nullptr)
+    if ((in_instance == nullptr) || (out_fabricsInstance == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             *out_fabricsInstance = reinterpret_cast<mxlFabricsInstance>(
@@ -148,7 +151,7 @@ mxlStatus mxlFabricsDestroyInstance(mxlFabricsInstance in_instance)
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             delete ofi::FabricsInstance::fromAPI(in_instance);
@@ -161,12 +164,12 @@ mxlStatus mxlFabricsDestroyInstance(mxlFabricsInstance in_instance)
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsCreateTarget(mxlFabricsInstance in_fabricsInstance, mxlFabricsTarget* out_target)
 {
-    if (in_fabricsInstance == nullptr || out_target == nullptr)
+    if ((in_fabricsInstance == nullptr) || (out_target == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             auto instance = ofi::FabricsInstance::fromAPI(in_fabricsInstance);
@@ -180,12 +183,12 @@ mxlStatus mxlFabricsCreateTarget(mxlFabricsInstance in_fabricsInstance, mxlFabri
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsDestroyTarget(mxlFabricsInstance in_fabricsInstance, mxlFabricsTarget in_target)
 {
-    if (in_fabricsInstance == nullptr || in_target == nullptr)
+    if ((in_fabricsInstance == nullptr) || (in_target == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             auto instance = ofi::FabricsInstance::fromAPI(in_fabricsInstance);
@@ -201,12 +204,12 @@ mxlStatus mxlFabricsDestroyTarget(mxlFabricsInstance in_fabricsInstance, mxlFabr
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsTargetSetup(mxlFabricsTarget in_target, mxlFabricsTargetConfig* in_config, mxlFabricsTargetInfo* out_info)
 {
-    if (in_target == nullptr || in_config == nullptr || out_info == nullptr)
+    if ((in_target == nullptr) || (in_config == nullptr) || (out_info == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             // Set up the target, release the returned unique_ptr, convert to external API type, assign the the pointer location
@@ -221,12 +224,12 @@ mxlStatus mxlFabricsTargetSetup(mxlFabricsTarget in_target, mxlFabricsTargetConf
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsTargetReadNonBlocking(mxlFabricsTarget in_target, uint16_t* out_entryIndex, uint16_t* out_sliceIndex)
 {
-    if (in_target == nullptr || out_entryIndex == nullptr || out_sliceIndex == nullptr)
+    if ((in_target == nullptr) || (out_entryIndex == nullptr) || (out_sliceIndex == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             auto target = ofi::TargetWrapper::fromAPI(in_target);
@@ -247,12 +250,12 @@ mxlStatus mxlFabricsTargetReadNonBlocking(mxlFabricsTarget in_target, uint16_t* 
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsTargetRead(mxlFabricsTarget in_target, uint16_t* out_entryIndex, uint16_t* out_sliceIndex, uint16_t in_timeoutMs)
 {
-    if (in_target == nullptr || out_entryIndex == nullptr || out_sliceIndex == nullptr)
+    if ((in_target == nullptr) || (out_entryIndex == nullptr) || (out_sliceIndex == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             auto target = ofi::TargetWrapper::fromAPI(in_target);
@@ -273,12 +276,12 @@ mxlStatus mxlFabricsTargetRead(mxlFabricsTarget in_target, uint16_t* out_entryIn
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsCreateInitiator(mxlFabricsInstance in_fabricsInstance, mxlFabricsInitiator* out_initiator)
 {
-    if (in_fabricsInstance == nullptr || out_initiator == nullptr)
+    if ((in_fabricsInstance == nullptr) || (out_initiator == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             auto instance = ofi::FabricsInstance::fromAPI(in_fabricsInstance);
@@ -292,12 +295,12 @@ mxlStatus mxlFabricsCreateInitiator(mxlFabricsInstance in_fabricsInstance, mxlFa
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsDestroyInitiator(mxlFabricsInstance in_fabricsInstance, mxlFabricsInitiator in_initiator)
 {
-    if (in_fabricsInstance == nullptr || in_initiator == nullptr)
+    if ((in_fabricsInstance == nullptr) || (in_initiator == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             ofi::FabricsInstance::fromAPI(in_fabricsInstance)->destroyInitiator(ofi::InitiatorWrapper::fromAPI(in_initiator));
@@ -310,12 +313,12 @@ mxlStatus mxlFabricsDestroyInitiator(mxlFabricsInstance in_fabricsInstance, mxlF
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsInitiatorSetup(mxlFabricsInitiator in_initiator, mxlFabricsInitiatorConfig const* in_config)
 {
-    if (in_initiator == nullptr || in_config == nullptr)
+    if ((in_initiator == nullptr) || (in_config == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             ofi::InitiatorWrapper::fromAPI(in_initiator)->setup(*in_config);
@@ -328,12 +331,12 @@ mxlStatus mxlFabricsInitiatorSetup(mxlFabricsInitiator in_initiator, mxlFabricsI
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsInitiatorAddTarget(mxlFabricsInitiator in_initiator, mxlFabricsTargetInfo const in_targetInfo)
 {
-    if (in_initiator == nullptr || in_targetInfo == nullptr)
+    if ((in_initiator == nullptr) || (in_targetInfo == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             auto targetInfo = ofi::TargetInfo::fromAPI(in_targetInfo);
@@ -347,12 +350,12 @@ mxlStatus mxlFabricsInitiatorAddTarget(mxlFabricsInitiator in_initiator, mxlFabr
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsInitiatorRemoveTarget(mxlFabricsInitiator in_initiator, mxlFabricsTargetInfo const in_targetInfo)
 {
-    if (in_initiator == nullptr || in_targetInfo == nullptr)
+    if ((in_initiator == nullptr) || (in_targetInfo == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             auto targetInfo = ofi::TargetInfo::fromAPI(in_targetInfo);
@@ -371,7 +374,7 @@ mxlStatus mxlFabricsInitiatorTransferGrain(mxlFabricsInitiator in_initiator, uin
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             ofi::InitiatorWrapper::fromAPI(in_initiator)->transferGrain(in_grainIndex, in_startSlice, in_endSlice);
@@ -389,7 +392,7 @@ mxlStatus mxlFabricsInitiatorMakeProgressNonBlocking(mxlFabricsInitiator in_init
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             if (ofi::InitiatorWrapper::fromAPI(in_initiator)->makeProgress())
@@ -410,7 +413,7 @@ mxlStatus mxlFabricsInitiatorMakeProgressBlocking(mxlFabricsInitiator in_initiat
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             if (ofi::InitiatorWrapper::fromAPI(in_initiator)->makeProgressBlocking(std::chrono::milliseconds(in_timeoutMs)))
@@ -426,12 +429,12 @@ mxlStatus mxlFabricsInitiatorMakeProgressBlocking(mxlFabricsInitiator in_initiat
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsProviderFromString(char const* in_string, mxlFabricsProvider* out_provider)
 {
-    if (in_string == nullptr || out_provider == nullptr)
+    if ((in_string == nullptr) || (out_provider == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             if (auto provider = ofi::providerFromString(in_string); provider)
@@ -453,7 +456,7 @@ mxlStatus mxlFabricsProviderToString(mxlFabricsProvider in_provider, char* out_s
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             auto providerEnumValueToString = [](char* outString, size_t* inOutStringSize, char const* providerString)
@@ -491,12 +494,12 @@ mxlStatus mxlFabricsProviderToString(mxlFabricsProvider in_provider, char* out_s
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsTargetInfoFromString(char const* in_string, mxlFabricsTargetInfo* out_targetInfo)
 {
-    if (in_string == nullptr || out_targetInfo == nullptr)
+    if ((in_string == nullptr) || (out_targetInfo == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             *out_targetInfo = std::make_unique<ofi::TargetInfo>(ofi::TargetInfo::fromJSON(in_string)).release()->toAPI();
@@ -509,12 +512,12 @@ mxlStatus mxlFabricsTargetInfoFromString(char const* in_string, mxlFabricsTarget
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsTargetInfoToString(mxlFabricsTargetInfo const in_targetInfo, char* out_string, size_t* in_stringSize)
 {
-    if (in_targetInfo == nullptr || in_stringSize == nullptr)
+    if ((in_targetInfo == nullptr) || (in_stringSize == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             std::stringstream ss;
@@ -532,7 +535,7 @@ mxlStatus mxlFabricsTargetInfoToString(mxlFabricsTargetInfo const in_targetInfo,
                 }
                 else
                 {
-                    ::strncpy(out_string, targetInfoString.c_str(), *in_stringSize);
+                    std::strncpy(out_string, targetInfoString.c_str(), *in_stringSize);
                 }
             }
 
@@ -549,7 +552,7 @@ mxlStatus mxlFabricsFreeTargetInfo(mxlFabricsTargetInfo in_info)
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             delete ofi::TargetInfo::fromAPI(in_info);
@@ -562,12 +565,12 @@ mxlStatus mxlFabricsFreeTargetInfo(mxlFabricsTargetInfo in_info)
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsExtGetRegions(mxlFabricsExtRegionsConfig const* in_config, mxlFabricsRegions* out_regions)
 {
-    if (in_config == nullptr || out_regions == nullptr)
+    if ((in_config == nullptr) || (out_regions == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             auto regions = ofi::mxlFabricsRegionsFromUser(*in_config);
@@ -586,12 +589,12 @@ extern "C" MXL_EXPORT
 mxlStatus mxlFabricsExtInitiatorTransferGrain(mxlFabricsInitiator in_initiator, mxlFabricsTargetInfo const in_targetInfo, uint64_t in_localIndex,
     uint64_t in_remoteIndex, uint64_t in_payloadOffset, uint16_t in_startSlice, uint16_t in_endSlice)
 {
-    if (in_initiator == nullptr || in_targetInfo == nullptr)
+    if ((in_initiator == nullptr) || (in_targetInfo == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
 
-    return try_run(
+    return ofi::try_run(
         [&]()
         {
             auto targetInfo = ofi::TargetInfo::fromAPI(in_targetInfo);

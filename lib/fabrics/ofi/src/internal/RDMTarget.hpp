@@ -23,8 +23,8 @@ namespace mxl::lib::fabrics::ofi
          * \param config The configuration to use for setting up the target.
          * \return A pair consisting of the newly setup RDMTarget and its associated TargetInfo.
          */
-
-        static std::pair<std::unique_ptr<RDMTarget>, std::unique_ptr<TargetInfo>> setup(mxlFabricsTargetConfig const&);
+        [[nodiscard]]
+        static std::pair<std::unique_ptr<RDMTarget>, std::unique_ptr<TargetInfo>> setup(mxlFabricsTargetConfig const& config);
 
         /** \copydoc Target::read()
          */
@@ -44,8 +44,8 @@ namespace mxl::lib::fabrics::ofi
          * \param endpoint The endpoint to use for communication.
          * \param immData The immediate data location to use for transfers.
          */
-        RDMTarget(Endpoint ep, std::unique_ptr<IngressProtocol>);
-        RDMTarget(Endpoint ep, std::unique_ptr<void> /* sample ingress */);
+        RDMTarget(Endpoint ep, std::unique_ptr<IngressProtocol> protocol);
+        RDMTarget(Endpoint ep, std::unique_ptr<void> protocol /* sample ingress */);
 
         /** \brief Internal method to drive progress based on the current state.
          *

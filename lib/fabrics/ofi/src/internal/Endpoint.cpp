@@ -85,7 +85,7 @@ namespace mxl::lib::fabrics::ofi
 
     Endpoint::~Endpoint()
     {
-        catchErrorAndLog([this]() { close(); }, "Failed to close endpoint");
+        catchAndLogFabricError([this]() { close(); }, "Failed to close endpoint");
     }
 
     Endpoint::Endpoint(::fid_ep* raw, FabricInfoView info, std::shared_ptr<Domain> domain, std::optional<std::shared_ptr<CompletionQueue>> cq,

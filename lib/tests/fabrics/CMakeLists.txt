@@ -40,13 +40,9 @@ target_link_libraries(mxl-fabrics-tests
 
 
 if (MXL_ENABLE_FABRICS_OFI)
-    target_include_directories(mxl-fabrics-tests
-            PRIVATE
-                "${CMAKE_CURRENT_SOURCE_DIR}/../../fabrics/ofi/src/internal"
-        )
     target_compile_definitions(mxl-fabrics-tests
             PRIVATE
-            -DMXL_FABRICS_OFI
+                MXL_FABRICS_OFI
         )
 
     add_subdirectory(ofi)

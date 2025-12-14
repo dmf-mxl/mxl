@@ -67,11 +67,11 @@ namespace mxl::lib::fabrics::ofi
 
         /** \brief Consume an event that was posted to the associated event queue.
          */
-        void consume(Event);
+        void consume(Event event);
 
         /** \brief Consume a completion that was posted to the associated completion queue.
          */
-        void consume(Completion);
+        void consume(Completion completion);
 
         /** \brief Post a data transfer request to this endpoint.
          */
@@ -130,15 +130,16 @@ namespace mxl::lib::fabrics::ofi
     private:
         /** \brief Handle a completion error event.
          */
-        void handleCompletionError(Completion::Error);
+        void handleCompletionError(Completion::Error error);
 
         /** \brief Handle a completion data event.
          */
-        void handleCompletionData(Completion::Data);
+        void handleCompletionData(Completion::Data data);
 
         /** \brief Restarts the endpoint. Produces a new Idle state from any previous state.
          */
-        Idle restart(Endpoint const&);
+        [[nodiscard]]
+        Idle restart(Endpoint const& endpoint);
 
     private:
         State _state;     /**< The internal state object. */
@@ -159,6 +160,7 @@ namespace mxl::lib::fabrics::ofi
          * \param config The configuration to use for setting up the target.
          * \return A newly setup RCInitiator object.
          */
+        [[nodiscard]]
         static std::unique_ptr<RCInitiator> setup(mxlFabricsInitiatorConfig const& config);
 
         /** \copydoc Initiator::addTarget()
@@ -209,12 +211,12 @@ namespace mxl::lib::fabrics::ofi
          * \param cq The completion queue to use for all endpoints created by this initiator.
          * \param eq The event queue to use for all endpoints created by this initiator.
          */
-        RCInitiator(std::shared_ptr<Domain>, std::shared_ptr<CompletionQueue>, std::shared_ptr<EventQueue>,
+        RCInitiator(std::shared_ptr<Domain> domain, std::shared_ptr<CompletionQueue> cq, std::shared_ptr<EventQueue> eq,
             std::unique_ptr<EgressProtocolTemplate> proto);
 
         /** \brief Block on the completion queue with a timeout.
          */
-        void blockOnCQ(std::chrono::steady_clock::duration);
+        void blockOnCQ(std::chrono::steady_clock::duration timeout);
 
         /** \brief Poll the completion queue and process the events until the queue is empty.
          */

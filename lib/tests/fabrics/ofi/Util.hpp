@@ -20,9 +20,10 @@ namespace mxl::lib::fabrics::ofi
     using InnerRegion = std::vector<std::uint8_t>;
     using InnerRegions = std::vector<InnerRegion>;
 
+    [[nodiscard]]
     inline mxlFabricsTargetConfig getDefaultTargetConfig(mxlFabricsRegions regions)
     {
-        mxlFabricsTargetConfig config{};
+        auto config = mxlFabricsTargetConfig{};
         config.endpointAddress.node = "127.0.0.1";
         config.endpointAddress.service = "9090";
         config.provider = MXL_FABRICS_PROVIDER_TCP;
@@ -33,7 +34,7 @@ namespace mxl::lib::fabrics::ofi
 
     inline mxlFabricsInitiatorConfig getDefaultInitiatorConfig(mxlFabricsRegions regions)
     {
-        mxlFabricsInitiatorConfig config{};
+        auto config = mxlFabricsInitiatorConfig{};
         config.endpointAddress.node = "127.0.0.1";
         config.endpointAddress.service = "9091";
         config.provider = MXL_FABRICS_PROVIDER_TCP;

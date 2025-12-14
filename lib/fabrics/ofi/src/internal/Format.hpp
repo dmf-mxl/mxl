@@ -20,7 +20,7 @@ struct fmt::formatter<mxlFabricsProvider>
     }
 
     template<typename Context>
-    constexpr auto format(mxlFabricsProvider const& provider, Context& ctx) const
+    auto format(mxlFabricsProvider const& provider, Context& ctx) const
     {
         switch (provider)
         {
@@ -43,7 +43,7 @@ struct fmt::formatter<ofi::Provider>
     }
 
     template<typename Context>
-    constexpr auto format(ofi::Provider const& provider, Context& ctx) const
+    auto format(ofi::Provider const& provider, Context& ctx) const
     {
         switch (provider)
         {

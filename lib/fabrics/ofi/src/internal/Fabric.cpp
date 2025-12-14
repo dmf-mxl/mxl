@@ -36,7 +36,7 @@ namespace mxl::lib::fabrics::ofi
 
     Fabric::~Fabric()
     {
-        catchErrorAndLog([this]() { close(); }, "Failed to close fabrics");
+        catchAndLogFabricError([this]() { close(); }, "Failed to close fabrics");
     }
 
     Fabric::Fabric(Fabric&& other) noexcept

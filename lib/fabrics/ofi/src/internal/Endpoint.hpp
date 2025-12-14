@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cstdint>
+#include <bit>
 #include <memory>
 #include <optional>
 #include <uuid.h>
@@ -39,10 +40,12 @@ namespace mxl::lib::fabrics::ofi
     public:
         /** \brief Generate a new random endpoint id.
          */
+        [[nodiscard]]
         static Id randomId() noexcept;
 
         /** \brief Convert between Ids and context values that can be written to and read from raw libfabric queue entries and fid_t.
          */
+        [[nodiscard]]
         constexpr static void* idToContextValue(Id id) noexcept
         {
             return std::bit_cast<void*>(id);
@@ -50,6 +53,7 @@ namespace mxl::lib::fabrics::ofi
 
         /** \copydoc idToContextValue(Id)
          */
+        [[nodiscard]]
         constexpr static Id contextValueToId(void* contextValue) noexcept
         {
             return std::bit_cast<Endpoint::Id>(contextValue);
@@ -61,6 +65,7 @@ namespace mxl::lib::fabrics::ofi
          * for the same endpoint id.
          * This function enables using the endpoint id as a completion token.
          */
+        [[nodiscard]]
         constexpr static Completion::Token tokenFromId(Id id) noexcept
         {
             static_assert(std::is_same_v<Completion::Token, Id>, "Completion token and endpoint id should be the same underlying type.");
@@ -73,6 +78,7 @@ namespace mxl::lib::fabrics::ofi
          * for the same completion token.
          * This function enables using the endpoint id as a completion token.
          */
+        [[nodiscard]]
         constexpr static Id idFromToken(Completion::Token token) noexcept
         {
             static_assert(std::is_same_v<Completion::Token, Id>, "Completion token and endpoint id should be the same underlying type.");

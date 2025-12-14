@@ -9,7 +9,7 @@
 
 namespace mxl::lib::fabrics::ofi
 {
-    DataLayout DataLayout::fromVideo(std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN> sliceSizes) noexcept
+    DataLayout DataLayout::fromVideo(std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN> const& sliceSizes) noexcept
     {
         return DataLayout{DataLayout::VideoDataLayout{.sliceSizes = sliceSizes}};
     };

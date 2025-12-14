@@ -31,14 +31,19 @@ namespace mxl::lib::fabrics::ofi
         public:
             /** \brief specify a host memory location.
              */
+            [[nodiscard]]
             static Location host() noexcept;
+
             /** \brief specify a CUDA device memory location.
              *
              * \param deviceId The CUDA device id.
              */
+            [[nodiscard]]
             static Location cuda(int deviceId) noexcept;
+
             /** \brief Convert between external and internal versions of this type
              */
+            [[nodiscard]]
             static Location fromAPI(mxlFabricsExtMemoryRegionLocation loc);
 
             /** \brief Return the device id. For host location 0 is returned.
@@ -200,8 +205,10 @@ namespace mxl::lib::fabrics::ofi
     public:
         /** \brief Convert between external and internal versions of this type
          */
-        static MxlRegions* fromAPI(mxlFabricsRegions) noexcept;
+        [[nodiscard]]
+        static MxlRegions* fromAPI(mxlFabricsRegions regions) noexcept;
         /** \copydoc fromAPI() */
+
         [[nodiscard]]
         mxlFabricsRegions toAPI() noexcept;
 
@@ -229,14 +236,14 @@ namespace mxl::lib::fabrics::ofi
     };
 
     /** \brief Convert a FlowData's memory regions to MxlRegions.
-     *
      * FlowData are obtained from an MXL FlowWriter or FlowReader.
      */
+    [[nodiscard]]
     MxlRegions mxlFabricsRegionsFromFlow(FlowData const& flow);
 
     /** \brief Convert user-provided memory regions to MxlRegions.
-     *
      * Used to convert mxlFabricsMemoryRegion arrays provided by the user.
      */
+    [[nodiscard]]
     MxlRegions mxlFabricsRegionsFromUser(mxlFabricsExtRegionsConfig const& config);
 }

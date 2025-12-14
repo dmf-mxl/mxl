@@ -206,6 +206,7 @@ namespace mxl::lib::fabrics::ofi
          * \brief  Get a list of provider configurations supported to the specified
          * node/service
          */
+        [[nodiscard]]
         static FabricInfoList get(char const* node, char const* service, Provider provider, std::uint64_t caps, ::fi_ep_type epType);
 
         /** \brief Take ownership over a fi_info raw pointer.

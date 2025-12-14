@@ -5,13 +5,17 @@
 #include "RemoteRegion.hpp"
 #include <cassert>
 #include <algorithm>
+#include "Exception.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
 
-    RemoteRegion RemoteRegion::sub(std::uint64_t offset, std::size_t length) const noexcept
+    RemoteRegion RemoteRegion::sub(std::uint64_t offset, std::size_t length) const
     {
-        assert(offset + length <= len);
+        if (offset + length > len)
+        {
+            throw Exception::invalidArgument("Invalid offset and length for remote region");
+        }
 
         return RemoteRegion{
             .addr = addr + offset,
@@ -39,12 +43,4 @@ namespace mxl::lib::fabrics::ofi
     {
         return _inner == other._inner;
     }
-
-    std::vector<::fi_rma_iov> RemoteRegionGroup::rmaIovsFromGroup(std::vector<RemoteRegion> group) noexcept
-    {
-        std::vector<::fi_rma_iov> rmaIovs;
-        std::ranges::transform(group, std::back_inserter(rmaIovs), [](RemoteRegion const& reg) { return reg.toRmaIov(); });
-        return rmaIovs;
-    }
-
 }

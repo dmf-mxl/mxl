@@ -28,7 +28,7 @@ namespace mxl::lib::fabrics::ofi
 
     PassiveEndpoint::~PassiveEndpoint()
     {
-        catchErrorAndLog([this]() { close(); }, "Failed to close passive endpoint");
+        catchAndLogFabricError([this]() { close(); }, "Failed to close passive endpoint");
     }
 
     PassiveEndpoint::PassiveEndpoint(::fid_pep* raw, std::shared_ptr<Fabric> fabric, Endpoint::Id id, std::optional<std::shared_ptr<EventQueue>> eq)
@@ -66,9 +66,13 @@ namespace mxl::lib::fabrics::ofi
         close();
 
         _raw = other._raw;
+        _id = other._id;
         other._raw = nullptr;
+        other._id = 0;
 
-        _id = std::move(other._id);
+        static_assert(std::is_nothrow_move_assignable_v<decltype(other._fabric)>, "Member must be nothrow move assignable");
+        static_assert(std::is_nothrow_move_assignable_v<decltype(other._eq)>, "Member must be nothrow move assignable");
+
         _fabric = std::move(other._fabric);
         _eq = std::move(other._eq);
 

@@ -16,7 +16,7 @@ namespace mxl::lib::fabrics::ofi
     public:
         /** \copydoc EgressProtocol::transferGrain()
          */
-        void transferGrain(Endpoint& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint32_t payloadOffset,
+        virtual void transferGrain(Endpoint& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint32_t payloadOffset,
             SliceRange const& sliceRange, ::fi_addr_t destAddr = FI_ADDR_UNSPEC) override;
 
         /** \copydoc EgressProtocol::processCompletion()

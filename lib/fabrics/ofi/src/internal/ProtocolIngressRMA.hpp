@@ -19,15 +19,16 @@ namespace mxl::lib::fabrics::ofi
 
         /** \copydoc IngressProtocol::registerMemory()
          */
+        [[nodiscard]]
         std::vector<RemoteRegion> registerMemory(std::shared_ptr<Domain> domain) override;
 
         /** \copydoc IngressProtocol::start()
          */
-        void start(Endpoint&) override;
+        void start(Endpoint& endpoint) override;
 
         /** \copydoc IngressProtocol::processCompletion()
          */
-        Target::ReadResult processCompletion(Endpoint&, Completion const&) override;
+        Target::ReadResult processCompletion(Endpoint& endpoint, Completion const& completion) override;
 
         /** \copydoc IngressProtocol::destroy()
          */

@@ -24,7 +24,7 @@ namespace mxl::lib::fabrics::ofi
          * \param instance The MXL Instance to associate with this FabricsInstance. It is required that the lifetime of instance is at least as
          * long as this FabricsInstance.
          */
-        FabricsInstance(mxl::lib::Instance* instance);
+        explicit FabricsInstance(mxl::lib::Instance* instance);
         ~FabricsInstance() = default;
 
         // Delete copy and move constructors and assignment operators
@@ -37,6 +37,7 @@ namespace mxl::lib::fabrics::ofi
          *
          * \return The mxlFabricsInstance representing this FabricsInstance.
          */
+        [[nodiscard]]
         mxlFabricsInstance toAPI() noexcept;
 
         /** \brief Convert an mxlFabricsInstance API object to its underlying FabricsInstance.
@@ -44,23 +45,26 @@ namespace mxl::lib::fabrics::ofi
          * \param instance The mxlFabricsInstance to convert.
          * \return The FabricsInstance underlying the given mxlFabricsInstance.
          */
-        static FabricsInstance* fromAPI(mxlFabricsInstance) noexcept;
+        [[nodiscard]]
+        static FabricsInstance* fromAPI(mxlFabricsInstance instance) noexcept;
 
         /** \brief create an uninitialized Target associated with this instance.
          */
+        [[nodiscard]]
         TargetWrapper* createTarget();
 
         /** \brief destroy a Target associated with this instance.
          */
-        void destroyTarget(TargetWrapper*);
+        void destroyTarget(TargetWrapper* target);
 
         /** \brief create an uninitialized Initiator associated with this instance.
          */
+        [[nodiscard]]
         InitiatorWrapper* createInitiator();
 
         /** \brief destroy an Initiator associated with this instance.
          */
-        void destroyInitiator(InitiatorWrapper*);
+        void destroyInitiator(InitiatorWrapper* initiator);
 
     private:
         mxl::lib::Instance* _mxlInstance;

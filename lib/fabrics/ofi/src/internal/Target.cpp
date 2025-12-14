@@ -18,11 +18,9 @@ namespace mxl::lib::fabrics::ofi
 {
     LocalRegion Target::ImmediateDataLocation::toLocalRegion() noexcept
     {
-        auto addr = &data;
-
         return LocalRegion{
-            .addr = reinterpret_cast<uint64_t>(reinterpret_cast<std::uintptr_t>(addr)),
-            .len = sizeof(uint64_t),
+            .addr = std::bit_cast<std::uint64_t>(&data),
+            .len = sizeof(std::uint64_t),
             .desc = nullptr,
         };
     }
@@ -66,8 +64,8 @@ namespace mxl::lib::fabrics::ofi
 
         switch (config.provider)
         {
-            case MXL_FABRICS_PROVIDER_AUTO:
-            case MXL_FABRICS_PROVIDER_TCP:
+            case MXL_FABRICS_PROVIDER_AUTO: [[fallthrough]];
+            case MXL_FABRICS_PROVIDER_TCP:  [[fallthrough]];
             case MXL_FABRICS_PROVIDER_VERBS:
             {
                 auto [target, info] = RCTarget::setup(config);
@@ -75,7 +73,7 @@ namespace mxl::lib::fabrics::ofi
                 return std::move(info);
             }
 
-            case MXL_FABRICS_PROVIDER_SHM:
+            case MXL_FABRICS_PROVIDER_SHM: [[fallthrough]];
             case MXL_FABRICS_PROVIDER_EFA:
             {
                 auto [target, info] = RDMTarget::setup(config);

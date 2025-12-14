@@ -103,15 +103,18 @@ namespace mxl::lib::fabrics::ofi
     class RDMInitiator : public Initiator
     {
     public:
-        static std::unique_ptr<RDMInitiator> setup(mxlFabricsInitiatorConfig const&);
+        /** \brief Set up a new RDMInitiator.
+         */
+        [[nodiscard]]
+        static std::unique_ptr<RDMInitiator> setup(mxlFabricsInitiatorConfig const& config);
 
         /** \copydoc Initiator::addTarget()
          */
-        void addTarget(TargetInfo const&) override;
+        void addTarget(TargetInfo const& remoteTargetInfo) override;
 
         /** \copydoc Initiator::removeTarget()
          */
-        void removeTarget(TargetInfo const&) override;
+        void removeTarget(TargetInfo const& remoteTargetInfo) override;
 
         void shutdown() override;
 
@@ -130,25 +133,27 @@ namespace mxl::lib::fabrics::ofi
 
         /** \copydoc Initiator::makeProgressBlocking()
          */
-        bool makeProgressBlocking(std::chrono::steady_clock::duration) override;
+        bool makeProgressBlocking(std::chrono::steady_clock::duration timeout) override;
 
     private:
         /** \brief Construct a new RDMInitiator object.
          *
          * \param ep The local endpoint to use for all transfers.
          */
-        RDMInitiator(Endpoint, std::unique_ptr<EgressProtocolTemplate>);
+        RDMInitiator(Endpoint endpoint, std::unique_ptr<EgressProtocolTemplate> tmpl);
 
         /** \brief Find a remote target by its endpoint id.
          *
          * \throws Exception::notFound if the Endpoint::Id does not map to any known remote endpoints.
          */
+        [[nodiscard]]
         RDMInitiatorTarget& findRemoteByEndpoint(Endpoint::Id id);
 
         /** \brief Find a remote target by its completion token.
          *
          * \throws Exception::notFound if the Completion::Token does not map to any known target.
          */
+        [[nodiscard]]
         RDMInitiatorTarget& findRemoteByToken(Completion::Token token);
 
         /** \brief Returns true if any of the endpoints contained in this initiator have pending work.
@@ -158,7 +163,7 @@ namespace mxl::lib::fabrics::ofi
 
         /** \brief Block on the completion queue with a timeout.
          */
-        void blockOnCQ(std::chrono::steady_clock::duration);
+        void blockOnCQ(std::chrono::steady_clock::duration timeout);
 
         /** \brief Poll the completion queue and process the events until the queue is empty.
          */
@@ -170,15 +175,15 @@ namespace mxl::lib::fabrics::ofi
 
         /** \brief Consume a completion entry
          */
-        void processCompletion(Completion);
+        void processCompletion(Completion completion);
 
         /** \brief Handle a completion error event.
          */
-        void handleCompletionError(Completion::Error);
+        void handleCompletionError(Completion::Error error);
 
         /** \brief Handle a completion data event.
          */
-        void handleCompletionData(Completion::Data);
+        void handleCompletionData(Completion::Data data);
 
     private:
         Endpoint _endpoint; /** Shared endpoint used for all transfers. */

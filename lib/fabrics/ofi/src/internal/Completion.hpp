@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <bit>
 #include <memory>
 #include <optional>
 #include <string>
@@ -89,18 +90,21 @@ namespace mxl::lib::fabrics::ofi
         explicit Completion(Data entry);
         explicit Completion(Error entry);
 
+        [[nodiscard]]
         static Token randomToken();
 
         /** \brief Convert between completion tokens and context values that can be written to and read from raw libfabric queue entries.
          */
-        constexpr static void* tokenToContextValue(Token token)
+        [[nodiscard]]
+        constexpr static void* tokenToContextValue(Token token) noexcept
         {
             return std::bit_cast<void*>(token);
         }
 
         /** \copydoc tokenToContextValue(Token)
          */
-        constexpr static Token tokenFromContextValue(void* contextValue)
+        [[nodiscard]]
+        constexpr static Token tokenFromContextValue(void* contextValue) noexcept
         {
             return std::bit_cast<Token>(contextValue);
         }

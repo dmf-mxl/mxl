@@ -21,8 +21,6 @@ namespace mxl::lib::fabrics::ofi
     class FILogging
     {
     public:
-        FILogging() = default;
-
         void init()
         {
             // It is safe to call a logging functions on the libfabric side
@@ -116,11 +114,11 @@ namespace mxl::lib::fabrics::ofi
 
     void fiLog(const struct fi_provider* prov, enum fi_log_level level, enum fi_log_subsys subsys, char const*, int line, char const* msgIn)
     {
-        std::string msg{msgIn};
+        auto msg = std::string{msgIn};
 
-        if (!msg.empty() && msg[msg.size() - 1] == '\n')
+        if (!msg.empty() && (msg[msg.size() - 1] == '\n'))
         {
-            msg.erase(msg.size() - 1);
+            msg.pop_back();
         }
 
         spdlog::log(

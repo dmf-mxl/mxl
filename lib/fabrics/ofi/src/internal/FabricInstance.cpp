@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "FabricInstance.hpp"
+#include <cstdlib> // IWYU pragma: keep // for ::setenv
 #include <mxl-internal/Logging.hpp>
 #include "mxl/fabrics.h"
 #include "Exception.hpp"
@@ -15,8 +16,6 @@ namespace mxl::lib::fabrics::ofi
     FabricsInstance::FabricsInstance(mxl::lib::Instance* instance)
         : _mxlInstance(instance)
     {
-        (void)(_mxlInstance);
-
         // Disable memory registration cache: Since we only perform memory registration during initialization rather than runtime, the cache provides
         // no benefit for our use case.
         ::setenv("FI_MR_CACHE_MONITOR", "disabled", 1);

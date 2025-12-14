@@ -35,14 +35,16 @@ namespace mxl::lib::fabrics::ofi
          * \param fabric The Fabric to create the PassiveEndpoint on.
          * \return A new PassiveEndpoint object.
          */
-        static PassiveEndpoint create(std::shared_ptr<Fabric>);
+        [[nodiscard]]
+        static PassiveEndpoint create(std::shared_ptr<Fabric> fabric);
 
         /** \brief Allocate a new PassiveEndpoint associated with the given Fabric.
          *
          * \param fabric The Fabric to create the PassiveEndpoint on.
          * \return A new PassiveEndpoint object.
          */
-        static PassiveEndpoint create(std::shared_ptr<Fabric>, Endpoint::Id);
+        [[nodiscard]]
+        static PassiveEndpoint create(std::shared_ptr<Fabric> fabric, Endpoint::Id id);
 
         /** \brief Get the endpoints id.
          */
@@ -86,6 +88,7 @@ namespace mxl::lib::fabrics::ofi
 
         /** \brief Access the underlying raw `fid_pep` pointer.
          */
+        [[nodiscard]]
         ::fid_pep* raw() noexcept;
 
         /** \copydoc raw()

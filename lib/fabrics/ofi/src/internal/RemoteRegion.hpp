@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <algorithm>
 #include <vector>
 #include <rdma/fi_rma.h>
 
@@ -26,7 +27,7 @@ namespace mxl::lib::fabrics::ofi
          * \return A new RemoteRegion representing the specified sub-region.
          */
         [[nodiscard]]
-        RemoteRegion sub(std::uint64_t offset, std::size_t length) const noexcept;
+        RemoteRegion sub(std::uint64_t offset, std::size_t length) const;
 
         /** \brief Convert this RemoteRegion to a struct fi_rma_iov used by libfabric RMA transfer functions.
          */
@@ -52,9 +53,9 @@ namespace mxl::lib::fabrics::ofi
     public:
         /** \brief Convert a vector of RemoteRegion into a RemoteRegionGroup
          */
-        RemoteRegionGroup(std::vector<RemoteRegion> group)
+        RemoteRegionGroup(std::vector<RemoteRegion> const& group)
             : _inner(std::move(group))
-            , _rmaIovs(rmaIovsFromGroup(_inner))
+            , _rmaIovs(rmaIovsFromGroup(group.begin(), group.end()))
         {}
 
         /** \brief Get a pointer to an array of fi_rma_iov structures representing the remote regions.
@@ -107,7 +108,15 @@ namespace mxl::lib::fabrics::ofi
     private:
         /** \brief Convert a vector of RemoteRegion into a vector of fi_rma_iov structures. Used by the constructor.
          */
-        static std::vector<::fi_rma_iov> rmaIovsFromGroup(std::vector<RemoteRegion> group) noexcept;
+        template<typename It>
+        [[nodiscard]]
+        static std::vector<::fi_rma_iov> rmaIovsFromGroup(It&& begin, It&& end) noexcept
+        {
+            std::vector<::fi_rma_iov> rmaIovs;
+            std::ranges::transform(
+                std::forward<It>(begin), std::forward<It>(end), std::back_inserter(rmaIovs), [](RemoteRegion const& reg) { return reg.toRmaIov(); });
+            return rmaIovs;
+        }
 
     private:
         std::vector<RemoteRegion> _inner; /**< The underlying remote regions */

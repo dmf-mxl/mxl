@@ -29,11 +29,12 @@ namespace mxl::lib::fabrics::ofi
          * \param domain The domain to register memory with.
          * \return A vector of RemoteRegion representing the registered memory regions for remote access.
          */
+        [[nodiscard]]
         virtual std::vector<RemoteRegion> registerMemory(std::shared_ptr<Domain> domain) = 0;
 
         /** \brief Start receiving.
          */
-        virtual void start(Endpoint&) = 0;
+        virtual void start(Endpoint& endpoint) = 0;
 
         /** \brief Process a completion with the given immediate data.
          * \param endpoint The endpoint associated with the completion
@@ -68,7 +69,7 @@ namespace mxl::lib::fabrics::ofi
 
         /** \brief Process a completion event. Any post-processing after a transfer should be done here.
          */
-        virtual void processCompletion(Completion::Data const&) = 0;
+        virtual void processCompletion(Completion::Data const& completion) = 0;
 
         /** \brief Check if there is uncompleted requests.
          */
@@ -81,13 +82,22 @@ namespace mxl::lib::fabrics::ofi
         virtual std::size_t reset() = 0;
     };
 
+    /**
+     * Base template for an egress protocol. The template registers memory and allocates other resources
+     * that can be used across multiple instances of the protocol.
+     */
     class EgressProtocolTemplate
     {
     public:
         virtual ~EgressProtocolTemplate() = default;
 
+        /** \brief Register memory required by the protocol.
+         */
         virtual void registerMemory(std::shared_ptr<Domain> domain) = 0;
 
+        /** \brief Create a new instance of the protocol for a remote target.
+         */
+        [[nodiscard]]
         virtual std::unique_ptr<EgressProtocol> createInstance(Completion::Token token, TargetInfo remoteInfo) = 0;
     };
 
@@ -96,6 +106,7 @@ namespace mxl::lib::fabrics::ofi
      * \param regions The regions involved.
      * \return A unique pointer to the selected ingress protocol.
      */
+    [[nodiscard]]
     std::unique_ptr<IngressProtocol> selectIngressProtocol(DataLayout const& layout, std::vector<Region> regions);
 
     /** \brief Select an appropriate egress protocol based on the data layout
@@ -103,5 +114,6 @@ namespace mxl::lib::fabrics::ofi
      * \param regions The regions involved.
      * \return A unique pointer to the selected egress protocol.
      */
+    [[nodiscard]]
     std::unique_ptr<EgressProtocolTemplate> selectEgressProtocol(DataLayout const& layout, std::vector<Region> regions);
 }

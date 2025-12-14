@@ -90,12 +90,14 @@ namespace mxl::lib::fabrics::ofi
          * \param api The mxlFabricsInitiator to convert.
          * \return The InitiatorWrapper underlying the given mxlFabricsInitiator.
          */
+        [[nodiscard]]
         static InitiatorWrapper* fromAPI(mxlFabricsInitiator api) noexcept;
 
         /** \brief Convert this InitiatorWrapper to its API representation.
          *
          * \return The mxlFabricsInitiator representing this InitiatorWrapper.
          */
+        [[nodiscard]]
         mxlFabricsInitiator toAPI() noexcept;
 
         /** \brief Set up the initiator with the specified configuration.
