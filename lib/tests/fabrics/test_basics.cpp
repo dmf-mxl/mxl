@@ -130,7 +130,8 @@ TEST_CASE("Fabrics connection oriented activation tests", "[fabrics][connected][
                 std::uint16_t dummyValidSlices;
                 do
                 {
-                    mxlFabricsTargetReadGrain(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // make progress on target
+                    mxlFabricsTargetReadGrain(
+                        target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // make progress on target
 
                     auto status = mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
                     if (status != MXL_STATUS_OK && status != MXL_ERR_NOT_READY)
