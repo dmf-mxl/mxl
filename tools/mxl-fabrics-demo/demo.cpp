@@ -554,7 +554,8 @@ private:
         }
         else
         {
-            return mxlFabricsTargetReadGrain(_target, entryIndex, validSlices, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
+            return mxlFabricsTargetReadGrain(
+                _target, entryIndex, validSlices, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
         }
     }
 
