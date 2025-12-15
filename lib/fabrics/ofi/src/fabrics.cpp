@@ -202,7 +202,7 @@ mxlStatus mxlFabricsDestroyTarget(mxlFabricsInstance in_fabricsInstance, mxlFabr
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsTargetSetup(mxlFabricsTarget in_target, mxlFabricsTargetConfig* in_config, mxlFabricsTargetInfo* out_info)
+mxlStatus mxlFabricsTargetSetup(mxlFabricsTarget in_target, mxlFabricsTargetConfig const* in_config, mxlFabricsTargetInfo* out_info)
 {
     if ((in_target == nullptr) || (in_config == nullptr) || (out_info == nullptr))
     {
@@ -222,7 +222,7 @@ mxlStatus mxlFabricsTargetSetup(mxlFabricsTarget in_target, mxlFabricsTargetConf
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsTargetReadNonBlocking(mxlFabricsTarget in_target, uint16_t* out_entryIndex, uint16_t* out_sliceIndex)
+mxlStatus mxlFabricsTargetReadGrainNonBlocking(mxlFabricsTarget in_target, uint16_t* out_entryIndex, uint16_t* out_sliceIndex)
 {
     if ((in_target == nullptr) || (out_entryIndex == nullptr) || (out_sliceIndex == nullptr))
     {
@@ -248,7 +248,7 @@ mxlStatus mxlFabricsTargetReadNonBlocking(mxlFabricsTarget in_target, uint16_t* 
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsTargetRead(mxlFabricsTarget in_target, uint16_t* out_entryIndex, uint16_t* out_sliceIndex, uint16_t in_timeoutMs)
+mxlStatus mxlFabricsTargetReadGrain(mxlFabricsTarget in_target, uint16_t* out_entryIndex, uint16_t* out_sliceIndex, uint16_t in_timeoutMs)
 {
     if ((in_target == nullptr) || (out_entryIndex == nullptr) || (out_sliceIndex == nullptr))
     {

@@ -103,7 +103,7 @@ TEST_CASE("Fabrics connection oriented activation tests", "[fabrics][connected][
                 std::uint16_t dummyValidSlices;
                 do
                 {
-                    mxlFabricsTargetReadNonBlocking(target, &dummyIndex, &dummyValidSlices); // make progress on target
+                    mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex, &dummyValidSlices); // make progress on target
 
                     auto status = mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
                     if (status != MXL_STATUS_OK && status != MXL_ERR_NOT_READY)
@@ -130,7 +130,7 @@ TEST_CASE("Fabrics connection oriented activation tests", "[fabrics][connected][
                 std::uint16_t dummyValidSlices;
                 do
                 {
-                    mxlFabricsTargetRead(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // make progress on target
+                    mxlFabricsTargetReadGrain(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // make progress on target
 
                     auto status = mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
                     if (status != MXL_STATUS_OK && status != MXL_ERR_NOT_READY)
@@ -220,7 +220,7 @@ TEST_CASE("Fabrics connectionless activation tests", "[fabrics][connectionless][
         std::uint16_t dummyValidSlices;
         do
         {
-            mxlFabricsTargetReadNonBlocking(target, &dummyIndex, &dummyValidSlices); // make progress on target
+            mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex, &dummyValidSlices); // make progress on target
 
             auto status = mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
             if (status != MXL_STATUS_OK && status != MXL_ERR_NOT_READY)
@@ -247,7 +247,7 @@ TEST_CASE("Fabrics connectionless activation tests", "[fabrics][connectionless][
         std::uint16_t dummyValidSlices;
         do
         {
-            mxlFabricsTargetRead(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // make progress on target
+            mxlFabricsTargetReadGrain(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // make progress on target
 
             auto status = mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
             if (status != MXL_STATUS_OK && status != MXL_ERR_NOT_READY)
@@ -342,7 +342,7 @@ TEST_CASE("Fabrics: transfer grain with user buffers", "[fabrics][transfer][user
         std::uint16_t dummyValidSlices;
         do
         {
-            mxlFabricsTargetReadNonBlocking(target, &dummyIndex, &dummyValidSlices); // make progress on target
+            mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex, &dummyValidSlices); // make progress on target
 
             auto status = mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
             if (status != MXL_STATUS_OK && status != MXL_ERR_NOT_READY)
@@ -368,7 +368,7 @@ TEST_CASE("Fabrics: transfer grain with user buffers", "[fabrics][transfer][user
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             do
             {
-                mxlFabricsTargetReadNonBlocking(target, &dummyIndex, &dummyValidSlices); // target make progress
+                mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex, &dummyValidSlices); // target make progress
                 mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
                 if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
                 {
@@ -388,7 +388,7 @@ TEST_CASE("Fabrics: transfer grain with user buffers", "[fabrics][transfer][user
             do
             {
                 mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
-                auto status = mxlFabricsTargetReadNonBlocking(target, &dummyIndex, &dummyValidSlices);
+                auto status = mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex, &dummyValidSlices);
                 if (status == MXL_ERR_INTERRUPTED)
                 {
                     FAIL("Peer disconnected before the transfer completed");
@@ -410,7 +410,7 @@ TEST_CASE("Fabrics: transfer grain with user buffers", "[fabrics][transfer][user
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             do
             {
-                mxlFabricsTargetRead(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // target make progress
+                mxlFabricsTargetReadGrain(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // target make progress
                 mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
                 if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
                 {
@@ -430,7 +430,7 @@ TEST_CASE("Fabrics: transfer grain with user buffers", "[fabrics][transfer][user
             do
             {
                 mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
-                auto status = mxlFabricsTargetRead(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count());
+                auto status = mxlFabricsTargetReadGrain(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count());
                 if (status == MXL_ERR_INTERRUPTED)
                 {
                     FAIL("Peer disconnected before the transfer completed");
@@ -478,7 +478,7 @@ TEST_CASE("Fabrics: transfer grain with user buffers", "[fabrics][transfer][user
         std::uint16_t dummyValidSlices;
         do
         {
-            mxlFabricsTargetReadNonBlocking(target, &dummyIndex, &dummyValidSlices); // make progress on target
+            mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex, &dummyValidSlices); // make progress on target
 
             auto status = mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
             if (status != MXL_STATUS_OK && status != MXL_ERR_NOT_READY)
@@ -504,7 +504,7 @@ TEST_CASE("Fabrics: transfer grain with user buffers", "[fabrics][transfer][user
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             do
             {
-                mxlFabricsTargetReadNonBlocking(target, &dummyIndex, &dummyValidSlices); // target make progress
+                mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex, &dummyValidSlices); // target make progress
                 mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
                 if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
                 {
@@ -524,7 +524,7 @@ TEST_CASE("Fabrics: transfer grain with user buffers", "[fabrics][transfer][user
             do
             {
                 mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
-                auto status = mxlFabricsTargetReadNonBlocking(target, &dummyIndex, &dummyValidSlices);
+                auto status = mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex, &dummyValidSlices);
                 if (status == MXL_ERR_INTERRUPTED)
                 {
                     FAIL("Peer disconnected before the transfer completed");
@@ -546,7 +546,7 @@ TEST_CASE("Fabrics: transfer grain with user buffers", "[fabrics][transfer][user
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             do
             {
-                mxlFabricsTargetRead(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // target make progress
+                mxlFabricsTargetReadGrain(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // target make progress
                 mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
                 if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
                 {
@@ -566,7 +566,7 @@ TEST_CASE("Fabrics: transfer grain with user buffers", "[fabrics][transfer][user
             do
             {
                 mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
-                auto status = mxlFabricsTargetRead(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count());
+                auto status = mxlFabricsTargetReadGrain(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count());
                 if (status == MXL_ERR_INTERRUPTED)
                 {
                     FAIL("Peer disconnected before the transfer completed");
@@ -654,7 +654,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
         std::uint16_t dummyValidSlices;
         do
         {
-            mxlFabricsTargetReadNonBlocking(target, &dummyIndex, &dummyValidSlices); // make progress on target
+            mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex, &dummyValidSlices); // make progress on target
 
             auto status = mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
             if (status != MXL_STATUS_OK && status != MXL_ERR_NOT_READY)
@@ -680,7 +680,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             do
             {
-                mxlFabricsTargetReadNonBlocking(target, &dummyIndex, &dummyValidSlices); // target make progress
+                mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex, &dummyValidSlices); // target make progress
                 mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
                 if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
                 {
@@ -700,7 +700,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             do
             {
                 mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
-                auto status = mxlFabricsTargetReadNonBlocking(target, &dummyIndex, &dummyValidSlices);
+                auto status = mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex, &dummyValidSlices);
                 if (status == MXL_ERR_INTERRUPTED)
                 {
                     FAIL("Peer disconnected before the transfer completed");
@@ -722,7 +722,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             do
             {
-                mxlFabricsTargetRead(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // target make progress
+                mxlFabricsTargetReadGrain(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // target make progress
                 mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
                 if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
                 {
@@ -742,7 +742,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             do
             {
                 mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
-                auto status = mxlFabricsTargetRead(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count());
+                auto status = mxlFabricsTargetReadGrain(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count());
                 if (status == MXL_ERR_INTERRUPTED)
                 {
                     FAIL("Peer disconnected before the transfer completed");
@@ -787,7 +787,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
         std::uint16_t dummyValidSlices;
         do
         {
-            mxlFabricsTargetReadNonBlocking(target, &dummyIndex, &dummyValidSlices); // make progress on target
+            mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex, &dummyValidSlices); // make progress on target
 
             auto status = mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
             if (status != MXL_STATUS_OK && status != MXL_ERR_NOT_READY)
@@ -813,7 +813,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             do
             {
-                mxlFabricsTargetReadNonBlocking(target, &dummyIndex, &dummyValidSlices); // target make progress
+                mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex, &dummyValidSlices); // target make progress
                 mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
                 if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
                 {
@@ -833,7 +833,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             do
             {
                 mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
-                auto status = mxlFabricsTargetReadNonBlocking(target, &dummyIndex, &dummyValidSlices);
+                auto status = mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex, &dummyValidSlices);
                 if (status == MXL_ERR_INTERRUPTED)
                 {
                     FAIL("Peer disconnected before the transfer completed");
@@ -855,7 +855,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             do
             {
-                mxlFabricsTargetRead(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // target make progress
+                mxlFabricsTargetReadGrain(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // target make progress
                 mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
                 if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
                 {
@@ -875,7 +875,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             do
             {
                 mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
-                auto status = mxlFabricsTargetRead(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count());
+                auto status = mxlFabricsTargetReadGrain(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count());
                 if (status == MXL_ERR_INTERRUPTED)
                 {
                     FAIL("Peer disconnected before the transfer completed");
