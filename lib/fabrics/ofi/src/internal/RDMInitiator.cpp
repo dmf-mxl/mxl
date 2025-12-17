@@ -272,7 +272,7 @@ namespace mxl::lib::fabrics::ofi
         return false;
     }
 
-    void RDMInitiator::blockOnCQ(std::chrono::system_clock::duration timeout)
+    void RDMInitiator::blockOnCQ(std::chrono::steady_clock::duration timeout)
     {
         // A zero timeout would cause the queue to block indefinetly, which
         // is not our documented behaviour.
