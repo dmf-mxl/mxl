@@ -383,7 +383,7 @@ namespace mxl::lib::fabrics::ofi
         std::erase_if(_targets, [](auto const& item) { return item.second.canEvict(); });
     }
 
-    void RCInitiator::blockOnCQ(std::chrono::system_clock::duration timeout)
+    void RCInitiator::blockOnCQ(std::chrono::steady_clock::duration timeout)
     {
         // A zero timeout would cause the queue to block indefinetly, which
         // is not our documented behaviour.
