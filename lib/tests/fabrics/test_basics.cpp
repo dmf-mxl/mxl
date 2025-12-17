@@ -5,8 +5,11 @@
 #include <chrono>
 #include <cstdint>
 #include <cstring>
+#include <algorithm>
+#include <uuid.h>
 #include <catch2/catch_message.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <picojson/picojson.h>
 #include <rdma/fabric.h>
 #include <mxl/fabrics.h>
 #include "mxl-internal/Logging.hpp"
@@ -902,6 +905,415 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
     REQUIRE(mxlDestroyFlow(instance, flowId) == MXL_STATUS_OK);
     REQUIRE(mxlFabricsDestroyInitiator(fabrics, initiator) == MXL_STATUS_OK);
     REQUIRE(mxlFabricsDestroyTarget(fabrics, target) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsDestroyInstance(fabrics) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+}
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Grain with flows multi target",
+    "[Fabrics][Transfer][Flows][Multi-targets]")
+{
+    namespace ofi = mxl::lib::fabrics::ofi;
+
+    auto flowDef = mxl::tests::readFile("../data/v210_flow.json");
+    auto jsonValue = picojson::value{};
+    REQUIRE(picojson::parse(jsonValue, flowDef).empty());
+    REQUIRE(jsonValue.is<picojson::object>());
+    auto root = jsonValue.get<picojson::object>();
+
+    auto instance = mxlCreateInstance(domain.c_str(), "");
+
+    // Initiator
+    mxlFlowReader reader;
+    mxlFlowConfigInfo configInfoDummy;
+    REQUIRE(mxlCreateFlow(instance, flowDef.c_str(), "{}", &configInfoDummy) == MXL_STATUS_OK);
+    REQUIRE(mxlCreateFlowReader(instance, root.at("id").get<std::string>().c_str(), "", &reader) == MXL_STATUS_OK);
+
+    mxlFabricsInstance fabrics;
+    REQUIRE(mxlFabricsCreateInstance(instance, &fabrics) == MXL_STATUS_OK);
+
+    mxlFabricsInitiator initiator;
+    REQUIRE(mxlFabricsCreateInitiator(fabrics, &initiator) == MXL_STATUS_OK);
+    // Setup initiator regions
+    mxlFabricsRegions mxlInitiatorRegions;
+    REQUIRE(mxlFabricsRegionsForFlowReader(reader, &mxlInitiatorRegions) == MXL_STATUS_OK);
+
+    constexpr auto nbTargets = 2;
+    std::array<mxlFabricsTarget, nbTargets> targets;
+    std::array<std::string, nbTargets> flowIds;
+    std::array<std::string, nbTargets> flowDefs;
+    std::array<mxlFlowConfigInfo, nbTargets> configInfo;
+    std::array<mxlFlowWriter, nbTargets> writer;
+    std::array<mxlFabricsRegions, nbTargets> mxlTargetRegions;
+    for (size_t i = 0; i < nbTargets; i++)
+    {
+        REQUIRE(mxlFabricsCreateTarget(fabrics, &targets[i]) == MXL_STATUS_OK);
+        flowIds[i] = uuids::to_string(uuids::uuid_system_generator{}());
+        root.at("id") = picojson::value{flowIds[i]};
+        flowDefs[i] = picojson::value{root}.serialize();
+        REQUIRE(mxlCreateFlow(instance, flowDefs[i].c_str(), "", &configInfo[i]) == MXL_STATUS_OK);
+        REQUIRE(mxlCreateFlowWriter(instance, flowIds[i].c_str(), "", &writer[i]) == MXL_STATUS_OK);
+        REQUIRE(mxlFabricsRegionsForFlowWriter(writer[i], &mxlTargetRegions[i]) == MXL_STATUS_OK);
+    }
+
+    SECTION("RC")
+    {
+        auto initiatorConfig = mxlFabricsInitiatorConfig{
+            .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
+            .provider = MXL_FABRICS_PROVIDER_TCP,
+            .regions = mxlInitiatorRegions,
+            .deviceSupport = false
+        };
+
+        REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig) == MXL_STATUS_OK);
+
+        std::array<mxlFabricsTargetConfig, nbTargets> targetConfig;
+        std::array<mxlFabricsTargetInfo, nbTargets> targetInfo;
+        for (size_t i = 0; i < nbTargets; i++)
+        {
+            targetConfig[i] = mxlFabricsTargetConfig{
+                .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
+                .provider = MXL_FABRICS_PROVIDER_TCP,
+                .regions = mxlTargetRegions[i],
+                .deviceSupport = false
+            };
+            REQUIRE(mxlFabricsTargetSetup(targets[i], &targetConfig[i], &targetInfo[i]) == MXL_STATUS_OK);
+
+            REQUIRE(mxlFabricsInitiatorAddTarget(initiator, targetInfo[i]) == MXL_STATUS_OK);
+        }
+
+        // try to connect them for 5 seconds
+        auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+        std::uint16_t dummyIndex;
+        std::uint16_t dummyValidSlices;
+        bool initiatorConnected = false;
+        do
+        {
+            for (auto& target : targets)
+            {
+                auto status = mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex, &dummyValidSlices); // make progress on target
+                if (status != MXL_STATUS_OK && status != MXL_ERR_NOT_READY)
+                {
+                    FAIL("Something went wrong in the target: " + std::to_string(status));
+                }
+            }
+
+            auto status = mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
+            if (status != MXL_STATUS_OK && status != MXL_ERR_NOT_READY)
+            {
+                FAIL("Something went wrong in the initiator: " + std::to_string(status));
+            }
+
+            if (status == MXL_STATUS_OK)
+            {
+                initiatorConnected = true;
+            }
+            if (std::chrono::steady_clock::now() > deadline)
+            {
+                FAIL("Failed to connect in 5 seconds");
+            }
+
+            if (initiatorConnected)
+            {
+                // all connected
+                break;
+            }
+        }
+        while (true);
+
+        SECTION("non-blocking")
+        {
+            // try to post a transfer within 5 seconds
+            deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+            do
+            {
+                for (auto& target : targets)
+                {
+                    mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex, &dummyValidSlices); // target make progress
+                }
+                mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
+                if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
+                {
+                    // transfer started
+                    break;
+                }
+
+                if (std::chrono::steady_clock::now() > deadline)
+                {
+                    FAIL("Failed to start transfer in 5 seconds");
+                }
+            }
+            while (std::chrono::steady_clock::now() < deadline);
+
+            // Wait up to 5 seconds for the transfer to complete
+            deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+            std::array<bool, nbTargets> transferComplete = {};
+            do
+            {
+                mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
+                for (size_t i = 0; i < nbTargets; i++)
+                {
+                    auto status = mxlFabricsTargetReadGrainNonBlocking(targets[i], &dummyIndex, &dummyValidSlices);
+                    if (status == MXL_ERR_INTERRUPTED)
+                    {
+                        FAIL("Peer disconnected before the transfer completed");
+                    }
+                    if (status == MXL_STATUS_OK)
+                    {
+                        // transfer complete
+                        transferComplete[i] = true;
+                    }
+                }
+
+                if (std::ranges::all_of(transferComplete, [](bool v) { return v; }))
+                {
+                    return;
+                }
+            }
+            while (std::chrono::steady_clock::now() < deadline);
+
+            FAIL("Failed to complete transfer in 5 seconds");
+        }
+
+        SECTION("blocking")
+        {
+            // try to post a transfer within 5 seconds
+            deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+            do
+            {
+                for (auto& target : targets)
+                {
+                    mxlFabricsTargetReadGrain(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // target make progress
+                }
+                mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
+                if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
+                {
+                    // transfer started
+                    break;
+                }
+
+                if (std::chrono::steady_clock::now() > deadline)
+                {
+                    FAIL("Failed to start transfer in 5 seconds");
+                }
+            }
+            while (std::chrono::steady_clock::now() < deadline);
+
+            // Wait up to 5 seconds for the transfer to complete
+            deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+            std::array<bool, nbTargets> transferComplete = {};
+            do
+            {
+                mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
+                for (size_t i = 0; i < nbTargets; i++)
+                {
+                    auto status = mxlFabricsTargetReadGrain(targets[i], &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count());
+                    if (status == MXL_ERR_INTERRUPTED)
+                    {
+                        FAIL("Peer disconnected before the transfer completed");
+                    }
+                    if (status == MXL_STATUS_OK)
+                    {
+                        // transfer complete
+                        transferComplete[i] = true;
+                    }
+                }
+                if (std::ranges::all_of(transferComplete, [](bool v) { return v; }))
+                {
+                    return;
+                }
+            }
+            while (std::chrono::steady_clock::now() < deadline);
+
+            FAIL("Failed to complete transfer in 5 seconds");
+        }
+
+        for (size_t i = 0; i < nbTargets; i++)
+        {
+            mxlFabricsFreeTargetInfo(targetInfo[i]);
+        }
+    }
+
+    SECTION("RDM")
+    {
+        auto initiatorConfig = mxlFabricsInitiatorConfig{
+            .endpointAddress = mxlFabricsEndpointAddress{.node = "initiator", .service = "test"},
+            .provider = MXL_FABRICS_PROVIDER_SHM,
+            .regions = mxlInitiatorRegions,
+            .deviceSupport = false
+        };
+        REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig) == MXL_STATUS_OK);
+
+        std::array<mxlFabricsTargetConfig, nbTargets> targetConfig;
+        std::array<mxlFabricsTargetInfo, nbTargets> targetInfo;
+        for (size_t i = 0; i < nbTargets; i++)
+        {
+            targetConfig[i] = mxlFabricsTargetConfig{
+                .endpointAddress = mxlFabricsEndpointAddress{.node = "target", .service = "test"},
+                .provider = MXL_FABRICS_PROVIDER_SHM,
+                .regions = mxlTargetRegions[i],
+                .deviceSupport = false
+            };
+            REQUIRE(mxlFabricsTargetSetup(targets[i], &targetConfig[i], &targetInfo[i]) == MXL_STATUS_OK);
+
+            REQUIRE(mxlFabricsInitiatorAddTarget(initiator, targetInfo[i]) == MXL_STATUS_OK);
+        }
+
+        // try to connect them for 5 seconds
+        auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+        std::uint16_t dummyIndex;
+        std::uint16_t dummyValidSlices;
+        do
+        {
+            for (auto& target : targets)
+            {
+                auto status = mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex, &dummyValidSlices); // make progress on target
+                if (status != MXL_STATUS_OK && status != MXL_ERR_NOT_READY)
+                {
+                    FAIL("Something went wrong in the target: " + std::to_string(status));
+                }
+            }
+
+            auto status = mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
+            if (status != MXL_STATUS_OK && status != MXL_ERR_NOT_READY)
+            {
+                FAIL("Something went wrong in the initiator: " + std::to_string(status));
+            }
+
+            if (status == MXL_STATUS_OK)
+            {
+                // connected
+                break;
+            }
+            if (std::chrono::steady_clock::now() > deadline)
+            {
+                FAIL("Failed to connect in 5 seconds");
+            }
+        }
+        while (true);
+
+        SECTION("non-blocking")
+        {
+            // try to post a transfer within 5 seconds
+            deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+            do
+            {
+                for (auto& target : targets)
+                {
+                    mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex, &dummyValidSlices); // target make progress
+                }
+
+                mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
+                if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
+                {
+                    // transfer started
+                    break;
+                }
+
+                if (std::chrono::steady_clock::now() > deadline)
+                {
+                    FAIL("Failed to start transfer in 5 seconds");
+                }
+            }
+            while (std::chrono::steady_clock::now() < deadline);
+
+            // Wait up to 5 seconds for the transfer to complete
+            deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+            std::array<bool, nbTargets> transferComplete = {};
+            do
+            {
+                mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
+                for (size_t i = 0; i < nbTargets; i++)
+                {
+                    auto status = mxlFabricsTargetReadGrainNonBlocking(targets[i], &dummyIndex, &dummyValidSlices);
+                    if (status == MXL_ERR_INTERRUPTED)
+                    {
+                        FAIL("Peer disconnected before the transfer completed");
+                    }
+                    if (status == MXL_STATUS_OK)
+                    {
+                        // transfer complete
+                        transferComplete[i] = true;
+                    }
+                }
+                if (std::ranges::all_of(transferComplete, [](bool v) { return v; }))
+                {
+                    return;
+                }
+            }
+            while (std::chrono::steady_clock::now() < deadline);
+
+            FAIL("Failed to complete transfer in 5 seconds");
+        }
+
+        SECTION("blocking")
+        {
+            // try to post a transfer within 5 seconds
+            deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+            do
+            {
+                for (auto& target : targets)
+                {
+                    mxlFabricsTargetReadGrain(target, &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count()); // target make progress
+                }
+                mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
+                if (mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1) == MXL_STATUS_OK)
+                {
+                    // transfer started
+                    break;
+                }
+
+                if (std::chrono::steady_clock::now() > deadline)
+                {
+                    FAIL("Failed to start transfer in 5 seconds");
+                }
+            }
+            while (std::chrono::steady_clock::now() < deadline);
+
+            // Wait up to 5 seconds for the transfer to complete
+            deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+            std::array<bool, nbTargets> transferComplete = {};
+            do
+            {
+                mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
+                for (size_t i = 0; i < nbTargets; i++)
+                {
+                    auto status = mxlFabricsTargetReadGrain(targets[i], &dummyIndex, &dummyValidSlices, std::chrono::milliseconds(20).count());
+                    if (status == MXL_ERR_INTERRUPTED)
+                    {
+                        FAIL("Peer disconnected before the transfer completed");
+                    }
+                    if (status == MXL_STATUS_OK)
+                    {
+                        // transfer complete
+                        transferComplete[i] = true;
+                    }
+                }
+                if (std::ranges::all_of(transferComplete, [](bool v) { return v; }))
+                {
+                    return;
+                }
+            }
+            while (std::chrono::steady_clock::now() < deadline);
+
+            FAIL("Failed to complete transfer in 5 seconds");
+        }
+
+        for (size_t i = 0; i < nbTargets; i++)
+        {
+            mxlFabricsFreeTargetInfo(targetInfo[i]);
+        }
+    }
+
+    REQUIRE(mxlFabricsRegionsFree(mxlInitiatorRegions) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowReader(instance, reader) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsDestroyInitiator(fabrics, initiator) == MXL_STATUS_OK);
+    for (size_t i = 0; i < nbTargets; i++)
+    {
+        REQUIRE(mxlFabricsRegionsFree(mxlTargetRegions[i]) == MXL_STATUS_OK);
+        REQUIRE(mxlReleaseFlowWriter(instance, writer[i]) == MXL_STATUS_OK);
+        REQUIRE(mxlDestroyFlow(instance, flowIds[i].c_str()) == MXL_STATUS_OK);
+        REQUIRE(mxlFabricsDestroyTarget(fabrics, targets[i]) == MXL_STATUS_OK);
+    }
     REQUIRE(mxlFabricsDestroyInstance(fabrics) == MXL_STATUS_OK);
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
 }
