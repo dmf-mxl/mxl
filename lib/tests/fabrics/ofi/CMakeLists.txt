@@ -46,6 +46,11 @@ target_include_directories(mxl-fabrics-ofi-tests
             "${CMAKE_CURRENT_SOURCE_DIR}/../../../fabrics/ofi/src/internal"
     )
 
+# Enable LTO/IPO on target if enabled and supported
+# This is necessary here, because the tests directly link the OBJECTS library
+# that has LTO/IPO enabled.
+mxl_enable_target_ipo(mxl-fabrics-ofi-tests)
+
 include(CTest)
 include(Catch)
 catch_discover_tests(mxl-fabrics-ofi-tests)

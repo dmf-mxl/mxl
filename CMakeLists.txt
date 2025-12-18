@@ -35,6 +35,38 @@ project(mxl
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
+
+#-------------------------------------------------------------------------------
+# Determine optional IPO support and allow enabling IPO on a per target basis.
+#-------------------------------------------------------------------------------
+option(MXL_ENABLE_IPO "Enable LTO/IPO on the library targets." OFF)
+
+set(MXL_IPO_SUPPORTED OFF)
+if(MXL_ENABLE_IPO)
+    include(CheckIPOSupported)
+
+    check_ipo_supported(RESULT MXL_IPO_SUPPORTED OUTPUT output LANGUAGES C CXX)
+    if(MXL_IPO_SUPPORTED)
+        message(STATUS "Enabling LTO/IPO support.")
+    else()
+        message(WARNING "LTO/IPO is not supported: ${output}")
+    endif()
+endif()
+
+if (MXL_IPO_SUPPORTED)
+    function(mxl_enable_target_ipo target)
+        message(STATUS "Enabling LTO/IPO on target: ${target}")
+        set_target_properties(${target}
+                PROPERTIES
+                    INTERPROCEDURAL_OPTIMIZATION ON
+            )
+    endfunction()
+else ()
+    function(mxl_enable_target_ipo target)
+    endfunction()
+endif ()
+
+
 find_program(ccache_executable ccache)
 
 if(ccache_executable)

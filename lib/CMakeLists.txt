@@ -82,9 +82,13 @@ target_link_libraries(mxl
             mxl-common  # Common objects for libmxl and libmxl-fabrics
     )
 
+# Enable LTO/IPO on target if enabled and supported
+mxl_enable_target_ipo(mxl)
+
 # Alias mxl to mxl::mxl so that this library can be used
 # in lieu of a module from the local source tree
 add_library(${PROJECT_NAME}::mxl ALIAS mxl)
+
 
 if (MXL_ENABLE_FABRICS_OFI)
     add_subdirectory(fabrics)

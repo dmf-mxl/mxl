@@ -49,6 +49,9 @@ set_target_properties(mxl-fabrics-objects
             CXX_EXTENSIONS            OFF
     )
 
+# Enable LTO/IPO on target if enabled and supported
+mxl_enable_target_ipo(mxl-fabrics-objects)
+
 add_library(mxl-fabrics SHARED)
 target_link_libraries(mxl-fabrics
         PRIVATE
@@ -76,6 +79,9 @@ target_link_libraries(mxl-fabrics
             mxl-fabrics-headers
             PkgConfig::libfabric
     )
+
+# Enable LTO/IPO on target if enabled and supported
+mxl_enable_target_ipo(mxl-fabrics)
 
 add_library(${PROJECT_NAME}::mxl-fabrics ALIAS mxl-fabrics)
 

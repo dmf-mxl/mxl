@@ -92,6 +92,9 @@ target_link_libraries(mxl-common
             mxl-internal-headers
     )
 
+# Enable LTO/IPO on target if enabled and supported
+mxl_enable_target_ipo(mxl-common)
+
 install(TARGETS mxl-common EXPORT ${PROJECT_NAME}-targets
         COMPONENT ${PROJECT_NAME}-lib
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
