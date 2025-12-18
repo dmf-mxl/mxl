@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use crate::mxlsrc::imp::MxlSrc;
 use crate::mxlsrc::state::{AudioState, InitialTime, State};
@@ -14,6 +14,7 @@ use mxl::{FlowInfo, MxlInstance, Rational, SamplesData};
 use tracing::trace;
 
 const GET_SAMPLE_TIMEOUT: Duration = Duration::from_secs(2);
+const PRODUCER_TIMEOUT: Duration = Duration::from_millis(100);
 const DEFAULT_BATCH_SIZE: u32 = 48;
 
 pub(crate) fn create_audio(
@@ -168,7 +169,11 @@ fn wait_for_sample(
     batch: u64,
     audio_state: &AudioState,
 ) -> Result<(), gst::FlowError> {
+    let start = Instant::now();
     while audio_state.index + batch > head {
+        if start.elapsed() > PRODUCER_TIMEOUT {
+            return Err(gst::FlowError::Eos);
+        }
         head = wait_for_producer(head, batch, audio_state)?;
     }
     Ok(())
