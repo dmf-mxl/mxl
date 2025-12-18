@@ -93,3 +93,9 @@ A media function consuming one or many flows may use multiple alignment strategi
 $$
 ReadIndex = min(F1_{head} ... FN_{head})
 $$
+
+
+## Time functions
+
+All time helpers operate on nanoseconds and rational time bases. Continuous flows typically pass the sample rate (`grainRate`) directly to these
+helpers when scheduling wake-ups or calculating how far to advance `headIndex`. Refer to `mxl/time.h` for the canonical API surface.
