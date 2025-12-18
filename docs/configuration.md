@@ -9,7 +9,7 @@ Domain level configuration is stored in an optional 'options.json' files stored 
 
 | Option        | Description                | Default Value |
 |----------------|---------------------------|---------------|
-| `urn:x-mxl:option:history_duration/v1.0"`         | Depth, in nanoseconds, of a ringbuffer         | 100'000'000ns   |
+| `urn:x-mxl:option:history_duration/v1.0"`         | Depth, in nanoseconds, of a ringbuffer         | 200'000'000ns   |
 
 ### Example 'options.json' file
 

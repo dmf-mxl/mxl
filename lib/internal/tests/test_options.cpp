@@ -24,7 +24,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : Default va
     auto flowIoFactory = std::make_unique<mxl::lib::PosixFlowIoFactory>();
     auto const instance = std::make_shared<Instance>(domain, "", std::move(flowIoFactory));
 
-    REQUIRE(instance->getHistoryDurationNs() == 100'000'000ULL); // default value
+    REQUIRE(instance->getHistoryDurationNs() == 200'000'000ULL); // default value
 }
 
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : Domain config", "[options]")
@@ -49,7 +49,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : Instance c
 
     // We should get the default value, not the instance config value.
     // We don't want per-instance history durations.
-    REQUIRE(instance->getHistoryDurationNs() == 100'000'000ULL);
+    REQUIRE(instance->getHistoryDurationNs() == 200'000'000ULL);
 }
 
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : Domain + Instance config", "[options]")
@@ -80,5 +80,5 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : invalid co
     auto flowIoFactory = std::make_unique<mxl::lib::PosixFlowIoFactory>();
     auto const instance = std::make_shared<Instance>(domain, "def", std::move(flowIoFactory));
 
-    REQUIRE(instance->getHistoryDurationNs() == 100'000'000ULL); // default value
+    REQUIRE(instance->getHistoryDurationNs() == 200'000'000ULL); // default value
 }

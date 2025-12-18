@@ -81,7 +81,7 @@ namespace mxl::lib
         , _writers{}
         , _mutex{}
         , _options{options}
-        , _historyDuration{100'000'000ULL}
+        , _historyDuration{200'000'000ULL}
         , _watcher{}
         , _stopping{false}
     {
