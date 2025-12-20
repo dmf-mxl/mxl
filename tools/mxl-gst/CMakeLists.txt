@@ -45,8 +45,8 @@ if (gstreamer_FOUND)
     target_link_libraries(mxl-gst-testsrc
             PRIVATE
                 mxl
-                mxl-internal-headers
-                mxl-common
+                stduuid
+                fmt::fmt
                 CLI11::CLI11
                 PkgConfig::gstreamer
                 PkgConfig::gstreamer-app
@@ -76,8 +76,8 @@ if (gstreamer_FOUND)
     target_link_libraries(mxl-gst-sink
             PRIVATE
                 mxl
-                mxl-internal-headers
-                mxl-common
+                stduuid
+                fmt::fmt
                 CLI11::CLI11
                 spdlog::spdlog
                 PkgConfig::gstreamer
@@ -108,8 +108,8 @@ if (gstreamer_FOUND)
     target_link_libraries(mxl-gst-looping-filesrc
             PRIVATE
                 mxl
-                mxl-internal-headers
-                mxl-common
+                stduuid
+                fmt::fmt
                 CLI11::CLI11
                 PkgConfig::gstreamer
                 PkgConfig::gstreamer-app

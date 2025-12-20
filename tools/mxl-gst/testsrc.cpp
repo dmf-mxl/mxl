@@ -7,6 +7,8 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <thread>
+#include <glib.h>
 #include <uuid.h>
 #include <CLI/CLI.hpp>
 #include <gst/app/gstappsink.h>
@@ -16,8 +18,7 @@
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
-#include "mxl-internal/FlowParser.hpp"
-#include "mxl-internal/Logging.hpp"
+#include "./utils.hpp"
 
 namespace
 {
@@ -783,35 +784,6 @@ namespace
     }
 }
 
-/**
- * Update the group-hint tag in the provided nmos flow json definition.
- *
- * @param nmosFlow The json nmos flow.
- * @param groupHint The group-hint value to set.
- * @param roleInGroup The role-in-group vaue to set in the group-hint tag.
- * @return The updated nmos flow json definition.
- */
-std::string updateGroupHintInFlow(std::string const& nmosFlow, std::string const& groupHint, std::string const& roleInGroup)
-{
-    // Parse the nmos flow json
-    auto jsonValue = picojson::value{};
-    auto const err = picojson::parse(jsonValue, nmosFlow);
-    if (!err.empty())
-    {
-        throw std::invalid_argument{"Failed to parse nmos flow: " + err};
-    }
-
-    // Add (or replace) the group-hint tag
-    auto& jsonObj = jsonValue.get<picojson::object>();
-    auto& tagsObj = jsonObj.find("tags")->second.get<picojson::object>();
-    auto& tagsArray = tagsObj["urn:x-nmos:tag:grouphint/v1.0"].get<picojson::array>();
-    tagsArray.clear();
-    tagsArray.emplace_back(groupHint + ":" + roleInGroup);
-
-    // Serialize back to json string
-    return picojson::value(jsonObj).serialize();
-}
-
 int main(int argc, char** argv)
 {
     std::signal(SIGINT, &signal_handler);
@@ -880,33 +852,28 @@ int main(int argc, char** argv)
             {
                 try
                 {
-                    auto const flowNmosDesc = readFile(videoFlowConfigFile);
-                    auto flowNmos = mxl::lib::FlowParser{flowNmosDesc};
-                    if (flowNmos.get<std::string>("interlace_mode") != "progressive")
+                    auto flowNmos = json_utils::parseFile(videoFlowConfigFile);
+                    auto const flowOptions = !videoFlowOptionFile.empty() ? readFile(videoFlowOptionFile) : std::string{};
+                    if (json_utils::getField<std::string>(flowNmos, "interlace_mode") != "progressive")
                     {
                         throw std::invalid_argument{"This application does not support interlaced flows."};
                     }
 
-                    auto const flowOptions = !videoFlowOptionFile.empty() ? readFile(videoFlowOptionFile) : std::string{};
-
-                    auto const updatedFlowNmosDesc = updateGroupHintInFlow(flowNmosDesc, groupHint, "video");
-
-                    auto mxlWriter = MxlWriter{domain, updatedFlowNmosDesc, flowOptions};
-
-                    auto const frameHeight = static_cast<std::uint64_t>(flowNmos.get<double>("frame_height"));
+                    json_utils::updateGroupHint(flowNmos, groupHint, "video");
+                    auto mxlWriter = MxlWriter{domain, json_utils::serializeJson(flowNmos), flowOptions};
+                    auto const frameWidth = static_cast<std::uint64_t>(json_utils::getField<double>(flowNmos, "frame_width"));
+                    auto const frameHeight = static_cast<std::uint64_t>(json_utils::getField<double>(flowNmos, "frame_height"));
                     if (mxlWriter.maxCommitBatchSizeHint() > frameHeight)
                     {
                         throw std::invalid_argument{"slicesPerBatch cannot be greater than frame height."};
                     }
 
-                    auto const gstConfig = VideoPipelineConfig{
-                        .frameWidth = static_cast<std::uint64_t>(flowNmos.get<double>("frame_width")),
+                    auto const gstConfig = VideoPipelineConfig{.frameWidth = frameWidth,
                         .frameHeight = frameHeight,
-                        .frameRate = flowNmos.getGrainRate(),
+                        .frameRate = json_utils::getRational(flowNmos, "grain_rate"),
                         .pattern = pattern_map.at(pattern),
                         .textOverlay = textOverlay,
-                        .sliceSize = flowNmos.getPayloadSliceLengths()[0],
-                    };
+                        .sliceSize = media_utils::getV210LineLength(frameWidth)};
 
                     auto gstPipeline = VideoPipeline{gstConfig};
 
@@ -932,24 +899,21 @@ int main(int argc, char** argv)
             {
                 try
                 {
-                    auto const flowNmosDesc = readFile(audioFlowConfigFile);
-                    auto flowNmos = mxl::lib::FlowParser{flowNmosDesc};
+                    auto flowNmos = json_utils::parseFile(audioFlowConfigFile);
                     auto const flowOptions = !audioFlowOptionFile.empty() ? readFile(audioFlowOptionFile) : std::string{};
-                    auto const updatedFlowNmosDesc = updateGroupHintInFlow(flowNmosDesc, groupHint, "audio");
+                    json_utils::updateGroupHint(flowNmos, groupHint, "audio");
 
-                    auto mxlWriter = MxlWriter{domain, updatedFlowNmosDesc, flowOptions};
+                    auto mxlWriter = MxlWriter{domain, json_utils::serializeJson(flowNmos), flowOptions};
 
                     auto const gstConfig = AudioPipelineConfig{
-                        .sampleRate = flowNmos.getGrainRate(),
-                        .channelCount = flowNmos.getChannelCount(),
+                        .sampleRate = json_utils::getRational(flowNmos, "sample_rate"),
+                        .channelCount = static_cast<std::uint32_t>(json_utils::getField<double>(flowNmos, "channel_count")),
                         .samplesPerBatch = mxlWriter.maxCommitBatchSizeHint(),
                         .wave = wave_map.at("sine"),
                     };
 
                     auto gstPipeline = AudioPipeline{gstConfig};
-
                     mxlWriter.run(gstPipeline, audioOffset);
-
                     MXL_INFO("Audio pipeline finished");
                 }
                 catch (std::exception const& e)

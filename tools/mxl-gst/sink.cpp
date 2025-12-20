@@ -5,9 +5,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <fstream>
 #include <stdexcept>
 #include <string>
+#include <thread>
+#include <uuid.h>
 #include <CLI/CLI.hpp>
 #include <fmt/core.h>
 #include <fmt/ranges.h>
@@ -17,12 +18,12 @@
 #include <gst/gstclock.h>
 #include <gst/gstpipeline.h>
 #include <gst/gstsystemclock.h>
+#include <picojson/picojson.h>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
-#include "mxl-internal/FlowParser.hpp"
-#include "mxl-internal/Logging.hpp"
-#include "mxl-internal/PathUtils.hpp"
+#include "mxl/rational.h"
+#include "./utils.hpp"
 
 #ifdef __APPLE__
 #   include <TargetConditionals.h>
@@ -767,22 +768,25 @@ namespace
         std::uint64_t _highestLatencyNs;
     };
 
-    std::string readFile(std::string const& filepath)
-    {
-        if (auto file = std::ifstream{filepath, std::ios::in | std::ios::binary}; file)
-        {
-            auto reader = std::stringstream{};
-            reader << file.rdbuf();
-            return reader.str();
-        }
-
-        throw std::runtime_error{"Failed to open file: " + filepath};
-    }
-
     std::string readFlowDescriptor(std::string const& domain, std::string const& flowID)
     {
-        auto const descriptorPath = mxl::lib::makeFlowDescriptorFilePath(domain, flowID);
-        return readFile(descriptorPath);
+        auto const opts = "{}";
+        auto instance = mxlCreateInstance(domain.c_str(), opts);
+        if (instance == nullptr)
+        {
+            throw std::runtime_error{"Failed to create MXL instance."};
+        }
+
+        char fourKBuffer[4096];
+        auto fourKBufferSize = sizeof(fourKBuffer);
+        auto requiredBufferSize = fourKBufferSize;
+
+        if (mxlGetFlowDef(instance, flowID.c_str(), fourKBuffer, &requiredBufferSize) != MXL_STATUS_OK)
+        {
+            throw std::runtime_error{"Failed to get flow definition for flow id " + flowID};
+        }
+
+        return std::string{fourKBuffer, requiredBufferSize - 1};
     }
 
     int real_main(int argc, char** argv, void*)
@@ -840,17 +844,21 @@ namespace
                         auto reader = MxlReader{domain, videoFlowID};
 
                         auto const flowDescriptor = readFlowDescriptor(domain, videoFlowID);
-                        auto const parser = mxl::lib::FlowParser{flowDescriptor};
+                        auto const flowNmos = json_utils::parseBuffer(flowDescriptor);
 
-                        if (parser.get<std::string>("interlace_mode") != "progressive")
+                        if (json_utils::getField<std::string>(flowNmos, "interlace_mode") != "progressive")
                         {
                             throw std::invalid_argument{"This application does not support interlaced flows."};
                         }
 
+                        auto const grainRate = json_utils::getRational(flowNmos, "grain_rate");
+                        auto const frameWidth = static_cast<std::uint32_t>(json_utils::getField<double>(flowNmos, "frame_width"));
+                        auto const frameHeight = static_cast<std::uint32_t>(json_utils::getField<double>(flowNmos, "frame_height"));
+
                         auto videoConfig = VideoPipelineConfig{
-                            .frameRate = parser.getGrainRate(),
-                            .frameWidth = static_cast<std::uint64_t>(parser.get<double>("frame_width")),
-                            .frameHeight = static_cast<std::uint64_t>(parser.get<double>("frame_height")),
+                            .frameRate = grainRate,
+                            .frameWidth = static_cast<std::uint64_t>(frameWidth),
+                            .frameHeight = static_cast<std::uint64_t>(frameHeight),
                             .offset = playbackDelay + ((audioVideoOffset < 0) ? -audioVideoOffset : 0LL),
                         };
 
@@ -878,13 +886,15 @@ namespace
                     try
                     {
                         auto reader = MxlReader{domain, audioFlowID};
-
                         auto const flowDescriptor = readFlowDescriptor(domain, audioFlowID);
-                        auto const parser = mxl::lib::FlowParser{flowDescriptor};
+                        auto flowNmos = json_utils::parseBuffer(flowDescriptor);
+
+                        auto grainRate = json_utils::getRational(flowNmos, "sample_rate");
+                        auto channelCount = static_cast<std::uint32_t>(json_utils::getField<double>(flowNmos, "channel_count"));
 
                         auto audioConfig = AudioPipelineConfig{
-                            .sampleRate = parser.getGrainRate(),
-                            .channelCount = parser.getChannelCount(),
+                            .sampleRate = grainRate,
+                            .channelCount = channelCount,
                             .offset = playbackDelay + ((audioVideoOffset > 0) ? audioVideoOffset : 0LL),
                             .speakerChannels = listenChannels,
                         };
