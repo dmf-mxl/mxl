@@ -17,7 +17,7 @@ fi
 # Install cargo binstall
 curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
 
-cargo binstall cargo-audit --locked
+cargo binstall cargo-audit@0.22.0 --locked
 cargo binstall cargo-outdated --locked
 
 # udeps requires the nightly compiler, so using machete (at least for now)
