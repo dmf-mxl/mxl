@@ -14,7 +14,6 @@ pub enum DataFormat {
     Video,
     Audio,
     Data,
-    Mux,
 }
 
 impl From<u32> for DataFormat {
@@ -24,7 +23,6 @@ impl From<u32> for DataFormat {
             mxl_sys::MXL_DATA_FORMAT_VIDEO => DataFormat::Video,
             mxl_sys::MXL_DATA_FORMAT_AUDIO => DataFormat::Audio,
             mxl_sys::MXL_DATA_FORMAT_DATA => DataFormat::Data,
-            mxl_sys::MXL_DATA_FORMAT_MUX => DataFormat::Mux,
             _ => DataFormat::Unspecified,
         }
     }

@@ -33,6 +33,7 @@ namespace mxl::lib
 
         /**
          * Translate a NMOS IS-04 data format to a an mxlDataFormat enum.
+         * "mux" format is not supported by MXL.
          * \param[in] format a string view referring to the format.
          * \return The mxlDataFormat enumerator coresponding to \p format, or
          *      MXL_DATA_FORMAT_UNSPECIFIED if \p format did not map to a known
@@ -57,10 +58,6 @@ namespace mxl::lib
                 if (tail == "data"sv)
                 {
                     return MXL_DATA_FORMAT_DATA;
-                }
-                if (tail == "mux"sv)
-                {
-                    return MXL_DATA_FORMAT_MUX;
                 }
             }
 

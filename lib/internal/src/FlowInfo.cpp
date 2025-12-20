@@ -17,7 +17,6 @@ namespace
             case MXL_DATA_FORMAT_VIDEO:       return "Video";
             case MXL_DATA_FORMAT_AUDIO:       return "Audio";
             case MXL_DATA_FORMAT_DATA:        return "Data";
-            case MXL_DATA_FORMAT_MUX:         return "Multiplexed";
             default:                          return "UNKNOWN";
         }
     }

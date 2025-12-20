@@ -16,7 +16,6 @@ extern "C"
         MXL_DATA_FORMAT_VIDEO,
         MXL_DATA_FORMAT_AUDIO,
         MXL_DATA_FORMAT_DATA,
-        MXL_DATA_FORMAT_MUX,
     } mxlDataFormat;
 
     /**
@@ -30,8 +29,7 @@ extern "C"
         {
             case MXL_DATA_FORMAT_VIDEO:
             case MXL_DATA_FORMAT_AUDIO:
-            case MXL_DATA_FORMAT_DATA:
-            case MXL_DATA_FORMAT_MUX:   return 1;
+            case MXL_DATA_FORMAT_DATA:  return 1;
 
             default:                    return 0;
         }
