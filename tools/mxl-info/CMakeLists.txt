@@ -27,11 +27,19 @@ if (NOT TARGET CLI11::CLI11)
     find_package(CLI11 CONFIG REQUIRED)
 endif ()
 
+if (NOT TARGET stduuid)
+    find_package(stduuid CONFIG REQUIRED)
+endif ()
+
+if (NOT TARGET fmt::fmt)
+    find_package(fmt CONFIG REQUIRED)
+endif()
+
 target_link_libraries(mxl-info
         PRIVATE
+            stduuid
+            fmt::fmt
             mxl
-            mxl-internal-headers
-            mxl-common
             CLI11::CLI11
     )
 

@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
-#include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -17,10 +16,9 @@
 #include <gsl/span>
 #include <picojson/picojson.h>
 #include <mxl/flow.h>
+#include <mxl/flowinfo.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
-#include "mxl-internal/FlowInfo.hpp"
-#include "mxl-internal/PathUtils.hpp"
 
 namespace
 {
@@ -73,6 +71,64 @@ namespace
             {
                 os << '\t' << fmt::format("{: >18}: {}", "Latency (grains)", latency) << std::endl;
             }
+        }
+
+        constexpr char const* getFormatString(int format) noexcept
+        {
+            switch (format)
+            {
+                case MXL_DATA_FORMAT_UNSPECIFIED: return "UNSPECIFIED";
+                case MXL_DATA_FORMAT_VIDEO:       return "Video";
+                case MXL_DATA_FORMAT_AUDIO:       return "Audio";
+                case MXL_DATA_FORMAT_DATA:        return "Data";
+                default:                          return "UNKNOWN";
+            }
+        }
+
+        constexpr char const* getPayloadLocationString(std::uint32_t payloadLocation) noexcept
+        {
+            switch (payloadLocation)
+            {
+                case MXL_PAYLOAD_LOCATION_HOST_MEMORY:   return "Host";
+                case MXL_PAYLOAD_LOCATION_DEVICE_MEMORY: return "Device";
+                default:                                 return "UNKNOWN";
+            }
+        }
+
+        std::ostream& operator<<(std::ostream& os, mxlFlowInfo const& info)
+        {
+            auto const span = uuids::span<std::uint8_t, sizeof info.config.common.id>{
+                const_cast<std::uint8_t*>(info.config.common.id), sizeof info.config.common.id};
+            auto const id = uuids::uuid(span);
+            os << "- Flow [" << uuids::to_string(id) << ']' << '\n'
+               << '\t' << fmt::format("{: >18}: {}", "Version", info.version) << '\n'
+               << '\t' << fmt::format("{: >18}: {}", "Struct size", info.size) << '\n'
+               << '\t' << fmt::format("{: >18}: {}", "Format", getFormatString(info.config.common.format)) << '\n'
+               << '\t'
+               << fmt::format("{: >18}: {}/{}", "Grain/sample rate", info.config.common.grainRate.numerator, info.config.common.grainRate.denominator)
+               << '\n'
+               << '\t' << fmt::format("{: >18}: {}", "Commit batch size", info.config.common.maxCommitBatchSizeHint) << '\n'
+               << '\t' << fmt::format("{: >18}: {}", "Sync batch size", info.config.common.maxSyncBatchSizeHint) << '\n'
+               << '\t' << fmt::format("{: >18}: {}", "Payload Location", getPayloadLocationString(info.config.common.payloadLocation)) << '\n'
+               << '\t' << fmt::format("{: >18}: {}", "Device Index", info.config.common.deviceIndex) << '\n'
+               << '\t' << fmt::format("{: >18}: {:0>8x}", "Flags", info.config.common.flags) << '\n';
+
+            if (mxlIsDiscreteDataFormat(info.config.common.format))
+            {
+                os << '\t' << fmt::format("{: >18}: {}", "Grain count", info.config.discrete.grainCount) << '\n';
+            }
+            else if (mxlIsContinuousDataFormat(info.config.common.format))
+            {
+                os << '\t' << fmt::format("{: >18}: {}", "Channel count", info.config.continuous.channelCount) << '\n'
+                   << '\t' << fmt::format("{: >18}: {}", "Buffer length", info.config.continuous.bufferLength) << '\n';
+            }
+
+            os << '\n'
+               << '\t' << fmt::format("{: >18}: {}", "Head index", info.runtime.headIndex) << '\n'
+               << '\t' << fmt::format("{: >18}: {}", "Last write time", info.runtime.lastWriteTime) << '\n'
+               << '\t' << fmt::format("{: >18}: {}", "Last read time", info.runtime.lastReadTime) << '\n';
+
+            return os;
         }
 
         std::ostream& operator<<(std::ostream& os, LatencyPrinter const& lp)
@@ -134,28 +190,14 @@ namespace
         ::mxlInstance _instance;
     };
 
-    std::string readFile(std::string const& filepath)
-    {
-        if (auto file = std::ifstream{filepath, std::ios::in | std::ios::binary}; file)
-        {
-            auto reader = std::stringstream{};
-            reader << file.rdbuf();
-            return reader.str();
-        }
-
-        throw std::runtime_error{"Failed to open file: " + filepath};
-    }
-
-    std::pair<std::string, std::string> getFlowDetails(std::filesystem::path const& descPath) noexcept
+    std::pair<std::string, std::string> getFlowDetails(std::string const& flowDef) noexcept
     {
         auto result = std::pair<std::string, std::string>{"n/a", "n/a"};
 
         try
         {
-            auto const content = readFile(descPath);
-
             auto v = picojson::value{};
-            if (auto const errorString = picojson::parse(v, content); errorString.empty())
+            if (auto const errorString = picojson::parse(v, flowDef); errorString.empty())
             {
                 auto const& obj = v.get<picojson::object>();
 
@@ -189,24 +231,51 @@ namespace
 
     int listAllFlows(std::string const& in_domain)
     {
+        auto const opts = "{}";
+        auto instance = mxlCreateInstance(in_domain.c_str(), opts);
+        if (instance == nullptr)
+        {
+            std::cerr << "ERROR" << ": "
+                      << "Failed to create MXL instance." << std::endl;
+            return EXIT_FAILURE;
+        }
+
         if (auto const base = std::filesystem::path{in_domain}; is_directory(base))
         {
             for (auto const& entry : std::filesystem::directory_iterator{base})
             {
-                if (is_directory(entry) && (entry.path().extension() == mxl::lib::FLOW_DIRECTORY_NAME_SUFFIX))
+                if (is_directory(entry) && (entry.path().extension().string() == ".mxl-flow"))
                 {
                     // this looks like a uuid. try to parse it an confirm it is valid.
                     auto const id = uuids::uuid::from_string(entry.path().stem().string());
                     if (id.has_value())
                     {
-                        auto const descPath = mxl::lib::makeFlowDescriptorFilePath(base, entry.path().stem().string());
-                        auto const [label, groupHint] = getFlowDetails(descPath);
+                        char fourKBuffer[4096];
+                        auto fourKBufferSize = sizeof(fourKBuffer);
+                        auto requiredBufferSize = fourKBufferSize;
+
+                        if (mxlGetFlowDef(instance, uuids::to_string(*id).c_str(), fourKBuffer, &requiredBufferSize) != MXL_STATUS_OK)
+                        {
+                            std::cerr << "ERROR" << ": "
+                                      << "Failed to get flow definition for flow id " << uuids::to_string(*id) << std::endl;
+                            continue;
+                        }
+
+                        auto flowDef = std::string{fourKBuffer, requiredBufferSize - 1};
+                        auto const [label, groupHint] = getFlowDetails(flowDef);
 
                         // Output CSV format: id,label,group_hint
                         std::cout << *id << ", " << std::quoted(label) << ", " << std::quoted(groupHint) << '\n';
                     }
                 }
             }
+        }
+
+        if ((instance != nullptr) && (mxlDestroyInstance(instance)) != MXL_STATUS_OK)
+        {
+            std::cerr << "ERROR" << ": "
+                      << "Failed to destroy MXL instance." << std::endl;
+            return EXIT_FAILURE;
         }
 
         std::cout << std::endl;
