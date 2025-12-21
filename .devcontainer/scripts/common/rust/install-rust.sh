@@ -7,7 +7,7 @@ set -eu
 
 RUST_VERSION=1.90.0
 
-if command -v rustup > /dev/null 2>&1; then
+if command -v rustup >/dev/null 2>&1; then
     rustup default $RUST_VERSION
 else
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain=$RUST_VERSION
