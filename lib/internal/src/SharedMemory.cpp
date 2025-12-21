@@ -30,7 +30,7 @@ namespace mxl::lib
         if ((mode == AccessMode::CREATE_READ_WRITE) && ((_fd = ::open(path, OMODE_CREATE, 0664)) != -1))
         {
             // Ensure the file is large enough to hold the shared data
-            if (::ftruncate(_fd, payloadSize) == -1)
+            if (::posix_fallocate(_fd, 0, payloadSize) == -1)
             {
                 // No need to close _fd, as the destructor *will* be called,
                 // because we delegated to the default constructor.
