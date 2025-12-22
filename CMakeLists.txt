@@ -16,13 +16,31 @@ cmake_policy(SET CMP0135 NEW)
 
 option(MXL_ENABLE_FABRICS_OFI "Enable building the fabrics library with libfabric" OFF)
 
-set(mxl_VERSION 0.10.0)
+# Build suffix.  Currently manually set but could be automated using branch names, etc.
+# One of : -dev, -beta, -rc, "" (empty for final releases)
+set(MXL_BUILD_SUFFIX "-dev")
+
+set(mxl_VERSION 1.0.0)
 
 if(DEFINED MXL_BUILD_NUMBER)
     string(APPEND mxl_VERSION ".${MXL_BUILD_NUMBER}")
 else()
     string(APPEND mxl_VERSION ".0")
 endif()
+
+find_package(Git QUIET)
+
+if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} rev-parse --short=12 HEAD
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_HASH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+else()
+    set(GIT_HASH "unknown")
+endif()
+
 
 option(BUILD_DOCS "Build the docs" ON)
 option(BUILD_TESTS "Build the tests" ON)

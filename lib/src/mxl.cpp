@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "mxl/mxl.h"
-#include <cstdint>
 #include <exception>
 #include <memory>
 #include <string>
@@ -10,6 +9,8 @@
 #include "mxl-internal/Instance.hpp"
 #include "mxl-internal/Logging.hpp"
 #include "mxl-internal/PosixFlowIoFactory.hpp"
+
+static char const g_mxl_version_string[] = MXL_VERSION_FULL;
 
 extern "C"
 MXL_EXPORT
@@ -21,6 +22,7 @@ mxlStatus mxlGetVersion(mxlVersionType* out_version)
         out_version->minor = MXL_VERSION_MINOR;
         out_version->bugfix = MXL_VERSION_PATCH;
         out_version->build = MXL_VERSION_BUILD;
+        out_version->fullVersion = g_mxl_version_string;
         return MXL_STATUS_OK;
     }
     else
