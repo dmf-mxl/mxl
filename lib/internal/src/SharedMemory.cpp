@@ -30,11 +30,11 @@ namespace mxl::lib
         if ((mode == AccessMode::CREATE_READ_WRITE) && ((_fd = ::open(path, OMODE_CREATE, 0664)) != -1))
         {
             // Ensure the file is large enough to hold the shared data
-            if (::posix_fallocate(_fd, 0, payloadSize) == -1)
+            if (auto error = ::posix_fallocate(_fd, 0, payloadSize); error != 0)
             {
                 // No need to close _fd, as the destructor *will* be called,
                 // because we delegated to the default constructor.
-                throw std::system_error(errno, std::generic_category(), "Could not resize shared memory segment.");
+                throw std::system_error(error, std::generic_category(), "Could not resize shared memory segment.");
             }
             _mode = AccessMode::CREATE_READ_WRITE;
         }
