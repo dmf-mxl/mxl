@@ -19,6 +19,7 @@
 #include <mxl/flowinfo.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
+#include "uri_parser.h"
 
 namespace
 {
@@ -350,10 +351,13 @@ namespace
 int main(int argc, char** argv)
 {
     auto app = CLI::App{"mxl-info"};
+    app.allow_extras();
+    app.footer("MXL URI format:\n"
+               "    mxl://[authority[:port]]/domain[?id=...]\n"
+               "    See: https://github.com/dmf-mxl/mxl/docs/Addressability.md");
 
     auto version = ::mxlVersionType{};
     ::mxlGetVersion(&version);
-
     {
         auto ss = std::stringstream{};
         ss << version.major << '.' << version.minor << '.' << version.bugfix << '.' << version.build;
@@ -364,29 +368,74 @@ int main(int argc, char** argv)
 
     auto domain = std::string{};
     auto domainOpt = app.add_option("-d,--domain", domain, "The MXL domain directory");
-    domainOpt->required(true);
     domainOpt->check(CLI::ExistingDirectory);
 
     auto flowId = std::string{};
-    auto flowIdOpt = app.add_option("-f,--flow", flowId, "The flow id to analyse");
+    app.add_option("-f,--flow", flowId, "The flow id to analyse");
 
-    auto allOpt = app.add_flag("-l,--list", "List all flows in the MXL domain");
+    auto listOpt = app.add_flag("-l,--list", "List all flows in the MXL domain");
     auto gcOpt = app.add_flag("-g,--garbage-collect", "Garbage collect inactive flows found in the MXL domain");
+
+    auto address = std::vector<std::string>{};
+    app.add_option("ADDRESS", address, "MXL URI")->expected(-1);
 
     CLI11_PARSE(app, argc, argv);
 
+    // URI will overwrite any other redudant options.  Parse the URI after CLI11 parsing.
+    if (!address.empty())
+    {
+        auto parsedUri = uri::parse_uri(address.at(0));
+
+        if (parsedUri.path.empty())
+        {
+            std::cerr << "ERROR: Domain must be specified in the MXL URI." << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        if (!parsedUri.authority.host.empty() || (parsedUri.authority.port != 0))
+        {
+            std::cerr << "ERROR: Authority/port not currently supported in MXL URI." << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        // We know that there won't be any error since the URI passed CLI11 validation.
+        domain = parsedUri.path;
+
+        // Check for the first flow id in the query parameters.
+        if (parsedUri.query.find("id") != parsedUri.query.end())
+        {
+            flowId = parsedUri.query.at("id");
+        }
+    }
+
+    // At this point we must have a domain.
+    if (domain.empty())
+    {
+        std::cerr << "ERROR: Domain must be specified either via --domain or in the URI." << std::endl;
+        return EXIT_FAILURE;
+    }
+
     auto status = EXIT_SUCCESS;
+
+    // If garbage collect is specified, do that first.
     if (gcOpt->count() > 0)
     {
         status = garbageCollect(domain);
     }
-    else if (allOpt->count() > 0)
+    // If list all is specified or if we don't have a flow id specified through option or URI: list all flows.
+    else if (listOpt->count() > 0 || flowId.empty())
     {
         status = listAllFlows(domain);
     }
-    else if (flowIdOpt->count() > 0)
+    // The user specified a flow id (through the URI or command line option): print info for that flow.
+    else if (!flowId.empty())
     {
         status = printFlow(domain, flowId);
+    }
+    else
+    {
+        std::cerr << "No action specified. Use --help for usage information." << std::endl;
+        status = EXIT_FAILURE;
     }
 
     return status;
