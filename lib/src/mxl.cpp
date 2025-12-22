@@ -22,7 +22,7 @@ mxlStatus mxlGetVersion(mxlVersionType* out_version)
         out_version->minor = MXL_VERSION_MINOR;
         out_version->bugfix = MXL_VERSION_PATCH;
         out_version->build = MXL_VERSION_BUILD;
-        out_version->fullVersion = g_mxl_version_string;
+        out_version->full = g_mxl_version_string;
         return MXL_STATUS_OK;
     }
     else

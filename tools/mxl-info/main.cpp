@@ -358,7 +358,7 @@ int main(int argc, char** argv)
 
     auto version = ::mxlVersionType{};
     ::mxlGetVersion(&version);
-    app.set_version_flag("--version", version.fullVersion);
+    app.set_version_flag("--version", version.full);
 
     auto domain = std::string{};
     auto domainOpt = app.add_option("-d,--domain", domain, "The MXL domain directory");
