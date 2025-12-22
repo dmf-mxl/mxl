@@ -154,7 +154,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow (With Alp
 {
     auto const opts = "{}";
     auto const flowId = "5fbec3b1-1b0f-417d-9059-8b94a47197ed";
-    auto flowDef = mxl::tests::readFile("data/v210+alpha_flow.json");
+    auto flowDef = mxl::tests::readFile("data/v210a_flow.json");
 
     auto instanceReader = mxlCreateInstance(domain.string().c_str(), opts);
     REQUIRE(instanceReader != nullptr);

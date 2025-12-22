@@ -367,7 +367,7 @@ namespace mxl::lib
                 }
                 else
                 {
-                    auto msg = std::string{"Invalid video height for interlaced v210+alpha. Must be even."};
+                    auto msg = std::string{"Invalid video height for interlaced v210a. Must be even."};
                     throw std::invalid_argument{std::move(msg)};
                 }
             }
