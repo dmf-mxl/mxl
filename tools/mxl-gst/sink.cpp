@@ -23,7 +23,7 @@
 #include <mxl/mxl.h>
 #include <mxl/time.h>
 #include "mxl/rational.h"
-#include "./utils.hpp"
+#include "utils.hpp"
 
 #ifdef __APPLE__
 #   include <TargetConditionals.h>

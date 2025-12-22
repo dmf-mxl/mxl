@@ -37,7 +37,6 @@ namespace media_utils
 
 namespace json_utils
 {
-
     /**
      * Parse a JSON buffer and return the root object.  Throws on error.
      * @param jsonBuffer The JSON buffer to parse.

@@ -17,7 +17,7 @@
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
-#include "./utils.hpp"
+#include "utils.hpp"
 
 namespace fs = std::filesystem;
 
