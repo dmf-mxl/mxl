@@ -52,6 +52,7 @@ RUN dnf install -y \
     ccache \
     curl \
     librdmacm-devel \
+    ldd \
     && dnf clean all
 
 RUN pip install --upgrade cmake

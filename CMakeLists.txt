@@ -16,9 +16,10 @@ cmake_policy(SET CMP0135 NEW)
 
 option(MXL_ENABLE_FABRICS_OFI "Enable building the fabrics library with libfabric" OFF)
 
-# Build suffix.  Currently manually set but could be automated using branch names, etc.
-# One of : -dev, -beta, -rc, "" (empty for final releases)
-set(MXL_BUILD_SUFFIX "-dev")
+# Build type. Used as a build suffix or in the operating system package file name.  Currently manually set but could be automated using branch names, etc.
+# One of : dev, beta, rc, "" (empty for final releases)
+set(MXL_BUILD_TYPE "dev")
+set(MXL_BUILD_SUFFIX "-${MXL_BUILD_TYPE}")
 
 set(mxl_VERSION 1.0.0)
 
@@ -159,6 +160,13 @@ if(BUILD_DOCS)
     endif()
 endif()
 
+# CPack Configuration
+set(CPACK_PACKAGE_NAME "dmfmxl-dev")
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_PACKAGE_DESCRIPTION "EBU DMF Media eXchange Layer SDK development package")
+set(CPACK_PACKAGE_VENDOR "EBU.ch")
+set(CPACK_PACKAGE_CONTACT "DMF MXL <mxl@ebu.ch>")
+
 if(EXISTS "/etc/os-release")
     file(STRINGS "/etc/os-release" OS_RELEASE_CONTENTS)
 
@@ -182,21 +190,46 @@ if(EXISTS "/etc/os-release")
         set(CPACK_DEBIAN_PACKAGE_DEPENDS "gstreamer1.0-x, gstreamer1.0-plugins-good")
         set(CPACK_DEBIAN_PACKAGE_SECTION "devel")
         set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
+
+        find_program(DPKG_EXECUTABLE dpkg)
+
+        if(DPKG_EXECUTABLE)
+            execute_process(
+                COMMAND ${DPKG_EXECUTABLE} --print-architecture
+                OUTPUT_VARIABLE DEB_ARCH
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+            )
+        else()
+            message(FATAL_ERROR "dpkg not found — cannot determine Debian architecture")
+        endif()
+        set(CPACK_PACKAGE_ARCHITECTURE "${DEB_ARCH}")
+        set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}_${CPACK_PACKAGE_VERSION}~${MXL_BUILD_TYPE}+g${GIT_HASH}-1_${CPACK_PACKAGE_ARCHITECTURE}")
+
     elseif(IS_RPM)
         set(CPACK_GENERATOR "RPM")
+        set(CPACK_RPM_PACKAGE_LICENSE "Apache-2.0")
+        set(CPACK_RPM_PACKAGE_GROUP "Development/Libraries")
+        # Let RPM auto-detect arch (x86_64, aarch64, etc.)
+        #unset(CPACK_RPM_PACKAGE_ARCHITECTURE)
+        set(CPACK_RPM_PACKAGE_AUTOREQPROV ON)
 
         # Not adding gstreamer as a dependency since some rpm based platforms do not provide the required packages (amazon linux 2023)
         # set(CPACK_RPM_PACKAGE_REQUIRES "")
+
+        string(TOLOWER "${MXL_BUILD_TYPE}" _bt)
+        set(_rpm_release "1")
+
+        if(_bt STREQUAL "")
+            # final release
+            set(_rpm_release "1")
+        else()
+            set(_rpm_release "0.1.${_bt}.g${GIT_HASH}")
+        endif()
+        set(CPACK_RPM_PACKAGE_RELEASE "${_rpm_release}%{?dist}")
+        set(CPACK_RPM_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${_rpm_release}.${CMAKE_SYSTEM_PROCESSOR}.rpm")
+
     endif()
 endif()
-
-# CPack Configuration
-set(CPACK_PACKAGE_NAME "dmfmxl-dev")
-set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
-set(CPACK_PACKAGE_DESCRIPTION "EBU DMF Media eXchange Layer SDK development package")
-set(CPACK_PACKAGE_VENDOR "EBU.ch")
-set(CPACK_PACKAGE_CONTACT "DMF MXL <mxl@ebu.ch>")
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}")
 
 # Include CPack
 include(CPack)
