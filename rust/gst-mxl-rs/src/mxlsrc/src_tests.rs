@@ -18,12 +18,12 @@ mod tests {
             .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
 
         let element = gst::ElementFactory::make("mxlsrc")
-            .property("video-flow", "test_flow")
+            .property("video-flow-id", "test_flow")
             .property("domain", "mydomain")
             .build()
             .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
 
-        let flow_id: String = element.property("video-flow");
+        let flow_id: String = element.property("video-flow-id");
         let domain: String = element.property("domain");
 
         assert_eq!(flow_id, "test_flow");
@@ -78,7 +78,7 @@ mod tests {
         // Pipeline 2: Consumer
         // -------------------------
         let src1 = gst::ElementFactory::make("mxlsrc")
-            .property("video-flow", "8fbec3b1-1b0f-417d-9059-8b94a47197ed")
+            .property("video-flow-id", "8fbec3b1-1b0f-417d-9059-8b94a47197ed")
             .property("domain", "/dev/shm")
             .build()
             .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;

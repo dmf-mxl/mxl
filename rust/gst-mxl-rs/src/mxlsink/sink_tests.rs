@@ -5,11 +5,11 @@
 mod tests {
     use std::collections::HashMap;
 
+    use crate::mxlsink::imp::*;
     use glib::subclass::types::ObjectSubclassType;
     use gst::{CoreError, Fraction, prelude::*};
     use gstreamer as gst;
-
-    use crate::{flowdef::*, mxlsink::imp::*};
+    use mxl::flowdef::*;
 
     #[test]
     #[cfg_attr(feature = "tracing", tracing_test::traced_test)]

@@ -3,17 +3,18 @@
 
 use std::{collections::HashMap, ops::Deref};
 
-use gst::StructureRef;
+use crate::mxlsink::imp::CAT;
+use gst::{ClockTime, StructureRef};
 use gst_audio::AudioInfo;
 use gstreamer as gst;
 use gstreamer_audio as gst_audio;
-use mxl::{FlowConfigInfo, GrainWriter, MxlInstance, Rational, SamplesWriter};
+use mxl::{
+    FlowConfigInfo, GrainWriter, MxlInstance, Rational, SamplesWriter,
+    flowdef::{Component, FlowDefAudio, FlowDefVideo, GrainRate, SampleRate},
+};
 use tracing::trace;
 
-use crate::{
-    flowdef::{Component, FlowDefAudio, FlowDefVideo, GrainRate, SampleRate},
-    mxlsink::imp::CAT,
-};
+use uuid::Uuid;
 
 pub(crate) const DEFAULT_FLOW_ID: &str = "";
 pub(crate) const DEFAULT_DOMAIN: &str = "";
@@ -63,7 +64,7 @@ pub(crate) struct Context {
 #[derive(Default, Debug, Clone)]
 pub(crate) struct InitialTime {
     pub index: u64,
-    pub gst_time: gst::ClockTime,
+    pub mxl_to_gst_offset: ClockTime,
 }
 
 pub(crate) fn init_state_with_audio(
@@ -85,7 +86,8 @@ pub(crate) fn init_state_with_audio(
         format: "urn:x-nmos:format:audio".into(),
         tags,
         label: "MXL Audio Flow".into(),
-        id: flow_id.deref().into(),
+        id: Uuid::parse_str(flow_id)
+            .map_err(|e| gst::loggable_error!(CAT, "Flow ID is invalid: {}", e))?,
         media_type: "audio/float32".to_string(),
         sample_rate: SampleRate { numerator: rate },
         channel_count: channels,
@@ -111,7 +113,7 @@ pub(crate) fn init_state_with_audio(
     state.audio = Some(AudioState {
         writer,
         bit_depth,
-        batch_size: (rate as usize / 100),
+        batch_size: flow.common().max_commit_batch_size_hint() as usize,
         flow_def,
     });
     state.flow = Some(flow);

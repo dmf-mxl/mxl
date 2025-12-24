@@ -1,8 +1,6 @@
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::time::Instant;
-
 use crate::mxlsink::{self, state::InitialTime};
 
 use glib::subclass::types::ObjectSubclassExt;
@@ -29,32 +27,26 @@ pub(crate) fn video(
         .obj()
         .current_running_time()
         .ok_or(gst::FlowError::Error)?;
-    let _ = state.initial_time.get_or_insert(InitialTime {
+    let initial_info = state.initial_time.get_or_insert(InitialTime {
         index: current_index,
-        gst_time,
+        mxl_to_gst_offset: ClockTime::from_nseconds(state.instance.get_time()) - gst_time,
     });
-    let initial_info = state.initial_time.as_ref().ok_or(gst::FlowError::Error)?;
     let mut index = current_index;
     match buffer.pts() {
         Some(pts) => {
-            let pts = pts + initial_info.gst_time;
+            let mxl_pts = pts + initial_info.mxl_to_gst_offset;
             index = state
                 .instance
-                .timestamp_to_index(pts.nseconds(), &video_state.grain_rate)
-                .map_err(|_| gst::FlowError::Error)?
-                + initial_info.index;
+                .timestamp_to_index(mxl_pts.nseconds(), &video_state.grain_rate)
+                .map_err(|_| gst::FlowError::Error)?;
 
             trace!(
                 "PTS {:?} mapped to grain index {}, current index is {} and running time is {} delta= {}",
-                pts,
+                mxl_pts,
                 index,
                 current_index,
                 gst_time,
-                if pts > gst_time {
-                    pts - gst_time
-                } else {
-                    ClockTime::from_mseconds(0)
-                }
+                mxl_pts.saturating_sub(gst_time)
             );
             if index > current_index && index - current_index > video_state.grain_count as u64 {
                 index = current_index + video_state.grain_count as u64 - 1;
@@ -84,19 +76,11 @@ fn commit_buffer(
         .open_grain(index)
         .map_err(|_| gst::FlowError::Error)?;
     let payload = access.payload_mut();
-    let mut copy_len = std::cmp::min(payload.len(), data.len());
-    let commit_time = Instant::now();
+    let copy_len = std::cmp::min(payload.len(), data.len());
     payload[..copy_len].copy_from_slice(&data[..copy_len]);
-    if copy_len > access.total_slices() as usize {
-        copy_len = access.total_slices() as usize;
-    }
+    let total_slices = access.total_slices();
     access
-        .commit(copy_len as u16)
+        .commit(total_slices)
         .map_err(|_| gst::FlowError::Error)?;
-    trace!(
-        "Commit time: {}us of grain: {}",
-        commit_time.elapsed().as_micros(),
-        index
-    );
     Ok(())
 }

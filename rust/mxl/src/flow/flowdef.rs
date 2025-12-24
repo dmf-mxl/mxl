@@ -4,19 +4,11 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct GrainRate {
-    pub numerator: i32,
-    pub denominator: i32,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Component {
-    pub name: String,
-    pub width: i32,
-    pub height: i32,
-    pub bit_depth: u8,
+pub enum FlowDef {
+    Video(FlowDefVideo),
+    Audio(FlowDefAudio),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -37,17 +29,12 @@ pub struct FlowDefVideo {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct SampleRate {
-    pub numerator: i32,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 pub struct FlowDefAudio {
     pub description: String,
     pub format: String,
     pub tags: HashMap<String, Vec<String>>,
     pub label: String,
-    pub id: String,
+    pub id: Uuid,
     pub media_type: String,
     pub sample_rate: SampleRate,
     pub channel_count: i32,
@@ -55,7 +42,21 @@ pub struct FlowDefAudio {
     pub parents: Vec<String>,
 }
 
-pub struct FlowDef {
-    pub video: Option<FlowDefVideo>,
-    pub audio: Option<FlowDefAudio>,
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GrainRate {
+    pub numerator: i32,
+    pub denominator: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Component {
+    pub name: String,
+    pub width: i32,
+    pub height: i32,
+    pub bit_depth: u8,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SampleRate {
+    pub numerator: i32,
 }

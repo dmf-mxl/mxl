@@ -69,13 +69,13 @@ impl ObjectImpl for MxlSrc {
     fn properties() -> &'static [glib::ParamSpec] {
         static PROPERTIES: LazyLock<Vec<glib::ParamSpec>> = LazyLock::new(|| {
             vec![
-                glib::ParamSpecString::builder("video-flow")
+                glib::ParamSpecString::builder("video-flow-id")
                     .nick("VideoFlowID")
                     .blurb("Video Flow ID")
                     .default_value(DEFAULT_FLOW_ID)
                     .mutable_ready()
                     .build(),
-                glib::ParamSpecString::builder("audio-flow")
+                glib::ParamSpecString::builder("audio-flow-id")
                     .nick("AudioFlowID")
                     .blurb("Audio Flow ID")
                     .default_value(DEFAULT_FLOW_ID)
@@ -118,18 +118,18 @@ impl ObjectImpl for MxlSrc {
     fn set_property(&self, _id: usize, value: &glib::Value, pspec: &glib::ParamSpec) {
         if let Ok(mut settings) = self.settings.lock() {
             match pspec.name() {
-                "video-flow" => {
+                "video-flow-id" => {
                     if let Ok(flow_id) = value.get::<String>() {
                         settings.video_flow = Some(flow_id);
                     } else {
-                        gst::error!(CAT, imp = self, "Invalid type for video-flow property");
+                        gst::error!(CAT, imp = self, "Invalid type for video-flow-id property");
                     }
                 }
-                "audio-flow" => {
+                "audio-flow-id" => {
                     if let Ok(flow_id) = value.get::<String>() {
                         settings.audio_flow = Some(flow_id);
                     } else {
-                        gst::error!(CAT, imp = self, "Invalid type for audio-flow property");
+                        gst::error!(CAT, imp = self, "Invalid type for audio-flow-id property");
                     }
                 }
                 "domain" => {
@@ -162,8 +162,8 @@ impl ObjectImpl for MxlSrc {
     fn property(&self, _id: usize, pspec: &glib::ParamSpec) -> glib::Value {
         if let Ok(settings) = self.settings.lock() {
             match pspec.name() {
-                "video-flow" => settings.video_flow.to_value(),
-                "audio-flow" => settings.video_flow.to_value(),
+                "video-flow-id" => settings.video_flow.to_value(),
+                "audio-flow-id" => settings.audio_flow.to_value(),
                 "domain" => settings.domain.to_value(),
                 _ => {
                     gst::error!(CAT, imp = self, "Unknown property {}", pspec.name());
@@ -196,8 +196,21 @@ impl ElementImpl for MxlSrc {
     fn pad_templates() -> &'static [gst::PadTemplate] {
         static PAD_TEMPLATES: LazyLock<Result<Vec<gst::PadTemplate>, glib::BoolError>> =
             LazyLock::new(|| {
-                let caps = gst::Caps::new_any();
+                let mut caps = gst::Caps::new_empty();
+                {
+                    let caps_mut = caps.make_mut();
 
+                    caps_mut.append(
+                        gst::Caps::builder("video/x-raw")
+                            .field("format", "v210")
+                            .build(),
+                    );
+                    caps.make_mut().append(
+                        gst::Caps::builder("audio/x-raw")
+                            .field("format", "F32LE")
+                            .build(),
+                    );
+                }
                 let src_pad_template = gst::PadTemplate::new(
                     "src",
                     gst::PadDirection::Src,

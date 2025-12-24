@@ -96,7 +96,7 @@ gst-launch-1.0 filesrc location="$AV_FILE" ! decodebin name=dec ! videoconvert !
 **Note**: Make sure the domain and flow IDs are consistent with the producer's.
 
 ```
-gst-launch-1.0 mxlsrc video-flow="$VIDEO_FLOW_ID" domain="$MXL_DOMAIN" ! videoconvert ! queue ! autovideosink mxlsrc audio-flow="$AUDIO_FLOW_ID" domain="$MXL_DOMAIN" ! audioconvert ! audioresample ! queue ! autoaudiosink
+gst-launch-1.0 mxlsrc video-flow-id="$VIDEO_FLOW_ID" domain="$MXL_DOMAIN" ! videoconvert ! queue ! autovideosink mxlsrc audio-flow-id="$AUDIO_FLOW_ID" domain="$MXL_DOMAIN" ! audioconvert ! audioresample ! queue ! autoaudiosink
 ``` 
 
 **Note**: In the examples above, it is assumed that you are running inside the devcontainer. If not, adjust paths accordingly.

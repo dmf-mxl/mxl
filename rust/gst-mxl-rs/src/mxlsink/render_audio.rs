@@ -5,7 +5,7 @@ use crate::mxlsink;
 
 use glib::subclass::types::ObjectSubclassExt;
 use gst::prelude::*;
-use gstreamer as gst;
+use gstreamer::{self as gst, ClockTime};
 use tracing::trace;
 
 pub(crate) fn audio(
@@ -43,26 +43,23 @@ pub(crate) fn audio(
         .current_running_time()
         .ok_or(gst::FlowError::Error)?;
 
-    let _ = state
+    let initial_info = state
         .initial_time
         .get_or_insert(mxlsink::state::InitialTime {
             index: current_index,
-            gst_time,
+            mxl_to_gst_offset: ClockTime::from_nseconds(state.instance.get_time()) - gst_time,
         });
-    let initial_info = state.initial_time.as_ref().ok_or(gst::FlowError::Error)?;
 
     let mut write_index = current_index;
     if let Some(pts) = buffer.pts() {
-        let abs_pts = pts + initial_info.gst_time;
+        let mxl_pts = pts + initial_info.mxl_to_gst_offset;
         write_index = state
             .instance
-            .timestamp_to_index(abs_pts.nseconds(), &sample_rate)
+            .timestamp_to_index(mxl_pts.nseconds(), &sample_rate)
             .map_err(|_| gst::FlowError::Error)?
             + initial_info.index;
 
-        if write_index > current_index + buffer_length {
-            write_index = current_index + buffer_length - 1;
-        }
+        write_index = std::cmp::min(write_index, current_index + buffer_length - 1);
     }
 
     trace!(

@@ -39,7 +39,9 @@ pub(crate) fn create_audio(
         .sample_rate()
         .map_err(|_| gst::FlowError::Error)?;
 
-    let batch_size = DEFAULT_BATCH_SIZE.min(continuous_flow_info.bufferLength / 2);
+    let batch_size = DEFAULT_BATCH_SIZE
+        .min(continuous_flow_info.bufferLength / 2)
+        .min(reader_info.config.common().max_commit_batch_size_hint());
     let ring = continuous_flow_info.bufferLength as u64;
     let batch = batch_size as u64;
 

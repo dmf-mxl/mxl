@@ -11,14 +11,11 @@ use gst::ClockTime;
 use gst_base::prelude::*;
 use gstreamer as gst;
 use gstreamer_base as gst_base;
-use mxl::{FlowReader, MxlInstance, config::get_mxl_so_path};
+use mxl::{FlowReader, MxlInstance, config::get_mxl_so_path, flowdef::*};
 
-use crate::{
-    flowdef::*,
-    mxlsrc::{
-        imp::*,
-        state::{AudioState, InitialTime, Settings, State, VideoState},
-    },
+use crate::mxlsrc::{
+    imp::*,
+    state::{AudioState, InitialTime, Settings, State, VideoState},
 };
 
 static CAT: LazyLock<gst::DebugCategory> = LazyLock::new(|| {
@@ -59,18 +56,18 @@ pub(crate) fn get_mxl_flow_json(
 }
 
 pub(crate) fn set_json_caps(src: &MxlSrc, json: FlowDef) -> Result<(), gst::LoggableError> {
-    match json.video {
-        Some(json) => {
+    match json {
+        FlowDef::Video(video) => {
             let caps = gst::Caps::builder("video/x-raw")
                 .field("format", "v210")
-                .field("width", json.frame_width)
-                .field("height", json.frame_height)
+                .field("width", video.frame_width)
+                .field("height", video.frame_height)
                 .field(
                     "framerate",
-                    gst::Fraction::new(json.grain_rate.numerator, json.grain_rate.denominator),
+                    gst::Fraction::new(video.grain_rate.numerator, video.grain_rate.denominator),
                 )
-                .field("interlace-mode", json.interlace_mode)
-                .field("colorimetry", json.colorspace.to_lowercase())
+                .field("interlace-mode", video.interlace_mode)
+                .field("colorimetry", video.colorspace.to_lowercase())
                 .build();
 
             src.obj()
@@ -80,30 +77,24 @@ pub(crate) fn set_json_caps(src: &MxlSrc, json: FlowDef) -> Result<(), gst::Logg
             gst::info!(CAT, imp = src, "Negotiated caps: {}", caps);
             Ok(())
         }
-        None => match json.audio {
-            Some(json) => {
-                let caps = gst::Caps::builder("audio/x-raw")
-                    .field("format", "F32LE")
-                    .field("rate", json.sample_rate.numerator)
-                    .field("channels", json.channel_count)
-                    .field("layout", "interleaved")
-                    .field(
-                        "channel-mask",
-                        generate_channel_mask_from_channels(json.channel_count as u32),
-                    )
-                    .build();
-                src.obj()
-                    .set_caps(&caps)
-                    .map_err(|err| gst::loggable_error!(CAT, "Failed to set caps: {}", err))?;
+        FlowDef::Audio(audio) => {
+            let caps = gst::Caps::builder("audio/x-raw")
+                .field("format", "F32LE")
+                .field("rate", audio.sample_rate.numerator)
+                .field("channels", audio.channel_count)
+                .field("layout", "interleaved")
+                .field(
+                    "channel-mask",
+                    generate_channel_mask_from_channels(audio.channel_count as u32),
+                )
+                .build();
+            src.obj()
+                .set_caps(&caps)
+                .map_err(|err| gst::loggable_error!(CAT, "Failed to set caps: {}", err))?;
 
-                gst::info!(CAT, imp = src, "Negotiated caps: {}", caps);
-                Ok(())
-            }
-            None => Err(gst::loggable_error!(
-                CAT,
-                "Failed to negotiate caps: No video or audio caps were found"
-            )),
-        },
+            gst::info!(CAT, imp = src, "Negotiated caps: {}", caps);
+            Ok(())
+        }
     }
 }
 
@@ -119,18 +110,12 @@ pub(crate) fn get_flow_def(
         "video/v210" => {
             let flow: FlowDefVideo = serde_json::from_value(serde_json)
                 .map_err(|e| gst::loggable_error!(CAT, "Invalid video flow JSON: {}", e))?;
-            FlowDef {
-                video: Some(flow),
-                audio: None,
-            }
+            FlowDef::Video(flow)
         }
         "audio/float32" => {
             let flow: FlowDefAudio = serde_json::from_value(serde_json)
                 .map_err(|e| gst::loggable_error!(CAT, "Invalid audio flow JSON: {}", e))?;
-            FlowDef {
-                video: None,
-                audio: Some(flow),
-            }
+            FlowDef::Audio(flow)
         }
         _ => {
             gst::warning!(CAT, imp = src, "Unknown media_type '{}'", media_type);

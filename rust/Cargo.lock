@@ -353,7 +353,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "gst-mxl-src"
+name = "gst-mxl-rs"
 version = "0.1.0"
 dependencies = [
  "glib",
@@ -368,6 +368,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "tracing-test",
+ "uuid",
 ]
 
 [[package]]
@@ -623,6 +624,7 @@ dependencies = [
  "clap",
  "libloading",
  "mxl-sys",
+ "serde",
  "thiserror",
  "tracing",
  "tracing-subscriber",
@@ -1112,6 +1114,7 @@ checksum = "e2e054861b4bd027cd373e18e8d8d8e6548085000e41290d95ce0c373a654b4a"
 dependencies = [
  "getrandom",
  "js-sys",
+ "serde_core",
  "wasm-bindgen",
 ]
 
