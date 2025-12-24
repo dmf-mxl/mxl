@@ -615,11 +615,8 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
     auto flowDef = mxl::tests::readFile("../data/v210_flow.json");
     auto const flowId = "5fbec3b1-1b0f-417d-9059-8b94a47197ed";
 
-    mxlFlowConfigInfo configInfo;
-    REQUIRE(mxlCreateFlow(instance, flowDef.c_str(), "", &configInfo) == MXL_STATUS_OK);
-
     mxlFlowWriter writer;
-    REQUIRE(mxlCreateFlowWriter(instance, flowId, "", &writer) == MXL_STATUS_OK);
+    REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), nullptr, &writer, nullptr, nullptr) == MXL_STATUS_OK);
 
     mxlFabricsRegions mxlTargetRegions;
     REQUIRE(mxlFabricsRegionsForFlowWriter(writer, &mxlTargetRegions) == MXL_STATUS_OK);
@@ -902,7 +899,6 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
     REQUIRE(mxlFabricsRegionsFree(mxlTargetRegions) == MXL_STATUS_OK);
     REQUIRE(mxlReleaseFlowReader(instance, reader) == MXL_STATUS_OK);
     REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
-    REQUIRE(mxlDestroyFlow(instance, flowId) == MXL_STATUS_OK);
     REQUIRE(mxlFabricsDestroyInitiator(fabrics, initiator) == MXL_STATUS_OK);
     REQUIRE(mxlFabricsDestroyTarget(fabrics, target) == MXL_STATUS_OK);
     REQUIRE(mxlFabricsDestroyInstance(fabrics) == MXL_STATUS_OK);
@@ -920,22 +916,9 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
     REQUIRE(jsonValue.is<picojson::object>());
     auto root = jsonValue.get<picojson::object>();
 
-    auto instance = mxlCreateInstance(domain.c_str(), "");
-
-    // Initiator
-    mxlFlowReader reader;
-    mxlFlowConfigInfo configInfoDummy;
-    REQUIRE(mxlCreateFlow(instance, flowDef.c_str(), "{}", &configInfoDummy) == MXL_STATUS_OK);
-    REQUIRE(mxlCreateFlowReader(instance, root.at("id").get<std::string>().c_str(), "", &reader) == MXL_STATUS_OK);
-
     mxlFabricsInstance fabrics;
+    auto instance = mxlCreateInstance(domain.c_str(), "");
     REQUIRE(mxlFabricsCreateInstance(instance, &fabrics) == MXL_STATUS_OK);
-
-    mxlFabricsInitiator initiator;
-    REQUIRE(mxlFabricsCreateInitiator(fabrics, &initiator) == MXL_STATUS_OK);
-    // Setup initiator regions
-    mxlFabricsRegions mxlInitiatorRegions;
-    REQUIRE(mxlFabricsRegionsForFlowReader(reader, &mxlInitiatorRegions) == MXL_STATUS_OK);
 
     constexpr auto nbTargets = 2;
     std::array<mxlFabricsTarget, nbTargets> targets;
@@ -950,10 +933,19 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
         flowIds[i] = uuids::to_string(uuids::uuid_system_generator{}());
         root.at("id") = picojson::value{flowIds[i]};
         flowDefs[i] = picojson::value{root}.serialize();
-        REQUIRE(mxlCreateFlow(instance, flowDefs[i].c_str(), "", &configInfo[i]) == MXL_STATUS_OK);
-        REQUIRE(mxlCreateFlowWriter(instance, flowIds[i].c_str(), "", &writer[i]) == MXL_STATUS_OK);
+        REQUIRE(mxlCreateFlowWriter(instance, flowDefs[i].c_str(), nullptr, &writer[i], &configInfo[i], nullptr) == MXL_STATUS_OK);
         REQUIRE(mxlFabricsRegionsForFlowWriter(writer[i], &mxlTargetRegions[i]) == MXL_STATUS_OK);
     }
+
+    // Initiator
+    mxlFlowReader reader;
+    REQUIRE(mxlCreateFlowReader(instance, root.at("id").get<std::string>().c_str(), "", &reader) == MXL_STATUS_OK);
+
+    mxlFabricsInitiator initiator;
+    REQUIRE(mxlFabricsCreateInitiator(fabrics, &initiator) == MXL_STATUS_OK);
+    // Setup initiator regions
+    mxlFabricsRegions mxlInitiatorRegions;
+    REQUIRE(mxlFabricsRegionsForFlowReader(reader, &mxlInitiatorRegions) == MXL_STATUS_OK);
 
     SECTION("RC")
     {
@@ -1311,7 +1303,6 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
     {
         REQUIRE(mxlFabricsRegionsFree(mxlTargetRegions[i]) == MXL_STATUS_OK);
         REQUIRE(mxlReleaseFlowWriter(instance, writer[i]) == MXL_STATUS_OK);
-        REQUIRE(mxlDestroyFlow(instance, flowIds[i].c_str()) == MXL_STATUS_OK);
         REQUIRE(mxlFabricsDestroyTarget(fabrics, targets[i]) == MXL_STATUS_OK);
     }
     REQUIRE(mxlFabricsDestroyInstance(fabrics) == MXL_STATUS_OK);
