@@ -24,9 +24,8 @@
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
-#include "utils.hpp"
-#include "mxl-internal/Logging.hpp"
 #include "mxl/rational.h"
+#include "utils.hpp"
 
 namespace fs = std::filesystem;
 
@@ -213,8 +212,6 @@ public:
             if (flowWriterAudio)
             {
                 mxlReleaseFlowWriter(mxlInstance, flowWriterAudio);
-                auto id = uuids::to_string(audioFlowId);
-                mxlDestroyFlow(mxlInstance, id.c_str());
             }
 
             mxlDestroyInstance(mxlInstance);
@@ -388,7 +385,7 @@ public:
 
             if (!flowCreated)
             {
-                MXL_WARN("Reusing existing flow.");
+                MXL_WARN("Reusing existing video flow.");
             }
 
             MXL_INFO("Video flow : {}", uuids::to_string(videoFlowId));
@@ -480,18 +477,19 @@ public:
             }
 
             mxlFlowConfigInfo configInfo;
-            auto res = mxlCreateFlow(mxlInstance, flowDef.c_str(), getFlowOptions(audioBatchSize, audioBatchSize).c_str(), &configInfo);
-            if (res != MXL_STATUS_OK)
-            {
-                MXL_ERROR("Failed to create flow: {}", (int)res);
-                return false;
-            }
+            bool flowCreated = false;
+            auto res = mxlCreateFlowWriter(
+                mxlInstance, flowDef.c_str(), getFlowOptions(audioBatchSize, audioBatchSize).c_str(), &flowWriterAudio, &configInfo, &flowCreated);
 
-            res = mxlCreateFlowWriter(mxlInstance, uuids::to_string(audioFlowId).c_str(), nullptr, &flowWriterAudio);
             if (res != MXL_STATUS_OK)
             {
                 MXL_ERROR("Failed to create flow writer: {}", (int)res);
                 return false;
+            }
+
+            if (!flowCreated)
+            {
+                MXL_WARN("Reusing existing audio flow.");
             }
 
             MXL_INFO("Audio flow : {}", uuids::to_string(audioFlowId));
