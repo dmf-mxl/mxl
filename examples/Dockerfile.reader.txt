@@ -15,4 +15,4 @@ COPY build/Linux-Clang-Release/tools/mxl-info/mxl-info /app/
 
 RUN patchelf --set-rpath /app mxl-info
 
-CMD ["sh", "-c", "while true; do /app/mxl-info -d /shared_memory/mxl -l || true; sleep 2; done"]
+CMD ["sh", "-c", "while true; do /app/mxl-info -d /domain -l || true; sleep 2; done"]

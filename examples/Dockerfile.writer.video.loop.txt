@@ -25,6 +25,6 @@ RUN patchelf --set-rpath /app mxl-gst-looping-filesrc
 
 ENV GST_PLUGIN_PATH="/app/gst-plugins:${GST_PLUGIN_PATH}"
 
-CMD ["/app/mxl-gst-looping-filesrc", "-d", "/shared_memory/mxl", "-i", "/app/video.ts"]
+CMD ["/app/mxl-gst-looping-filesrc", "-d", "/domain", "-i", "/app/video.ts"]
 
 
