@@ -13,6 +13,12 @@ This example launches two containers simulating two different media functions ex
     docker exec -it examples-reader-media-function-1 /app/mxl-info -d /domain -f 5fbec3b1-1b0f-417d-9059-8b94a47197ed
     ```
 
+> **NOTE:** Out of the box, the setup works correctly only with docker.io. When using Docker CE, `docker compose up` may fail with:
+>
+> ```
+> invalid mount config for type "bind": bind source path does not exist: /dev/shm/mxl
+> ``` 
+
 ## Building
 
 Compile the whole MXL library and tools using the ```Linux-Clang-Release``` preset by invoking ```ninja all``` in the ```build/Linux-Clang-Release```  directory.  Then, in the "examples" directory, run:
