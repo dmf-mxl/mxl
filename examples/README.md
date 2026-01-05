@@ -18,15 +18,33 @@ This example launches two containers simulating two different media functions ex
 Compile the whole MXL library and tools using the ```Linux-Clang-Release``` preset by invoking ```ninja all``` in the ```build/Linux-Clang-Release```  directory.  Then, in the "examples" directory, run:
 
 ```bash
-docker compose build
+docker compose --profile '*' build
+```
+
+### Profiles
+
+The examples are grouped into Docker Compose profiles. Using `--profile '*'` builds everything, but you can also build only a subset:
+- `--profile test-source`: builds the `writer-media-function` example
+- `--profile looping-file-source`: builds the `writer-looper-video-media-function` and `writer-looper-audio-media-function` examples
+
+```bash
+docker compose --profile test-source build
+docker compose --profile looping-file-source build
 ```
 
 ## Running
 
-In the "examples" directory run:
+In the "examples" directory run: 
 
 ```bash
-docker compose up
+docker compose --profile '*' up
+```
+
+to run all examples, or run a smaller set by selecting a profile:
+
+```bash
+docker compose --profile test-source up
+docker compose --profile looping-file-source up
 ```
 
 # Kubernetes Example
