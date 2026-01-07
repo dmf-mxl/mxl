@@ -14,18 +14,24 @@
 /**
  * Logging macros
  */
-#define MXL_LOG(level, msg, ...)                                                                    \
-    do                                                                                              \
-    {                                                                                               \
-        std::cerr << "[" << level << "] " << " - " << fmt::format(msg, ##__VA_ARGS__) << std::endl; \
-    }                                                                                               \
+
+// clang-format off
+#define MXL_LOG(level, msg, ...)                          \
+    do                                                    \
+    {                                                     \
+        std::cerr                                         \
+            << '[' << level << "] " << " - "              \
+            << fmt::format(msg __VA_OPT__(,) __VA_ARGS__) \
+            << std::endl;                                 \
+    }                                                     \
     while (0)
 
-#define MXL_ERROR(msg, ...) MXL_LOG("ERROR", msg, ##__VA_ARGS__)
-#define MXL_WARN(msg, ...)  MXL_LOG("WARN", msg, ##__VA_ARGS__)
-#define MXL_INFO(msg, ...)  MXL_LOG("INFO", msg, ##__VA_ARGS__)
-#define MXL_DEBUG(msg, ...) MXL_LOG("DEBUG", msg, ##__VA_ARGS__)
-#define MXL_TRACE(msg, ...) MXL_LOG("TRACE", msg, ##__VA_ARGS__)
+#define MXL_ERROR(msg, ...) MXL_LOG("ERROR", msg __VA_OPT__(,) __VA_ARGS__)
+#define MXL_WARN(msg, ...)  MXL_LOG("WARN",  msg __VA_OPT__(,) __VA_ARGS__)
+#define MXL_INFO(msg, ...)  MXL_LOG("INFO",  msg __VA_OPT__(,) __VA_ARGS__)
+#define MXL_DEBUG(msg, ...) MXL_LOG("DEBUG", msg __VA_OPT__(,) __VA_ARGS__)
+#define MXL_TRACE(msg, ...) MXL_LOG("TRACE", msg __VA_OPT__(,) __VA_ARGS__)
+// clang-format on
 
 namespace media_utils
 {
