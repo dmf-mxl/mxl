@@ -49,8 +49,6 @@ namespace mxl::lib::fabrics::ofi
 
     FabricAddress FabricAddress::fromBase64(std::string_view data)
     {
-        return FabricAddress{base64::decode_into<std::vector<std::uint8_t>>(data)};
-
         auto decoded = base64::decode_into<std::vector<std::uint8_t>>(data);
         if (decoded.empty())
         {
