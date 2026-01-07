@@ -31,8 +31,8 @@ In order to encourage broad industry adoption, the European Broadcasting Union (
 
 ## Technical Documentation
 
-- [MXL Architecture](docs/architecture.md)
-- [SDK Usage](docs/usage.md)
+- [MXL Architecture](docs/Architecture.md)
+- [SDK Usage](docs/Usage.md)
 - [Building options](docs/Building.md)
 - [Tools](docs/Tools.md)
 
