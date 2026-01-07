@@ -117,6 +117,47 @@ if(NOT BUILD_SHARED_LIBS)
   set(MXL_POSITION_INDEPENDENT_CODE ${MXL_ENABLE_PIC})
 endif()
 
+#-------------------------------------------------------------------------------
+# Helper to conditionally add flags supported by the current compiler
+#-------------------------------------------------------------------------------
+include(CheckCCompilerFlag)
+include(CheckCXXCompilerFlag)
+
+function(mxl_check_and_add_flag flag)
+    string(REGEX REPLACE "^-+" "" var "${flag}")
+    string(MAKE_C_IDENTIFIER "${var}" var)
+    string(TOUPPER "${var}" var)
+
+    set(c_var "MXL_C_COMPILER_SUPPORTS_${var}")
+    set(cxx_var "MXL_CXX_COMPILER_SUPPORTS_${var}")
+
+    set(lang_list "")
+    check_c_compiler_flag("${flag}" ${c_var})
+    if (${c_var})
+        list(APPEND lang_list C)
+    endif ()
+
+    check_cxx_compiler_flag("${flag}" ${cxx_var})
+    if (${cxx_var})
+        list(APPEND lang_list CXX)
+    endif ()
+
+    list(JOIN lang_list "," lang_list_string)
+    if (NOT "${lang_list_string}" STREQUAL "")
+        add_compile_options($<$<COMPILE_LANGUAGE:${lang_list_string}>:${flag}>)
+    endif ()
+endfunction()
+
+#-------------------------------------------------------------------------------
+# Globally add warning flags
+#-------------------------------------------------------------------------------
+mxl_check_and_add_flag("-Wall")
+mxl_check_and_add_flag("-Wextra")
+mxl_check_and_add_flag("-Wunreachable-code")
+mxl_check_and_add_flag("-Wpedantic")
+mxl_check_and_add_flag("-Wno-c++23-attribute-extensions")
+
+
 add_subdirectory(lib)
 add_subdirectory(utils)
 if (BUILD_TOOLS)
