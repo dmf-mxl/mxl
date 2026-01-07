@@ -241,9 +241,6 @@ extern "C"
      * \param in_startSlice The start slice in the slice range to transfer. This is inclusive.
      * \param in_endSlice The end slice in the slice range to transfer. This is exclusive.
      * \return The result code. \see mxlStatus
-     * \note This function assumes: (1) the underlying buffer layout matches the MXL grain data layout, and (2) ring buffer entries for local and
-     * remote regions can be calculated via modulo operation: `grainIndex % regions.size()`.If these assumptions do not hold, use
-     * mxlFabricsExtInitiatorTransferGrain() instead, see fabrics_ext.h.
      */
     MXL_EXPORT
     mxlStatus mxlFabricsInitiatorTransferGrain(mxlFabricsInitiator in_initiator, uint64_t in_grainIndex, uint16_t in_startSlice,

@@ -60,16 +60,6 @@ namespace mxl::lib::fabrics::ofi
         return std::holds_alternative<Host>(_inner);
     }
 
-    Region::Location Region::Location::fromAPI(mxlFabricsExtMemoryRegionLocation loc)
-    {
-        switch (loc.type)
-        {
-            case MXL_PAYLOAD_LOCATION_HOST_MEMORY:   return Location::host();
-            case MXL_PAYLOAD_LOCATION_DEVICE_MEMORY: return Location::cuda(static_cast<int>(loc.deviceId));
-            default:                                 throw Exception::invalidArgument("Invalid memory region type");
-        }
-    }
-
     std::string Region::Location::toString() const noexcept
     {
         return std::visit(
@@ -181,23 +171,6 @@ namespace mxl::lib::fabrics::ofi
         else
         {
             throw Exception::make(MXL_ERR_UNKNOWN, "Unsupported flow fromat {}", flow.flowInfo()->config.common.format);
-        }
-    }
-
-    MxlRegions mxlFabricsRegionsFromUser(mxlFabricsExtRegionsConfig const& config)
-    {
-        auto outRegions = std::vector<Region>{};
-        for (std::size_t i = 0; i < config.regionsCount; i++)
-        {
-            outRegions.emplace_back(config.regions[i].addr, config.regions[i].size, Region::Location::fromAPI(config.regions[i].loc));
-        }
-        if (config.format == MXL_DATA_FORMAT_VIDEO)
-        {
-            return {std::move(outRegions), DataLayout::fromVideo(std::to_array(config.sliceSize))};
-        }
-        else
-        {
-            throw Exception::invalidArgument("Unsupported data format {}", static_cast<int>(config.format));
         }
     }
 }

@@ -13,7 +13,6 @@
 #include <mxl-internal/FlowData.hpp>
 #include <rdma/fi_domain.h>
 #include "mxl/fabrics.h"
-#include "mxl/fabrics_ext.h"
 #include "DataLayout.hpp"
 
 namespace mxl::lib::fabrics::ofi
@@ -40,11 +39,6 @@ namespace mxl::lib::fabrics::ofi
              */
             [[nodiscard]]
             static Location cuda(int deviceId) noexcept;
-
-            /** \brief Convert between external and internal versions of this type
-             */
-            [[nodiscard]]
-            static Location fromAPI(mxlFabricsExtMemoryRegionLocation loc);
 
             /** \brief Return the device id. For host location 0 is returned.
              */
@@ -203,11 +197,15 @@ namespace mxl::lib::fabrics::ofi
     class MxlRegions
     {
     public:
+        MxlRegions(std::vector<Region> regions, DataLayout dataLayout)
+            : _regions(std::move(regions))
+            , _layout(std::move(dataLayout))
+        {}
+
         /** \brief Convert between external and internal versions of this type
          */
         [[nodiscard]]
         static MxlRegions* fromAPI(mxlFabricsRegions regions) noexcept;
-        /** \copydoc fromAPI() */
 
         [[nodiscard]]
         mxlFabricsRegions toAPI() noexcept;
@@ -222,13 +220,6 @@ namespace mxl::lib::fabrics::ofi
 
     private:
         friend MxlRegions mxlFabricsRegionsFromFlow(FlowData const& flow);
-        friend MxlRegions mxlFabricsRegionsFromUser(mxlFabricsExtRegionsConfig const& config);
-
-    private:
-        MxlRegions(std::vector<Region> regions, DataLayout dataLayout)
-            : _regions(std::move(regions))
-            , _layout(std::move(dataLayout))
-        {}
 
     private:
         std::vector<Region> _regions;
@@ -240,10 +231,4 @@ namespace mxl::lib::fabrics::ofi
      */
     [[nodiscard]]
     MxlRegions mxlFabricsRegionsFromFlow(FlowData const& flow);
-
-    /** \brief Convert user-provided memory regions to MxlRegions.
-     * Used to convert mxlFabricsMemoryRegion arrays provided by the user.
-     */
-    [[nodiscard]]
-    MxlRegions mxlFabricsRegionsFromUser(mxlFabricsExtRegionsConfig const& config);
 }
