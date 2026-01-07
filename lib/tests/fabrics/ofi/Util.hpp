@@ -11,7 +11,7 @@
 #include <fmt/format.h>
 #include <rdma/fabric.h>
 #include "mxl/fabrics.h"
-#include "mxl/fabrics_ext.h"
+#include "DataLayout.hpp"
 #include "Domain.hpp"
 #include "Region.hpp"
 
@@ -72,8 +72,14 @@ namespace mxl::lib::fabrics::ofi
         return domain;
     }
 
+    inline MxlRegions getEmptyVideoMxlRegions()
+    {
+        return MxlRegions({}, DataLayout::fromVideo({8, 0, 0, 0}));
+    }
+
     inline std::pair<MxlRegions, InnerRegions> getHostRegionGroups()
     {
+        /// Warning: Do not modify the values below, you will break many tests
         auto innerRegions = std::vector<std::vector<std::uint8_t>>{
             std::vector<std::uint8_t>(256),
             std::vector<std::uint8_t>(512),
@@ -81,55 +87,25 @@ namespace mxl::lib::fabrics::ofi
             std::vector<std::uint8_t>(2048),
         };
 
-        /// Warning: Do not modify the values below, you will break many tests
-        // clang-format off
-        auto mxlFabricsRegions =  std::vector<mxlFabricsExtMemoryRegion>{
-            mxlFabricsExtMemoryRegion{
-                .addr = reinterpret_cast<std::uintptr_t>(innerRegions[0].data()),
-                .size = innerRegions[0].size(),
-                .loc = {.type = MXL_PAYLOAD_LOCATION_HOST_MEMORY, .deviceId = 0},
-            },
-            mxlFabricsExtMemoryRegion{
-                .addr = reinterpret_cast<std::uintptr_t>(innerRegions[1].data()),
-                .size = innerRegions[1].size(),
-                .loc = {.type = MXL_PAYLOAD_LOCATION_HOST_MEMORY, .deviceId = 0},
-            },
-            mxlFabricsExtMemoryRegion{
-                .addr = reinterpret_cast<std::uintptr_t>(innerRegions[2].data()),
-                .size = innerRegions[2].size(),
-                .loc = {.type = MXL_PAYLOAD_LOCATION_HOST_MEMORY, .deviceId = 0},
-            },
-            mxlFabricsExtMemoryRegion{
-                .addr = reinterpret_cast<std::uintptr_t>(innerRegions[3].data()),
-                .size = innerRegions[3].size(),
-                .loc = {.type = MXL_PAYLOAD_LOCATION_HOST_MEMORY, .deviceId = 0},
-            }
-        };
+        std::vector<Region> regions;
+        for (auto const& innerRegion : innerRegions)
+        {
+            regions.emplace_back(*innerRegion.data(), innerRegion.size());
+        }
 
-
-        auto config = mxlFabricsExtRegionsConfig{.regions=mxlFabricsRegions.data(), .regionsCount = mxlFabricsRegions.size(), .sliceSize={8,0,0,0},.format=MXL_DATA_FORMAT_VIDEO};
-
-        // clang-format on
-
-        return {mxlFabricsRegionsFromUser(config), innerRegions};
+        auto mxlRegions = MxlRegions(regions, DataLayout::fromVideo({8, 0, 0, 0}));
+        return {mxlRegions, innerRegions};
     }
 
-    inline std::pair<mxlFabricsRegions, InnerRegions> getUserMxlRegions()
+    inline MxlRegions getMxlRegions(std::vector<std::vector<std::uint8_t>> const& innerRegions,
+        DataLayout dataLayout = DataLayout::fromVideo({8, 0, 0, 0}))
     {
-        auto regions = InnerRegions{InnerRegion(256)};
-        auto memoryRegions = std::vector<mxlFabricsExtMemoryRegion>{
-            mxlFabricsExtMemoryRegion{.addr = reinterpret_cast<std::uintptr_t>(regions[0].data()),
-                                      .size = regions[0].size(),
-                                      .loc = {.type = MXL_PAYLOAD_LOCATION_HOST_MEMORY, .deviceId = 0}},
-        };
-        auto config = mxlFabricsExtRegionsConfig{
-            .regions = memoryRegions.data(), .regionsCount = memoryRegions.size(), .sliceSize = {8, 0, 0, 0},
-                    .format = MXL_DATA_FORMAT_VIDEO
-        };
-
-        mxlFabricsRegions outRegions;
-        mxlFabricsExtGetRegions(&config, &outRegions);
-
-        return {outRegions, regions};
+        std::vector<Region> regions;
+        for (auto const& innerRegion : innerRegions)
+        {
+            regions.emplace_back(*innerRegion.data(), innerRegion.size());
+        }
+        return {regions, dataLayout};
     }
+
 }
