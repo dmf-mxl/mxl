@@ -3,7 +3,7 @@
 
 use std::{
     sync::{LazyLock, MutexGuard},
-    time::{Duration, Instant},
+    time::Duration,
 };
 
 use glib::subclass::types::ObjectSubclassExt;
@@ -44,20 +44,20 @@ pub(crate) fn get_flow_type_id<'a>(
 }
 
 pub(crate) fn get_mxl_flow_json(
-    domain: &String,
-    flow_id: &String,
+    instance: &MxlInstance,
+    flow_id: &str,
 ) -> Result<serde_json::Value, gst::LoggableError> {
-    let json_path = format!("{}/{}.mxl-flow/flow_def.json", domain, flow_id);
-    let data = std::fs::read_to_string(&json_path)
-        .map_err(|e| gst::loggable_error!(CAT, "Failed to read JSON: {}", e))?;
-    let serde_json: serde_json::Value = serde_json::from_str(&data)
+    let flow_def = instance
+        .get_flow_def(flow_id)
+        .map_err(|e| gst::loggable_error!(CAT, "Failed to get flow definition: {}", e))?;
+    let serde_json: serde_json::Value = serde_json::from_str(flow_def.as_str())
         .map_err(|e| gst::loggable_error!(CAT, "Invalid JSON: {}", e))?;
     Ok(serde_json)
 }
 
-pub(crate) fn set_json_caps(src: &MxlSrc, json: FlowDef) -> Result<(), gst::LoggableError> {
+pub(crate) fn set_json_caps(src: &MxlSrc, json: FlowDefDetails) -> Result<(), gst::LoggableError> {
     match json {
-        FlowDef::Video(video) => {
+        FlowDefDetails::Video(video) => {
             let caps = gst::Caps::builder("video/x-raw")
                 .field("format", "v210")
                 .field("width", video.frame_width)
@@ -66,7 +66,12 @@ pub(crate) fn set_json_caps(src: &MxlSrc, json: FlowDef) -> Result<(), gst::Logg
                     "framerate",
                     gst::Fraction::new(video.grain_rate.numerator, video.grain_rate.denominator),
                 )
-                .field("interlace-mode", video.interlace_mode)
+                .field(
+                    "interlace-mode",
+                    serde_json::to_string(&video.interlace_mode).map_err(|err| {
+                        gst::loggable_error!(CAT, "Invalid interlace-mode: {}", err)
+                    })?,
+                )
                 .field("colorimetry", video.colorspace.to_lowercase())
                 .build();
 
@@ -77,7 +82,7 @@ pub(crate) fn set_json_caps(src: &MxlSrc, json: FlowDef) -> Result<(), gst::Logg
             gst::info!(CAT, imp = src, "Negotiated caps: {}", caps);
             Ok(())
         }
-        FlowDef::Audio(audio) => {
+        FlowDefDetails::Audio(audio) => {
             let caps = gst::Caps::builder("audio/x-raw")
                 .field("format", "F32LE")
                 .field("rate", audio.sample_rate.numerator)
@@ -101,7 +106,7 @@ pub(crate) fn set_json_caps(src: &MxlSrc, json: FlowDef) -> Result<(), gst::Logg
 pub(crate) fn get_flow_def(
     src: &MxlSrc,
     serde_json: serde_json::Value,
-) -> Result<FlowDef, gst::LoggableError> {
+) -> Result<FlowDefDetails, gst::LoggableError> {
     let media_type = serde_json
         .get("media_type")
         .and_then(|v| v.as_str())
@@ -110,12 +115,12 @@ pub(crate) fn get_flow_def(
         "video/v210" => {
             let flow: FlowDefVideo = serde_json::from_value(serde_json)
                 .map_err(|e| gst::loggable_error!(CAT, "Invalid video flow JSON: {}", e))?;
-            FlowDef::Video(flow)
+            FlowDefDetails::Video(flow)
         }
         "audio/float32" => {
             let flow: FlowDefAudio = serde_json::from_value(serde_json)
                 .map_err(|e| gst::loggable_error!(CAT, "Invalid audio flow JSON: {}", e))?;
-            FlowDef::Audio(flow)
+            FlowDefDetails::Audio(flow)
         }
         _ => {
             gst::warning!(CAT, imp = src, "Unknown media_type '{}'", media_type);
@@ -193,21 +198,21 @@ pub(crate) fn init(mxlsrc: &MxlSrc) -> Result<(), gst::ErrorMessage> {
         )
     })?;
 
-    let start = Instant::now();
     let reader;
-
+    let mut warned = false;
     loop {
         match init_mxl_reader(&settings) {
             Ok(r) => {
                 reader = r;
                 break;
             }
-            Err(e) => {
-                if start.elapsed() >= Duration::from_secs(5) {
-                    return Err(e);
+            Err(_) => {
+                if !warned {
+                    eprintln!("Waiting for flow to be created...");
+                    warned = true;
                 }
-                eprintln!(" Failed to init reader ({e}), retrying...");
-                std::thread::sleep(Duration::from_millis(250));
+                //Sleep to avoid busy looping
+                std::thread::sleep(Duration::from_millis(10));
             }
         }
     }

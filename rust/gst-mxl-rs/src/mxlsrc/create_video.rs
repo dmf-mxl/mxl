@@ -3,22 +3,17 @@
 
 use std::time::Duration;
 
-use crate::mxlsrc::imp::MxlSrc;
+use crate::mxlsrc::imp::{CreateState, MxlSrc};
 use crate::mxlsrc::state::{InitialTime, State};
 use glib::subclass::types::ObjectSubclassExt;
 use gst::prelude::*;
-use gst_base::subclass::base_src::CreateSuccess;
 use gstreamer as gst;
-use gstreamer_base as gst_base;
 use tracing::trace;
 
 const GET_GRAIN_TIMEOUT: Duration = Duration::from_secs(5);
 pub(super) const MXL_GRAIN_FLAG_INVALID: u32 = 0x00000001;
 
-pub(crate) fn create_video(
-    src: &MxlSrc,
-    state: &mut State,
-) -> Result<CreateSuccess, gst::FlowError> {
+pub(crate) fn create_video(src: &MxlSrc, state: &mut State) -> Result<CreateState, gst::FlowError> {
     let video_state = state.video.as_mut().ok_or(gst::FlowError::Error)?;
     let rate = video_state.grain_rate;
     let current_index = state.instance.get_current_index(&rate);
@@ -78,7 +73,7 @@ pub(crate) fn create_video(
 
             Err(err) => {
                 trace!("error: {err}");
-                return Err(gst::FlowError::Error);
+                return Ok(CreateState::NoDataCreated);
             }
         };
         if grain_data.flags & MXL_GRAIN_FLAG_INVALID != 0 {
@@ -98,5 +93,5 @@ pub(crate) fn create_video(
     trace!(pts=?buffer.pts(), ts_gst=?ts_gst, buffer=?buffer, "Produced buffer");
 
     video_state.frame_counter += 1;
-    Ok(CreateSuccess::NewBuffer(buffer))
+    Ok(CreateState::DataCreated(buffer))
 }

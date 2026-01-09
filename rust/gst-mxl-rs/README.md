@@ -109,3 +109,10 @@ export AUDIO_FILE=<audio file path, e.g. file.mp3>
 
 gst-launch-1.0 filesrc location="$VIDEO_FILE" ! decodebin name=dv ! videoconvert ! queue ! mxlsink flow-id="$VIDEO_FLOW_ID" domain="$MXL_DOMAIN" filesrc location="$AUDIO_FILE" ! decodebin name=da ! audioresample ! audioconvert ! queue ! mxlsink flow-id="$AUDIO_FLOW_ID" domain="$MXL_DOMAIN"
 ```
+
+
+### Create video/audio flows from GStreamer test sources
+
+```
+gst-launch-1.0 videotestsrc ! timeoverlay valignment=center ! clockoverlay time-format=\"%F %H:%M:%S %Z\" ! video/x-raw,width=1920,height=1080,framerate=25/1,format=v216 ! videoconvert ! queue ! mxlsink flow-id="$VIDEO_FLOW_ID" domain="$MXL_DOMAIN" audiotestsrc wave=ticks ! audioconvert ! queue ! mxlsink flow-id="$AUDIO_FLOW_ID" domain="$MXL_DOMAIN"
+```

@@ -264,24 +264,42 @@ impl BaseSinkImpl for MxlSink {
     }
 
     fn stop(&self) -> Result<(), gst::ErrorMessage> {
-        let context = self.context.lock().map_err(|e| {
+        let mut context = self.context.lock().map_err(|e| {
             gst::error_msg!(
                 gst::CoreError::Failed,
                 ["Failed to get context mutex: {}", e]
             )
         })?;
         self.unlock()?;
-        let state = context.state.as_ref().ok_or(gst::error_msg!(
+        let state = context.state.as_mut().ok_or(gst::error_msg!(
             gst::CoreError::Failed,
             ["Failed to get state"]
         ))?;
-        let settings = self.settings.lock().map_err(|e| {
-            gst::error_msg!(gst::CoreError::Failed, ["Failed to get state mutex: {}", e])
-        })?;
-        if state.flow.is_some()
-            && let Err(e) = state.instance.destroy_flow(&settings.flow_id)
-        {
-            gst::warning!(CAT, imp = self, "Failed to destroy flow: {}", e);
+
+        if state.audio.is_some() {
+            state
+                .audio
+                .take()
+                .ok_or(gst::error_msg!(
+                    gst::CoreError::Failed,
+                    ["Failed to get audio state"]
+                ))?
+                .writer
+                .destroy()
+                .map_err(|_| gst::error_msg!(gst::CoreError::Failed, ["Failed to destroy flow"]))?
+        };
+
+        if state.video.is_some() {
+            state
+                .video
+                .take()
+                .ok_or(gst::error_msg!(
+                    gst::CoreError::Failed,
+                    ["Failed to get video state"]
+                ))?
+                .writer
+                .destroy()
+                .map_err(|_| gst::error_msg!(gst::CoreError::Failed, ["Failed to destroy flow"]))?
         }
 
         gst::info!(CAT, imp = self, "Stopped");

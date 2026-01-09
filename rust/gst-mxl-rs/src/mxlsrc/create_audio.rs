@@ -3,13 +3,11 @@
 
 use std::time::{Duration, Instant};
 
-use crate::mxlsrc::imp::MxlSrc;
+use crate::mxlsrc::imp::{CreateState, MxlSrc};
 use crate::mxlsrc::state::{AudioState, InitialTime, State};
 use glib::subclass::types::ObjectSubclassExt;
 use gst::{Buffer, ClockTime, prelude::*};
-use gst_base::subclass::base_src::CreateSuccess;
 use gstreamer as gst;
-use gstreamer_base as gst_base;
 use mxl::{FlowInfo, MxlInstance, Rational, SamplesData};
 use tracing::trace;
 
@@ -17,13 +15,10 @@ const GET_SAMPLE_TIMEOUT: Duration = Duration::from_secs(2);
 const PRODUCER_TIMEOUT: Duration = Duration::from_millis(100);
 const DEFAULT_BATCH_SIZE: u32 = 48;
 
-pub(crate) fn create_audio(
-    src: &MxlSrc,
-    state: &mut State,
-) -> Result<CreateSuccess, gst::FlowError> {
+pub(crate) fn create_audio(src: &MxlSrc, state: &mut State) -> Result<CreateState, gst::FlowError> {
     let audio_state = state.audio.as_mut().ok_or(gst::FlowError::Error)?;
 
-    let mut reader_info = audio_state
+    let reader_info = audio_state
         .reader
         .get_info()
         .map_err(|_| gst::FlowError::Error)?;
@@ -58,7 +53,7 @@ pub(crate) fn create_audio(
         audio_state,
     );
 
-    let mut head = reader_info.runtime.head_index();
+    let head = reader_info.runtime.head_index();
     wait_for_sample(head, batch, audio_state)?;
 
     if is_reader_late(head, batch, ring, audio_state)? {
@@ -79,25 +74,7 @@ pub(crate) fn create_audio(
     let samples = match read_once(audio_state.index) {
         Ok(s) => s,
         Err(_) => {
-            reader_info = audio_state
-                .reader
-                .get_info()
-                .map_err(|_| gst::FlowError::Error)?;
-            head = reader_info.runtime.head_index();
-
-            let target = define_cushion(head, batch);
-            trace!(
-                "CATCH-UP (retry): get_samples failed at {}, head {}. Jumping -> {}",
-                audio_state.index, head, target
-            );
-
-            audio_state.index = target;
-            state.initial_info.gst_time = ts_gst;
-            state.initial_info.mxl_index = state.instance.get_time();
-            audio_state.batch_counter = 0;
-            audio_state.next_discont = true;
-
-            read_once(audio_state.index).map_err(|_| gst::FlowError::Error)?
+            return Ok(CreateState::NoDataCreated);
         }
     };
 
@@ -132,7 +109,7 @@ pub(crate) fn create_audio(
         state.initial_info.gst_time, pts, ts_gst
     );
 
-    Ok(CreateSuccess::NewBuffer(buffer))
+    Ok(CreateState::DataCreated(buffer))
 }
 
 fn audio_state_init(
@@ -174,7 +151,7 @@ fn wait_for_sample(
     let start = Instant::now();
     while audio_state.index + batch > head {
         if start.elapsed() > PRODUCER_TIMEOUT {
-            return Err(gst::FlowError::Eos);
+            return Ok(());
         }
         head = wait_for_producer(head, batch, audio_state)?;
     }

@@ -19,11 +19,11 @@ gstreamer = "0.24.4"
 gstreamer-audio = "0.24.4"
 gstreamer-base = "0.24.4"
 mxl = { path = "../mxl" }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-uuid = { version = "1.17", features = ["v4", "serde"] }
-tracing = "0.1.43"
-tracing-subscriber = "0.3.20"
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
 tracing-test = "0.2.5"
 
 # If this is not included, tracing won't work while debugging
@@ -38,4 +38,4 @@ crate-type = ["cdylib", "rlib"]
 path = "src/lib.rs"
 
 [build-dependencies]
-gst-plugin-version-helper = { path = "../version-helper" }
+gst-plugin-version-helper = { version = "0.8.3" }

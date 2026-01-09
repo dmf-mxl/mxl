@@ -10,6 +10,7 @@ mod tests {
     use gst::{CoreError, Fraction, prelude::*};
     use gstreamer as gst;
     use mxl::flowdef::*;
+    use uuid::Uuid;
 
     #[test]
     #[cfg_attr(feature = "tracing", tracing_test::traced_test)]
@@ -18,7 +19,7 @@ mod tests {
         let width = 1920;
         let height = 1080;
         let framerate = Fraction::new(30000, 1001);
-        let interlace_mode = "progressive".to_string();
+        let interlace_mode = InterlaceMode::Progressive;
         let colorimetry = "BT709".to_string();
         let format = "v210".to_string();
         let mut tags = HashMap::new();
@@ -26,21 +27,8 @@ mod tests {
             "urn:x-nmos:tag:grouphint/v1.0".to_string(),
             vec!["Media Function XYZ:Audio".to_string()],
         );
-        let flow_def = FlowDefVideo {
-            description: format!(
-                "MXL Test Flow, 1080p{}",
-                framerate.numer() / framerate.denom()
-            ),
-            id: flow_id.to_string(),
-            tags,
-            format: "urn:x-nmos:format:video".into(),
-            label: format!(
-                "MXL Test Flow, 1080p{}",
-                framerate.numer() / framerate.denom()
-            ),
-            parents: vec![],
-            media_type: format!("video/{}", format),
-            grain_rate: GrainRate {
+        let flow_def_details = FlowDefVideo {
+            grain_rate: Rate {
                 numerator: framerate.numer(),
                 denominator: framerate.denom(),
             },
@@ -68,6 +56,24 @@ mod tests {
                     bit_depth: 10,
                 },
             ],
+        };
+
+        let flow_def = FlowDef {
+            id: Uuid::parse_str(&flow_id)
+                .map_err(|_| glib::Error::new(CoreError::Failed, "Failed to parse UUID"))?,
+            description: format!(
+                "MXL Test Flow, 1080p{}",
+                framerate.numer() / framerate.denom()
+            ),
+            tags,
+            format: "urn:x-nmos:format:video".into(),
+            label: format!(
+                "MXL Test Flow, 1080p{}",
+                framerate.numer() / framerate.denom()
+            ),
+            parents: vec![],
+            media_type: format!("video/{}", format),
+            details: FlowDefDetails::Video(flow_def_details),
         };
 
         let json = serde_json::to_value(&flow_def)

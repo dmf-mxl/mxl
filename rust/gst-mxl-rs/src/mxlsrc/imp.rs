@@ -18,6 +18,7 @@ use gst_base::prelude::*;
 use gst_base::subclass::base_src::CreateSuccess;
 use gst_base::subclass::prelude::*;
 use gstreamer as gst;
+use gstreamer::Buffer;
 use gstreamer_base as gst_base;
 use tracing::trace;
 
@@ -56,6 +57,11 @@ pub struct MxlSrc {
     pub settings: Mutex<Settings>,
     pub context: Mutex<Context>,
     clock_wait: Mutex<ClockWait>,
+}
+
+pub enum CreateState {
+    DataCreated(Buffer),
+    NoDataCreated,
 }
 
 #[glib::object_subclass]
@@ -250,6 +256,15 @@ impl BaseSrcImpl for MxlSrc {
             .settings
             .lock()
             .map_err(|e| gst::loggable_error!(CAT, "Failed to lock settings mutex {}", e))?;
+        let context = self
+            .context
+            .lock()
+            .map_err(|e| gst::loggable_error!(CAT, "Failed to lock context mutex {}", e))?;
+        let instance = &context
+            .state
+            .as_ref()
+            .ok_or(gst::loggable_error!(CAT, "Failed to get state"))?
+            .instance;
         if settings.audio_flow.is_some() && settings.video_flow.is_some() {
             gst::warning!(CAT, imp = self, "You can't set both video and audio flows");
             return self.parent_negotiate();
@@ -260,9 +275,8 @@ impl BaseSrcImpl for MxlSrc {
             gst::warning!(CAT, imp = self, "domain or flow-id not set yet");
             return self.parent_negotiate();
         }
-
         let flow_id = mxl_helper::get_flow_type_id(&settings)?;
-        let json_flow_description = mxl_helper::get_mxl_flow_json(&settings.domain, flow_id)?;
+        let json_flow_description = mxl_helper::get_mxl_flow_json(instance, flow_id)?;
         let flow_description = mxl_helper::get_flow_def(self, json_flow_description)?;
         mxl_helper::set_json_caps(self, flow_description)
     }
@@ -393,6 +407,30 @@ impl PushSrcImpl for MxlSrc {
         &self,
         _buffer: Option<&mut gst::BufferRef>,
     ) -> Result<CreateSuccess, gst::FlowError> {
+        loop {
+            match self.try_create() {
+                Ok(r) => match r {
+                    CreateState::DataCreated(buffer) => {
+                        return Ok(CreateSuccess::NewBuffer(buffer));
+                    }
+                    CreateState::NoDataCreated => {
+                        if self.obj().current_state() == gst::State::Paused
+                            || self.obj().current_state() == gst::State::Null
+                        {
+                            return Err(gst::FlowError::Eos);
+                        };
+                        //Flow is stale and reader needs to be rebuilt
+                        let _ = mxl_helper::init(self);
+                    }
+                },
+                Err(e) => return Err(e),
+            }
+        }
+    }
+}
+
+impl MxlSrc {
+    fn try_create(&self) -> Result<CreateState, gst::FlowError> {
         let mut context = self.context.lock().map_err(|_| gst::FlowError::Error)?;
         let state = context.state.as_mut().ok_or(gst::FlowError::Error)?;
         if state.video.is_some() {
