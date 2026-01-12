@@ -19,7 +19,6 @@ gstreamer = "0.24.4"
 gstreamer-audio = "0.24.4"
 gstreamer-base = "0.24.4"
 mxl = { path = "../mxl" }
-serde.workspace = true
 serde_json.workspace = true
 uuid.workspace = true
 tracing.workspace = true

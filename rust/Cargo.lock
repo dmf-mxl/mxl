@@ -363,7 +363,6 @@ dependencies = [
  "gstreamer-base",
  "mxl",
  "regex",
- "serde",
  "serde_json",
  "tracing",
  "tracing-subscriber",
