@@ -176,6 +176,28 @@ if (MXL_FORCE_OPTIMIZATION_LEVEL)
 endif()
 
 
+#-------------------------------------------------------------------------------
+# If specified try to use libc++ instead of libstdcxx globally for all targets.
+#-------------------------------------------------------------------------------
+set(MXL_USE_LIBCPP OFF CACHE STRING "Explicitly use libc++ instead of the standard library provided by the system.")
+
+if (MXL_USE_LIBCPP)
+    function(mxl_check_libcpp outvar)
+        string(APPEND CMAKE_EXE_LINKER_FLAGS "-stdlib=libc++")
+        check_cxx_compiler_flag("-stdlib=libc++" ${outvar})
+        set(${outvar} ${${outvar}} PARENT_SCOPE)
+    endfunction()
+
+    mxl_check_libcpp(MXL_HAS_LIBCPP)
+    if (MXL_HAS_LIBCPP)
+        add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>)
+        add_link_options($<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>)
+    else()
+        message(WARNING "Could not switch to libc++, because it is notusable on the current platform.")
+    endif()
+endif()
+
+
 add_subdirectory(lib)
 add_subdirectory(utils)
 if (BUILD_TOOLS)
