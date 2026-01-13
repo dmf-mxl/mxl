@@ -632,10 +632,11 @@ int main(int argc, char** argv)
     if (runAsInitiator)
     {
         MXL_INFO("Running as initiator");
-        std::ifstream file(fmt::format("/dev/shm/{}.mxl-flow/flow_def.json", flowConf), std::ios::in | std::ios::binary);
+        auto fileName = fmt::format("{}/{}.mxl-flow/flow_def.json", domain, flowConf);
+        std::ifstream file(fileName, std::ios::in | std::ios::binary);
         if (!file)
         {
-            MXL_ERROR("Failed to open file: '{}'", flowConf);
+            MXL_ERROR("Failed to open file: '{}'", fileName);
             return MXL_ERR_INVALID_ARG;
         }
         std::string flowDescriptor{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
