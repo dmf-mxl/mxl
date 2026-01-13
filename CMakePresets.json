@@ -81,13 +81,7 @@
             "hidden": true,
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "gcc",
-                "CMAKE_CXX_COMPILER": "g++",
-                "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wpedantic",
-                "CMAKE_CXX_FLAGS_DEBUG": "-O0 -g",
-                "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
-                "CMAKE_EXE_LINKER_FLAGS": "-Wl,--exclude-libs=ALL -Wl,-z,defs -Wl,--as-needed",
-                "CMAKE_MODULE_LINKER_FLAGS": "-Wl,--exclude-libs=ALL -Wl,-z,defs -Wl,--as-needed",
-                "CMAKE_SHARED_LINKER_FLAGS": "-Wl,--exclude-libs=ALL -Wl,-z,defs -Wl,--as-needed"
+                "CMAKE_CXX_COMPILER": "g++"
             }
         },
         {
@@ -96,24 +90,7 @@
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++",
-                "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wno-missing-braces",
-                "CMAKE_CXX_FLAGS_DEBUG": "-O0 -g",
-                "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
-                "CMAKE_EXE_LINKER_FLAGS": "-Wl,--exclude-libs=ALL -Wl,-z,defs -Wl,--as-needed",
-                "CMAKE_MODULE_LINKER_FLAGS": "-Wl,--exclude-libs=ALL -Wl,-z,defs -Wl,--as-needed",
-                "CMAKE_SHARED_LINKER_FLAGS": "-Wl,--exclude-libs=ALL -Wl,-z,defs -Wl,--as-needed",
-                "CMAKE_CXX_SCAN_FOR_MODULES": "OFF",
                 "CMAKE_LINKER_TYPE": "LLD"
-            }
-        },
-        {
-            "name": "clang-darwin",
-            "hidden": true,
-            "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "clang++",
-                "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wno-missing-braces",
-                "CMAKE_CXX_FLAGS_DEBUG": "-O0 -g",
-                "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG"
             }
         },
         {
@@ -127,41 +104,7 @@
             "name": "release",
             "hidden": true,
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release",
-                "CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE": "ON"
-            }
-        },
-        {
-            "name": "asan",
-            "hidden": true,
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "ASan",
-                "CMAKE_CXX_FLAGS_ASAN": "-O1 -g -fsanitize=address -fno-omit-frame-pointer -DNDEBUG"
-            }
-        },
-        {
-            "name": "tsan",
-            "hidden": true,
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "TSan",
-                "CMAKE_CXX_FLAGS_TSAN": "-O1 -g -fsanitize=thread -DNDEBUG"
-            }
-        },
-        {
-            "name": "ubsan",
-            "hidden": true,
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "UBSan",
-                "CMAKE_CXX_FLAGS_UBSAN": "-O1 -g -fsanitize=undefined -fno-omit-frame-pointer -DNDEBUG"
-            }
-        },
-        {
-            "name": "msan",
-            "description": "This is Clang-only configuration",
-            "hidden": true,
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "MSan",
-                "CMAKE_CXX_FLAGS_MSAN": "-O2 -g -fsanitize=memory -fno-omit-frame-pointer -DNDEBUG"
+                "CMAKE_BUILD_TYPE": "Release"
             }
         },
         {
@@ -181,30 +124,6 @@
             ]
         },
         {
-            "name": "Linux-GCC-AddressSanitizer",
-            "inherits": [
-                "linux",
-                "gcc",
-                "asan"
-            ]
-        },
-        {
-            "name": "Linux-GCC-ThreadSanitizer",
-            "inherits": [
-                "linux",
-                "gcc",
-                "tsan"
-            ]
-        },
-        {
-            "name": "Linux-GCC-UBSanitizer",
-            "inherits": [
-                "linux",
-                "gcc",
-                "ubsan"
-            ]
-        },
-        {
             "name": "Linux-Clang-Debug",
             "inherits": [
                 "linux",
@@ -221,26 +140,10 @@
             ]
         },
         {
-            "name": "Linux-Clang-AddressSanitizer",
-            "inherits": [
-                "linux",
-                "clang",
-                "asan"
-            ]
-        },
-        {
-            "name": "Linux-Clang-UBSanitizer",
-            "inherits": [
-                "linux",
-                "clang",
-                "ubsan"
-            ]
-        },
-        {
             "name": "Darwin-Clang-Debug",
             "inherits": [
                 "darwin",
-                "clang-darwin",
+                "clang",
                 "debug"
             ]
         },
@@ -248,25 +151,9 @@
             "name": "Darwin-Clang-Release",
             "inherits": [
                 "darwin",
-                "clang-darwin",
+                "clang",
                 "release"
             ]
-        },
-        {
-            "name": "Darwin-Clang-AddressSanitizer",
-            "inherits": [
-                "darwin",
-                "clang-darwin",
-                "asan"
-            ]
-        },
-        {
-            "name": "Darwin-Clang-UBSanitizer",
-            "inherits": [
-                "darwin",
-                "clang-darwin",
-                "ubsan"
-            ]
-        }
+}
     ]
 }
