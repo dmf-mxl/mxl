@@ -159,6 +159,23 @@ mxl_check_and_add_flag("-Wpedantic")
 mxl_check_and_add_flag("-Wno-c++23-attribute-extensions")
 
 
+#-------------------------------------------------------------------------------
+# Allow forcing a certain optimization level regardless of what has been
+# provided through the build type, the environment, the toolchain file or
+# whatever.
+#-------------------------------------------------------------------------------
+set(MXL_FORCE_OPTIMIZATION_LEVEL OFF CACHE STRING "Force a sepcific optimization level: Can be one of 0, 1, 2, 3, fast or s.")
+
+if (MXL_FORCE_OPTIMIZATION_LEVEL)
+    check_cxx_compiler_flag("-O${MXL_FORCE_OPTIMIZATION_LEVEL}" MXL_CXX_COMPILER_SUPPORTS_OPTIMIZATION_LEVEL)
+    if (MXL_CXX_COMPILER_SUPPORTS_OPTIMIZATION_LEVEL)
+        add_compile_options($<$<COMPILE_LANGUAGE:C,CXX>:-O${MXL_FORCE_OPTIMIZATION_LEVEL}>)
+    else()
+        message(ERROR "The compiler does not recognize the specified optimization.")
+    endif()
+endif()
+
+
 add_subdirectory(lib)
 add_subdirectory(utils)
 if (BUILD_TOOLS)
