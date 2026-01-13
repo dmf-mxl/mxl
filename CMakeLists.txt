@@ -112,9 +112,10 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 option(MXL_ENABLE_PIC "Enable PIC for static libraries" ON)
 
 # Policy: shared always PIC, static set to MXL_ENABLE_PIC.
-set(MXL_POSITION_INDEPENDENT_CODE ON)
 if(NOT BUILD_SHARED_LIBS)
-  set(MXL_POSITION_INDEPENDENT_CODE ${MXL_ENABLE_PIC})
+    set(MXL_POSITION_INDEPENDENT_CODE ${MXL_ENABLE_PIC})
+else()
+    set(MXL_POSITION_INDEPENDENT_CODE ON)
 endif()
 
 #-------------------------------------------------------------------------------
