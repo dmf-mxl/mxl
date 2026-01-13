@@ -152,6 +152,53 @@ mxl_check_and_add_flag("-Wno-c++23-attribute-extensions")
 
 
 #-------------------------------------------------------------------------------
+# Try to determine a senisble target architecture that is reasonably modern.
+#-------------------------------------------------------------------------------
+set(MXL_TARGET_ARCH_HELPER)
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "^((x86)|(X86)|(amd)|(AMD))")
+    check_cxx_compiler_flag("-march=x86-64-v3" MXL_CXX_COMPILER_SUPPORTS_PSABI_V3)
+    if (MXL_CXX_COMPILER_SUPPORTS_PSABI_V3)
+        set(MXL_TARGET_ARCH_HELPER x86-64-v3)
+    endif()
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "^((arm)|(ARM)|(aarch)|(AARCH))")
+    check_cxx_compiler_flag("-march=armv8.5-a" MXL_CXX_COMPILER_SUPPORTS_ARM_V85A)
+    if (MXL_CXX_COMPILER_SUPPORTS_ARM_V85A)
+        set(MXL_TARGET_ARCH_HELPER armv8.5-a)
+    endif()
+endif()
+
+set(MXL_TARGET_ARCH "${MXL_TARGET_ARCH_HELPER}" CACHE STRING "The target architecture to generate code for.")
+
+if (MXL_TARGET_ARCH)
+    add_compile_options($<$<COMPILE_LANGUAGE:C,CXX>:-march=${MXL_TARGET_ARCH}>)
+endif()
+
+#-------------------------------------------------------------------------------
+# If specified try to add an option specifying the more specific target to tune
+# for.
+#-------------------------------------------------------------------------------
+set(MXL_TUNE_TARGET "" CACHE STRING "The target architecture to tune the generated code for, while keeping it compatible with the base architecture.")
+
+if (MXL_TUNE_TARGET)
+    if (MXL_TARGET_ARCH)
+        check_cxx_compiler_flag("-march=${MXL_TARGET_ARCH} -mtune=generic" MXL_CXX_COMPILER_SUPPORTS_TUNE)
+        if (MXL_CXX_COMPILER_SUPPORTS_TUNE)
+            check_cxx_compiler_flag("-march=${MXL_TARGET_ARCH} -mtune=${MXL_TUNE_TARGET}" MXL_CXX_COMPILER_SUPPORTS_TUNE_TARGET)
+            if (MXL_CXX_COMPILER_SUPPORTS_TUNE_TARGET)
+                add_compile_options($<$<COMPILE_LANGUAGE:C,CXX>:-mtune=${MXL_TUNE_TARGET}>)
+            else()
+                message(ERROR "The specified tune target is not compatible with the target architecture.")
+            endif()
+        else()
+            message(WARNING "The target compile does not seem to support CPU specific tuning.")
+        endif()
+    else()
+        message(WARNING "Can not enable CPU tuning without a target architecture.")
+    endif()
+endif()
+
+
+#-------------------------------------------------------------------------------
 # Allow forcing a certain optimization level regardless of what has been
 # provided through the build type, the environment, the toolchain file or
 # whatever.
