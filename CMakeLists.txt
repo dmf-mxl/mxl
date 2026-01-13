@@ -86,14 +86,6 @@ else ()
 endif ()
 
 
-find_program(ccache_executable ccache)
-
-if(ccache_executable)
-    message(STATUS "Using ccache from '${ccache_executable}'")
-    set(CMAKE_DISABLE_PRECOMPILE_HEADERS ON)
-    set(CMAKE_CXX_COMPILER_LAUNCHER ${ccache_executable})
-endif()
-
 # Enable testing for the project
 enable_testing()
 
@@ -194,6 +186,68 @@ if (MXL_USE_LIBCPP)
         add_link_options($<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>)
     else()
         message(WARNING "Could not switch to libc++, because it is notusable on the current platform.")
+    endif()
+endif()
+
+
+#-------------------------------------------------------------------------------
+# If specified try to enable various sanitizers globally for all targets.
+#-------------------------------------------------------------------------------
+set(MXL_ENABLE_SANITIZERS OFF CACHE BOOL "Perform runtime checking using the memory, thread and undefined behaviour sanitizers if available.")
+
+if (MXL_ENABLE_SANITIZERS)
+    function(mxl_check_sanitizer sanitizer outvar)
+        string(APPEND CMAKE_EXE_LINKER_FLAGS -fsanitize=${sanitizer})
+        check_cxx_compiler_flag("-fsanitize=${sanitizer}" ${outvar})
+        set(${outvar} ${${outvar}} PARENT_SCOPE)
+    endfunction()
+
+    set(MXL_SANITIZERS "")
+
+    #mxl_check_sanitizer(memory MXL_CXX_COMPILER_SUPPORTS_MSAN)
+    #if (MXL_CXX_COMPILER_SUPPORTS_MSAN)
+    #    list(APPEND MXL_SANITIZERS "memory")
+    #else()
+        mxl_check_sanitizer(address MXL_CXX_COMPILER_SUPPORTS_ASAN)
+        if (MXL_CXX_COMPILER_SUPPORTS_ASAN)
+            list(APPEND MXL_SANITIZERS "address")
+        else()
+            check_cxx_compiler_flag(leak MXL_CXX_COMPILER_SUPPORTS_LSAN)
+            if (MXL_CXX_COMPILER_SUPPORTS_LSAN)
+                list(APPEND MXL_SANITIZERS "leak")
+            endif()
+        endif()
+    #endif()
+
+    # We can not use ubsan at the moment, because MXL makes use of 128 bit
+    # integer arithmetic.
+    # See: https://github.com/android/ndk/issues/295
+    #mxl_check_sanitizer(undefined MXL_CXX_COMPILER_SUPPORTS_UBSAN)
+    #if (MXL_CXX_COMPILER_SUPPORTS_UBSAN)
+    #    list(APPEND MXL_SANITIZERS "undefined")
+    #endif()
+
+    # Thread sanitizer is unfortunately not compatible with address sanitizer.
+    #mxl_check_sanitizer(thread MXL_CXX_COMPILER_SUPPORTS_TSAN)
+    #if (MXL_CXX_COMPILER_SUPPORTS_TSAN)
+    #    list(APPEND MXL_SANITIZERS "thread")
+    #endif()
+
+    if (MXL_SANITIZERS)
+        list(JOIN MXL_SANITIZERS "," MXL_SANITIZER_LIST)
+        message(STATUS "Enabling the sanitizers: ${MXL_SANITIZER_LIST}")
+
+        add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fsanitize=${MXL_SANITIZER_LIST}>)
+        add_link_options($<$<COMPILE_LANGUAGE:CXX>:-fsanitize=${MXL_SANITIZER_LIST}>)
+    else()
+        message(WARNING "None of the supported sanitizers are available on the current platform.")
+    endif()
+else()
+    find_program(ccache_executable ccache)
+    if(ccache_executable)
+        message(STATUS "Using ccache from '${ccache_executable}'")
+        set(CMAKE_DISABLE_PRECOMPILE_HEADERS ON)
+        set(CMAKE_CXX_COMPILER_LAUNCHER ${ccache_executable})
     endif()
 endif()
 
