@@ -1,9 +1,89 @@
 # SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 # SPDX-License-Identifier: Apache-2.0
-
-Checks: "-*,modernize-*,-modernize-use-trailing-return-type"
-HeaderFileExtensions: ["", "h", "hpp"]
-ImplementationFileExtensions: ["cpp"]
+---
+Checks: >-
+    -*,
+    clang-diagnostic-*,
+    bugprone-*,
+    cert-*,
+    misc-*,
+    modernize-*,
+    performance-*,
+    readability-*,
+    android-cloexec-*,
+    cppcoreguidelines-avoid-const-or-ref-data-members,
+    cppcoreguidelines-avoid-goto,
+    cppcoreguidelines-interfaces-global-init,
+    cppcoreguidelines-slicing,
+    hicpp-exception-baseclass,
+    -clang-diagnostic-address-of-packed-member,
+    -clang-diagnostic-unknown-pragmas,
+    -bugprone-easily-swappable-parameters,
+    -bugprone-reserved-identifier,
+    -cert-dcl16-c,
+    -cert-dcl21-cpp,
+    -cert-dcl37-c,
+    -cert-dcl51-cpp,
+    -cert-env33-c,
+    -misc-include-cleaner,
+    -misc-non-private-member-variables-in-classes,
+    -misc-no-recursion,
+    -modernize-avoid-c-arrays,
+    -modernize-concat-nested-namespaces,
+    -modernize-raw-string-literal,
+    -modernize-replace-disallow-copy-and-assign-macro,
+    -modernize-replace-random-shuffle,
+    -modernize-use-default-member-init,
+    -modernize-use-equals-delete,
+    -modernize-use-nodiscard,
+    -modernize-use-override,
+    -modernize-use-trailing-return-type,
+    -performance-avoid-endl,
+    -performance-enum-size,
+    -performance-noexcept-destructor,
+    -performance-noexcept-move-constructor,
+    -performance-noexcept-swap,
+    -readability-const-return-type,
+    -readability-convert-member-functions-to-static,
+    -readability-else-after-return,
+    -readability-identifier-length,
+    -readability-identifier-naming,
+    -readability-implicit-bool-conversion,
+    -readability-magic-numbers,
+    -readability-make-member-function-const,
+    -readability-named-parameter,
+    -readability-qualified-auto,
+    -readability-redundant-access-specifiers,
+    -readability-redundant-member-init,
+    -readability-static-accessed-through-instance,
+    -readability-use-anyofallof
+WarningsAsErrors:      ''
+HeaderFilterRegex:     '/(lib|bin)/'
+HeaderFileExtensions:  ["h", "hpp"]
+ImplementationFileExtensions: ["c", "cpp"]
 CheckOptions:
-  modernize-use-using.IgnoreExternC: "true"
-  modernize-use-using.IgnoreMacros: "true"
+  - key:            bugprone-dangling-handle.HandleClasses
+    value:          'std::basic_string_view;std::experimental::basic_string_view'
+  - key:            cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor
+    value:          true
+  - key:            cppcoreguidelines-special-member-functions.AllowMissingMoveFunctions
+    value:          true
+  - key:            modernize-use-auto.RemoveStars
+    value:          '1'
+  - key:            modernize-use-using.IgnoreExternC
+    value:          true
+  - key:            modernize-use-using.IgnoreMacros
+    value:          true
+  - key:            readability-braces-around-statements.ShortStatementLines
+    value:          '2'
+  - key:            readability-function-cognitive-complexity.Threshold
+    value:          '50'
+  - key:            readability-function-cognitive-complexity.DescribeBasicIncrements
+    value:          false
+  - key:            readability-implicit-bool-conversion.AllowConditionalIntegerCasts
+    value:          '1'
+  - key:            readability-implicit-bool-conversion.AllowConditionalPointerCasts
+    value:          '1'
+  - key:            readability-uppercase-literal-suffix.NewSuffixes
+    value:          'f;L;LL;U;UL,ULL,LL'
+...

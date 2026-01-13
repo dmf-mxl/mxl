@@ -216,6 +216,44 @@ endif()
 
 
 #-------------------------------------------------------------------------------
+# If specified try to enable static analysis with clang-tidy.
+#-------------------------------------------------------------------------------
+set(MXL_ENABLE_CLANG_TIDY OFF CACHE BOOL "Perform static analysis with clang tidy during compilation.")
+
+if (MXL_ENABLE_CLANG_TIDY)
+    # Go through some lengths to try to find a clang-tidy executable that
+    # matches the clang executable being used.
+    # E.g. clang-20 -> clang-tidy-20
+    get_filename_component(MXL_CLANG_TIDY_NAME "${CMAKE_C_COMPILER}" NAME)
+    if (MXL_CLANG_TIDY_NAME MATCHES "clang")
+        string(REPLACE "clang" "clang-tidy" MXL_CLANG_TIDY_NAME "${MXL_CLANG_TIDY_NAME}")
+    else()
+        set(MXL_CLANG_TIDY_NAME "clang-tidy")
+    endif()
+
+    # If we dind't fall back to the default already, add it as a last resort
+    # fallback anyway, in case a more specific executable can not be found.
+    if (NOT MXL_CLANG_TIDY_NAME STREQUAL "clang-tidy")
+        list(APPEND MXL_CLANG_TIDY_NAME "clang-tidy")
+    endif()
+
+    find_program(MXL_CLANG_TIDY_EXE
+        NAMES ${MXL_CLANG_TIDY_NAME}
+        DOC "Path to the clang-tidy executable to use for stratic analysis.")
+
+    if (MXL_CLANG_TIDY_EXE)
+        message(STATUS "Found clang-tidy executable: ${MXL_CLANG_TIDY_EXE}")
+
+        # Enable clang tidy with the project local config
+        set(CMAKE_CXX_CLANG_TIDY ${MXL_CLANG_TIDY_EXE};-config-file=${CMAKE_CURRENT_SOURCE_DIR}/.clang-tidy)
+        set(CMAKE_C_CLANG_TIDY   ${MXL_CLANG_TIDY_EXE};-config-file=${CMAKE_CURRENT_SOURCE_DIR}/.clang-tidy)
+    else()
+        message(WARNING "Could not find clang-tidy executable un der the name(s): ${MXL_CLANG_TIDY_NAME}")
+    endif()
+endif()
+
+
+#-------------------------------------------------------------------------------
 # If specified try to use libc++ instead of libstdcxx globally for all targets.
 #-------------------------------------------------------------------------------
 set(MXL_USE_LIBCPP OFF CACHE STRING "Explicitly use libc++ instead of the standard library provided by the system.")
