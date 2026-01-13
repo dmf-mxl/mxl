@@ -60,13 +60,6 @@ set_target_properties(mxl
             SOVERSION                 "${PROJECT_VERSION_MAJOR}"
     )
 
-if (NOT APPLE)
-    target_link_options(mxl
-            PRIVATE
-                "-Wl,--exclude-libs,ALL"
-        )
-endif()
-
 target_sources(mxl
         PRIVATE
             src/flow.cpp
@@ -82,6 +75,8 @@ target_link_libraries(mxl
             mxl-common  # Common objects for libmxl and libmxl-fabrics
     )
 
+# Add common linker options
+mxl_add_common_target_link_options(mxl PRIVATE)
 # Enable LTO/IPO on target if enabled and supported
 mxl_enable_target_ipo(mxl)
 

@@ -93,6 +93,8 @@ target_link_libraries(mxl-common
             mxl-internal-headers
     )
 
+# Add common linker options
+#mxl_add_common_target_link_options(mxl-common PRIVATE)
 # Enable LTO/IPO on target if enabled and supported
 mxl_enable_target_ipo(mxl-common)
 

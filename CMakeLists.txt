@@ -337,6 +337,47 @@ else()
 endif()
 
 
+#-------------------------------------------------------------------------------
+# If supported enable linker flags previosuly passed explicitly in
+# CMakePresets.json
+#-------------------------------------------------------------------------------
+include(CheckLinkerFlag)
+
+function(mxl_check_linker_flag flag outvar_suffix)
+    check_linker_flag(C "${flag}" MXL_C_${outvar_suffix})
+    set(MXL_C_${outvar_suffix} "${MXL_C_${outvar_suffix}}" PARENT_SCOPE)
+    set(MXL_C_${outvar_suffix}_FLAG "${flag}" PARENT_SCOPE)
+    check_linker_flag(CXX "${flag}" MXL_CXX_${outvar_suffix})
+    set(MXL_CXX_${outvar_suffix} "${MXL_C_${outvar_suffix}}" PARENT_SCOPE)
+    set(MXL_CXX_${outvar_suffix}_FLAG "${flag}" PARENT_SCOPE)
+endfunction()
+
+mxl_check_linker_flag("LINKER:-z,defs" LINKER_SUPPORTS_Z_DEFS)
+mxl_check_linker_flag("LINKER:-z,relro" LINKER_SUPPORTS_Z_RELRO)
+mxl_check_linker_flag("LINKER:-z,now" LINKER_SUPPORTS_Z_NOW)
+mxl_check_linker_flag("LINKER:--exclude-libs,ALL" LINKER_SUPPORTS_EXCLUDE_LIBS)
+mxl_check_linker_flag("LINKER:--as-needed" LINKER_SUPPORTS_AS_NEEDED)
+
+function(mxl_add_common_target_link_option target scope outvar_suffix)
+    if (MXL_C_${outvar_suffix})
+        target_link_options(${target} ${scope} $<$<LINK_LANGUAGE:C>:${MXL_C_${outvar_suffix}_FLAG}>)
+    endif()
+    if (MXL_CXX_${outvar_suffix})
+        target_link_options(${target} ${scope} $<$<LINK_LANGUAGE:CXX>:${MXL_CXX_${outvar_suffix}_FLAG}>)
+    endif()
+endfunction()
+
+function(mxl_add_common_target_link_options target scope)
+    if (NOT MXL_ENABLE_SANITIZERS)
+        mxl_add_common_target_link_option(${target} ${scope} LINKER_SUPPORTS_Z_DEFS)
+    endif()
+    mxl_add_common_target_link_option(${target} ${scope} LINKER_SUPPORTS_Z_RELRO)
+    mxl_add_common_target_link_option(${target} ${scope} LINKER_SUPPORTS_Z_NOW)
+    mxl_add_common_target_link_option(${target} ${scope} LINKER_SUPPORTS_EXCLUDE_LIBS)
+    mxl_add_common_target_link_option(${target} ${scope} LINKER_SUPPORTS_AS_NEEDED)
+endfunction()
+
+
 add_subdirectory(lib)
 add_subdirectory(utils)
 if (BUILD_TOOLS)
