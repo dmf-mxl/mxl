@@ -314,7 +314,7 @@ impl BaseSinkImpl for MxlSink {
         if state.video.is_some() {
             render_video::video(self, state, buffer)
         } else {
-            render_audio::audio(self, state, buffer)
+            render_audio::audio(state, buffer)
         }
     }
 

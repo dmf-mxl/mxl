@@ -3,13 +3,10 @@
 
 use crate::mxlsink;
 
-use glib::subclass::types::ObjectSubclassExt;
-use gst::prelude::*;
-use gstreamer::{self as gst, ClockTime};
+use gstreamer::{self as gst};
 use tracing::trace;
 
 pub(crate) fn audio(
-    mxlsink: &mxlsink::imp::MxlSink,
     state: &mut mxlsink::state::State,
     buffer: &gst::Buffer,
 ) -> Result<gst::FlowSuccess, gst::FlowError> {
@@ -37,30 +34,15 @@ pub(crate) fn audio(
         .sample_rate()
         .map_err(|_| gst::FlowError::Error)?;
     let buffer_length = flow_info.bufferLength as u64;
-    let current_index = state.instance.get_current_index(&sample_rate);
-    let gst_time = mxlsink
-        .obj()
-        .current_running_time()
-        .ok_or(gst::FlowError::Error)?;
 
-    let initial_info = state
-        .initial_time
-        .get_or_insert(mxlsink::state::InitialTime {
-            index: current_index,
-            mxl_to_gst_offset: ClockTime::from_nseconds(state.instance.get_time()) - gst_time,
-        });
-
-    let mut write_index = current_index;
-    if let Some(pts) = buffer.pts() {
-        let mxl_pts = pts + initial_info.mxl_to_gst_offset;
-        write_index = state
-            .instance
-            .timestamp_to_index(mxl_pts.nseconds(), &sample_rate)
-            .map_err(|_| gst::FlowError::Error)?
-            + initial_info.index;
-
-        write_index = std::cmp::min(write_index, current_index + buffer_length - 1);
-    }
+    let mut write_index = match audio_state.next_write_index {
+        Some(idx) => idx,
+        None => {
+            let current_index = state.instance.get_current_index(&sample_rate);
+            audio_state.next_write_index = Some(current_index);
+            current_index
+        }
+    };
 
     trace!(
         "Writing audio batch starting at index {}, sample_rate {}/{}",
@@ -110,7 +92,7 @@ pub(crate) fn audio(
         src_offset_samples += chunk_samples;
         remaining -= chunk_samples;
     }
-
+    audio_state.next_write_index = Some(write_index);
     Ok(gst::FlowSuccess::Ok)
 }
 

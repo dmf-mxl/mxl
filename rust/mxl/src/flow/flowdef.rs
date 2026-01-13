@@ -19,12 +19,12 @@ pub struct FlowDef {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-#[serde(tag = "media_type")]
+#[serde(tag = "format")]
 pub enum FlowDefDetails {
-    #[serde(rename = "video/v210")]
+    #[serde(rename = "urn:x-nmos:format:video")]
     Video(FlowDefVideo),
     // TODO: Add support for "video/v210a".
-    #[serde(rename = "audio/float32")]
+    #[serde(rename = "urn:x-nmos:format:audio")]
     Audio(FlowDefAudio),
 }
 

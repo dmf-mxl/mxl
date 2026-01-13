@@ -107,28 +107,24 @@ pub(crate) fn get_flow_def(
     src: &MxlSrc,
     serde_json: serde_json::Value,
 ) -> Result<FlowDefDetails, gst::LoggableError> {
-    let media_type = serde_json
-        .get("media_type")
+    let format = serde_json
+        .get("format")
         .and_then(|v| v.as_str())
         .unwrap_or("unknown");
-    let json = match media_type {
-        "video/v210" => {
+    let json = match format {
+        "urn:x-nmos:format:video" => {
             let flow: FlowDefVideo = serde_json::from_value(serde_json)
                 .map_err(|e| gst::loggable_error!(CAT, "Invalid video flow JSON: {}", e))?;
             FlowDefDetails::Video(flow)
         }
-        "audio/float32" => {
+        "urn:x-nmos:format:audio" => {
             let flow: FlowDefAudio = serde_json::from_value(serde_json)
                 .map_err(|e| gst::loggable_error!(CAT, "Invalid audio flow JSON: {}", e))?;
             FlowDefDetails::Audio(flow)
         }
         _ => {
-            gst::warning!(CAT, imp = src, "Unknown media_type '{}'", media_type);
-            return Err(gst::loggable_error!(
-                CAT,
-                "Unknown media type {}",
-                media_type
-            ));
+            gst::warning!(CAT, imp = src, "Unknown format '{}'", format);
+            return Err(gst::loggable_error!(CAT, "Unknown format {}", format));
         }
     };
     Ok(json)

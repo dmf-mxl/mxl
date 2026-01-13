@@ -56,6 +56,7 @@ pub(crate) struct AudioState {
     pub bit_depth: u8,
     pub batch_size: usize,
     pub flow_def: FlowDefAudio,
+    pub next_write_index: Option<u64>,
 }
 
 #[derive(Default)]
@@ -65,7 +66,6 @@ pub(crate) struct Context {
 
 #[derive(Default, Debug, Clone)]
 pub(crate) struct InitialTime {
-    pub index: u64,
     pub mxl_to_gst_offset: ClockTime,
 }
 
@@ -133,6 +133,7 @@ pub(crate) fn init_state_with_audio(
         bit_depth,
         batch_size: flow.common().max_commit_batch_size_hint() as usize,
         flow_def: flow_def_details,
+        next_write_index: None,
     });
     state.flow = Some(flow);
 

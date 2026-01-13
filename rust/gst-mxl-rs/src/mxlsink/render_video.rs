@@ -28,7 +28,6 @@ pub(crate) fn video(
         .current_running_time()
         .ok_or(gst::FlowError::Error)?;
     let initial_info = state.initial_time.get_or_insert(InitialTime {
-        index: current_index,
         mxl_to_gst_offset: ClockTime::from_nseconds(state.instance.get_time()) - gst_time,
     });
     let mut index = current_index;
