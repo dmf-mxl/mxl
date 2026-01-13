@@ -55,36 +55,6 @@ project(mxl
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
 
-#-------------------------------------------------------------------------------
-# Determine optional IPO support and allow enabling IPO on a per target basis.
-#-------------------------------------------------------------------------------
-option(MXL_ENABLE_IPO "Enable LTO/IPO on the library targets." OFF)
-
-set(MXL_IPO_SUPPORTED OFF)
-if(MXL_ENABLE_IPO)
-    include(CheckIPOSupported)
-
-    check_ipo_supported(RESULT MXL_IPO_SUPPORTED OUTPUT output LANGUAGES C CXX)
-    if(MXL_IPO_SUPPORTED)
-        message(STATUS "Enabling LTO/IPO support.")
-    else()
-        message(WARNING "LTO/IPO is not supported: ${output}")
-    endif()
-endif()
-
-if (MXL_IPO_SUPPORTED)
-    function(mxl_enable_target_ipo target)
-        message(STATUS "Enabling LTO/IPO on target: ${target}")
-        set_target_properties(${target}
-                PROPERTIES
-                    INTERPROCEDURAL_OPTIMIZATION ON
-            )
-    endfunction()
-else ()
-    function(mxl_enable_target_ipo target)
-    endfunction()
-endif ()
-
 
 # Enable testing for the project
 enable_testing()
@@ -128,17 +98,17 @@ function(mxl_check_and_add_flag flag)
     check_c_compiler_flag("${flag}" ${c_var})
     if (${c_var})
         list(APPEND lang_list C)
-    endif ()
+    endif()
 
     check_cxx_compiler_flag("${flag}" ${cxx_var})
     if (${cxx_var})
         list(APPEND lang_list CXX)
-    endif ()
+    endif()
 
     list(JOIN lang_list "," lang_list_string)
     if (NOT "${lang_list_string}" STREQUAL "")
         add_compile_options($<$<COMPILE_LANGUAGE:${lang_list_string}>:${flag}>)
-    endif ()
+    endif()
 endfunction()
 
 #-------------------------------------------------------------------------------
@@ -195,6 +165,37 @@ if (MXL_TUNE_TARGET)
     else()
         message(WARNING "Can not enable CPU tuning without a target architecture.")
     endif()
+endif()
+
+
+#-------------------------------------------------------------------------------
+# Determine optional IPO support and allow enabling IPO on a per target basis.
+#-------------------------------------------------------------------------------
+set(MXL_ENABLE_IPO OFF CACHE BOOL "Enable LTO/IPO on the library targets.")
+
+set(MXL_IPO_SUPPORTED OFF)
+if(MXL_ENABLE_IPO)
+    include(CheckIPOSupported)
+
+    check_ipo_supported(RESULT MXL_IPO_SUPPORTED OUTPUT output LANGUAGES C CXX)
+    if(MXL_IPO_SUPPORTED)
+        message(STATUS "Enabling LTO/IPO support.")
+    else()
+        message(WARNING "LTO/IPO is not supported: ${output}")
+    endif()
+endif()
+
+if (MXL_IPO_SUPPORTED)
+    function(mxl_enable_target_ipo target)
+        message(STATUS "Enabling LTO/IPO on target: ${target}")
+        set_target_properties(${target}
+                PROPERTIES
+                    INTERPROCEDURAL_OPTIMIZATION ON
+            )
+    endfunction()
+else()
+    function(mxl_enable_target_ipo target)
+    endfunction()
 endif()
 
 
