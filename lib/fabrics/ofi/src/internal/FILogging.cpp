@@ -3,7 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "FILogging.hpp"
+#include <cstdlib>
 #include <atomic>
+#include <ranges>
 #include <rdma/fabric.h>
 #include <rdma/fi_ext.h>
 #include <rdma/providers/fi_log.h>
@@ -14,6 +16,13 @@
 
 namespace mxl::lib::fabrics::ofi
 {
+    namespace
+    {
+        constexpr static auto fiLogLevelStrings = std::array<std::pair<std::string_view, ::fi_log_level>, 4>{
+            {{"trace", FI_LOG_TRACE}, {"debug", FI_LOG_DEBUG}, {"info", FI_LOG_INFO}, {"warn", FI_LOG_WARN}}
+        };
+    }
+
     int fiLogEnabled(const struct fi_provider* prov, enum fi_log_level level, enum fi_log_subsys subsys, std::uint64_t flags);
     int fiLogReady(const struct fi_provider* prov, enum fi_log_level level, enum fi_log_subsys subsys, std::uint64_t flags, std::uint64_t* showtime);
     void fiLog(const struct fi_provider* prov, enum fi_log_level level, enum fi_log_subsys subsys, char const*, int line, char const* msgIn);
@@ -29,6 +38,22 @@ namespace mxl::lib::fabrics::ofi
             if (_isInit.exchange(true, std::memory_order_relaxed))
             {
                 return;
+            }
+
+            auto fiLogLevelCStr = ::getenv("FI_LOG_LEVEL");
+            if (fiLogLevelCStr != nullptr)
+            {
+                auto fiLogLevelStr = std::string_view{fiLogLevelCStr};
+                auto it = std::ranges::find_if(fiLogLevelStrings,
+                    [fiLogLevelStr](std::pair<std::string_view, ::fi_log_level> const& item) { return fiLogLevelStr == item.first; });
+                if (it != fiLogLevelStrings.end())
+                {
+                    _level = it->second;
+                }
+                else
+                {
+                    _level = FI_LOG_WARN;
+                }
             }
 
             auto ops = ::fi_ops_log{
@@ -52,7 +77,7 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         fi_log_level level() const noexcept
         {
-            return FI_LOG_WARN;
+            return _level;
         }
 
         [[nodiscard]]
@@ -68,6 +93,7 @@ namespace mxl::lib::fabrics::ofi
         }
 
         std::atomic_bool _isInit;
+        ::fi_log_level _level;
     };
 
     static FILogging logging;
@@ -115,7 +141,6 @@ namespace mxl::lib::fabrics::ofi
     void fiLog(const struct fi_provider* prov, enum fi_log_level level, enum fi_log_subsys subsys, char const*, int line, char const* msgIn)
     {
         auto msg = std::string{msgIn};
-
         if (msg.ends_with('\n'))
         {
             msg.pop_back();
