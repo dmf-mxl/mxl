@@ -116,7 +116,7 @@ namespace mxl::lib::fabrics::ofi
     {
         auto msg = std::string{msgIn};
 
-        if (!msg.empty() && (msg[msg.size() - 1] == '\n'))
+        if (msg.ends_with('\n'))
         {
             msg.pop_back();
         }
