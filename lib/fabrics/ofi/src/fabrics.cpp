@@ -28,33 +28,36 @@ namespace ofi = mxl::lib::fabrics::ofi;
 
 namespace mxl::lib::fabrics::ofi
 {
-    template<typename F>
-    mxlStatus try_run(F&& func, std::string_view errMsg)
+    namespace
     {
-        try
+        template<typename F>
+        mxlStatus try_run(F&& func, std::string_view errMsg)
         {
-            return func();
-        }
-        catch (ofi::Exception& e)
-        {
-            if (e.status() == MXL_ERR_UNKNOWN)
+            try
+            {
+                return func();
+            }
+            catch (ofi::Exception& e)
+            {
+                if (e.status() == MXL_ERR_UNKNOWN)
+                {
+                    MXL_ERROR("{}: {}", errMsg, e.what());
+                }
+
+                return e.status();
+            }
+            catch (std::exception& e)
             {
                 MXL_ERROR("{}: {}", errMsg, e.what());
+
+                return MXL_ERR_UNKNOWN;
             }
+            catch (...)
+            {
+                MXL_ERROR("{}", errMsg);
 
-            return e.status();
-        }
-        catch (std::exception& e)
-        {
-            MXL_ERROR("{}: {}", errMsg, e.what());
-
-            return MXL_ERR_UNKNOWN;
-        }
-        catch (...)
-        {
-            MXL_ERROR("{}", errMsg);
-
-            return MXL_ERR_UNKNOWN;
+                return MXL_ERR_UNKNOWN;
+            }
         }
     }
 }
