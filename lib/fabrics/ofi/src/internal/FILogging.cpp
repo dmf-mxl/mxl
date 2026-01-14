@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "FILogging.hpp"
+#include <cctype>
 #include <cstdlib>
 #include <algorithm>
 #include <atomic>
@@ -44,7 +45,8 @@ namespace mxl::lib::fabrics::ofi
             auto fiLogLevelCStr = ::getenv("FI_LOG_LEVEL");
             if (fiLogLevelCStr != nullptr)
             {
-                auto fiLogLevelStr = std::string_view{fiLogLevelCStr};
+                auto fiLogLevelStr = std::string{fiLogLevelCStr};
+                std::ranges::transform(fiLogLevelStr, fiLogLevelStr.begin(), [](char const c) -> char { return std::tolower(c); });
                 auto it = std::ranges::find_if(fiLogLevelStrings,
                     [fiLogLevelStr](std::pair<std::string_view, ::fi_log_level> const& item) { return fiLogLevelStr == item.first; });
                 if (it != fiLogLevelStrings.end())
