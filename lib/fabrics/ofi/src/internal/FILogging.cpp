@@ -4,8 +4,9 @@
 
 #include "FILogging.hpp"
 #include <cstdlib>
+#include <algorithm>
 #include <atomic>
-#include <ranges>
+#include <string_view>
 #include <rdma/fabric.h>
 #include <rdma/fi_ext.h>
 #include <rdma/providers/fi_log.h>
