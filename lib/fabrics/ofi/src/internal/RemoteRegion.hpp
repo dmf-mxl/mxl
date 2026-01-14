@@ -108,13 +108,15 @@ namespace mxl::lib::fabrics::ofi
     private:
         /** \brief Convert a vector of RemoteRegion into a vector of fi_rma_iov structures. Used by the constructor.
          */
-        template<typename It>
+        template<typename Begin, typename End>
         [[nodiscard]]
-        static std::vector<::fi_rma_iov> rmaIovsFromGroup(It&& begin, It&& end) noexcept
+        static std::vector<::fi_rma_iov> rmaIovsFromGroup(Begin&& begin, End&& end) noexcept
         {
             std::vector<::fi_rma_iov> rmaIovs;
-            std::ranges::transform(
-                std::forward<It>(begin), std::forward<It>(end), std::back_inserter(rmaIovs), [](RemoteRegion const& reg) { return reg.toRmaIov(); });
+            std::ranges::transform(std::forward<Begin>(begin),
+                std::forward<End>(end),
+                std::back_inserter(rmaIovs),
+                [](RemoteRegion const& reg) { return reg.toRmaIov(); });
             return rmaIovs;
         }
 
