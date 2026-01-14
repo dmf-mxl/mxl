@@ -15,15 +15,13 @@ namespace mxl::lib::fabrics::ofi
 
     ImmDataGrain::ImmDataGrain(std::uint64_t index, std::uint16_t sliceIndex) noexcept
     {
-        auto packed = std::bit_cast<ImmDataPacked*>(&_inner);
-        packed->ringBufferIndex = index;
-        packed->sliceIndex = sliceIndex;
+        auto ringBufferIndex = static_cast<std::uint16_t>(index);
+        _inner = std::bit_cast<std::uint32_t>(Unpacked{.ringBufferIndex = ringBufferIndex, .sliceIndex = sliceIndex});
     }
 
-    std::pair<std::uint16_t, std::uint16_t> ImmDataGrain::unpack() const noexcept
+    ImmDataGrain::Unpacked ImmDataGrain::unpack() const noexcept
     {
-        auto packed = std::bit_cast<ImmDataPacked*>(&_inner);
-        return {packed->ringBufferIndex, packed->sliceIndex};
+        return std::bit_cast<Unpacked>(_inner);
     }
 
     std::uint32_t ImmDataGrain::data() const noexcept

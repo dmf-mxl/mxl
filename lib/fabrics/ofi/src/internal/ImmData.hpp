@@ -5,7 +5,6 @@
 #pragma once
 
 #include <cstdint>
-#include <utility>
 
 namespace mxl::lib::fabrics::ofi
 {
@@ -14,6 +13,13 @@ namespace mxl::lib::fabrics::ofi
      */
     class ImmDataGrain
     {
+    public:
+        struct Unpacked //**< Unpacked representation of immediate data. */
+        {
+            std::uint16_t ringBufferIndex;
+            std::uint16_t sliceIndex;
+        };
+
     public:
         /** \brief Create immediate data from packed data.
          *
@@ -33,7 +39,7 @@ namespace mxl::lib::fabrics::ofi
          * \return A pair containing the ring buffer index and slice index.
          */
         [[nodiscard]]
-        std::pair<std::uint16_t, std::uint16_t> unpack() const noexcept;
+        Unpacked unpack() const noexcept;
 
         /** \brief Get the packed immediate data.
          *
@@ -43,12 +49,6 @@ namespace mxl::lib::fabrics::ofi
         std::uint32_t data() const noexcept;
 
     private:
-        struct ImmDataPacked //**< Unpacked representation of immediate data. */
-        {
-            std::uint16_t ringBufferIndex;
-            std::uint16_t sliceIndex;
-        };
-
         uint32_t _inner; /**< Packed representation of immediate data. */
     };
 
