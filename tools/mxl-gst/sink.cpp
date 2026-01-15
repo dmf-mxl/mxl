@@ -626,7 +626,7 @@ namespace
                     (void)::mxlFlowReaderGetRuntimeInfo(_reader, &runtimeInfo);
                     MXL_TRACE("Failed to get samples at index {}: TOO LATE. Last published {}", requestedIndex, runtimeInfo.headIndex);
 
-                    currentIndex = ((::mxlTimestampToIndex(&rate, startTime) + (windowSize / 2U)) / windowSize) * windowSize;
+                    currentIndex = ((::mxlTimestampToIndex(&rate, ::mxlGetTime()) + (windowSize / 2U)) / windowSize) * windowSize;
                     requestedIndex = currentIndex - readDelayGrains;
                     deliveryDeadline = ::mxlIndexToTimestamp(&rate, currentIndex + windowSize);
                 }
