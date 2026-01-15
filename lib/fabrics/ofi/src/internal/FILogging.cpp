@@ -133,7 +133,8 @@ namespace mxl::lib::fabrics::ofi
 
     int fiLogEnabled(const struct fi_provider* prov, enum fi_log_level level, enum fi_log_subsys subsys, std::uint64_t)
     {
-        return level <= logging.level() && logging.isProviderLoggingEnabled(prov) && logging.isSubsystemLoggingEnabled(subsys);
+        return (level <= logging.level() || logging.level() == FI_LOG_TRACE) && logging.isProviderLoggingEnabled(prov) &&
+               logging.isSubsystemLoggingEnabled(subsys);
     }
 
     int fiLogReady(const struct fi_provider*, enum fi_log_level, enum fi_log_subsys, std::uint64_t, std::uint64_t*)
