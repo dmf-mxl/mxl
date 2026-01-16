@@ -93,7 +93,7 @@ namespace mxl::lib::fabrics::ofi
 
     AddressVector::~AddressVector()
     {
-        close();
+        catchAndLogFabricError([this]() { close(); }, "Failed to close address vector");
     }
 
     AddressVector::AddressVector(AddressVector&& other) noexcept
