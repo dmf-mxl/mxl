@@ -69,10 +69,6 @@ set_target_properties(mxl-fabrics-objects
             SOVERSION                 "${PROJECT_VERSION_MAJOR}"
     )
 
-target_link_options(mxl-fabrics
-        PRIVATE
-            "-Wl,--exclude-libs,ALL"
-    )
 target_link_libraries(mxl-fabrics
         PUBLIC
             mxl
@@ -80,6 +76,8 @@ target_link_libraries(mxl-fabrics
             PkgConfig::libfabric
     )
 
+# Add common linker options
+mxl_add_common_target_link_options(mxl-fabrics PRIVATE)
 # Enable LTO/IPO on target if enabled and supported
 mxl_enable_target_ipo(mxl-fabrics)
 

@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 # SPDX-License-Identifier: Apache-2.0
 
-FROM debian:trixie-slim
+FROM debian:forky-slim
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -41,7 +41,7 @@ RUN apt-get update \
     htop \
     librdmacm-dev
 
-ARG CLANG_VERSION=19
+ARG CLANG_VERSION=21
 RUN apt-get install -y --no-install-recommends \
     "clang-${CLANG_VERSION}" \
     "clang-tools-${CLANG_VERSION}" \

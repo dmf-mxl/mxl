@@ -87,6 +87,7 @@ add_test(
   NAME "pkg-config C consumer can link and run"
   COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_pkgconfig_c_link.sh
           ${CMAKE_BINARY_DIR}
+          ${VCPKG_INSTALLED_DIR}
           ${VCPKG_TARGET_TRIPLET}
           ${BUILD_SHARED_LIBS}
           MXL_LINKER_FLAG=${MXL_LINKER_FLAG}

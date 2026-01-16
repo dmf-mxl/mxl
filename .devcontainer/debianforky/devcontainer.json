@@ -1,0 +1,53 @@
+// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-License-Identifier: Apache-2.0
+{
+    "name": "mxl - Debian Forky",
+    "build": {
+        "dockerfile": "../Dockerfile.debianforky",
+        "context": "../",
+        "args": {}
+    },
+    "runArgs": [
+        "--security-opt",
+        "apparmor:unconfined"
+    ],
+    "mounts": [
+        // These 2 mount points are required for GUI applications to work in WSL2. Remove them if you are not using WSL2.
+        "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached",
+        "source=/mnt/wslg,target=/mnt/wslg,type=bind,consistency=cached"
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools-extension-pack",
+                "mhutchie.git-graph",
+                "matepek.vscode-catch2-test-adapter",
+                "llvm-vs-code-extensions.vscode-clangd",
+                "xaver.clang-format",
+                "bierner.markdown-mermaid",
+                "rust-lang.rust-analyzer"
+            ],
+            "settings": {
+                "C_Cpp.intelliSenseEngine": "disabled",
+                "editor.inlayHints.enabled": "off",
+                "cmake.copyCompileCommands": "${workspaceFolder}/build/compile_commands.json",
+                "editor.formatOnSave": true,
+                "[cpp]": {
+                    "editor.defaultFormatter": "xaver.clang-format"
+                },
+                "rust-analyzer.linkedProjects": [
+                    "${workspaceFolder}/rust/Cargo.toml"
+                ]
+            }
+        }
+    },
+    "containerEnv": {
+        "NINJA_STATUS": "[%r processes, %f/%t @ %o/s : %es] ",
+        "CCACHE_DIR": "${containerWorkspaceFolder}/.cache/ccache",
+        "DISPLAY": "${localEnv:DISPLAY}"
+    },
+    "hostRequirements": {
+        "gpu": "optional"
+    },
+    "remoteUser": "devcontainer"
+}

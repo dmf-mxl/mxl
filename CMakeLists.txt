@@ -55,10 +55,123 @@ project(mxl
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
 
+
+# Enable testing for the project
+enable_testing()
+
+# Set macOS specific configuration
+if(APPLE)
+    # Add the official GStreamer framework paths to the PKG_CONFIG_PATH
+    set(ENV{PKG_CONFIG_PATH} "/Library/Frameworks/GStreamer.framework/Versions/1.0/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+endif()
+
+# Default build is shared libraries.
+# Use '-DBUILD_SHARED_LIBS=OFF' for static build.
+option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
+
+# Default PIC ON for static builds.
+# Use -DMXL_ENABLE_PIC=OFF to disable PIC
+option(MXL_ENABLE_PIC "Enable PIC for static libraries" ON)
+
+# Policy: shared always PIC, static set to MXL_ENABLE_PIC.
+if(NOT BUILD_SHARED_LIBS)
+    set(MXL_POSITION_INDEPENDENT_CODE ${MXL_ENABLE_PIC})
+else()
+    set(MXL_POSITION_INDEPENDENT_CODE ON)
+endif()
+
+#-------------------------------------------------------------------------------
+# Helper to conditionally add flags supported by the current compiler
+#-------------------------------------------------------------------------------
+include(CheckCCompilerFlag)
+include(CheckCXXCompilerFlag)
+
+function(mxl_check_and_add_flag flag)
+    string(REGEX REPLACE "^-+" "" var "${flag}")
+    string(MAKE_C_IDENTIFIER "${var}" var)
+    string(TOUPPER "${var}" var)
+
+    set(c_var "MXL_C_COMPILER_SUPPORTS_${var}")
+    set(cxx_var "MXL_CXX_COMPILER_SUPPORTS_${var}")
+
+    set(lang_list "")
+    check_c_compiler_flag("${flag}" ${c_var})
+    if (${c_var})
+        list(APPEND lang_list C)
+    endif()
+
+    check_cxx_compiler_flag("${flag}" ${cxx_var})
+    if (${cxx_var})
+        list(APPEND lang_list CXX)
+    endif()
+
+    list(JOIN lang_list "," lang_list_string)
+    if (NOT "${lang_list_string}" STREQUAL "")
+        add_compile_options($<$<COMPILE_LANGUAGE:${lang_list_string}>:${flag}>)
+    endif()
+endfunction()
+
+#-------------------------------------------------------------------------------
+# Globally add warning flags
+#-------------------------------------------------------------------------------
+mxl_check_and_add_flag("-Wall")
+mxl_check_and_add_flag("-Wextra")
+mxl_check_and_add_flag("-Wunreachable-code")
+mxl_check_and_add_flag("-Wpedantic")
+mxl_check_and_add_flag("-Wno-c++23-attribute-extensions")
+
+
+#-------------------------------------------------------------------------------
+# Try to determine a senisble target architecture that is reasonably modern.
+#-------------------------------------------------------------------------------
+set(MXL_TARGET_ARCH_HELPER)
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "^((x86)|(X86)|(amd)|(AMD))")
+    check_cxx_compiler_flag("-march=x86-64-v3" MXL_CXX_COMPILER_SUPPORTS_PSABI_V3)
+    if (MXL_CXX_COMPILER_SUPPORTS_PSABI_V3)
+        set(MXL_TARGET_ARCH_HELPER x86-64-v3)
+    endif()
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "^((arm)|(ARM)|(aarch)|(AARCH))")
+    check_cxx_compiler_flag("-march=armv8.5-a" MXL_CXX_COMPILER_SUPPORTS_ARM_V85A)
+    if (MXL_CXX_COMPILER_SUPPORTS_ARM_V85A)
+        set(MXL_TARGET_ARCH_HELPER armv8.5-a)
+    endif()
+endif()
+
+set(MXL_TARGET_ARCH "${MXL_TARGET_ARCH_HELPER}" CACHE STRING "The target architecture to generate code for.")
+
+if (MXL_TARGET_ARCH)
+    add_compile_options($<$<COMPILE_LANGUAGE:C,CXX>:-march=${MXL_TARGET_ARCH}>)
+endif()
+
+#-------------------------------------------------------------------------------
+# If specified try to add an option specifying the more specific target to tune
+# for.
+#-------------------------------------------------------------------------------
+set(MXL_TUNE_TARGET "" CACHE STRING "The target architecture to tune the generated code for, while keeping it compatible with the base architecture.")
+
+if (MXL_TUNE_TARGET)
+    if (MXL_TARGET_ARCH)
+        check_cxx_compiler_flag("-march=${MXL_TARGET_ARCH} -mtune=generic" MXL_CXX_COMPILER_SUPPORTS_TUNE)
+        if (MXL_CXX_COMPILER_SUPPORTS_TUNE)
+            check_cxx_compiler_flag("-march=${MXL_TARGET_ARCH} -mtune=${MXL_TUNE_TARGET}" MXL_CXX_COMPILER_SUPPORTS_TUNE_TARGET)
+            if (MXL_CXX_COMPILER_SUPPORTS_TUNE_TARGET)
+                add_compile_options($<$<COMPILE_LANGUAGE:C,CXX>:-mtune=${MXL_TUNE_TARGET}>)
+            else()
+                message(ERROR "The specified tune target is not compatible with the target architecture.")
+            endif()
+        else()
+            message(WARNING "The target compile does not seem to support CPU specific tuning.")
+        endif()
+    else()
+        message(WARNING "Can not enable CPU tuning without a target architecture.")
+    endif()
+endif()
+
+
 #-------------------------------------------------------------------------------
 # Determine optional IPO support and allow enabling IPO on a per target basis.
 #-------------------------------------------------------------------------------
-option(MXL_ENABLE_IPO "Enable LTO/IPO on the library targets." OFF)
+set(MXL_ENABLE_IPO OFF CACHE BOOL "Enable LTO/IPO on the library targets.")
 
 set(MXL_IPO_SUPPORTED OFF)
 if(MXL_ENABLE_IPO)
@@ -80,82 +193,190 @@ if (MXL_IPO_SUPPORTED)
                     INTERPROCEDURAL_OPTIMIZATION ON
             )
     endfunction()
-else ()
+else()
     function(mxl_enable_target_ipo target)
     endfunction()
-endif ()
-
-
-find_program(ccache_executable ccache)
-
-if(ccache_executable)
-    message(STATUS "Using ccache from '${ccache_executable}'")
-    set(CMAKE_DISABLE_PRECOMPILE_HEADERS ON)
-    set(CMAKE_CXX_COMPILER_LAUNCHER ${ccache_executable})
 endif()
 
-# Enable testing for the project
-enable_testing()
-
-# Set macOS specific configuration
-if(APPLE)
-    # Add the official GStreamer framework paths to the PKG_CONFIG_PATH
-    set(ENV{PKG_CONFIG_PATH} "/Library/Frameworks/GStreamer.framework/Versions/1.0/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
-endif()
-
-# Default build is shared libraries.
-# Use '-DBUILD_SHARED_LIBS=OFF' for static build.
-option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
-
-# Default PIC ON for static builds.
-# Use -DMXL_ENABLE_PIC=OFF to disable PIC
-option(MXL_ENABLE_PIC "Enable PIC for static libraries" ON)
-
-# Policy: shared always PIC, static set to MXL_ENABLE_PIC.
-set(MXL_POSITION_INDEPENDENT_CODE ON)
-if(NOT BUILD_SHARED_LIBS)
-  set(MXL_POSITION_INDEPENDENT_CODE ${MXL_ENABLE_PIC})
-endif()
 
 #-------------------------------------------------------------------------------
-# Helper to conditionally add flags supported by the current compiler
+# Allow forcing a certain optimization level regardless of what has been
+# provided through the build type, the environment, the toolchain file or
+# whatever.
 #-------------------------------------------------------------------------------
-include(CheckCCompilerFlag)
-include(CheckCXXCompilerFlag)
+set(MXL_FORCE_OPTIMIZATION_LEVEL OFF CACHE STRING "Force a sepcific optimization level: Can be one of 0, 1, 2, 3, fast or s.")
 
-function(mxl_check_and_add_flag flag)
-    string(REGEX REPLACE "^-+" "" var "${flag}")
-    string(MAKE_C_IDENTIFIER "${var}" var)
-    string(TOUPPER "${var}" var)
+if (MXL_FORCE_OPTIMIZATION_LEVEL)
+    check_cxx_compiler_flag("-O${MXL_FORCE_OPTIMIZATION_LEVEL}" MXL_CXX_COMPILER_SUPPORTS_OPTIMIZATION_LEVEL)
+    if (MXL_CXX_COMPILER_SUPPORTS_OPTIMIZATION_LEVEL)
+        add_compile_options($<$<COMPILE_LANGUAGE:C,CXX>:-O${MXL_FORCE_OPTIMIZATION_LEVEL}>)
+    else()
+        message(ERROR "The compiler does not recognize the specified optimization.")
+    endif()
+endif()
 
-    set(c_var "MXL_C_COMPILER_SUPPORTS_${var}")
-    set(cxx_var "MXL_CXX_COMPILER_SUPPORTS_${var}")
 
-    set(lang_list "")
-    check_c_compiler_flag("${flag}" ${c_var})
-    if (${c_var})
-        list(APPEND lang_list C)
-    endif ()
+#-------------------------------------------------------------------------------
+# If specified try to enable static analysis with clang-tidy.
+#-------------------------------------------------------------------------------
+set(MXL_ENABLE_CLANG_TIDY OFF CACHE BOOL "Perform static analysis with clang tidy during compilation.")
 
-    check_cxx_compiler_flag("${flag}" ${cxx_var})
-    if (${cxx_var})
-        list(APPEND lang_list CXX)
-    endif ()
+if (MXL_ENABLE_CLANG_TIDY)
+    # Go through some lengths to try to find a clang-tidy executable that
+    # matches the clang executable being used.
+    # E.g. clang-20 -> clang-tidy-20
+    get_filename_component(MXL_CLANG_TIDY_NAME "${CMAKE_C_COMPILER}" NAME)
+    if (MXL_CLANG_TIDY_NAME MATCHES "clang")
+        string(REPLACE "clang" "clang-tidy" MXL_CLANG_TIDY_NAME "${MXL_CLANG_TIDY_NAME}")
+    else()
+        set(MXL_CLANG_TIDY_NAME "clang-tidy")
+    endif()
 
-    list(JOIN lang_list "," lang_list_string)
-    if (NOT "${lang_list_string}" STREQUAL "")
-        add_compile_options($<$<COMPILE_LANGUAGE:${lang_list_string}>:${flag}>)
-    endif ()
+    # If we dind't fall back to the default already, add it as a last resort
+    # fallback anyway, in case a more specific executable can not be found.
+    if (NOT MXL_CLANG_TIDY_NAME STREQUAL "clang-tidy")
+        list(APPEND MXL_CLANG_TIDY_NAME "clang-tidy")
+    endif()
+
+    find_program(MXL_CLANG_TIDY_EXE
+        NAMES ${MXL_CLANG_TIDY_NAME}
+        DOC "Path to the clang-tidy executable to use for stratic analysis.")
+
+    if (MXL_CLANG_TIDY_EXE)
+        message(STATUS "Found clang-tidy executable: ${MXL_CLANG_TIDY_EXE}")
+
+        # Enable clang tidy with the project local config
+        set(CMAKE_CXX_CLANG_TIDY ${MXL_CLANG_TIDY_EXE};-config-file=${CMAKE_CURRENT_SOURCE_DIR}/.clang-tidy)
+        set(CMAKE_C_CLANG_TIDY   ${MXL_CLANG_TIDY_EXE};-config-file=${CMAKE_CURRENT_SOURCE_DIR}/.clang-tidy)
+    else()
+        message(WARNING "Could not find clang-tidy executable un der the name(s): ${MXL_CLANG_TIDY_NAME}")
+    endif()
+endif()
+
+
+#-------------------------------------------------------------------------------
+# If specified try to use libc++ instead of libstdcxx globally for all targets.
+#-------------------------------------------------------------------------------
+set(MXL_USE_LIBCPP OFF CACHE STRING "Explicitly use libc++ instead of the standard library provided by the system.")
+
+if (MXL_USE_LIBCPP)
+    function(mxl_check_libcpp outvar)
+        string(APPEND CMAKE_EXE_LINKER_FLAGS "-stdlib=libc++")
+        check_cxx_compiler_flag("-stdlib=libc++" ${outvar})
+        set(${outvar} ${${outvar}} PARENT_SCOPE)
+    endfunction()
+
+    mxl_check_libcpp(MXL_HAS_LIBCPP)
+    if (MXL_HAS_LIBCPP)
+        add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>)
+        add_link_options($<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>)
+    else()
+        message(WARNING "Could not switch to libc++, because it is notusable on the current platform.")
+    endif()
+endif()
+
+
+#-------------------------------------------------------------------------------
+# If specified try to enable various sanitizers globally for all targets.
+#-------------------------------------------------------------------------------
+set(MXL_ENABLE_SANITIZERS OFF CACHE BOOL "Perform runtime checking using the memory, thread and undefined behaviour sanitizers if available.")
+
+if (MXL_ENABLE_SANITIZERS)
+    function(mxl_check_sanitizer sanitizer outvar)
+        string(APPEND CMAKE_EXE_LINKER_FLAGS -fsanitize=${sanitizer})
+        check_cxx_compiler_flag("-fsanitize=${sanitizer}" ${outvar})
+        set(${outvar} ${${outvar}} PARENT_SCOPE)
+    endfunction()
+
+    set(MXL_SANITIZERS "")
+
+    #mxl_check_sanitizer(memory MXL_CXX_COMPILER_SUPPORTS_MSAN)
+    #if (MXL_CXX_COMPILER_SUPPORTS_MSAN)
+    #    list(APPEND MXL_SANITIZERS "memory")
+    #else()
+        mxl_check_sanitizer(address MXL_CXX_COMPILER_SUPPORTS_ASAN)
+        if (MXL_CXX_COMPILER_SUPPORTS_ASAN)
+            list(APPEND MXL_SANITIZERS "address")
+        else()
+            check_cxx_compiler_flag(leak MXL_CXX_COMPILER_SUPPORTS_LSAN)
+            if (MXL_CXX_COMPILER_SUPPORTS_LSAN)
+                list(APPEND MXL_SANITIZERS "leak")
+            endif()
+        endif()
+    #endif()
+
+    # We can not use ubsan at the moment, because MXL makes use of 128 bit
+    # integer arithmetic.
+    # See: https://github.com/android/ndk/issues/295
+    #mxl_check_sanitizer(undefined MXL_CXX_COMPILER_SUPPORTS_UBSAN)
+    #if (MXL_CXX_COMPILER_SUPPORTS_UBSAN)
+    #    list(APPEND MXL_SANITIZERS "undefined")
+    #endif()
+
+    # Thread sanitizer is unfortunately not compatible with address sanitizer.
+    #mxl_check_sanitizer(thread MXL_CXX_COMPILER_SUPPORTS_TSAN)
+    #if (MXL_CXX_COMPILER_SUPPORTS_TSAN)
+    #    list(APPEND MXL_SANITIZERS "thread")
+    #endif()
+
+    if (MXL_SANITIZERS)
+        list(JOIN MXL_SANITIZERS "," MXL_SANITIZER_LIST)
+        message(STATUS "Enabling the sanitizers: ${MXL_SANITIZER_LIST}")
+
+        add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fsanitize=${MXL_SANITIZER_LIST}>)
+        add_link_options($<$<COMPILE_LANGUAGE:CXX>:-fsanitize=${MXL_SANITIZER_LIST}>)
+    else()
+        message(WARNING "None of the supported sanitizers are available on the current platform.")
+    endif()
+else()
+    find_program(ccache_executable ccache)
+    if(ccache_executable)
+        message(STATUS "Using ccache from '${ccache_executable}'")
+        set(CMAKE_DISABLE_PRECOMPILE_HEADERS ON)
+        set(CMAKE_CXX_COMPILER_LAUNCHER ${ccache_executable})
+    endif()
+endif()
+
+
+#-------------------------------------------------------------------------------
+# If supported enable linker flags previosuly passed explicitly in
+# CMakePresets.json
+#-------------------------------------------------------------------------------
+include(CheckLinkerFlag)
+
+function(mxl_check_linker_flag flag outvar_suffix)
+    check_linker_flag(C "${flag}" MXL_C_${outvar_suffix})
+    set(MXL_C_${outvar_suffix} "${MXL_C_${outvar_suffix}}" PARENT_SCOPE)
+    set(MXL_C_${outvar_suffix}_FLAG "${flag}" PARENT_SCOPE)
+    check_linker_flag(CXX "${flag}" MXL_CXX_${outvar_suffix})
+    set(MXL_CXX_${outvar_suffix} "${MXL_C_${outvar_suffix}}" PARENT_SCOPE)
+    set(MXL_CXX_${outvar_suffix}_FLAG "${flag}" PARENT_SCOPE)
 endfunction()
 
-#-------------------------------------------------------------------------------
-# Globally add warning flags
-#-------------------------------------------------------------------------------
-mxl_check_and_add_flag("-Wall")
-mxl_check_and_add_flag("-Wextra")
-mxl_check_and_add_flag("-Wunreachable-code")
-mxl_check_and_add_flag("-Wpedantic")
-mxl_check_and_add_flag("-Wno-c++23-attribute-extensions")
+mxl_check_linker_flag("LINKER:-z,defs" LINKER_SUPPORTS_Z_DEFS)
+mxl_check_linker_flag("LINKER:-z,relro" LINKER_SUPPORTS_Z_RELRO)
+mxl_check_linker_flag("LINKER:-z,now" LINKER_SUPPORTS_Z_NOW)
+mxl_check_linker_flag("LINKER:--exclude-libs,ALL" LINKER_SUPPORTS_EXCLUDE_LIBS)
+mxl_check_linker_flag("LINKER:--as-needed" LINKER_SUPPORTS_AS_NEEDED)
+
+function(mxl_add_common_target_link_option target scope outvar_suffix)
+    if (MXL_C_${outvar_suffix})
+        target_link_options(${target} ${scope} $<$<LINK_LANGUAGE:C>:${MXL_C_${outvar_suffix}_FLAG}>)
+    endif()
+    if (MXL_CXX_${outvar_suffix})
+        target_link_options(${target} ${scope} $<$<LINK_LANGUAGE:CXX>:${MXL_CXX_${outvar_suffix}_FLAG}>)
+    endif()
+endfunction()
+
+function(mxl_add_common_target_link_options target scope)
+    if (NOT MXL_ENABLE_SANITIZERS)
+        mxl_add_common_target_link_option(${target} ${scope} LINKER_SUPPORTS_Z_DEFS)
+    endif()
+    mxl_add_common_target_link_option(${target} ${scope} LINKER_SUPPORTS_Z_RELRO)
+    mxl_add_common_target_link_option(${target} ${scope} LINKER_SUPPORTS_Z_NOW)
+    mxl_add_common_target_link_option(${target} ${scope} LINKER_SUPPORTS_EXCLUDE_LIBS)
+    mxl_add_common_target_link_option(${target} ${scope} LINKER_SUPPORTS_AS_NEEDED)
+endfunction()
 
 
 add_subdirectory(lib)
