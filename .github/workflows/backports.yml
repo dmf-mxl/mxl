@@ -1,0 +1,79 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+name: Backport merged PRs
+on:
+  pull_request_target:
+    types: [closed, labeled]
+permissions:
+  contents: write # so it can comment
+  pull-requests: write # so it can create pull requests
+jobs:
+  # These jobs are triggered when a PR is closed. The second job will only run when the first job
+  # finds labels matching: backport/.*
+  inspect-closed:
+    name: "PR closed: detect backport labels"
+    runs-on: ubuntu-latest
+    if: |
+        github.event.pull_request.merged 
+          && github.event.action == 'closed'
+          && github.event.action != 'labeled'
+    outputs:
+      target-branches: ${{ steps.target-branches.outputs.target-branches }}
+    steps:
+      - name: Parse labels
+        id: target-branches
+        # this line produces an output like: `target-branches=["release/v1.0.0","release/v1.1.0"]` or `target-branches=[]`
+        run: printf 'target-branches=%s\n' "$(echo -e "${{ join(github.event.pull_request.labels.*.name, '\n') }}" | sed -nE 's%backport/(.*)%\"release/\1\"%p' | jq -cs '.')" >>$GITHUB_OUTPUT
+  backport-closed:
+    name: "PR closed: create backport PR"
+    runs-on: ubuntu-latest
+    needs: inspect-closed
+    if: ${{ needs.inspect-closed.outputs.target-branches != '[]' }} # Don't run if no backport/* labels were found by the prev. job
+    strategy:
+      matrix:
+        target-branch: ${{ fromJSON(needs.inspect-closed.outputs.target-branches) }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create backport pull requests
+        uses: korthout/backport-action@v4
+        with:
+          label_pattern: a^
+          target_branches: ${{ matrix.target-branch }}
+          branch_name: backport/${pull_number}/-/${target_branch}
+          copy_assignees: true
+          copy_requested_reviewers: true
+          git_committer_name: backport-bot
+          git_committer_email: backport-bot@ebu.ch
+          pull_description: 'Backport of #${pull_number} to `${target_branch}`.'
+          pull_title: '[Backport to ${target_branch}] ${pull_title}'
+          add_labels: 'backport,automation'
+
+  # This job is triggered when a *merged* PR is *labeled*, once per label
+  backport-labeled:
+    name: "PR labeled: create backport PR"
+    runs-on: ubuntu-latest
+    if: |
+      github.event.pull_request.merged
+        && github.event.action != 'closed'
+        && github.event.action == 'labeled'
+        && startsWith(github.event.label.name, 'backport/')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse label
+        id: target-branch
+        # this line produces an output like: `target-branch=release/v1.0.0`
+        run: printf 'target-branch=%s\n' "$(sed -nE 's%backport/(.*)%release/\1%p' <<<"${{ github.event.label.name }}")" >>$GITHUB_OUTPUT
+      - name: Create backport pull requests
+        uses: korthout/backport-action@v4
+        with:
+          label_pattern: a^
+          target_branches: ${{ steps.target-branch.outputs.target-branch }}
+          branch_name: backport/${pull_number}/-/${target_branch}
+          copy_assignees: true
+          copy_requested_reviewers: true
+          git_committer_name: backport-bot
+          git_committer_email: backport-bot@ebu.ch
+          pull_description: 'Backport of #${pull_number} to `${target_branch}`.'
+          pull_title: '[Backport to ${target_branch}] ${pull_title}'
+          add_labels: 'backport,automation'
