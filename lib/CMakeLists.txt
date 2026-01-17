@@ -11,10 +11,6 @@ configure_file(
     )
 
 add_library(mxl-headers INTERFACE)
-target_compile_features(mxl-headers
-        INTERFACE
-            cxx_std_20
-    )
 target_include_directories(mxl-headers
         INTERFACE
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
