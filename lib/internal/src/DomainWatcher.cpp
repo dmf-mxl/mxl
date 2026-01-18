@@ -7,7 +7,6 @@
 #include <filesystem>
 #include <memory>
 #include <mutex>
-#include <stdexcept>
 #include <system_error>
 #include <thread>
 #include <utility>
@@ -225,7 +224,9 @@ namespace mxl::lib
                         MXL_ERROR("Error closing file descriptor {} for '{}'", wd, rec->fileName);
                     }
 #elif defined __linux__
-                    if (inotify_rm_watch(_inotifyFd, wd) == -1)
+                    auto f = std::filesystem::path{rec->fileName};
+                    // Try to remove the watch only if the file still exists.
+                    if (exists(f) && (inotify_rm_watch(_inotifyFd, wd) == -1))
                     {
                         auto const error = errno;
                         MXL_ERROR("Failed to remove inotify watch (wd={}) for '{}': {}", wd, rec->fileName, std::strerror(error));
