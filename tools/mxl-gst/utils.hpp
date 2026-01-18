@@ -155,8 +155,7 @@ namespace json_utils
      */
     void updateGroupHint(picojson::object& nmosFlow, std::string const& groupHint, std::string const& roleInGroup)
     {
-        auto jsonObj = nmosFlow; // make a copy to modify
-        auto& tagsObj = jsonObj.find("tags")->second.get<picojson::object>();
+        auto& tagsObj = nmosFlow.find("tags")->second.get<picojson::object>();
         auto& tagsArray = tagsObj["urn:x-nmos:tag:grouphint/v1.0"].get<picojson::array>();
         tagsArray.clear();
         tagsArray.emplace_back(groupHint + ":" + roleInGroup);
