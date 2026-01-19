@@ -6,24 +6,26 @@
 set -e
 
 usage() {
-    echo "usage: $0 <build_dir> <triplet> <BUILD_SHARED_LIBS: ON|OFF> <MXL_LINKER_FLAG=<linker-selection-flag>> <c_compiler>" >&2
+    echo "usage: $0 <build_dir> <vcpkg_install_dir> <vcpkg_triplet> <BUILD_SHARED_LIBS: ON|OFF> <MXL_LINKER_FLAG=<linker-selection-flag>> <c_compiler>" >&2
     echo "  build_dir         Path to the CMake build directory." >&2
-    echo "  triplet           vcpkg target triplet used for the build." >&2
+    echo "  vcpkg_install_dir vcpkg install directory" >&2
+    echo "  vcpkg_triplet     vcpkg target triplet used for the build." >&2
     echo "  BUILD_SHARED_LIBS Indicates whether the build uses shared libraries (ON or OFF)." >&2
     echo "  MXL_LINKER_FLAG   Optional compiler linker-selection flag (e.g. -fuse-ld=lld); empty means use default linker." >&2
     echo "  c_compiler        Path to the C compiler executable." >&2
 }
 
-if [ "$#" -ne 5 ]; then
+if [ "$#" -ne 6 ]; then
     usage
     exit 1
 fi
 
 BUILD_DIR="$1"
-VCPKG_TRIPLET="$2"
-BUILD_SHARED_LIBS="$3"
-MXL_LINKER_FLAG="${4#MXL_LINKER_FLAG=}"
-C_COMPILER="$5"
+VCPKG_INSTALL_DIR="$2"
+VCPKG_TRIPLET="$3"
+BUILD_SHARED_LIBS="$4"
+MXL_LINKER_FLAG="${5#MXL_LINKER_FLAG=}"
+C_COMPILER="$6"
 
 PKGCFG_STATIC=
 RPATH_FLAGS=
@@ -36,7 +38,7 @@ else
     exit 2
 fi
 
-export PKG_CONFIG_PATH="$BUILD_DIR/pkgconfig_test:$BUILD_DIR/vcpkg_installed/$VCPKG_TRIPLET/lib/pkgconfig"
+export PKG_CONFIG_PATH="$BUILD_DIR/pkgconfig_test:$VCPKG_INSTALL_DIR/$VCPKG_TRIPLET/lib/pkgconfig"
 
 TEST_DIR="$(mktemp -d /tmp/mxl_pkgconfig_test.XXXXXX)"
 
@@ -79,3 +81,4 @@ rm -rf $TEST_DIR/mxl_link_test_domain
 rm  $TEST_DIR/mxl_link_test
 rm  $TEST_DIR/mxl_link_test.c
 rmdir $TEST_DIR
+
