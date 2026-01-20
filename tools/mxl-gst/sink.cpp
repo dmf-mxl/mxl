@@ -372,13 +372,9 @@ namespace
             // frames that correspond to the index that is readOffset
             // nanoseconds in the past and deliver them as the next frame to the
             // gstreamer pipeline.
-            auto const startTime = ::mxlGetTime();
-            auto const readDelayGrains = durationInGrains(rate, readDelay);
-            auto currentIndex = ::mxlTimestampToIndex(&rate, startTime);
-            auto requestedIndex = currentIndex - readDelayGrains;
-            auto deliveryDeadline = ::mxlIndexToTimestamp(&rate, currentIndex + 1U);
+            auto cursor = Cursor{rate, 1U, readDelay};
 
-            initializeHighestLatency("Video", rate, currentIndex, requestedIndex);
+            initializeHighestLatency("Video", rate, cursor.currentIndex(), cursor.requestedIndex());
 
             auto expectedSlices = slicesPerBatch;
             while (!g_exit_requested)
@@ -388,19 +384,20 @@ namespace
                 uint8_t* payload;
 
                 auto const iterationStartTime = ::mxlGetTime();
-                auto const iterationTimeoutNs = (iterationStartTime < deliveryDeadline) ? (deliveryDeadline - iterationStartTime) : 0ULL;
+                auto const iterationTimeoutNs =
+                    (iterationStartTime < cursor.deliveryDeadline()) ? (cursor.deliveryDeadline() - iterationStartTime) : 0ULL;
                 if (sliceReadMode)
                 {
                     // Slice mode is not really useful here since gstreamer needs the full grain to push to the pipeline. But for educational
                     // purposes, here's how you can wait for slices to be available.
                     // Please note that -- contrary to how this sample does it -- you don't have to use the slice based reading just because
                     // the producer indicates a sub-grain sync batch size and are free to use mxlFlowReaderGetGrain() in any case.
-                    ret = ::mxlFlowReaderGetGrainSlice(_reader, requestedIndex, expectedSlices, iterationTimeoutNs, &grainInfo, &payload);
+                    ret = ::mxlFlowReaderGetGrainSlice(_reader, cursor.requestedIndex(), expectedSlices, iterationTimeoutNs, &grainInfo, &payload);
                 }
                 else
                 {
                     // Use this function to wait for a full grain
-                    ret = ::mxlFlowReaderGetGrain(_reader, requestedIndex, iterationTimeoutNs, &grainInfo, &payload);
+                    ret = ::mxlFlowReaderGetGrain(_reader, cursor.requestedIndex(), iterationTimeoutNs, &grainInfo, &payload);
                 }
 
                 if (ret == MXL_STATUS_OK)
@@ -413,7 +410,7 @@ namespace
                             // based on MXL timestamps, GStreamer automatically handles missing grains by repeating the last valid frame. Consuming
                             // applications should implement similar logic for invalid grain handling.
 
-                            updateHighestLatency("Video", ::mxlIndexToTimestamp(&rate, requestedIndex), ::mxlGetTime());
+                            updateHighestLatency("Video", ::mxlIndexToTimestamp(&rate, cursor.requestedIndex()), ::mxlGetTime());
 
                             // If we got here, we can push the grain to the gstreamer pipeline
                             auto const buffer = ::gst_buffer_new_allocate(nullptr, grainInfo.grainSize, nullptr);
@@ -423,17 +420,14 @@ namespace
                             std::memcpy(map.data, payload, grainInfo.grainSize);
                             ::gst_buffer_unmap(buffer, &map);
 
-                            gstPipeline.pushBuffer(buffer, ::mxlIndexToTimestamp(&rate, currentIndex + 1U));
+                            gstPipeline.pushBuffer(buffer, ::mxlIndexToTimestamp(&rate, cursor.currentIndex() + 1U));
 
                             ::gst_buffer_unref(buffer);
                         }
 
-                        ::mxlSleepUntil(deliveryDeadline);
+                        cursor.next();
 
-                        currentIndex += 1U;
-                        requestedIndex += 1U;
                         expectedSlices = slicesPerBatch;
-                        deliveryDeadline = ::mxlIndexToTimestamp(&rate, currentIndex + 1U);
                     }
                     else if (sliceReadMode)
                     {
@@ -443,12 +437,10 @@ namespace
                 }
                 else if (ret == MXL_ERR_FLOW_INVALID)
                 {
-                    if (handleInvalidFlow(requestedIndex))
+                    if (handleInvalidFlow(cursor.requestedIndex()))
                     {
                         // Realign to current index.
-                        currentIndex = ::mxlGetCurrentIndex(&rate);
-                        requestedIndex = currentIndex - readDelayGrains;
-                        deliveryDeadline = ::mxlIndexToTimestamp(&rate, currentIndex + 1U);
+                        cursor.realign(iterationStartTime);
                     }
                 }
                 else if (ret == MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
@@ -456,19 +448,17 @@ namespace
                     // We are too early somehow, keep trying the same grain index
                     auto runtimeInfo = ::mxlFlowRuntimeInfo{};
                     (void)::mxlFlowReaderGetRuntimeInfo(_reader, &runtimeInfo);
-                    MXL_WARN("Failed to get grain at index {}: TOO EARLY. Last published {}", requestedIndex, runtimeInfo.headIndex);
+                    MXL_WARN("Failed to get grain at index {}: TOO EARLY. Last published {}", cursor.requestedIndex(), runtimeInfo.headIndex);
                 }
                 else if (ret == MXL_ERR_OUT_OF_RANGE_TOO_LATE)
                 {
                     auto runtimeInfo = ::mxlFlowRuntimeInfo{};
                     (void)::mxlFlowReaderGetRuntimeInfo(_reader, &runtimeInfo);
-                    MXL_TRACE("Failed to get grain at index {}: TOO LATE. Last published {}", requestedIndex, runtimeInfo.headIndex);
+                    MXL_TRACE("Failed to get grain at index {}: TOO LATE. Last published {}", cursor.requestedIndex(), runtimeInfo.headIndex);
 
                     // Grain expired. Realign to current index. GStreamer repeats the last valid frame for missing data; consuming applications
                     // should do the same.
-                    currentIndex = ::mxlGetCurrentIndex(&rate);
-                    requestedIndex = currentIndex - readDelayGrains;
-                    deliveryDeadline = ::mxlIndexToTimestamp(&rate, currentIndex + 1U);
+                    cursor.realign(iterationStartTime);
                 }
                 else
                 {
@@ -500,14 +490,13 @@ namespace
                         // should do the same.
                         if (_reader != nullptr)
                         {
-                            currentIndex = ::mxlGetCurrentIndex(&rate);
-                            requestedIndex = currentIndex - readDelayGrains;
-                            deliveryDeadline = ::mxlIndexToTimestamp(&rate, currentIndex + 1U);
+                            cursor.realign(iterationStartTime);
                         }
                     }
                     else
                     {
-                        MXL_ERROR("Unexpected error when reading the grain {} with status {}. Exiting...", requestedIndex, static_cast<int>(ret));
+                        MXL_ERROR(
+                            "Unexpected error when reading the grain {} with status {}. Exiting...", cursor.requestedIndex(), static_cast<int>(ret));
                         return;
                     }
                 }
@@ -532,25 +521,22 @@ namespace
             // The index that corresponds to the current time. We are reading a range of samples up to the
             // index that is readOffset nanoseconds in the past and deliver them as the next chunk to the
             // gesteremaer pipeline.
-            auto const startTime = ::mxlGetTime();
-            auto const readDelayGrains = ((durationInGrains(rate, readDelay) + windowSize - 1U) / windowSize) * windowSize;
-            auto currentIndex = ((::mxlTimestampToIndex(&rate, startTime) + (windowSize / 2U)) / windowSize) * windowSize;
-            auto requestedIndex = currentIndex - readDelayGrains;
-            auto deliveryDeadline = ::mxlIndexToTimestamp(&rate, currentIndex + windowSize);
+            auto cursor = Cursor{rate, windowSize, readDelay};
 
-            initializeHighestLatency("Audio", rate, currentIndex, requestedIndex);
+            initializeHighestLatency("Audio", rate, cursor.currentIndex(), cursor.requestedIndex());
 
             while (!g_exit_requested)
             {
                 auto const iterationStartTime = ::mxlGetTime();
-                auto const iterationTimeoutNs = (iterationStartTime < deliveryDeadline) ? (deliveryDeadline - iterationStartTime) : 0ULL;
+                auto const iterationTimeoutNs =
+                    (iterationStartTime < cursor.deliveryDeadline()) ? (cursor.deliveryDeadline() - iterationStartTime) : 0ULL;
 
                 mxlWrappedMultiBufferSlice payload;
-                auto const ret = ::mxlFlowReaderGetSamples(_reader, requestedIndex, windowSize, iterationTimeoutNs, &payload);
+                auto const ret = ::mxlFlowReaderGetSamples(_reader, cursor.requestedIndex(), windowSize, iterationTimeoutNs, &payload);
 
                 if (ret == MXL_STATUS_OK)
                 {
-                    updateHighestLatency("Audio", ::mxlIndexToTimestamp(&rate, requestedIndex), ::mxlGetTime());
+                    updateHighestLatency("Audio", ::mxlIndexToTimestamp(&rate, cursor.requestedIndex()), ::mxlGetTime());
 
                     auto const payloadLen = windowSize * payload.count * sizeof(float);
                     auto const buffer = ::gst_buffer_new_allocate(nullptr, payloadLen, nullptr);
@@ -586,25 +572,18 @@ namespace
 
                     ::gst_audio_buffer_unmap(&audioBuffer);
 
-                    gstPipeline.pushBuffer(buffer, ::mxlIndexToTimestamp(&rate, currentIndex + windowSize));
+                    gstPipeline.pushBuffer(buffer, ::mxlIndexToTimestamp(&rate, cursor.requestedIndex() + windowSize));
 
                     ::gst_buffer_unref(buffer);
 
-                    ::mxlSleepUntil(deliveryDeadline);
-
-                    currentIndex += windowSize;
-                    requestedIndex += windowSize;
-                    deliveryDeadline = ::mxlIndexToTimestamp(&rate, currentIndex + windowSize);
+                    cursor.next();
                 }
                 else if (ret == MXL_ERR_FLOW_INVALID)
                 {
-                    if (handleInvalidFlow(requestedIndex))
+                    if (handleInvalidFlow(cursor.requestedIndex()))
                     {
                         // Realign to current index.
-                        auto const curTime = ::mxlGetTime();
-                        currentIndex = ((::mxlTimestampToIndex(&rate, curTime) + (windowSize / 2U)) / windowSize) * windowSize;
-                        requestedIndex = currentIndex - readDelayGrains;
-                        deliveryDeadline = ::mxlIndexToTimestamp(&rate, currentIndex + windowSize);
+                        cursor.realign(iterationStartTime);
                     }
                 }
                 else if (ret == MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
@@ -616,7 +595,7 @@ namespace
                     // Please note that it can occasionally happen that the last published index in this report is beyond
                     // the requested index, because the flow has been commited to in between the point in time, when the
                     // call to mxlFlowReaderGetSamples() returned and the flow runtime info was fetched.
-                    MXL_TRACE("Failed to get samples at index {}: TOO EARLY. Last published {}", requestedIndex, runtimeInfo.headIndex);
+                    MXL_TRACE("Failed to get samples at index {}: TOO EARLY. Last published {}", cursor.requestedIndex(), runtimeInfo.headIndex);
                 }
                 else if (ret == MXL_ERR_OUT_OF_RANGE_TOO_LATE)
                 {
@@ -624,11 +603,9 @@ namespace
                     // should handle this better by inserting silence with a micro fades to prevent clicks and pops.
                     auto runtimeInfo = ::mxlFlowRuntimeInfo{};
                     (void)::mxlFlowReaderGetRuntimeInfo(_reader, &runtimeInfo);
-                    MXL_TRACE("Failed to get samples at index {}: TOO LATE. Last published {}", requestedIndex, runtimeInfo.headIndex);
+                    MXL_TRACE("Failed to get samples at index {}: TOO LATE. Last published {}", cursor.requestedIndex(), runtimeInfo.headIndex);
 
-                    currentIndex = ((::mxlTimestampToIndex(&rate, startTime) + (windowSize / 2U)) / windowSize) * windowSize;
-                    requestedIndex = currentIndex - readDelayGrains;
-                    deliveryDeadline = ::mxlIndexToTimestamp(&rate, currentIndex + windowSize);
+                    cursor.realign(iterationStartTime);
                 }
                 else
                 {
@@ -661,16 +638,13 @@ namespace
                         if (_reader != nullptr)
                         {
                             MXL_DEBUG("Realigning sound flow: {}.", flowId);
-                            auto const curTime = ::mxlGetTime();
-                            currentIndex = ((::mxlTimestampToIndex(&rate, curTime) + (windowSize / 2U)) / windowSize) * windowSize;
-                            requestedIndex = currentIndex - readDelayGrains;
-                            deliveryDeadline = ::mxlIndexToTimestamp(&rate, currentIndex + windowSize);
+                            cursor.realign(iterationStartTime);
                         }
                     }
                     else
                     {
                         MXL_ERROR("Unexpected error when reading the samples at index {} with status {}. Exiting...",
-                            requestedIndex,
+                            cursor.requestedIndex(),
                             static_cast<int>(ret));
                         return;
                     }
@@ -695,10 +669,71 @@ namespace
             , _highestLatencyNs{}
         {}
 
-        static std::int64_t durationInGrains(mxlRational const& rate, std::int64_t duration) noexcept
+        struct Cursor
         {
-            return ::mxlTimestampToIndex(&rate, duration);
-        }
+            Cursor(mxlRational const& rate, std::uint32_t windowSize, std::int64_t readDelay) noexcept
+                : _rate{rate}
+                , _windowSize{windowSize}
+                , _readDelayGrains{((durationInGrains(readDelay) + _windowSize - 1U) / _windowSize) * _windowSize}
+            {
+                realign(::mxlGetTime());
+            }
+
+            void next() noexcept
+            {
+                ::mxlSleepUntil(_deliveryDeadline);
+
+                _currentIndex += _windowSize;
+                _requestedIndex += _windowSize;
+                _deliveryDeadline = getDeliveryDeadline();
+            }
+
+            void realign(std::uint64_t timeNow) noexcept
+            {
+                _currentIndex = ((::mxlTimestampToIndex(&_rate, timeNow) + (_windowSize / 2U)) / _windowSize) * _windowSize;
+                _requestedIndex = _currentIndex - _readDelayGrains;
+                _deliveryDeadline = getDeliveryDeadline();
+            }
+
+            [[nodiscard]]
+            constexpr std::uint64_t currentIndex() const noexcept
+            {
+                return _currentIndex;
+            }
+
+            [[nodiscard]]
+            constexpr std::uint64_t requestedIndex() const noexcept
+            {
+                return _requestedIndex;
+            }
+
+            [[nodiscard]]
+            constexpr std::uint64_t deliveryDeadline() const noexcept
+            {
+                return _deliveryDeadline;
+            }
+
+        private:
+            [[nodiscard]]
+            std::int64_t durationInGrains(std::int64_t duration) const noexcept
+            {
+                return ::mxlTimestampToIndex(&_rate, duration);
+            }
+
+            [[nodiscard]]
+            std::uint64_t getDeliveryDeadline() const noexcept
+            {
+                return ::mxlIndexToTimestamp(&_rate, _currentIndex + _windowSize);
+            }
+
+        private:
+            mxlRational _rate;
+            std::uint32_t _windowSize;
+            std::int64_t _readDelayGrains;
+            std::uint64_t _currentIndex;
+            std::uint64_t _requestedIndex;
+            std::uint64_t _deliveryDeadline;
+        };
 
         void initializeHighestLatency(char const* prefix, mxlRational const& rate, std::uint64_t currentIndex, std::uint64_t requestedIndex)
         {
