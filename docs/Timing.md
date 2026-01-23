@@ -24,26 +24,26 @@ The following table demonstrates the indexing logic for a 50/1 fps video flow st
 | Grain Index | TAI Timestamp (ns since SMPTE ST 2059 epoch) | Ring buffer Index |
 | ----------- | -------------------------------------------- | ----------------- |
 | 0           | 0                                            | 0                 |
-| 1           | 40'000'000                                   | 1                 |
-| 2           | 60'000'000                                   | 2                 |
-| 3           | 80'000'000                                   | 3                 |
-| 4           | 100'000'000                                  | 4                 |
-| 5           | 120'000'000                                  | 0                 |
-| 6           | 140'000'000                                  | 1                 |
-| 7           | 160'000'000                                  | 2                 |
-| 8           | 180'000'000                                  | 3                 |
-| 9           | 200'000'000                                  | 4                 |
+| 1           | 20'000'000                                   | 1                 |
+| 2           | 40'000'000                                   | 2                 |
+| 3           | 60'000'000                                   | 3                 |
+| 4           | 80'000'000                                   | 4                 |
+| 5           | 100'000'000                                  | 0                 |
+| 6           | 120'000'000                                  | 1                 |
+| 7           | 140'000'000                                  | 2                 |
+| 8           | 160'000'000                                  | 3                 |
+| 9           | 180'000'000                                  | 4                 |
 
 The following graph demonstrates a ring buffer where the head has wrapped around and is now at ring buffer index 2 (the time span between grain 3 and 7 in the table above).
 
 ```mermaid
 flowchart LR
 
-    A0["ring buffer index=0<br/>grain index=5<br/>ts=120'000'000ns"] --> A1[1]
-    A1["ring buffer index=1<br/>gi=6<br/>ts=140'000'000ns"] --> A2[2]
-    A2["HEAD<br/>ring buffer index=2<br/>gi=7<br/>ts=160'000'000ns"] --> A3[3]
-    A3["ring buffer index=3<br/>gi=3<br/>ts=80'000'000ns"] --> A4[4]
-    A4["ring buffer index=4<br/>gi=4<br/>ts=100'000'000ns"] --> A0
+    A0["ring buffer index=0<br/>grain index=5<br/>ts=100'000'000ns"] --> A1[1]
+    A1["ring buffer index=1<br/>gi=6<br/>ts=120'000'000ns"] --> A2[2]
+    A2["HEAD<br/>ring buffer index=2<br/>gi=7<br/>ts=140'000'000ns"] --> A3[3]
+    A3["ring buffer index=3<br/>gi=3<br/>ts=60'000'000ns"] --> A4[4]
+    A4["ring buffer index=4<br/>gi=4<br/>ts=80'000'000ns"] --> A0
 
     %% head
     style A2 fill:#030,color:#eee,stroke:#333,stroke-width:2px

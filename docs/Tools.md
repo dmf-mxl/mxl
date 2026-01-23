@@ -8,26 +8,22 @@
 Simple tool that uses the MXL sdk to open a flow by ID and prints the flow details.
 
 ```bash
-mxl-info 
-
-
 ./mxl-info [OPTIONS] [ADDRESS...]
 
-
 POSITIONALS:
-  ADDRESS TEXT ...            MXL URI 
+  ADDRESS TEXT ...            MXL URI
 
 OPTIONS:
-  -h,     --help              Print this help message and exit 
-          --version           Display program version information and exit 
-  -d,     --domain TEXT:DIR   The MXL domain directory 
-  -f,     --flow TEXT         The flow id to analyse 
-  -l,     --list              List all flows in the MXL domain 
-  -g,     --garbage-collect   Garbage collect inactive flows found in the MXL domain 
+  -h,     --help              Print this help message and exit
+          --version           Display program version information and exit
+  -d,     --domain TEXT:DIR   The MXL domain directory
+  -f,     --flow TEXT         The flow id to analyse
+  -l,     --list              List all flows in the MXL domain
+  -g,     --garbage-collect   Garbage collect inactive flows found in the MXL domain
 
-MXL URI format: 
-mxl://[authority[:port]]/domain[?id=...] 
-See: https://github.com/dmf-mxl/mxl/docs/Addressability.md 
+MXL URI format:
+mxl://[authority[:port]]/domain[?id=...]
+See: https://github.com/dmf-mxl/mxl/docs/Addressability.md
 ```
 
 Example 1a : listing all flows in a domain using command line options.
@@ -108,7 +104,7 @@ A binary that uses the gstreamer 'videotestsrc' and 'audiotestsrc' elements to p
   "id": "5fbec3b1-1b0f-417d-9059-8b94a47197ed",
   "tags": {
     "urn:x-nmos:tag:grouphint/v1.0": [
-      "Media Function XYZ:Video"
+      "My Media Function Unique Name (Change Me):Video"
     ]
   },
   "format": "urn:x-nmos:format:video",
@@ -154,7 +150,7 @@ Below is an example of an **augmented NMOS Flow JSON** for audio.
   "format": "urn:x-nmos:format:audio",
   "tags": {
     "urn:x-nmos:tag:grouphint/v1.0": [
-      "Media Function XYZ:Audio"
+      "My Media Function Unique Name (Change Me):Audio"
     ]
   },
   "label": "MXL Audio Flow",
@@ -173,16 +169,12 @@ Below is an example of an **augmented NMOS Flow JSON** for audio.
 ```
 
 ```bash
-mxl-gst-testsrc
-
-
-./build/Linux-Clang-Debug/tools/mxl-gst/mxl-gst-testsrc [OPTIONS]
-
+./mxl-gst-testsrc [OPTIONS]
 
 OPTIONS:
   -h,     --help              Print this help message and exit
   -v,     --video-config-file TEXT
-                              The json file which contains the Video NMOS Flow configuration
+                              The json file which contains the Video NMOS Flow configuration.
           --video-options-file TEXT
                               The json file which contains the Video Flow options.
   -a,     --audio-config-file TEXT
@@ -202,14 +194,14 @@ OPTIONS:
                               https://gstreamer.freedesktop.org/documentation/videotestsrc/index.html?gi-language=c#GstVideoTestSrcPattern
   -t,     --overlay-text TEXT [EBU DMF MXL]
                               Change the text overlay of the test source
-  -g,     --group-hint TEXT [mxl-gst-testsrc-group]  
+  -g,     --group-hint TEXT [mxl-gst-testsrc-group]
                               The group-hint value to use in the flow json definition                               
 ```
 
 Example to run with video only:
 
 ```bash
-./build/Linux-Clang-Debug/tools/mxl-gst/mxl-gst-testsrc \
+./mxl-gst-testsrc \
   -d /dev/shm \
   -v lib/tests/data/v210_flow.json
 ```
@@ -217,7 +209,7 @@ Example to run with video only:
 Example to run with audio only:
 
 ```bash
-./build/Linux-Clang-Debug/tools/mxl-gst/mxl-gst-testsrc \
+./mxl-gst-testsrc \
   -d /dev/shm \
   -a lib/tests/data/audio_flow.json
 ```
@@ -225,7 +217,7 @@ Example to run with audio only:
 Example to run with both video and audio:
 
 ```bash
-./build/Linux-Clang-Debug/tools/mxl-gst/mxl-gst-testsrc \
+./mxl-gst-testsrc \
   -d /dev/shm \
   -v lib/tests/data/v210_flow.json \
   -a lib/tests/data/audio_flow.json
@@ -255,7 +247,7 @@ audio_options.json
 You can run the full example with:
 
 ```bash
-./build/Linux-Clang-Debug/tools/mxl-gst/mxl-gst-testsrc \
+./mxl-gst-testsrc \
   -d /dev/shm \
   -v lib/tests/data/v210_flow.json \
   --video-options-file video_options.json \
@@ -268,7 +260,7 @@ You can run the full example with:
 A binary that reads from a MXL Flow and display the flow using the gstreamer element 'autovideosink'.
 
 ```bash
-./build/Linux-GCC-Release/tools/mxl-gst/mxl-gst-sink [OPTIONS]
+./mxl-gst-sink [OPTIONS]
 
 
 OPTIONS:
@@ -295,7 +287,7 @@ OPTIONS:
 Example to run with video only:
 
 ```bash
-./build/Linux-Clang-Debug/tools/mxl-gst/mxl-gst-sink \
+./mxl-gst-sink \
   -d /dev/shm \
   -v 5fbec3b1-1b0f-417d-9059-8b94a47197ed
 ```
@@ -303,7 +295,7 @@ Example to run with video only:
 Example to run with audio only:
 
 ```bash
-./build/Linux-Clang-Debug/tools/mxl-gst/mxl-gst-sink \
+./mxl-gst-sink \
   -d /dev/shm \
   -a b3bb5be7-9fe9-4324-a5bb-4c70e1084449
 ```
@@ -311,8 +303,44 @@ Example to run with audio only:
 Example to run with both video and audio:
 
 ```bash
-./build/Linux-Clang-Debug/tools/mxl-gst/mxl-gst-sink \
+./mxl-gst-sink \
   -d /dev/shm \
   -v 5fbec3b1-1b0f-417d-9059-8b94a47197ed \
   -a b3bb5be7-9fe9-4324-a5bb-4c70e1084449
 ```
+
+### mxl-gst-looping-filesrc
+
+A utility that continuously loops through MPEG-TS files to generate video grains to push into MXL flows.
+
+#### Prerequisites
+
+This application requires the `looping_filesrc` GStreamer plugin located in `utils/gst-looping-filesrc/`.  After building the plugin successfully, set the GST_PLUGIN_PATH environment variable to enable GStreamer to locate and load the plugin.
+
+```bash
+export GST_PLUGIN_PATH="./build/Linux-GCC-Release/utils/gst-looping-filesrc:${GST_PLUGIN_PATH}"
+```
+
+**Verify Installation:**
+
+```bash
+gst-inspect-1.0 looping_filesrc
+```
+
+#### Usage
+
+```bash
+./mxl-gst-looping-filesrc [OPTIONS]
+
+
+OPTIONS:
+  -h,     --help              Print this help message and exit
+  -d,     --domain TEXT REQUIRED
+                              The MXL domain directory
+  -i,     --input TEXT:FILE REQUIRED
+                              MPEGTS media file location
+```
+
+## Gstreamer filters
+
+MXL Source and Sink filters for GStreamer are available [here](../rust/gst-mxl-rs/README.md). 
