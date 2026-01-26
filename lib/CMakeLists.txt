@@ -139,7 +139,7 @@ configure_file(
         @ONLY
     )
 # Test-only .pc file in the build dir for pre-install test.
-if (BUILD_TESTING)
+if (BUILD_TESTS)
     set(MXL_PKGCONFIG_PREFIX     "${CMAKE_CURRENT_BINARY_DIR}")
     set(MXL_PKGCONFIG_LIBDIR     "${CMAKE_CURRENT_BINARY_DIR}")
     set(MXL_PKGCONFIG_INCLUDEDIR "${CMAKE_SOURCE_DIR}/lib/include")

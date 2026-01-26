@@ -3,8 +3,14 @@
 
 #pragma once
 
-#include <cstddef>
-#include <cstdint>
+#ifdef __cplusplus
+#   include <cstddef>
+#   include <cstdint>
+#else
+#   include <stddef.h>
+#   include <stdint.h>
+#endif
+
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/platform.h>
@@ -92,7 +98,7 @@ extern "C"
      */
     typedef struct mxlFabricsMemoryRegion_t
     {
-        std::uintptr_t addr;                /**< Start address of the contiguous memory region. */
+        uintptr_t addr;                     /**< Start address of the contiguous memory region. */
         size_t size;                        /**< Size of that memory region */
         mxlFabricsMemoryRegionLocation loc; /**< Location information for that memory region. */
     } mxlFabricsMemoryRegion;
@@ -159,7 +165,7 @@ extern "C"
      * Create a fabrics target. The target is the receiver of write operations from an initiator.
      * \param in_fabricsInstance A valid mxl fabrics instance
      * \param out_target A valid fabrics target
-     */ 
+     */
     MXL_EXPORT
     mxlStatus mxlFabricsCreateTarget(mxlFabricsInstance in_fabricsInstance, mxlFabricsTarget* out_target);
 
@@ -306,7 +312,7 @@ extern "C"
      * \param in_targetInfo A valid target info to serialize
      * \param out_string A user supplied buffer of the correct size. Initially you can pass a NULL pointer to obtain the size of the string.
      * \param in_stringSize The size of the output string.
-     */ 
+     */
     MXL_EXPORT
     mxlStatus mxlFabricsTargetInfoToString(mxlTargetInfo const in_targetInfo, char* out_string, size_t* in_stringSize);
 

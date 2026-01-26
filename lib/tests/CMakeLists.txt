@@ -90,8 +90,15 @@ add_test(
           ${VCPKG_INSTALLED_DIR}
           ${VCPKG_TARGET_TRIPLET}
           ${BUILD_SHARED_LIBS}
+	  ${MXL_ENABLE_FABRICS_OFI}
           MXL_LINKER_FLAG=${MXL_LINKER_FLAG}
           ${CMAKE_C_COMPILER}
+)
+set_tests_properties(
+  "pkg-config C consumer can link and run"
+  PROPERTIES
+    ENVIRONMENT
+    "PKG_CONFIG_PATH=$ENV{PKG_CONFIG_PATH}"
 )
 
 # Copy test files to the build directory
