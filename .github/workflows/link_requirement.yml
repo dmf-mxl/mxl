@@ -2,9 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 name: Link Requirement Issue
+
 on:
   issues:
-    types: [opened]
+    # 'labeled' covers the edge case where 'Feature' label is applied after creation
+    types: [opened, labeled]
 
 permissions:
   contents: read
@@ -13,51 +15,95 @@ permissions:
 
 jobs:
   link-requirement:
+    # Only run when the issue is labeled 'Feature'
+    if: >
+      contains(github.event.issue.labels.*.name, 'Feature') ||
+      (github.event.action == 'labeled' && github.event.label.name == 'Feature')
     runs-on: ubuntu-latest
-    steps:
+    env:
+      # Default parent repo for number-only links; override via repo/org Actions Variable if needed
+      DEFAULT_REQUIREMENTS_REPO: ${{ vars.DEFAULT_REQUIREMENTS_REPO || 'dmf-mxl/mxl-requirements' }}
 
-      - name: Print raw issue body
+    steps:
+      - name: Print raw issue body (debug)
         run: |
           echo "${{ github.event.issue.body }}"
-    
+
       - name: Parse issue form
         id: parse
         uses: cssnr/parse-issue-form-action@v1
         with:
           body: ${{ github.event.issue.body }}
-      
-      - name: Debug requirement_link
-        run: |
-          echo "Parsed requirement_link: ${{ steps.parse.outputs.requirement_link }}"
 
-      - name: Extract owner, repo, and issue number
-        id: extract
+      # Guard: Skip if the field is absent or empty
+      - name: Guard - check requirement_link presence
+        id: guard
         run: |
           LINK="${{ steps.parse.outputs.requirement_link }}"
-          echo "Raw LINK: $LINK"
-          if [[ "$LINK" =~ ^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+#[0-9]+$ ]]; then
-            OWNER_REPO=$(echo "$LINK" | cut -d'#' -f1)
-            ISSUE_NUM=$(echo "$LINK" | grep -o '#[0-9]*' | cut -c2-)
-            echo "owner_repo=$OWNER_REPO" >> $GITHUB_OUTPUT
-            echo "issue_num=$ISSUE_NUM" >> $GITHUB_OUTPUT
+          if [ -z "$LINK" ]; then
+            echo "No 'requirement_link' field/value found; skipping workflow."
+            echo "has=false" >> $GITHUB_OUTPUT
           else
-            echo "Invalid requirement_link format: $LINK"
+            echo "Detected requirement_link raw value: '$LINK'"
+            echo "has=true" >> $GITHUB_OUTPUT
           fi
-          
-      # This uses the GitHub App created and installed for our purpose
-      - name: Create cross-repo token
+
+      - name: Normalize and extract owner/repo and issue number
+        if: steps.guard.outputs.has == 'true'
+        id: extract
+        env:
+          RAW_LINK: ${{ steps.parse.outputs.requirement_link }}
+          DEFAULT_REPO: ${{ env.DEFAULT_REQUIREMENTS_REPO }}
+        run: |
+          set -euo pipefail
+          LINK="$(echo "$RAW_LINK" | tr -d '\r' | xargs)"  # trim whitespace/CR
+
+          OWNER_REPO=""
+          ISSUE_NUM=""
+
+          # Accept:
+          # 1) owner/repo#123
+          # 2) 123 or #123  (mapped to DEFAULT_REPO)
+          # 3) https://github.com/owner/repo/issues/123
+          if [[ "$LINK" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#[0-9]+$ ]]; then
+            OWNER_REPO="${LINK%%#*}"
+            ISSUE_NUM="${LINK##*#}"
+          elif [[ "$LINK" =~ ^\#?[0-9]+$ ]]; then
+            OWNER_REPO="$DEFAULT_REPO"
+            ISSUE_NUM="${LINK#\#}"
+          elif [[ "$LINK" =~ ^https?://github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)/issues/([0-9]+) ]]; then
+            OWNER_REPO="${BASH_REMATCH[1]}/${BASH_REMATCH[2]}"
+            ISSUE_NUM="${BASH_REMATCH[3]}"
+          else
+            echo "Invalid requirement_link format: '$LINK'"
+          fi
+
+          if [[ -n "$OWNER_REPO" && -n "$ISSUE_NUM" ]]; then
+            echo "Normalized owner_repo=$OWNER_REPO, issue_num=$ISSUE_NUM"
+            echo "owner_repo=$OWNER_REPO" >> "$GITHUB_OUTPUT"
+            echo "issue_num=$ISSUE_NUM" >> "$GITHUB_OUTPUT"
+          else
+            echo "Could not parse owner/repo and issue number; skipping linking steps."
+          fi
+
+      # Create an installation token from the org GitHub App (single owner = org)
+      - name: Create cross-repo token (GitHub App at org)
+        if: steps.extract.outputs.issue_num != ''
         id: app-token
         uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ vars.CROSS_REPO_ISSUE_ACCESS_APP_ID }}
           private-key: ${{ secrets.CROSS_REPO_ISSUE_ACCESS_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}  # token can access repos in this owner installation
+          # Explicitly select the org installation
+          owner: dmf-mxl
 
       - name: Export GH_TOKEN for subsequent steps
+        if: steps.extract.outputs.issue_num != ''
         run: |
           echo "GH_TOKEN=${{ steps.app-token.outputs.token }}" >> "$GITHUB_ENV"
-          
+
       - name: Debug token presence
+        if: steps.extract.outputs.issue_num != ''
         run: |
           if [ -z "${GH_TOKEN}" ]; then
             echo "GH_TOKEN is empty or not set!"
@@ -66,29 +112,15 @@ jobs:
             echo "GH_TOKEN is set."
           fi
 
-      # - name: Comment on parent issue
-      #   if: steps.extract.outputs.issue_num != ''
-      #   run: |
-      #     curl -X POST \
-      #       -H "Authorization: token $GH_TOKEN" \
-      #       -H "Accept: application/vnd.github.v3+json" \
-      #       https://api.github.com/repos/${{ steps.extract.outputs.owner_repo }}/issues/${{ steps.extract.outputs.issue_num }}/comments \
-      #       -d "{\"body\": \"Linked feature: ${{ github.repository }}#${{ github.event.issue.number }}\"}"
-
-      # - name: Set 'Type' field to 'Feature' in GitHub Project
-      #   run: |
-      #     curl -X POST -H "Authorization: bearer $GH_TOKEN" -H "Content-Type: application/json" \
-      #     -d '{
-      #       "query": "mutation { updateProjectV2ItemFieldValue(input: {projectId: \"PROJECT_ID\", itemId: \"ITEM_ID\", fieldId: \"TYPE_FIELD_ID\", value: { singleSelectOptionId: \"FEATURE_OPTION_ID\" }}) { projectV2Item { id } } }"
-      #     }' https://api.github.com/graphql
-          
       - name: Link as sub-issue using gh CLI
+        if: steps.extract.outputs.issue_num != ''
         env:
           PARENT_REPO: ${{ steps.extract.outputs.owner_repo }}
           PARENT_NUMBER: ${{ steps.extract.outputs.issue_num }}
           CHILD_REPO: ${{ github.repository }}
           CHILD_NUMBER: ${{ github.event.issue.number }}
         run: |
+          set -euo pipefail
           echo "Fetching node IDs..."
 
           PARENT_NODE_ID=$(gh issue view https://github.com/$PARENT_REPO/issues/$PARENT_NUMBER --json id --jq .id)
@@ -110,4 +142,3 @@ jobs:
                 subIssue { title }
               }
             }'
-       

@@ -1,6 +1,7 @@
 name: Feature
-description: Feature from MXL Requirement
-labels: []
+description: Feature derived from an MXL Requirement
+labels:
+  - Feature
 assignees: []
 title: "[Feature] <short description>"
 
@@ -9,8 +10,10 @@ body:
     id: requirement_link
     attributes:
       label: Requirement Link
-      description: Link to the related issue in MXL Requirements repo (e.g., `dmf-mxl/mxl-requirements#99999` or full URL)
-      placeholder: "dmf-mxl/mxl-requirements#99999"
+      description: >
+        Link or number of the related requirement in the MXL Requirements repo.
+        Accepted formats: `12345`, `#12345`, `dmf-mxl/mxl-requirements#12345`, or a full URL.
+      placeholder: "12345"
     validations:
       required: true
 
@@ -18,7 +21,7 @@ body:
     id: description
     attributes:
       label: Description
-      description: A clear and concise description of the feature
+      description: Provide a clear, concise description of the feature.
       placeholder: "Describe the feature"
     validations:
       required: true
@@ -26,12 +29,11 @@ body:
   - type: textarea
     id: additional_context
     attributes:
-      label: Additional context
-      description: Add any other context or screenshots about the feature request here.
-      placeholder: "Include any relevant background, links, or images."
+      label: Additional Context
+      description: Add any other context, background information, or images.
+      placeholder: "Include relevant background, links, screenshots, or diagrams."
     validations:
       required: false
 
 # SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 # SPDX-License-Identifier: Apache-2.0
-
