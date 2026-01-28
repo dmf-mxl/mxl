@@ -46,6 +46,8 @@ namespace mxl::lib::fabrics::ofi
         FabricInfoView info() const noexcept;
 
     private:
+        /** \brief Close the underlying fabric object.
+         */
         void close();
 
         Fabric(::fid_fabric* raw, FabricInfoView info);
