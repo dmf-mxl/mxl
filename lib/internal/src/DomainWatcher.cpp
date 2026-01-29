@@ -244,11 +244,10 @@ namespace mxl::lib
                 if (::inotify_rm_watch(_inotifyFd, wd) == -1)
                 {
                     auto const error = errno;
-                    if (error != EINVAL || std::filesystem::exists(it->second.fileName))
+                    if ((error != EINVAL) || std::filesystem::exists(it->second.fileName))
                     {
                         MXL_WARN("Failed to remove inotify watch (wd={}) for '{}': {}", wd, record.fileName, std::strerror(error));
                     }
-                    // Continue with cleanup despite failure
                 }
 #endif
             }
