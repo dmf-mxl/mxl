@@ -6,190 +6,325 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <list>
+#include <random>
 #include <string>
+#include <system_error>
+#include <thread>
 #include <fcntl.h>
 #include <unistd.h>
 #include <uuid.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <catch2/catch_test_macros.hpp>
+#include "mxl-internal/DiscreteFlowWriter.hpp"
 #include "mxl-internal/DomainWatcher.hpp"
+#include "mxl-internal/Flow.hpp"
 #include "mxl-internal/PathUtils.hpp"
+#include "mxl/flowinfo.h"
 #include "../../tests/Utils.hpp"
 
 using namespace mxl::lib;
 namespace fs = std::filesystem;
 
+namespace
+{}
+
+struct MockFlowFiles
+{
+    MockFlowFiles(fs::path domain, uuids::uuid const& id)
+        : _domain{std::move(domain)}
+        , _id{id}
+        , _accessFileFd{-1}
+    {
+        auto flowDir = makeFlowDirectoryName(_domain, uuids::to_string(_id));
+        std::filesystem::create_directories(flowDir);
+        auto accessFilePath = makeFlowAccessFilePath(flowDir);
+        auto dataFilePath = makeFlowDataFilePath(flowDir);
+
+        _accessFileFd = ::open(accessFilePath.c_str(), O_CREAT | O_WRONLY | O_TRUNC | O_CLOEXEC, 0644);
+        if (_accessFileFd < 0)
+        {
+            auto const error = errno;
+            throw std::system_error{error, std::system_category(), "Failed to open access file"};
+        }
+
+        _dataFileFd = ::open(dataFilePath.c_str(), O_CREAT | O_WRONLY | O_TRUNC | O_CLOEXEC, 0644);
+
+        if (::ftruncate(_accessFileFd, sizeof(Grain)) < 0)
+        {
+            auto const error = errno;
+            throw std::system_error{error, std::system_category(), "Failed truncate access file"};
+        }
+
+        if (::ftruncate(_dataFileFd, sizeof(Flow)) < 0)
+        {
+            auto const error = errno;
+            throw std::system_error{error, std::system_category(), "Failed truncate access file"};
+        }
+    }
+
+    ~MockFlowFiles()
+    {
+        if (_accessFileFd > -1)
+        {
+            (void)::close(_accessFileFd);
+        }
+        if (_dataFileFd > -1)
+        {
+            (void)::close(_dataFileFd);
+        }
+
+        auto flowDir = makeFlowDirectoryName(_domain, uuids::to_string(_id));
+        fs::remove(makeFlowAccessFilePath(flowDir));
+        fs::remove(makeFlowDataFilePath(flowDir));
+    }
+
+    void touch()
+    {
+        auto times = std::array<::timespec, 2>{
+            timespec{.tv_sec = 0, .tv_nsec = UTIME_NOW },
+            timespec{.tv_sec = 0, .tv_nsec = UTIME_OMIT}
+        };
+        if (auto ret = ::futimens(_accessFileFd, times.data()); ret < 0)
+        {
+            auto const error = errno;
+            throw std::system_error(error, std::system_category(), "Failed to update flow access time");
+        }
+    }
+
+    fs::path _domain;
+    uuids::uuid _id;
+    int _accessFileFd;
+    int _dataFileFd;
+};
+
+struct MockWriter : mxl::lib::DiscreteFlowWriter
+{
+    MockWriter(std::filesystem::path const& domain, uuids::uuid id, DomainWatcher::ptr const& watcher)
+        : mxl::lib::DiscreteFlowWriter(id)
+        , _info{}
+        , _id{id}
+        , _watcher{watcher}
+    {
+        _watcher->addFlow(this, _id);
+        _flowDataFd = ::open(makeFlowDataFilePath(domain, uuids::to_string(id)).c_str(), O_RDONLY | O_CLOEXEC, 0);
+        if (_flowDataFd < 0)
+        {
+            auto const error = errno;
+            throw std::system_error{error, std::system_category(), "Failed to open grain data file"};
+        }
+
+        _flowData = reinterpret_cast<Flow*>(::mmap(nullptr, sizeof(Flow), PROT_READ, MAP_SHARED, _flowDataFd, 0));
+        if (_flowData == MAP_FAILED)
+        {
+            auto const error = errno;
+            throw std::system_error{error, std::system_category(), "Failed to map grain data file"};
+        }
+    }
+
+    virtual ~MockWriter() override
+    {
+        _watcher->removeFlow(this, _id);
+        if ((_flowData != nullptr) && (_flowData != MAP_FAILED))
+        {
+            (void)::munmap(_flowData, sizeof(Flow));
+        }
+
+        if (_flowDataFd > -1)
+        {
+            (void)::close(_flowDataFd);
+        }
+    }
+
+    [[noreturn]]
+    virtual FlowData const& getFlowData() const override
+    {
+        // Implementation is not provided
+        std::terminate();
+    }
+
+    virtual ::mxlFlowInfo getFlowInfo() const override
+    {
+        return _info;
+    }
+
+    virtual ::mxlFlowConfigInfo getFlowConfigInfo() const override
+    {
+        return _info.config;
+    }
+
+    virtual ::mxlFlowRuntimeInfo getFlowRuntimeInfo() const override
+    {
+        return _info.runtime;
+    }
+
+    virtual bool isExclusive() const override
+    {
+        return false;
+    }
+
+    virtual bool makeExclusive() override
+    {
+        return false;
+    }
+
+    /**
+     * Get the grain info for a specific grain index without opening the grain for mutation.
+     */
+    [[noreturn]]
+    virtual mxlGrainInfo getGrainInfo(std::uint64_t) const override
+    {
+        // Implementation is not provided
+        std::terminate();
+    };
+
+    virtual mxlStatus openGrain(std::uint64_t, mxlGrainInfo*, std::uint8_t**) override
+    {
+        return MXL_STATUS_OK;
+    }
+
+    virtual mxlStatus commit(mxlGrainInfo const&) override
+    {
+        return MXL_STATUS_OK;
+    }
+
+    virtual mxlStatus cancel() override
+    {
+        return MXL_STATUS_OK;
+    }
+
+    bool checkReadTimeUpdated()
+    {
+        auto before = _lastReadTime;
+        _lastReadTime = _flowData->info.runtime.lastReadTime;
+        return before != _lastReadTime;
+    }
+
+    mxlFlowInfo _info;
+    uuids::uuid _id;
+    DomainWatcher::ptr _watcher;
+
+    std::uint64_t _lastReadTime;
+    int _flowDataFd;
+    Flow* _flowData;
+};
+
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Directory Watcher", "[directory watcher]")
 {
-    auto watcher = DomainWatcher{domain.native(), nullptr};
+    auto watcher = std::make_shared<DomainWatcher>(domain.native());
 
-    auto const* id = "5fbec3b1-1b0f-417d-9059-8b94a47197ed";
-    auto const flowDirectory = makeFlowDirectoryName(domain, id);
+    auto flowId1 = *uuids::uuid::from_string("5fbec3b1-1b0f-417d-9059-8b94a47197ed");
+    auto flowId2 = *uuids::uuid::from_string("6fbec3b1-1b0f-417d-9059-8b94a47197ed");
 
-    create_directories(flowDirectory);
+    auto mockFiles = MockFlowFiles{domain, flowId1};
+    auto mockFiles2 = MockFlowFiles{domain, flowId2};
 
-    auto flowId = *uuids::uuid::from_string(id);
-    auto f1Path = makeFlowDataFilePath(flowDirectory);
-    auto f1 = std::ofstream{f1Path};
-
-    auto f2Path = makeFlowAccessFilePath(flowDirectory);
-    auto f2 = std::ofstream{f2Path};
-
-    REQUIRE(1 == watcher.addFlow(flowId, WatcherType::READER));
-    REQUIRE(2 == watcher.addFlow(flowId, WatcherType::READER));
-    REQUIRE(1 == watcher.addFlow(flowId, WatcherType::WRITER));
-    REQUIRE(2 == watcher.addFlow(flowId, WatcherType::WRITER));
-    REQUIRE(1 == watcher.removeFlow(flowId, WatcherType::READER));
-    REQUIRE(0 == watcher.removeFlow(flowId, WatcherType::READER));
-    REQUIRE(-1 == watcher.removeFlow(flowId, WatcherType::READER));
-    REQUIRE(1 == watcher.removeFlow(flowId, WatcherType::WRITER));
-    REQUIRE(0 == watcher.removeFlow(flowId, WatcherType::WRITER));
-    REQUIRE(-1 == watcher.removeFlow(flowId, WatcherType::WRITER));
+    auto mockWriter1 = std::make_unique<MockWriter>(domain, flowId1, watcher);
+    auto mockWriter2 = std::make_unique<MockWriter>(domain, flowId1, watcher);
+    REQUIRE(watcher->count(flowId1) == 2);
+    REQUIRE(watcher->size() == 2);
+    auto mockWriter3 = std::make_unique<MockWriter>(domain, flowId2, watcher);
+    mockWriter1.reset();
+    REQUIRE(watcher->count(flowId1) == 1);
+    REQUIRE(watcher->count(flowId2) == 1);
+    REQUIRE(watcher->size() == 2);
+    mockWriter2.reset();
+    REQUIRE(watcher->count(flowId1) == 0);
+    REQUIRE(watcher->count(flowId2) == 1);
+    REQUIRE(watcher->size() == 1);
+    mockWriter3.reset();
 }
 
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "DomainWatcher triggers callback on file modifications", "[domainwatcher]")
 {
     // This test checks that modifying a watched file triggers the callback with correct UUID and WatcherType.
-
-    // Variables to capture callback information
-    auto eventMutex = std::mutex{};
-    auto eventCV = std::condition_variable{};
-    auto eventCount = std::atomic<int>{0};
-    auto callbackUuid = uuids::uuid{};
-    auto callbackType = mxl::lib::WatcherType{};
-
-    // Set up DomainWatcher with a callback that notifies when a file change event is caught
-    mxl::lib::DomainWatcher watcher(domain,
-        [&](uuids::uuid id, mxl::lib::WatcherType type)
-        {
-            auto lock = std::unique_lock<std::mutex>{eventMutex};
-            callbackUuid = id;
-            callbackType = type;
-            eventCount++;
-            lock.unlock();
-            eventCV.notify_one();
-        });
+    auto watcher = std::make_shared<DomainWatcher>(domain);
 
     // Create a flow directory and files, then add watchers for both Reader and Writer types
-    auto const flowIdStr = std::string{"11111111-2222-3333-4444-555555555555"}; // test UUID
-    auto flowDir = mxl::lib::makeFlowDirectoryName(domain, flowIdStr);
-    create_directories(flowDir);
-    auto flowId = *uuids::uuid::from_string(flowIdStr);
-    auto dataFile = mxl::lib::makeFlowDataFilePath(flowDir);     // main data file
-    auto accessFile = mxl::lib::makeFlowAccessFilePath(flowDir); // access file
-    std::ofstream{dataFile}.close();
-    std::ofstream{accessFile}.close();
+    auto const flowId = *uuids::uuid::from_string("11111111-2222-3333-4444-555555555555"); // test UUID
+    auto mockFlow = MockFlowFiles{domain, flowId};
 
-    REQUIRE(watcher.addFlow(flowId, mxl::lib::WatcherType::READER) == 1);
-    REQUIRE(watcher.addFlow(flowId, mxl::lib::WatcherType::WRITER) == 1);
-
-    // Give the watcher thread a moment to register the inotify watch
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-    // Test 1: Modify the main data file and expect a READER-type event
-    auto initialCount = eventCount.load();
     {
-        std::ofstream f(dataFile, std::ios::app);
-        f << "TestData";
-        f.flush();
-        f.close();
+        auto writer1 = MockWriter{domain, flowId, watcher};
+        auto writer2 = MockWriter{domain, flowId, watcher};
+
+        // Give the watcher thread a moment to register the inotify watch
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        // Modify the main data file and expect a Writer event
+        mockFlow.touch();
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        REQUIRE(writer1.checkReadTimeUpdated());
+        REQUIRE(writer2.checkReadTimeUpdated());
+        REQUIRE(!writer1.checkReadTimeUpdated());
+        REQUIRE(!writer2.checkReadTimeUpdated());
+
+        // Modify the main data file and expect a Writer event
+        mockFlow.touch();
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        REQUIRE(writer1.checkReadTimeUpdated());
+        REQUIRE(writer2.checkReadTimeUpdated());
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    // Wait for callback with timeout
-    auto lock = std::unique_lock<std::mutex>{eventMutex};
-    auto gotEvent = eventCV.wait_for(lock, std::chrono::seconds(2), [&] { return eventCount.load() > initialCount; });
-    lock.unlock();
-
-    REQUIRE(gotEvent);
-    REQUIRE(callbackUuid == flowId);
-    REQUIRE(callbackType == mxl::lib::WatcherType::READER);
-
-    // Clean up: remove the flow watches
-    REQUIRE(watcher.removeFlow(flowId, mxl::lib::WatcherType::READER) == 0);
-    REQUIRE(watcher.removeFlow(flowId, mxl::lib::WatcherType::WRITER) == 0);
+    REQUIRE(watcher->size() == 0);
 }
 
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "DomainWatcher thread start/stop behavior", "[domainwatcher]")
 {
-    // Set up a callback that will signal when an event is processed
-    auto eventMutex = std::mutex{};
-    auto eventCV = std::condition_variable{};
-    auto eventReceived = bool{false};
-    mxl::lib::DomainWatcher watcher(domain,
-        [&](uuids::uuid, mxl::lib::WatcherType)
-        {
-            auto lock = std::lock_guard<std::mutex>{eventMutex};
-            eventReceived = true;
-            eventCV.notify_one();
-        });
+    // This test checks that modifying a watched file triggers the callback with correct UUID and WatcherType.
+    auto watcher = std::make_shared<DomainWatcher>(domain);
 
-    // Prepare a flow and add a watch so that events can be generated
-    auto const flowIdStr = std::string{"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"};
-    auto flowDir = mxl::lib::makeFlowDirectoryName(domain, flowIdStr);
-    create_directories(flowDir);
-    auto flowId = *uuids::uuid::from_string(flowIdStr);
-    auto dataFile = mxl::lib::makeFlowDataFilePath(flowDir);
-    std::ofstream{dataFile}.close();
-    REQUIRE(watcher.addFlow(flowId, mxl::lib::WatcherType::READER) == 1);
-
-    // Trigger an event to confirm the thread is running and processing events
-    {
-        std::ofstream f(dataFile, std::ios::app);
-        f << "1"; // modify file to generate an inotify event
-    }
-    // Wait for the callback (with a short timeout)
-    auto lock = std::unique_lock<std::mutex>{eventMutex};
-    auto gotEvent = eventCV.wait_for(lock, std::chrono::milliseconds(500), [&] { return eventReceived; });
-    REQUIRE(gotEvent); // The event thread should have processed the file change
-    lock.unlock();
-    eventReceived = false;
-
-    // Now stop the watcher thread and ensure no further events are processed
-    watcher.stop(); // signal the DomainWatcher to stop its event loop
-
-    // Give the thread time to actually stop processing
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    // Create a flow directory and files, then add watchers for both Reader and Writer types
+    auto const flowId = *uuids::uuid::from_string("11111111-2222-3333-4444-555555555555"); // test UUID
+    auto mockFlow = MockFlowFiles{domain, flowId};
 
     {
-        std::ofstream f(dataFile, std::ios::app);
-        f << "2"; // another modification after stopping
-        f.flush();
-        f.close();
+        auto mockWriter1 = MockWriter{domain, flowId, watcher};
+        auto mockWriter2 = MockWriter{domain, flowId, watcher};
+        REQUIRE(watcher->size() == 2);
+        REQUIRE(watcher->count(flowId) == 2);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+
+        mockFlow.touch();
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+
+        REQUIRE(mockWriter1.checkReadTimeUpdated());
+        REQUIRE(mockWriter2.checkReadTimeUpdated());
+
+        watcher->stop();
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+
+        mockFlow.touch();
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+
+        REQUIRE(!mockWriter1.checkReadTimeUpdated());
+        REQUIRE(!mockWriter2.checkReadTimeUpdated());
     }
-
-    // Wait longer to see if any callback occurs (it should not, since thread is stopped)
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    // The eventReceived flag should remain false because the thread is stopped
-    REQUIRE(eventReceived == false);
-
-    // Cleanup
-    REQUIRE(watcher.removeFlow(flowId, mxl::lib::WatcherType::READER) == 0);
-    // DomainWatcher destructor will join the thread (if not already stopped) and close fds.
 }
 
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "DomainWatcher error handling for invalid inputs", "[domainwatcher]")
 {
     // Case 1: Using a valid domain path but adding a flow without creating the files
-    mxl::lib::DomainWatcher watcher(domain, nullptr);
+    auto watcher = std::make_shared<DomainWatcher>(domain);
 
     // Attempt to addFlow on a domain where the flow files don't exist (should throw because files are not present)
     uuids::uuid dummyId = *uuids::uuid::from_string("01234567-89ab-cdef-0123-456789abcdef");
+    auto test = [&]()
+    {
+        auto mockWriter = MockWriter{domain, dummyId, watcher};
+    };
+
     // The implementation throws std::system_error when inotify_add_watch fails
-    REQUIRE_THROWS_AS(watcher.addFlow(dummyId, mxl::lib::WatcherType::READER), std::system_error);
+    REQUIRE_THROWS_AS(test(), std::system_error);
 
-    // Case 2: Using a valid domain path but adding a flow without creating the files
-    // Choose a new flow ID and call addFlow without creating the flow directory or files
-    uuids::uuid noFileId = *uuids::uuid::from_string("fedcba98-7654-3210-fedc-ba9876543210");
-    // Should throw because the file doesn't exist
-    REQUIRE_THROWS_AS(watcher.addFlow(noFileId, mxl::lib::WatcherType::WRITER), std::system_error);
-    // Also test removing a watch that was never added (should return -1)
-    REQUIRE(watcher.removeFlow(noFileId, mxl::lib::WatcherType::WRITER) == -1);
-
-    // Case 3: Removing a non-existent watch on a brand new DomainWatcher (nothing added at all)
-    uuids::uuid randomId = *uuids::uuid::from_string("00000000-0000-0000-0000-000000000000");
-    mxl::lib::DomainWatcher emptyWatcher(domain, nullptr);
-    REQUIRE(emptyWatcher.removeFlow(randomId, mxl::lib::WatcherType::READER) == -1);
+    // Removing a non-existant writer should not throw
+    REQUIRE_NOTHROW(watcher->removeFlow(nullptr, dummyId));
+    REQUIRE_NOTHROW(watcher->removeFlow(std::bit_cast<DiscreteFlowWriter*>(std::bit_cast<std::uintptr_t>(0x7f11251231231)), dummyId));
 }
 
 #ifdef __linux__ // This test uses /proc/self/fd which is Linux-specific
@@ -197,7 +332,6 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "DomainWatcher cleans
 {
     // This test verifies that DomainWatcher closes its inotify/epoll descriptors upon destruction,
     // so no file descriptor leaks occur.
-    namespace fs = std::filesystem;
     // Helper: count open file descriptors (excluding the FD for /proc/self/fd itself)
     auto countOpenFDs = []()
     {
@@ -217,15 +351,14 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "DomainWatcher cleans
 
     auto const fdsBefore = countOpenFDs();
     { // scope to ensure DomainWatcher destruction
-        mxl::lib::DomainWatcher watcher(domain, nullptr);
+        auto watcher = std::make_shared<DomainWatcher>(domain);
         // Add a watch to force inotify initialization if not already done in constructor
-        auto const flowIdStr = std::string{"12345678-1234-5678-1234-567812345678"};
-        auto flowDir = mxl::lib::makeFlowDirectoryName(domain, flowIdStr);
-        create_directories(flowDir);
-        auto flowId = *uuids::uuid::from_string(flowIdStr);
-        auto filePath = mxl::lib::makeFlowDataFilePath(flowDir);
-        std::ofstream{filePath}.close();
-        REQUIRE(watcher.addFlow(flowId, mxl::lib::WatcherType::READER) == 1);
+        auto const flowId = *uuids::uuid::from_string("12345678-1234-5678-1234-567812345678");
+        auto flowFiles = MockFlowFiles{domain, flowId};
+        auto writer = MockWriter{domain, flowId, watcher};
+
+        auto const fdsWhileActive = countOpenFDs();
+        REQUIRE(fdsWhileActive > fdsBefore);
         // (No need to trigger events here; we just want the watcher to open its fds)
     } // DomainWatcher goes out of scope here, its destructor should close inotify/epoll fds
     auto const fdsAfter = countOpenFDs();
@@ -240,183 +373,83 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "DomainWatcher suppor
 {
     // This test spawns multiple threads to add and remove flow watchers concurrently,
     // to ensure thread safety (no crashes or race conditions and correct final state).
-    mxl::lib::DomainWatcher watcher(domain, nullptr);
+    auto flowId = *uuids::uuid::from_string("12345678-1234-5678-1234-567812345678");
+    auto mockFiles = MockFlowFiles{domain, flowId};
 
-    // Prepare a flow file for watching
-    auto const flowIdStr = std::string{"deadc0de-dead-beef-dead-beefdeadc0de"};
-    auto flowDir = mxl::lib::makeFlowDirectoryName(domain, flowIdStr);
-    create_directories(flowDir);
-    auto flowId = *uuids::uuid::from_string(flowIdStr);
-    auto filePath = mxl::lib::makeFlowDataFilePath(flowDir);
-    std::ofstream{filePath}.close(); // create the file to watch
+    std::random_device rd{};
+    std::mt19937 rng{rd()};
 
-    auto const iterations = 100;     // Reduced iterations for more predictable results
-    auto addCount = std::atomic<int>{0};
-    auto removeCount = std::atomic<int>{0};
+    std::atomic<std::size_t> readyCount{0};
+    std::atomic<bool> startSignal{false};
 
-    // Launch two threads: one repeatedly adds a reader watch, the other removes it
-    std::thread adder(
-        [&]()
-        {
-            for (int i = 0; i < iterations; ++i)
-            {
-                try
-                {
-                    auto result = watcher.addFlow(flowId, mxl::lib::WatcherType::READER);
-                    if (result > 0)
-                    {
-                        addCount++;
-                    }
-                }
-                catch (...)
-                {
-                    // Ignore exceptions from concurrent access
-                }
-                if (i % 10 == 0)
-                {
-                    std::this_thread::yield();
-                } // occasionally yield to other thread
-            }
-        });
-    std::thread remover(
-        [&]()
-        {
-            for (int i = 0; i < iterations; ++i)
-            {
-                try
-                {
-                    int result = watcher.removeFlow(flowId, mxl::lib::WatcherType::READER);
-                    if (result >= 0)
-                    {
-                        removeCount++;
-                    }
-                }
-                catch (...)
-                {
-                    // Ignore exceptions from concurrent access
-                }
-                if (i % 10 == 0)
-                {
-                    std::this_thread::yield();
-                }
-            }
-        });
+    constexpr auto iterations = 1024;
+    constexpr auto nWorkers = 8;
+    constexpr auto slots = 4;
 
-    // Wait for both threads to finish
-    adder.join();
-    remover.join();
-
-    // After concurrent operations, clean up any remaining watches
-    // The exact final state is unpredictable due to concurrency, but we should be able to clean up
-    int cleanupAttempts = 0;
-    int result = 0;
-    do
+    struct Worker
     {
-        result = watcher.removeFlow(flowId, mxl::lib::WatcherType::READER);
-        cleanupAttempts++;
-    }
-    while (result > 0 && cleanupAttempts < 10); // Limit cleanup attempts
-
-    // Verify the watcher is still functional after stress testing
-    REQUIRE(watcher.addFlow(flowId, mxl::lib::WatcherType::READER) >= 1);
-    REQUIRE(watcher.removeFlow(flowId, mxl::lib::WatcherType::READER) >= 0);
-}
-
-TEST_CASE("DomainWatcher ctor throws on invalid domain path", "[domainwatcher]")
-{
-    // Point at a path that cannot be used as a directory (e.g. a regular file)
-    auto tmp = std::filesystem::temp_directory_path() / "not_a_dir";
-    std::ofstream{tmp}.close(); // create a plain file
-    REQUIRE_THROWS_AS(mxl::lib::DomainWatcher(tmp, nullptr), std::filesystem::filesystem_error);
-}
-
-TEST_CASE("DomainWatcher allows re-add after full remove", "[domainwatcher]")
-{
-    // Create domain and file
-    auto domain = std::filesystem::temp_directory_path() / "mxl_dw_readd";
-    std::filesystem::remove_all(domain);
-    std::filesystem::create_directories(domain);
-    auto flowId = *uuids::uuid::from_string("abcdefab-1234-5678-9abc-abcdefabcdef");
-    auto flowDir = mxl::lib::makeFlowDirectoryName(domain, uuids::to_string(flowId));
-    std::filesystem::create_directories(flowDir);
-    auto file = mxl::lib::makeFlowDataFilePath(flowDir);
-    std::ofstream{file}.close();
-
-    DomainWatcher watcher(domain, nullptr);
-    // Add once, remove fully, then add again—should succeed twice
-    REQUIRE(watcher.addFlow(flowId, WatcherType::READER) == 1);
-    REQUIRE(watcher.removeFlow(flowId, WatcherType::READER) == 0);
-    REQUIRE(watcher.addFlow(flowId, WatcherType::READER) == 1);
-}
-
-TEST_CASE("DomainWatcher triggers WRITER callback on access file modifications", "[domainwatcher]")
-{
-    // Ensure a WRITER‐type watcher actually fires when the access file changes
-    auto const homeDir = std::getenv("HOME");
-    REQUIRE(homeDir != nullptr);
-
-    auto domainPath = std::filesystem::path{homeDir} / "mxl_test_writer_event";
-    remove_all(domainPath);
-    create_directories(domainPath);
-
-    // Synchronization primitives for the callback
-    auto mtx = std::mutex{};
-    auto cv = std::condition_variable{};
-    auto notified = bool{false};
-    auto cbId = uuids::uuid{};
-    auto cbType = mxl::lib::WatcherType{};
-
-    // Install watcher
-    auto watcher = mxl::lib::DomainWatcher{domainPath,
-        [&](uuids::uuid id, mxl::lib::WatcherType type)
-        {
-            auto const lock = std::lock_guard{mtx};
-            notified = true;
-            cbId = id;
-            cbType = type;
-            cv.notify_one();
-        }};
-
-    // Prepare flow directory & files
-    auto const flowIdStr = std::string{"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"};
-    auto flowDir = makeFlowDirectoryName(domainPath, flowIdStr);
-    create_directories(flowDir);
-    auto flowId = *uuids::uuid::from_string(flowIdStr);
-    auto dataFile = makeFlowDataFilePath(flowDir);
-    auto accFile = makeFlowAccessFilePath(flowDir);
-    std::ofstream{dataFile}.close();
-    std::ofstream{accFile}.close();
-
-    // Add a WRITER watch
-    REQUIRE(watcher.addFlow(flowId, mxl::lib::WatcherType::WRITER) == 1);
-
-    // Give the thread time to register
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-
-    // Simulate what a real reader does: update the access file timestamp
-    auto accessFd = ::open(accFile.string().c_str(), O_RDWR);
-    REQUIRE(accessFd != -1);
-
-    // Use futimens to update access time (generates IN_ATTRIB event)
-    struct timespec times[2] = {
-        {0, UTIME_NOW }, // access time = now
-        {0, UTIME_OMIT}  // keep modification time unchanged
+        std::vector<std::optional<MockWriter>> writers;
+        std::optional<std::thread> thread;
     };
-    auto result = ::futimens(accessFd, times);
-    ::close(accessFd);
-    REQUIRE(result == 0);
 
-    // Wait for callback
+    auto watcher = std::make_shared<DomainWatcher>(domain);
+    auto work = [&](Worker* w)
     {
-        auto lock = std::unique_lock{mtx};
-        auto got = cv.wait_for(lock, std::chrono::seconds(1), [&] { return notified; });
-        REQUIRE(got);
-        REQUIRE(cbId == flowId);
-        REQUIRE(cbType == mxl::lib::WatcherType::WRITER);
+        readyCount.fetch_add(1);
+        startSignal.wait(false);
+
+        auto dist = std::uniform_int_distribution{std::size_t{0}, w->writers.size() - 1};
+
+        for (std::size_t n = 0; n < iterations; ++n)
+        {
+            auto index = dist(rng);
+            auto& slot = w->writers.at(index);
+            if (slot)
+            {
+                slot.reset();
+            }
+            else
+            {
+                slot.emplace(domain, flowId, watcher);
+            }
+
+            if (index > (w->writers.size() / 2))
+            {
+                mockFiles.touch();
+            }
+        }
+    };
+
+    auto workers = std::list<Worker>{};
+    for (auto i = 0; i < nWorkers; ++i)
+    {
+        auto& w = workers.emplace_back(std::vector<std::optional<MockWriter>>{slots}, std::nullopt);
+        w.thread = std::thread{work, &w};
     }
 
-    // Clean up
-    REQUIRE(watcher.removeFlow(flowId, mxl::lib::WatcherType::WRITER) == 0);
+    while (readyCount.load() != workers.size())
+    {
+    }
+
+    startSignal.store(true);
+    startSignal.notify_all();
+    // work work work...
+    std::ranges::for_each(workers,
+        [](Worker& w)
+        {
+            w.thread->join();
+            w.writers.clear();
+        });
+
+    REQUIRE(watcher->size() == 0);
+    REQUIRE(watcher->count(flowId) == 0);
+    {
+        auto mockWriter = MockWriter{domain, flowId, watcher};
+        REQUIRE(watcher->size() == 1);
+        REQUIRE(watcher->count(flowId) == 1);
+    }
+    REQUIRE(watcher->size() == 0);
+    REQUIRE(watcher->count(flowId) == 0);
 }
 
 TEST_CASE("DomainWatcher constructor throws on invalid domain path", "[domainwatcher]")
@@ -429,7 +462,7 @@ TEST_CASE("DomainWatcher constructor throws on invalid domain path", "[domainwat
     auto bad1 = std::filesystem::path{homeDir} / "mxl_nonexistent_domain";
     remove_all(bad1);
     REQUIRE(!exists(bad1));
-    REQUIRE_THROWS_AS((mxl::lib::DomainWatcher{bad1, nullptr}), std::filesystem::filesystem_error);
+    REQUIRE_THROWS_AS((mxl::lib::DomainWatcher{bad1}), std::filesystem::filesystem_error);
 
     // Case: path exists but is a regular file
     auto bad2 = std::filesystem::path{homeDir} / "mxl_not_a_dir";
@@ -440,7 +473,7 @@ TEST_CASE("DomainWatcher constructor throws on invalid domain path", "[domainwat
     }
     REQUIRE(exists(bad2));
     REQUIRE(is_regular_file(bad2));
-    REQUIRE_THROWS_AS((mxl::lib::DomainWatcher{bad2, nullptr}), std::filesystem::filesystem_error);
+    REQUIRE_THROWS_AS((mxl::lib::DomainWatcher{bad2}), std::filesystem::filesystem_error);
 
     // Clean up
     remove_all(bad2);

@@ -15,7 +15,8 @@ namespace mxl::lib
     enum class LockMode
     {
         Exclusive,
-        Shared
+        Shared,
+        None,
     };
 
     enum class AccessMode
@@ -286,11 +287,6 @@ namespace mxl::lib
 
     constexpr bool SharedMemoryBase::isExclusive() const
     {
-        if (_lockType == LockType::None)
-        {
-            throw std::runtime_error("Cannot check the lock type of an invalid or read-only shared memory segment");
-        }
-
         return _lockType == LockType::Exclusive;
     }
 

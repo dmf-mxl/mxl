@@ -74,7 +74,8 @@ namespace mxl::lib
 
     }
 
-    Instance::Instance(std::filesystem::path const& mxlDomain, std::string const& options, std::unique_ptr<FlowIoFactory>&& flowIoFactory)
+    Instance::Instance(std::filesystem::path const& mxlDomain, std::string const& options, std::unique_ptr<FlowIoFactory>&& flowIoFactory,
+        DomainWatcher::ptr watcher)
         : _flowManager{mxlDomain}
         , _flowIoFactory{std::move(flowIoFactory)}
         , _readers{}
@@ -83,12 +84,11 @@ namespace mxl::lib
         , _syncGroups{}
         , _options{options}
         , _historyDuration{200'000'000ULL}
-        , _watcher{}
+        , _watcher{std::move(watcher)}
         , _stopping{false}
     {
         std::call_once(loggingFlag, [&]() { initializeLogging(); });
         parseOptions(options);
-        _watcher = std::make_shared<DomainWatcher>(mxlDomain, [this](auto const& uuid, auto type) { fileChangedCallback(uuid, type); });
         MXL_DEBUG("Instance created. MXL Domain: {}", mxlDomain.string());
     }
 
@@ -118,25 +118,6 @@ namespace mxl::lib
         spdlog::default_logger()->flush();
     }
 
-    void Instance::fileChangedCallback(uuids::uuid const& flowId, WatcherType type)
-    {
-        if (!_stopping)
-        {
-            std::lock_guard<std::mutex> lock(_mutex);
-
-            // Someone wrote to the flow. let the readers know.
-            if (type == WatcherType::WRITER)
-
-            {
-                // Someone read the grain and touched the "access" file.  let update the last read count.
-                if (auto const found = _writers.find(flowId); found != _writers.end())
-                {
-                    found->second.get()->flowRead();
-                }
-            }
-        }
-    }
-
     FlowReader* Instance::getFlowReader(std::string const& flowId)
     {
         auto const id = uuids::uuid::from_string(flowId);
@@ -154,16 +135,6 @@ namespace mxl::lib
             auto flowData = _flowManager.openFlow(*id, AccessMode::READ_ONLY);
             auto reader = _flowIoFactory->createFlowReader(_flowManager, *id, std::move(flowData));
 
-            if (dynamic_cast<ContinuousFlowReader*>(reader.get()) == nullptr)
-            {
-                // FIXME: This leaks if the map insertion throws an exception.
-                //     Delegate the watch handling to the reader itself by
-                //     passing it a reference to the DomainWatcher.
-                //
-                //     Doing it like this would also get rid of the ugly cast
-                //     to decide whether or not to install the watch.
-                _watcher->addFlow(*id, WatcherType::READER);
-            }
             return (*_readers.try_emplace(pos, *id, std::move(reader))).second.get();
         }
     }
@@ -179,10 +150,6 @@ namespace mxl::lib
             {
                 if ((*pos).second.releaseReference())
                 {
-                    if (dynamic_cast<ContinuousFlowReader*>((*pos).second.get()) == nullptr)
-                    {
-                        _watcher->removeFlow(id, WatcherType::READER);
-                    }
                     // Remove from the synchronization groups
                     for (auto& group : _syncGroups)
                     {
@@ -199,15 +166,12 @@ namespace mxl::lib
         if (writer)
         {
             auto const id = writer->getId();
-            auto removeFlowWatch = false;
             {
                 auto const lock = std::lock_guard{_mutex};
                 if (auto const pos = _writers.find(id); pos != _writers.end())
                 {
                     if ((*pos).second.releaseReference())
                     {
-                        removeFlowWatch = (dynamic_cast<ContinuousFlowWriter*>((*pos).second.get()) == nullptr);
-
                         // Delete the flow if we are the last writer.
                         if (writer->isExclusive() || writer->makeExclusive())
                         {
@@ -217,10 +181,6 @@ namespace mxl::lib
                         _writers.erase(pos);
                     }
                 }
-            }
-            if (removeFlowWatch)
-            {
-                _watcher->removeFlow(id, WatcherType::WRITER);
             }
         }
     }
@@ -263,17 +223,6 @@ namespace mxl::lib
         else
         {
             auto writer = _flowIoFactory->createFlowWriter(_flowManager, id, std::move(flowData));
-
-            if (dynamic_cast<ContinuousFlowWriter*>(writer.get()) == nullptr)
-            {
-                // FIXME: This leaks if the map insertion throws an exception.
-                //     Delegate the watch handling to the writer itself by
-                //     passing it a reference to the DomainWatcher.
-                //
-                //     Doing it like this would also get rid of the ugly cast
-                //     to decide whether or not to install the watch.
-                _watcher->addFlow(id, WatcherType::WRITER);
-            }
 
             flowWriter = (*_writers.try_emplace(pos, id, std::move(writer))).second.get();
         }

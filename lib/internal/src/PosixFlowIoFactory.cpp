@@ -9,6 +9,10 @@
 
 namespace mxl::lib
 {
+    PosixFlowIoFactory::PosixFlowIoFactory(DomainWatcher::ptr watcher)
+        : _watcher{std::move(watcher)}
+    {}
+
     PosixFlowIoFactory::~PosixFlowIoFactory() = default;
 
     std::unique_ptr<DiscreteFlowReader> PosixFlowIoFactory::createDiscreteFlowReader(FlowManager const& manager, uuids::uuid const& flowId,
@@ -26,7 +30,7 @@ namespace mxl::lib
     std::unique_ptr<DiscreteFlowWriter> PosixFlowIoFactory::createDiscreteFlowWriter(FlowManager const& manager, uuids::uuid const& flowId,
         std::unique_ptr<DiscreteFlowData>&& data) const
     {
-        return std::make_unique<PosixDiscreteFlowWriter>(manager, flowId, std::move(data));
+        return std::make_unique<PosixDiscreteFlowWriter>(manager, flowId, std::move(data), _watcher);
     }
 
     std::unique_ptr<ContinuousFlowWriter> PosixFlowIoFactory::createContinuousFlowWriter(FlowManager const& manager, uuids::uuid const& flowId,

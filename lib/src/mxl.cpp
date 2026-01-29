@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <mxl/version.h>
+#include "mxl-internal/DomainWatcher.hpp"
 #include "mxl-internal/Instance.hpp"
 #include "mxl-internal/Logging.hpp"
 #include "mxl-internal/PosixFlowIoFactory.hpp"
@@ -37,8 +38,9 @@ mxlInstance mxlCreateInstance(char const* in_mxlDomain, char const* in_options)
     try
     {
         auto const opts = (in_options != nullptr) ? in_options : "";
-        auto flowIoFactory = std::make_unique<mxl::lib::PosixFlowIoFactory>();
-        return reinterpret_cast<mxlInstance>(new mxl::lib::Instance{in_mxlDomain, opts, std::move(flowIoFactory)});
+        auto domainWatcher = std::make_shared<mxl::lib::DomainWatcher>(in_mxlDomain);
+        auto flowIoFactory = std::make_unique<mxl::lib::PosixFlowIoFactory>(domainWatcher);
+        return reinterpret_cast<mxlInstance>(new mxl::lib::Instance{in_mxlDomain, opts, std::move(flowIoFactory), std::move(domainWatcher)});
     }
     catch (std::exception& e)
     {

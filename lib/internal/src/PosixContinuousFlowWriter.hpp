@@ -10,6 +10,7 @@
 #include <mxl/mxl.h>
 #include "mxl-internal/ContinuousFlowData.hpp"
 #include "mxl-internal/ContinuousFlowWriter.hpp"
+#include "mxl-internal/DomainWatcher.hpp"
 #include "mxl-internal/FlowManager.hpp"
 
 namespace mxl::lib
@@ -55,9 +56,6 @@ namespace mxl::lib
 
         /** \see ContinuousFlowWriter::cancel */
         virtual mxlStatus cancel() override;
-
-        /** \see FlowWriter::flowRead */
-        virtual void flowRead() override;
 
         [[nodiscard]]
         virtual bool isExclusive() const override;

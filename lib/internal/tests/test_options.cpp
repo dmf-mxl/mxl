@@ -6,6 +6,7 @@
 #include <fstream>
 #include <string>
 #include <catch2/catch_test_macros.hpp>
+#include "mxl-internal/DomainWatcher.hpp"
 #include "mxl-internal/Instance.hpp"
 #include "mxl-internal/PathUtils.hpp"
 #include "mxl-internal/PosixFlowIoFactory.hpp"
@@ -21,8 +22,9 @@ namespace
 
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : Default value", "[options]")
 {
-    auto flowIoFactory = std::make_unique<mxl::lib::PosixFlowIoFactory>();
-    auto const instance = std::make_shared<Instance>(domain, "", std::move(flowIoFactory));
+    auto domainWatcher = std::make_shared<DomainWatcher>(domain);
+    auto flowIoFactory = std::make_unique<mxl::lib::PosixFlowIoFactory>(domainWatcher);
+    auto const instance = std::make_shared<Instance>(domain, "", std::move(flowIoFactory), domainWatcher);
 
     REQUIRE(instance->getHistoryDurationNs() == 200'000'000ULL); // default value
 }
@@ -36,16 +38,18 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : Domain con
     ofs << options_500;
     ofs.close();
 
-    auto flowIoFactory = std::make_unique<mxl::lib::PosixFlowIoFactory>();
-    auto const instance = std::make_shared<Instance>(domain, "", std::move(flowIoFactory));
+    auto domainWatcher = std::make_shared<DomainWatcher>(domain);
+    auto flowIoFactory = std::make_unique<mxl::lib::PosixFlowIoFactory>(domainWatcher);
+    auto const instance = std::make_shared<Instance>(domain, "", std::move(flowIoFactory), domainWatcher);
 
     REQUIRE(instance->getHistoryDurationNs() == 500'000'000ULL); // domain value
 }
 
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : Instance config", "[options]")
 {
-    auto flowIoFactory = std::make_unique<mxl::lib::PosixFlowIoFactory>();
-    auto const instance = std::make_shared<Instance>(domain, options_250, std::move(flowIoFactory));
+    auto domainWatcher = std::make_shared<DomainWatcher>(domain);
+    auto flowIoFactory = std::make_unique<mxl::lib::PosixFlowIoFactory>(domainWatcher);
+    auto const instance = std::make_shared<Instance>(domain, options_250, std::move(flowIoFactory), domainWatcher);
 
     // We should get the default value, not the instance config value.
     // We don't want per-instance history durations.
@@ -61,8 +65,9 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : Domain + I
     ofs << options_500;
     ofs.close();
 
-    auto flowIoFactory = std::make_unique<mxl::lib::PosixFlowIoFactory>();
-    auto const instance = std::make_shared<Instance>(domain, options_250, std::move(flowIoFactory));
+    auto domainWatcher = std::make_shared<DomainWatcher>(domain);
+    auto flowIoFactory = std::make_unique<mxl::lib::PosixFlowIoFactory>(domainWatcher);
+    auto const instance = std::make_shared<Instance>(domain, options_250, std::move(flowIoFactory), domainWatcher);
 
     // We should use the domain config, not the instance config.  We don't want per-instance history durations.
     REQUIRE(instance->getHistoryDurationNs() == 500'000'000ULL);
@@ -77,8 +82,9 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : invalid co
     ofs << "abc";
     ofs.close();
 
-    auto flowIoFactory = std::make_unique<mxl::lib::PosixFlowIoFactory>();
-    auto const instance = std::make_shared<Instance>(domain, "def", std::move(flowIoFactory));
+    auto domainWatcher = std::make_shared<DomainWatcher>(domain);
+    auto flowIoFactory = std::make_unique<mxl::lib::PosixFlowIoFactory>(domainWatcher);
+    auto const instance = std::make_shared<Instance>(domain, "def", std::move(flowIoFactory), domainWatcher);
 
     REQUIRE(instance->getHistoryDurationNs() == 200'000'000ULL); // default value
 }

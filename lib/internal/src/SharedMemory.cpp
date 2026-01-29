@@ -47,7 +47,7 @@ namespace mxl::lib
             _mode = (mode == AccessMode::READ_ONLY) ? AccessMode::READ_ONLY : AccessMode::READ_WRITE;
         }
 
-        if (mode != AccessMode::READ_ONLY)
+        if (lockMode != LockMode::None && mode != AccessMode::READ_ONLY)
         {
             auto lockFlags = LOCK_NB;
 
@@ -133,12 +133,6 @@ namespace mxl::lib
         {
             // This is a no-op
             return true;
-        }
-
-        // Can only upgrade a shared lock
-        if (_lockType != LockType::Shared)
-        {
-            throw std::runtime_error("Cannot upgrade the lock of a shared memory object that is read-only or invalid");
         }
 
         if (::flock(_fd, LOCK_EX | LOCK_NB) < 0)

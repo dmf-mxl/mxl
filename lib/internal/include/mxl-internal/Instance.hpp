@@ -36,8 +36,9 @@ namespace mxl::lib
         /// \param[in] mxlDomain The directory where the shared memory files will be created
         /// \param[in] options Additional options. \todo Not implemented yet.
         /// \param[in] flowIoFactory A factory used to create flow readers for flows of different types.
-        ///
-        Instance(std::filesystem::path const& mxlDomain, std::string const& options, std::unique_ptr<FlowIoFactory>&& flowIoFactory);
+        /// \param[in] watcher A DomainWatcher that is shared with the flowIoFactory
+        Instance(std::filesystem::path const& mxlDomain, std::string const& options, std::unique_ptr<FlowIoFactory>&& flowIoFactory,
+            DomainWatcher::ptr watcher);
 
         /// Dtor. Release all readers and writers.
         ~Instance();
@@ -152,8 +153,6 @@ namespace mxl::lib
             FlowOptionsParser const&);
         std::pair<std::unique_ptr<FlowData>, bool> createOrOpenContinuousFlowData(std::string const& flowDef, FlowParser const&,
             FlowOptionsParser const&);
-
-        void fileChangedCallback(uuids::uuid const& flowId, WatcherType type);
 
         /// Parses the options json string (if non empty) and merges it with the optional
         /// domain-wide options (if defined in the domain).

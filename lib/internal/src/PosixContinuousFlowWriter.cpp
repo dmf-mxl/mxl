@@ -143,9 +143,6 @@ namespace mxl::lib
         return true;
     }
 
-    void PosixContinuousFlowWriter::flowRead()
-    {}
-
     bool PosixContinuousFlowWriter::isExclusive() const
     {
         if (!_flowData)

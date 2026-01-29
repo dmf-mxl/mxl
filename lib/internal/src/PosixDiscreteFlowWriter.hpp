@@ -9,6 +9,7 @@
 #include <mxl/mxl.h>
 #include "mxl-internal/DiscreteFlowData.hpp"
 #include "mxl-internal/DiscreteFlowWriter.hpp"
+#include "mxl-internal/DomainWatcher.hpp"
 
 namespace mxl::lib
 {
@@ -26,7 +27,10 @@ namespace mxl::lib
          * \param[in] manager A referene to the flow manager used to obtain
          *         additional information about the flows context.
          */
-        PosixDiscreteFlowWriter(FlowManager const& manager, uuids::uuid const& flowId, std::unique_ptr<DiscreteFlowData>&& data);
+        PosixDiscreteFlowWriter(FlowManager const& manager, uuids::uuid const& flowId, std::unique_ptr<DiscreteFlowData>&& data,
+            DomainWatcher::ptr const& watcher);
+
+        ~PosixDiscreteFlowWriter() override;
 
     public:
         /**
@@ -61,9 +65,6 @@ namespace mxl::lib
         /** \see DiscreteFlowWriter::cancel */
         virtual mxlStatus cancel() override;
 
-        /** \see FlowWriter::flowRead */
-        virtual void flowRead() override;
-
         virtual bool isExclusive() const override;
 
         virtual bool makeExclusive() override;
@@ -73,5 +74,10 @@ namespace mxl::lib
         std::unique_ptr<DiscreteFlowData> _flowData;
         /** The currently opened grain index. MXL_UNDEFINED_INDEX if no grain is currently opened. */
         std::uint64_t _currentIndex;
+
+        // The watcher reference needs live in the most derived class of `FlowWriter` because it only synchronizes with the `DomainWatcher` thread
+        // while the destructor runs. If it was inside the `FlowWriter` destructor itself, the domain watcher thread could call `flowRead()` of a
+        // already destructed instance of `PosixDiscreteFlowWriter` which would result in a `pure virtual function called` exception.
+        DomainWatcher::ptr _watcher;
     };
 }

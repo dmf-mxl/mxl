@@ -7,6 +7,7 @@
 #include <uuid.h>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
+#include "mxl-internal/DomainWatcher.hpp"
 #include "mxl-internal/FlowData.hpp"
 
 namespace mxl::lib
@@ -52,12 +53,6 @@ namespace mxl::lib
          */
         [[nodiscard]]
         virtual mxlFlowRuntimeInfo getFlowRuntimeInfo() const = 0;
-
-        /**
-         * Invoked when a flow is read. The writer will
-         * update the 'lastReadTime' field
-         */
-        virtual void flowRead() = 0;
 
         /**
          * Check if this is the only writer for this flow.
