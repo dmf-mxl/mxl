@@ -72,7 +72,19 @@ namespace mxl::lib
         ///
         ~DomainWatcher();
 
+        ///
+        /// Add a new FlowWriter reference to the DomainWatcher.
+        /// \param writer The FlowWriter reference
+        /// \param id Id of the flow the FlowWriter is writing to.
+        ///
         void addFlow(DiscreteFlowWriter* writer, uuids::uuid id);
+
+        ///
+        /// Remove a FlowWriter reference from the DomainWatcher.
+        /// If no more FlowWriter references for a given flow id are present in the DomainWatcher
+        /// it stops watching the flow.
+        /// \param writer The flow writer reference to remove.
+        /// \param id Id of the flow the FlowWriter is writing to.
         void removeFlow(DiscreteFlowWriter* writer, uuids::uuid id);
 
         ///
