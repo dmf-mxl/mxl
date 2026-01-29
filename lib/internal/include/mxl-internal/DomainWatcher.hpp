@@ -47,13 +47,8 @@ namespace mxl::lib
     ///
     /// Monitors flows on disk for changes.
     ///
-    /// A flow reader is looking for changes to the {mxl_domain}/{flow_id}.mxl-flow/data file
-    /// An update to this flow triggers a callback that will notify a condition variable in the relevant FlowReaders.
-    /// if a reader is waiting for the next grain it will be notified that the grain is ready.
-    ///
     /// A flow writer is looking for changes to the {mxl_domain}/{flow_id}.mxl-flow/access file. This file is 'touched'
-    /// by readers when they read a grain, which will trigger a 'FlowInfo.lastRead` update (performed by the FlowWriter
-    /// since the writer is the only one mapping the flow in write-mode).
+    /// by readers when they read a grain, which will trigger a 'FlowInfo.lastRead` update.
     ///
     class MXL_EXPORT DomainWatcher
     {
