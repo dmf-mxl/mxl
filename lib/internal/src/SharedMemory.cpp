@@ -29,9 +29,15 @@ namespace mxl::lib
 
         if ((mode == AccessMode::CREATE_READ_WRITE) && ((_fd = ::open(path, OMODE_CREATE, 0664)) != -1))
         {
+#ifdef __linux__
             // Ensure the file is large enough to hold the shared data
             if (auto error = ::posix_fallocate(_fd, 0, payloadSize); error != 0)
             {
+#elif defined __APPLE__
+            if (::ftruncate(_fd, payloadSize) < 0)
+            {
+                auto const error = errno;
+#endif
                 // No need to close _fd, as the destructor *will* be called,
                 // because we delegated to the default constructor.
                 throw std::system_error(error, std::generic_category(), "Could not resize shared memory segment.");
