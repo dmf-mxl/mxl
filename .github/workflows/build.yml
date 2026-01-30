@@ -178,14 +178,6 @@ jobs:
           files: |
             **/test-results.xml
 
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        if: ${{matrix.compiler == 'Linux-GCC-Release' }}
-        with:
-          name: build-ubuntu-${{ matrix.os }}-${{ matrix.architecture }}-${{matrix.compiler}} artifacts
-          path: |
-            ${{ github.workspace }}/build/${{ matrix.compiler }}/*.deb
-
   build_rust:
     name: Build Rust bindings on Ubuntu ${{ matrix.os }} - ${{matrix.version}} - ${{ matrix.architecture }}
     runs-on: ubuntu-latest
