@@ -11,7 +11,7 @@ target_include_directories(mxl-fabrics-headers
             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
 
-install(TARGETS mxl-fabrics-headers EXPORT ${PROJECT_NAME}-targets
+install(TARGETS mxl-fabrics-headers EXPORT mxl-fabrics-targets
         COMPONENT ${PROJECT_NAME}-dev
     )
 
