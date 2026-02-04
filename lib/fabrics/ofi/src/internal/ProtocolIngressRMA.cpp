@@ -36,8 +36,9 @@ namespace mxl::lib::fabrics::ofi
         {
             if (_immDataBuffer)
             {
+                auto data = _immDataBuffer->data;
                 ep.recv(immDataRegion());
-                return Target::ReadResult{_immDataBuffer->data};
+                return Target::ReadResult{data};
             }
             else
             {
