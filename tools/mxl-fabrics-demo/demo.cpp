@@ -399,9 +399,8 @@ public:
             return status;
         }
 
-        mxlFlowConfigInfo configInfo;
         bool flowCreated = false;
-        status = mxlCreateFlowWriter(_instance, flowDescriptor.c_str(), flowOptions.c_str(), &_writer, &configInfo, &flowCreated);
+        status = mxlCreateFlowWriter(_instance, flowDescriptor.c_str(), flowOptions.c_str(), &_writer, &_configInfo, &flowCreated);
         if (status != MXL_STATUS_OK)
         {
             MXL_ERROR("Failed to create flow writer with status '{}'", static_cast<int>(status));
