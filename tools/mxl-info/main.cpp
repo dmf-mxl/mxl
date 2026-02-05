@@ -14,7 +14,7 @@
 #include <fmt/color.h>
 #include <fmt/format.h>
 #include <gsl/span>
-#include <picojson/picojson.h>
+#include <picojson/wrapper.h>
 #include <mxl/flow.h>
 #include <mxl/flowinfo.h>
 #include <mxl/mxl.h>

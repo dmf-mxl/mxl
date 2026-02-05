@@ -7,7 +7,7 @@
 #include <array>
 #include <string>
 #include <uuid.h>
-#include <picojson/picojson.h>
+#include <picojson/wrapper.h>
 #include <mxl/dataformat.h>
 #include <mxl/flowinfo.h>
 #include <mxl/platform.h>

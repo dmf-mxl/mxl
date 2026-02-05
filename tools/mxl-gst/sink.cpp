@@ -18,7 +18,7 @@
 #include <gst/gstclock.h>
 #include <gst/gstpipeline.h>
 #include <gst/gstsystemclock.h>
-#include <picojson/picojson.h>
+#include <picojson/wrapper.h>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>

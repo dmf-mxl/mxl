@@ -51,11 +51,16 @@ if (NOT TARGET fmt::fmt)
     find_package(fmt CONFIG REQUIRED)
 endif()
 
+if (NOT TARGET picojson::picojson)
+    find_package(picojson REQUIRED)
+endif()
+
 target_link_libraries(mxl-info
         PRIVATE
             simple_uri_parser
             stduuid
             fmt::fmt
+            picojson::picojson
             mxl
             CLI11::CLI11
     )

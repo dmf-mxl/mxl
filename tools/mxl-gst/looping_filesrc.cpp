@@ -18,7 +18,7 @@
 #include <gst/gstcaps.h>
 #include <gst/gstobject.h>
 #include <gst/gstvalue.h>
-#include <picojson/picojson.h>
+#include <picojson/wrapper.h>
 #include <spdlog/cfg/env.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <mxl/flow.h>

@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
-#include <picojson/picojson.h>
+#include <picojson/wrapper.h>
 #include <mxl/platform.h>
 
 namespace mxl::lib
