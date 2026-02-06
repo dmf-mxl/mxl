@@ -11,11 +11,22 @@ find_package_handle_standard_args(picojson
 )
 
 if(picojson_FOUND)
+    write_file("${CMAKE_CURRENT_BINARY_DIR}/picojson_wrapper/picojson/wrapper.h"
+        "\
+#pragma once
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored \"-Wmaybe-uninitialized\"
+#include <picojson/picojson.h>
+#pragma GCC diagnostic pop")
+
     set(picojson_INCLUDE_DIRS ${picojson_INCLUDE_DIR})
     if(NOT TARGET picojson::picojson)
         add_library(picojson::picojson INTERFACE IMPORTED)
         set_target_properties(picojson::picojson PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${picojson_INCLUDE_DIRS}"
+        )
+        set_target_properties(picojson::picojson PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}/picojson_wrapper"
         )
     endif()
 endif()

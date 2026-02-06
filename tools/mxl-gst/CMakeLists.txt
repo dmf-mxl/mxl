@@ -22,6 +22,9 @@ if (gstreamer_FOUND)
         find_package(spdlog CONFIG REQUIRED)
     endif ()
 
+    if (NOT TARGET picojson::picojson)
+        find_package(picojson REQUIRED)
+    endif ()
 
     add_executable(mxl-gst-testsrc)
     target_compile_features(mxl-gst-testsrc
@@ -47,6 +50,7 @@ if (gstreamer_FOUND)
                 mxl
                 stduuid
                 fmt::fmt
+                picojson::picojson
                 CLI11::CLI11
                 PkgConfig::gstreamer
                 PkgConfig::gstreamer-app
@@ -78,6 +82,7 @@ if (gstreamer_FOUND)
                 mxl
                 stduuid
                 fmt::fmt
+                picojson::picojson
                 CLI11::CLI11
                 spdlog::spdlog
                 PkgConfig::gstreamer
@@ -110,6 +115,7 @@ if (gstreamer_FOUND)
                 mxl
                 stduuid
                 fmt::fmt
+                picojson::picojson
                 CLI11::CLI11
                 PkgConfig::gstreamer
                 PkgConfig::gstreamer-app

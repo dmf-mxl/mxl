@@ -11,7 +11,7 @@
 #include <CLI/CLI.hpp>
 #include <gst/app/gstappsink.h>
 #include <gst/gst.h>
-#include <picojson/picojson.h>
+#include <picojson/wrapper.h>
 #include <spdlog/cfg/env.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <mxl/flow.h>
