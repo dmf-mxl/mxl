@@ -3,20 +3,14 @@
 
 # Configuration
 
-## Domain level configuration
+MXL supports configuration at two levels: domain-level options that apply to all flows, and flow-level options that apply to individual flows.
 
-Domain level configuration is stored in an optional 'options.json' files stored at the root of the MXL domain.  If present, the MXL SDK will look for specific options defined in the table below and configure itself accordingly.
+## Topics
 
-| Option        | Description                | Default Value |
-|----------------|---------------------------|---------------|
-| `urn:x-mxl:option:history_duration/v1.0"`         | Depth, in nanoseconds, of a ringbuffer         | 200'000'000ns   |
-
-### Example 'options.json' file
-
-This options file will configure the depth of the ringbuffers to 500'000'000ns (500ms)
-
-```json
-{
-    "urn:x-mxl:option:history_duration/v1.0": 500000000
-}
-```
+- [Domain level configuration](./Configuration-Domain-Level.md) - Options.json configuration, history duration, grain count calculations
+- [Flow-level configuration](./Configuration-Flow-Level.md) - Writer and reader options for individual flows
+- [Flow definition JSON schema](./Configuration-JSON-Schema.md) - Complete schema for video, audio, and ancillary data flows
+- [Options.json vs flow_def.json](./Configuration-Options-vs-FlowDef.md) - Understanding the difference between domain and flow configuration
+- [Advanced configuration](./Configuration-Advanced.md) - Custom history per flow, batch size tuning
+- [Configuration best practices](./Configuration-Best-Practices.md) - Guidelines for effective configuration
+- [Troubleshooting configuration issues](./Configuration-Troubleshooting.md) - Solutions to common configuration problems

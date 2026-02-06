@@ -3,98 +3,27 @@
 
 # Building
 
-## Option 1 : Devcontainer build environment
+This document provides comprehensive build instructions for MXL, including prerequisites, build options, troubleshooting, and platform-specific notes.
 
-This is the preferred option for development on WSL2 or native linux desktop. This method is self contained, provides a predictable build environment (through a dynamically built container) and pre-configured set of VSCode extensions defined in the devcontainer definition file.
+## Contents
 
-1. Install [VSCode](https://code.visualstudio.com/)
-2. Install the [DevContainer extension](vscode:extension/ms-vscode-remote.remote-containers)
-3. Install docker (inside wsl2 or native linux). Make sure the current user is part of the docker group.
-   - On Ubuntu, this would be: `sudo apt install docker.io`
-4. Install docker buildx.
-   - On Ubuntu, this would be: `sudo apt install docker-buildx`
-5. Open the MXL source code folder using VSCode. 
-   - In wsl2 this can be done by launching `code <mxl_directory>`
-   - **NOTE:** If not running under WSL2, remove the 2 mount points defined in the devcontainer.json you intend to use for development.  
-   - For example, if you intend to use the Ubuntu 24.04 devcontainer, edit the .devcontainer/ubuntu24/devcontainer.json file and remove the content of the "mounts" array. These mount points are only needed for X/WAYLAND support in WSL2.  Their presence will prevent the devcontainer to load correctly when running on a native Linux system.
-6. VSCode will detect that this folder contains a devcontainer definition. It will prompt you with a dialog "Reopen in dev container". Click this dialog. If the dialog does not appear, you can invoke the command: `CTRL-SHIFT-P -> Dev Containers : Reopen in container`
+1. [Prerequisites](./Building-Prerequisites.md) - Required tools, libraries, and platform-specific prerequisites (Ubuntu, RHEL, macOS)
+2. [Devcontainer Build Environment](./Building-Devcontainer.md) - Using VSCode devcontainers for development (preferred method for WSL2/Linux)
+3. [CMake with Presets](./Building-CMake-Presets.md) - Building directly on host system with CMake presets
+4. [Running Tests](./Building-Running-Tests.md) - Running all tests, specific tests, verbose output, and parallel execution
+5. [Building Rust Crates](./Building-Rust.md) - Installing Rust, building Rust bindings, and GStreamer plugins
+6. [Static Build Notes](./Building-Static.md) - Building MXL as static libraries
+7. [macOS Notes](./Building-macOS.md) - Platform-specific instructions for macOS
+8. [Docker/Container Build Instructions](./Building-Docker.md) - Building MXL in Docker containers
+9. [CI/CD Integration](./Building-CI-CD.md) - GitHub Actions and GitLab CI examples
+10. [Troubleshooting Common Build Issues](./Building-Troubleshooting.md) - Solutions to common build problems
+11. [Using with CMake](./Building-CMake-Integration.md) - Integrating MXL into your CMake projects
+12. [Installing MXL System-Wide](./Building-Installation.md) - System-wide installation instructions
+13. [Build Performance Tips](./Building-Performance.md) - Optimizing build speed with ccache, Ninja, and parallel builds
 
-## Option 2: CMake with presets
+## Additional resources
 
-_Note: the following instructions apply to Ubuntu 22.04._
-
-1. Install all apt packages specified in the [Dockerfile](../.devcontainer/Dockerfile)
-2. Install vcpkg as done in the [Dockerfile](../.devcontainer/Dockerfile)
-3. Create a build directory and invoke cmake with a build preset. the list of available presets is:
-
-```bash
-  "Linux-GCC-Debug"
-  "Linux-GCC-Release"
-  "Linux-GCC-AddressSanitizer"
-  "Linux-GCC-ThreadSanitizer"
-  "Linux-GCC-UBSanitizer"
-  "Linux-Clang-Debug"
-  "Linux-Clang-Release"
-  "Linux-Clang-AddressSanitizer"
-  "Linux-Clang-UBSanitizer"
-  "Darwin-Clang-Debug"
-  "Darwin-Clang-Release"
-  "Darwin-Clang-AddressSanitizer"
-  "Darwin-Clang-UBSanitizer"
-```
-
-For example:
-
-```bash
-# Generate the build files using the Linux-Clang-Debug preset
-mkdir build
-cd build
-cmake .. --preset Linux-Clang-Debug
-
-# Build everything
-cmake --build build/Linux-Clang-Debug --target all
-```
-
-## Static build notes
-
-By default, the CMake presets build MXL as shared libraries. To build
-MXL as static libraries instead, use the CMake option
-`-DBUILD_SHARED_LIBS=OFF`.
-
-For example:
-
-```
-mkdir build
-cd build
-cmake .. --preset Linux-GCC-Debug -DBUILD_SHARED_LIBS=OFF
-cmake --build build/Linux-GCC-Debug --target all
-```
-
-PIC is enabled by default and can be disabled with
-`-DMXL_ENABLE_PIC=OFF`.
-
-## macOS notes
-
-1. Install the [Homebrew](https://brew.sh) package manager
-2. Install doxygen and ccache through brew: `brew install doxygen ccache`
-3. Install the GStreamer runtime and developement packages according to [these instructions](https://gstreamer.freedesktop.org/documentation/installing/on-mac-osx.html?gi-language=c#download-and-install-the-sdk)
-
-# Using with CMake
-
-The MXL provides a CMake package configuration file that allows for easy integration into your project. If it is installed in a non-default location, you may need to specify its root path using `CMAKE_PREFIX_PATH`:
-
-```bash
-cmake -DCMAKE_PREFIX_PATH=/home/username/mxl-sdk ..
-```
-
-## Basic usage
-
-Below is a minimal example of how to use the MXL in your project:
-
-```cmake
-cmake_minimum_required(VERSION 3.20)
-project(mxl-test LANGUAGES CXX)
-find_package(mxl CONFIG REQUIRED)
-add_executable(mxl-test main.cpp)
-target_link_libraries(mxl-test PRIVATE mxl::mxl)
-```
+- **CMake documentation:** https://cmake.org/documentation/
+- **vcpkg documentation:** https://vcpkg.io/
+- **GStreamer build guide:** https://gstreamer.freedesktop.org/documentation/installing/
+- **Rust installation guide:** https://www.rust-lang.org/tools/install
