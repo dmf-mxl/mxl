@@ -29,7 +29,7 @@ namespace mxl::lib::fabrics::ofi
         return size;
     }
 
-    std::uint32_t SliceRange::transferOffset(std::uint32_t payloadOffset, std::int32_t sliceSize) const noexcept
+    std::uint32_t SliceRange::transferOffset(std::uint32_t payloadOffset, std::uint32_t sliceSize) const noexcept
     {
         if (_start == 0)
         {

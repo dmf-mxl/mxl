@@ -15,7 +15,6 @@
 #include <mxl/mxl.h>
 #include "internal/Exception.hpp"
 #include "internal/FabricInstance.hpp"
-#include "internal/ImmData.hpp"
 #include "internal/Initiator.hpp"
 #include "internal/Provider.hpp"
 #include "internal/Region.hpp"
@@ -238,6 +237,7 @@ mxlStatus mxlFabricsTargetReadGrainNonBlocking(mxlFabricsTarget in_target, uint6
             auto res = ofi::TargetWrapper::fromAPI(in_target)->readGrain();
             if (!res)
             {
+                MXL_INFO("not ready");
                 return MXL_ERR_NOT_READY;
             }
 
@@ -261,7 +261,7 @@ mxlStatus mxlFabricsTargetReadGrain(mxlFabricsTarget in_target, uint16_t in_time
             auto res = ofi::TargetWrapper::fromAPI(in_target)->readGrainBlocking(std::chrono::milliseconds(in_timeoutMs));
             if (!res)
             {
-                return MXL_ERR_TIMEOUT;
+                return MXL_ERR_NOT_READY;
             }
 
             *out_grainIndex = res->grainIndex;

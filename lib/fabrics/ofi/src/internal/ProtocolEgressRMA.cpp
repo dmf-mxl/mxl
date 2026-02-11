@@ -27,8 +27,9 @@ namespace mxl::lib::fabrics::ofi
 
         auto localRegion = _localRegions[localIndex % _localRegions.size()].sub(localOffset, localSize);
         auto remoteRegion = _remoteInfo.remoteRegions[remoteIndex % _remoteInfo.remoteRegions.size()].sub(remoteOffset, remoteSize);
+        auto remoteSlot = remoteIndex % _remoteInfo.remoteRegions.size();
 
-        _pending += ep.write(_token, localRegion, remoteRegion, destAddr, ImmDataGrain{remoteIndex, sliceRange.end()}.data());
+        _pending += ep.write(_token, localRegion, remoteRegion, destAddr, ImmDataGrain{remoteSlot, sliceRange.end()}.data());
     }
 
     void RMAGrainEgressProtocol::processCompletion(Completion::Data const&)
@@ -47,7 +48,7 @@ namespace mxl::lib::fabrics::ofi
     }
 
     RMAGrainEgressProtocolTemplate::RMAGrainEgressProtocolTemplate(DataLayout layout, std::vector<Region> regions)
-        : _dataLayout(std::move(layout))
+        : _dataLayout(layout)
         , _regions(std::move(regions))
     {}
 
@@ -72,7 +73,7 @@ namespace mxl::lib::fabrics::ofi
         struct MakeUniqueEnabler : RMAGrainEgressProtocol
         {
             MakeUniqueEnabler(Completion::Token token, TargetInfo info, DataLayout layout, std::vector<LocalRegion> localRegion)
-                : RMAGrainEgressProtocol(token, std::move(info), std::move(layout), std::move(localRegion))
+                : RMAGrainEgressProtocol(token, std::move(info), layout, std::move(localRegion))
             {}
         };
 
