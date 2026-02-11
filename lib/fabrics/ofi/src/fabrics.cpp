@@ -99,7 +99,7 @@ mxlStatus mxlFabricsRegionsForFlowWriter(mxlFlowWriter in_writer, mxlFabricsRegi
             auto writer = ::mxl::lib::to_FlowWriter(in_writer);
 
             // We are leaking the ownership, the user is responsible for calling mxlFabricsRegionsFree to free the memory.
-            auto regionPtr = std::make_unique<ofi::MxlRegions>(ofi::mxlFabricsRegionsFromFlow(writer->getFlowData())).release();
+            auto regionPtr = std::make_unique<ofi::MxlRegions>(ofi::mxlFabricsRegionsFromMutableFlow(writer->getFlowData())).release();
 
             *out_regions = regionPtr->toAPI();
 
@@ -225,7 +225,7 @@ mxlStatus mxlFabricsTargetSetup(mxlFabricsTarget in_target, mxlFabricsTargetConf
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsTargetReadGrainNonBlocking(mxlFabricsTarget in_target, uint64_t* out_grainIndex, uint16_t* out_sliceIndex)
+mxlStatus mxlFabricsTargetReadGrainNonBlocking(mxlFabricsTarget in_target, uint64_t* out_grainIndex)
 {
     if ((in_target == nullptr) || (out_grainIndex == nullptr))
     {
@@ -241,20 +241,14 @@ mxlStatus mxlFabricsTargetReadGrainNonBlocking(mxlFabricsTarget in_target, uint6
                 return MXL_ERR_NOT_READY;
             }
 
-            auto [entryIndex, sliceIndex] = *res;
-            *out_grainIndex = entryIndex;
-            if (out_sliceIndex)
-            {
-                *out_sliceIndex = sliceIndex;
-            }
-
+            *out_grainIndex = res->grainIndex;
             return MXL_STATUS_OK;
         },
         "Failed to try for new grain");
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsTargetReadGrain(mxlFabricsTarget in_target, uint16_t in_timeoutMs, uint64_t* out_grainIndex, uint16_t* out_sliceIndex)
+mxlStatus mxlFabricsTargetReadGrain(mxlFabricsTarget in_target, uint16_t in_timeoutMs, uint64_t* out_grainIndex)
 {
     if ((in_target == nullptr) || (out_grainIndex == nullptr))
     {
@@ -270,13 +264,7 @@ mxlStatus mxlFabricsTargetReadGrain(mxlFabricsTarget in_target, uint16_t in_time
                 return MXL_ERR_TIMEOUT;
             }
 
-            auto [grainIndex, sliceIndex] = *res;
-            *out_grainIndex = grainIndex;
-            if (out_sliceIndex)
-            {
-                *out_sliceIndex = sliceIndex;
-            }
-
+            *out_grainIndex = res->grainIndex;
             return MXL_STATUS_OK;
         },
         "Failed to wait for new grain");
@@ -529,7 +517,6 @@ mxlStatus mxlFabricsTargetInfoToString(mxlFabricsTargetInfo const in_targetInfo,
     return ofi::try_run(
         [&]()
         {
-            std::stringstream ss;
             auto targetInfoString = ofi::TargetInfo::fromAPI(in_targetInfo)->toJSON();
 
             if (out_string == nullptr)

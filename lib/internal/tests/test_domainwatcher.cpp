@@ -138,6 +138,13 @@ struct MockWriter : mxl::lib::DiscreteFlowWriter
     }
 
     [[noreturn]]
+    virtual FlowData& getFlowData() override
+    {
+        // Implementation is not provided
+        std::terminate();
+    }
+
+    [[noreturn]]
     virtual FlowData const& getFlowData() const override
     {
         // Implementation is not provided

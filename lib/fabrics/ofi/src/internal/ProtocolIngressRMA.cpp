@@ -52,8 +52,15 @@ namespace mxl::lib::fabrics::ofi
         }
 
         auto [slot, slice] = ImmDataGrain{static_cast<std::uint32_t>(*immData)}.unpack();
+
+        // Set the number of valid slices in the grain header. This information is received through the immediate data and must be updated
+        // in the local shared memory in the case of partial writes.
+        setValidSlicesForGrain(_regions, slot, slice);
+
+        // Get the actual grain index from the grain header in share memory. This was written in the first RMA write.
         auto grainIndex = getGrainIndexInRingSlot(_regions, slot);
-        return std::make_optional<Target::GrainReadResult>(grainIndex, slice);
+
+        return std::make_optional<Target::GrainReadResult>(grainIndex);
     }
 
     void RMAGrainIngressProtocol::reset()
