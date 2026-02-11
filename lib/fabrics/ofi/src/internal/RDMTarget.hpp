@@ -42,7 +42,7 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Construct an RDMTarget with the given endpoint and immediate data location.
          *
          * \param endpoint The endpoint to use for communication.
-         * \param immData The immediate data location to use for transfers.
+         * \param protocol The protocol that will be run over the endpoint.
          */
         RDMTarget(Endpoint ep, std::unique_ptr<IngressProtocol> protocol);
         RDMTarget(Endpoint ep, std::unique_ptr<void> protocol /* sample ingress */);

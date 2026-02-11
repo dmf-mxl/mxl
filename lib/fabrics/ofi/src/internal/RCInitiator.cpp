@@ -44,12 +44,10 @@ namespace mxl::lib::fabrics::ofi
                 [](std::monostate) { return false; },   // Something went wrong with this target, but there is probably no work to do.
                 [](Idle const&) { return true; },       // An idle target means there is no work to do right now.
                 [](Connecting const&) { return true; }, // In the connecting state, the target is waiting for a connected event.
-                [&](Connected const&)
-                {
-                    return _proto->hasPendingWork();
-                }, // While connected, a target has pending work when there are transfers that have not yet completed.
-                [](Flushing const&) { return true; }, // In the shutdown state, the target is waiting for a FI_SHUTDOWN event.
-                [](Done const&) { return false; },    // In the done state, there is no pending work.
+                [&](Connected const&) { return _proto->hasPendingWork(); }, // While connected, a target has pending work when
+                                                                            // there are transfers that have not yet completed.
+                [](Flushing const&) { return true; },                       // In the shutdown state, the target is waiting for a FI_SHUTDOWN event.
+                [](Done const&) { return false; },                          // In the done state, there is no pending work.
             },
             _state);
     }
@@ -225,7 +223,7 @@ namespace mxl::lib::fabrics::ofi
                 },
                 [](Connecting state) -> State
                 {
-                    MXL_WARN("Received a completion event while connecting, ignoring");
+                    MXL_WARN("Received a completion event while connecting, ignoring.");
                     return state;
                 },
                 [&](Connected state) -> State
@@ -240,7 +238,7 @@ namespace mxl::lib::fabrics::ofi
                 },
                 [](Done state) -> State
                 {
-                    MXL_DEBUG("Ignoring completion after shutdown");
+                    MXL_DEBUG("Ignoring completion after shutdown.");
                     return state;
                 }},
             std::move(_state));
@@ -399,7 +397,7 @@ namespace mxl::lib::fabrics::ofi
             auto completion = _cq->readBlocking(timeout);
             if (!completion)
             {
-                // No completion available, if we were flushing any endpoint, transition their state to done
+                // No completion available, if we were flushing any endpoint, transition their state to done.
                 for (auto& [_, target] : _targets)
                 {
                     target.terminate();
@@ -425,7 +423,7 @@ namespace mxl::lib::fabrics::ofi
             auto completion = _cq->read();
             if (!completion)
             {
-                // No completion available, if we were flushing any endpoint, transition their state to done
+                // No completion available, if we were flushing any endpoint, transition their state to done.
                 for (auto& [_, target] : _targets)
                 {
                     target.terminate();
@@ -521,7 +519,7 @@ namespace mxl::lib::fabrics::ofi
                 return hasPendingWork();
             }
 
-            // Block on the completion queue until a completion arrives, or the interval timeout occurrs.
+            // Block on the completion queue until a completion arrives, or the interval timeout occurs.
             blockOnCQ(std::min(EQPollInterval, timeUntilDeadline));
         }
 
