@@ -255,7 +255,6 @@ impl BaseSinkImpl for MxlSink {
         context.state = Some(State {
             instance,
             flow: None,
-            initial_time: None,
             video: None,
             audio: None,
         });
@@ -312,7 +311,7 @@ impl BaseSinkImpl for MxlSink {
         let mut context = self.context.lock().map_err(|_| gst::FlowError::Error)?;
         let state = context.state.as_mut().ok_or(gst::FlowError::Error)?;
         if state.video.is_some() {
-            render_video::video(self, state, buffer)
+            render_video::video(state, buffer)
         } else {
             render_audio::audio(state, buffer)
         }
