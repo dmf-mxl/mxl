@@ -4,12 +4,12 @@
 use std::{collections::HashMap, process, str::FromStr};
 
 use crate::mxlsink::imp::CAT;
-use gst::{ClockTime, StructureRef};
+use gst::StructureRef;
 use gst_audio::AudioInfo;
 use gstreamer as gst;
 use gstreamer_audio as gst_audio;
 use mxl::{
-    FlowConfigInfo, GrainWriter, MxlInstance, Rational, SamplesWriter,
+    FlowConfigInfo, GrainWriter, MxlInstance, SamplesWriter,
     flowdef::{
         Component, FlowDef, FlowDefAudio, FlowDefDetails, FlowDefVideo, InterlaceMode, Rate,
     },
@@ -41,13 +41,11 @@ pub(crate) struct State {
     pub flow: Option<FlowConfigInfo>,
     pub video: Option<VideoState>,
     pub audio: Option<AudioState>,
-    pub initial_time: Option<InitialTime>,
 }
 
 pub(crate) struct VideoState {
     pub writer: GrainWriter,
     pub grain_index: u64,
-    pub grain_rate: Rational,
     pub grain_count: u32,
 }
 
@@ -62,11 +60,6 @@ pub(crate) struct AudioState {
 #[derive(Default)]
 pub(crate) struct Context {
     pub state: Option<State>,
-}
-
-#[derive(Default, Debug, Clone)]
-pub(crate) struct InitialTime {
-    pub mxl_to_gst_offset: ClockTime,
 }
 
 pub(crate) fn init_state_with_audio(
@@ -239,10 +232,6 @@ pub(crate) fn init_state_with_video(
     let writer = flow_writer
         .to_grain_writer()
         .map_err(|e| gst::loggable_error!(CAT, "Failed to create grain writer: {}", e))?;
-    let grain_rate = flow
-        .common()
-        .grain_rate()
-        .map_err(|e| gst::loggable_error!(CAT, "Failed to get grain rate: {}", e))?;
     let grain_count = flow
         .discrete()
         .map_err(|e| gst::loggable_error!(CAT, "Failed to get grain count: {}", e))?
@@ -255,7 +244,6 @@ pub(crate) fn init_state_with_video(
     state.video = Some(VideoState {
         writer,
         grain_index: index,
-        grain_rate,
         grain_count,
     });
     state.flow = Some(flow);

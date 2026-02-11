@@ -1,65 +1,41 @@
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::mxlsink::{self, state::InitialTime};
+use crate::mxlsink;
 
-use glib::subclass::types::ObjectSubclassExt;
-use gst::{ClockTime, prelude::*};
 use gstreamer as gst;
 use tracing::trace;
 
 pub(crate) fn video(
-    mxlsink: &mxlsink::imp::MxlSink,
     state: &mut mxlsink::state::State,
     buffer: &gst::Buffer,
 ) -> Result<gst::FlowSuccess, gst::FlowError> {
-    let current_index = state.instance.get_current_index(
-        &state
-            .flow
-            .as_ref()
-            .ok_or(gst::FlowError::Error)?
-            .common()
-            .grain_rate()
-            .map_err(|_| gst::FlowError::Error)?,
-    );
-    let video_state = state.video.as_mut().ok_or(gst::FlowError::Error)?;
-    let gst_time = mxlsink
-        .obj()
-        .current_running_time()
-        .ok_or(gst::FlowError::Error)?;
-    let initial_info = state.initial_time.get_or_insert(InitialTime {
-        mxl_to_gst_offset: ClockTime::from_nseconds(state.instance.get_time()) - gst_time,
-    });
-    let mut index = current_index;
-    match buffer.pts() {
-        Some(pts) => {
-            let mxl_pts = pts + initial_info.mxl_to_gst_offset;
-            index = state
-                .instance
-                .timestamp_to_index(mxl_pts.nseconds(), &video_state.grain_rate)
-                .map_err(|_| gst::FlowError::Error)?;
+    let flow = state.flow.as_ref().ok_or(gst::FlowError::Error)?;
+    let grain_rate = flow
+        .common()
+        .grain_rate()
+        .map_err(|_| gst::FlowError::Error)?;
 
-            trace!(
-                "PTS {:?} mapped to grain index {}, current index is {} and running time is {} delta= {}",
-                mxl_pts,
-                index,
-                current_index,
-                gst_time,
-                mxl_pts.saturating_sub(gst_time)
-            );
-            if index > current_index && index - current_index > video_state.grain_count as u64 {
-                index = current_index + video_state.grain_count as u64 - 1;
-            }
-            video_state.grain_index = index;
-        }
-        None => {
-            video_state.grain_index = current_index;
-        }
+    let current_index = state.instance.get_current_index(&grain_rate);
+
+    let video_state = state.video.as_mut().ok_or(gst::FlowError::Error)?;
+
+    let buffer_size = video_state.grain_count as u64;
+    let safe_window = buffer_size / 2;
+
+    let next_index = video_state.grain_index;
+
+    let diff = next_index as i128 - current_index as i128;
+
+    if diff >= safe_window as i128 {
+        return Ok(gst::FlowSuccess::Ok);
     }
 
-    commit_buffer(buffer, video_state, index)?;
-    video_state.grain_index += 1;
-    trace!("END RENDER");
+    commit_buffer(buffer, video_state, next_index)?;
+    video_state.grain_index = video_state.grain_index.wrapping_add(1);
+
+    trace!("Committed grain {}", next_index);
+
     Ok(gst::FlowSuccess::Ok)
 }
 
