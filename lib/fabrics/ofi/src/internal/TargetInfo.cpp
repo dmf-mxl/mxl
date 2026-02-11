@@ -4,7 +4,7 @@
 
 #include "TargetInfo.hpp"
 #include <string>
-#include <picojson/picojson.h>
+#include <picojson/wrapper.h>
 #include <uuid/uuid.h>
 #include "Address.hpp"
 #include "Exception.hpp"

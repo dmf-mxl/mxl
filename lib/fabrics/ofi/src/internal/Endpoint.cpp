@@ -169,7 +169,7 @@ namespace mxl::lib::fabrics::ofi
 
     void Endpoint::accept()
     {
-        uint8_t dummy;
+        auto dummy = std::uint8_t{};
         fiCall(::fi_accept, "Failed to accept connection", _raw, &dummy, sizeof(dummy));
     }
 
