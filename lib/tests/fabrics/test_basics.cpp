@@ -9,7 +9,7 @@
 #include <uuid.h>
 #include <catch2/catch_message.hpp>
 #include <catch2/catch_test_macros.hpp>
-#include <picojson/picojson.h>
+#include <picojson/wrapper.h>
 #include <rdma/fabric.h>
 #include <mxl/fabrics.h>
 #include "mxl/flow.h"
