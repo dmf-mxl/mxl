@@ -26,9 +26,8 @@ namespace mxl::lib::fabrics::ofi
          * \param length The length of the sub-region.
          * \return A new LocalRegion representing the specified sub-region.
          */
-
         [[nodiscard]]
-        LocalRegion sub(std::uint64_t offset, std::size_t length) const noexcept;
+        LocalRegion sub(std::uint64_t offset, std::size_t length) const;
 
         /** \brief Convert this LocalRegion to a struct iovec used by libfabric transfer functions.
          */
