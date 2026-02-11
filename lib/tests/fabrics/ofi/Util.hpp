@@ -90,7 +90,7 @@ namespace mxl::lib::fabrics::ofi
         std::vector<Region> regions;
         for (auto const& innerRegion : innerRegions)
         {
-            regions.emplace_back(*innerRegion.data(), innerRegion.size());
+            regions.emplace_back(*innerRegion.data(), innerRegion.size(), nullptr);
         }
 
         auto mxlRegions = MxlRegions(regions, DataLayout::fromVideo({8, 0, 0, 0}));
@@ -103,7 +103,7 @@ namespace mxl::lib::fabrics::ofi
         std::vector<Region> regions;
         for (auto const& innerRegion : innerRegions)
         {
-            regions.emplace_back(*innerRegion.data(), innerRegion.size());
+            regions.emplace_back(*innerRegion.data(), innerRegion.size(), nullptr);
         }
         return {regions, dataLayout};
     }

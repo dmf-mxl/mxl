@@ -28,15 +28,15 @@ namespace mxl::lib::fabrics::ofi
 
         /** \copydoc Target::read()
          */
-        Target::ReadResult read() override;
+        std::optional<Target::GrainReadResult> readGrain() final;
 
         /** \copydoc Target::readBlocking()
          */
-        Target::ReadResult readBlocking(std::chrono::steady_clock::duration timeout) override;
+        std::optional<Target::GrainReadResult> readGrainBlocking(std::chrono::steady_clock::duration timeout) final;
 
         /** \copydoc Target::shutdown()
          */
-        void shutdown() override;
+        void shutdown() final;
 
     private:
         /** \brief Construct an RDMTarget with the given endpoint and immediate data location.
@@ -53,10 +53,11 @@ namespace mxl::lib::fabrics::ofi
          * \return The result of the read operation.
          */
         template<QueueReadMode>
-        Target::ReadResult makeProgress(std::chrono::steady_clock::duration timeout);
+        std::optional<Target::GrainReadResult> readNextGrain(std::chrono::steady_clock::duration timeout);
 
     private:
         Endpoint _ep;
         std::unique_ptr<IngressProtocol> _protocol = {};
+        std::vector<Region> _regions;
     };
 }

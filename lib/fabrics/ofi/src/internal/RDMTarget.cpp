@@ -73,34 +73,34 @@ namespace mxl::lib::fabrics::ofi
         return {std::make_unique<MakeUniqueEnabler>(std::move(endpoint), std::move(protocol)), std::move(targetInfo)};
     }
 
-    RDMTarget::RDMTarget(Endpoint ep, std::unique_ptr<IngressProtocol> ingress)
+    RDMTarget::RDMTarget(Endpoint ep, std::unique_ptr<IngressProtocol> proto)
         : _ep(std::move(ep))
-        , _protocol(std::move(ingress))
+        , _protocol(std::move(proto))
     {}
 
-    Target::ReadResult RDMTarget::read()
+    std::optional<Target::GrainReadResult> RDMTarget::readGrain()
     {
-        return makeProgress<QueueReadMode::NonBlocking>({});
+        return readNextGrain<QueueReadMode::NonBlocking>({});
     }
 
-    Target::ReadResult RDMTarget::readBlocking(std::chrono::steady_clock::duration timeout)
+    std::optional<Target::GrainReadResult> RDMTarget::readGrainBlocking(std::chrono::steady_clock::duration timeout)
     {
-        return makeProgress<QueueReadMode::Blocking>(timeout);
+        return readNextGrain<QueueReadMode::Blocking>(timeout);
     }
 
     void RDMTarget::shutdown()
     {}
 
     template<QueueReadMode queueReadMode>
-    Target::ReadResult RDMTarget::makeProgress(std::chrono::steady_clock::duration timeout)
+    std::optional<Target::GrainReadResult> RDMTarget::readNextGrain(std::chrono::steady_clock::duration timeout)
     {
         auto completion = readCompletionQueue<queueReadMode>(*_ep.completionQueue(), timeout);
         if (completion)
         {
-            return _protocol->processCompletion(_ep, *completion);
+            return _protocol->readGrain(_ep, *completion);
         }
 
-        return ReadResult{std::nullopt};
+        return {};
     }
 
 }

@@ -225,9 +225,9 @@ mxlStatus mxlFabricsTargetSetup(mxlFabricsTarget in_target, mxlFabricsTargetConf
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsTargetReadGrainNonBlocking(mxlFabricsTarget in_target, uint16_t* out_entryIndex, uint16_t* out_sliceIndex)
+mxlStatus mxlFabricsTargetReadGrainNonBlocking(mxlFabricsTarget in_target, uint64_t* out_grainIndex, uint16_t* out_sliceIndex)
 {
-    if ((in_target == nullptr) || (out_entryIndex == nullptr) || (out_sliceIndex == nullptr))
+    if ((in_target == nullptr) || (out_grainIndex == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
@@ -235,25 +235,28 @@ mxlStatus mxlFabricsTargetReadGrainNonBlocking(mxlFabricsTarget in_target, uint1
     return ofi::try_run(
         [&]()
         {
-            auto target = ofi::TargetWrapper::fromAPI(in_target);
-            if (auto res = target->read(); res.immData)
+            auto res = ofi::TargetWrapper::fromAPI(in_target)->readGrain();
+            if (!res)
             {
-                auto [entryIndex, sliceIndex] = ofi::ImmDataGrain{*res.immData}.unpack();
-                *out_entryIndex = entryIndex;
-                *out_sliceIndex = sliceIndex;
-
-                return MXL_STATUS_OK;
+                return MXL_ERR_NOT_READY;
             }
 
-            return MXL_ERR_NOT_READY;
+            auto [entryIndex, sliceIndex] = *res;
+            *out_grainIndex = entryIndex;
+            if (out_sliceIndex)
+            {
+                *out_sliceIndex = sliceIndex;
+            }
+
+            return MXL_STATUS_OK;
         },
         "Failed to try for new grain");
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsTargetReadGrain(mxlFabricsTarget in_target, uint16_t* out_entryIndex, uint16_t* out_sliceIndex, uint16_t in_timeoutMs)
+mxlStatus mxlFabricsTargetReadGrain(mxlFabricsTarget in_target, uint16_t in_timeoutMs, uint64_t* out_grainIndex, uint16_t* out_sliceIndex)
 {
-    if ((in_target == nullptr) || (out_entryIndex == nullptr) || (out_sliceIndex == nullptr))
+    if ((in_target == nullptr) || (out_grainIndex == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
@@ -261,17 +264,20 @@ mxlStatus mxlFabricsTargetReadGrain(mxlFabricsTarget in_target, uint16_t* out_en
     return ofi::try_run(
         [&]()
         {
-            auto target = ofi::TargetWrapper::fromAPI(in_target);
-            if (auto res = target->readBlocking(std::chrono::milliseconds(in_timeoutMs)); res.immData)
+            auto res = ofi::TargetWrapper::fromAPI(in_target)->readGrainBlocking(std::chrono::milliseconds(in_timeoutMs));
+            if (!res)
             {
-                auto [entryIndex, sliceIndex] = ofi::ImmDataGrain{*res.immData}.unpack();
-                *out_entryIndex = entryIndex;
-                *out_sliceIndex = sliceIndex;
-
-                return MXL_STATUS_OK;
+                return MXL_ERR_TIMEOUT;
             }
 
-            return MXL_ERR_NOT_READY;
+            auto [grainIndex, sliceIndex] = *res;
+            *out_grainIndex = grainIndex;
+            if (out_sliceIndex)
+            {
+                *out_sliceIndex = sliceIndex;
+            }
+
+            return MXL_STATUS_OK;
         },
         "Failed to wait for new grain");
 }

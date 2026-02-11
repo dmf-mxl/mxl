@@ -31,14 +31,16 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         static std::pair<std::unique_ptr<RCTarget>, std::unique_ptr<TargetInfo>> setup(mxlFabricsTargetConfig const& config);
 
-        /** \copydoc Target::read()
+        /** \copydoc Target::readGrain()
          */
-        Target::ReadResult read() final;
+        std::optional<Target::GrainReadResult> readGrain() final;
 
-        /** \copydoc Target::readBlocking()
+        /** \copydoc Target::readGrainBlocking()
          */
-        Target::ReadResult readBlocking(std::chrono::steady_clock::duration timeout) final;
+        std::optional<Target::GrainReadResult> readGrainBlocking(std::chrono::steady_clock::duration timeout) final;
 
+        /** \brief Shut down the target.
+         */
         void shutdown() override;
 
     private:
@@ -87,10 +89,10 @@ namespace mxl::lib::fabrics::ofi
          * \return The result of the read operation.
          */
         template<QueueReadMode>
-        Target::ReadResult makeProgress(std::chrono::steady_clock::duration timeout);
+        std::optional<Target::GrainReadResult> readNextGrain(std::chrono::steady_clock::duration timeout);
 
         [[nodiscard]]
-        static PassiveEndpoint makeListener(std::shared_ptr<Fabric> fabric);
+        static PassiveEndpoint makeListener(std::shared_ptr<Fabric> const& fabric);
 
     private:
         std::unique_ptr<IngressProtocol> _proto;

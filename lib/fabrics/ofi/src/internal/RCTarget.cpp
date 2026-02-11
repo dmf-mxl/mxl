@@ -74,23 +74,23 @@ namespace mxl::lib::fabrics::ofi
         , _state(WaitForConnectionRequest{std::move(pep)})
     {}
 
-    Target::ReadResult RCTarget::read()
+    std::optional<Target::GrainReadResult> RCTarget::readGrain()
     {
-        return makeProgress<QueueReadMode::NonBlocking>({});
+        return readNextGrain<QueueReadMode::NonBlocking>({});
     }
 
-    Target::ReadResult RCTarget::readBlocking(std::chrono::steady_clock::duration timeout)
+    std::optional<Target::GrainReadResult> RCTarget::readGrainBlocking(std::chrono::steady_clock::duration timeout)
     {
-        return makeProgress<QueueReadMode::Blocking>(timeout);
+        return readNextGrain<QueueReadMode::Blocking>(timeout);
     }
 
     void RCTarget::shutdown()
     {}
 
     template<QueueReadMode queueReadMode>
-    Target::ReadResult RCTarget::makeProgress(std::chrono::steady_clock::duration timeout)
+    std::optional<Target::GrainReadResult> RCTarget::readNextGrain(std::chrono::steady_clock::duration timeout)
     {
-        Target::ReadResult result;
+        auto result = std::optional<Target::GrainReadResult>{std::nullopt};
 
         _state = std::visit(
             overloaded{[](std::monostate) -> State { throw Exception::invalidState("Target is in an invalid state an can no longer make progress"); },
@@ -142,7 +142,6 @@ namespace mxl::lib::fabrics::ofi
                 [&](RCTarget::Connected state) -> State
                 {
                     auto [completion, event] = readEndpointQueues<queueReadMode>(state.ep, timeout);
-
                     if (event && event.value().isShutdown())
                     {
                         MXL_INFO("Remote endpoint has shutdown the connection. Transitioning to listening to new connection.");
@@ -151,7 +150,7 @@ namespace mxl::lib::fabrics::ofi
 
                     if (completion)
                     {
-                        result = _proto->processCompletion(state.ep, *completion);
+                        result = _proto->readGrain(state.ep, *completion);
                     }
 
                     return Connected{.ep = std::move(state.ep)};
@@ -161,7 +160,7 @@ namespace mxl::lib::fabrics::ofi
         return result;
     }
 
-    PassiveEndpoint RCTarget::makeListener(std::shared_ptr<Fabric> fabric)
+    PassiveEndpoint RCTarget::makeListener(std::shared_ptr<Fabric> const& fabric)
     {
         // Create a passive endpoint. A passive endpoint can be viewed like a bound TCP socket listening for
         // incoming connections.

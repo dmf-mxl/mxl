@@ -101,7 +101,7 @@ public:
         }
     }
 
-    mxlStatus setup(std::string targetInfoStr)
+    mxlStatus setup(std::string const& targetInfoStr)
     {
         _instance = mxlCreateInstance(_config.domain.c_str(), "");
         if (_instance == nullptr)
@@ -217,7 +217,7 @@ public:
                 continue;
             }
             else if (ret == MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
-            {
+            { // NOLINT(bugprone-branch-clone): Repeated for clarity.
                 // We are too early somehow.. retry the same grain later.
                 continue;
             }
@@ -478,14 +478,14 @@ public:
     mxlStatus run()
     {
         mxlGrainInfo grainInfo;
-        uint16_t entryIndex = 0;
-        uint16_t validSlices = 0;
-        uint8_t* dummyPayload;
+        std::uint64_t grainIndex = 0;
+        std::uint16_t validSlices = 0;
+        std::uint8_t* dummyPayload;
         mxlStatus status;
 
         while (!g_exit_requested)
         {
-            status = targetReadGrain(&entryIndex, &validSlices, std::chrono::milliseconds(200));
+            status = targetReadGrain(&grainIndex, &validSlices, std::chrono::milliseconds(200));
             if (status == MXL_ERR_TIMEOUT)
             {
                 // No completion before a timeout was triggered, most likely a problem upstream.
@@ -505,15 +505,6 @@ public:
                 MXL_ERROR("Failed to wait for grain with status '{}'", static_cast<int>(status));
                 return status;
             }
-
-            status = mxlFlowWriterGetGrainInfo(_writer, entryIndex, &grainInfo);
-            if (status != MXL_STATUS_OK)
-            {
-                MXL_ERROR("Failed to get grain info with status '{}'", static_cast<int>(status));
-                return status;
-            }
-
-            std::uint64_t grainIndex = grainInfo.index;
 
             // Here we open so that we can commit, we are not going to modify the grain as it was already modified by the initiator.
             status = mxlFlowWriterOpenGrain(_writer, grainIndex, &grainInfo, &dummyPayload);
@@ -545,16 +536,16 @@ public:
     }
 
 private:
-    mxlStatus targetReadGrain(std::uint16_t* entryIndex, std::uint16_t* validSlices, std::chrono::steady_clock::duration timeout)
+    mxlStatus targetReadGrain(std::uint64_t* grainIndex, std::uint16_t* validSlices, std::chrono::steady_clock::duration timeout)
     {
         if (_config.provider == MXL_FABRICS_PROVIDER_EFA)
         {
-            return mxlFabricsTargetReadGrainNonBlocking(_target, entryIndex, validSlices);
+            return mxlFabricsTargetReadGrainNonBlocking(_target, grainIndex, validSlices);
         }
         else
         {
             return mxlFabricsTargetReadGrain(
-                _target, entryIndex, validSlices, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
+                _target, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count(), grainIndex, validSlices);
         }
     }
 
