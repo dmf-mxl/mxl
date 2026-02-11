@@ -4,13 +4,17 @@
 
 #include "LocalRegion.hpp"
 #include <algorithm>
+#include "Exception.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
 
-    LocalRegion LocalRegion::sub(std::uint64_t offset, std::size_t length) const noexcept
+    LocalRegion LocalRegion::sub(std::uint64_t offset, std::size_t length) const
     {
-        assert(offset + length <= len);
+        if (offset + length > len)
+        {
+            throw Exception::invalidState("Tried to access out-of-bounds sub region of LocalRegion");
+        }
 
         return LocalRegion{
             .addr = addr + offset,
@@ -21,7 +25,7 @@ namespace mxl::lib::fabrics::ofi
 
     ::iovec LocalRegion::toIovec() const noexcept
     {
-        return ::iovec{.iov_base = reinterpret_cast<void*>(addr), .iov_len = len};
+        return ::iovec{.iov_base = reinterpret_cast<void*>(addr), .iov_len = len}; // NOLINT(performance-no-int-to-ptr): No way to avoid this
     }
 
     ::iovec const* LocalRegionGroup::asIovec() const noexcept
