@@ -1,6 +1,23 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+/**
+ * @file PosixDiscreteFlowReader.cpp
+ * @brief Discrete flow reader (video/data grains) with access time tracking
+ *
+ * Reads individual grains from per-grain mmap'd files in ring buffer. Each grain
+ * is in separate file: grains/data.0, grains/data.1, etc.
+ *
+ * Partial grain support: minValidSlices allows reading incomplete grains
+ * (e.g., reading video frame as lines arrive). Writer commits slices progressively.
+ *
+ * Access tracking: touches flow's 'access' file on successful read to update
+ * lastReadTime for GC decisions. Handles read-only volumes gracefully.
+ *
+ * Ring buffer math: absolute index % grainCount = ring position
+ * Valid window: [headIndex - grainCount + 1, headIndex]
+ */
+
 #include "PosixDiscreteFlowReader.hpp"
 #include <cstdint>
 #include <cstdio>
@@ -28,15 +45,17 @@ namespace mxl::lib
 {
     namespace
     {
+        /** Update access time of file (for GC tracking). Updates atime, leaves mtime unchanged. */
         bool updateFileAccessTime(int fd) noexcept
         {
             auto const times = std::array<timespec, 2>{
-                {{0, UTIME_NOW}, {0, UTIME_OMIT}}
+                {{0, UTIME_NOW}, {0, UTIME_OMIT}}  // atime=now, mtime=unchanged
             };
             return (::futimens(fd, times.data()) == 0);
         }
     }
 
+    /** Constructor: opens access file for lastReadTime tracking (best-effort) */
     PosixDiscreteFlowReader::PosixDiscreteFlowReader(FlowManager const& manager, uuids::uuid const& flowId, std::unique_ptr<DiscreteFlowData>&& data)
         : DiscreteFlowReader{flowId, manager.getDomain()}
         , _flowData{std::move(data)}
@@ -45,9 +64,8 @@ namespace mxl::lib
         auto const accessFile = makeFlowAccessFilePath(manager.getDomain(), to_string(flowId));
         _accessFileFd = ::open(accessFile.string().c_str(), O_RDWR);
 
-        // Opening the access file may fail if the domain is in a read only volume.
-        // we can still execute properly but the 'lastReadTime' will never be updated.
-        // Ignore failures.
+        // Opening may fail on read-only filesystems - that's OK, we just can't track access time
+        // MXL continues to work, just without GC read-time tracking
     }
 
     FlowData const& PosixDiscreteFlowReader::getFlowData() const
@@ -146,20 +164,30 @@ namespace mxl::lib
         return result;
     }
 
+    /**
+     * Non-blocking grain retrieval. Checks if grain ready based on validSlices.
+     * Partial grain support: returns OK if validSlices >= minValidSlices OR if grain marked invalid.
+     * Payload pointer is right after grain header (zero-copy, points into mmap).
+     */
     mxlStatus PosixDiscreteFlowReader::getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo,
         std::uint8_t** out_payload) const
     {
         auto result = MXL_ERR_UNKNOWN;
         auto const flow = _flowData->flow();
+
+        // Check if index is in valid range
         if (auto const headIndex = flow->info.runtime.headIndex; in_index <= headIndex)
         {
             auto const grainCount = flow->info.config.discrete.grainCount;
             auto const minIndex = (headIndex >= grainCount) ? (headIndex - grainCount + 1U) : std::uint64_t{0};
+
             if (in_index >= minIndex)
             {
+                // Map absolute index to ring buffer position
                 auto const offset = in_index % grainCount;
                 auto const grain = _flowData->grainAt(offset);
 
+                // Check if grain has enough valid slices OR is marked invalid
                 if ((grain->header.info.validSlices >= std::min(in_minValidSlices, grain->header.info.totalSlices)) ||
                     ((grain->header.info.flags & MXL_GRAIN_FLAG_INVALID) != 0))
                 {
@@ -169,6 +197,7 @@ namespace mxl::lib
                     }
                     if (out_payload != nullptr)
                     {
+                        // Zero-copy pointer directly into mmap (right after header)
                         *out_payload = reinterpret_cast<std::uint8_t*>(&grain->header + 1);
                     }
 
@@ -176,16 +205,19 @@ namespace mxl::lib
                 }
                 else
                 {
+                    // Grain exists but not enough slices yet
                     result = MXL_ERR_OUT_OF_RANGE_TOO_EARLY;
                 }
             }
             else
             {
+                // Grain was overwritten (too old)
                 result = MXL_ERR_OUT_OF_RANGE_TOO_LATE;
             }
         }
         else
         {
+            // Grain hasn't been written yet
             result = MXL_ERR_OUT_OF_RANGE_TOO_EARLY;
         }
 

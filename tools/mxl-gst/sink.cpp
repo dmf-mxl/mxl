@@ -1,6 +1,35 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+/**
+ * @file sink.cpp
+ * @brief MXL GStreamer sink - reads from MXL flows and plays via GStreamer
+ *
+ * This tool demonstrates zero-copy consumption of MXL video and audio flows,
+ * converting them to GStreamer pipelines for local playback.
+ *
+ * Key features:
+ *   - Reads video flows (v210 format) and renders via autovideosink
+ *   - Reads audio flows (float32 non-interleaved) and plays via autoaudiosink
+ *   - Handles flow timing and synchronization using TAI timestamps
+ *   - Supports configurable read delay for buffering
+ *   - Demonstrates proper latency tracking and invalid grain/sample handling
+ *   - Can play video and audio simultaneously from separate flows
+ *
+ * Usage:
+ *   mxl-gst-sink -d /tmp/mxl-domain -v <video-flow-id> -a <audio-flow-id> \
+ *                --read-delay 40000000 --playback-delay 0 --av-delay 0
+ *
+ * The tool uses GStreamer's appsrc element to push MXL data into a pipeline:
+ *   MXL Flow → appsrc → videoconvert/audioconvert → autovideosink/autoaudiosink
+ *
+ * Timing model:
+ *   - Uses TAI (International Atomic Time) via SMPTE ST 2059
+ *   - Reads grains/samples from the past (controlled by --read-delay)
+ *   - Applies playback offset for A/V sync (--playback-delay, --av-delay)
+ *   - Handles buffer underruns and overruns with appropriate fallback behavior
+ */
+
 #include <csignal>
 #include <cstddef>
 #include <cstdint>
@@ -31,19 +60,27 @@
 
 namespace
 {
+    /** @brief Global flag set by signal handler to request graceful exit */
     auto volatile g_exit_requested = std::sig_atomic_t{0};
 
+    /**
+     * @brief Signal handler for SIGINT and SIGTERM
+     * Sets the exit flag to allow graceful shutdown of pipelines and MXL resources.
+     */
     void signal_handler(int) noexcept
     {
         g_exit_requested = 1;
     }
 
+    /**
+     * @brief Configuration parameters for video pipeline construction
+     */
     struct VideoPipelineConfig
     {
-        mxlRational frameRate;
-        std::uint64_t frameWidth;
-        std::uint64_t frameHeight;
-        std::int64_t offset;
+        mxlRational frameRate;        ///< Video frame rate (e.g., {30, 1} for 30fps)
+        std::uint64_t frameWidth;     ///< Frame width in pixels
+        std::uint64_t frameHeight;    ///< Frame height in pixels
+        std::int64_t offset;          ///< Playback delay offset in nanoseconds
 
         [[nodiscard]]
         std::string display() const
@@ -53,12 +90,15 @@ namespace
         }
     };
 
+    /**
+     * @brief Configuration parameters for audio pipeline construction
+     */
     struct AudioPipelineConfig
     {
-        mxlRational sampleRate;
-        std::size_t channelCount;
-        std::int64_t offset;
-        std::vector<std::size_t> speakerChannels;
+        mxlRational sampleRate;                    ///< Audio sample rate (e.g., {48000, 1})
+        std::size_t channelCount;                  ///< Number of audio channels in the flow
+        std::int64_t offset;                       ///< Playback delay offset in nanoseconds
+        std::vector<std::size_t> speakerChannels;  ///< Which channels to route to speakers
 
         [[nodiscard]]
         std::string display() const
@@ -71,9 +111,21 @@ namespace
         }
     };
 
+    /**
+     * @brief Base class for GStreamer pipelines that push MXL data via appsrc
+     *
+     * Manages pipeline lifecycle, TAI clock configuration, and buffer pushing.
+     * Derived classes (VideoPipeline, AudioPipeline) construct specific pipelines.
+     */
     class GstreamerPipeline
     {
     public:
+        /**
+         * @brief Start the GStreamer pipeline and record the MXL base time
+         *
+         * The base time is used to convert MXL TAI timestamps to GStreamer PTS values.
+         * All buffers pushed to GStreamer will have PTS relative to this base time.
+         */
         void start()
         {
             if (_pipeline == nullptr)
@@ -87,8 +139,17 @@ namespace
             MXL_INFO("Staring pipeline with base time: {} ns", _mxlBaseTime);
         }
 
+        /**
+         * @brief Push a buffer to the GStreamer appsrc element
+         *
+         * Converts MXL TAI absolute timestamp to GStreamer relative PTS before pushing.
+         *
+         * @param buffer The GstBuffer containing video or audio data
+         * @param now The MXL TAI timestamp when this buffer should be presented
+         */
         void pushBuffer(GstBuffer* buffer, std::uint64_t now) noexcept
         {
+            // Convert MXL absolute TAI timestamp to GStreamer relative PTS
             GST_BUFFER_PTS(buffer) = now - _mxlBaseTime;
 
             int ret;

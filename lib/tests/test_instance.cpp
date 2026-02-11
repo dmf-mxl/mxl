@@ -1,12 +1,47 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+/**
+ * @file test_instance.cpp
+ * @brief Unit tests for MXL instance lifecycle and flow management
+ *
+ * This test suite validates MXL instance behavior including:
+ *   - Flow reader/writer caching within instances
+ *   - Multiple instances sharing the same domain
+ *   - Flow lifecycle tied to writers (flow deletion when last writer releases)
+ *   - Automatic flow cleanup on instance destruction
+ *   - Reference counting for readers and writers
+ *
+ * Key concepts tested:
+ *   - Instance isolation: Multiple instances can coexist in same domain
+ *   - Flow ownership: Flows persist until all writers release them
+ *   - Reader caching: Same flow ID returns same reader within an instance
+ *   - Writer uniqueness: Each writer is distinct even for same flow
+ *   - Automatic cleanup: Flows removed when last reference is released
+ *
+ * These tests use the mxlDomainFixture to ensure clean test isolation.
+ */
+
 #include <uuid.h>
 #include <catch2/catch_test_macros.hpp>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include "Utils.hpp"
 
+/**
+ * @brief Test that flow readers are cached within an instance
+ *
+ * This test verifies:
+ *   - Creating multiple writers for different flows produces distinct writers
+ *   - Creating multiple readers for the same flow returns the same cached reader
+ *   - Readers and writers for the same flow are different objects
+ *   - All readers/writers can be properly released
+ *
+ * Expected behavior:
+ *   - mxlCreateFlowReader(instance, flowId, ...) returns same pointer on repeated calls
+ *   - mxlCreateFlowWriter(instance, flowDef, ...) returns unique pointers
+ *   - Reader and writer pointers differ even for same flow
+ */
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow readers / writers caching", "[instance]")
 {
     auto const opts = "{}";
@@ -73,6 +108,21 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow readers / write
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
 }
 
+/**
+ * @brief Test that flows persist until all writers release them
+ *
+ * This test verifies reference counting behavior:
+ *   - Two instances create writers for the same flow
+ *   - First writer release: flow still exists (second writer holds reference)
+ *   - Second writer release: flow is deleted (no more references)
+ *
+ * Expected behavior:
+ *   - Flow directory exists as long as at least one writer exists
+ *   - Flow directory is removed when the last writer releases
+ *   - Multiple instances can safely share the same flow
+ *
+ * This prevents premature flow deletion when multiple writers are active.
+ */
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow deletion on writer release", "[instance]")
 {
     auto instanceA = mxlCreateInstance(domain.string().c_str(), nullptr);
@@ -106,6 +156,22 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow deletion on wri
     REQUIRE(mxlDestroyInstance(instanceB) == MXL_STATUS_OK);
 }
 
+/**
+ * @brief Test that flow cleanup occurs on instance destruction
+ *
+ * This test verifies automatic cleanup behavior:
+ *   - Two instances create writers for the same flow (without explicit release)
+ *   - First instance destruction: flow still exists (second instance has writer)
+ *   - Second instance destruction: flow is deleted (all instances gone)
+ *
+ * Expected behavior:
+ *   - Destroying an instance implicitly releases its flow writers
+ *   - Flow persists as long as any instance has an active writer
+ *   - Last instance destruction triggers flow cleanup
+ *
+ * This ensures proper cleanup even when writers aren't explicitly released
+ * before instance destruction (e.g., in case of errors or early returns).
+ */
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow deletion on instance destruction", "[instance]")
 {
     auto instanceA = mxlCreateInstance(domain.string().c_str(), nullptr);

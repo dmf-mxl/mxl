@@ -2,6 +2,10 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file Domain.cpp
+ * \brief Implementation of Domain wrapper - handles domain lifecycle and memory registration.
+ */
+
 #include "Domain.hpp"
 #include <cstdint>
 #include <memory>
@@ -31,8 +35,10 @@ namespace mxl::lib::fabrics::ofi
     {
         ::fid_domain* domain;
 
+        // Open domain using fi_domain2() - creates resource container for this fabric
         fiCall(::fi_domain2, "Failed to open domain", fabric->raw(), fabric->info().raw(), &domain, 0, nullptr);
 
+        // Use MakeSharedEnabler pattern to access private constructor with std::make_shared
         struct MakeSharedEnabler : public Domain
         {
             MakeSharedEnabler(::fid_domain* domain, std::shared_ptr<Fabric> fabric, std::vector<RegisteredRegion> registerRegions)
@@ -45,6 +51,8 @@ namespace mxl::lib::fabrics::ofi
 
     void Domain::registerRegions(std::vector<Region> const& regions, std::uint64_t access)
     {
+        // Register each Region with fi_mr_reg(), storing RegisteredRegion wrappers
+        // Access flags specify permissions (read/write/remote_read/remote_write)
         std::ranges::transform(regions, std::back_inserter(_registeredRegions), [&](auto const& region) { return registerRegion(region, access); });
     }
 
@@ -60,11 +68,15 @@ namespace mxl::lib::fabrics::ofi
 
     bool Domain::usingVirtualAddresses() const noexcept
     {
+        // Check if provider requires virtual addresses (actual pointer values) vs offset-based (0-based) addressing
+        // FI_MR_VIRT_ADDR means remote peer must use actual virtual addresses when accessing our memory
         return (_fabric->info().raw()->domain_attr->mr_mode & FI_MR_VIRT_ADDR) != 0;
     }
 
     bool Domain::usingRecvBufForCqData() const noexcept
     {
+        // Check if provider requires posted receive buffer to receive immediate data (CQ data)
+        // FI_RX_CQ_DATA means target must call fi_recv() to accept immediate data with RDMA writes
         return (_fabric->info().raw()->rx_attr->mode & FI_RX_CQ_DATA) != 0;
     }
 

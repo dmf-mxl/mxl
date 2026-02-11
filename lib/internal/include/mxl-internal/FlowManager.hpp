@@ -1,6 +1,47 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+/**
+ * @file FlowManager.hpp
+ * @brief CRUD operations for MXL flows (Create, Read, Update, Delete)
+ *
+ * FlowManager handles all filesystem operations for flows within an MXL domain.
+ * It's the centralized authority for flow lifecycle management.
+ *
+ * RESPONSIBILITIES:
+ * - CREATE: Allocate flow directory structure, shared memory files, grain files
+ * - READ/OPEN: Map existing flow files into FlowData objects
+ * - DELETE: Remove flow files and directories
+ * - LIST: Enumerate all flows in the domain
+ * - QUERY: Retrieve flow definitions (NMOS JSON)
+ *
+ * FILESYSTEM STRUCTURE CREATED:
+ *   ${domain}/
+ *     ${flowId}.mxl-flow/            -- Flow directory
+ *       flow_def.json                -- NMOS flow definition (stored as-is)
+ *       data                         -- Flow shared memory (FlowState + metadata)
+ *       access                       -- Touch file for reader activity tracking
+ *       grains/                      -- Grain directory (discrete flows only)
+ *         data.0, data.1, ...        -- Individual grain files
+ *       channels                     -- Sample ring buffer (continuous flows only)
+ *
+ * DESIGN:
+ * - One FlowManager per Instance (owns the domain)
+ * - No caching (FlowData objects owned by readers/writers, not manager)
+ * - Atomic operations where possible (e.g., create with O_EXCL)
+ * - Idempotent operations (e.g., delete non-existent flow succeeds)
+ *
+ * THREAD SAFETY:
+ * - All operations are thread-safe (use filesystem atomicity)
+ * - No internal locking (stateless except _mxlDomain path)
+ * - Concurrent creates of same flow: one succeeds, others get "already exists"
+ *
+ * GARBAGE COLLECTION:
+ * - deleteFlow() checks for advisory locks before deletion
+ * - Flows with active readers/writers cannot be deleted (lock held)
+ * - Stale flows (no locks) can be deleted safely
+ */
+
 #pragma once
 
 #include <cstddef>
@@ -16,28 +57,11 @@
 
 namespace mxl::lib
 {
-    ///
-    /// Performs Flow CRUD operations
-    ///
-    /// CREATE
-    /// Creates the flow resources in the base path (the MXL 'domain'). Flow resource contain
-    ///  - <mxl_domain>/<flow_id>.mxl-flow               : The toplevel for all files belonging to MXLs representation of a the flow
-    ///  - <mxl_domain>/<flow_id>.mxl-flow/flow_def.json : A file containing the flow definition (NMOS Flow resource json)
-    ///  - <mxl_domain>/<flow_id>.mxl-flow/access        : A file used for access notifications by consumers of the flow
-    ///  - <mxl_domain>/<flow_id>.mxl-flow/data          : The shared memory segment containing the `Flow`
-    ///  - <mxl_domain>/<flow_id>.mxl-flow/grains/       : A directory containing the per grain shared memory segments.
-    ///
-    /// After creation, the FlowData associated with the new flow is stored in an internal cache.
-    ///
-    /// GET
-    /// Return a cached FlowData for a flowId.  The flow must opened first.
-    ///
-    /// DELETE
-    /// Delete a flow by flowId.  If the flow is opened it is first closed than all physical resources (see above) are deleted
-    ///
-    /// LIST
-    /// List all the flows found in the domain.
-    ///
+    /**
+     * Performs Flow CRUD operations (Create, Read, Update, Delete).
+     *
+     * One FlowManager per Instance, manages all flows in a single MXL domain.
+     */
     class MXL_EXPORT FlowManager
     {
     public:

@@ -2,6 +2,35 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file RemoteRegion.hpp
+ * \brief Remote memory region descriptor for RDMA target buffers.
+ *
+ * RemoteRegion represents a remote memory buffer that the initiator can target with RDMA operations.
+ * It's sent from the target to the initiator (out-of-band or via control message).
+ *
+ * Key fields:
+ * - addr: Remote address (virtual address or 0-based offset depending on FI_MR_VIRT_ADDR mode)
+ * - len: Length of buffer in bytes
+ * - rkey: Remote protection key (from fi_mr_key()) - grants access permission to remote buffer
+ *
+ * RemoteRegion vs LocalRegion:
+ * - RemoteRegion: Destination buffer on target (write to there) - contains rkey
+ * - LocalRegion: Source buffer on initiator (write from here) - contains desc
+ *
+ * Security consideration:
+ * - rkey is a secret that grants RDMA access to memory region
+ * - Only share with trusted peers
+ * - In MXL, rkeys may be exchanged via immediate data or separate control channel
+ *
+ * RemoteRegionGroup:
+ * - Collection of remote regions for scatter-gather RDMA to multiple target buffers
+ * - Converted to fi_rma_iov array for libfabric RMA operations
+ *
+ * Generation:
+ * - Created from RegisteredRegion (after memory registration on target)
+ * - Sent to initiator peer for use in RDMA write operations
+ */
+
 #pragma once
 
 #include <cstddef>
@@ -14,7 +43,8 @@ namespace mxl::lib::fabrics::ofi
 
     /** \brief Represent a remote memory region used for data transfer.
      *
-     * This can be constructed from a `RegisteredRegion`.
+     * This can be constructed from a `RegisteredRegion` on the target side.
+     * Sent to initiator to enable RDMA writes to target memory.
      */
     struct RemoteRegion
     {

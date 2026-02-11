@@ -1,6 +1,42 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+/**
+ * @file FlowParser.cpp
+ * @brief Parses NMOS IS-04 flow definitions and computes MXL buffer parameters
+ *
+ * FlowParser extracts everything needed to create an MXL flow from NMOS JSON:
+ * - Flow ID, format (video/audio/data), grain/sample rate
+ * - Video dimensions, interlacing, media type (v210, v210a)
+ * - Audio bit depth, channel count
+ * - Computes payload sizes, slice counts for ring buffer allocation
+ *
+ * KEY VALIDATIONS:
+ * - UUID validity
+ * - Format support (video, audio, data - no mux)
+ * - Dimension limits (2x1 to 8Kx4K) to prevent RAM exhaustion
+ * - Interlacing constraints (only 30000/1001 or 25/1 field rates)
+ * - Media type support (v210, v210a for video; smpte291 for data)
+ * - Group hint tag validation (NMOS parameter register requirement)
+ *
+ * INTERLACED VIDEO HANDLING:
+ * - NMOS grain_rate is field rate (e.g., 30000/1001 for 60i)
+ * - MXL treats each field as separate grain
+ * - Payload size is per-field (height/2 lines)
+ * - Parser doubles grain_rate internally for field-based indexing
+ *
+ * PAYLOAD SIZE CALCULATIONS:
+ * Video v210: ((width+47)/48)*128 bytes/line * lines/field
+ * Video v210a: v210 + alpha plane ((width+2)/3)*4 bytes/line
+ * Data smpte291: Fixed 4096 bytes (one VFS page)
+ * Audio: bit_depth/8 bytes per sample (32-bit or 64-bit float)
+ *
+ * SLICE LENGTHS (for progressive commit):
+ * Video: One line of v210 data (or v210+alpha for v210a)
+ * Data: 1 byte (allows byte-by-byte progressive write)
+ * Total slices = number of lines (video) or bytes (data)
+ */
+
 #include "mxl-internal/FlowParser.hpp"
 #include <cstddef>
 #include <cstdint>
@@ -23,12 +59,11 @@ namespace mxl::lib
     namespace
     {
 
-        // this are arbitrary limits, but we need to put a cap somewhere to prevent a bad json document
-        // from allocating all the RAM on the system.
-        constexpr auto MAX_WIDTH = 7680u;  // 8K UHD
-        constexpr auto MAX_HEIGHT = 4320u; // 8K UHD
+        // Sanity limits to prevent bad JSON from allocating all system RAM
+        constexpr auto MAX_WIDTH = 7680u;  // 8K UHD width limit
+        constexpr auto MAX_HEIGHT = 4320u; // 8K UHD height limit
 
-        // Grain size when the grain data format is "data"
+        // Fixed grain size for ancillary data flows (one filesystem page)
         constexpr auto DATA_FORMAT_GRAIN_SIZE = 4096;
 
         /**

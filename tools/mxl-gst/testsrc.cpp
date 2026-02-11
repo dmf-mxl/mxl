@@ -1,6 +1,43 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+/**
+ * @file testsrc.cpp
+ * @brief MXL GStreamer test source - generates synthetic media and writes to MXL flows
+ *
+ * This tool demonstrates MXL flow writer functionality by generating test video and audio
+ * using GStreamer's videotestsrc and audiotestsrc elements, then writing the data into
+ * MXL shared-memory ring buffers.
+ *
+ * Key features:
+ *   - Generates v210 video test patterns (SMPTE bars, color fields, etc.)
+ *   - Generates multi-channel audio test tones
+ *   - Creates MXL flows from NMOS JSON descriptors
+ *   - Demonstrates sub-grain commit batching for video (progressive slices)
+ *   - Handles invalid grain generation when frames are skipped
+ *   - Supports configurable frame/sample offsets for testing timing scenarios
+ *   - Uses TAI timestamps for precise timing alignment
+ *
+ * Usage:
+ *   mxl-gst-testsrc -d /tmp/mxl-domain \
+ *                   -v video_flow.json --video-options-file video_opts.json \
+ *                   -a audio_flow.json --audio-options-file audio_opts.json \
+ *                   --pattern smpte --overlay-text "Test Source"
+ *
+ * GStreamer pipeline structure:
+ *   Video: videotestsrc → textoverlay → clockoverlay → videoconvert → appsink (v210)
+ *   Audio: audiotestsrc (per channel) → interleave → audioconvert → appsink (F32LE non-interleaved)
+ *
+ * The appsink pulls buffers from GStreamer and the tool writes them into MXL flows using
+ * mxlFlowWriterOpenGrain/CommitGrain (video) or mxlFlowWriterOpenSamples/CommitSamples (audio).
+ *
+ * This tool is useful for:
+ *   - Testing MXL flow readers (see sink.cpp)
+ *   - Benchmarking shared-memory performance
+ *   - Demonstrating sub-grain synchronization (batch commits)
+ *   - Generating test media for fabric transport (see mxl-fabrics-demo)
+ */
+
 #include <csignal>
 #include <cstdint>
 #include <fstream>

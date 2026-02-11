@@ -2,6 +2,10 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file MemoryRegion.cpp
+ * \brief Implementation of MemoryRegion wrapper - handles memory registration with fi_mr_regattr().
+ */
+
 #include "MemoryRegion.hpp"
 #include <cstdint>
 #include <random>
@@ -47,26 +51,29 @@ namespace mxl::lib::fabrics::ofi
             region.size,
             region.loc.toString());
 
+        // FI_HMEM_DEVICE_ONLY flag indicates non-host memory (CUDA, ROCm, etc.)
         std::uint64_t flags = 0;
         flags |= region.loc.isHost() ? 0 : FI_HMEM_DEVICE_ONLY;
 
+        // Build fi_mr_attr structure for registration
         ::fi_mr_attr attr{};
         setDeviceId(attr, region.loc);
 
         attr.mr_iov = region.asIovec();
         attr.iov_count = 1;
-        attr.access = access;
+        attr.access = access;           // Access permissions (FI_WRITE, FI_REMOTE_READ, etc.)
         attr.offset = 0;                // reserved to 0
-        attr.requested_key = dist(gen); // creating a random key, but it can be ignored if FI_MR_PROV_KEY mr mode is set
+        attr.requested_key = dist(gen); // Random rkey (provider may override with FI_MR_PROV_KEY)
         attr.context = nullptr;         // not used
         attr.auth_key_size = 0;
         attr.auth_key = nullptr;
-        attr.iface = region.loc.iface();
+        attr.iface = region.loc.iface(); // FI_HMEM_SYSTEM, FI_HMEM_CUDA, etc.
         attr.hmem_data = nullptr;
-        attr.page_size = 4096;  // not used'
+        attr.page_size = 4096;  // not used
         attr.base_mr = nullptr; // not used
         attr.sub_mr_cnt = 0;    // not used
 
+        // Call fi_mr_regattr() to register memory with domain
         fiCall(fi_mr_regattr, "Failed to register memory region", domain.raw(), &attr, flags, &raw);
 
         struct MakeSharedEnabler : public MemoryRegion

@@ -1,3 +1,23 @@
+//! Audio Buffer Creation for MXL Source
+//!
+//! This module handles reading audio samples from MXL's shared-memory ring buffer
+//! and converting them to GStreamer buffers.
+//!
+//! ## Audio Format
+//! - Input: MXL planar audio (separate channel planes in shared memory)
+//! - Output: GStreamer buffer with interleaved F32LE audio
+//!
+//! ## Synchronization Strategy
+//! 1. **Initialization**: On first read, establish offset between MXL timeline and GStreamer running time
+//! 2. **Producer monitoring**: Wait briefly if reader is ahead of writer (no data available yet)
+//! 3. **Late detection**: If reader falls too far behind, jump forward (catch-up)
+//! 4. **Discontinuity flagging**: Set DISCONT flag when catching up
+//!
+//! ## Ring Buffer Management
+//! - Reads in batches (DEFAULT_BATCH_SIZE samples per buffer)
+//! - Handles wraparound (two-plane access per channel)
+//! - Advances read index after each successful read
+
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -11,11 +31,36 @@ use gstreamer as gst;
 use mxl::{FlowInfo, MxlInstance, Rational, SamplesData};
 use tracing::trace;
 
+/// Maximum time to wait for samples to become available
 const GET_SAMPLE_TIMEOUT: Duration = Duration::from_secs(2);
+
+/// Maximum time to wait for producer to advance head index
 const PRODUCER_TIMEOUT: Duration = Duration::from_millis(100);
+
+/// Default number of samples per buffer (affects latency vs. efficiency)
 const DEFAULT_BATCH_SIZE: u32 = 48;
 
+/// Creates a GStreamer audio buffer from MXL samples.
+///
+/// This is the main data path for audio. It reads a batch of samples from
+/// the MXL ring buffer, interleaves them, and wraps them in a GStreamer buffer.
+///
+/// # Arguments
+/// * `src` - The source element (provides access to pipeline clock)
+/// * `state` - Element state containing audio reader and timing info
+///
+/// # Returns
+/// * `Ok(CreateState::DataCreated(buffer))` if samples were read successfully
+/// * `Ok(CreateState::NoDataCreated)` if flow is stale (needs re-initialization)
+/// * `Err(FlowError)` if reading failed
+///
+/// # Synchronization
+/// - Initializes timing on first buffer
+/// - Waits for producer if reader is ahead
+/// - Catches up if reader is too far behind
+/// - Adjusts PTS if buffer would be late
 pub(crate) fn create_audio(src: &MxlSrc, state: &mut State) -> Result<CreateState, gst::FlowError> {
+    // Get audio state and flow configuration
     let audio_state = state.audio.as_mut().ok_or(gst::FlowError::Error)?;
 
     let reader_info = audio_state
@@ -34,16 +79,19 @@ pub(crate) fn create_audio(src: &MxlSrc, state: &mut State) -> Result<CreateStat
         .sample_rate()
         .map_err(|_| gst::FlowError::Error)?;
 
+    // Calculate batch size (limited by buffer size and max batch hint)
     let batch_size = DEFAULT_BATCH_SIZE
-        .min(continuous_flow_info.bufferLength / 2)
+        .min(continuous_flow_info.bufferLength / 2)  // Max half the ring buffer
         .min(reader_info.config.common().max_commit_batch_size_hint());
     let ring = continuous_flow_info.bufferLength as u64;
     let batch = batch_size as u64;
 
+    // Get current GStreamer running time
     let Some(ts_gst) = src.obj().current_running_time() else {
         return Err(gst::FlowError::Error);
     };
 
+    // Initialize timing on first read
     audio_state_init(
         &mut state.initial_info,
         &state.instance,
@@ -53,9 +101,11 @@ pub(crate) fn create_audio(src: &MxlSrc, state: &mut State) -> Result<CreateStat
         audio_state,
     );
 
+    // Check producer position and wait if necessary
     let head = reader_info.runtime.head_index();
     wait_for_sample(head, batch, audio_state)?;
 
+    // Catch up if reader has fallen too far behind
     if is_reader_late(head, batch, ring, audio_state)? {
         resync_state(
             ts_gst,
@@ -65,12 +115,14 @@ pub(crate) fn create_audio(src: &MxlSrc, state: &mut State) -> Result<CreateStat
         );
     }
 
+    // Closure to read samples from MXL
     let read_once = |idx: u64| {
         audio_state
             .samples_reader
             .get_samples(idx, batch as usize, GET_SAMPLE_TIMEOUT)
     };
 
+    // Read samples (or signal stale flow if timeout)
     let samples = match read_once(audio_state.index) {
         Ok(s) => s,
         Err(_) => {
@@ -78,17 +130,21 @@ pub(crate) fn create_audio(src: &MxlSrc, state: &mut State) -> Result<CreateStat
         }
     };
 
-    //Right now audio is being interleaved but in the future audio will be planar.
+    // Convert from planar to interleaved format
+    // NOTE: Future MXL versions may support planar output directly
     let interleaved = interleave_audio(&samples)?;
 
+    // Calculate actual duration of this batch (accounting for wraparound)
     let read_batch_duration =
         compute_batch_duration(audio_state.index, batch, &state.instance, &sample_rate)?;
 
+    // Advance MXL timeline reference
     state.initial_info.mxl_index = state
         .initial_info
         .mxl_index
         .saturating_add(read_batch_duration);
 
+    // Calculate buffer PTS
     let pts = compute_pts(
         batch,
         sample_rate,
@@ -97,10 +153,13 @@ pub(crate) fn create_audio(src: &MxlSrc, state: &mut State) -> Result<CreateStat
         &mut state.initial_info,
     );
 
+    // Check if discontinuity flag should be set
     let is_discont = std::mem::take(&mut audio_state.next_discont);
 
+    // Build GStreamer buffer
     let buffer = build_buffer(pts, samples, is_discont, interleaved)?;
 
+    // Advance counters
     audio_state.batch_counter += 1;
     audio_state.index += batch;
 
@@ -112,6 +171,9 @@ pub(crate) fn create_audio(src: &MxlSrc, state: &mut State) -> Result<CreateStat
     Ok(CreateState::DataCreated(buffer))
 }
 
+/// Initializes audio state on first buffer.
+///
+/// Establishes the timeline offset between MXL and GStreamer.
 fn audio_state_init(
     initial_info: &mut InitialTime,
     instance: &MxlInstance,
@@ -120,17 +182,24 @@ fn audio_state_init(
     reader_info: &FlowInfo,
     audio_state: &mut AudioState,
 ) {
+    // Only initialize once
     if !audio_state.is_initialized {
+        // Establish initial timeline offset
         *initial_info = InitialTime {
             mxl_index: instance.get_time(),
             gst_time: ts_gst,
         };
+
+        // Start reading one batch behind head (gives buffer for producer to advance)
         audio_state.index = reader_info.runtime.head_index().saturating_sub(batch);
         audio_state.is_initialized = true;
         audio_state.batch_counter = 0;
     }
 }
 
+/// Resyncs state after detecting lateness.
+///
+/// Resets the timeline offset and flags next buffer as discontinuous.
 fn resync_state(
     ts_gst: ClockTime,
     initial_info: &mut InitialTime,
@@ -143,6 +212,9 @@ fn resync_state(
     audio_state.next_discont = true;
 }
 
+/// Waits briefly if reader is ahead of producer.
+///
+/// Returns immediately if data is available, or after PRODUCER_TIMEOUT.
 fn wait_for_sample(
     mut head: u64,
     batch: u64,
@@ -176,6 +248,9 @@ fn wait_for_producer(
     Ok(head)
 }
 
+/// Checks if reader has fallen too far behind producer.
+///
+/// Returns true if reader index is older than the oldest valid sample.
 fn is_reader_late(
     head: u64,
     batch: u64,
@@ -257,6 +332,10 @@ fn build_buffer(
     Ok(buffer)
 }
 
+/// Converts MXL planar audio to GStreamer interleaved format.
+///
+/// MXL stores each channel separately (planar), GStreamer expects
+/// samples interleaved (S1C1, S1C2, S2C1, S2C2...).
 fn interleave_audio(samples: &SamplesData<'_>) -> Result<Vec<u8>, gst::FlowError> {
     let num_channels = samples.num_of_channels();
     let mut channels: Vec<Vec<u8>> = Vec::with_capacity(num_channels);

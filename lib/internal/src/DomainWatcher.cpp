@@ -1,6 +1,43 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+/**
+ * @file DomainWatcher.cpp
+ * @brief Cross-platform file watching for flow access time tracking (GC support)
+ *
+ * DomainWatcher monitors flow 'access' files to detect reader activity for garbage
+ * collection decisions. When readers access flows, they touch the access file,
+ * triggering file system events that update lastReadTime in flow metadata.
+ *
+ * PLATFORM-SPECIFIC IMPLEMENTATIONS:
+ *
+ * Linux (inotify + epoll):
+ * - inotify watches IN_ACCESS | IN_ATTRIB on access files
+ * - epoll multiplexes inotify events with timeout
+ * - Events processed in dedicated thread
+ * - Watch descriptors map to flow UUIDs in _watches multimap
+ *
+ * macOS (kqueue):
+ * - kqueue watches EVFILT_VNODE with NOTE_ATTRIB on access files
+ * - kevent() waits for file changes with timeout
+ * - Events processed in dedicated thread
+ *
+ * Thread lifecycle:
+ * - Constructor starts processEvents() thread
+ * - Destructor sets _running=false, joins thread, cleans up watches/FDs
+ * - Thread polls with 250ms timeout for graceful shutdown
+ *
+ * Registration pattern:
+ * - DiscreteFlowWriter registers on construction (addFlow)
+ * - DiscreteFlowWriter deregisters on destruction (removeFlow)
+ * - Multiple writers can watch same flow (multimap, refcounted by UUID)
+ *
+ * Why only discrete flows?
+ * - Continuous flows (audio) have too high read frequency for file watching
+ * - Would overwhelm file system with events
+ * - Discrete flows (video/data) have manageable read rates
+ */
+
 #include "mxl-internal/DomainWatcher.hpp"
 #include <cstdint>
 #include <cstring>

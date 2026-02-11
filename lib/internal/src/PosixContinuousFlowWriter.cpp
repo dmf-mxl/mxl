@@ -1,6 +1,21 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+/**
+ * @file PosixContinuousFlowWriter.cpp
+ * @brief Audio sample writer with batched futex signaling
+ *
+ * Writes audio samples to strided per-channel ring buffers. Implements intelligent
+ * batching to reduce futex wake overhead: only signals readers when sync batch
+ * boundaries are crossed, not on every commit.
+ *
+ * Batching logic (signalCompletedBatch):
+ * - Tracks last signaled batch number
+ * - Signals when crossing into new batch
+ * - Has early-signal threshold to avoid overshooting on next commit
+ * - This dramatically reduces CPU overhead for high-rate audio streams
+ */
+
 #include "PosixContinuousFlowWriter.hpp"
 #include <stdexcept>
 #include <mxl/time.h>
@@ -8,6 +23,7 @@
 
 namespace mxl::lib
 {
+    /** Constructor: caches batch sizes and computes early-signal threshold */
     PosixContinuousFlowWriter::PosixContinuousFlowWriter(FlowManager const&, uuids::uuid const& flowId, std::unique_ptr<ContinuousFlowData>&& data)
         : ContinuousFlowWriter{flowId}
         , _flowData{std::move(data)}
@@ -24,6 +40,7 @@ namespace mxl::lib
 
             auto const commitBatchSize = std::max(commonFlowConfigInfo.maxCommitBatchSizeHint, 1U);
             _syncBatchSize = std::max(commonFlowConfigInfo.maxSyncBatchSizeHint, 1U);
+            // Early threshold prevents overshooting sync batch on next commit
             _earlySyncThreshold = (_syncBatchSize >= commitBatchSize) ? (_syncBatchSize - commitBatchSize) : 0U;
         }
     }
@@ -52,12 +69,15 @@ namespace mxl::lib
         return getFlowData().flowInfo()->runtime;
     }
 
+    /** Open samples: returns mutable pointers into ring buffer for writing. Same wraparound math as reader. */
     mxlStatus PosixContinuousFlowWriter::openSamples(std::uint64_t index, std::size_t count, mxlMutableWrappedMultiBufferSlice& payloadBufferSlices)
     {
         if (_flowData)
         {
+            // Limit to half buffer to prevent overwriting data readers may still need
             if (count <= (_bufferLength / 2))
             {
+                // Same ring buffer math as reader
                 auto const startOffset = (index + _bufferLength - count) % _bufferLength;
                 auto const endOffset = (index % _bufferLength);
 
@@ -86,6 +106,7 @@ namespace mxl::lib
         return MXL_ERR_UNKNOWN;
     }
 
+    /** Commit: update head index and conditionally wake readers based on batch logic */
     mxlStatus PosixContinuousFlowWriter::commit()
     {
         if (_flowData)
@@ -94,9 +115,9 @@ namespace mxl::lib
             flow->info.runtime.headIndex = _currentIndex;
             _currentIndex = MXL_UNDEFINED_INDEX;
 
+            // Only wake readers if we crossed a sync batch boundary
             if (signalCompletedBatch())
             {
-                // Let readers know that the head has moved
                 flow->state.syncCounter++;
                 wakeAll(&flow->state.syncCounter);
             }
@@ -110,25 +131,35 @@ namespace mxl::lib
         }
     }
 
+    /** Cancel: discard uncommitted sample range */
     mxlStatus PosixContinuousFlowWriter::cancel()
     {
         _currentIndex = MXL_UNDEFINED_INDEX;
         return MXL_STATUS_OK;
     }
 
+    /**
+     * Batch signaling logic: only return true when sync batch boundary is crossed.
+     * This reduces futex wake overhead by batching multiple commits before signaling.
+     */
     bool PosixContinuousFlowWriter::signalCompletedBatch() noexcept
     {
         auto const currentSyncSampleBatch = _currentIndex / _syncBatchSize;
+
+        // Shouldn't happen (index going backwards)
         if (currentSyncSampleBatch < _lastSyncSampleBatch)
         {
             return false;
         }
+
         if (currentSyncSampleBatch == _lastSyncSampleBatch)
         {
-            // Signal now before overshooting the maximum the next time around
+            // Still in same batch - but check if we're close to overshooting
             if ((_currentIndex % _syncBatchSize) > _earlySyncThreshold)
             {
+                // Signal early to prevent overshooting on next commit
                 _lastSyncSampleBatch = currentSyncSampleBatch + 1U;
+                return true;
             }
             else
             {
@@ -137,10 +168,10 @@ namespace mxl::lib
         }
         else
         {
+            // Crossed into new batch - signal!
             _lastSyncSampleBatch = currentSyncSampleBatch;
+            return true;
         }
-
-        return true;
     }
 
     bool PosixContinuousFlowWriter::isExclusive() const

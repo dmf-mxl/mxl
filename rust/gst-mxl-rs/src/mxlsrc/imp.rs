@@ -1,3 +1,27 @@
+//! MXL Source Implementation
+//!
+//! This module contains the core implementation of the mxlsrc GStreamer element.
+//! It implements GStreamer's PushSrc trait (a type of BaseSrc), handling:
+//! - Element lifecycle (start/stop state transitions)
+//! - Property management (video-flow-id, audio-flow-id, domain)
+//! - Caps negotiation (reading flow definition, setting caps)
+//! - Buffer creation (calling create_audio or create_video on-demand)
+//! - Live mode operation (timestamps based on running time)
+//!
+//! ## GStreamer PushSrc Overview (for non-GStreamer developers)
+//! PushSrc is a base class for source elements that:
+//! - Produce buffers on-demand via the `create()` method
+//! - Operate in either live or non-live mode
+//! - Handle scheduling and pushing buffers downstream
+//! - Support seeking (if non-live) and querying
+//!
+//! ## Implementation Structure
+//! - `MxlSrc`: The struct holding element state (settings, context, clock_wait)
+//! - `ObjectImpl`: GObject property system integration
+//! - `ElementImpl`: GStreamer element metadata and pad templates
+//! - `BaseSrcImpl`: Source-specific behavior (start, stop, negotiate, set_caps)
+//! - `PushSrcImpl`: On-demand buffer creation via create()
+
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -34,12 +58,17 @@ use crate::mxlsrc::state::DEFAULT_DOMAIN;
 use crate::mxlsrc::state::DEFAULT_FLOW_ID;
 use crate::mxlsrc::state::Settings;
 
+/// GStreamer debug category for logging mxlsrc-specific messages
 pub(crate) static CAT: LazyLock<gst::DebugCategory> = LazyLock::new(|| {
     gst::DebugCategory::new("mxlsrc", gst::DebugColorFlags::empty(), Some("MXL Source"))
 });
 
+/// Clock waiting state for handling pipeline synchronization
 struct ClockWait {
+    /// Active clock wait (if any) for cancellation
     clock_id: Option<gst::SingleShotClockId>,
+
+    /// True when flushing (cancels clock waits)
     flushing: bool,
 }
 
@@ -47,31 +76,54 @@ impl Default for ClockWait {
     fn default() -> ClockWait {
         ClockWait {
             clock_id: None,
-            flushing: true,
+            flushing: true,  // Start in flushing state until unlock_stop()
         }
     }
 }
 
+/// MXL Source element implementation.
+///
+/// This struct holds all mutable state for the element. Fields are wrapped
+/// in Mutex for thread safety (GStreamer may call methods from multiple threads).
 #[derive(Default)]
 pub struct MxlSrc {
+    /// User-configurable properties (video/audio flow IDs, domain)
     pub settings: Mutex<Settings>,
+
+    /// Runtime state (MXL instance, reader, flow config)
     pub context: Mutex<Context>,
+
+    /// Clock synchronization state
     clock_wait: Mutex<ClockWait>,
 }
 
+/// Result of attempting to create a buffer.
+///
+/// `NoDataCreated` signals that the flow is stale and should be re-initialized.
 pub enum CreateState {
+    /// Buffer was created successfully
     DataCreated(Buffer),
+
+    /// No data available (flow stale, needs re-initialization)
     NoDataCreated,
 }
 
+/// Registers this type as a GLib object subclass
 #[glib::object_subclass]
 impl ObjectSubclass for MxlSrc {
+    /// Internal type name (must be unique)
     const NAME: &'static str = "GstRsMxlSrc";
+
+    /// Public wrapper type
     type Type = mxlsrc::MxlSrc;
+
+    /// Parent class (PushSrc provides on-demand buffer creation)
     type ParentType = gst_base::PushSrc;
 }
 
+/// GObject property system implementation
 impl ObjectImpl for MxlSrc {
+    /// Returns the list of properties this element exposes
     fn properties() -> &'static [glib::ParamSpec] {
         static PROPERTIES: LazyLock<Vec<glib::ParamSpec>> = LazyLock::new(|| {
             vec![
@@ -99,8 +151,13 @@ impl ObjectImpl for MxlSrc {
         PROPERTIES.as_ref()
     }
 
+    /// Called when the element is constructed.
+    ///
+    /// Configures the source as live (real-time) with time-based format.
     fn constructed(&self) {
         self.parent_constructed();
+
+        // Initialize tracing (debug/diagnostics feature)
         #[cfg(feature = "tracing")]
         {
             use tracing_subscriber::filter::LevelFilter;
@@ -116,8 +173,13 @@ impl ObjectImpl for MxlSrc {
                 .finish()
                 .try_init();
         }
+
         let obj = self.obj();
+
+        // Configure as live source (timestamps based on running time, not file position)
         obj.set_live(true);
+
+        // Use time format (not bytes or other formats)
         obj.set_format(gst::Format::Time);
     }
 
@@ -183,9 +245,12 @@ impl ObjectImpl for MxlSrc {
     }
 }
 
+/// GStreamer object implementation (inherits from GstObject)
 impl GstObjectImpl for MxlSrc {}
 
+/// GStreamer element implementation (metadata and pads)
 impl ElementImpl for MxlSrc {
+    /// Returns element metadata displayed by gst-inspect
     fn metadata() -> Option<&'static gst::subclass::ElementMetadata> {
         static ELEMENT_METADATA: LazyLock<gst::subclass::ElementMetadata> = LazyLock::new(|| {
             gst::subclass::ElementMetadata::new(
@@ -244,11 +309,21 @@ impl ElementImpl for MxlSrc {
     }
 }
 
+/// BaseSrc implementation (source-specific behavior)
 impl BaseSrcImpl for MxlSrc {
+    /// Handles events from downstream (seek, reconfigure, etc.)
     fn event(&self, event: &gst::Event) -> bool {
         self.parent_event(event)
     }
 
+    /// Negotiates caps with downstream.
+    ///
+    /// Reads the MXL flow definition (JSON), parses it into video or audio
+    /// parameters, and proposes caps to downstream.
+    ///
+    /// # Returns
+    /// * `Ok(())` if caps were negotiated successfully
+    /// * `Err(LoggableError)` if flow ID not set, MXL query failed, or caps invalid
     fn negotiate(&self) -> Result<(), gst::LoggableError> {
         gst::info!(CAT, imp = self, "Negotiating caps…");
 
@@ -281,6 +356,16 @@ impl BaseSrcImpl for MxlSrc {
         mxl_helper::set_json_caps(self, flow_description)
     }
 
+    /// Called when caps are finalized (after negotiation succeeds).
+    ///
+    /// Verifies the negotiated caps match what we expected from the flow definition.
+    ///
+    /// # Arguments
+    /// * `caps` - Negotiated capabilities (video/x-raw or audio/x-raw)
+    ///
+    /// # Returns
+    /// * `Ok(())` if caps are valid
+    /// * `Err(LoggableError)` if caps are missing required fields
     fn set_caps(&self, caps: &gst::Caps) -> Result<(), gst::LoggableError> {
         let structure = caps
             .structure(0)
@@ -345,14 +430,32 @@ impl BaseSrcImpl for MxlSrc {
         }
     }
 
+    /// Called when transitioning to PAUSED state (start the source).
+    ///
+    /// Initializes the MXL instance, creates flow readers, and prepares
+    /// for buffer creation.
+    ///
+    /// # Returns
+    /// * `Ok(())` if MXL initialization succeeded
+    /// * `Err(ErrorMessage)` if initialization failed
     fn start(&self) -> Result<(), gst::ErrorMessage> {
+        // Clear flushing flag
         self.unlock_stop()?;
+
+        // Initialize MXL readers
         mxl_helper::init(self)?;
         gst::info!(CAT, imp = self, "Started");
 
         Ok(())
     }
 
+    /// Called when transitioning to NULL state (stop the source).
+    ///
+    /// Destroys MXL readers and releases shared memory resources.
+    ///
+    /// # Returns
+    /// * `Ok(())` if cleanup succeeded
+    /// * `Err(ErrorMessage)` if cleanup failed
     fn stop(&self) -> Result<(), gst::ErrorMessage> {
         let mut context = self.context.lock().map_err(|e| {
             gst::error_msg!(
@@ -402,7 +505,24 @@ impl BaseSrcImpl for MxlSrc {
     }
 }
 
+/// PushSrc implementation (on-demand buffer creation)
 impl PushSrcImpl for MxlSrc {
+    /// Creates a buffer on-demand.
+    ///
+    /// Called by the BaseSrc base class when downstream requests data.
+    /// Loops until a buffer is created or EOS is reached.
+    ///
+    /// # Arguments
+    /// * `_buffer` - Optional pre-allocated buffer (unused, we always create new)
+    ///
+    /// # Returns
+    /// * `Ok(CreateSuccess::NewBuffer(buffer))` if a buffer was created
+    /// * `Err(FlowError::Eos)` if the element is stopping
+    /// * `Err(FlowError)` if buffer creation failed
+    ///
+    /// # Flow Staleness
+    /// If try_create() returns NoDataCreated, the flow is stale (writer died).
+    /// We re-initialize the reader and retry unless we're stopping.
     fn create(
         &self,
         _buffer: Option<&mut gst::BufferRef>,
@@ -414,12 +534,14 @@ impl PushSrcImpl for MxlSrc {
                         return Ok(CreateSuccess::NewBuffer(buffer));
                     }
                     CreateState::NoDataCreated => {
+                        // Check if we're stopping (EOS)
                         if self.obj().current_state() == gst::State::Paused
                             || self.obj().current_state() == gst::State::Null
                         {
                             return Err(gst::FlowError::Eos);
                         };
-                        //Flow is stale and reader needs to be rebuilt
+
+                        // Flow is stale: re-initialize reader and retry
                         let _ = mxl_helper::init(self);
                     }
                 },
@@ -430,6 +552,9 @@ impl PushSrcImpl for MxlSrc {
 }
 
 impl MxlSrc {
+    /// Attempts to create a buffer without retrying.
+    ///
+    /// Routes to create_video or create_audio based on negotiated caps.
     fn try_create(&self) -> Result<CreateState, gst::FlowError> {
         let mut context = self.context.lock().map_err(|_| gst::FlowError::Error)?;
         let state = context.state.as_mut().ok_or(gst::FlowError::Error)?;

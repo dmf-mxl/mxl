@@ -2,6 +2,37 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/**
+ * @file Exception.hpp
+ * @brief Exception types for the fabrics OFI implementation
+ *
+ * This file defines exception classes and helper functions for error handling in the fabrics layer.
+ *
+ * ERROR HANDLING STRATEGY:
+ * - Internally, the fabrics code uses C++ exceptions (Exception, FabricException)
+ * - At the C API boundary, exceptions are caught and converted to mxlStatus codes
+ * - This allows clean RAII and error propagation internally while maintaining C compatibility
+ *
+ * TWO EXCEPTION TYPES:
+ * - **Exception**: Generic MXL fabrics exception carrying an mxlStatus code
+ * - **FabricException**: Extends Exception to also carry a libfabric error code (fi_errno)
+ *
+ * HELPER FUNCTIONS:
+ * - mxlStatusFromFiErrno(): Maps libfabric error codes to MXL status codes
+ * - fiCall(): Template function that wraps libfabric API calls and throws on error
+ *
+ * USAGE PATTERN:
+ * ```cpp
+ * // Instead of:
+ * int ret = fi_endpoint(domain, info, &ep, nullptr);
+ * if (ret != 0) { /* handle error ... */ }
+ *
+ * // Use:
+ * fiCall(fi_endpoint, "Failed to create endpoint", domain, info, &ep, nullptr);
+ * // throws FabricException on error, otherwise continues
+ * ```
+ */
+
 #pragma once
 
 #include <exception>
@@ -13,15 +44,37 @@
 namespace mxl::lib::fabrics::ofi
 {
     /**
-     * \brief Convert an error code returned by libfabric to an appropriate mxlStatus code.
+     * @brief Convert a libfabric error code to an mxlStatus code
+     *
+     * @param fiErrno Negative error code returned by a libfabric function (e.g., -FI_EAGAIN, -FI_ENOMEM)
+     * @return mxlStatus Corresponding MXL status code
+     *
+     * Libfabric uses negative error codes defined in rdma/fi_errno.h. This function maps
+     * common libfabric errors to their MXL equivalents.
+     *
+     * Common mappings:
+     * - -FI_ENOMEM -> MXL_ERR_NO_MEMORY
+     * - -FI_EINVAL -> MXL_ERR_INVALID_ARG
+     * - -FI_ENOSYS -> MXL_ERR_NOT_SUPPORTED
+     * - -FI_ETIMEDOUT -> MXL_ERR_TIMEOUT
+     * - Everything else -> MXL_ERR_UNKNOWN
      */
     mxlStatus mxlStatusFromFiErrno(int fiErrno);
 
     /**
-     * \brief Custom exception type used in the fabrics library.
+     * @class Exception
+     * @brief Base exception class for the fabrics layer
      *
-     * Used to propagate information about error conditions to the api surface by
-     * carrying a status code.
+     * This exception carries an mxlStatus code that indicates the category of error.
+     * It's used internally for error propagation and converted to status codes at the C API boundary.
+     *
+     * The class provides factory methods for creating specific error types:
+     * - invalidArgument() for MXL_ERR_INVALID_ARG
+     * - internal() for MXL_ERR_INTERNAL
+     * - invalidState() for MXL_ERR_INVALID_STATE
+     * - etc.
+     *
+     * These factory methods use fmt::format for type-safe, printf-style formatting.
      */
     class Exception : public std::exception
     {

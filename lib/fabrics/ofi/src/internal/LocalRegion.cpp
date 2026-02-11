@@ -2,6 +2,10 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file LocalRegion.cpp
+ * \brief Implementation of LocalRegion conversion utilities.
+ */
+
 #include "LocalRegion.hpp"
 #include <algorithm>
 

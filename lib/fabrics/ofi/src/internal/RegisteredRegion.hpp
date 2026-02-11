@@ -2,6 +2,30 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file RegisteredRegion.hpp
+ * \brief Registered memory region - combines original Region with MemoryRegion after fi_mr_reg().
+ *
+ * RegisteredRegion ties together:
+ * - Original Region (base address, size, location)
+ * - MemoryRegion (fid_mr handle from fi_mr_reg() containing desc and rkey)
+ *
+ * After registration, RegisteredRegion can generate:
+ * - LocalRegion: For local RDMA operations (contains desc for local DMA)
+ * - RemoteRegion: For remote peer (contains rkey for remote access, address in correct mode)
+ *
+ * Address modes:
+ * - Virtual addressing: Remote uses actual pointer value (region.base)
+ * - Offset addressing: Remote uses 0-based offset (0)
+ * - Mode determined by FI_MR_VIRT_ADDR flag in domain attributes
+ *
+ * Workflow:
+ * 1. Create Region (unregistered memory descriptor)
+ * 2. Register with MemoryRegion::reg() → gets fid_mr handle
+ * 3. Wrap in RegisteredRegion
+ * 4. Call toLocal() for initiator-side LocalRegion
+ * 5. Call toRemote() for target-side RemoteRegion (send to peer)
+ */
+
 #pragma once
 
 #include <vector>
@@ -15,6 +39,8 @@
 namespace mxl::lib::fabrics::ofi
 {
     /** \brief Represent a registered memory region.
+     *
+     * Combines original Region with MemoryRegion handle to generate LocalRegion and RemoteRegion.
      */
     class RegisteredRegion
     {

@@ -1,6 +1,36 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+/**
+ * @file FlowManager.cpp
+ * @brief Atomic flow creation/deletion with tmpdir staging and rename-based publication
+ *
+ * FlowManager orchestrates the lifecycle of MXL flows in a domain (tmpfs directory).
+ * Key operations: create, open, delete, list flows.
+ *
+ * ATOMIC FLOW CREATION PATTERN:
+ * 1. Create temp directory (.mxl-tmp-XXXXXXXX) - hidden, won't clash with real flows
+ * 2. Build flow structure in temp dir (data file, JSON, grain files)
+ * 3. Atomically publish via renameat2(RENAME_NOREPLACE) to UUID.mxl-flow/
+ * 4. If rename fails (EEXIST), another process won race - open existing flow instead
+ * 5. On success, return created flow; on conflict, open and return existing flow
+ *
+ * This create-or-open pattern prevents race conditions when multiple processes
+ * try to create the same flow simultaneously. First one wins, others seamlessly
+ * open the winner's flow.
+ *
+ * FLOW DELETION:
+ * - deleteFlow() removes entire flow directory tree
+ * - Safe because advisory locks prevent deleting active flows
+ * - Garbage collection uses this after checking for stale locks
+ *
+ * FLOW OPENING:
+ * - Opens existing flow's data file, mmaps it
+ * - For discrete: opens all grain files (grains/data.0, data.1, ...)
+ * - For continuous: opens channel buffer file
+ * - Validates flow version compatibility
+ */
+
 #include "mxl-internal/FlowManager.hpp"
 #include <cstring>
 #include <filesystem>
@@ -26,16 +56,9 @@ namespace mxl::lib
     namespace
     {
         /**
-         * Attempt to create a temporary directory to prepare a new flow.
-         * The temporary name is structured in a way that prevents is from
-         * clashing with directory names that belong to established flows.
-         *
-         * \param[in] base the base directory, below which the temporary
-         *      directory should be created,
-         * \return A filesystem path referring to the newly created temporary
-         *      directory.
-         * \throws std::filesystem::filesystem_error if creating the temporary
-         *      directory failed for whatever reason.
+         * Create temp directory for staging flow creation.
+         * Uses mkdtemp for atomic temp dir creation with unique random suffix.
+         * Prefix ".mxl-tmp-" ensures no collision with real flow dirs (UUID.mxl-flow).
          */
         std::filesystem::path createTemporaryFlowDirectory(std::filesystem::path const& base)
         {

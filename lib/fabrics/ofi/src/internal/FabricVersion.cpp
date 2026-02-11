@@ -2,6 +2,10 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file FabricVersion.cpp
+ * \brief Implementation of libfabric version query.
+ */
+
 #include "FabricVersion.hpp"
 #include <rdma/fabric.h>
 

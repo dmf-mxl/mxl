@@ -1,6 +1,27 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+/**
+ * @file test_flows_timing.cpp
+ * @brief Unit tests for MXL flow timing and synchronization behavior
+ *
+ * This test suite validates MXL's timing and synchronization mechanisms:
+ *   - Blocking reads that wait for grain availability
+ *   - Reader/writer concurrency with timing constraints
+ *   - Timeout handling for missing grains
+ *   - Real-time grain production/consumption patterns
+ *   - Frame-accurate timing using TAI timestamps
+ *
+ * Key scenarios tested:
+ *   - Reader waiting for writer to catch up (simulates late writer)
+ *   - Writer producing grains at real-time rate
+ *   - Reader blocking until specific grain index is available
+ *   - Timeout behavior when grains are missing
+ *
+ * These tests use threading to simulate realistic producer/consumer
+ * scenarios with timing constraints typical of live media workflows.
+ */
+
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
@@ -23,8 +44,24 @@
 
 #include "Utils.hpp"
 
-/// The test simulates trying to read video data from the current head, while the writer is still
-/// 3 grains behind (~100 ms at the 30000/1001 rate).
+/**
+ * @brief Test that reader blocks waiting for writer to produce a grain
+ *
+ * Simulates a real-time scenario where:
+ *   1. Reader requests current grain (index N)
+ *   2. Writer is 3 grains behind (at index N-3)
+ *   3. Writer produces grains at real-time rate (~33ms per frame @ 29.97fps)
+ *   4. Reader blocks until grain N is available
+ *   5. Reader successfully retrieves grain N after ~100ms wait
+ *
+ * This validates:
+ *   - Blocking read behavior (mxlFlowReaderGetGrain waits)
+ *   - Timeout parameter works correctly (1 second timeout)
+ *   - Grain data integrity (embedded grain index verified)
+ *   - Thread-safe concurrent access
+ *
+ * The test uses 30000/1001 rate (~29.97fps), so 3 grains = ~100ms latency.
+ */
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : Wait for grain availability", "[mxl flows timing]")
 {
     auto const opts = "{}";

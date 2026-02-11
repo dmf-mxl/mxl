@@ -1,3 +1,13 @@
+//! Unit and Integration Tests for MXL Sink
+//!
+//! This module contains tests for the mxlsink element:
+//! - Flow definition JSON generation (serialization to NMOS format)
+//! - Pipeline construction and state transitions
+//! - Video format handling (GRAY8 with conversion to v210)
+//!
+//! Tests are conditional on #[cfg(test)] and can use tracing output
+//! when the "tracing" feature is enabled.
+
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -12,6 +22,10 @@ mod tests {
     use mxl::flowdef::*;
     use uuid::Uuid;
 
+    /// Tests MXL flow definition JSON generation.
+    ///
+    /// Verifies that FlowDefVideo serializes to the correct NMOS-compatible
+    /// JSON structure expected by MXL.
     #[test]
     #[cfg_attr(feature = "tracing", tracing_test::traced_test)]
     fn flow_def_generation() -> Result<(), glib::Error> {
@@ -121,6 +135,14 @@ mod tests {
         Ok(())
     }
 
+    /// Tests a valid video pipeline with format conversion.
+    ///
+    /// Creates a pipeline: videotestsrc -> videoconvert -> GRAY8 -> videoconvert -> mxlsink
+    /// Verifies:
+    /// - Elements link successfully
+    /// - State transition to PLAYING succeeds
+    /// - Caps negotiation completes
+    /// - Pipeline runs for 600ms without errors
     #[test]
     #[cfg_attr(feature = "tracing", tracing_test::traced_test)]
     fn valid_gray_pipeline() -> Result<(), glib::Error> {

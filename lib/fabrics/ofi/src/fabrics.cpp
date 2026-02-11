@@ -2,9 +2,23 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/**
+ * @file fabrics.cpp
+ * @brief Stub implementation of the MXL Fabrics C API
+ *
+ * This file contains placeholder implementations that return MXL_ERR_INTERNAL for all
+ * fabric functions. The actual OFI/libfabric implementation exists elsewhere in the codebase.
+ *
+ * This stub may be used when:
+ * - Building MXL without fabrics support enabled
+ * - Linking against a minimal MXL build
+ * - As a template for alternative fabric implementations
+ */
+
 #include <mxl/fabrics.h>
 #include <mxl/mxl.h>
 
+// Macro to suppress "unused parameter" compiler warnings in stub functions
 #define MXL_FABRICS_UNUSED(x) (void)x
 
 extern "C" MXL_EXPORT

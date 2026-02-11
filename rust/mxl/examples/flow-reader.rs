@@ -1,6 +1,30 @@
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+//! Example program demonstrating MXL flow reading.
+//!
+//! This example connects to an existing MXL flow and continuously reads media data
+//! (either discrete grains for video/data or continuous samples for audio). It
+//! automatically adapts to the flow type and demonstrates both blocking reads
+//! with timeout and timing synchronization.
+//!
+//! # Usage
+//!
+//! ```bash
+//! cargo run --example flow-reader -- \
+//!     --mxl-domain /dev/shm/my_domain \
+//!     --flow-id "12345678-1234-1234-1234-123456789abc"
+//! ```
+//!
+//! For audio flows, optionally specify batch size:
+//!
+//! ```bash
+//! cargo run --example flow-reader -- \
+//!     --mxl-domain /dev/shm/my_domain \
+//!     --flow-id "audio-flow-uuid" \
+//!     --sample-batch-size 480
+//! ```
+
 mod common;
 
 use std::time::Duration;
@@ -9,8 +33,10 @@ use clap::Parser;
 use mxl::config::get_mxl_so_path;
 use tracing::{info, warn};
 
+/// Timeout for blocking read operations.
 const READ_TIMEOUT: Duration = Duration::from_secs(5);
 
+/// Command-line arguments for the flow reader example.
 #[derive(Debug, Parser)]
 #[command(version = clap::crate_version!(), author = clap::crate_authors!())]
 pub struct Opts {
@@ -29,6 +55,7 @@ pub struct Opts {
     pub sample_batch_size: Option<u64>,
 }
 
+/// Main entry point - loads MXL, connects to flow, and dispatches to appropriate reader.
 fn main() -> Result<(), mxl::Error> {
     common::setup_logging();
     let opts: Opts = Opts::parse();
@@ -54,6 +81,10 @@ fn main() -> Result<(), mxl::Error> {
     }
 }
 
+/// Reads discrete grains (video frames / data packets) in a loop.
+///
+/// Demonstrates blocking grain reads with timeout, starting from the current index
+/// based on the flow's grain rate.
 fn read_grains(
     mxl_instance: mxl::MxlInstance,
     reader: mxl::GrainReader,
@@ -75,6 +106,11 @@ fn read_grains(
     Ok(())
 }
 
+/// Reads continuous audio samples in batches.
+///
+/// Demonstrates non-blocking sample reads with manual timing synchronization.
+/// The batch size can be specified via command-line args, or will be inferred
+/// from the writer's hint or defaulted to ~10ms worth of samples.
 fn read_samples(
     mxl_instance: mxl::MxlInstance,
     reader: mxl::SamplesReader,

@@ -1,6 +1,33 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+/**
+ * @file test_flows.cpp
+ * @brief Comprehensive unit tests for MXL flow reader/writer functionality
+ *
+ * This test suite validates core MXL flow operations including:
+ *   - Video flow creation and lifecycle
+ *   - Audio flow creation and lifecycle
+ *   - Data/ancillary flow handling (ST 291 metadata)
+ *   - Grain writing and reading (video, discrete data)
+ *   - Sample writing and reading (audio, continuous data)
+ *   - Flow synchronization and timing
+ *   - Invalid grain handling
+ *   - Multi-reader/writer scenarios
+ *   - Ring buffer wraparound behavior
+ *   - Flow activation/deactivation
+ *   - PCAP file generation for network transmission validation (Linux only)
+ *
+ * Key test categories:
+ *   - Create/Destroy: Basic flow lifecycle
+ *   - Read/Write: Zero-copy grain/sample operations
+ *   - Timing: Index-based synchronization
+ *   - Edge cases: Invalid grains, buffer overruns, concurrent access
+ *   - Integration: Multi-flow scenarios, reader/writer interleaving
+ *
+ * These tests use real NMOS flow descriptors from data/*.json files.
+ */
+
 #include "Utils.hpp"
 
 #ifndef __APPLE__
@@ -29,6 +56,21 @@
 
 namespace fs = std::filesystem;
 
+/**
+ * @brief Test complete video flow lifecycle: create, write, read, destroy
+ *
+ * This test validates:
+ *   - Creating a v210 video flow from NMOS JSON descriptor
+ *   - Flow becomes active when writer is created
+ *   - Opening a grain for writing allocates proper buffer size
+ *   - Writing invalid grains (marked with MXL_GRAIN_FLAG_INVALID)
+ *   - Reading grains back with zero-copy access
+ *   - Grain metadata (index, size, flags) is preserved
+ *   - Buffer contents are accessible (marks at start/end verified)
+ *   - Flow cleanup releases all resources
+ *
+ * Tests 1920x1080 59.94fps video flow (60000/1001 rate).
+ */
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : Create/Destroy", "[mxl flows]")
 {
     auto const opts = "{}";

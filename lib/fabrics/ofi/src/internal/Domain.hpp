@@ -2,6 +2,25 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file Domain.hpp
+ * \brief Wrapper for libfabric domain (fi_domain) - resource container for RDMA operations.
+ *
+ * A Domain in libfabric is a resource container that groups related RDMA resources together.
+ * Key responsibilities:
+ * - Memory registration: Pins memory regions for zero-copy RDMA access
+ * - Resource isolation: Provides namespace for endpoints, completion queues, address vectors
+ * - Address modes: Determines whether virtual or offset-based addressing is used
+ * - Completion modes: Specifies how completion data (immediate data) is delivered
+ *
+ * Hierarchy: Fabric → Domain → Endpoints/CQs/AVs
+ *
+ * Memory registration process:
+ * 1. User provides Region objects (base pointer + size)
+ * 2. Domain registers them with fi_mr_reg(), pinning pages in physical memory
+ * 3. Creates RegisteredRegion objects containing memory registration handles
+ * 4. Generates LocalRegion (for local RDMA ops) and RemoteRegion (for remote peer) from registrations
+ */
+
 #pragma once
 
 #include <cstdint>
@@ -19,6 +38,9 @@ namespace mxl::lib::fabrics::ofi
     class RegisteredRegion;
 
     /** \brief RAII Wrapper around a libfabric domain (`fi_domain`).
+     *
+     * Domain is a resource container that manages memory registration and provides
+     * the context for creating endpoints, completion queues, and address vectors.
      */
     class Domain
     {

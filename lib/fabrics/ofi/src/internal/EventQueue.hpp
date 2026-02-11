@@ -2,6 +2,31 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file EventQueue.hpp
+ * \brief Wrapper for libfabric event queue (fi_eq) - receives control path events.
+ *
+ * EventQueue (EQ) is for control/management events, as opposed to CompletionQueue (CQ) which handles
+ * data path completions.
+ *
+ * EventQueue vs CompletionQueue:
+ * - EQ: Connection management events (FI_CONNREQ, FI_CONNECTED, FI_SHUTDOWN), errors
+ * - CQ: Data operation completions (successful/failed write, recv, etc.)
+ *
+ * Event types delivered to EQ:
+ * - FI_CONNREQ: Incoming connection request on passive endpoint
+ * - FI_CONNECTED: Connection established (both active and passive sides)
+ * - FI_SHUTDOWN: Graceful connection teardown completed
+ * - Error events: Control operation failures
+ *
+ * Usage pattern:
+ * 1. Create EventQueue with open()
+ * 2. Bind to endpoint with endpoint.bind(eq)
+ * 3. Poll with read() (non-blocking) or readBlocking() (blocking with timeout)
+ * 4. Handle Event variants (ConnectionRequested, Connected, Shutdown, Error)
+ *
+ * Only connection-oriented (MSG) endpoints typically use EventQueue.
+ */
+
 #pragma once
 
 #include <chrono>
@@ -13,7 +38,9 @@
 
 namespace mxl::lib::fabrics::ofi
 {
-    /** \brief RAII Wrapper around a libfabric event queue (`fi_eq`)
+    /** \brief RAII Wrapper around a libfabric event queue (`fi_eq`).
+     *
+     * EventQueue receives control path events for connection management.
      */
     class EventQueue : public std::enable_shared_from_this<EventQueue>
     {

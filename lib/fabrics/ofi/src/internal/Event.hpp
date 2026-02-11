@@ -2,6 +2,26 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file Event.hpp
+ * \brief Wrapper for libfabric event queue entries - control path events for connection management.
+ *
+ * Events are control-plane notifications (vs Completions which are data-plane). They're posted to
+ * EventQueue (EQ) for connection-oriented endpoints.
+ *
+ * Event types:
+ * - ConnectionRequested: Incoming connection request on passive endpoint (FI_CONNREQ)
+ * - Connected: Connection established, endpoint ready for data transfers (FI_CONNECTED)
+ * - Shutdown: Graceful connection teardown completed (FI_SHUTDOWN)
+ * - Error: Control path error (e.g., connection refused, timeout)
+ *
+ * Key difference from Completion:
+ * - Events = control operations (connect, accept, shutdown)
+ * - Completions = data operations (write, recv)
+ *
+ * Events are only relevant for connection-oriented (MSG) endpoints. Connectionless (RDM/DGRAM)
+ * endpoints typically don't use EventQueue.
+ */
+
 #pragma once
 
 #include <cstdint>
@@ -15,7 +35,10 @@ namespace mxl::lib::fabrics::ofi
 {
     class EventQueue;
 
-    /** \brief Type to represent an event entry from an EventQueue
+    /** \brief Type to represent an event entry from an EventQueue.
+     *
+     * Event is a std::variant wrapper around different event types from libfabric EventQueue.
+     * Use std::visit() with overloaded pattern to handle different event types.
      */
     class Event
     {

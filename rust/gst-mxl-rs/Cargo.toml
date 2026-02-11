@@ -3,38 +3,56 @@
 
 [package]
 name = "gst-mxl-rs"
-description = "MXL plugin"
-repository.workspace = true
-edition.workspace = true
-publish.workspace = true
-version.workspace = true
-license.workspace = true
+description = "MXL plugin"  # Brief description for Cargo registry
+repository.workspace = true  # Uses workspace-level repository URL
+edition.workspace = true     # Uses workspace-level Rust edition (2021)
+publish.workspace = true     # Uses workspace-level publish settings
+version.workspace = true     # Uses workspace-level version
+license.workspace = true     # Uses workspace-level license (Apache-2.0)
 
+# Cargo-machete: tool for finding unused dependencies
 [package.metadata.cargo-machete]
-ignored = ["regex"]
+ignored = ["regex"]  # Regex is needed for tracing but not directly referenced
 
 [dependencies]
+# GLib object system (required for GStreamer integration)
 glib = "0.21.5"
+
+# Core GStreamer bindings
 gstreamer = "0.24.4"
+
+# GStreamer audio utilities (AudioInfo, audio caps handling)
 gstreamer-audio = "0.24.4"
+
+# GStreamer base classes (BaseSrc, BaseSink, PushSrc)
 gstreamer-base = "0.24.4"
+
+# MXL SDK (local path dependency)
 mxl = { path = "../mxl" }
+
+# JSON serialization/deserialization (for NMOS flow definitions)
 serde_json.workspace = true
+
+# UUID parsing and generation (for flow IDs)
 uuid.workspace = true
+
+# Structured logging (optional, via "tracing" feature)
 tracing.workspace = true
 tracing-subscriber.workspace = true
-tracing-test = "0.2.5"
+tracing-test = "0.2.5"  # Test integration for tracing
 
-# If this is not included, tracing won't work while debugging
+# Required for tracing to work properly (unicode-case needed for pattern matching)
 regex = { version = "1", features = ["unicode-case"] }
 
 [features]
+# Optional feature: enables detailed tracing output
 tracing = []
 
 [lib]
-name = "gstmxl"
-crate-type = ["cdylib", "rlib"]
-path = "src/lib.rs"
+name = "gstmxl"  # Library name (becomes libgstmxl.so / gstmxl.dll)
+crate-type = ["cdylib", "rlib"]  # Build both shared library (for GStreamer) and Rust library (for tests)
+path = "src/lib.rs"  # Entry point for the library
 
 [build-dependencies]
+# Helper for generating version info from git (used in build.rs)
 gst-plugin-version-helper = { version = "0.8.3" }

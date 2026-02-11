@@ -1,6 +1,20 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+/**
+ * @file Utils.hpp
+ * @brief Test utility functions and fixtures for MXL unit tests
+ *
+ * This header provides common test infrastructure used across all MXL test suites:
+ *   - Domain path selection (Linux: /dev/shm, macOS: $HOME)
+ *   - RAII domain fixture for automatic setup/teardown
+ *   - File reading utilities for loading test data (NMOS flow descriptors)
+ *   - Temporary domain creation for isolated testing
+ *
+ * The mxlDomainFixture ensures each test starts with a clean domain and
+ * automatically cleans up afterward, preventing test interference.
+ */
+
 #pragma once
 
 #include <cstdlib>
@@ -18,26 +32,60 @@
 namespace mxl::tests
 {
 
+    /**
+     * @brief Read entire file contents into a string
+     * @param filepath Path to the file to read
+     * @return File contents as string
+     * @throws std::runtime_error if file cannot be opened
+     */
     std::string readFile(std::filesystem::path const& filepath);
 
     /**
-     * Simple utility function to get the domain path for the tests.
-     * This will return a path to /dev/shm/mxl_domain on Linux and a path in the user's
-     * home directory ($HOME/mxl_domain) on macOS.
-     * \return The path to the mxl domain directory.  The directory may not exist yet.
+     * @brief Get the default MXL domain path for tests
+     *
+     * Returns platform-specific shared memory location:
+     *   - Linux: /dev/shm/mxl_domain (tmpfs for zero-copy performance)
+     *   - macOS: $HOME/mxl_domain (macOS doesn't expose tmpfs to userspace)
+     *
+     * @return The path to the MXL domain directory (may not exist yet)
+     * @throws std::runtime_error on unsupported platforms or missing $HOME
      */
     std::filesystem::path getDomainPath();
 
-    // Helper to make a unique temp domain
+    /**
+     * @brief Create a unique temporary domain for isolated testing
+     *
+     * Uses mkdtemp to create a unique domain directory with random suffix.
+     * Useful for parallel test execution without domain conflicts.
+     *
+     * @return Path to the newly created temporary domain
+     * @throws std::runtime_error if directory creation fails
+     */
     std::filesystem::path makeTempDomain();
 
-    //
-    // RAII helper to prepare and cleanup a domain for the duration of a test
-    //
+    /**
+     * @brief RAII test fixture for MXL domain lifecycle management
+     *
+     * This fixture ensures clean test isolation by:
+     *   1. Removing any existing domain before test starts
+     *   2. Creating a fresh domain directory
+     *   3. Automatically cleaning up domain when test completes
+     *
+     * Usage with Catch2:
+     *   TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Test name", "[tag]")
+     *   {
+     *       // 'domain' member is available here
+     *       auto instance = mxlCreateInstance(domain.string().c_str(), "{}");
+     *       // ... test code ...
+     *   }
+     *   // Domain is automatically cleaned up when test exits
+     */
     class mxlDomainFixture
     {
     public:
-        /// Create the fixture. Will delete the domain if it exists and create a new one.
+        /**
+         * @brief Constructor: remove old domain if present, create fresh one
+         */
         mxlDomainFixture()
             : domain{getDomainPath()}
         {
@@ -45,16 +93,23 @@ namespace mxl::tests
             std::filesystem::create_directories(domain);
         }
 
-        /// Delete the domain folder
+        /**
+         * @brief Destructor: clean up domain directory and all flows
+         */
         ~mxlDomainFixture()
         {
             removeDomain();
         }
 
     protected:
-        /// The path to the domain
+        /** @brief The path to the MXL domain being tested */
         std::filesystem::path domain;
 
+        /**
+         * @brief Check if a flow directory exists in the domain
+         * @param id Flow UUID string
+         * @return true if the flow's .mxl-flow directory exists
+         */
         [[nodiscard]]
         bool flowDirectoryExists(std::string const& id) const
         {
@@ -62,7 +117,9 @@ namespace mxl::tests
         }
 
     private:
-        /// Remove the domain folder if it exists
+        /**
+         * @brief Remove the domain directory if it exists
+         */
         void removeDomain()
         {
             if (std::filesystem::exists(domain))
@@ -73,8 +130,9 @@ namespace mxl::tests
     };
 
     /**************************************************************************/
-    /* Inline implementation.                                                 */
+    /* Inline implementation                                                  */
     /**************************************************************************/
+
     inline std::string readFile(std::filesystem::path const& filepath)
     {
         if (auto file = std::ifstream{filepath, std::ios::in | std::ios::binary}; file)

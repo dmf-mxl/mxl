@@ -2,6 +2,10 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file Region.cpp
+ * \brief Implementation of Region classes - converts memory descriptors to iovec and libfabric types.
+ */
+
 #include "Region.hpp"
 #include <cassert>
 #include <cstdint>

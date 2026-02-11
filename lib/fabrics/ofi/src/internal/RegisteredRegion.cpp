@@ -2,6 +2,10 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file RegisteredRegion.cpp
+ * \brief Implementation of RegisteredRegion conversions to LocalRegion and RemoteRegion.
+ */
+
 #include "RegisteredRegion.hpp"
 #include "LocalRegion.hpp"
 #include "RemoteRegion.hpp"
@@ -11,6 +15,8 @@ namespace mxl::lib::fabrics::ofi
 
     RemoteRegion RegisteredRegion::toRemote(bool useVirtualAddress) const noexcept
     {
+        // Virtual addressing: remote uses actual pointer value (region.base)
+        // Offset addressing: remote uses 0-based offset (0)
         auto addr = useVirtualAddress ? _region.base : 0;
 
         return RemoteRegion{.addr = addr, .len = _region.size, .rkey = _mr.rkey()};
@@ -18,6 +24,7 @@ namespace mxl::lib::fabrics::ofi
 
     LocalRegion RegisteredRegion::toLocal() const noexcept
     {
+        // Local side always uses virtual address and memory descriptor (desc) for DMA
         return LocalRegion{.addr = _region.base, .len = _region.size, .desc = _mr.desc()};
     }
 

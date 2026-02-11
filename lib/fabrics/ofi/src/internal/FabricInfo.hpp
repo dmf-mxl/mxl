@@ -2,6 +2,28 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file FabricInfo.hpp
+ * \brief Wrappers for libfabric fi_info structure - describes fabric capabilities and configuration.
+ *
+ * fi_info is libfabric's capability descriptor. It specifies:
+ * - Provider (transport implementation: tcp, verbs, efa, shm, etc.)
+ * - Endpoint type (FI_EP_RDM = reliable datagram, FI_EP_MSG = connection-oriented, FI_EP_DGRAM = unreliable)
+ * - Capabilities (FI_RMA = RDMA, FI_MSG = messages, FI_TAGGED = tagged messaging)
+ * - Addressing format (IPv4, IPv6, IB GID, etc.)
+ * - Memory registration mode (virtual vs offset addressing)
+ * - Completion modes (immediate data delivery requirements)
+ *
+ * Three wrapper classes:
+ * - FabricInfo: Owning RAII wrapper (calls fi_freeinfo() on destruction)
+ * - FabricInfoView: Non-owning view (doesn't free, safe to pass around)
+ * - FabricInfoList: Owning wrapper for linked list of fi_info (from fi_getinfo())
+ *
+ * Typical workflow:
+ * 1. Query available providers: FabricInfoList::get(node, service, provider, caps, epType)
+ * 2. Iterate through list to find suitable configuration
+ * 3. Clone chosen FabricInfo and use to open Fabric
+ */
+
 #pragma once
 
 #include <cstddef>
@@ -19,10 +41,11 @@ namespace mxl::lib::fabrics::ofi
     class FabricInfoView;
     class FabricInfoList;
 
-    /** \brief RAII wrapper around a libfabric `fi_info`` structure.
+    /** \brief RAII wrapper around a libfabric `fi_info` structure.
      *
      * Manages the lifetime of a `fi_info` object, ensuring that it is properly
      * deallocated when the FabricInfo object goes out of scope.
+     * FabricInfo owns the fi_info and calls fi_freeinfo() in destructor.
      */
     class FabricInfo
     {

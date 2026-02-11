@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+//! Grain reader implementation for discrete media flows.
+
 use std::{sync::Arc, time::Duration};
 
 use crate::{
@@ -12,38 +14,107 @@ use crate::{
     instance::InstanceContext,
 };
 
+/// Reader for discrete media grains (video frames, data packets).
+///
+/// Provides zero-copy access to grains stored in MXL's ring buffer. Grains
+/// are accessed by index, and reads can be blocking (with timeout) or non-blocking.
+///
+/// # Thread Safety
+///
+/// `GrainReader` is `Send` but not `Sync`. Each reader should be used by only
+/// one thread at a time, but can be transferred between threads.
+///
+/// # Examples
+///
+/// ```no_run
+/// # use mxl::{MxlInstance, GrainReader};
+/// # use std::time::Duration;
+/// # fn example(instance: MxlInstance, reader: GrainReader) -> Result<(), mxl::Error> {
+/// let info = reader.get_config_info()?;
+/// let rate = info.common().grain_rate()?;
+/// let index = instance.get_current_index(&rate);
+///
+/// // Blocking read with 5-second timeout
+/// let grain = reader.get_complete_grain(index, Duration::from_secs(5))?;
+/// println!("Read {} bytes", grain.payload.len());
+/// # Ok(())
+/// # }
+/// ```
 pub struct GrainReader {
     context: Arc<InstanceContext>,
     reader: mxl_sys::FlowReader,
 }
 
-/// The MXL readers and writers are not thread-safe, so we do not implement `Sync` for them, but
-/// there is no reason to not implement `Send`.
+// Safety: Readers are not thread-safe (no Sync) but can be sent between threads.
 unsafe impl Send for GrainReader {}
 
 impl GrainReader {
+    /// Creates a new grain reader (internal use only).
     pub(crate) fn new(context: Arc<InstanceContext>, reader: mxl_sys::FlowReader) -> Self {
         Self { context, reader }
     }
 
+    /// Explicitly destroys this reader, releasing resources immediately.
+    ///
+    /// Normally the reader is destroyed automatically when dropped.
     pub fn destroy(mut self) -> Result<()> {
         self.destroy_inner()
     }
 
-    /// The whole FlowInfo is quite a chunk of data. Go for `get_config_info` or `get_runtime_info`
-    /// if they contain what you need.
+    /// Retrieves complete flow information (config + runtime).
+    ///
+    /// This is a relatively heavy query. Prefer [`Self::get_config_info`] or
+    /// [`Self::get_runtime_info`] if you only need specific fields.
     pub fn get_info(&self) -> Result<FlowInfo> {
         get_flow_info(&self.context, self.reader)
     }
 
+    /// Retrieves flow configuration (format, rate, buffer hints).
+    ///
+    /// This is lighter weight than [`Self::get_info`] and returns only static
+    /// configuration fields.
     pub fn get_config_info(&self) -> Result<FlowConfigInfo> {
         get_config_info(&self.context, self.reader)
     }
 
+    /// Retrieves flow runtime state (head index, last access times).
+    ///
+    /// Useful for checking how much data is available before reading.
     pub fn get_runtime_info(&self) -> Result<mxl_sys::FlowRuntimeInfo> {
         get_runtime_info(&self.context, self.reader)
     }
 
+    /// Reads a complete grain with blocking and timeout.
+    ///
+    /// Waits for the grain at `index` to be completely written, retrying if partial
+    /// data is encountered. Returns once all slices are valid or the timeout expires.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - Grain index to read
+    /// * `timeout` - Maximum time to wait for the grain to become available
+    ///
+    /// # Returns
+    ///
+    /// A zero-copy view of the grain's payload, valid for the lifetime of this reader.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::Timeout`] if the grain is not available within `timeout`
+    /// - [`Error::OutOfRangeTooLate`] if the grain has been overwritten
+    /// - [`Error::OutOfRangeTooEarly`] if the grain hasn't been written yet
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use mxl::GrainReader;
+    /// # use std::time::Duration;
+    /// # fn example(reader: GrainReader) -> Result<(), mxl::Error> {
+    /// let grain = reader.get_complete_grain(100, Duration::from_secs(5))?;
+    /// println!("Grain size: {} bytes", grain.payload.len());
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn get_complete_grain<'a>(
         &'a self,
         index: u64,
@@ -87,8 +158,36 @@ impl GrainReader {
         })
     }
 
-    /// Non-blocking version of `get_complete_grain`. If the grain is not available, returns an error.
-    /// If the grain is partial, it is returned as is and the payload length will be smaller than the total grain size.
+    /// Reads a grain without blocking (may return partial data).
+    ///
+    /// Unlike [`Self::get_complete_grain`], this returns immediately whether or not
+    /// the grain is complete. For partial grains, `payload.len() < total_size`.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - Grain index to read
+    ///
+    /// # Returns
+    ///
+    /// A zero-copy view of available grain data (may be incomplete).
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::OutOfRangeTooLate`] if the grain has been overwritten
+    /// - [`Error::OutOfRangeTooEarly`] if the grain hasn't been started
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use mxl::GrainReader;
+    /// # fn example(reader: GrainReader) -> Result<(), mxl::Error> {
+    /// let grain = reader.get_grain_non_blocking(100)?;
+    /// if grain.payload.len() < grain.total_size {
+    ///     println!("Partial grain: {}/{} bytes", grain.payload.len(), grain.total_size);
+    /// }
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn get_grain_non_blocking<'a>(&'a self, index: u64) -> Result<GrainData<'a>> {
         let mut grain_info: mxl_sys::GrainInfo = unsafe { std::mem::zeroed() };
         let mut payload_ptr: *mut u8 = std::ptr::null_mut();

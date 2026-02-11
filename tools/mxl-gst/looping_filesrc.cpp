@@ -1,6 +1,43 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+/**
+ * @file looping_filesrc.cpp
+ * @brief MXL looping file player - reads media files and writes to MXL flows
+ *
+ * This tool demonstrates real-world MXL integration by reading video and audio from
+ * media files (e.g., MPEG-TS) using GStreamer, then writing the decoded streams into
+ * MXL shared-memory flows for consumption by other applications.
+ *
+ * Key features:
+ *   - Decodes video/audio from any GStreamer-supported format (MP4, MPEG-TS, MKV, etc.)
+ *   - Automatically creates MXL flows based on detected media parameters
+ *   - Converts video to v210 format for MXL
+ *   - Converts audio to float32 non-interleaved for MXL
+ *   - Handles frame and sample indexing with TAI timestamps
+ *   - Runs video and audio processing in separate threads
+ *   - Generates invalid grains/silence when frames/samples are skipped
+ *   - Uses dynamic pad connection for decodebin output
+ *
+ * Usage:
+ *   mxl-gst-looping-filesrc -d /tmp/mxl-domain -i /path/to/media.ts
+ *
+ * GStreamer pipeline structure:
+ *   File: looping_filesrc → decodebin → [dynamically linked pads]
+ *   Video path: queue → videorate → videoconvert → appsink (v210)
+ *   Audio path: queue → audioconvert → appsink (F32LE non-interleaved, 48kHz)
+ *
+ * The tool creates NMOS flow descriptors on-the-fly based on the detected media
+ * parameters (resolution, frame rate, channel count, sample rate). These flows can
+ * then be consumed by mxl-gst-sink or transported over fabrics using mxl-fabrics-demo.
+ *
+ * This tool is useful for:
+ *   - Creating MXL flows from existing media files
+ *   - Testing MXL with real-world video/audio content
+ *   - Demonstrating file playback → shared memory → playback pipelines
+ *   - Continuous looping playback for testing and demos
+ */
+
 #include <climits>
 #include <csignal>
 #include <cstdint>

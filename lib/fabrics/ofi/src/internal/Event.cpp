@@ -2,6 +2,10 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file Event.cpp
+ * \brief Implementation of Event wrapper - parses libfabric event queue entries into typed variants.
+ */
+
 #include "Event.hpp"
 #include <rdma/fabric.h>
 #include "EventQueue.hpp"
@@ -83,12 +87,14 @@ namespace mxl::lib::fabrics::ofi
 
     Event Event::fromRawCMEntry(::fi_eq_cm_entry const& entry, std::uint32_t eventType)
     {
+        // Parse connection management event from fi_eq_read() result
+        // entry.fid identifies the endpoint, entry.info contains peer info for FI_CONNREQ
         // clang-format off
         switch (eventType)
         {
-            case FI_CONNREQ:   return {ConnectionRequested{entry.fid, FabricInfo::own(entry.info)}};
-            case FI_CONNECTED: return {Connected{entry.fid}};
-            case FI_SHUTDOWN:  return {Shutdown{entry.fid}};
+            case FI_CONNREQ:   return {ConnectionRequested{entry.fid, FabricInfo::own(entry.info)}};  // Incoming connection request
+            case FI_CONNECTED: return {Connected{entry.fid}};                                         // Connection established
+            case FI_SHUTDOWN:  return {Shutdown{entry.fid}};                                          // Graceful disconnect
             default:           throw Exception::internal("Unsupported event type returned from queue");
         }
         // clang-format on

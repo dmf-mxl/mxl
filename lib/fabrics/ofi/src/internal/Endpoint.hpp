@@ -2,6 +2,29 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file Endpoint.hpp
+ * \brief Wrapper for libfabric endpoint (fi_ep) - the communication endpoint for RDMA operations.
+ *
+ * An Endpoint is analogous to a socket in traditional networking - it's the communication channel
+ * for sending/receiving data over RDMA fabrics.
+ *
+ * Key concepts:
+ * - Endpoint lifecycle: create → bind(CQ/EQ/AV) → enable → data transfers
+ * - Connection models: Connection-oriented (connect/accept) vs connectionless (use AV for addressing)
+ * - Data operations: write() for RDMA writes, recv() for posting receive buffers
+ * - Completion tracking: Each endpoint has unique ID embedded in completions/events
+ * - Queue associations: Endpoints bind to CompletionQueue (data completions) and EventQueue (control events)
+ *
+ * For connectionless (RDM/DGRAM):
+ * - Bind to AddressVector for peer addressing
+ * - Pass fi_addr_t from AV to write() operations
+ *
+ * For connection-oriented (MSG):
+ * - connect() or accept() to establish connection
+ * - Wait for Event::Connected on EventQueue before data transfers
+ * - destAddr parameter ignored in write() operations
+ */
+
 #pragma once
 
 #include <cstdint>
@@ -23,6 +46,9 @@
 namespace mxl::lib::fabrics::ofi
 {
     /** \brief RAII Wrapper around a libfabric endpoint (`fi_ep`).
+     *
+     * Endpoint represents a communication channel for RDMA data transfers.
+     * Must be bound to CQ/EQ/AV and enabled before use.
      */
     class Endpoint
     {

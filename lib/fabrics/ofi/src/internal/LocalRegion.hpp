@@ -2,6 +2,30 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file LocalRegion.hpp
+ * \brief Local memory region descriptor for RDMA source buffers.
+ *
+ * LocalRegion represents a local memory buffer used as the source for RDMA operations.
+ * It's used by the initiator (sender) side of data transfers.
+ *
+ * Key fields:
+ * - addr: Local virtual address of buffer
+ * - len: Length of buffer in bytes
+ * - desc: Memory descriptor (from fi_mr_desc()) containing registration handle
+ *
+ * LocalRegion vs RemoteRegion:
+ * - LocalRegion: Source buffer on initiator (write from here)
+ * - RemoteRegion: Destination buffer on target (write to there)
+ *
+ * LocalRegionGroup:
+ * - Scatter-gather list for vectored I/O (multiple non-contiguous buffers in single operation)
+ * - Converted to iovec array for libfabric fi_writemsg()
+ *
+ * Generation:
+ * - Created from RegisteredRegion (after memory registration with fi_mr_reg())
+ * - Can be manually constructed for unregistered memory (if provider supports FI_MR_LOCAL)
+ */
+
 #pragma once
 
 #include <cstddef>
@@ -11,10 +35,11 @@
 
 namespace mxl::lib::fabrics::ofi
 {
-    /** \brief Represent a source memory region used for for data transfer.
+    /** \brief Represent a source memory region used for data transfer.
      *
      * This can be constructed directly if no memory registration is needed.
      * Otherwise, it can be generated from a `RegisteredRegion`.
+     * Used as the local (source) side of RDMA write operations.
      */
     struct LocalRegion
     {

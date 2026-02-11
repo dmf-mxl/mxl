@@ -1,6 +1,48 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+/**
+ * @file fabrics.h
+ * @brief MXL Fabrics Public C API - High-performance remote memory access for media exchange
+ *
+ * This header defines the public C API for MXL's fabrics subsystem, which extends MXL's local
+ * shared-memory media exchange to remote hosts via RDMA (Remote Direct Memory Access).
+ *
+ * ARCHITECTURE OVERVIEW:
+ * - MXL core provides zero-copy shared memory exchange between processes on the same machine
+ * - The Fabrics layer extends this to network-connected machines using OpenFabrics Interface (OFI/libfabric)
+ * - OFI abstracts various RDMA hardware (InfiniBand, RoCE, AWS EFA, etc.) behind a portable API
+ *
+ * KEY CONCEPTS:
+ * - **Target**: The logical receiver of media grains transferred over the network
+ * - **Initiator**: The logical sender that pushes media grains to one or more targets
+ * - **Regions**: Memory areas registered with the fabric hardware for zero-copy RDMA operations
+ * - **Provider**: The underlying transport implementation (TCP, Verbs/InfiniBand, EFA, SHM, etc.)
+ *
+ * TYPICAL WORKFLOW:
+ * 1. Create an mxlFabricsInstance from an mxlInstance
+ * 2. On the receiving side:
+ *    a. Create a target with mxlFabricsCreateTarget()
+ *    b. Configure it with mxlFabricsTargetSetup() - this returns connection info (mxlTargetInfo)
+ *    c. Share the mxlTargetInfo (serialized) to the sending side (out-of-band)
+ *    d. Poll for incoming grains with mxlFabricsTargetTryNewGrain() or mxlFabricsTargetWaitForNewGrain()
+ * 3. On the sending side:
+ *    a. Create an initiator with mxlFabricsCreateInitiator()
+ *    b. Configure it with mxlFabricsInitiatorSetup()
+ *    c. Add target(s) with mxlFabricsInitiatorAddTarget() using the received mxlTargetInfo
+ *    d. Transfer grains with mxlFabricsInitiatorTransferGrain()
+ *    e. Call mxlFabricsInitiatorMakeProgress*() to pump the network operations
+ *
+ * MEMORY REGISTRATION:
+ * - Before RDMA can occur, memory must be "pinned" and registered with the network hardware
+ * - Use mxlFabricsRegionsForFlowReader/Writer() to extract regions from MXL flows
+ * - Or use mxlFabricsRegionsFromUserBuffers() for custom memory buffers
+ *
+ * THREADING:
+ * - Each target/initiator operates independently and can be polled from different threads
+ * - Users are responsible for synchronization if sharing objects across threads
+ */
+
 #pragma once
 
 #ifdef __cplusplus
@@ -20,87 +62,194 @@ extern "C"
 {
 #endif
 
-    /** Central instance object, holds resources that are global to all initiators and targets.
+    /**
+     * @brief Central fabrics instance object - manages resources shared across targets and initiators
+     *
+     * This is the root object for the fabrics subsystem. It holds global resources including
+     * the underlying libfabric fabric and domain objects. All targets and initiators must be
+     * created from an instance.
+     *
+     * Opaque handle representing an mxlFabricsInstance_t structure.
      */
     typedef struct mxlFabricsInstance_t* mxlFabricsInstance;
 
-    /** The target is the logical receiver of grains transferred over the network. It is the receiver
-     *  of transfer requests by the 'initiator'.
+    /**
+     * @brief Target - the logical receiver of media grains over the network
+     *
+     * A target represents a receiving endpoint in the fabrics system. It:
+     * - Listens for incoming RDMA write operations from initiators
+     * - Exposes registered memory regions that initiators can write to
+     * - Provides an interface to poll for newly received grains
+     *
+     * Targets are passive - they do not initiate transfers, they only receive them.
+     * Multiple initiators can write to a single target concurrently.
+     *
+     * Opaque handle representing an mxlFabricsTarget_t structure.
      */
     typedef struct mxlFabricsTarget_t* mxlFabricsTarget;
 
-    /** The TargetInfo object holds the local fabric address, keys and memory region addresses for a target. It is returned after setting
-     *  up a new target and must be passed to the initiator to connect it.
+    /**
+     * @brief Connection information for a target - shared with initiators to enable remote access
+     *
+     * TargetInfo is an opaque data structure containing everything an initiator needs to connect
+     * to a target and perform RDMA writes:
+     * - The target's fabric network address (analogous to IP:port)
+     * - Memory region keys (RKEY) for accessing the target's registered buffers
+     * - Remote virtual addresses of the target's memory regions
+     *
+     * This object is returned by mxlFabricsTargetSetup() and must be serialized using
+     * mxlFabricsTargetInfoToString() to be transmitted to remote initiators (via out-of-band
+     * communication such as config files, REST API, signaling channel, etc.).
+     *
+     * Opaque handle representing an mxlTargetInfo_t structure.
      */
     typedef struct mxlTargetInfo_t* mxlTargetInfo;
 
-    /** The initiator is the logical sender of grains over the network. It is the initiator of transfer requests
-     *  to registered memory regions of a target.
+    /**
+     * @brief Initiator - the logical sender of media grains over the network
+     *
+     * An initiator represents a sending endpoint in the fabrics system. It:
+     * - Initiates RDMA write operations to push media grains to targets
+     * - Can connect to multiple targets and multicast the same grain to all of them
+     * - Manages a work queue of pending transfer operations
+     *
+     * Initiators are active - they drive the data movement. The user enqueues transfers
+     * via mxlFabricsInitiatorTransferGrain() and then must regularly call
+     * mxlFabricsInitiatorMakeProgress*() to pump the network operations.
+     *
+     * Opaque handle representing an mxlFabricsInitiator_t structure.
      */
     typedef struct mxlFabricsInitiator_t* mxlFabricsInitiator;
 
-    /** A collection of memory regions that can be the target or the source of remote write operations.
-     * Can be obtained by using a flow reader or writer, and converting it to a regions collection
-     * with mxlFabricsRegionsForFlowReader() or mxlFabricsRegionsForFlowWriter().
+    /**
+     * @brief A collection of memory regions for RDMA operations
+     *
+     * Regions represent one or more contiguous memory areas that have been registered
+     * (or will be registered) with the fabrics layer for zero-copy RDMA access.
+     *
+     * In MXL, regions typically correspond to the backing memory buffers of a Flow
+     * (obtained via mxlFabricsRegionsForFlowReader/Writer), but can also represent
+     * arbitrary user-provided buffers (via mxlFabricsRegionsFromUserBuffers).
+     *
+     * The same memory can be used as both a source (on an initiator) and a destination
+     * (on a target), but the registration and access permissions differ.
+     *
+     * Opaque handle representing an mxlRegions_t structure.
      */
     typedef struct mxlRegions_t* mxlRegions;
 
+    /**
+     * @brief Fabric provider selection - specifies the underlying transport mechanism
+     *
+     * OFI/libfabric supports multiple "providers" - different implementations of the RDMA API
+     * that run over various network fabrics. Each provider has different characteristics in terms
+     * of performance, latency, compatibility, and hardware requirements.
+     *
+     * PROVIDER DETAILS:
+     * - **AUTO**: Let libfabric choose the best available provider for your system (may not work in all cases)
+     * - **TCP**: Software-based using standard TCP sockets - works on any network, lowest performance
+     * - **VERBS**: Hardware RDMA using InfiniBand or RoCE (RDMA over Converged Ethernet) via libibverbs
+     * - **EFA**: AWS Elastic Fabric Adapter - custom RDMA protocol for EC2 instances with EFA-enabled NICs
+     * - **SHM**: Shared memory provider for intra-node transfers (same machine)
+     *
+     * CHOOSING A PROVIDER:
+     * - Use VERBS for on-premise InfiniBand or RoCE deployments
+     * - Use EFA for AWS EC2 with EFA-enabled instance types (c5n, p3dn, etc.)
+     * - Use TCP for testing or when no RDMA hardware is available
+     * - Use SHM for testing multi-process scenarios on a single machine
+     */
     typedef enum mxlFabricsProvider
     {
-        MXL_SHARING_PROVIDER_AUTO = 0,  /**< Auto select the best provider. ** This might not be supported by all implementations. */
-        MXL_SHARING_PROVIDER_TCP = 1,   /**< Provider that uses linux tcp sockets. */
-        MXL_SHARING_PROVIDER_VERBS = 2, /**< Provider for userspace verbs (libibverbs) and librdmcm for connection management. */
-        MXL_SHARING_PROVIDER_EFA = 3,   /**< Provider for AWS Elastic Fabric Adapter. */
-        MXL_SHARING_PROVIDER_SHM = 4,   /**< Provider used for moving data between 2 memory regions inside the same system. Supported */
+        MXL_SHARING_PROVIDER_AUTO = 0,  /**< Auto-select the best provider (may not be supported by all implementations) */
+        MXL_SHARING_PROVIDER_TCP = 1,   /**< Software transport using standard TCP sockets - universally compatible but slowest */
+        MXL_SHARING_PROVIDER_VERBS = 2, /**< Hardware RDMA using InfiniBand or RoCE via libibverbs userspace library */
+        MXL_SHARING_PROVIDER_EFA = 3,   /**< AWS Elastic Fabric Adapter - custom RDMA for AWS EC2 (requires EFA-enabled instances) */
+        MXL_SHARING_PROVIDER_SHM = 4,   /**< Shared memory provider for intra-node (same-machine) data movement */
     } mxlFabricsProvider;
 
-    /** Address of a logical network endpoint. This is analogous to a hostname and port number in classic ipv4 networking.
-     * The actual values for node and service vary between providers, but often an ip address as the node value and a port number as the service
-     * value are sufficient.
-     * `node` and `service` pointers are expected to live at least until the target or initiator `setup` function is executed and are
-     * internally cloned.
+    /**
+     * @brief Network endpoint address - identifies where a target or initiator binds/listens
+     *
+     * This structure is analogous to a (hostname, port) pair in traditional TCP/IP networking,
+     * but the interpretation of 'node' and 'service' varies by provider.
+     *
+     * PROVIDER-SPECIFIC INTERPRETATIONS:
+     * - **TCP/VERBS**: node = IP address (e.g. "192.168.1.100" or NULL for INADDR_ANY),
+     *                  service = port number as string (e.g. "5000")
+     * - **EFA**: node = IP address, service = port number (EFA uses UDP underneath)
+     * - **SHM**: node/service typically ignored or used to generate unique shared memory names
+     *
+     * MEMORY LIFETIME:
+     * The `node` and `service` pointers must remain valid until the corresponding
+     * mxlFabricsTargetSetup() or mxlFabricsInitiatorSetup() call completes. The implementation
+     * will internally clone these strings, so the caller can free them afterward.
+     *
+     * NULL VALUES:
+     * - node=NULL typically means "bind to all interfaces" or "use default"
+     * - service=NULL may allow the system to assign an ephemeral port (provider-dependent)
      */
     typedef struct mxlEndpointAddress_t
     {
-        char const* node;
-        char const* service;
+        char const* node;    /**< Network node identifier (e.g. IP address or hostname) - provider-specific interpretation */
+        char const* service; /**< Service identifier (e.g. port number) - provider-specific interpretation */
     } mxlEndpointAddress;
 
-    /** Configuration object required to set up a new target.
+    /**
+     * @brief Configuration for setting up a target (receiver)
+     *
+     * This structure specifies all parameters needed to initialize a target endpoint that will
+     * receive media grains via RDMA writes.
      */
     typedef struct mxlTargetConfig_t
     {
-        mxlEndpointAddress endpointAddress; /**< Bind address for the local endpoint. */
-        mxlFabricsProvider provider;        /**< The provider that should be used */
-        mxlRegions regions;                 /**< Local memory regions of the flow that grains should be written to. */
-        bool deviceSupport;                 /**< Require support of transfers involving device memory. */
+        mxlEndpointAddress endpointAddress; /**< Bind address for the local endpoint (where to listen for incoming connections/writes) */
+        mxlFabricsProvider provider;        /**< Which fabric provider to use (TCP, VERBS, EFA, SHM) */
+        mxlRegions regions;                 /**< Local memory regions where incoming grains will be written (destination buffers) */
+        bool deviceSupport;                 /**< If true, require provider support for GPU/device memory (e.g. CUDA, ROCm) - not all providers support this */
     } mxlTargetConfig;
 
-    /** Configuration object required to set up an initiator.
+    /**
+     * @brief Configuration for setting up an initiator (sender)
+     *
+     * This structure specifies all parameters needed to initialize an initiator endpoint that will
+     * send media grains to remote targets via RDMA writes.
      */
     typedef struct mxlInitiatorConfig_t
     {
-        mxlEndpointAddress endpointAddress; /**< Bind address for the local endpoint. */
-        mxlFabricsProvider provider;        /**< The provider that should be used. */
-        mxlRegions regions;                 /**< Local memory regions of the flow that grains should source of remote write requests. */
-        bool deviceSupport;                 /**< Require support of transfers involving device memory. */
+        mxlEndpointAddress endpointAddress; /**< Bind address for the local endpoint (source address for outgoing connections/writes) */
+        mxlFabricsProvider provider;        /**< Which fabric provider to use (must match the target's provider in most cases) */
+        mxlRegions regions;                 /**< Local memory regions containing the grains to send (source buffers) */
+        bool deviceSupport;                 /**< If true, require provider support for GPU/device memory (e.g. CUDA, ROCm) - not all providers support this */
     } mxlInitiatorConfig;
 
-    /** Configuration for a memory region location.
+    /**
+     * @brief Memory region location descriptor - specifies where memory physically resides
+     *
+     * RDMA hardware needs to know whether memory is in system RAM or on a GPU/accelerator device,
+     * as different code paths and DMA engines are used for each.
      */
     typedef struct mxlFabricsMemoryRegionLocation_t
     {
-        mxlPayloadLocation type; /**< Memory type of the payload. */
-        uint64_t deviceId;       /**< Device Index when device memory is used, otherwise it is ignored. */
+        mxlPayloadLocation type; /**< Memory type: host RAM (MXL_LOCATION_HOST) or device memory (MXL_LOCATION_DEVICE) */
+        uint64_t deviceId;       /**< GPU/device index (e.g. CUDA device 0, 1, etc.) - only used if type is MXL_LOCATION_DEVICE, ignored otherwise */
     } mxlFabricsMemoryRegionLocation;
 
-    /** Configuration for a user supplied memory region.
+    /**
+     * @brief User-supplied memory region descriptor
+     *
+     * When using custom buffers (not MXL Flows), this structure describes a single contiguous
+     * memory region that should be registered with the fabrics layer for RDMA operations.
+     *
+     * REQUIREMENTS:
+     * - Memory must be contiguous in virtual address space
+     * - Memory should ideally be page-aligned for best performance
+     * - Memory must remain valid and pinned (not paged out) for the duration of RDMA operations
      */
     typedef struct mxlFabricsMemoryRegion_t
     {
-        uintptr_t addr;                     /**< Start address of the contiguous memory region. */
-        size_t size;                        /**< Size of that memory region */
-        mxlFabricsMemoryRegionLocation loc; /**< Location information for that memory region. */
+        uintptr_t addr;                     /**< Start address of the contiguous memory region (virtual address) */
+        size_t size;                        /**< Size in bytes of the memory region */
+        mxlFabricsMemoryRegionLocation loc; /**< Location descriptor indicating if this is host or device memory */
     } mxlFabricsMemoryRegion;
 
     /**

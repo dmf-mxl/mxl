@@ -1,3 +1,19 @@
+//! MXL Helper Functions for Source Initialization
+//!
+//! This module provides utility functions for initializing the mxlsrc element:
+//! - Loading the MXL shared library
+//! - Creating MXL instances and flow readers
+//! - Parsing flow definitions (JSON) into GStreamer caps
+//! - Generating channel masks for audio
+//!
+//! ## Initialization Flow
+//! 1. Load MXL API (shared library)
+//! 2. Create MXL instance (connect to domain)
+//! 3. Create flow reader (wait for flow if not found)
+//! 4. Parse flow definition JSON
+//! 5. Convert to GStreamer caps
+//! 6. Negotiate caps with downstream
+
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -18,6 +34,7 @@ use crate::mxlsrc::{
     state::{AudioState, InitialTime, Settings, State, VideoState},
 };
 
+/// GStreamer debug category for mxlsrc helper functions
 static CAT: LazyLock<gst::DebugCategory> = LazyLock::new(|| {
     gst::DebugCategory::new(
         "mxlsrc",
@@ -26,6 +43,9 @@ static CAT: LazyLock<gst::DebugCategory> = LazyLock::new(|| {
     )
 });
 
+/// Determines which flow ID to use (video or audio).
+///
+/// Returns the appropriate flow ID from settings based on which property was set.
 pub(crate) fn get_flow_type_id<'a>(
     settings: &'a MutexGuard<'a, Settings>,
 ) -> Result<&'a String, gst::LoggableError> {
@@ -43,6 +63,9 @@ pub(crate) fn get_flow_type_id<'a>(
     Ok(id)
 }
 
+/// Retrieves the MXL flow definition as JSON.
+///
+/// Queries the MXL instance for the flow's NMOS-compatible JSON definition.
 pub(crate) fn get_mxl_flow_json(
     instance: &MxlInstance,
     flow_id: &str,
@@ -55,6 +78,10 @@ pub(crate) fn get_mxl_flow_json(
     Ok(serde_json)
 }
 
+/// Converts MXL flow definition to GStreamer caps and sets them on the element.
+///
+/// Extracts video or audio parameters from the flow definition and builds
+/// appropriate caps for negotiation.
 pub(crate) fn set_json_caps(src: &MxlSrc, json: FlowDefDetails) -> Result<(), gst::LoggableError> {
     match json {
         FlowDefDetails::Video(video) => {
@@ -103,6 +130,10 @@ pub(crate) fn set_json_caps(src: &MxlSrc, json: FlowDefDetails) -> Result<(), gs
     }
 }
 
+/// Parses JSON flow definition into typed FlowDefDetails.
+///
+/// Determines if the flow is video or audio and deserializes into the
+/// appropriate structure.
 pub(crate) fn get_flow_def(
     src: &MxlSrc,
     serde_json: serde_json::Value,
@@ -129,6 +160,9 @@ pub(crate) fn get_flow_def(
     };
     Ok(json)
 }
+/// Generates a GStreamer channel mask for the given channel count.
+///
+/// Creates a bitmask where the first N bits are set (e.g., 0x03 for 2 channels).
 pub(crate) fn generate_channel_mask_from_channels(channels: u32) -> gst::Bitmask {
     let mask = if channels >= 64 {
         u64::MAX
@@ -138,6 +172,10 @@ pub(crate) fn generate_channel_mask_from_channels(channels: u32) -> gst::Bitmask
     gst::Bitmask::new(mask)
 }
 
+/// Initializes an MXL flow reader.
+///
+/// Creates the reader, waiting in a loop if the flow doesn't exist yet
+/// (producer may not have started).
 fn init_mxl_reader(settings: &MutexGuard<'_, Settings>) -> Result<FlowReader, gst::ErrorMessage> {
     let mxl_instance = init_mxl_instance(settings)?;
     let flow_id = if settings.video_flow.is_some() {
@@ -168,6 +206,10 @@ fn init_mxl_reader(settings: &MutexGuard<'_, Settings>) -> Result<FlowReader, gs
     }
 }
 
+/// Initializes the mxlsrc element with MXL readers.
+///
+/// Called from start() to create the MXL instance, flow reader, and
+/// format-specific state (video or audio).
 pub(crate) fn init(mxlsrc: &MxlSrc) -> Result<(), gst::ErrorMessage> {
     let settings = mxlsrc
         .settings
@@ -255,6 +297,9 @@ pub(crate) fn init(mxlsrc: &MxlSrc) -> Result<(), gst::ErrorMessage> {
     Ok(())
 }
 
+/// Initializes the MXL instance from settings.
+///
+/// Loads the MXL shared library and creates an instance connected to the domain.
 fn init_mxl_instance(
     settings: &MutexGuard<'_, Settings>,
 ) -> Result<MxlInstance, gst::ErrorMessage> {

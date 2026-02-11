@@ -2,6 +2,28 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file Fabric.hpp
+ * \brief Wrapper for libfabric fabric (fid_fabric) - top-level container for RDMA resources.
+ *
+ * A Fabric is the top-level resource in libfabric's hierarchy. It represents a single network fabric
+ * (a logical or physical network of RDMA-capable devices).
+ *
+ * Libfabric resource hierarchy:
+ * Fabric → Domain → Endpoint/CQ/EQ/AV
+ *
+ * The Fabric object:
+ * - Encapsulates provider-specific implementation (TCP, Verbs, EFA, SHM, etc.)
+ * - Created from FabricInfo which specifies provider, addressing, capabilities
+ * - Parent for Domain objects (which manage memory registration and resource allocation)
+ *
+ * Typical workflow:
+ * 1. Query available providers with fi_getinfo()
+ * 2. Select appropriate FabricInfo
+ * 3. Open Fabric with Fabric::open(info)
+ * 4. Create Domain from Fabric
+ * 5. Create Endpoints, CQs, EQs, AVs from Domain
+ */
+
 #pragma once
 
 #include <memory>
@@ -11,7 +33,9 @@
 namespace mxl::lib::fabrics::ofi
 {
 
-    /** \brief RAIII wrapper around a libfabric fabric object (`fid_fabric`).
+    /** \brief RAII wrapper around a libfabric fabric object (`fid_fabric`).
+     *
+     * Fabric is the top-level resource container representing a network fabric instance.
      */
     class Fabric
     {

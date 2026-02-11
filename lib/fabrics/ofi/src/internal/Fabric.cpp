@@ -2,6 +2,10 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file Fabric.cpp
+ * \brief Implementation of Fabric wrapper - handles fabric lifecycle.
+ */
+
 #include "Fabric.hpp"
 #include <memory>
 #include <rdma/fabric.h>

@@ -1,6 +1,45 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+/**
+ * @file Instance.cpp
+ * @brief Top-level MXL instance managing readers/writers lifecycle and configuration
+ *
+ * Instance is the main orchestration layer for MXL. One per domain. Manages:
+ * - Reader/writer lifecycle with reference counting
+ * - Flow creation via FlowParser (NMOS JSON) + FlowManager
+ * - Synchronization groups for multi-flow sync
+ * - Garbage collection of stale flows
+ * - Configuration (history duration, batch sizes)
+ *
+ * LIFECYCLE MANAGEMENT:
+ * - Readers/writers stored in maps with RefCounted wrappers
+ * - getFlowReader/releaseReader: ref-counted, auto-cleanup when count hits 0
+ * - createFlowWriter/releaseWriter: same pattern
+ * - Destructor cleans up leaked writers (exclusive lock check + deleteFlow)
+ *
+ * FLOW CREATION WORKFLOW:
+ * 1. Parse NMOS IS-04 JSON (FlowParser extracts format, dimensions, rates)
+ * 2. Calculate buffer sizes from history duration + grain/sample rate
+ * 3. Call FlowManager to create or open flow (atomic create-or-open)
+ * 4. Wrap FlowData in platform-specific reader/writer (PosixFlowIoFactory)
+ * 5. Store in _readers/_writers map with refcount=1
+ * 6. Return to application
+ *
+ * CONFIGURATION:
+ * - History duration: how much media history to keep in ring buffers
+ * - Read from domain-level options.json OR instance-level options string
+ * - Defaults: 200ms history (balanced latency vs. memory)
+ * - Used to compute grainCount (discrete) or bufferLength (continuous)
+ *
+ * GARBAGE COLLECTION:
+ * - garbageCollect() scans domain for flows with no active locks
+ * - Tries to get exclusive lock on each flow's data file
+ * - If successful (no writers), deletes entire flow directory
+ * - Returns count of flows deleted
+ * - Best-effort: never throws, just logs errors
+ */
+
 #include "mxl-internal/Instance.hpp"
 #include <cstddef>
 #include <cstdint>
@@ -39,6 +78,7 @@ namespace mxl::lib
 
         std::once_flag loggingFlag;
 
+        /** Initialize spdlog logging once per process. Reads MXL_LOG_LEVEL env var. */
         void initializeLogging()
         {
             auto console = spdlog::stdout_color_mt("console");

@@ -1,6 +1,33 @@
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+//! Example program demonstrating MXL flow writing.
+//!
+//! This example creates an MXL flow from a JSON definition file and continuously
+//! writes media data (either discrete grains for video/data or continuous samples
+//! for audio). It demonstrates timing synchronization, zero-copy writing, and
+//! automatic flow cleanup.
+//!
+//! # Usage
+//!
+//! For video/data flows:
+//!
+//! ```bash
+//! cargo run --example flow-writer -- \
+//!     --mxl-domain /dev/shm/my_domain \
+//!     --flow-config-file examples/v210_flow.json \
+//!     --grain-or-sample-count 100
+//! ```
+//!
+//! For audio flows with custom batch size:
+//!
+//! ```bash
+//! cargo run --example flow-writer -- \
+//!     --mxl-domain /dev/shm/my_domain \
+//!     --flow-config-file examples/audio_flow.json \
+//!     --sample-batch-size 480
+//! ```
+
 mod common;
 
 use clap::Parser;
@@ -8,6 +35,7 @@ use tracing::{info, warn};
 
 use mxl::config::get_mxl_so_path;
 
+/// Command-line arguments for the flow writer example.
 #[derive(Debug, Parser)]
 #[command(version = clap::crate_version!(), author = clap::crate_authors!())]
 pub struct Opts {
@@ -29,6 +57,7 @@ pub struct Opts {
     pub sample_batch_size: Option<u64>,
 }
 
+/// Main entry point - loads MXL, creates flow, and dispatches to appropriate writer.
 fn main() -> Result<(), mxl::Error> {
     common::setup_logging();
     let opts: Opts = Opts::parse();
@@ -71,6 +100,10 @@ fn main() -> Result<(), mxl::Error> {
     }
 }
 
+/// Writes discrete grains (video frames / data packets) with timing synchronization.
+///
+/// Demonstrates zero-copy grain writing with a test pattern, automatic pacing
+/// based on grain rate, and explicit flow cleanup.
 pub fn write_grains(
     mxl_instance: mxl::MxlInstance,
     flow_config_info: mxl::FlowConfigInfo,
@@ -119,6 +152,10 @@ pub fn write_grains(
     Ok(())
 }
 
+/// Writes continuous audio samples in batches with timing synchronization.
+///
+/// Demonstrates zero-copy multi-channel sample writing with a test pattern,
+/// automatic pacing based on sample rate, and explicit flow cleanup.
 pub fn write_samples(
     mxl_instance: mxl::MxlInstance,
     flow_config_info: mxl::FlowConfigInfo,

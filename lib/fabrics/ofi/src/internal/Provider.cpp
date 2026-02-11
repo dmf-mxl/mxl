@@ -2,6 +2,10 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file Provider.cpp
+ * \brief Implementation of Provider enum conversions between internal and API representations.
+ */
+
 #include "Provider.hpp"
 #include <map>
 #include <optional>

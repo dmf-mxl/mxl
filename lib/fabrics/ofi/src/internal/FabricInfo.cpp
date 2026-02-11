@@ -2,6 +2,10 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file FabricInfo.cpp
+ * \brief Implementation of FabricInfo wrappers - manages fi_info lifecycle and queries available providers.
+ */
+
 #include "FabricInfo.hpp"
 #include <cstdint>
 #include <rdma/fabric.h>

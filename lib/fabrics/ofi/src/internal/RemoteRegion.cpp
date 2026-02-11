@@ -2,6 +2,10 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file RemoteRegion.cpp
+ * \brief Implementation of RemoteRegion conversion to fi_rma_iov.
+ */
+
 #include "RemoteRegion.hpp"
 #include <algorithm>
 

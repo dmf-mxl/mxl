@@ -2,6 +2,65 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/**
+ * @file demo.cpp
+ * @brief MXL fabrics transport demonstration - network-based MXL flow transmission
+ *
+ * This tool demonstrates MXL's fabrics layer, which enables zero-copy RDMA-based
+ * transport of MXL flows across network fabrics (libfabric/OFI backends like
+ * Ethernet TCP, InfiniBand Verbs, AWS EFA, etc.).
+ *
+ * The tool can run in two modes:
+ *
+ * TARGET MODE (Receiver):
+ *   - Creates an MXL flow writer from an NMOS JSON descriptor
+ *   - Sets up a fabrics target endpoint that listens for connections
+ *   - Receives grains via RDMA and commits them to the local MXL flow
+ *   - Prints base64-encoded target info for initiator to connect
+ *
+ * INITIATOR MODE (Sender):
+ *   - Creates an MXL flow reader for an existing flow
+ *   - Parses target info string from the command line
+ *   - Connects to the remote target via fabrics
+ *   - Reads grains locally and transmits them via RDMA to target
+ *
+ * Key features:
+ *   - Zero-copy RDMA for high-performance media transport
+ *   - Works with any MXL flow format (video, audio, data)
+ *   - Automatic memory region registration for RDMA
+ *   - Progressive grain transfer (handles partial grains)
+ *   - Supports multiple libfabric providers (tcp, verbs, efa)
+ *   - Graceful connection setup and teardown
+ *
+ * Usage (2-step process):
+ *   1. Start target (receiver):
+ *      ./mxl-fabrics-demo -d /tmp/domain -f flow.json \
+ *                         --node 2.2.2.2 --service 1234 --provider verbs
+ *      → This prints a target-info string (base64-encoded)
+ *
+ *   2. Start initiator (sender):
+ *      ./mxl-fabrics-demo -i -d /tmp/domain -f <flow-uuid> \
+ *                         --node 1.1.1.1 --service 1234 --provider verbs \
+ *                         --target-info <base64-string-from-step-1>
+ *      → This connects and starts transmitting grains
+ *
+ * Network topology:
+ *   Initiator (sender)                Target (receiver)
+ *   ┌─────────────────┐              ┌─────────────────┐
+ *   │ MXL Flow Reader │              │ MXL Flow Writer │
+ *   │       ↓         │              │       ↑         │
+ *   │ Fabrics         │  ─────────→  │ Fabrics         │
+ *   │ Initiator       │  RDMA/OFI    │ Target          │
+ *   └─────────────────┘              └─────────────────┘
+ *
+ * This tool demonstrates:
+ *   - MXL fabrics API usage (initiator and target setup)
+ *   - RDMA memory region management
+ *   - Grain transfer synchronization
+ *   - Connection lifecycle management
+ *   - Integration with MXL flow readers/writers
+ */
+
 #include <csignal>
 #include <cstdint>
 #include <cstdlib>
@@ -28,29 +87,46 @@
    --target-info <targetInfo>
 */
 
+/** @brief Global flag set by signal handler for graceful shutdown */
 std::sig_atomic_t volatile g_exit_requested = 0;
 
+/**
+ * @brief Configuration parameters for initiator and target operation
+ */
 struct Config
 {
-    std::string domain;
+    std::string domain;                    ///< MXL domain directory path
 
     // flow configuration
-    std::string flowID;
+    std::string flowID;                    ///< Flow UUID (initiator) or NMOS JSON path (target)
 
     // endpoint configuration
-    std::optional<std::string> node;
-    std::optional<std::string> service;
-    mxlFabricsProvider provider;
+    std::optional<std::string> node;       ///< Fabric node address (IP or interface name)
+    std::optional<std::string> service;    ///< Fabric service identifier (port number)
+    mxlFabricsProvider provider;           ///< Fabric provider (TCP, Verbs, EFA)
 };
 
+/**
+ * @brief Signal handler for SIGINT/SIGTERM - triggers graceful shutdown
+ */
 void signal_handler(int)
 {
     g_exit_requested = 1;
 }
 
+/**
+ * @brief Fabrics initiator (sender) implementation
+ *
+ * Reads grains from a local MXL flow and transmits them to a remote target
+ * via RDMA. Manages connection lifecycle and grain transfer progress.
+ */
 class AppInitator
 {
 public:
+    /**
+     * @brief Construct initiator with configuration
+     * @param config Configuration including domain, flow ID, and network parameters
+     */
     AppInitator(Config config)
         : _config(std::move(config))
     {}
@@ -100,6 +176,18 @@ public:
         }
     }
 
+    /**
+     * @brief Set up the initiator: create flow reader, register memory, connect to target
+     *
+     * This function:
+     *   1. Creates MXL instance and flow reader
+     *   2. Creates fabrics initiator
+     *   3. Registers flow memory regions for RDMA
+     *   4. Parses target info and establishes connection
+     *
+     * @param targetInfoStr Base64-encoded target information from the receiver
+     * @return MXL_STATUS_OK on success, error code otherwise
+     */
     mxlStatus setup(std::string targetInfoStr)
     {
         _instance = mxlCreateInstance(_config.domain.c_str(), "");
@@ -186,8 +274,22 @@ public:
         return MXL_STATUS_OK;
     }
 
+    /**
+     * @brief Main transmission loop: read grains locally and transfer via RDMA
+     *
+     * This function continuously:
+     *   1. Waits for the next grain to be available locally
+     *   2. Transfers it to the remote target via mxlFabricsInitiatorTransferGrain
+     *   3. Polls for transfer completion
+     *   4. Handles errors (too early, too late, etc.)
+     *
+     * Runs until g_exit_requested is set or a fatal error occurs.
+     *
+     * @return MXL_STATUS_OK on graceful shutdown, error code on failure
+     */
     mxlStatus run()
-    { // Extract the FlowInfo structure.
+    {
+        // Extract the FlowInfo structure to get grain rate for indexing
         mxlFlowConfigInfo configInfo;
         auto status = mxlFlowReaderGetConfigInfo(_reader, &configInfo);
         if (status != MXL_STATUS_OK)
@@ -293,9 +395,19 @@ private:
     mxlTargetInfo _targetInfo;
 };
 
+/**
+ * @brief Fabrics target (receiver) implementation
+ *
+ * Creates a local MXL flow writer and listens for incoming RDMA connections.
+ * Receives grains from remote initiators and commits them to the local flow.
+ */
 class AppTarget
 {
 public:
+    /**
+     * @brief Construct target with configuration
+     * @param config Configuration including domain, flow descriptor, and network parameters
+     */
     AppTarget(Config config)
         : _config(std::move(config))
     {}
@@ -345,6 +457,19 @@ public:
         }
     }
 
+    /**
+     * @brief Set up the target: create flow writer, register memory, start listening
+     *
+     * This function:
+     *   1. Creates MXL instance and flow writer from NMOS descriptor
+     *   2. Creates fabrics target
+     *   3. Registers flow memory regions for RDMA
+     *   4. Sets up listening endpoint
+     *   5. Generates target info for initiators to connect
+     *
+     * @param flowDescriptor NMOS JSON flow definition
+     * @return MXL_STATUS_OK on success, error code otherwise
+     */
     mxlStatus setup(std::string const& flowDescriptor)
     {
         _instance = mxlCreateInstance(_config.domain.c_str(), "");
@@ -439,6 +564,22 @@ public:
         return MXL_STATUS_OK;
     }
 
+    /**
+     * @brief Main reception loop: wait for incoming grains and commit to local flow
+     *
+     * This function continuously:
+     *   1. Waits for a grain to be written via RDMA by an initiator
+     *   2. Opens the grain locally (without modifying payload)
+     *   3. Commits the grain to make it available to local readers
+     *   4. Logs grain details
+     *
+     * Note: The grain payload and metadata are already written by the remote initiator.
+     * The target just needs to open and commit to update the flow head index.
+     *
+     * Runs until g_exit_requested is set or a fatal error occurs.
+     *
+     * @return MXL_STATUS_OK on graceful shutdown, error code on failure
+     */
     mxlStatus run()
     {
         mxlGrainInfo dummyGrainInfo;
@@ -448,10 +589,11 @@ public:
 
         while (!g_exit_requested)
         {
+            // Wait for remote initiator to complete writing a grain
             status = mxlFabricsTargetWaitForNewGrain(_target, &grainIndex, 200);
             if (status == MXL_ERR_TIMEOUT)
             {
-                // No completion before a timeout was triggered, most likely a problem upstream.
+                // No completion before a timeout was triggered, most likely a problem upstream
                 MXL_WARN("wait for new grain timeout, most likely there is a problem upstream.");
                 continue;
             }
@@ -503,6 +645,30 @@ private:
     mxlTargetInfo _targetInfo;
 };
 
+/**
+ * @brief Main entry point for mxl-fabrics-demo
+ *
+ * Parses command-line arguments and runs in either:
+ *   - Initiator mode (-i): Reads from local flow, transmits to remote target
+ *   - Target mode (default): Creates flow writer, receives from remote initiator
+ *
+ * The workflow is:
+ *   1. Parse command-line arguments (domain, flow, network params, mode)
+ *   2. If target mode:
+ *      - Create flow writer from NMOS JSON
+ *      - Setup fabrics target endpoint
+ *      - Print target info (base64) for initiator to use
+ *      - Run reception loop
+ *   3. If initiator mode:
+ *      - Create flow reader for existing flow
+ *      - Parse target info from command line
+ *      - Setup fabrics initiator and connect to target
+ *      - Run transmission loop
+ *
+ * @param argc Argument count
+ * @param argv Argument values
+ * @return MXL_STATUS_OK on success, error code on failure
+ */
 int main(int argc, char** argv)
 {
     std::signal(SIGINT, &signal_handler);

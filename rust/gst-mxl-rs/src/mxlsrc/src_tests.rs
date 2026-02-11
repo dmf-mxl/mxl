@@ -1,3 +1,11 @@
+//! Unit and Integration Tests for MXL Source
+//!
+//! This module contains tests for the mxlsrc element:
+//! - Property setting (video-flow-id, audio-flow-id, domain)
+//! - Producer-consumer pipeline (mxlsink -> mxlsrc)
+//! - State transitions
+//! - Data flow validation
+
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -11,6 +19,9 @@ mod tests {
 
     use crate::mxlsrc::imp::*;
 
+    /// Tests property setting and retrieval.
+    ///
+    /// Verifies that properties can be set via the GObject API.
     #[test]
     fn set_properties() -> Result<(), glib::Error> {
         gst::init()?;
@@ -31,6 +42,17 @@ mod tests {
         Ok(())
     }
 
+    /// Tests a complete producer-consumer pipeline.
+    ///
+    /// Creates two pipelines:
+    /// 1. Producer: videotestsrc -> mxlsink
+    /// 2. Consumer: mxlsrc -> fakesink
+    ///
+    /// Verifies:
+    /// - Both pipelines start successfully
+    /// - Data flows through shared memory
+    /// - Pipelines run for 600ms without errors
+    /// - Clean shutdown
     #[test]
     #[cfg_attr(feature = "tracing", tracing_test::traced_test)]
     fn start_valid_pipeline() -> Result<(), glib::Error> {

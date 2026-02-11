@@ -19,6 +19,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+/**
+ * @file Base64.hpp
+ * @brief High-performance compile-time base64 encoding/decoding library
+ *
+ * This is a third-party header-only library (MIT licensed) used by MXL fabrics for
+ * serializing binary fabric addresses to text (base64 strings).
+ *
+ * WHY BASE64 FOR ADDRESSES?
+ * - Fabric addresses are opaque binary blobs with provider-specific formats
+ * - TargetInfo objects need to be transmitted out-of-band (JSON, XML, config files)
+ * - Base64 encoding makes binary data safe for text-based protocols
+ *
+ * USAGE IN MXL:
+ * - FabricAddress::toBase64() uses base64::encode_into<std::string>()
+ * - FabricAddress::fromBase64() uses base64::decode_into<std::vector<uint8_t>>()
+ *
+ * This library uses compile-time lookup tables and template metaprogramming for
+ * performance, and supports both little-endian and big-endian architectures.
+ */
+
 #ifndef BASE64_HPP_
 #define BASE64_HPP_
 

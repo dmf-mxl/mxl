@@ -2,6 +2,38 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/**
+ * @file CompletionQueue.hpp
+ * @brief Completion Queue (CQ) wrapper - holds completions for finished RDMA operations
+ *
+ * WHAT IS A COMPLETION QUEUE?
+ * In libfabric/RDMA, operations are asynchronous. When you initiate an RDMA write with fi_write(),
+ * the function returns immediately. Later, when the operation actually finishes, a "completion"
+ * entry is placed into the Completion Queue.
+ *
+ * The application must poll or wait on the CQ to retrieve these completions and know when
+ * operations have finished.
+ *
+ * COMPLETION QUEUE VS EVENT QUEUE:
+ * - **CompletionQueue (CQ)**: For data path operations (write, read, send, recv completions)
+ * - **EventQueue (EQ)**: For control path events (connection established, connection closed, errors)
+ *
+ * READING COMPLETIONS:
+ * - read(): Non-blocking poll - returns immediately with completion or nullopt
+ * - readBlocking(timeout): Blocks until completion arrives or timeout expires
+ *
+ * QUEUE FORMATS:
+ * MXL uses FI_CQ_FORMAT_DATA which provides:
+ * - Operation flags (FI_RMA, FI_WRITE, FI_REMOTE_WRITE, etc.)
+ * - Optional immediate data (64-bit user metadata sent with the operation)
+ * - Endpoint context (op_context field identifies the endpoint)
+ *
+ * USAGE IN MXL:
+ * - Initiator: Polls CQ to know when RDMA writes have completed
+ * - Target: Polls CQ to know when incoming RDMA writes have arrived
+ * - Each endpoint is bound to a CQ before being enabled
+ */
+
 #pragma once
 
 #include <chrono>
@@ -14,91 +46,129 @@
 namespace mxl::lib::fabrics::ofi
 {
 
-    /** \brief RAII Wrapper around a libfabric completion queue (`fi_cq`).
+    /**
+     * @class CompletionQueue
+     * @brief RAII wrapper around a libfabric completion queue (fi_cq)
+     *
+     * Manages the lifecycle of a completion queue and provides methods to read completions.
+     * Inherits from enable_shared_from_this because Completion::Error needs to hold a
+     * shared_ptr to the CQ for fi_cq_strerror() calls.
      */
     class CompletionQueue : public std::enable_shared_from_this<CompletionQueue>
     {
     public:
-        /** \brief A collection of attributes that can be used to configure the
-         * operation of newly created completion queues.
+        /**
+         * @struct Attributes
+         * @brief Configuration attributes for creating a CompletionQueue
          */
         struct Attributes
         {
         public:
-            /** \brief Returns the a CompletionQueueAttr with all of its attributes
-             * set to reasonable defaults.
+            /**
+             * @brief Get default attributes for a typical completion queue
+             * @return Attributes with size=8 and waitObject=FI_WAIT_UNSPEC
              */
             static Attributes defaults();
 
-            /** \brief Returns the raw libfabric version of this object.
+            /**
+             * @brief Convert to raw libfabric fi_cq_attr structure
+             * @return ::fi_cq_attr Populated with format=FI_CQ_FORMAT_DATA
              */
             [[nodiscard]]
             ::fi_cq_attr raw() const noexcept;
 
         public:
-            std::size_t size;            /**< Size of the queue. */
-            enum fi_wait_obj waitObject; /**< The underlying wait object that should be used. */
+            std::size_t size;            ///< Queue depth - number of completion entries it can hold
+            enum fi_wait_obj waitObject; ///< Wait mechanism: FI_WAIT_UNSPEC, FI_WAIT_FD, etc.
         };
 
     public:
-        /** \brief Create a new completion queue in the specified domain.
+        /**
+         * @brief Factory method to create and open a completion queue
+         * @param domain The domain to create the CQ in
+         * @param attr Configuration attributes (defaults are usually fine)
+         * @return std::shared_ptr<CompletionQueue> Newly created CQ
+         * @throws FabricException if fi_cq_open() fails
          */
         static std::shared_ptr<CompletionQueue> open(std::shared_ptr<Domain> domain, Attributes const& attr = Attributes::defaults());
 
+        /**
+         * @brief Destructor - closes the CQ and releases resources
+         */
         ~CompletionQueue();
 
-        // No copying, no moving
+        // No copying or moving - CQ must stay at same address for shared_from_this to work
         CompletionQueue(CompletionQueue const&) = delete;
         void operator=(CompletionQueue const&) = delete;
         CompletionQueue(CompletionQueue&&) = delete;
         CompletionQueue& operator=(CompletionQueue&&) = delete;
 
-        /** \brief Mutable accessor of the underlying `fi_cq` instance.
+        /**
+         * @brief Get mutable access to the underlying fi_cq pointer
+         * @return ::fid_cq* Raw libfabric completion queue handle
          */
         ::fid_cq* raw() noexcept;
 
-        /** \brief Immutable accessor of the underlying `fi_cq` instance.
+        /**
+         * @brief Get const access to the underlying fi_cq pointer
+         * @return ::fid_cq const* Raw libfabric completion queue handle
          */
         [[nodiscard]]
         ::fid_cq const* raw() const noexcept;
 
-        /** \brief Perform a non-blocking read on the completion queue.
+        /**
+         * @brief Non-blocking read of the completion queue
+         * @return std::optional<Completion> The completion if available, or nullopt if queue is empty
          *
-         * If no completion event is available in the queue
-         * returns std::nullopt
+         * Polls the CQ once using fi_cq_read(). Returns immediately - does not block.
+         * Use this in a polling loop for lowest latency.
          */
         std::optional<Completion> read();
 
-        /** \brief Perform a blocking read on the completion queue.
+        /**
+         * @brief Blocking read of the completion queue with timeout
+         * @param timeout Maximum time to wait for a completion
+         * @return std::optional<Completion> The completion if received, or nullopt if timeout
+         * @throws Exception if interrupted by a signal
          *
-         * This function will block until the specified timeout
-         * has elapsed, the process is signaled, or a completion is available on the queue.
-         * If no event was available after the timeout, the function returns std::nullopt. If the process is signaled
-         * while blocking on this functions, an exception will be thrown.
+         * Uses fi_cq_sread() to block until a completion arrives or timeout expires.
+         * More CPU-efficient than polling read() in a loop, but slightly higher latency.
          */
         std::optional<Completion> readBlocking(std::chrono::steady_clock::duration timeout);
 
     private:
-        /** \brief Releases all underlying resources. This is called from the destructor and the move-assignment operator.
+        /**
+         * @brief Internal helper to close the CQ and release resources
+         *
+         * Called by destructor. Safe to call multiple times (checks if _raw is non-null).
          */
         void close();
 
-        /** \brief The completion queue can only exists behind a shared_ptr.
+        /**
+         * @brief Private constructor - use open() factory method
+         * @param raw The raw fi_cq pointer from fi_cq_open()
+         * @param domain The domain this CQ belongs to (keeps domain alive)
          *
-         * Some events need to carry a reference to the
-         * completion queue. To prevent the queue from being released before all these events have be released, they own
-         * a shared_ptr to the queue they have originated from.
+         * Private because CompletionQueue must only exist behind a shared_ptr
+         * (Completion::Error objects hold shared_ptr<CompletionQueue> for fi_cq_strerror).
          */
         CompletionQueue(::fid_cq* raw, std::shared_ptr<Domain> domain);
 
-        /** \brief Handle the result of a blocking or non-blocking read.
+        /**
+         * @brief Common handler for read() and readBlocking() results
+         * @param ret Return value from fi_cq_read() or fi_cq_sread()
+         * @param entry The raw completion entry structure
+         * @return std::optional<Completion> Parsed completion or nullopt
          *
-         * This takes a raw completion entry and generate a Completion instance.
+         * Handles three cases:
+         * - ret == -FI_EAGAIN: No completion available (returns nullopt)
+         * - ret == -FI_EAVAIL: Error completion available (reads error with fi_cq_readerr)
+         * - ret > 0: Success (wraps entry in Completion::Data)
          */
         std::optional<Completion> handleReadResult(ssize_t ret, ::fi_cq_data_entry const& entry);
 
     private:
-        ::fid_cq* _raw;                  /**< Raw resource reference. */
-        std::shared_ptr<Domain> _domain; /**< The domain this queue was created into. */
+        ::fid_cq* _raw;                  ///< Raw libfabric CQ handle (or nullptr if closed)
+        std::shared_ptr<Domain> _domain; ///< The domain this CQ was created in (keeps domain alive)
     };
 }

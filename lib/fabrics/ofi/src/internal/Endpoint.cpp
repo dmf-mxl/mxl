@@ -2,6 +2,10 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file Endpoint.cpp
+ * \brief Implementation of Endpoint wrapper - handles endpoint lifecycle, binding, and RDMA operations.
+ */
+
 #include "Endpoint.hpp"
 #include <cstdint>
 #include <memory>
@@ -328,20 +332,23 @@ namespace mxl::lib::fabrics::ofi
         std::optional<std::uint32_t> immData)
     {
         std::uint64_t data = immData.value_or(0);
+        // FI_DELIVERY_COMPLETE ensures completion only after data reaches target memory (strongest guarantee)
         std::uint64_t flags = FI_DELIVERY_COMPLETE;
+        // FI_REMOTE_CQ_DATA indicates immediate data should be delivered to remote CQ
         flags |= immData.has_value() ? FI_REMOTE_CQ_DATA : 0;
 
         ::fi_msg_rma msg = {
-            .msg_iov = msgIov,
-            .desc = desc,
-            .iov_count = iovCount,
-            .addr = destAddr,
-            .rma_iov = rmaIov,
-            .rma_iov_count = 1,
-            .context = _raw,
-            .data = data,
+            .msg_iov = msgIov,           // Local source buffers (scatter-gather list)
+            .desc = desc,                // Memory region descriptors for local buffers
+            .iov_count = iovCount,       // Number of local buffers
+            .addr = destAddr,            // Destination fi_addr_t from AV (or FI_ADDR_UNSPEC for connected)
+            .rma_iov = rmaIov,           // Remote target buffer (address + rkey)
+            .rma_iov_count = 1,          // Single remote destination region
+            .context = _raw,             // Context pointer (endpoint) returned in completion
+            .data = data,                // Immediate data (32-bit user payload)
         };
 
+        // Post RDMA write to endpoint's work queue
         fiCall(::fi_writemsg, "Failed to push rma write to work queue.", _raw, &msg, flags);
     }
 

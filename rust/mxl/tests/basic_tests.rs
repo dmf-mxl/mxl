@@ -1,22 +1,43 @@
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-/// Tests of the basic low level synchronous API.
-///
-/// The tests now require an MXL library of a specific name to be present in the system. This should
-/// change in the future. For now, feel free to just edit the path to your library.
+//! Basic integration tests for the MXL Rust bindings.
+//!
+//! These tests exercise the core read/write operations for both discrete (grain-based)
+//! and continuous (sample-based) flows. Each test creates an isolated temporary domain
+//! on `/dev/shm` and cleans up automatically.
+//!
+//! # Test Coverage
+//!
+//! - Grain writing and reading (video/data flows)
+//! - Sample writing and reading (audio flows)
+//! - Flow definition retrieval
+//! - Instance and flow lifecycle management
+//!
+//! # Requirements
+//!
+//! - MXL library must be built and available (via `get_mxl_so_path()`)
+//! - `/dev/shm` must be writable
+//! - Test flow definitions must exist in the MXL repository
+
 use std::time::Duration;
 
 use mxl::{MxlInstance, OwnedGrainData, OwnedSamplesData, config::get_mxl_so_path};
 use tracing::info;
 
+/// Ensures logging is initialized only once across all tests.
 static LOG_ONCE: std::sync::Once = std::sync::Once::new();
 
+/// RAII guard for test domain directories.
+///
+/// Automatically creates a unique temporary domain directory on `/dev/shm`
+/// and removes it when dropped, ensuring test isolation and cleanup.
 struct TestDomainGuard {
     dir: std::path::PathBuf,
 }
 
 impl TestDomainGuard {
+    /// Creates a new test domain directory with a unique UUID suffix.
     fn new(test: &str) -> Self {
         let dir = std::path::PathBuf::from(format!(
             "/dev/shm/mxl_rust_unit_tests_domain_{}_{}",
@@ -32,12 +53,14 @@ impl TestDomainGuard {
         Self { dir }
     }
 
+    /// Returns the domain path as a string.
     fn domain(&self) -> String {
         self.dir.to_string_lossy().to_string()
     }
 }
 
 impl Drop for TestDomainGuard {
+    /// Removes the test domain directory on drop.
     fn drop(&mut self) {
         std::fs::remove_dir_all(self.dir.as_path()).unwrap_or_else(|_| {
             panic!(
@@ -48,9 +71,12 @@ impl Drop for TestDomainGuard {
     }
 }
 
+/// Sets up a test by initializing logging and creating an isolated MXL instance.
+///
+/// Returns an MXL instance bound to a unique temporary domain, along with the
+/// domain guard for cleanup.
 fn setup_test(test: &str) -> (MxlInstance, TestDomainGuard) {
-    // Set up the logging to use the RUST_LOG environment variable and if not present, print INFO
-    // and higher.
+    // Initialize logging once (respects RUST_LOG environment variable)
     LOG_ONCE.call_once(|| {
         tracing_subscriber::fmt()
             .with_env_filter(
@@ -69,6 +95,7 @@ fn setup_test(test: &str) -> (MxlInstance, TestDomainGuard) {
     )
 }
 
+/// Reads a flow definition JSON file from the MXL repository test data directory.
 fn read_flow_def<P: AsRef<std::path::Path>>(path: P) -> String {
     let flow_config_file = mxl::config::get_mxl_repo_root().join(path);
 
@@ -83,6 +110,10 @@ fn read_flow_def<P: AsRef<std::path::Path>>(path: P) -> String {
         .unwrap()
 }
 
+/// Tests basic grain writing and reading for discrete flows.
+///
+/// Creates a video flow (v210), writes a grain, reads it back, and verifies
+/// the roundtrip. Demonstrates zero-copy access and RAII cleanup.
 #[test]
 fn basic_mxl_grain_writing_reading() {
     let (mxl_instance, _domain_guard) = setup_test("grains");
@@ -112,6 +143,10 @@ fn basic_mxl_grain_writing_reading() {
     mxl_instance.destroy().unwrap();
 }
 
+/// Tests basic sample writing and reading for continuous flows.
+///
+/// Creates an audio flow, writes a batch of samples, reads them back, and verifies
+/// the roundtrip. Demonstrates multi-channel access and RAII cleanup.
 #[test]
 fn basic_mxl_samples_writing_reading() {
     let (mxl_instance, _domain_guard) = setup_test("samples");
@@ -144,6 +179,10 @@ fn basic_mxl_samples_writing_reading() {
     mxl_instance.destroy().unwrap();
 }
 
+/// Tests flow definition retrieval.
+///
+/// Creates a flow from a JSON definition, retrieves it back from the domain,
+/// and verifies the JSON matches the original.
 #[test]
 fn get_flow_def() {
     let (mxl_instance, _domain_guard) = setup_test("flow_def");

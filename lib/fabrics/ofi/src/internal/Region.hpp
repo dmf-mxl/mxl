@@ -2,6 +2,32 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file Region.hpp
+ * \brief Unregistered memory region descriptor - base address and size before RDMA registration.
+ *
+ * Region represents an unregistered memory buffer (just base pointer + size).
+ * It's the input to memory registration (MemoryRegion::reg()).
+ *
+ * Region vs RegisteredRegion vs LocalRegion vs RemoteRegion:
+ * 1. Region: Unregistered memory (base, size, location)
+ * 2. RegisteredRegion: After fi_mr_reg() - contains MemoryRegion with desc/rkey
+ * 3. LocalRegion: Derived from RegisteredRegion - used for local RDMA operations
+ * 4. RemoteRegion: Derived from RegisteredRegion - sent to remote peer for RDMA targeting
+ *
+ * Region.Location:
+ * - Specifies memory type (host RAM, CUDA device memory, etc.)
+ * - Maps to libfabric's fi_hmem_iface (FI_HMEM_SYSTEM, FI_HMEM_CUDA, etc.)
+ * - Required for heterogeneous memory support (GPU-Direct RDMA)
+ *
+ * RegionGroup:
+ * - Collection of multiple Region objects
+ * - Used for scatter-gather operations
+ *
+ * MxlRegions:
+ * - Bridge between MXL's flow-based memory model and libfabric regions
+ * - Converts FlowData buffers to Region objects for registration
+ */
+
 #pragma once
 
 #include <cstddef>
@@ -18,6 +44,9 @@ namespace mxl::lib::fabrics::ofi
 {
 
     /** \brief Represent a memory region (unregistered).
+     *
+     * Region is the input to memory registration. After registration via MemoryRegion::reg(),
+     * it becomes a RegisteredRegion which can generate LocalRegion and RemoteRegion.
      */
     class Region
     {

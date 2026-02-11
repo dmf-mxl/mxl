@@ -2,6 +2,10 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file EventQueue.cpp
+ * \brief Implementation of EventQueue wrapper - handles event queue lifecycle and reading control events.
+ */
+
 #include "EventQueue.hpp"
 #include <chrono>
 #include <cstdint>
@@ -110,14 +114,16 @@ namespace mxl::lib::fabrics::ofi
 
     std::optional<Event> EventQueue::handleReadResult(ssize_t ret, std::uint32_t eventType, ::fi_eq_entry const& entry)
     {
+        // Handle three cases: no event (-FI_EAGAIN), error event (-FI_EAVAIL), or success
         if (ret == -FI_EAGAIN)
         {
-            // No event available
+            // No event available in queue (non-blocking read returned immediately)
             return std::nullopt;
         }
 
         if (ret == -FI_EAVAIL)
         {
+            // Error event available, must call fi_eq_readerr() to retrieve it
             ::fi_eq_err_entry eq_err{};
             fi_eq_readerr(_raw, &eq_err, 0);
 
@@ -126,9 +132,11 @@ namespace mxl::lib::fabrics::ofi
 
         if (ret < 0)
         {
+            // Unexpected error (not EAGAIN or EAVAIL)
             throw FabricException::make(ret, "Failed to read from event queue: {}", ::fi_strerror(ret));
         }
 
+        // Success: parse event based on type
         switch (eventType)
         {
             case FI_CONNECTED:

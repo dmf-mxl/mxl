@@ -2,6 +2,36 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+/** \file MemoryRegion.hpp
+ * \brief Wrapper for libfabric memory region (fid_mr) - registered memory for RDMA operations.
+ *
+ * MemoryRegion represents a memory buffer that has been registered (pinned) for RDMA operations.
+ * Memory registration is required for zero-copy RDMA transfers.
+ *
+ * What memory registration does:
+ * - Pins pages in physical memory (prevents swapping to disk)
+ * - Creates DMA mapping for NIC access
+ * - Returns memory descriptor (desc) for local operations
+ * - Returns remote key (rkey) for remote peer access
+ *
+ * Key outputs from registration:
+ * - desc: Memory descriptor for local side (used in LocalRegion)
+ * - rkey: Remote protection key for remote side (used in RemoteRegion)
+ *
+ * Access flags (combined with bitwise OR):
+ * - FI_SEND/FI_RECV: Message operations
+ * - FI_WRITE: Local buffer for RDMA writes (initiator)
+ * - FI_REMOTE_READ: Remote can read from this buffer (target)
+ * - FI_REMOTE_WRITE: Remote can write to this buffer (target)
+ *
+ * Typical workflow:
+ * 1. Create Region (base pointer + size)
+ * 2. Register with MemoryRegion::reg(domain, region, access)
+ * 3. Extract desc for LocalRegion, rkey for RemoteRegion
+ * 4. Send rkey to remote peer (out-of-band or via immediate data)
+ * 5. Use in RDMA operations
+ */
+
 #pragma once
 
 #include <cstdint>
@@ -14,7 +44,10 @@
 namespace mxl::lib::fabrics::ofi
 {
 
-    /** \brief RAII wrapper around a libfabric memory region (`fid_mr`)
+    /** \brief RAII wrapper around a libfabric memory region (`fid_mr`).
+     *
+     * MemoryRegion manages the lifecycle of a registered memory buffer.
+     * Automatically unregisters (fi_close) in destructor.
      */
     class MemoryRegion
     {
