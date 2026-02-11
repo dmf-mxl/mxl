@@ -46,7 +46,7 @@ namespace mxl::lib::fabrics::ofi
          * \note When start is 0, the offset is 0, because we include the header in the transfer.
          */
         [[nodiscard]]
-        std::uint32_t transferOffset(std::uint32_t payloadOffset, std::int32_t sliceSize) const noexcept;
+        std::uint32_t transferOffset(std::uint32_t payloadOffset, std::uint32_t sliceSize) const noexcept;
 
     private:
         SliceRange(std::uint16_t start, std::uint16_t end) noexcept

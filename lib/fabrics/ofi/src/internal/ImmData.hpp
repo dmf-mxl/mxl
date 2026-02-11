@@ -16,7 +16,7 @@ namespace mxl::lib::fabrics::ofi
     public:
         struct Unpacked //**< Unpacked representation of immediate data. */
         {
-            std::uint16_t ringBufferIndex;
+            std::uint16_t ringBufferSlot;
             std::uint16_t sliceIndex;
         };
 
