@@ -479,13 +479,12 @@ public:
     {
         mxlGrainInfo grainInfo;
         std::uint64_t grainIndex = 0;
-        std::uint16_t validSlices = 0;
         std::uint8_t* dummyPayload;
         mxlStatus status;
 
         while (!g_exit_requested)
         {
-            status = targetReadGrain(&grainIndex, &validSlices, std::chrono::milliseconds(200));
+            status = targetReadGrain(&grainIndex, std::chrono::milliseconds(200));
             if (status == MXL_ERR_TIMEOUT)
             {
                 // No completion before a timeout was triggered, most likely a problem upstream.
@@ -514,9 +513,6 @@ public:
                 return status;
             }
 
-            // Now that the grain is open, we can se the valid slices.
-            grainInfo.validSlices = validSlices;
-
             // GrainInfo and media payload was already written by the remote endpoint, we simply commit!.
             status = mxlFlowWriterCommitGrain(_writer, &grainInfo);
             if (status != MXL_STATUS_OK)
@@ -528,7 +524,7 @@ public:
             MXL_DEBUG("Comitted grain with index={} current index={} validSlices={} flags={}",
                 grainIndex,
                 mxlGetCurrentIndex(&_configInfo.common.grainRate),
-                validSlices,
+                grainInfo.validSlices,
                 grainInfo.flags);
         }
 
@@ -536,16 +532,15 @@ public:
     }
 
 private:
-    mxlStatus targetReadGrain(std::uint64_t* grainIndex, std::uint16_t* validSlices, std::chrono::steady_clock::duration timeout)
+    mxlStatus targetReadGrain(std::uint64_t* grainIndex, std::chrono::steady_clock::duration timeout)
     {
         if (_config.provider == MXL_FABRICS_PROVIDER_EFA)
         {
-            return mxlFabricsTargetReadGrainNonBlocking(_target, grainIndex, validSlices);
+            return mxlFabricsTargetReadGrainNonBlocking(_target, grainIndex);
         }
         else
         {
-            return mxlFabricsTargetReadGrain(
-                _target, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count(), grainIndex, validSlices);
+            return mxlFabricsTargetReadGrain(_target, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count(), grainIndex);
         }
     }
 

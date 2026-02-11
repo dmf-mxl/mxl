@@ -9,6 +9,7 @@
 #include <bits/types/struct_iovec.h>
 #include <mxl-internal/DiscreteFlowData.hpp>
 #include <mxl-internal/Flow.hpp>
+#include "mxl/dataformat.h"
 #include "mxl/fabrics.h"
 #include "mxl/flow.h"
 #include "mxl/mxl.h"
@@ -119,6 +120,29 @@ namespace mxl::lib::fabrics::ofi
         return _layout;
     }
 
+    MxlRegions mxlFabricsRegionsFromMutableFlow(FlowData& flow)
+    {
+        auto mxlRegions = mxlFabricsRegionsFromFlow(flow);
+
+        if (mxlIsDiscreteDataFormat(static_cast<int>(flow.flowInfo()->config.common.format)))
+        {
+            auto& discreteFlow = static_cast<DiscreteFlowData&>(flow);
+
+            if (mxlRegions._regions.size() != discreteFlow.grainCount())
+            {
+                throw Exception::invalidState("Unexpected number of grains in discrete flow");
+            }
+
+            for (std::size_t i = 0; i < discreteFlow.grainCount(); ++i)
+            {
+                mxlRegions._regions[i].grainIndexPtr = &discreteFlow.grainAt(i)->header.info.index;
+                mxlRegions._regions[i].validSlicesPtr = &discreteFlow.grainAt(i)->header.info.validSlices;
+            }
+        }
+
+        return mxlRegions;
+    }
+
     MxlRegions mxlFabricsRegionsFromFlow(FlowData const& flow)
     {
         static_assert(sizeof(GrainHeader) == 8192,
@@ -131,7 +155,7 @@ namespace mxl::lib::fabrics::ofi
                 "GPU memory is not currently supported in the Flow API of MXL. Edit the code below when it is supported");
         }
 
-        if (mxlIsDiscreteDataFormat(flow.flowInfo()->config.common.format))
+        if (mxlIsDiscreteDataFormat(static_cast<int>(flow.flowInfo()->config.common.format)))
         {
             auto& discreteFlow = static_cast<DiscreteFlowData const&>(flow);
             std::vector<Region> regions;
@@ -143,7 +167,6 @@ namespace mxl::lib::fabrics::ofi
                 auto grainInfoBaseAddr = reinterpret_cast<std::uintptr_t>(discreteFlow.grainAt(i));
                 auto grainInfoSize = sizeof(GrainHeader);
                 auto grainPayloadSize = grain->header.info.grainSize;
-                auto grainIndexPtr = &grain->header.info.index;
 
                 if (flow.flowInfo()->config.common.payloadLocation != MXL_PAYLOAD_LOCATION_HOST_MEMORY)
                 {
@@ -151,7 +174,7 @@ namespace mxl::lib::fabrics::ofi
                         "GPU memory is not currently supported in the Flow API of MXL. Edit the code below when it is supported");
                 }
 
-                regions.emplace_back(grainInfoBaseAddr, grainInfoSize + grainPayloadSize, grainIndexPtr, Region::Location::host());
+                regions.emplace_back(grainInfoBaseAddr, grainInfoSize + grainPayloadSize, nullptr, nullptr, Region::Location::host());
             }
 
             // TODO: Add an utility function to retrieve the number of available planes when alpha support is added.
@@ -175,13 +198,23 @@ namespace mxl::lib::fabrics::ofi
         }
     }
 
-    std::uint64_t getGrainIndexInRingSlot(std::vector<Region> const& regions, std::uint16_t slotIndex)
+    std::uint64_t getGrainIndexInRingSlot(std::vector<Region> const& regions, std::uint16_t slot)
     {
-        if (slotIndex >= regions.size())
+        if (slot >= regions.size())
         {
-            throw Exception::invalidArgument("Invalid ring buffer slot number: {}, ring buffer len: {}", slotIndex, regions.size());
+            throw Exception::invalidArgument("Invalid ring buffer slot number: {}, ring buffer len: {}", slot, regions.size());
         }
 
-        return *regions[slotIndex].grainIndexPtr;
+        return *regions[slot].grainIndexPtr;
+    }
+
+    void setValidSlicesForGrain(std::vector<Region> const& regions, std::uint16_t slot, std::uint16_t validSlices)
+    {
+        if (slot >= regions.size())
+        {
+            throw Exception::invalidArgument("Invalid ring buffer slot number: {}, ring buffer len: {}", slot, regions.size());
+        }
+
+        *regions[slot].validSlicesPtr = validSlices;
     }
 }

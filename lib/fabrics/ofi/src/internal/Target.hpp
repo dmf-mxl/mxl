@@ -22,7 +22,6 @@ namespace mxl::lib::fabrics::ofi
         struct GrainReadResult
         {
             std::uint64_t grainIndex;
-            std::uint16_t sliceIndex;
         };
 
     public:

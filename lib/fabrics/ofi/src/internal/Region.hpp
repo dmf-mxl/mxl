@@ -95,10 +95,12 @@ namespace mxl::lib::fabrics::ofi
          * \param size The size of the memory region in bytes.
          * \param loc The location of the memory region \see Location.
          */
-        explicit Region(std::uintptr_t base, std::size_t size, std::uint64_t const* grainIndexPtr, Location loc = Location::host()) noexcept
+        explicit Region(std::uintptr_t base, std::size_t size, std::uint64_t const* grainIndexPtr, std::uint16_t* validSlicesPtr,
+            Location loc = Location::host()) noexcept
             : base(base)
             , size(size)
             , grainIndexPtr(grainIndexPtr)
+            , validSlicesPtr(validSlicesPtr)
             , loc(loc)
             , _iovec(iovecFromRegion(base, size))
         {}
@@ -118,6 +120,7 @@ namespace mxl::lib::fabrics::ofi
         std::uintptr_t base;
         std::size_t size;
         std::uint64_t const* grainIndexPtr;
+        std::uint16_t* validSlicesPtr;
         Location loc;
 
     private:
@@ -221,7 +224,8 @@ namespace mxl::lib::fabrics::ofi
         DataLayout const& dataLayout() const noexcept;
 
     private:
-        friend MxlRegions mxlFabricsRegionsFromFlow(FlowData const& flow);
+        friend MxlRegions mxlFabricsRegionsFromFlow(FlowData& flow);
+        friend MxlRegions mxlFabricsRegionsFromMutableFlow(FlowData& flow);
 
     private:
         std::vector<Region> _regions;
@@ -234,5 +238,17 @@ namespace mxl::lib::fabrics::ofi
     [[nodiscard]]
     MxlRegions mxlFabricsRegionsFromFlow(FlowData const& flow);
 
+    /** \brief Convert a FlowData's memory regions to MxlRegions.
+     * FlowData are obtained from an MXL FlowWriter or FlowReader.
+     */
+    [[nodiscard]]
+    MxlRegions mxlFabricsRegionsFromMutableFlow(FlowData& flow);
+
+    /** \brief
+     */
     std::uint64_t getGrainIndexInRingSlot(std::vector<Region> const& regions, std::uint16_t slotIndex);
+
+    /** \brief
+     */
+    void setValidSlicesForGrain(std::vector<Region> const& regions, std::uint16_t slot, std::uint16_t validSlices);
 }

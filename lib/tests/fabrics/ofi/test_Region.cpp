@@ -25,9 +25,10 @@ TEST_CASE("ofi: Region constructors", "[ofi][Constructors]")
 TEST_CASE("ofi: RegionGroup view and iovec conversion", "[ofi][RegionGroup]")
 {
     std::uint64_t dummyGrainIndex = 0;
+    std::uint16_t dummyValidSlices = 0;
 
-    auto r1 = Region{0x1000, 64, &dummyGrainIndex, Region::Location::host()};
-    auto r2 = Region{0x2000, 128, &dummyGrainIndex, Region::Location::host()};
+    auto r1 = Region{0x1000, 64, &dummyGrainIndex, &dummyValidSlices, Region::Location::host()};
+    auto r2 = Region{0x2000, 128, &dummyGrainIndex, &dummyValidSlices, Region::Location::host()};
     auto group = RegionGroup({r1, r2});
     REQUIRE(group.size() == 2);
 
