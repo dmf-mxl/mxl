@@ -22,7 +22,7 @@ namespace mxl::lib::fabrics::ofi
     {
         MXL_INFO("setting up target [endpoint = {}:{}, provider = {}]", config.endpointAddress.node, config.endpointAddress.service, config.provider);
 
-        // Convert to our internal enum type
+        // Convert to our internal enum type.
         auto provider = providerFromAPI(config.provider);
         if (!provider)
         {
@@ -56,7 +56,7 @@ namespace mxl::lib::fabrics::ofi
         auto proto = selectIngressProtocol(mxlRegions->dataLayout(), mxlRegions->regions());
         auto targetInfo = std::make_unique<TargetInfo>(pep.id(), pep.localAddress(), proto->registerMemory(domain));
 
-        // Helper struct to enable the std::make_unique function to access the private constructor of this class
+        // Helper struct to enable the std::make_unique function to access the private constructor of this class.
         struct MakeUniqueEnabler : RCTarget
         {
             MakeUniqueEnabler(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain)
@@ -164,7 +164,7 @@ namespace mxl::lib::fabrics::ofi
     PassiveEndpoint RCTarget::makeListener(std::shared_ptr<Fabric> fabric)
     {
         // Create a passive endpoint. A passive endpoint can be viewed like a bound TCP socket listening for
-        // incoming connections
+        // incoming connections.
         auto pep = PassiveEndpoint::create(fabric);
 
         // Create an event queue for the passive endpoint. Incoming connections generate an entry in the event queue

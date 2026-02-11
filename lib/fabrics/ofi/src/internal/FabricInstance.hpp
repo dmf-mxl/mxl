@@ -48,12 +48,12 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         static FabricsInstance* fromAPI(mxlFabricsInstance instance) noexcept;
 
-        /** \brief create an uninitialized Target associated with this instance.
+        /** \brief Create an uninitialized Target associated with this instance.
          */
         [[nodiscard]]
         TargetWrapper* createTarget();
 
-        /** \brief destroy a Target associated with this instance.
+        /** \brief Destroy a Target associated with this instance.
          */
         void destroyTarget(TargetWrapper* target);
 
@@ -62,7 +62,7 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         InitiatorWrapper* createInitiator();
 
-        /** \brief destroy an Initiator associated with this instance.
+        /** \brief Destroy an Initiator associated with this instance.
          */
         void destroyInitiator(InitiatorWrapper* initiator);
 

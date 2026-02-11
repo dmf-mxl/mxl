@@ -51,7 +51,7 @@ namespace mxl::lib::fabrics::ofi
         using const_iterator = std::vector<RemoteRegion>::const_iterator;
 
     public:
-        /** \brief Convert a vector of RemoteRegion into a RemoteRegionGroup
+        /** \brief Convert a vector of RemoteRegion into a RemoteRegionGroup.
          */
         RemoteRegionGroup(std::vector<RemoteRegion> const& group)
             : _inner(std::move(group))
