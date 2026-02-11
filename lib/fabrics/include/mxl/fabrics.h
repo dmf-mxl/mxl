@@ -167,23 +167,23 @@ extern "C"
     /**
      * Non-blocking accessor for a flow grain at a specific index.
      * \param in_target A valid fabrics target
-     * \param out_entryIndex The index of the grain ring buffer index that is ready, if any.
+     * \param out_grainIndex The index of the grain that was written, if any..
      * \param out_sliceIndex The last valid slice index that is ready, if any.
      * \return The result code. MXL_ERR_NOT_READY if no grain was available at the time of the call, and the call should be retried. \see mxlStatus
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsTargetReadGrainNonBlocking(mxlFabricsTarget in_target, uint16_t* out_entryIndex, uint16_t* out_sliceIndex);
+    mxlStatus mxlFabricsTargetReadGrainNonBlocking(mxlFabricsTarget in_target, uint64_t* out_grainIndex, uint16_t* out_sliceIndex);
 
     /**
      * Blocking accessor for a flow grain at a specific index.
      * \param in_target A valid fabrics target
-     * \param out_entryIndex The index of the grain ring buffer index that is ready, if any.
+     * \param out_grainIndex The index of the grain that was written, if any.
      * \param out_sliceIndex The last valid slice index that is ready, if any.
      * \param in_timeoutMs How long should we wait for the grain (in milliseconds)
      * \return The result code. MXL_ERR_NOT_READY if no grain was available before the timeout. \see mxlStatus
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsTargetReadGrain(mxlFabricsTarget in_target, uint16_t* out_entryIndex, uint16_t* out_sliceIndex, uint16_t in_timeoutMs);
+    mxlStatus mxlFabricsTargetReadGrain(mxlFabricsTarget in_target, uint16_t in_timeoutMs, uint64_t* out_entryIndex, uint16_t* out_sliceIndex);
 
     /**
      * Create a fabrics initiator instance.

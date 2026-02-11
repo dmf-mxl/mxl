@@ -157,7 +157,7 @@ namespace mxl::lib::fabrics::ofi
     }
 
     // Initialize logging
-    static void fiInitLogging()
+    void fiInitLogging()
     {
         logging.init();
     }

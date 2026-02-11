@@ -10,6 +10,7 @@
 #include <rdma/fi_errno.h>
 #include "mxl/fabrics.h"
 #include "Exception.hpp"
+#include "ImmData.hpp"
 #include "LocalRegion.hpp"
 #include "RCTarget.hpp"
 #include "RDMTarget.hpp"
@@ -35,31 +36,31 @@ namespace mxl::lib::fabrics::ofi
         return reinterpret_cast<mxlFabricsTarget>(this);
     }
 
-    Target::ReadResult TargetWrapper::read()
+    std::optional<Target::GrainReadResult> TargetWrapper::readGrain()
     {
         if (!_inner)
         {
-            throw Exception::invalidState("Target is not set up");
+            throw Exception::invalidState("Target is not set up.");
         }
 
-        return _inner->read();
+        return _inner->readGrain();
     }
 
-    Target::ReadResult TargetWrapper::readBlocking(std::chrono::steady_clock::duration timeout)
+    std::optional<Target::GrainReadResult> TargetWrapper::readGrainBlocking(std::chrono::steady_clock::duration timeout)
     {
         if (!_inner)
         {
-            throw Exception::invalidState("Target is not set up");
+            throw Exception::invalidState("Target is not set up.");
         }
 
-        return _inner->readBlocking(timeout);
+        return _inner->readGrainBlocking(timeout);
     }
 
     std::unique_ptr<TargetInfo> TargetWrapper::setup(mxlFabricsTargetConfig const& config)
     {
         if (_inner)
         {
-            _inner.release();
+            _inner.reset();
         }
 
         switch (config.provider)
@@ -84,5 +85,4 @@ namespace mxl::lib::fabrics::ofi
 
         throw Exception::invalidArgument("Invalid provider value");
     }
-
 }

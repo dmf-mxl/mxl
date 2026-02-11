@@ -143,6 +143,7 @@ namespace mxl::lib::fabrics::ofi
                 auto grainInfoBaseAddr = reinterpret_cast<std::uintptr_t>(discreteFlow.grainAt(i));
                 auto grainInfoSize = sizeof(GrainHeader);
                 auto grainPayloadSize = grain->header.info.grainSize;
+                auto grainIndexPtr = &grain->header.info.index;
 
                 if (flow.flowInfo()->config.common.payloadLocation != MXL_PAYLOAD_LOCATION_HOST_MEMORY)
                 {
@@ -150,7 +151,7 @@ namespace mxl::lib::fabrics::ofi
                         "GPU memory is not currently supported in the Flow API of MXL. Edit the code below when it is supported");
                 }
 
-                regions.emplace_back(grainInfoBaseAddr, grainInfoSize + grainPayloadSize, Region::Location::host());
+                regions.emplace_back(grainInfoBaseAddr, grainInfoSize + grainPayloadSize, grainIndexPtr, Region::Location::host());
             }
 
             // TODO: Add an utility function to retrieve the number of available planes when alpha support is added.
@@ -172,5 +173,15 @@ namespace mxl::lib::fabrics::ofi
         {
             throw Exception::make(MXL_ERR_UNKNOWN, "Unsupported flow fromat {}", flow.flowInfo()->config.common.format);
         }
+    }
+
+    std::uint64_t getGrainIndexInRingSlot(std::vector<Region> const& regions, std::uint16_t slotIndex)
+    {
+        if (slotIndex >= regions.size())
+        {
+            throw Exception::invalidArgument("Invalid ring buffer slot number: {}, ring buffer len: {}", slotIndex, regions.size());
+        }
+
+        return *regions[slotIndex].grainIndexPtr;
     }
 }

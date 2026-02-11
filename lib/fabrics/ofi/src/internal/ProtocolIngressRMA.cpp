@@ -4,6 +4,8 @@
 
 #include "ProtocolIngressRMA.hpp"
 #include "Exception.hpp"
+#include "ImmData.hpp"
+#include "Region.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
@@ -22,27 +24,36 @@ namespace mxl::lib::fabrics::ofi
         return domain->remoteRegions();
     }
 
-    void RMAGrainIngressProtocol::start(Endpoint& ep)
+    void RMAGrainIngressProtocol::start(Endpoint& endpoint)
     {
-        if (ep.domain()->usingRecvBufForCqData())
+        if (endpoint.domain()->usingRecvBufForCqData())
         {
-            ep.recv(immDataRegion());
+            endpoint.recv(immDataRegion());
         }
     }
 
-    Target::ReadResult RMAGrainIngressProtocol::processCompletion(Endpoint& ep, Completion const& completion)
+    std::optional<Target::GrainReadResult> RMAGrainIngressProtocol::readGrain(Endpoint& endpoint, Completion const& completion)
     {
-        if (auto data = completion.tryData(); data)
+        auto completionData = completion.tryData();
+        if (!completionData)
         {
-            if (_immDataBuffer)
-            {
-                ep.recv(immDataRegion());
-            }
-
-            return Target::ReadResult{data->data()};
+            return {};
         }
 
-        return {};
+        if (_immDataBuffer)
+        {
+            endpoint.recv(_immDataBuffer->toLocalRegion());
+        }
+
+        auto immData = completionData->data();
+        if (!immData)
+        {
+            throw Exception::invalidState("Received a completion without immediate data.");
+        }
+
+        auto [slot, slice] = ImmDataGrain{static_cast<std::uint32_t>(*immData)}.unpack();
+        auto grainIndex = getGrainIndexInRingSlot(_regions, slot);
+        return std::make_optional<Target::GrainReadResult>(grainIndex, slice);
     }
 
     void RMAGrainIngressProtocol::reset()

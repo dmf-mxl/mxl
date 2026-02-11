@@ -40,7 +40,7 @@ namespace mxl::lib::fabrics::ofi
          * \param endpoint The endpoint associated with the completion
          * \param completion The completion object to process.
          */
-        virtual Target::ReadResult processCompletion(Endpoint& endpoint, Completion const& completion) = 0;
+        virtual std::optional<Target::GrainReadResult> readGrain(Endpoint& endpoint, Completion const& completion) = 0;
 
         /** \brief Destroy the protocol object.
          */

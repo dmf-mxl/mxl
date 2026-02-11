@@ -95,9 +95,10 @@ namespace mxl::lib::fabrics::ofi
          * \param size The size of the memory region in bytes.
          * \param loc The location of the memory region \see Location.
          */
-        explicit Region(std::uintptr_t base, std::size_t size, Location loc = Location::host()) noexcept
+        explicit Region(std::uintptr_t base, std::size_t size, std::uint64_t const* grainIndexPtr, Location loc = Location::host()) noexcept
             : base(base)
             , size(size)
+            , grainIndexPtr(grainIndexPtr)
             , loc(loc)
             , _iovec(iovecFromRegion(base, size))
         {}
@@ -116,6 +117,7 @@ namespace mxl::lib::fabrics::ofi
     public:
         std::uintptr_t base;
         std::size_t size;
+        std::uint64_t const* grainIndexPtr;
         Location loc;
 
     private:
@@ -199,7 +201,7 @@ namespace mxl::lib::fabrics::ofi
     public:
         MxlRegions(std::vector<Region> regions, DataLayout dataLayout)
             : _regions(std::move(regions))
-            , _layout(std::move(dataLayout))
+            , _layout(dataLayout)
         {}
 
         /** \brief Convert between external and internal versions of this type
@@ -231,4 +233,6 @@ namespace mxl::lib::fabrics::ofi
      */
     [[nodiscard]]
     MxlRegions mxlFabricsRegionsFromFlow(FlowData const& flow);
+
+    std::uint64_t getGrainIndexInRingSlot(std::vector<Region> const& regions, std::uint16_t slotIndex);
 }

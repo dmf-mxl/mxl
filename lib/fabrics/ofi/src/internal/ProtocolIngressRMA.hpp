@@ -28,7 +28,7 @@ namespace mxl::lib::fabrics::ofi
 
         /** \copydoc IngressProtocol::processCompletion()
          */
-        Target::ReadResult processCompletion(Endpoint& endpoint, Completion const& completion) override;
+        std::optional<Target::GrainReadResult> readGrain(Endpoint& endpoint, Completion const& completion) override;
 
         /** \copydoc IngressProtocol::destroy()
          */

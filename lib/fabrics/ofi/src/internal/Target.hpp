@@ -19,9 +19,10 @@ namespace mxl::lib::fabrics::ofi
     public:
         /** \brief Result of a read operation.
          */
-        struct ReadResult
+        struct GrainReadResult
         {
-            std::optional<std::uint32_t> immData{std::nullopt}; /**< If a transfer was initiated with immediate data, this contains the data. */
+            std::uint64_t grainIndex;
+            std::uint16_t sliceIndex;
         };
 
     public:
@@ -32,13 +33,13 @@ namespace mxl::lib::fabrics::ofi
          * A non-blocking operation that also drives the connection forward. Continuous invocation of this function is necessary for connection
          * establishment and ongoing progress.
          */
-        virtual ReadResult read() = 0;
+        virtual std::optional<GrainReadResult> readGrain() = 0;
 
         /** \brief Determine if new data can be consumed.
          *
          * A blocking version of read. see read().
          */
-        virtual ReadResult readBlocking(std::chrono::steady_clock::duration timeout) = 0;
+        virtual std::optional<GrainReadResult> readGrainBlocking(std::chrono::steady_clock::duration timeout) = 0;
 
         /** \brief Shut down the target gracefully.
          * Initiates a graceful shutdown of the target and blocks until the shutdown is complete.
@@ -87,11 +88,11 @@ namespace mxl::lib::fabrics::ofi
 
         /** \copydoc Target::read()
          */
-        Target::ReadResult read();
+        std::optional<Target::GrainReadResult> readGrain();
 
         /** \copydoc Target::readBlocking(std::chrono::steady_clock::duration)
          */
-        Target::ReadResult readBlocking(std::chrono::steady_clock::duration timeout);
+        std::optional<Target::GrainReadResult> readGrainBlocking(std::chrono::steady_clock::duration timeout);
 
         /** \brief Set up the target with the specified configuration.
          *
