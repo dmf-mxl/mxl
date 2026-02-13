@@ -1,14 +1,14 @@
 {
   "$copyright": "SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.",
   "$license": "SPDX-License-Identifier: Apache-2.0",
-  "description": "MXL VANC Data",
+  "description": "___CHANGE ME___ Long description of the data flow",
   "tags": {
     "urn:x-nmos:tag:grouphint/v1.0": [
-      "Media Function XYZ:Ancillary Data"
+      "___CHANGE ME FOR A NAME UNIQUE TO YOUR MEDIA FUNCTION INSTANCE___:Ancillary Data"
     ]
   },
   "format": "urn:x-nmos:format:data",
-  "label": "MXL VANC Data",
+  "label": "___CHANGE ME___ Short description of the data flow",
   "version": "1453880607:123995943",
   "parents": [],
   "source_id": "0e635152-e501-4d4e-bb87-9f3fe05eb79a",
