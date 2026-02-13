@@ -117,6 +117,11 @@ write_basic_package_version_file(
         COMPATIBILITY SameMinorVersion
     )
 
+# Install Findpicojson.cmake (picojson is a dependency of mxl)
+install(FILES
+            ${CMAKE_SOURCE_DIR}/cmake/modules/Findpicojson.cmake
+        DESTINATION ${MXL_CMAKE_CONFIG_DESTINATION}/modules)
+
 # Install the generated config and version files.
 install(FILES
             ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake

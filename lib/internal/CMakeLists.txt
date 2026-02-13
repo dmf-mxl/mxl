@@ -112,4 +112,6 @@ install(TARGETS mxl-internal-headers
         COMPONENT ${PROJECT_NAME}-dev
     )
 
-add_subdirectory(tests)
+if (BUILD_TESTS)
+    add_subdirectory(tests)
+endif()

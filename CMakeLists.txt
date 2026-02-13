@@ -46,6 +46,7 @@ endif()
 option(BUILD_DOCS "Build the docs" ON)
 option(BUILD_TESTS "Build the tests" ON)
 option(BUILD_TOOLS "Build the tools" ON)
+option(BUILD_UTILS "Build the utils" ON)
 
 project(mxl
     VERSION ${mxl_VERSION}
@@ -380,7 +381,9 @@ endfunction()
 
 
 add_subdirectory(lib)
-add_subdirectory(utils)
+if (BUILD_UTILS)
+    add_subdirectory(utils)
+endif()
 if (BUILD_TOOLS)
     add_subdirectory(tools)
 endif()
