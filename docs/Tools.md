@@ -98,17 +98,20 @@ watch -n 1 -p ./mxl-info mxl:///dev/shm/mxl?id=5fbec3b1-1b0f-417d-9059-8b94a4719
 
 A binary that uses the gstreamer 'videotestsrc' and 'audiotestsrc' elements to produce video grains and/or audio samples which will be pushed to a MXL Flow. The flow is configured from a NMOS Flow json file. Here's an example of such file :
 
+&emsp; **Note** Don't forget to provide valid description, label and grouphint tag.
+
+
 ```json
 {
-  "description": "MXL Test Flow, 1080p29",
+  "description": "___CHANGE ME___ Long description of the video flow",
   "id": "5fbec3b1-1b0f-417d-9059-8b94a47197ed",
   "tags": {
     "urn:x-nmos:tag:grouphint/v1.0": [
-      "My Media Function Unique Name (Change Me):Video"
+      "___CHANGE ME FOR A NAME UNIQUE TO YOUR MEDIA FUNCTION INSTANCE___:Video"
     ]
   },
   "format": "urn:x-nmos:format:video",
-  "label": "MXL Test Flow, 1080p29",
+  "label": "___CHANGE ME___ Short description of the video flow",
   "parents": [],
   "media_type": "video/v210",
   "grain_rate": {
@@ -142,18 +145,21 @@ A binary that uses the gstreamer 'videotestsrc' and 'audiotestsrc' elements to p
 }
 ```
 Below is an example of an **augmented NMOS Flow JSON** for audio.  
-&emsp; **Note:** The *channel_count* property is a mandatory MXL requirement (not found in standard NMOS definition). To adjust the number of audio channels, simply update the *channel_count* value.
+&emsp; **Note 1:** The *channel_count* property is a mandatory MXL requirement (not found in standard NMOS definition). To adjust the number of audio channels, simply update the *channel_count* value.
+
+&emsp; **Note 2:** Don't forget to provide valid description, label and grouphint tag.
+
 
 ```json
 {
-  "description": "MXL Audio Flow",
+  "description": "___CHANGE ME___ Long description of the audio flow",
   "format": "urn:x-nmos:format:audio",
   "tags": {
     "urn:x-nmos:tag:grouphint/v1.0": [
-      "My Media Function Unique Name (Change Me):Audio"
+      "___CHANGE ME FOR A NAME UNIQUE TO YOUR MEDIA FUNCTION INSTANCE___:Audio #1"
     ]
   },
-  "label": "MXL Audio Flow",
+  "label": "___CHANGE ME___ Short description of the audio flow",
   "version": "1441812152:154331951",
   "id": "b3bb5be7-9fe9-4324-a5bb-4c70e1084449",
   "media_type": "audio/float32",

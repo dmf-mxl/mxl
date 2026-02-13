@@ -153,10 +153,43 @@ extern "C"
     typedef struct mxlFlowSynchronizationGroup_t* mxlFlowSynchronizationGroup;
 
     /**
-     * Attempt to create a flow writer for a given flow definition. If the flow does not exist already, it is created and 'created' will be set to
+     * Attempts to create a flow writer for a given flow definition. If the flow does not exist already, it is created and 'created' will be set to
      * true. If the flow exists, it will be opened and 'created' will be set to false. If the flow exists already it is not guaranteed that the flow
      * definition of the existing flow is exactly equal to the flow definition supplied in flowDef. The definition of the existing flow can be
      * retrieved using mxlGetFlowDef().
+     *
+     * <span style="color: red;">IMPORTANT NOTE</span><br/>
+     * The flow definition (flowDef) is expected to have well defined fields such as label,
+     * description and grouphint tag.  This is a responsibility of the media function implementer.  These fields should refer to the <b>media function
+     * instance name</b>.  For example, on a large system with mutliple software defined decoders running simultaneously, <b>each decoder instance
+     * should use a unique name in the grouphint tag to identify itself.</b> Please read carefully the 'natural groups' section of the <a
+     * href="https://specs.amwa.tv/nmos-parameter-registers/branches/main/tags/grouphint.html#natural-groups">group hint tag specification</a>.
+     *
+     * Example fields for an hypothetical video decoder media function instance named "Decoder 1":
+     * <ul>
+     *   <li>label: "Decoder 1 Video Output"</li>
+     *   <li>description: "Decoder 1 MXL Flow Video Output"</li>
+     *   <li>grouphint tag: "Decoder 1:Video"</li>
+     * </ul>
+     *
+     * Example fields for a multi-flow audio receiver media function instance named "Audio Receiver A":
+     * Flow 1:
+     * <ul>
+     *   <li>label: "Audio Receiver A Audio Output #1"</li>
+     *   <li>description: "Audio Receiver A MXL Flow Audio Output #1"</li>
+     *   <li>grouphint tag: "Audio Receiver A:Audio #1"</li>
+     * </ul>
+     *
+     * Flow 2:
+     * <ul>
+     *   <li>label: "Audio Receiver A Audio Output #2"</li>
+     *   <li>description: "Audio Receiver A MXL Flow Audio Output #2"</li>
+     *   <li>grouphint tag: "Audio Receiver A:Audio #2"</li>
+     * </ul>
+     *
+     * <b>Having a well formed grouphint tag refering to the <b>media function instance name</b> is essential to ensure proper flow discovery and
+     * management by higher level applications using MXL.</b>
+     *
      * \param[in] instance The mxl instance created using mxlCreateInstance
      * \param[in] flowDef The flow definition from which a flow should be created if there is not already a flow with the same flow id.
      * \param[in] options (optional) Additional options, can be NULL
