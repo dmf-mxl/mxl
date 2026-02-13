@@ -1,10 +1,11 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 //
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include <cstdint>
+#include <bit>
 #include <memory>
 #include <optional>
 #include <uuid.h>
@@ -39,15 +40,50 @@ namespace mxl::lib::fabrics::ofi
     public:
         /** \brief Generate a new random endpoint id.
          */
+        [[nodiscard]]
         static Id randomId() noexcept;
 
         /** \brief Convert between Ids and context values that can be written to and read from raw libfabric queue entries and fid_t.
          */
-        static void* idToContextValue(Id id) noexcept;
+        [[nodiscard]]
+        constexpr static void* idToContextValue(Id id) noexcept
+        {
+            return std::bit_cast<void*>(id);
+        }
 
         /** \copydoc idToContextValue(Id)
          */
-        static Id contextValueToId(void*) noexcept;
+        [[nodiscard]]
+        constexpr static Id contextValueToId(void* contextValue) noexcept
+        {
+            return std::bit_cast<Endpoint::Id>(contextValue);
+        }
+
+        /** \brief Convert an endpoint id value to a completion token value.
+         * Convert an endpoint id to a completion token value. This does not perform any lookups,
+         * it just converts the types. This is a pure function and will always return the same token value
+         * for the same endpoint id.
+         * This function enables using the endpoint id as a completion token.
+         */
+        [[nodiscard]]
+        constexpr static Completion::Token tokenFromId(Id id) noexcept
+        {
+            static_assert(std::is_same_v<Completion::Token, Id>, "Completion token and endpoint id should be the same underlying type.");
+            return id;
+        }
+
+        /** \brief Convert a completion token value to an endpoint id value.
+         * Convert a completion token to an endpoint id value. This does not perform any lookups,
+         * it just converts the types. This is a pure function and will always return the same endpoint id
+         * for the same completion token.
+         * This function enables using the endpoint id as a completion token.
+         */
+        [[nodiscard]]
+        constexpr static Id idFromToken(Completion::Token token) noexcept
+        {
+            static_assert(std::is_same_v<Completion::Token, Id>, "Completion token and endpoint id should be the same underlying type.");
+            return token;
+        }
 
         /** \brief Read the endpoint id from a libfabric object reference.
          *
@@ -79,24 +115,24 @@ namespace mxl::lib::fabrics::ofi
          *
          * If the endpoint is allocated in order to accept a connection request. The
          * fabric information obtained when accepting the connection must be passed via the info parameter.
-         * A random id will be chosen to identify the endpoint in completions and events.
+         * A random id will be chosen to identify the endpoint in events.
          */
         static Endpoint create(std::shared_ptr<Domain> domain, FabricInfoView info);
 
-        /** \brief Allocates a new (active) endpoint.
+        /** \brief Creates a new (active) endpoint.
          *
          * A new random id will be chosen to identify the endpoint in completions and events.
          */
         static Endpoint create(std::shared_ptr<Domain> domain);
 
-        /** \brief Allocates (active) new endpoint.
+        /** \brief Create an (active) endpoint.
          *
          * If the endpoint is allocated in order to accept a connection request. The
          * fabric information obtained when accepting the connection must be passed via the info parameter.
          */
         static Endpoint create(std::shared_ptr<Domain> domain, Id id, FabricInfoView);
 
-        /** \brief Allocates an (active) endpoint.
+        /** \brief Create an (active) endpoint.
          */
         static Endpoint create(std::shared_ptr<Domain> domain, Id id);
 
@@ -215,26 +251,30 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Push a remote write work request of a single contiguous buffer to the endpoint work queue.
          *
          * When the write is complete, a Completion::Data will be pushed to the
-         * completion queue associated with the endpoint. Before a write request can be made, the endpoint must have beed enabled,
+         * completion queue associated with the endpoint. Before a write request can be made, the endpoint must have been enabled.
+         * \param token Completion token to associate with the write operation
          * \param local Source memory region to write from
          * \param remoteGroup Destination memory regions to write to
          * \param destAddr The destination address of the target endpoint. This is unused when using connected endpoints.
          * \param immData 64 bits of user data that will be available in the completion entry associated with this transfer.
+         * \return The number of requests posted to the endpoint work queue
          */
-        void write(LocalRegion const& local, RemoteRegion const& remote, ::fi_addr_t destAddr = FI_ADDR_UNSPEC,
+        std::size_t write(Completion::Token token, LocalRegion const& local, RemoteRegion const& remote, ::fi_addr_t destAddr = FI_ADDR_UNSPEC,
             std::optional<std::uint32_t> immData = std::nullopt);
 
         /** \brief Push a remote write work request of a scatter-gather list to the endpoint work queue.
          *
          * When the write is complete, a Completion::Data will be pushed to the
-         * completion queue associated with the endpoint. Before a write request can be made, the endpoint must have beed enabled,
+         * completion queue associated with the endpoint. Before a write request can be made, the endpoint must have been enabled.
+         * \param token Completion token to associate with the write operation
          * \param localGroup Source memory regions to write from (scatter-gather version)
          * \param remoteGroup Destination memory regions to write to
          * \param destAddr The destination address of the target endpoint. This is unused when using connected endpoints.
          * \param 64 bits of user data that will be available in the completion entry associated with this transfer.
+         * \return The number of requests posted to the endpoint work queue
          */
-        void write(LocalRegionGroup const& localGroup, RemoteRegion const& remote, ::fi_addr_t destAddr = FI_ADDR_UNSPEC,
-            std::optional<std::uint32_t> immData = std::nullopt);
+        std::size_t write(Completion::Token token, LocalRegionGroup const& localGroup, RemoteRegion const& remote,
+            ::fi_addr_t destAddr = FI_ADDR_UNSPEC, std::optional<std::uint32_t> immData = std::nullopt);
 
         /** \brief Push a recv work request to the endpoint work queue.
          *
@@ -258,8 +298,8 @@ namespace mxl::lib::fabrics::ofi
     private:
         /** \brief Internal implementation of the  remote write request
          */
-        void writeImpl(::iovec const* msgIov, std::size_t iovCount, void** desc, ::fi_rma_iov const* rmaIov, ::fi_addr_t destAddr,
-            std::optional<std::uint32_t> immData);
+        std::size_t writeImpl(Completion::Token token, ::iovec const* msgIov, std::size_t iovCount, void** desc, ::fi_rma_iov const* rmaIov,
+            ::fi_addr_t destAddr, std::optional<std::uint32_t> immData);
 
         /** \brief Close the endpoint and release all resources. Called from the destructor and the move assignment operator.
          */
