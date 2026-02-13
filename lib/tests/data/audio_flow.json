@@ -1,14 +1,14 @@
 {
   "$copyright": "SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.",
   "$license": "SPDX-License-Identifier: Apache-2.0",
-  "description": "MXL Audio Flow",
+  "description": "___CHANGE ME___ Long description of the audio flow",
   "format": "urn:x-nmos:format:audio",
   "tags": {
     "urn:x-nmos:tag:grouphint/v1.0": [
-      "Media Function XYZ:Audio"
+      "___CHANGE ME FOR A NAME UNIQUE TO YOUR MEDIA FUNCTION INSTANCE___:Audio"
     ]
   },
-  "label": "MXL Audio Flow",
+  "label": "___CHANGE ME___ Short description of the audio flow",
   "version": "1441812152:154331951",
   "id": "b3bb5be7-9fe9-4324-a5bb-4c70e1084449",
   "media_type": "audio/float32",
