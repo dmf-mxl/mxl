@@ -100,15 +100,15 @@ A binary that uses the gstreamer 'videotestsrc' and 'audiotestsrc' elements to p
 
 ```json
 {
-  "description": "MXL Test Flow, 1080p29",
+  "description": "___CHANGE ME___ Long description of the video flow",
   "id": "5fbec3b1-1b0f-417d-9059-8b94a47197ed",
   "tags": {
     "urn:x-nmos:tag:grouphint/v1.0": [
-      "My Media Function Unique Name (Change Me):Video"
+      "___CHANGE ME FOR A NAME UNIQUE TO YOUR MEDIA FUNCTION INSTANCE___:Video"
     ]
   },
   "format": "urn:x-nmos:format:video",
-  "label": "MXL Test Flow, 1080p29",
+  "label": "___CHANGE ME___ Short description of the video flow",
   "parents": [],
   "media_type": "video/v210",
   "grain_rate": {
@@ -146,14 +146,14 @@ Below is an example of an **augmented NMOS Flow JSON** for audio.
 
 ```json
 {
-  "description": "MXL Audio Flow",
+  "description": "___CHANGE ME___ Long description of the audio flow",
   "format": "urn:x-nmos:format:audio",
   "tags": {
     "urn:x-nmos:tag:grouphint/v1.0": [
-      "My Media Function Unique Name (Change Me):Audio"
+      "___CHANGE ME FOR A NAME UNIQUE TO YOUR MEDIA FUNCTION INSTANCE___:Audio"
     ]
   },
-  "label": "MXL Audio Flow",
+  "label": "___CHANGE ME___ Short description of the audio flow",
   "version": "1441812152:154331951",
   "id": "b3bb5be7-9fe9-4324-a5bb-4c70e1084449",
   "media_type": "audio/float32",

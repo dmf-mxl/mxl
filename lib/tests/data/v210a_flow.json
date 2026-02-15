@@ -1,15 +1,15 @@
 {
   "$copyright": "SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.",
   "$license": "SPDX-License-Identifier: Apache-2.0",
-  "description": "MXL Test Flow, 1080p29 with alpha",
+  "description": "___CHANGE ME___ Long description of the video flow",
   "id": "5fbec3b1-1b0f-417d-9059-8b94a47197ed",
   "tags": {
     "urn:x-nmos:tag:grouphint/v1.0": [
-      "Media Function XYZ:Video"
+      "___CHANGE ME FOR A NAME UNIQUE TO YOUR MEDIA FUNCTION INSTANCE___:Video"
     ]
   },
   "format": "urn:x-nmos:format:video",
-  "label": "MXL Test Flow, 1080p29 with alpha",
+  "label": "___CHANGE ME___ Short description of the video flow",
   "parents": [],
   "media_type": "video/v210a",
   "grain_rate": {
