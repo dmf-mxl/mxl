@@ -346,6 +346,20 @@ namespace
             return EXIT_FAILURE;
         }
     }
+
+    template<typename F>
+    int tryRun(F&& f)
+    {
+        try
+        {
+            return f();
+        }
+        catch (std::exception const& ex)
+        {
+            std::cerr << "ERROR: Caught exception: " << ex.what() << std::endl;
+            return EXIT_FAILURE;
+        }
+    }
 }
 
 int main(int argc, char** argv)
@@ -408,19 +422,6 @@ int main(int argc, char** argv)
         std::cerr << "ERROR: Domain must be specified either via --domain or in the URI." << std::endl;
         return EXIT_FAILURE;
     }
-
-    auto tryRun = [](auto&& f)
-    {
-        try
-        {
-            return f();
-        }
-        catch (std::exception const& ex)
-        {
-            std::cerr << "ERROR: Caught exception: " << ex.what() << std::endl;
-            return EXIT_FAILURE;
-        }
-    };
 
     auto status = EXIT_SUCCESS;
 
