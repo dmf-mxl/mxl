@@ -1,69 +1,52 @@
-# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 # SPDX-License-Identifier: Apache-2.0
 
-services:
-  init:
-    image: alpine
-    command: ["sh", "-c", "mkdir -p /dev/shm/mxl"]
-    volumes:
-      - type: bind
-        source: /dev/shm
-        target: /dev/shm
-    restart: no
+volumes:
+  mxl-domain:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: strictatime
 
+services:
   writer-media-function:
     image: mxl-writer
     profiles: [test-source]
-    depends_on:
-      - init
     build:
       context: ..
       dockerfile: examples/Dockerfile.writer.txt
     restart: unless-stopped
     volumes:
-      - type: bind
-        source: /dev/shm/mxl
-        target: /domain
+      - mxl-domain:/domain
 
   writer-looper-video-media-function:
     image: mxl-writer-video-looper
     profiles: [looping-file-source]
-    depends_on:
-      - init
     build:
       context: ..
       dockerfile: examples/Dockerfile.writer.video.loop.txt
     restart: unless-stopped
     volumes:
-      - type: bind
-        source: /dev/shm/mxl
-        target: /domain
+      - mxl-domain:/domain
 
   writer-looper-audio-media-function:
     image: mxl-writer-audio-looper
     profiles: [looping-file-source]
-    depends_on:
-      - init
     build:
       context: ..
       dockerfile: examples/Dockerfile.writer.audio.loop.txt
     restart: unless-stopped
     volumes:
-      - type: bind
-        source: /dev/shm/mxl
-        target: /domain
+      - mxl-domain:/domain
 
   reader-media-function:
     image: mxl-reader
-    depends_on:
-      - init
     build:
       context: ..
       dockerfile: examples/Dockerfile.reader.txt
     restart: unless-stopped
     volumes:
-      - type: bind
-        source: /dev/shm/mxl
-        target: /domain
+      - mxl-domain:/domain
     stdin_open: true
     tty: true
