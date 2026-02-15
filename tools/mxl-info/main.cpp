@@ -409,22 +409,35 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
+    auto tryRun = [](auto&& f)
+    {
+        try
+        {
+            return f();
+        }
+        catch (std::exception const& ex)
+        {
+            std::cerr << "ERROR: Caught exception: " << ex.what() << std::endl;
+            return EXIT_FAILURE;
+        }
+    };
+
     auto status = EXIT_SUCCESS;
 
     // If garbage collect is specified, do that first.
     if (gcOpt->count() > 0)
     {
-        status = garbageCollect(domain);
+        status = tryRun([&]() { return garbageCollect(domain); });
     }
     // If list all is specified or if we don't have a flow id specified through option or URI: list all flows.
     else if (listOpt->count() > 0 || flowId.empty())
     {
-        status = listAllFlows(domain);
+        status = tryRun([&]() { return listAllFlows(domain); });
     }
     // The user specified a flow id (through the URI or command line option): print info for that flow.
     else if (!flowId.empty())
     {
-        status = printFlow(domain, flowId);
+        status = tryRun([&]() { return printFlow(domain, flowId); });
     }
     else
     {
