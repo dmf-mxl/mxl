@@ -82,7 +82,7 @@ PIC is enabled by default and can be disabled with
 
 ## ARM notes
 
-The MXL project is configured to require the ```armv8.5-a``` architecture on ARM CPUs.  Most modern ARM CPUs meet this requirement.  Notable exceptions are the Raspberry PIs.  For example, the Pi5 CPU has an architecture level ```armv8.2-a``` whereas the Pi4B is at level ```armv8.0-a```.  To properly target these CPUs, pass the architecture type as an additional argument to cmake : ```-DMXL_TARGET_ARCH=<archname>```.
+The MXL project is configured to require the `armv8.5-a` architecture on ARM CPUs.  Most modern ARM CPUs meet this requirement.  Notable exceptions are the Raspberry Pis.  For example, the Pi 5 CPU has an architecture level `armv8.2-a` whereas the Pi 4 Model B is at level `armv8.0-a`.  To properly target these CPUs, pass the architecture type as an additional argument to cmake : `-DMXL_TARGET_ARCH=<archname>`.
 
 For example, for the Raspberry Pi 5:
 ```
