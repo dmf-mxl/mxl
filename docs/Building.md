@@ -79,6 +79,19 @@ PIC is enabled by default and can be disabled with
 2. Install doxygen and ccache through brew: `brew install doxygen ccache`
 3. Install the GStreamer runtime and developement packages according to [these instructions](https://gstreamer.freedesktop.org/documentation/installing/on-mac-osx.html?gi-language=c#download-and-install-the-sdk)
 
+
+## ARM notes
+
+The MXL project is configured to require the ```armv8.5-a``` architecture on ARM CPUs.  Most modern ARM CPUs meet this requirement.  Notable exceptions are the Raspberry PIs.  For example, the Pi5 CPU has an architecture level ```armv8.2-a``` whereas the Pi4B is at level ```armv8.0-a```.  To properly target these CPUs, pass the architecture type as an additional argument to cmake : ```-DMXL_TARGET_ARCH=<archname>```.
+
+For example, for the Raspberry Pi 5:
+```
+mkdir build
+cd build
+cmake .. --preset Linux-GCC-Debug -DMXL_TARGET_ARCH=armv8.2a
+cmake --build build/Linux-GCC-Debug --target all
+```
+
 # Using with CMake
 
 The MXL provides a CMake package configuration file that allows for easy integration into your project. If it is installed in a non-default location, you may need to specify its root path using `CMAKE_PREFIX_PATH`:
