@@ -1,4 +1,6 @@
 #! /bin/bash
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
 
 target_dir="${1}"
 if [[ -z "${target_dir}" ]]; then
