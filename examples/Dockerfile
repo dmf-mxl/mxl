@@ -53,9 +53,11 @@ FROM base AS mxl
 COPY --from=builder /usr/lib/x86_64-linux-gnu/libmxl* /usr/lib/x86_64-linux-gnu/
 COPY --from=builder /usr/bin/mxl-* /usr/bin/
 USER mxl
+WORKDIR /home/mxl
+ENTRYPOINT ["/bin/bash", "-c"]
 
 FROM mxl AS mxl-info
-ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+ENTRYPOINT ["/usr/bin/mxl-info"]
 
 FROM mxl AS mxl-gst-testsrc
 ENTRYPOINT ["/usr/bin/mxl-gst-testsrc"]

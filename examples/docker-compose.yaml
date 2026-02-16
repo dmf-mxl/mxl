@@ -1,69 +1,83 @@
-# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 # SPDX-License-Identifier: Apache-2.0
-
+name: mxl-example
+volumes:
+  mxl-domain:
+    driver: local
+    driver_opts:
+      device: none
+      type: tmpfs
+      o: nosuid,strictatime,uid=1000,gid=1000,mode=0755
 services:
-  init:
-    image: alpine
-    command: ["sh", "-c", "mkdir -p /dev/shm/mxl"]
-    volumes:
-      - type: bind
-        source: /dev/shm
-        target: /dev/shm
-    restart: no
-
-  writer-media-function:
-    image: mxl-writer
-    profiles: [test-source]
-    depends_on:
-      - init
+  # Writes a test video flow to the domain
+  video-flow-writer:
     build:
+      dockerfile: examples/Dockerfile
       context: ..
-      dockerfile: examples/Dockerfile.writer.txt
-    restart: unless-stopped
+      target: mxl-gst-testsrc
     volumes:
+      - mxl-domain:/mxl-domain
       - type: bind
-        source: /dev/shm/mxl
-        target: /domain
-
-  writer-looper-video-media-function:
-    image: mxl-writer-video-looper
-    profiles: [looping-file-source]
-    depends_on:
-      - init
+        source: flow-configs
+        target: /home/mxl/flow-configs
+    command: -d /mxl-domain -v flow-configs/flow-video-v210.json
+  # Writes a test audio flow to the domain
+  audio-flow-writer:
     build:
+      dockerfile: examples/Dockerfile
       context: ..
-      dockerfile: examples/Dockerfile.writer.video.loop.txt
-    restart: unless-stopped
+      target: mxl-gst-testsrc
     volumes:
+      - type: volume
+        source: mxl-domain
+        target: /mxl-domain
       - type: bind
-        source: /dev/shm/mxl
-        target: /domain
-
-  writer-looper-audio-media-function:
-    image: mxl-writer-audio-looper
-    profiles: [looping-file-source]
-    depends_on:
-      - init
+        source: flow-configs
+        target: /home/mxl/flow-configs
+    command: -d /mxl-domain -a flow-configs/flow-audio.json
+  # Simulates a video flow reader
+  video-fake-reader:
     build:
+      dockerfile: examples/Dockerfile
       context: ..
-      dockerfile: examples/Dockerfile.writer.audio.loop.txt
-    restart: unless-stopped
+      target: mxl-fake-reader
     volumes:
-      - type: bind
-        source: /dev/shm/mxl
-        target: /domain
-
-  reader-media-function:
-    image: mxl-reader
-    depends_on:
-      - init
+      - type: volume
+        source: mxl-domain
+        target: /mxl-domain
+    command: --domain /mxl-domain --video-flow-id 5fbec3b1-1b0f-417d-9059-8b94a47197ed --interval 1
+  # Simulates an audio flow reader
+  audio-fake-reader:
     build:
+      dockerfile: examples/Dockerfile
       context: ..
-      dockerfile: examples/Dockerfile.reader.txt
-    restart: unless-stopped
+      target: mxl-fake-reader
     volumes:
-      - type: bind
-        source: /dev/shm/mxl
-        target: /domain
-    stdin_open: true
-    tty: true
+      - type: volume
+        source: mxl-domain
+        target: /mxl-domain
+    command: --domain /mxl-domain --audio-flow-id 5fbec3b1-1b0f-417d-9059-8b94a47197ed --interval 1
+  # Prints the video flow information every 5 seconds.
+  video-flow-info:
+    build:
+      dockerfile: examples/Dockerfile
+      context: ..
+      target: mxl-info
+    volumes:
+      - type: volume
+        source: mxl-domain
+        target: /mxl-domain
+    entrypoint: ["/usr/bin/dumb-init", "--"]
+    command: ["/bin/bash", "-c", "trap 'exit 0' SIGINT SIGTERM; while true; do mxl-info mxl:///mxl-domain?id=5fbec3b1-1b0f-417d-9059-8b94a47197ed; sleep 5; done"]
+  # Prints the audio flow information every 5 seconds.
+  audio-flow-info:
+    build:
+      dockerfile: examples/Dockerfile
+      context: ..
+      target: mxl-info
+    volumes:
+      - type: volume
+        source: mxl-domain
+        target: /mxl-domain
+    entrypoint: ["/usr/bin/dumb-init", "--"]
+    command: ["/bin/bash", "-c", "trap 'exit 0' SIGINT SIGTERM; while true; do mxl-info mxl:///mxl-domain?id=b3bb5be7-9fe9-4324-a5bb-4c70e1084449; sleep 5; done"]
