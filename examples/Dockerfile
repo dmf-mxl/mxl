@@ -6,11 +6,9 @@ RUN apt-get update && apt-get install -y \
    gstreamer1.0-plugins-good \
    gstreamer1.0-plugins-base \
    curl zip unzip tar \
+   dumb-init \
    && rm -r /var/lib/apt/lists/*
 
-RUN curl -LO "https://github.com/Yelp/dumb-init/releases/download/v1.2.5/dumb-init_1.2.5_amd64.deb" \
-    && dpkg -i "dumb-init_1.2.5_amd64.deb" \
-    && rm -v dumb-init_1.2.5_amd64.deb
 
 RUN useradd -m mxl
 
