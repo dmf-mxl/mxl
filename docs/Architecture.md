@@ -45,6 +45,10 @@ An _mxlFlowReader_ will only _mmap_ flow resources in readonly mode (PROT_READ),
 
 See [timing model](./Timing.md)
 
+## Ring buffer types 
+
+The MXL SDK provides two ringbuffer types: Discrete and Continuous.  Discrete ringbuffers are used for granular data types such as video and ancillary data.  Continuous ringbuffers are used for audio. 
+
 ## Discrete Grain I/O
 
 Grain I/O can be 'partial'. In other words, a FlowWriter can write the bytes of a grain progressively (as slices for example).
