@@ -198,10 +198,10 @@ namespace
     /// \return An MXL URI string that can be used to access the specified flows in the specified domain.
     std::string generateMxlAddress(std::string const& domain, std::vector<uuids::uuid> const& flowIds)
     {
-        std::ostringstream oss;
+        auto oss = std::ostringstream{};
         oss << "mxl://" << domain << "?";
 
-        for (size_t i = 0; i < flowIds.size(); ++i)
+        for (std::size_t i = 0; i < flowIds.size(); ++i)
         {
             oss << "id=" << uuids::to_string(flowIds[i]);
             if (i < (flowIds.size() - 1))
@@ -212,6 +212,9 @@ namespace
         return oss.str();
     }
 
+    /// Parse the flow definition JSON to extract detailed information.
+    /// \param flowDef The flow definition JSON string.
+    /// \return A tuple containing the flow label, group name, and role in group.
     std::tuple<std::string, std::string, std::string> getFlowDetails(std::string const& flowDef) noexcept
     {
         auto label = std::string{"n/a"};
@@ -359,44 +362,29 @@ namespace
             // and flag those in the output.
             for (auto const& [flowId, label, roleInGroup] : groupInfo)
             {
-                if (!roleInGroup.empty())
+                // If the role is not empty and already exists in the set of seen roles, we have a conflict.
+                if (!roleInGroup.empty() && !seenRolesInGroup.insert(roleInGroup).second)
                 {
-                    if (seenRolesInGroup.contains(roleInGroup))
-                    {
-                        hasRoleInGroupConflicts = true;
-                    }
-                    else
-                    {
-                        seenRolesInGroup.insert(roleInGroup);
-                    }
+                    hasRoleInGroupConflicts = true;
                 }
 
-                if (detail::isTerminal(std::cout))
-                {
-                    auto color = fmt::color::green;
-                    if (hasRoleInGroupConflicts || roleInGroup.empty())
-                    {
-                        color = fmt::color::red;
-                    }
-                    else
-                    {
-                        color = fmt::color::white;
-                    }
+                // A flow is considered to have issues if it has an invalid group, a role in group conflict, or an empty role in group (since that is
+                // not ideal for grouping).
+                bool flowHasIssues = invalidGroup || hasRoleInGroupConflicts || roleInGroup.empty();
 
-                    std::cout
-                        << fmt::format(fmt::fg(color),
-                               "\tID: {}, Label: {}, Role in Group: {}",
-                               uuids::to_string(flowId),
-                               label,
-                               roleInGroup.empty() ? "MISSING" : roleInGroup)
-                        << std::endl;
-                }
-                else
-                {
-                    std::cout << "\tID: " << uuids::to_string(flowId) << ", Label: " << label
-                              << ", Role in Group: " << (roleInGroup.empty() ? "MISSING" : roleInGroup) << std::endl;
-                }
+                // Print the flow details, flagging any issues in red if we are in a terminal.
+                auto const style = (detail::isTerminal(std::cout) && flowHasIssues) ? fmt::text_style{fmt::fg(fmt::color::red)} : fmt::text_style{};
+                std::cout
+                    << fmt::format(style,
+                           "\t{} : {} - {}",
+                           roleInGroup.empty() ? "MISSING ROLE" : roleInGroup,
+                           uuids::to_string(flowId),
+                           label)
+                    << std::endl;
             }
+            
+            // Add an extra newline after each group for readability.
+            std::cout << std::endl;
         }
 
         // Clean up the MXL instance before exiting.
