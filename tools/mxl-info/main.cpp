@@ -374,15 +374,10 @@ namespace
 
                 // Print the flow details, flagging any issues in red if we are in a terminal.
                 auto const style = (detail::isTerminal(std::cout) && flowHasIssues) ? fmt::text_style{fmt::fg(fmt::color::red)} : fmt::text_style{};
-                std::cout
-                    << fmt::format(style,
-                           "\t{} : {} - {}",
-                           roleInGroup.empty() ? "MISSING ROLE" : roleInGroup,
-                           uuids::to_string(flowId),
-                           label)
-                    << std::endl;
+                std::cout << fmt::format(style, "\t{} : {} - {}", roleInGroup.empty() ? "MISSING ROLE" : roleInGroup, uuids::to_string(flowId), label)
+                          << std::endl;
             }
-            
+
             // Add an extra newline after each group for readability.
             std::cout << std::endl;
         }
