@@ -191,9 +191,32 @@ namespace
         ::mxlInstance _instance;
     };
 
-    std::pair<std::string, std::string> getFlowDetails(std::string const& flowDef) noexcept
+    /// Generate an MXL URI for a given domain and list of flow ids.  This is useful for users to copy and paste into the command line to quickly
+    /// access specific flows.
+    /// \param domain The MXL domain
+    /// \param flowIds The list of flow ids to include in the URI query parameters.
+    /// \return An MXL URI string that can be used to access the specified flows in the specified domain.
+    std::string generateMxlAddress(std::string const& domain, std::vector<uuids::uuid> const& flowIds)
     {
-        auto result = std::pair<std::string, std::string>{"n/a", "n/a"};
+        std::ostringstream oss;
+        oss << "mxl://" << domain << "?";
+
+        for (size_t i = 0; i < flowIds.size(); ++i)
+        {
+            oss << "id=" << uuids::to_string(flowIds[i]);
+            if (i < (flowIds.size() - 1))
+            {
+                oss << "&";
+            }
+        }
+        return oss.str();
+    }
+
+    std::tuple<std::string, std::string, std::string> getFlowDetails(std::string const& flowDef) noexcept
+    {
+        auto label = std::string{"n/a"};
+        auto groupName = std::string{""};
+        auto roleInGroup = std::string{""};
 
         try
         {
@@ -204,7 +227,7 @@ namespace
 
                 if (auto const labelIt = obj.find("label"); (labelIt != obj.end()) && labelIt->second.is<std::string>())
                 {
-                    result.first = labelIt->second.get<std::string>();
+                    label = labelIt->second.get<std::string>();
                 }
 
                 // try to get the group hint tag
@@ -218,7 +241,18 @@ namespace
                         auto const& groupHintArray = groupHintIt->second.get<picojson::array>();
                         if (!groupHintArray.empty() && groupHintArray[0].is<std::string>())
                         {
-                            result.second = groupHintArray[0].get<std::string>();
+                            // split the string on the first colon to separate group name and role
+                            auto const groupHintStr = groupHintArray[0].get<std::string>();
+                            auto const colonPos = groupHintStr.find(':');
+                            if (colonPos != std::string::npos)
+                            {
+                                groupName = groupHintStr.substr(0, colonPos);
+                                roleInGroup = groupHintStr.substr(colonPos + 1);
+                            }
+                            else
+                            {
+                                groupName = groupHintStr;
+                            }
                         }
                     }
                 }
@@ -227,9 +261,14 @@ namespace
         catch (...)
         {}
 
-        return result;
+        return {label, groupName, roleInGroup};
     }
 
+    /// Print a list of all flows in the specified MXL domain, grouped by their group name (if specified in the flow definition tags).
+    // For each flow, also print the flow label and role in group (if specified).
+    // If there are multiple flows with the same role in group within a group, flag this as a conflict in the output.
+    // \param in_domain The MXL domain to list flows from.
+    // \return EXIT_SUCCESS if the operation was successful, EXIT_FAILURE otherwise.
     int listAllFlows(std::string const& in_domain)
     {
         auto const opts = "{}";
@@ -241,6 +280,10 @@ namespace
             return EXIT_FAILURE;
         }
 
+        // maps the group name to a tuple of (flow id, flow label, role in group)
+        std::map<std::string, std::vector<std::tuple<uuids::uuid, std::string, std::string>>> groups;
+
+        // List all flows in the domain by iterating over the flow directories.
         if (auto const base = std::filesystem::path{in_domain}; is_directory(base))
         {
             for (auto const& entry : std::filesystem::directory_iterator{base})
@@ -248,30 +291,115 @@ namespace
                 if (is_directory(entry) && (entry.path().extension().string() == ".mxl-flow"))
                 {
                     // this looks like a uuid. try to parse it an confirm it is valid.
-                    auto const id = uuids::uuid::from_string(entry.path().stem().string());
+                    auto const idStr = entry.path().stem().string();
+                    auto const id = uuids::uuid::from_string(idStr);
                     if (id.has_value())
                     {
                         char fourKBuffer[4096];
                         auto fourKBufferSize = sizeof(fourKBuffer);
                         auto requiredBufferSize = fourKBufferSize;
 
-                        if (mxlGetFlowDef(instance, uuids::to_string(*id).c_str(), fourKBuffer, &requiredBufferSize) != MXL_STATUS_OK)
+                        if (mxlGetFlowDef(instance, idStr.c_str(), fourKBuffer, &requiredBufferSize) != MXL_STATUS_OK)
                         {
                             std::cerr << "ERROR" << ": "
-                                      << "Failed to get flow definition for flow id " << uuids::to_string(*id) << std::endl;
+                                      << "Failed to get flow definition for flow id " << idStr << std::endl;
                             continue;
                         }
 
+                        // parse the flow details.
                         auto flowDef = std::string{fourKBuffer, requiredBufferSize - 1};
-                        auto const [label, groupHint] = getFlowDetails(flowDef);
+                        auto const [label, groupName, roleInGroup] = getFlowDetails(flowDef);
 
-                        // Output CSV format: id,label,group_hint
-                        std::cout << *id << ", " << std::quoted(label) << ", " << std::quoted(groupHint) << '\n';
+                        // add the flow details to the appropriate group.
+                        groups[groupName].emplace_back(*id, label, roleInGroup);
                     }
                 }
             }
         }
 
+        // Print the groups and their associated flow ids and labels.  Display the everything in a tree structure based on the group name, and show
+        // the role in group as well.
+        for (auto const& [groupName, groupInfo] : groups)
+        {
+            auto flowIds = std::vector<uuids::uuid>{};
+            for (auto const& [flowId, label, roleInGroup] : groupInfo)
+            {
+                flowIds.push_back(flowId);
+            }
+
+            auto const mxlAddress = generateMxlAddress(in_domain, flowIds);
+            auto hasRoleInGroupConflicts = false;
+            auto seenRolesInGroup = std::set<std::string>{};
+
+            // A group name is considered invalid if empty
+            bool invalidGroup = groupName.empty();
+
+            // Print the group name and mxl address for the group.
+            // Pretty print if we are in a terminal, otherwise just print plain text.
+            if (detail::isTerminal(std::cout))
+            {
+                auto color = invalidGroup ? fmt::color::red : fmt::color::white;
+                std::cout << fmt::format(fmt::fg(color), "{}: ", groupName) << mxlAddress << std::endl;
+            }
+            else
+            {
+                if (invalidGroup)
+                {
+                    std::cout << "Invalid group name (empty string)";
+                }
+                else
+                {
+                    std::cout << groupName;
+                }
+                std::cout << ": " << mxlAddress << std::endl;
+            }
+
+            // Iterate over the flows in the group and print their details.
+            // Also check for any role in group conflicts (i.e. multiple flows with the same non-empty role in group or empty role in group)
+            // and flag those in the output.
+            for (auto const& [flowId, label, roleInGroup] : groupInfo)
+            {
+                if (!roleInGroup.empty())
+                {
+                    if (seenRolesInGroup.contains(roleInGroup))
+                    {
+                        hasRoleInGroupConflicts = true;
+                    }
+                    else
+                    {
+                        seenRolesInGroup.insert(roleInGroup);
+                    }
+                }
+
+                if (detail::isTerminal(std::cout))
+                {
+                    auto color = fmt::color::green;
+                    if (hasRoleInGroupConflicts || roleInGroup.empty())
+                    {
+                        color = fmt::color::red;
+                    }
+                    else
+                    {
+                        color = fmt::color::white;
+                    }
+
+                    std::cout
+                        << fmt::format(fmt::fg(color),
+                               "\tID: {}, Label: {}, Role in Group: {}",
+                               uuids::to_string(flowId),
+                               label,
+                               roleInGroup.empty() ? "MISSING" : roleInGroup)
+                        << std::endl;
+                }
+                else
+                {
+                    std::cout << "\tID: " << uuids::to_string(flowId) << ", Label: " << label
+                              << ", Role in Group: " << (roleInGroup.empty() ? "MISSING" : roleInGroup) << std::endl;
+                }
+            }
+        }
+
+        // Clean up the MXL instance before exiting.
         if ((instance != nullptr) && (mxlDestroyInstance(instance)) != MXL_STATUS_OK)
         {
             std::cerr << "ERROR" << ": "
@@ -283,6 +411,11 @@ namespace
         return EXIT_SUCCESS;
     }
 
+    /// Print detailed information about a specific flow in the MXL domain, including its configuration and runtime status.  Also print the latency of
+    /// the flow in grains/samples.
+    /// \param in_domain The MXL domain the flow belongs to.
+    /// \param in_id The id of the flow to print information about.
+    /// \return EXIT_SUCCESS if the operation was successful, EXIT_FAILURE otherwise.
     int printFlow(std::string const& in_domain, std::string const& in_id)
     {
         // Create the SDK instance with a specific domain.
