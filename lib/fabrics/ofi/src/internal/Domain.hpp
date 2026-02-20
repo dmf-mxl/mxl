@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 //
 // SPDX-License-Identifier: Apache-2.0
 
@@ -87,6 +87,10 @@ namespace mxl::lib::fabrics::ofi
          */
         void close();
 
+        /** \brief Register a single memory region to this domain.
+         *
+         * The domain will own its own version of the registered memory region.
+         */
         [[nodiscard]]
         RegisteredRegion registerRegion(Region const& region, std::uint64_t access);
 

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 //
 // SPDX-License-Identifier: Apache-2.0
 
@@ -9,6 +9,7 @@
 #include <fmt/format.h>
 #include <rdma/fi_errno.h>
 #include <mxl/mxl.h>
+#include "mxl-internal/Logging.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
@@ -136,7 +137,7 @@ namespace mxl::lib::fabrics::ofi
      * second argument.
      */
     template<typename F, typename... T>
-    int fiCall(F fun, std::string_view msg, T... args)
+    int fiCall(F&& fun, std::string_view msg, T&&... args)
     {
         int result = fun(std::forward<T>(args)...);
         if (result < 0)
@@ -146,5 +147,18 @@ namespace mxl::lib::fabrics::ofi
         }
 
         return result;
+    }
+
+    template<typename F>
+    void catchAndLogFabricError(F&& fun, std::string_view msg)
+    {
+        try
+        {
+            fun();
+        }
+        catch (FabricException const& e)
+        {
+            MXL_ERROR("FabricException caught: {}: {}", msg, e.what());
+        }
     }
 }

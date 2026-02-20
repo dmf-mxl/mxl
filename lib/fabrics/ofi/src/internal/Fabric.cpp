@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 //
 // SPDX-License-Identifier: Apache-2.0
 
@@ -36,7 +36,7 @@ namespace mxl::lib::fabrics::ofi
 
     Fabric::~Fabric()
     {
-        close();
+        catchAndLogFabricError([this]() { close(); }, "Failed to close fabrics");
     }
 
     Fabric::Fabric(Fabric&& other) noexcept

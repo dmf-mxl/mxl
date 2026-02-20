@@ -34,6 +34,10 @@ namespace mxl::lib
     public:
         /** \see FlowWriter::getFlowData */
         [[nodiscard]]
+        virtual FlowData& getFlowData() override;
+
+        /** \see FlowWriter::getFlowData */
+        [[nodiscard]]
         virtual FlowData const& getFlowData() const override;
 
         /** \see FlowWriter::getFlowInfo */

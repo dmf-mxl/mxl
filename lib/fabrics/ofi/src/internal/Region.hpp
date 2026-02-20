@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 //
 // SPDX-License-Identifier: Apache-2.0
 
@@ -13,6 +13,7 @@
 #include <mxl-internal/FlowData.hpp>
 #include <rdma/fi_domain.h>
 #include "mxl/fabrics.h"
+#include "DataLayout.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
@@ -29,15 +30,15 @@ namespace mxl::lib::fabrics::ofi
         public:
             /** \brief specify a host memory location.
              */
+            [[nodiscard]]
             static Location host() noexcept;
+
             /** \brief specify a CUDA device memory location.
              *
              * \param deviceId The CUDA device id.
              */
+            [[nodiscard]]
             static Location cuda(int deviceId) noexcept;
-            /** \brief Convert between external and internal versions of this type
-             */
-            static Location fromAPI(mxlFabricsMemoryRegionLocation loc);
 
             /** \brief Return the device id. For host location 0 is returned.
              */
@@ -94,9 +95,12 @@ namespace mxl::lib::fabrics::ofi
          * \param size The size of the memory region in bytes.
          * \param loc The location of the memory region \see Location.
          */
-        explicit Region(std::uintptr_t base, std::size_t size, Location loc = Location::host()) noexcept
+        explicit Region(std::uintptr_t base, std::size_t size, std::uint64_t const* grainIndexPtr, std::uint16_t* validSlicesPtr,
+            Location loc = Location::host()) noexcept
             : base(base)
             , size(size)
+            , grainIndexPtr(grainIndexPtr)
+            , validSlicesPtr(validSlicesPtr)
             , loc(loc)
             , _iovec(iovecFromRegion(base, size))
         {}
@@ -115,6 +119,8 @@ namespace mxl::lib::fabrics::ofi
     public:
         std::uintptr_t base;
         std::size_t size;
+        std::uint64_t const* grainIndexPtr;
+        std::uint16_t* validSlicesPtr;
         Location loc;
 
     private:
@@ -191,50 +197,58 @@ namespace mxl::lib::fabrics::ofi
 
     /** \brief Represent a collection of memory regions.
      *
-     * This is the internal strucure representing mxlRegions API type.
+     * This is the internal strucure representing mxlFabricsRegions API type.
      */
     class MxlRegions
     {
     public:
+        MxlRegions(std::vector<Region> regions, DataLayout dataLayout)
+            : _regions(std::move(regions))
+            , _layout(dataLayout)
+        {}
+
         /** \brief Convert between external and internal versions of this type
          */
-        static MxlRegions* fromAPI(mxlRegions) noexcept;
-        /** \copydoc fromAPI() */
         [[nodiscard]]
-        mxlRegions toAPI() noexcept;
+        static MxlRegions* fromAPI(mxlFabricsRegions regions) noexcept;
+
+        [[nodiscard]]
+        mxlFabricsRegions toAPI() noexcept;
 
         /** \brief View accessor for the underlying regions.
          */
         [[nodiscard]]
         std::vector<Region> const& regions() const noexcept;
 
-        // [[nodiscard]]
-        // DataLayout const& dataLayout() const noexcept;
+        [[nodiscard]]
+        DataLayout const& dataLayout() const noexcept;
 
     private:
-        friend MxlRegions mxlRegionsFromFlow(FlowData& flow);
-        friend MxlRegions mxlRegionsFromUser(mxlFabricsMemoryRegion const* regions, size_t count);
-
-    private:
-        MxlRegions(std::vector<Region> regions /*,  DataLayout dataLayout*/)
-            : _regions(std::move(regions))
-        // , _layout(std::move(dataLayout))
-        {}
+        friend MxlRegions mxlFabricsRegionsFromFlow(FlowData& flow);
+        friend MxlRegions mxlFabricsRegionsFromMutableFlow(FlowData& flow);
 
     private:
         std::vector<Region> _regions;
-        // DataLayout _layout;
+        DataLayout _layout;
     };
 
     /** \brief Convert a FlowData's memory regions to MxlRegions.
-     *
      * FlowData are obtained from an MXL FlowWriter or FlowReader.
      */
-    MxlRegions mxlRegionsFromFlow(FlowData& flow);
+    [[nodiscard]]
+    MxlRegions mxlFabricsRegionsFromFlow(FlowData const& flow);
 
-    /** \brief Convert user-provided memory regions to MxlRegions.
-     *
-     * Used to convert mxlFabricsMemoryRegion arrays provided by the user.
+    /** \brief Convert a FlowData's memory regions to MxlRegions.
+     * FlowData are obtained from an MXL FlowWriter or FlowReader.
      */
-    MxlRegions mxlRegionsFromUser(mxlFabricsMemoryRegion const* regions, size_t count);
+    [[nodiscard]]
+    MxlRegions mxlFabricsRegionsFromMutableFlow(FlowData& flow);
+
+    /** \brief
+     */
+    std::uint64_t getGrainIndexInRingSlot(std::vector<Region> const& regions, std::uint16_t slotIndex);
+
+    /** \brief
+     */
+    void setValidSlicesForGrain(std::vector<Region> const& regions, std::uint16_t slot, std::uint16_t validSlices);
 }

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 //
 // SPDX-License-Identifier: Apache-2.0
 
@@ -114,9 +114,19 @@ namespace mxl::lib::fabrics::ofi
         return std::holds_alternative<ConnectionRequested>(_event);
     }
 
+    Event::ConnectionRequested const& Event::connReq() const
+    {
+        return std::get<Event::ConnectionRequested>(_event);
+    }
+
     bool Event::isConnected() const noexcept
     {
         return std::holds_alternative<Connected>(_event);
+    }
+
+    Event::Connected const& Event::connected() const
+    {
+        return std::get<Event::Connected>(_event);
     }
 
     bool Event::isShutdown() const noexcept
@@ -124,9 +134,19 @@ namespace mxl::lib::fabrics::ofi
         return std::holds_alternative<Shutdown>(_event);
     }
 
+    Event::Shutdown const& Event::shutdown() const
+    {
+        return std::get<Event::Shutdown>(_event);
+    }
+
     bool Event::isError() const noexcept
     {
         return std::holds_alternative<Error>(_event);
+    }
+
+    Event::Error const& Event::error() const
+    {
+        return std::get<Event::Error>(_event);
     }
 
     ::fid_t Event::fid() noexcept

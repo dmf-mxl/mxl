@@ -1,7 +1,8 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <chrono>
 #include <csignal>
 #include <cstdint>
 #include <cstdlib>
@@ -35,7 +36,7 @@ struct Config
     std::string domain;
 
     // flow configuration
-    std::string flowID;
+    mxl::lib::FlowParser const& flowParser;
 
     // endpoint configuration
     std::optional<std::string> node;
@@ -100,7 +101,7 @@ public:
         }
     }
 
-    mxlStatus setup(std::string targetInfoStr)
+    mxlStatus setup(std::string const& targetInfoStr)
     {
         _instance = mxlCreateInstance(_config.domain.c_str(), "");
         if (_instance == nullptr)
@@ -117,7 +118,7 @@ public:
         }
 
         // Create a flow reader for the given flow id.
-        status = mxlCreateFlowReader(_instance, _config.flowID.c_str(), "", &_reader);
+        status = mxlCreateFlowReader(_instance, uuids::to_string(_config.flowParser.getId()).c_str(), "", &_reader);
         if (status != MXL_STATUS_OK)
         {
             MXL_ERROR("Failed to create flow reader with status '{}'", static_cast<int>(status));
@@ -131,7 +132,7 @@ public:
             return status;
         }
 
-        mxlRegions regions;
+        mxlFabricsRegions regions;
         status = mxlFabricsRegionsForFlowReader(_reader, &regions);
         if (status != MXL_STATUS_OK)
         {
@@ -139,7 +140,7 @@ public:
             return status;
         }
 
-        mxlInitiatorConfig initiatorConfig = {
+        mxlFabricsInitiatorConfig initiatorConfig = {
             .endpointAddress = {.node = _config.node ? _config.node.value().c_str() : nullptr,
                                 .service = _config.service ? _config.service.value().c_str() : nullptr},
             .provider = _config.provider,
@@ -170,7 +171,7 @@ public:
 
         do
         {
-            status = mxlFabricsInitiatorMakeProgressBlocking(_initiator, 250);
+            status = makeProgress(std::chrono::milliseconds(250));
             if (status == MXL_ERR_INTERRUPTED)
             {
                 return MXL_STATUS_OK;
@@ -196,26 +197,36 @@ public:
             return status;
         }
 
+        std::uint16_t slicesPerBatch = configInfo.common.maxSyncBatchSizeHint;
+        MXL_INFO("Using batch size of {} slices", slicesPerBatch);
+
         mxlGrainInfo grainInfo;
-        uint8_t* payload;
+        std::uint8_t* payload;
+        std::uint16_t startSlice = 0;
+        std::uint16_t endSlice = slicesPerBatch;
 
         uint64_t grainIndex = mxlGetCurrentIndex(&configInfo.common.grainRate);
 
         while (!g_exit_requested)
         {
-            auto ret = mxlFlowReaderGetGrain(_reader, grainIndex, 200000000, &grainInfo, &payload);
+            auto ret = mxlFlowReaderGetGrainSlice(_reader, grainIndex, endSlice, 200000000, &grainInfo, &payload);
             if (ret == MXL_ERR_OUT_OF_RANGE_TOO_LATE)
             {
                 // We are too late.. time travel!
                 grainIndex = mxlGetCurrentIndex(&configInfo.common.grainRate);
                 continue;
             }
-            if (ret == MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
-            {
+            else if (ret == MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
+            { // NOLINT(bugprone-branch-clone): Repeated for clarity.
                 // We are too early somehow.. retry the same grain later.
                 continue;
             }
-            if (ret != MXL_STATUS_OK)
+            else if (ret == MXL_ERR_TIMEOUT)
+            {
+                // No grains available before a timeout was triggered.. most likely a problem upstream.
+                continue;
+            }
+            else if (ret != MXL_STATUS_OK)
             {
                 // Something  unexpected occured, not much we can do, but log and retry
                 MXL_ERROR("Missed grain {}, err : {}", grainIndex, (int)ret);
@@ -223,8 +234,16 @@ public:
                 continue;
             }
 
+            if (grainInfo.flags & MXL_GRAIN_FLAG_INVALID)
+            {
+                // If we've got an invalid grain, do not waster bandwidth, transfer only the grain header and go to the next grain.
+                ret = mxlFabricsInitiatorTransferGrain(_initiator, grainIndex, 0, 0);
+                ++grainIndex;
+                continue;
+            }
+
             // Okay the grain is ready, we can transfer it to the targets.
-            ret = mxlFabricsInitiatorTransferGrain(_initiator, grainIndex);
+            ret = mxlFabricsInitiatorTransferGrain(_initiator, grainIndex, startSlice, grainInfo.validSlices);
             if (ret == MXL_ERR_NOT_READY)
             {
                 continue;
@@ -237,7 +256,7 @@ public:
 
             do
             {
-                status = mxlFabricsInitiatorMakeProgressBlocking(_initiator, 10);
+                status = makeProgress(std::chrono::milliseconds(10));
                 if (status == MXL_ERR_INTERRUPTED)
                 {
                     return MXL_STATUS_OK;
@@ -250,14 +269,20 @@ public:
             }
             while (status == MXL_ERR_NOT_READY);
 
+            MXL_DEBUG("Transferred grain index={} slices {}-{}", grainIndex, startSlice, grainInfo.validSlices);
+
             if (grainInfo.validSlices != grainInfo.totalSlices)
             {
                 // partial commit, we will need to work on the same grain again.
+                startSlice = grainInfo.validSlices;
+                endSlice = std::min<std::uint16_t>(startSlice + slicesPerBatch, _config.flowParser.getTotalPayloadSlices());
                 continue;
             }
 
             // If we get here, we have transfered the grain completely, we can work on the next grain.
-            grainIndex++;
+            startSlice = 0;
+            endSlice = slicesPerBatch;
+            ++grainIndex;
         }
 
         status = mxlFabricsInitiatorRemoveTarget(_initiator, _targetInfo);
@@ -268,7 +293,7 @@ public:
 
         do
         {
-            status = mxlFabricsInitiatorMakeProgressBlocking(_initiator, 250);
+            status = makeProgress(std::chrono::milliseconds(250));
             if (status == MXL_ERR_INTERRUPTED)
             {
                 return MXL_STATUS_OK;
@@ -284,13 +309,26 @@ public:
     }
 
 private:
+    mxlStatus makeProgress(std::chrono::steady_clock::duration timeout)
+    {
+        if (_config.provider == MXL_FABRICS_PROVIDER_EFA)
+        {
+            return mxlFabricsInitiatorMakeProgressNonBlocking(_initiator);
+        }
+        else
+        {
+            return mxlFabricsInitiatorMakeProgressBlocking(_initiator, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
+        }
+    }
+
+private:
     Config _config;
 
     mxlInstance _instance;
     mxlFabricsInstance _fabricsInstance;
     mxlFlowReader _reader;
     mxlFabricsInitiator _initiator;
-    mxlTargetInfo _targetInfo;
+    mxlFabricsTargetInfo _targetInfo;
 };
 
 class AppTarget
@@ -345,7 +383,7 @@ public:
         }
     }
 
-    mxlStatus setup(std::string const& flowDescriptor)
+    mxlStatus setup(std::string const& flowDescriptor, std::string const& flowOptions)
     {
         _instance = mxlCreateInstance(_config.domain.c_str(), "");
         if (_instance == nullptr)
@@ -361,10 +399,8 @@ public:
             return status;
         }
 
-        mxlFlowConfigInfo configInfo;
         bool flowCreated = false;
-        // Create a flow writer for the given flow id.
-        status = mxlCreateFlowWriter(_instance, flowDescriptor.c_str(), "", &_writer, &configInfo, &flowCreated);
+        status = mxlCreateFlowWriter(_instance, flowDescriptor.c_str(), flowOptions.c_str(), &_writer, &_configInfo, &flowCreated);
         if (status != MXL_STATUS_OK)
         {
             MXL_ERROR("Failed to create flow writer with status '{}'", static_cast<int>(status));
@@ -375,7 +411,7 @@ public:
             MXL_WARN("Reusing existing flow");
         }
 
-        mxlRegions memoryRegions;
+        mxlFabricsRegions memoryRegions;
         status = mxlFabricsRegionsForFlowWriter(_writer, &memoryRegions);
         if (status != MXL_STATUS_OK)
         {
@@ -390,7 +426,7 @@ public:
             return status;
         }
 
-        mxlTargetConfig targetConfig = {
+        mxlFabricsTargetConfig targetConfig = {
             .endpointAddress = {.node = _config.node ? _config.node.value().c_str() : nullptr,
                                 .service = _config.service ? _config.service.value().c_str() : nullptr},
             .provider = _config.provider,
@@ -441,34 +477,36 @@ public:
 
     mxlStatus run()
     {
-        mxlGrainInfo dummyGrainInfo;
-        uint64_t grainIndex = 0;
-        uint8_t* dummyPayload;
+        mxlGrainInfo grainInfo;
+        std::uint64_t grainIndex = 0;
+        std::uint8_t* dummyPayload;
         mxlStatus status;
 
         while (!g_exit_requested)
         {
-            status = mxlFabricsTargetWaitForNewGrain(_target, &grainIndex, 200);
+            status = targetReadGrain(&grainIndex, std::chrono::milliseconds(200));
             if (status == MXL_ERR_TIMEOUT)
             {
                 // No completion before a timeout was triggered, most likely a problem upstream.
                 MXL_WARN("wait for new grain timeout, most likely there is a problem upstream.");
                 continue;
             }
-
-            if (status == MXL_ERR_INTERRUPTED)
+            else if (status == MXL_ERR_NOT_READY)
+            {
+                continue;
+            }
+            else if (status == MXL_ERR_INTERRUPTED)
             {
                 return MXL_STATUS_OK;
             }
-
-            if (status != MXL_STATUS_OK)
+            else if (status != MXL_STATUS_OK)
             {
                 MXL_ERROR("Failed to wait for grain with status '{}'", static_cast<int>(status));
                 return status;
             }
 
             // Here we open so that we can commit, we are not going to modify the grain as it was already modified by the initiator.
-            status = mxlFlowWriterOpenGrain(_writer, grainIndex, &dummyGrainInfo, &dummyPayload);
+            status = mxlFlowWriterOpenGrain(_writer, grainIndex, &grainInfo, &dummyPayload);
             if (status != MXL_STATUS_OK)
             {
                 MXL_ERROR("Failed to open grain with status '{}'", static_cast<int>(status));
@@ -476,21 +514,34 @@ public:
             }
 
             // GrainInfo and media payload was already written by the remote endpoint, we simply commit!.
-            status = mxlFlowWriterCommitGrain(_writer, &dummyGrainInfo);
+            status = mxlFlowWriterCommitGrain(_writer, &grainInfo);
             if (status != MXL_STATUS_OK)
             {
                 MXL_ERROR("Failed to commit grain with status '{}'", static_cast<int>(status));
                 return status;
             }
 
-            MXL_INFO("Comitted grain with index={} validSlices={} totalSlices={}, grainSize={}",
+            MXL_DEBUG("Comitted grain with index={} current index={} validSlices={} flags={}",
                 grainIndex,
-                dummyGrainInfo.validSlices,
-                dummyGrainInfo.totalSlices,
-                dummyGrainInfo.grainSize);
+                mxlGetCurrentIndex(&_configInfo.common.grainRate),
+                grainInfo.validSlices,
+                grainInfo.flags);
         }
 
         return MXL_STATUS_OK;
+    }
+
+private:
+    mxlStatus targetReadGrain(std::uint64_t* grainIndex, std::chrono::steady_clock::duration timeout)
+    {
+        if (_config.provider == MXL_FABRICS_PROVIDER_EFA)
+        {
+            return mxlFabricsTargetReadGrainNonBlocking(_target, grainIndex);
+        }
+        else
+        {
+            return mxlFabricsTargetReadGrain(_target, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count(), grainIndex);
+        }
     }
 
 private:
@@ -500,7 +551,8 @@ private:
     mxlFabricsInstance _fabricsInstance;
     mxlFlowWriter _writer;
     mxlFabricsTarget _target;
-    mxlTargetInfo _targetInfo;
+    mxlFabricsTargetInfo _targetInfo;
+    mxlFlowConfigInfo _configInfo;
 };
 
 int main(int argc, char** argv)
@@ -520,24 +572,27 @@ int main(int argc, char** argv)
         flowConf,
         "The flow ID when used as an initiator. The json file which contains the NMOS Flow configuration when used as a target.");
 
-    bool runAsInitiator;
+    std::string flowOptionsFile;
+    app.add_option("--flow-options", flowOptionsFile, "Flow options file. (Only used when invoking a Target)");
+
+    bool runAsInitiator = false;
     auto runAsInitiatorOpt = app.add_flag("-i,--initiator",
         runAsInitiator,
         "Run as an initiator (flow reader + fabrics initiator). If not set, run as a receiver (fabrics target + flow writer).");
     runAsInitiatorOpt->default_val(false);
 
-    std::optional<std::string> node;
+    std::string node;
     auto nodeOpt = app.add_option("-n,--node",
         node,
         "This corresponds to the interface identifier of the fabrics endpoint, it can also be a logical address. This can be seen as the bind "
         "address when using sockets.");
-    nodeOpt->default_val(std::nullopt);
+    nodeOpt->default_val("");
 
-    std::optional<std::string> service;
+    std::string service;
     auto serviceOpt = app.add_option("--service",
         service,
         "This corresponds to a service identifier for the fabrics endpoint. This can be seen as the bind port when using sockets.");
-    serviceOpt->default_val(std::nullopt);
+    serviceOpt->default_val("");
 
     std::string provider;
     auto providerOpt = app.add_option("-p,--provider", provider, "The fabrics provider. One of (tcp, verbs or efa). Default is 'tcp'.");
@@ -562,13 +617,22 @@ int main(int argc, char** argv)
     if (runAsInitiator)
     {
         MXL_INFO("Running as initiator");
+        auto fileName = fmt::format("{}/{}.mxl-flow/flow_def.json", domain, flowConf);
+        std::ifstream file(fileName, std::ios::in | std::ios::binary);
+        if (!file)
+        {
+            MXL_ERROR("Failed to open file: '{}'", fileName);
+            return MXL_ERR_INVALID_ARG;
+        }
+        std::string flowDescriptor{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
+        mxl::lib::FlowParser descriptorParser{flowDescriptor};
 
         auto app = AppInitator{
             Config{
                    .domain = domain,
-                   .flowID = flowConf,
-                   .node = node,
-                   .service = service,
+                   .flowParser = descriptorParser,
+                   .node = node.empty() ? std::nullopt : std::optional<std::string>(node),
+                   .service = service.empty() ? std::nullopt : std::optional<std::string>(service),
                    .provider = mxlProvider,
                    },
         };
@@ -600,17 +664,29 @@ int main(int argc, char** argv)
 
         auto flowId = uuids::to_string(descriptorParser.getId());
 
+        std::string flowOptions;
+        if (!flowOptionsFile.empty())
+        {
+            std::ifstream optionFile(flowOptionsFile, std::ios::in | std::ios::binary);
+            if (!optionFile)
+            {
+                MXL_ERROR("Failed to open file: '{}'", flowOptionsFile);
+                return EXIT_FAILURE;
+            }
+            flowOptions = {std::istreambuf_iterator<char>(optionFile), std::istreambuf_iterator<char>()};
+        }
+
         auto app = AppTarget{
             Config{
                    .domain = domain,
-                   .flowID = flowId,
-                   .node = node,
-                   .service = service,
+                   .flowParser = descriptorParser,
+                   .node = node.empty() ? std::nullopt : std::optional<std::string>(node),
+                   .service = service.empty() ? std::nullopt : std::optional<std::string>(service),
                    .provider = mxlProvider,
                    },
         };
 
-        if (status = app.setup(flowDescriptor); status != MXL_STATUS_OK)
+        if (status = app.setup(flowDescriptor, flowOptions); status != MXL_STATUS_OK)
         {
             MXL_ERROR("Failed to setup target with status '{}'", static_cast<int>(status));
             return status;
