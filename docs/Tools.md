@@ -31,18 +31,26 @@ Example 1a : listing all flows in a domain using command line options.
 ```bash
 ../mxl-info/mxl-info -d /dev/shm/mxl/ -l
 CAM1: mxl:///dev/shm/mxl/?id=5fbec3b1-1b0f-417d-9059-8b94a47197ed&id=b3bb5be7-9fe9-4324-a5bb-4c70e1084449
-        ID: 5fbec3b1-1b0f-417d-9059-8b94a47197ed, Label: Camera 1, Role in Group: video
-        ID: b3bb5be7-9fe9-4324-a5bb-4c70e1084449, Label: Camera 1, Role in Group: audio
-  ```
+        video : 5fbec3b1-1b0f-417d-9059-8b94a47197ed - Camera 1
+        audio : b3bb5be7-9fe9-4324-a5bb-4c70e1084449 - Camera 1
+
+CAM2: mxl:///dev/shm/mxl/?id=53c36c15-10c8-48a3-9ba1-41f31d557fba&id=20e6824e-44b1-43ad-b198-99ebb7fa7092
+        video : 53c36c15-10c8-48a3-9ba1-41f31d557fba - Camera 2
+        audio : 20e6824e-44b1-43ad-b198-99ebb7fa7092 - Camera 2
+```
 
 Example 1b : listing all flows in a domain by specifying an MXL domain URI.
 
 ```bash
 ./mxl-info mxl:///dev/shm/mxl
 CAM1: mxl:///dev/shm/mxl/?id=5fbec3b1-1b0f-417d-9059-8b94a47197ed&id=b3bb5be7-9fe9-4324-a5bb-4c70e1084449
-        ID: 5fbec3b1-1b0f-417d-9059-8b94a47197ed, Label: Camera 1, Role in Group: video
-        ID: b3bb5be7-9fe9-4324-a5bb-4c70e1084449, Label: Camera 1, Role in Group: audio
-  ```
+        video : 5fbec3b1-1b0f-417d-9059-8b94a47197ed - Camera 1
+        audio : b3bb5be7-9fe9-4324-a5bb-4c70e1084449 - Camera 1
+
+CAM2: mxl:///dev/shm/mxl/?id=53c36c15-10c8-48a3-9ba1-41f31d557fba&id=20e6824e-44b1-43ad-b198-99ebb7fa7092
+        video : 53c36c15-10c8-48a3-9ba1-41f31d557fba - Camera 2
+        audio : 20e6824e-44b1-43ad-b198-99ebb7fa7092 - Camera 2
+```
 
 
 Example 2a : Printing details about a specific flow using command line options.
