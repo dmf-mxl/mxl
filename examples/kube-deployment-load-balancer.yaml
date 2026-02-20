@@ -1,0 +1,124 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+# This example demonstrates a Kubernetes deployment with a LoadBalancer service.
+# It includes:
+# - A PersistentVolume and PersistentVolumeClaim for shared storage
+# - A Deployment for the writer media function
+# - A Deployment for the reader media function with pod affinity to ensure co-location with the writer
+# - A LoadBalancer service to expose the reader media function to external clients (e.g.,
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: domain-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: hostpath
+  hostPath:
+    path: /tmp/domain-data 
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: domain-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: hostpath
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: domain-pv
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: writer-media-function
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: writer-media-function
+  template:
+    metadata:
+      labels:
+        app: writer-media-function
+    spec:
+      nodeSelector:
+        role: worker
+      containers:
+        - name: writer-container
+          image: mxl-writer:latest
+          imagePullPolicy: IfNotPresent
+          # If the image is private, configure ImagePullSecrets
+          volumeMounts:
+            - name: domain-volume
+              mountPath: /domain
+      volumes:
+        - name: domain-volume
+          persistentVolumeClaim:
+            claimName: domain-pvc
+      restartPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reader-media-function
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reader-media-function
+  template:
+    metadata:
+      labels:
+        app: reader-media-function
+    spec:
+      nodeSelector:
+        role: worker
+      containers:
+        - name: reader-container
+          image: mxl-reader:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: "4Gi"
+          tty: true
+          stdin: true
+          volumeMounts:
+            - name: domain-volume
+              mountPath: /domain
+              readOnly: true
+      volumes:
+        - name: domain-volume
+          persistentVolumeClaim:
+            claimName: domain-pvc
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - writer-media-function
+              topologyKey: kubernetes.io/hostname
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reader-media-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: reader-media-function
+  ports:
+    - protocol: UDP       # SRT usually runs over UDP
+      port: 5000          # The port exposed to Windows
+      targetPort: 5000    # The port the container is listening on

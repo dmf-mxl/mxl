@@ -1,0 +1,125 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+# Fabric-mode template for cross-node deployments (AWS EFA / RDMA-style path).
+#
+# Notes:
+# - This manifest is intentionally separate from shm/hostPath manifests.
+# - It avoids shared node-local domain assumptions.
+# - It uses EFA resource placeholders (vpc.amazonaws.com/efa) and anti-affinity
+#   to spread writer/reader across nodes.
+# - Requires EKS nodes prepared for EFA + Kubernetes device plugin.
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: writer-media-function-fabric
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: writer-media-function-fabric
+  template:
+    metadata:
+      labels:
+        app: writer-media-function-fabric
+    spec:
+      nodeSelector:
+        role: worker
+        efa: "true"
+      containers:
+        - name: writer-container
+          image: mxl-writer:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: FI_PROVIDER
+              value: efa
+            - name: FI_EFA_USE_DEVICE_RDMA
+              value: "1"
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+              vpc.amazonaws.com/efa: "1"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+              vpc.amazonaws.com/efa: "1"
+          volumeMounts:
+            - name: domain-volume
+              mountPath: /domain
+      volumes:
+        - name: domain-volume
+          emptyDir: {}
+      restartPolicy: Always
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reader-media-function-fabric
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: reader-media-function-fabric
+  template:
+    metadata:
+      labels:
+        app: reader-media-function-fabric
+    spec:
+      nodeSelector:
+        role: worker
+        efa: "true"
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - reader-media-function-fabric
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: reader-container
+          image: mxl-reader:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: FI_PROVIDER
+              value: efa
+            - name: FI_EFA_USE_DEVICE_RDMA
+              value: "1"
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+              vpc.amazonaws.com/efa: "1"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+              vpc.amazonaws.com/efa: "1"
+          tty: true
+          stdin: true
+          volumeMounts:
+            - name: domain-volume
+              mountPath: /domain
+      volumes:
+        - name: domain-volume
+          emptyDir: {}
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reader-media-service-fabric
+spec:
+  type: LoadBalancer
+  selector:
+    app: reader-media-function-fabric
+  ports:
+    - protocol: UDP
+      port: 5000
+      targetPort: 5000

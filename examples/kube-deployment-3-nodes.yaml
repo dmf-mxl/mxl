@@ -1,0 +1,88 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+# Per-node mode:
+# - 1 writer pod per worker node
+# - 1 reader pod per worker node
+# - Each node uses its own local /tmp/domain-data directory
+#   (same path, but isolated per node filesystem)
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: writer-media-function
+spec:
+  selector:
+    matchLabels:
+      app: writer-media-function
+  template:
+    metadata:
+      labels:
+        app: writer-media-function
+    spec:
+      nodeSelector:
+        role: worker
+      containers:
+        - name: writer-container
+          image: mxl-writer:latest
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: domain-volume
+              mountPath: /domain
+      volumes:
+        - name: domain-volume
+          hostPath:
+            path: /tmp/domain-data
+            type: DirectoryOrCreate
+      restartPolicy: Always
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: reader-media-function
+spec:
+  selector:
+    matchLabels:
+      app: reader-media-function
+  template:
+    metadata:
+      labels:
+        app: reader-media-function
+    spec:
+      nodeSelector:
+        role: worker
+      containers:
+        - name: reader-container
+          image: mxl-reader:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: "2Gi"
+          tty: true
+          stdin: true
+          volumeMounts:
+            - name: domain-volume
+              mountPath: /domain
+              readOnly: true
+      volumes:
+        - name: domain-volume
+          hostPath:
+            path: /tmp/domain-data
+            type: DirectoryOrCreate
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reader-media-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: reader-media-function
+  ports:
+    - protocol: UDP
+      port: 5000
+      targetPort: 5000

@@ -1,0 +1,116 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+# Local fabric-simulation mode (no EFA hardware required).
+#
+# Purpose:
+# - Simulate cross-node scheduling and network-based transport behavior locally.
+# - Use libfabric sockets provider instead of EFA.
+#
+# Notes:
+# - This is NOT real RDMA/EFA performance.
+# - Keep this separate from shm/hostPath manifests.
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: writer-media-function-fabric-local
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: writer-media-function-fabric-local
+  template:
+    metadata:
+      labels:
+        app: writer-media-function-fabric-local
+    spec:
+      nodeSelector:
+        role: worker
+      containers:
+        - name: writer-container
+          image: mxl-writer:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: FI_PROVIDER
+              value: sockets
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "2Gi"
+          volumeMounts:
+            - name: domain-volume
+              mountPath: /domain
+      volumes:
+        - name: domain-volume
+          emptyDir: {}
+      restartPolicy: Always
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reader-media-function-fabric-local
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: reader-media-function-fabric-local
+  template:
+    metadata:
+      labels:
+        app: reader-media-function-fabric-local
+    spec:
+      nodeSelector:
+        role: worker
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - reader-media-function-fabric-local
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: reader-container
+          image: mxl-reader:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: FI_PROVIDER
+              value: sockets
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "2Gi"
+          tty: true
+          stdin: true
+          volumeMounts:
+            - name: domain-volume
+              mountPath: /domain
+      volumes:
+        - name: domain-volume
+          emptyDir: {}
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reader-media-service-fabric-local
+spec:
+  type: LoadBalancer
+  selector:
+    app: reader-media-function-fabric-local
+  ports:
+    - protocol: UDP
+      port: 5000
+      targetPort: 5000
