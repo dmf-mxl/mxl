@@ -29,16 +29,21 @@ See: https://github.com/dmf-mxl/mxl/docs/Addressability.md
 Example 1a : listing all flows in a domain using command line options.
 
 ```bash
-./mxl-info -d ~/mxl_domain/ -l
-5fbec3b1-1b0f-417d-9059-8b94a47197ed, "MXL Test Flow, 1080p29 with alpha", "Media Function XYZ:Video"
-```
+../mxl-info/mxl-info -d /dev/shm/mxl/ -l
+CAM1: mxl:///dev/shm/mxl/?id=5fbec3b1-1b0f-417d-9059-8b94a47197ed&id=b3bb5be7-9fe9-4324-a5bb-4c70e1084449
+        ID: 5fbec3b1-1b0f-417d-9059-8b94a47197ed, Label: Camera 1, Role in Group: video
+        ID: b3bb5be7-9fe9-4324-a5bb-4c70e1084449, Label: Camera 1, Role in Group: audio
+  ```
 
 Example 1b : listing all flows in a domain by specifying an MXL domain URI.
 
 ```bash
 ./mxl-info mxl:///dev/shm/mxl
-5fbec3b1-1b0f-417d-9059-8b94a47197ed, "MXL Test Flow, 1080p29 with alpha", "Media Function XYZ:Video"
-```
+CAM1: mxl:///dev/shm/mxl/?id=5fbec3b1-1b0f-417d-9059-8b94a47197ed&id=b3bb5be7-9fe9-4324-a5bb-4c70e1084449
+        ID: 5fbec3b1-1b0f-417d-9059-8b94a47197ed, Label: Camera 1, Role in Group: video
+        ID: b3bb5be7-9fe9-4324-a5bb-4c70e1084449, Label: Camera 1, Role in Group: audio
+  ```
+
 
 Example 2a : Printing details about a specific flow using command line options.
 
