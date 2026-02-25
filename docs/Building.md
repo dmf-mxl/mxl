@@ -52,7 +52,7 @@ cd build
 cmake .. --preset Linux-Clang-Debug
 
 # Build everything
-cmake --build build/Linux-Clang-Debug --target all
+cmake --build Linux-Clang-Debug --target all
 ```
 
 ## Static build notes
