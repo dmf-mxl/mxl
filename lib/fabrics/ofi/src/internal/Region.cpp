@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 //
 // SPDX-License-Identifier: Apache-2.0
 
@@ -9,7 +9,8 @@
 #include <bits/types/struct_iovec.h>
 #include <mxl-internal/DiscreteFlowData.hpp>
 #include <mxl-internal/Flow.hpp>
-#include "mxl-internal/ContinuousFlowData.hpp"
+#include "mxl/dataformat.h"
+#include "mxl/fabrics.h"
 #include "mxl/flow.h"
 #include "mxl/mxl.h"
 #include "Exception.hpp"
@@ -60,16 +61,6 @@ namespace mxl::lib::fabrics::ofi
         return std::holds_alternative<Host>(_inner);
     }
 
-    Region::Location Region::Location::fromAPI(mxlFabricsMemoryRegionLocation loc)
-    {
-        switch (loc.type)
-        {
-            case MXL_PAYLOAD_LOCATION_HOST_MEMORY:   return Location::host();
-            case MXL_PAYLOAD_LOCATION_DEVICE_MEMORY: return Location::cuda(static_cast<int>(loc.deviceId));
-            default:                                 throw Exception::invalidArgument("Invalid memory region type");
-        }
-    }
-
     std::string Region::Location::toString() const noexcept
     {
         return std::visit(
@@ -109,14 +100,14 @@ namespace mxl::lib::fabrics::ofi
         return iovecs;
     }
 
-    MxlRegions* MxlRegions::fromAPI(mxlRegions regions) noexcept
+    MxlRegions* MxlRegions::fromAPI(mxlFabricsRegions regions) noexcept
     {
         return reinterpret_cast<MxlRegions*>(regions);
     }
 
-    mxlRegions MxlRegions::toAPI() noexcept
+    mxlFabricsRegions MxlRegions::toAPI() noexcept
     {
-        return reinterpret_cast<mxlRegions>(this);
+        return reinterpret_cast<mxlFabricsRegions>(this);
     }
 
     std::vector<Region> const& MxlRegions::regions() const noexcept
@@ -124,15 +115,49 @@ namespace mxl::lib::fabrics::ofi
         return _regions;
     }
 
-    MxlRegions mxlRegionsFromFlow(FlowData& flow)
+    DataLayout const& MxlRegions::dataLayout() const noexcept
+    {
+        return _layout;
+    }
+
+    MxlRegions mxlFabricsRegionsFromMutableFlow(FlowData& flow)
+    {
+        auto mxlRegions = mxlFabricsRegionsFromFlow(flow);
+
+        if (mxlIsDiscreteDataFormat(static_cast<int>(flow.flowInfo()->config.common.format)))
+        {
+            auto& discreteFlow = static_cast<DiscreteFlowData&>(flow);
+
+            if (mxlRegions._regions.size() != discreteFlow.grainCount())
+            {
+                throw Exception::invalidState("Unexpected number of grains in discrete flow");
+            }
+
+            for (std::size_t i = 0; i < discreteFlow.grainCount(); ++i)
+            {
+                mxlRegions._regions[i].grainIndexPtr = &discreteFlow.grainAt(i)->header.info.index;
+                mxlRegions._regions[i].validSlicesPtr = &discreteFlow.grainAt(i)->header.info.validSlices;
+            }
+        }
+
+        return mxlRegions;
+    }
+
+    MxlRegions mxlFabricsRegionsFromFlow(FlowData const& flow)
     {
         static_assert(sizeof(GrainHeader) == 8192,
             "GrainHeader type size changed! The Fabrics API makes assumptions on the memory layout of a flow, please review the code below if the "
             "change is intended!");
 
-        if (mxlIsDiscreteDataFormat(flow.flowInfo()->config.common.format))
+        if (flow.flowInfo()->config.common.payloadLocation != MXL_PAYLOAD_LOCATION_HOST_MEMORY)
         {
-            auto& discreteFlow = static_cast<DiscreteFlowData&>(flow);
+            throw Exception::make(MXL_ERR_UNKNOWN,
+                "GPU memory is not currently supported in the Flow API of MXL. Edit the code below when it is supported");
+        }
+
+        if (mxlIsDiscreteDataFormat(static_cast<int>(flow.flowInfo()->config.common.format)))
+        {
+            auto& discreteFlow = static_cast<DiscreteFlowData const&>(flow);
             std::vector<Region> regions;
 
             for (std::size_t i = 0; i < discreteFlow.grainCount(); ++i)
@@ -149,43 +174,47 @@ namespace mxl::lib::fabrics::ofi
                         "GPU memory is not currently supported in the Flow API of MXL. Edit the code below when it is supported");
                 }
 
-                regions.emplace_back(grainInfoBaseAddr, grainInfoSize + grainPayloadSize, Region::Location::host());
+                regions.emplace_back(grainInfoBaseAddr, grainInfoSize + grainPayloadSize, nullptr, nullptr, Region::Location::host());
             }
 
-            return {std::move(regions),
-                /*DataLayout::fromVideo(false)*/};
+            // TODO: Add an utility function to retrieve the number of available planes when alpha support is added.
+            return {std::move(regions), DataLayout::fromVideo(std::to_array(discreteFlow.flowInfo()->config.discrete.sliceSizes))};
         }
-        else if (mxlIsContinuousDataFormat(flow.flowInfo()->config.common.format))
-        {
-            auto& continuousFlow = static_cast<ContinuousFlowData&>(flow);
-            std::vector<Region> regions;
-
-            // For the continuous flow, the data layout is a single contiguous buffer
-            regions.emplace_back(
-                reinterpret_cast<std::uintptr_t>(continuousFlow.channelData()), continuousFlow.channelDataLength(), Region::Location::host());
-
-            return {
-                std::move(regions),
-                /*DataLayout::fromAudio(continuousFlow.channelCount(),
-                                      continuousFlow.channelBufferLength(),
-                                      continuousFlow.sampleWordSize()),*/
-            };
-        }
-
+        // else if (mxlIsContinuousDataFormat(flow.flowInfo()->config.common.format))
+        // {
+        //     auto& continuousFlow = static_cast<ContinuousFlowData const&>(flow);
+        //     std::vector<Region> regions;
+        //
+        //     // For the continuous flow, the data layout is a single contiguous buffer
+        //     regions.emplace_back(
+        //         reinterpret_cast<std::uintptr_t>(continuousFlow.channelData()), continuousFlow.channelDataLength(), Region::Location::host());
+        //
+        //     return {std::move(regions)};
+        // }
+        //
         else
         {
             throw Exception::make(MXL_ERR_UNKNOWN, "Unsupported flow fromat {}", flow.flowInfo()->config.common.format);
         }
     }
 
-    MxlRegions mxlRegionsFromUser(mxlFabricsMemoryRegion const* regions, size_t count)
+    std::uint64_t getGrainIndexInRingSlot(std::vector<Region> const& regions, std::uint16_t slot)
     {
-        std::vector<Region> outRegions;
-        for (size_t i = 0; i < count; i++)
+        if (slot >= regions.size())
         {
-            outRegions.emplace_back(regions[i].addr, regions[i].size, Region::Location::fromAPI(regions[i].loc));
+            throw Exception::invalidArgument("Invalid ring buffer slot number: {}, ring buffer len: {}", slot, regions.size());
         }
 
-        return {std::move(outRegions) /*, DataLayout::fromVideo(false)*/}; // TODO: datalayout struct definition at API level
+        return *regions[slot].grainIndexPtr;
+    }
+
+    void setValidSlicesForGrain(std::vector<Region> const& regions, std::uint16_t slot, std::uint16_t validSlices)
+    {
+        if (slot >= regions.size())
+        {
+            throw Exception::invalidArgument("Invalid ring buffer slot number: {}, ring buffer len: {}", slot, regions.size());
+        }
+
+        *regions[slot].validSlicesPtr = validSlices;
     }
 }

@@ -38,6 +38,9 @@ namespace mxl::lib
          * The flow writer must first open the flow before invoking this method.
          */
         [[nodiscard]]
+        virtual FlowData& getFlowData() override;
+
+        [[nodiscard]]
         virtual FlowData const& getFlowData() const override;
 
         /** \see FlowWriter::getFlowInfo */

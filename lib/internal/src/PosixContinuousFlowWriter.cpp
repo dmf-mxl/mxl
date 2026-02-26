@@ -28,6 +28,15 @@ namespace mxl::lib
         }
     }
 
+    FlowData& PosixContinuousFlowWriter::getFlowData()
+    {
+        if (_flowData)
+        {
+            return *_flowData;
+        }
+        throw std::runtime_error("No open flow.");
+    }
+
     FlowData const& PosixContinuousFlowWriter::getFlowData() const
     {
         if (_flowData)

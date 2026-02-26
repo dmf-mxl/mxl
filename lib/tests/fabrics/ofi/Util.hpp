@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 //
 // SPDX-License-Identifier: Apache-2.0
 
@@ -11,7 +11,7 @@
 #include <fmt/format.h>
 #include <rdma/fabric.h>
 #include "mxl/fabrics.h"
-#include "mxl/flow.h"
+#include "DataLayout.hpp"
 #include "Domain.hpp"
 #include "Region.hpp"
 
@@ -20,23 +20,24 @@ namespace mxl::lib::fabrics::ofi
     using InnerRegion = std::vector<std::uint8_t>;
     using InnerRegions = std::vector<InnerRegion>;
 
-    inline mxlTargetConfig getDefaultTargetConfig(mxlRegions regions)
+    [[nodiscard]]
+    inline mxlFabricsTargetConfig getDefaultTargetConfig(mxlFabricsRegions regions)
     {
-        mxlTargetConfig config{};
+        auto config = mxlFabricsTargetConfig{};
         config.endpointAddress.node = "127.0.0.1";
         config.endpointAddress.service = "9090";
-        config.provider = MXL_SHARING_PROVIDER_TCP;
+        config.provider = MXL_FABRICS_PROVIDER_TCP;
         config.deviceSupport = false;
         config.regions = regions;
         return config;
     }
 
-    inline mxlInitiatorConfig getDefaultInitiatorConfig(mxlRegions regions)
+    inline mxlFabricsInitiatorConfig getDefaultInitiatorConfig(mxlFabricsRegions regions)
     {
-        mxlInitiatorConfig config{};
+        auto config = mxlFabricsInitiatorConfig{};
         config.endpointAddress.node = "127.0.0.1";
         config.endpointAddress.service = "9091";
-        config.provider = MXL_SHARING_PROVIDER_TCP;
+        config.provider = MXL_FABRICS_PROVIDER_TCP;
         config.deviceSupport = false;
         config.regions = regions;
         return config;
@@ -71,8 +72,14 @@ namespace mxl::lib::fabrics::ofi
         return domain;
     }
 
+    inline MxlRegions getEmptyVideoMxlRegions()
+    {
+        return MxlRegions({}, DataLayout::fromVideo({8, 0, 0, 0}));
+    }
+
     inline std::pair<MxlRegions, InnerRegions> getHostRegionGroups()
     {
+        /// Warning: Do not modify the values below, you will break many tests
         auto innerRegions = std::vector<std::vector<std::uint8_t>>{
             std::vector<std::uint8_t>(256),
             std::vector<std::uint8_t>(512),
@@ -80,49 +87,25 @@ namespace mxl::lib::fabrics::ofi
             std::vector<std::uint8_t>(2048),
         };
 
-        /// Warning: Do not modify the values below, you will break many tests
-        // clang-format off
-        auto mxlRegions =  std::vector<mxlFabricsMemoryRegion>{
-            mxlFabricsMemoryRegion{
-                .addr = reinterpret_cast<std::uintptr_t>(innerRegions[0].data()),
-                .size = innerRegions[0].size(),
-                .loc = {.type = MXL_PAYLOAD_LOCATION_HOST_MEMORY, .deviceId = 0},
-            },
-            mxlFabricsMemoryRegion{
-                .addr = reinterpret_cast<std::uintptr_t>(innerRegions[1].data()),
-                .size = innerRegions[1].size(),
-                .loc = {.type = MXL_PAYLOAD_LOCATION_HOST_MEMORY, .deviceId = 0},
-            },
-            mxlFabricsMemoryRegion{
-                .addr = reinterpret_cast<std::uintptr_t>(innerRegions[2].data()),
-                .size = innerRegions[2].size(),
-                .loc = {.type = MXL_PAYLOAD_LOCATION_HOST_MEMORY, .deviceId = 0},
-            },
-            mxlFabricsMemoryRegion{
-                .addr = reinterpret_cast<std::uintptr_t>(innerRegions[3].data()),
-                .size = innerRegions[3].size(),
-                .loc = {.type = MXL_PAYLOAD_LOCATION_HOST_MEMORY, .deviceId = 0},
-            }
-        };
+        std::vector<Region> regions;
+        for (auto const& innerRegion : innerRegions)
+        {
+            regions.emplace_back(*innerRegion.data(), innerRegion.size(), nullptr, nullptr);
+        }
 
-        // clang-format on
-
-        return {mxlRegionsFromUser(mxlRegions.data(), mxlRegions.size()), innerRegions};
+        auto mxlRegions = MxlRegions(regions, DataLayout::fromVideo({8, 0, 0, 0}));
+        return {mxlRegions, innerRegions};
     }
 
-    inline std::pair<mxlRegions, InnerRegions> getUserMxlRegions()
+    inline MxlRegions getMxlRegions(std::vector<std::vector<std::uint8_t>> const& innerRegions,
+        DataLayout dataLayout = DataLayout::fromVideo({8, 0, 0, 0}))
     {
-        auto regions = InnerRegions{InnerRegion(256)};
-        auto memoryRegions = std::vector<mxlFabricsMemoryRegion>{
-            mxlFabricsMemoryRegion{.addr = reinterpret_cast<std::uintptr_t>(regions[0].data()),
-                                   .size = regions[0].size(),
-                                   .loc = {.type = MXL_PAYLOAD_LOCATION_HOST_MEMORY, .deviceId = 0}},
-        };
-
-        mxlRegions outRegions;
-        mxlFabricsRegionsFromUserBuffers(memoryRegions.data(), memoryRegions.size(), &outRegions);
-
-        return {outRegions, regions};
+        std::vector<Region> regions;
+        for (auto const& innerRegion : innerRegions)
+        {
+            regions.emplace_back(*innerRegion.data(), innerRegion.size(), nullptr, nullptr);
+        }
+        return {regions, dataLayout};
     }
 
 }

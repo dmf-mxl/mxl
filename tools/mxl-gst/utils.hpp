@@ -8,7 +8,7 @@
 #include <sstream>
 #include <string>
 #include <fmt/format.h>
-#include <picojson/picojson.h>
+#include <picojson/wrapper.h>
 #include "mxl/rational.h"
 
 /**
