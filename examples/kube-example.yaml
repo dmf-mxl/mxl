@@ -1,0 +1,436 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: domain-pv
+spec:
+  capacity:
+    storage: 32M
+  accessModes:
+    - ReadWriteMany
+  storageClassName: mxl-domain
+  local:
+    path: /dev/shm/mxl/example/data
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values: [__HOSTNAME__] # !! CHANGEME
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: domain-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  volumeName: domain-pv
+  storageClassName: mxl-domain
+  resources:
+    requests:
+      storage: 32M
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mxl-domain-volume-lifecycle-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mxl-domain-lifecycle-controller
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mxl-domain-lifecycle-controller
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: __HOSTNAME__
+      volumes:
+        - name: run-dbus
+          hostPath:
+            path: /run/dbus
+        - name: run-systemd
+          hostPath:
+            path: /run/systemd
+        - name: dev-shm
+          hostPath:
+            path: /dev/shm
+      initContainers:
+        - name: create-volume
+          securityContext:
+            privileged: true
+          env:
+            - name: SYSTEMCTL_FORCE_BUS
+              value: "1"
+          volumeMounts:
+            - name: run-dbus
+              mountPath: /run/dbus
+            - name: run-systemd
+              mountPath: /run/systemd
+            - name: dev-shm
+              mountPath: /dev/shm
+          image: docker.io/jonasohland/mxl-shminit:latest
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -e
+              if [[ -d "/dev/shm/mxl/example" ]] \
+                && grep -q "/dev/shm/mxl/example" /proc/mounts
+              then
+                echo "nothing to do"
+                exit 0
+              fi
+
+              mkdir -vp "/dev/shm/mxl/example"
+              echo "mounting tmpfs at /dev/shm/mxl/example"
+              systemd-run -G --wait -q -- mount -t tmpfs -o size=32M,nosuid,nodev,noexec,strictatime tmpfs /dev/shm/mxl/example
+              systemd-run -G --wait -q -- mkdir -v /dev/shm/mxl/example/data
+              systemd-run -G --wait -q -- chown -R 1000:1000 /dev/shm/mxl/example/data
+      containers:
+        - name: wait
+          securityContext:
+            privileged: true
+          env:
+            - name: SYSTEMCTL_FORCE_BUS
+              value: "1"
+          volumeMounts:
+            - name: run-dbus
+              mountPath: /run/dbus
+            - name: run-systemd
+              mountPath: /run/systemd
+            - name: dev-shm
+              mountPath: /dev/shm
+          image: docker.io/jonasohland/mxl-shminit:latest
+          command:
+            - /bin/bash
+            - -c
+            - |
+              function teardown() {
+                if grep -q "/dev/shm/mxl/example" /proc/mounts; then
+                  echo "attempting to umount /dev/shm/mxl/example"
+                  while true; do
+                    if systemd-run -G --wait -q -- umount "/dev/shm/mxl/example"; then
+                      echo "umount ok"
+                      break
+                    fi
+                    sleep 0.5
+                  done
+                fi
+
+                if systemd-run -G --wait -q -- /bin/sh -c "test -d /dev/shm/mxl/example"; then
+                  echo "remove /dev/shm/mxl/example volume mountpoint"
+                  systemd-run -G --wait -q -- rm -r /dev/shm/mxl/example
+                fi
+
+                exit 0
+              }
+              trap teardown SIGINT SIGTERM
+              while true; do sleep 1; done
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mxl-video-flow-description
+data:
+  flow.json: |
+    {
+      "$copyright": "SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.",
+      "$license": "SPDX-License-Identifier: Apache-2.0",
+      "description": "MXL Test Flow, 1080p29",
+      "id": "5fbec3b1-1b0f-417d-9059-8b94a47197ed",
+      "tags": {
+        "urn:x-nmos:tag:grouphint/v1.0": [
+          "Example Media Function:Video"
+        ]
+      },
+      "format": "urn:x-nmos:format:video",
+      "label": "MXL Test Flow, 1080p29",
+      "parents": [],
+      "media_type": "video/v210",
+      "grain_rate": {
+        "numerator": 30000,
+        "denominator": 1001
+      },
+      "frame_width": 1920,
+      "frame_height": 1080,
+      "interlace_mode": "progressive",
+      "colorspace": "BT709",
+      "components": [
+        {
+          "name": "Y",
+          "width": 1920,
+          "height": 1080,
+          "bit_depth": 10
+        },
+        {
+          "name": "Cb",
+          "width": 960,
+          "height": 1080,
+          "bit_depth": 10
+        },
+        {
+          "name": "Cr",
+          "width": 960,
+          "height": 1080,
+          "bit_depth": 10
+        }
+      ]
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mxl-audio-flow-description
+data:
+  flow.json: |
+    {
+      "$copyright": "SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.",
+      "$license": "SPDX-License-Identifier: Apache-2.0",
+      "description": "MXL Audio Flow",
+      "format": "urn:x-nmos:format:audio",
+      "tags": {
+        "urn:x-nmos:tag:grouphint/v1.0": [
+          "Media Function XYZ:Audio"
+        ]
+      },
+      "label": "MXL Audio Flow",
+      "version": "1441812152:154331951",
+      "id": "b3bb5be7-9fe9-4324-a5bb-4c70e1084449",
+      "media_type": "audio/float32",
+      "sample_rate": {
+        "numerator": 48000
+      },
+      "channel_count": 2,
+      "bit_depth": 32,
+      "parents": [],
+      "source_id": "2aa143ac-0ab7-4d75-bc32-5c00c13d186f",
+      "device_id": "169feb2c-3fae-42a5-ae2e-f6f8cbce29cf"
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mxl-video-flow-writer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mxl-video-flow-writer
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mxl-video-flow-writer
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: __HOSTNAME__
+      volumes:
+        - name: domain
+          persistentVolumeClaim:
+            claimName: domain-pvc
+        - name: flow-config
+          configMap:
+            name: mxl-video-flow-description
+      containers:
+        - name: test
+          image: docker.io/library/mxl-example-video-flow-writer
+          imagePullPolicy: IfNotPresent
+          restartPolicy: Always
+          volumeMounts:
+            - name: domain
+              mountPath: /home/mxl/domain
+            - name: flow-config
+              mountPath: /home/mxl/config
+          args: ["-d", "domain", "-v", "config/flow.json"]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mxl-audio-flow-writer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mxl-audio-flow-writer
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mxl-audio-flow-writer
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: __HOSTNAME__
+      volumes:
+        - name: domain
+          persistentVolumeClaim:
+            claimName: domain-pvc
+        - name: flow-config
+          configMap:
+            name: mxl-audio-flow-description
+      containers:
+        - name: test
+          image: docker.io/library/mxl-example-audio-flow-writer
+          imagePullPolicy: IfNotPresent
+          restartPolicy: Always
+          volumeMounts:
+            - name: domain
+              mountPath: /home/mxl/domain
+            - name: flow-config
+              mountPath: /home/mxl/config
+          args: ["-d", "domain", "-a", "config/flow.json"]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mxl-fake-video-flow-reader
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mxl-fake-video-flow-reader
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mxl-fake-video-flow-reader
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: __HOSTNAME__
+      volumes:
+        - name: domain
+          persistentVolumeClaim:
+            claimName: domain-pvc
+      containers:
+        - name: test
+          image: docker.io/library/mxl-example-video-fake-reader
+          imagePullPolicy: IfNotPresent
+          restartPolicy: Always
+          volumeMounts:
+            - name: domain
+              mountPath: /home/mxl/domain
+          args: ["--domain", "domain", "--video-flow-id", "5fbec3b1-1b0f-417d-9059-8b94a47197ed", "-i", "2s"]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mxl-fake-audio-flow-reader
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mxl-fake-audio-flow-reader
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mxl-fake-audio-flow-reader
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: __HOSTNAME__
+      volumes:
+        - name: domain
+          persistentVolumeClaim:
+            claimName: domain-pvc
+      containers:
+        - name: test
+          image: docker.io/library/mxl-example-audio-fake-reader
+          imagePullPolicy: IfNotPresent
+          restartPolicy: Always
+          volumeMounts:
+            - name: domain
+              mountPath: /home/mxl/domain
+          args: ["--domain", "domain", "--audio-flow-id", "b3bb5be7-9fe9-4324-a5bb-4c70e1084449", "-i", "2s"]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mxl-video-flow-info
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mxl-video-flow-info
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mxl-video-flow-info
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: __HOSTNAME__
+      volumes:
+        - name: domain
+          persistentVolumeClaim:
+            claimName: domain-pvc
+      containers:
+        - name: test
+          image: docker.io/library/mxl-example-video-flow-info
+          imagePullPolicy: IfNotPresent
+          restartPolicy: Always
+          volumeMounts:
+            - name: domain
+              mountPath: /home/mxl/domain
+          command: ["/usr/bin/dumb-init", "--"]
+          args: [/bin/bash, -c, "trap 'exit 0' SIGINT SIGTERM; while true; do mxl-info mxl:///home/mxl/domain?id=5fbec3b1-1b0f-417d-9059-8b94a47197ed; echo '----------'; sleep 5s; done"]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mxl-audio-flow-info
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mxl-audio-flow-info
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mxl-audio-flow-info
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: __HOSTNAME__
+      volumes:
+        - name: domain
+          persistentVolumeClaim:
+            claimName: domain-pvc
+      containers:
+        - name: test
+          image: docker.io/library/mxl-example-audio-flow-info
+          imagePullPolicy: IfNotPresent
+          restartPolicy: Always
+          volumeMounts:
+            - name: domain
+              mountPath: /home/mxl/domain
+          command: ["/usr/bin/dumb-init", "--"]
+          args: [/bin/bash, -c, "trap 'exit 0' SIGINT SIGTERM; while true; do mxl-info mxl:///home/mxl/domain?id=b3bb5be7-9fe9-4324-a5bb-4c70e1084449; echo '----------'; sleep 5s; done"]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mxl-domain-info
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mxl-domain-info
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mxl-domain-info
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: __HOSTNAME__
+      volumes:
+        - name: domain
+          persistentVolumeClaim:
+            claimName: domain-pvc
+      containers:
+        - name: test
+          image: docker.io/library/mxl-example-video-flow-info
+          imagePullPolicy: IfNotPresent
+          restartPolicy: Always
+          volumeMounts:
+            - name: domain
+              mountPath: /home/mxl/domain
+          command: ["/usr/bin/dumb-init", "--"]
+          args: [/bin/bash, -c, "trap 'exit 0' SIGINT SIGTERM; while true; do mxl-info mxl:///home/mxl/domain; echo '----------'; sleep 5s; done"]

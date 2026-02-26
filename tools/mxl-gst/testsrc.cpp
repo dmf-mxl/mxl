@@ -356,7 +356,7 @@ namespace
                 _config.frameRate.denominator,
                 _config.textOverlay);
 
-            MXL_INFO("Generating following gsteamer video pipeline -> {}", pipelineDesc);
+            MXL_INFO("Generating following GStreamer video pipeline -> {}", pipelineDesc);
             launchPipeline(pipelineDesc, _config.frameRate);
 
             // Configure appsink
@@ -421,7 +421,7 @@ namespace
                 config.sampleRate.numerator,
                 config.channelCount);
 
-            MXL_INFO("Generating following gsteamer audio pipeline -> {}", pipelineDesc);
+            MXL_INFO("Generating following GStreamer audio pipeline -> {}", pipelineDesc);
             launchPipeline(pipelineDesc, _config.sampleRate);
         }
 

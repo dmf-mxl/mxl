@@ -201,7 +201,7 @@ namespace
                 _config.frameRate.denominator,
                 _config.offset);
 
-            MXL_INFO("Generating following Video gsteamer pipeline -> {}", pipelineDesc);
+            MXL_INFO("Generating following GStreamer video pipeline -> {}", pipelineDesc);
             launchPipeline(pipelineDesc);
         }
 
@@ -235,7 +235,7 @@ namespace
                 generateMixMatrix(),
                 _config.offset);
 
-            MXL_INFO("Generating following Audio gsteamer pipeline -> {}", pipelineDesc);
+            MXL_INFO("Generating following GStreamer audio pipeline -> {}", pipelineDesc);
             launchPipeline(pipelineDesc);
 
             {
