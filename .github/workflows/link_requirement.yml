@@ -41,7 +41,40 @@ jobs:
 
     steps:
       #
-      # 1. Fetch full issue body (works for both real issues and workflow_dispatch)
+      #  Create GitHub App token (real use)
+      #
+      - name: Create GitHub App token (org)
+        if: steps.extract.outputs.issue_num != '' && github.event_name != 'workflow_dispatch'
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.CROSS_REPO_ISSUE_ACCESS_APP_ID }}
+          private-key: ${{ secrets.CROSS_REPO_ISSUE_ACCESS_PRIVATE_KEY }}
+          owner: dmf-mxl
+
+      - name: Export GH_TOKEN
+        if: steps.extract.outputs.issue_num != '' && github.event_name != 'workflow_dispatch'
+        run: |
+          echo "GH_TOKEN=${{ steps.app-token.outputs.token }}" >> "$GITHUB_ENV"
+
+      #
+      #  Allow test mode to use GITHUB_TOKEN instead
+      #
+      - name: Test mode token
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "GH_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> "$GITHUB_ENV"
+
+      - name: Verify GH_TOKEN
+        if: steps.extract.outputs.issue_num != ''
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "ERROR: GH_TOKEN empty"
+            exit 1
+          fi
+
+      #
+      #  Fetch full issue body (works for both real issues and workflow_dispatch)
       #
       - name: Fetch issue body
         id: fetch
@@ -50,7 +83,7 @@ jobs:
           gh api "repos/${{ github.repository }}/issues/${ISSUE_NUMBER}" --jq .body > issue_body.txt
 
       #
-      # 2. Try to parse the form (will only succeed on real Feature issues)
+      #  Try to parse the form (will only succeed on real Feature issues)
       #
       - name: Parse issue form (best effort)
         id: parse
@@ -60,7 +93,7 @@ jobs:
           body: ${{ steps.fetch.outputs.body || github.event.issue.body || '' }}
 
       #
-      # 3. Guard – ensure requirement_link exists (only used for real issues)
+      #  Guard – ensure requirement_link exists (only used for real issues)
       #
       - name: Guard – ensure requirement_link exists
         id: guard
@@ -80,7 +113,7 @@ jobs:
           fi
 
       #
-      # 4. Normalise requirement link (only when guard passes)
+      #  Normalise requirement link (only when guard passes)
       #
       - name: Normalize requirement link
         if: steps.guard.outputs.has == 'true'
@@ -129,40 +162,7 @@ jobs:
           fi
 
       #
-      # 5. Create GitHub App token (real use)
-      #
-      - name: Create GitHub App token (org)
-        if: steps.extract.outputs.issue_num != '' && github.event_name != 'workflow_dispatch'
-        id: app-token
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ vars.CROSS_REPO_ISSUE_ACCESS_APP_ID }}
-          private-key: ${{ secrets.CROSS_REPO_ISSUE_ACCESS_PRIVATE_KEY }}
-          owner: dmf-mxl
-
-      - name: Export GH_TOKEN
-        if: steps.extract.outputs.issue_num != '' && github.event_name != 'workflow_dispatch'
-        run: |
-          echo "GH_TOKEN=${{ steps.app-token.outputs.token }}" >> "$GITHUB_ENV"
-
-      #
-      # 6. Allow test mode to use GITHUB_TOKEN instead
-      #
-      - name: Test mode token
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          echo "GH_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> "$GITHUB_ENV"
-
-      - name: Verify GH_TOKEN
-        if: steps.extract.outputs.issue_num != ''
-        run: |
-          if [ -z "$GH_TOKEN" ]; then
-            echo "ERROR: GH_TOKEN empty"
-            exit 1
-          fi
-
-      #
-      # 7. Parent–child link (Requirement parent → Feature child)
+      #  Parent–child link (Requirement parent → Feature child)
       #
       - name: Link as sub-issue
         if: steps.extract.outputs.issue_num != ''
@@ -194,7 +194,7 @@ jobs:
             "
 
       #
-      # 8. Append the clickable URL to the bottom of the issue body (idempotent)
+      #  Append the clickable URL to the bottom of the issue body (idempotent)
       #
       - name: Append normalized URL to issue body (idempotent)
         if: steps.extract.outputs.issue_num != ''
