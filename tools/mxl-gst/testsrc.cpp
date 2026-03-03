@@ -653,6 +653,8 @@ namespace
                             gstSampleIndex,
                             sampleIndex);
                     }
+                    // Generate the skipped samples as silenced samples.
+                    // ** A production application should apply a fade when inserting silence to avoid audio artefacts
                     else if (gstSampleIndex > sampleIndex) // gstreamer index is bigger than we expected
                     {
                         MXL_WARN("ContinuousFlow: Skipped sample(s). Expected sample index {}, got sample index {} (bufferTs={} ns). Generating {} "
@@ -662,28 +664,42 @@ namespace
                             bufferTs,
                             gstSampleIndex - sampleIndex);
 
-                        // Generate the skipped samples as silenced samples.
-                        // ** A production application should apply a fade when inserting silence to avoid audio artefacts
-                        auto const nbSamples = gstSampleIndex - sampleIndex;
-                        auto const actualSampleIndex = gstSampleIndex - offset;
+                        auto nbSamples = gstSampleIndex - sampleIndex;
 
-                        auto payloadBuffersSlices = mxlMutableWrappedMultiBufferSlice{};
-                        if (::mxlFlowWriterOpenSamples(_writer, actualSampleIndex, nbSamples, &payloadBuffersSlices) != MXL_STATUS_OK)
+                        // Generate silence in nbSamplesBatch < samplesPerBatch. Otherwise MXL will throw MXL_ERR_INVALID_ARG
+                        while (nbSamples > 0)
                         {
-                            MXL_ERROR("Failed to open samples at index '{}'", actualSampleIndex);
-                            break;
-                        }
+                            auto const nbSamplesBatch = std::min<std::uint64_t>(nbSamples, samplesPerBatch);
+                            auto const actualSampleIndex = sampleIndex - offset;
 
-                        for (auto chan = std::size_t{0}; chan < payloadBuffersSlices.count; ++chan)
-                        {
-                            for (auto& fragment : payloadBuffersSlices.base.fragments)
+                            mxlMutableWrappedMultiBufferSlice payloadBuffersSlices;
+                            if (::mxlFlowWriterOpenSamples(_writer, actualSampleIndex, nbSamplesBatch, &payloadBuffersSlices) != MXL_STATUS_OK)
                             {
-                                if (fragment.size != 0)
+                                MXL_ERROR("Failed to open samples at index '{}'", actualSampleIndex);
+                                break;
+                            }
+
+                            for (auto chan = std::size_t{0}; chan < payloadBuffersSlices.count; ++chan)
+                            {
+                                for (auto& fragment : payloadBuffersSlices.base.fragments)
                                 {
-                                    auto const dst = static_cast<std::uint8_t*>(fragment.pointer) + (chan * payloadBuffersSlices.stride);
-                                    ::memset(dst, 0, fragment.size); // fill with silence
+                                    if (fragment.size != 0)
+                                    {
+                                        auto const dst = static_cast<std::uint8_t*>(fragment.pointer) + (chan * payloadBuffersSlices.stride);
+                                        ::memset(dst, 0, fragment.size); // fill with silence
+                                    }
                                 }
                             }
+
+                            if (::mxlFlowWriterCommitSamples(_writer) != MXL_STATUS_OK)
+                            {
+                                MXL_ERROR("Failed to commit silence samples at index '{}'", actualSampleIndex);
+                                break;
+                            }
+
+                            // Move to the next silence batch
+                            nbSamples -= nbSamplesBatch;
+                            sampleIndex += nbSamplesBatch;
                         }
                     }
                     else // gstreamer index matches expected index
