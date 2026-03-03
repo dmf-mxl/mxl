@@ -1,0 +1,22 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: mxl-demo-eks
+  region: eu-central-1
+  version: "1.30"
+
+autoModeConfig:
+  enabled: false
+
+iam:
+  serviceRoleARN: arn:aws:iam::720180693591:role/YourEKSClusterRole
+
+managedNodeGroups:
+  - name: ng-1
+    instanceType: t3.small
+    desiredCapacity: 1
+    minSize: 1
+    maxSize: 1
+    iam:
+      instanceRoleARN: arn:aws:iam::720180693591:role/YourEKSNodeRole
