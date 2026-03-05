@@ -45,6 +45,77 @@ Enables memory sharing through controlled data movement.
 - Information about example tools to work with MXL, including GStreamer pipelines, are [here](docs/Tools.md)
 - There are some examples of how to use MXL with Docker Compose and Kubernetes [here](examples/README.md).
 
+## Running Locally
+
+### Option 1: Using Devcontainer (Recommended for Linux/WSL2)
+
+This is the easiest way to set up a consistent development environment:
+
+1. Install [VSCode](https://code.visualstudio.com/) and the [DevContainer extension](vscode:extension/ms-vscode-remote.remote-containers)
+2. Install Docker (with buildx support)
+3. Clone the repository and open it in VSCode:
+   ```bash
+   git clone https://github.com/dmf-mxl/mxl.git
+   cd mxl
+   code .
+   ```
+4. VSCode will prompt you to "Reopen in dev container" — click it (or use `Ctrl+Shift+P > Dev Containers: Reopen in Container`)
+5. Once inside the container, build the project:
+   ```bash
+   mkdir build && cd build
+   cmake .. --preset Linux-Clang-Debug
+   cmake --build . --target all
+   ```
+
+### Option 2: Using CMake Locally
+
+#### On Ubuntu 22.04 / Debian:
+1. Install dependencies:
+   ```bash
+   sudo apt install build-essential cmake git libopenfec-dev
+   ```
+2. Install vcpkg (see [Dockerfile](/.devcontainer/Dockerfile) for detailed instructions)
+3. Clone and build:
+   ```bash
+   git clone https://github.com/dmf-mxl/mxl.git
+   cd mxl
+   mkdir build && cd build
+   cmake .. --preset Linux-GCC-Debug
+   cmake --build . --target all
+   ```
+
+#### On macOS:
+1. Install Homebrew and dependencies:
+   ```bash
+   brew install cmake doxygen ccache
+   ```
+2. Install GStreamer (follow [these instructions](https://gstreamer.freedesktop.org/documentation/installing/on-mac-osx.html?gi-language=c#download-and-install-the-sdk))
+3. Clone and build:
+   ```bash
+   git clone https://github.com/dmf-mxl/mxl.git
+   cd mxl
+   mkdir build && cd build
+   cmake .. --preset Darwin-Clang-Debug
+   cmake --build . --target all
+   ```
+
+### Running Tests
+
+After building, run the test suite:
+```bash
+cmake --build . --target test
+```
+
+### Available Build Presets
+
+Other CMake presets available include:
+- `Linux-GCC-Debug`, `Linux-GCC-Release`
+- `Linux-Clang-Debug`, `Linux-Clang-Release`
+- `Linux-*-AddressSanitizer`, `Linux-*-ThreadSanitizer`, `Linux-*-UBSanitizer`
+- `Darwin-Clang-Debug`, `Darwin-Clang-Release` (with sanitizer variants)
+
+Choose the appropriate preset for your platform and needs. For more detailed build information, see [Building.md](docs/Building.md).
+
 # Motivation
 
 Rapid advances in computing power and network infrastructure are transforming the landscape of live media production. The professional broadcast industry is gradually moving away from hardware-centric systems and towards software-defined solutions, promising far greater flexibility, scalability, and operational agility. However, this shift into a more virtualised, “dematerialised” environment also introduces substantial interoperability challenges. Multiple vendors, proprietary frameworks, and disparate technology stacks can prevent diverse systems from integrating seamlessly across distributed networks, potentially inhibiting innovation and restricting the efficiency of modern broadcast workflows.
