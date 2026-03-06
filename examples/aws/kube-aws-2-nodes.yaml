@@ -1,38 +1,10 @@
-# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
-# SPDX-License-Identifier: Apache-2.0
 
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: domain-pv
-spec:
-  capacity:
-    storage: 1Gi
-  accessModes:
-    - ReadWriteMany
-  storageClassName: hostpath
-  hostPath:
-    path: /tmp/domain-data 
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: domain-pvc
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: hostpath
-  resources:
-    requests:
-      storage: 1Gi
-  volumeName: domain-pv
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
   name: writer-media-function
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: writer-media-function
@@ -41,11 +13,9 @@ spec:
       labels:
         app: writer-media-function
     spec:
-      nodeSelector:
-        role: worker
       containers:
         - name: writer-container
-          image: mxl-writer:latest
+          image: 720180693591.dkr.ecr.eu-central-1.amazonaws.com/mxl-writer:latest
           imagePullPolicy: IfNotPresent
           # If the image is private, configure ImagePullSecrets
           volumeMounts:
@@ -53,16 +23,16 @@ spec:
               mountPath: /domain
       volumes:
         - name: domain-volume
-          persistentVolumeClaim:
-            claimName: domain-pvc
+          hostPath:
+            path: /tmp/domain-data
+            type: DirectoryOrCreate
       restartPolicy: Always
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
   name: reader-media-function
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: reader-media-function
@@ -71,11 +41,9 @@ spec:
       labels:
         app: reader-media-function
     spec:
-      nodeSelector:
-        role: worker
       containers:
         - name: reader-container
-          image: mxl-reader:latest
+          image: 720180693591.dkr.ecr.eu-central-1.amazonaws.com/mxl-reader:latest
           imagePullPolicy: IfNotPresent
           command: ["/bin/sh", "-c"]
           args:
@@ -84,7 +52,7 @@ spec:
               while true; do /app/mxl-info -d /domain -l || true; sleep 2; done
           resources:
             limits:
-              memory: "6Gi"
+              memory: "2Gi"
           tty: true
           stdin: true
           volumeMounts:
@@ -93,18 +61,9 @@ spec:
               readOnly: true
       volumes:
         - name: domain-volume
-          persistentVolumeClaim:
-            claimName: domain-pvc
-      affinity:
-        podAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: app
-                    operator: In
-                    values:
-                      - writer-media-function
-              topologyKey: kubernetes.io/hostname
+          hostPath:
+            path: /tmp/domain-data
+            type: DirectoryOrCreate
       restartPolicy: Always
 
 # ---
@@ -127,8 +86,12 @@ apiVersion: v1
 kind: Service
 metadata:
   name: reader-media-service
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
 spec:
   type: LoadBalancer
+  externalTrafficPolicy: Local
   selector:
     app: reader-media-function
   ports:

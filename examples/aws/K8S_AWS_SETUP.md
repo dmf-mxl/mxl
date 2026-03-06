@@ -30,40 +30,30 @@ docker --version
 
 ## 2) Configure AWS credentials
 
-If you use IAM user access keys:
-
-```bash
-aws configure
-```
-
-Use:
-
-- AWS Access Key ID: `<your-access-key-id>`
-- AWS Secret Access Key: `<your-secret-access-key>`
-- Default region name: `eu-central-1`
-- Default output format: `json`
-
-SSO start URL: https://qvest-digital.awsapps.com/start/#
-SSO region: eu-central-1
-CLI default region: eu-central-1
-CLI output: json
-
+Use AWS IAM Identity Center (SSO):
 
 ```bash
 aws configure sso --profile dmf-demo
 export AWS_PROFILE=dmf-demo
 ```
-- Session name: qvest-sso
-- SSO start URL: https://qvest-digital.awsapps.com/start/#
-- SSO region: eu-central-1
-- CLI default region: eu-central-1
-- CLI output: json
 
-Validate identity:
+Use these values during setup:
+
+- SSO session name: `qvest-sso`
+- SSO start URL: `https://qvest-digital.awsapps.com/start/#`
+- SSO region: `eu-central-1`
+- CLI default region: `eu-central-1`
+- CLI output format: `json`
+
+Sign in and validate identity:
 
 ```bash
+aws sso login --profile dmf-demo
+#Click on the second link and login
+
 aws sts get-caller-identity --profile dmf-demo
 ```
+
 
 ## 3) Export environment variables
 
@@ -149,7 +139,11 @@ Notes for cost control:
 ## 6) Connect kubectl to EKS
 
 ```bash
-aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION
+# If your cluster was created with Terraform (recommended):
+# cd terraform && eval "$(terraform output -raw kubeconfig_update_command)" && cd -
+
+# Manual fallback:
+aws eks update-kubeconfig --region $AWS_REGION --name $CLUSTER_NAME --alias $CLUSTER_NAME --profile $AWS_PROFILE
 kubectl get nodes
 ```
 
@@ -171,16 +165,24 @@ nodeSelector:
 ```bash
 kubectl get nodes
 kubectl label node <node-name> role=worker
+kubectl get nodes --show-labels | grep role=worker
+```
+
+For a single-node cluster, you can label automatically:
+
+```bash
+kubectl label node "$(kubectl get nodes -o name | head -n1 | cut -d/ -f2)" role=worker --overwrite
 ```
 
 ## 8) Apply manifest
 
 ```bash
-kubectl apply -f examples/kube-deployment-1-node.yaml
+kubectl apply -f examples/aws/kube-aws-1-node.yaml
 
-kubectl exec -it reader-media-function-79c7b7667f-r9bdd -- /app/mxl-info -d /domain -l
-kubectl exec -it reader-media-function-79c7b7667f-r9bdd -- /app/mxl-gst-sink -d /domain -v 5fbec3b1-1b0f-417d-9059-8b94a47197ed
+kubectl logs -f deploy/reader-media-function
 ```
+
+`reader-media-function` starts `/app/mxl-gst-sink` automatically from the Deployment command.
 
 Check rollout:
 
