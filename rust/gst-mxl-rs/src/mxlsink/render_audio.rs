@@ -1,10 +1,34 @@
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::mxlsink;
+use std::time::Duration;
 
-use gstreamer::{self as gst};
+use crate::mxlsink::{
+    self,
+    state::{AudioCommand, AudioEngine, InitialTime},
+};
+
+use gstreamer::{
+    self as gst,
+    prelude::{ClockExt, ElementExt},
+};
+use mxl::Rational;
 use tracing::trace;
+
+pub struct WriteSampleData {
+    chunk: Vec<u8>,
+    num_channels: usize,
+    bytes_per_sample: usize,
+    chunk_samples: usize,
+    index: u64,
+}
+
+pub struct WriteGrainData {
+    pub buf: Vec<u8>,
+    pub index: u64,
+}
+
+const LATENCY_CUSHION: u64 = 5_000_000;
 
 pub(crate) fn audio(
     state: &mut mxlsink::state::State,
@@ -12,106 +36,93 @@ pub(crate) fn audio(
 ) -> Result<gst::FlowSuccess, gst::FlowError> {
     let map = buffer.map_readable().map_err(|_| gst::FlowError::Error)?;
     let src = map.as_slice();
-    let audio_state = state.audio.as_mut().ok_or(gst::FlowError::Error)?;
-
-    let bytes_per_sample = (audio_state.flow_def.bit_depth / 8) as usize;
-    trace!(
-        "received buffer size: {}, channel count: {}, bit-depth: {}, bytes-per-sample: {}",
-        src.len(),
-        audio_state.flow_def.channel_count,
-        audio_state.bit_depth,
-        bytes_per_sample
-    );
-
-    let samples_per_buffer =
-        src.len() / (audio_state.flow_def.channel_count as usize * bytes_per_sample);
-    audio_state.batch_size = samples_per_buffer;
-
-    let flow = state.flow.as_ref().ok_or(gst::FlowError::Error)?;
-    let flow_info = flow.continuous().map_err(|_| gst::FlowError::Error)?;
-    let sample_rate = flow
-        .common()
-        .sample_rate()
+    let flow_info = state
+        .flow
+        .as_ref()
+        .ok_or(gst::FlowError::Error)?
+        .continuous()
         .map_err(|_| gst::FlowError::Error)?;
     let buffer_length = flow_info.bufferLength as u64;
+    let max_chunk = (buffer_length / 2) as usize;
+    let clock = state.pipeline.clock().ok_or(gst::FlowError::Error)?;
+    let gst_now = clock.time();
+    let audio_state = state.audio.as_mut().ok_or(gst::FlowError::Error)?;
+    let bytes_per_sample = (audio_state.flow_def.bit_depth / 8) as usize;
+    let samples_per_buffer =
+        src.len() / (audio_state.flow_def.channel_count as usize * bytes_per_sample);
+    let gst_pts = buffer.pts().ok_or(gst::FlowError::Error)?;
+    trace!("GST BUFFER PTS: {:#?}", gst_pts);
+    let mxl_now = state.instance.get_time();
 
-    let mut write_index = match audio_state.next_write_index {
-        Some(idx) => idx,
-        None => {
-            let current_index = state.instance.get_current_index(&sample_rate);
-            audio_state.next_write_index = Some(current_index);
-            current_index
-        }
+    let initial = audio_state.initial_time.get_or_insert(InitialTime {
+        mxl_pts_offset: mxl_now - gst_now.nseconds(),
+    });
+
+    let initial_pts_offset = initial.mxl_pts_offset;
+    let sample_rate = Rational {
+        numerator: audio_state.flow_def.sample_rate.numerator as i64,
+        denominator: audio_state.flow_def.sample_rate.denominator as i64,
     };
 
-    trace!(
-        "Writing audio batch starting at index {}, sample_rate {}/{}",
-        write_index, sample_rate.numerator, sample_rate.denominator
-    );
-
-    let max_chunk = (buffer_length / 2) as usize;
     let num_channels = audio_state.flow_def.channel_count as usize;
-    let samples_total = samples_per_buffer;
-    let mut remaining = samples_total;
+    let mut remaining = samples_per_buffer;
     let mut src_offset_samples = 0;
+    let mut base_pts = gst_pts.nseconds() + initial_pts_offset;
 
     while remaining > 0 {
-        let (chunk_samples, chunk_bytes, mut access, samples_per_channel) =
-            compute_samples_per_channel(
-                audio_state,
-                bytes_per_sample,
-                write_index,
-                max_chunk,
-                num_channels,
-                remaining,
-            )?;
+        let mxl_pts = base_pts;
+        let chunk_samples = remaining.min(max_chunk);
+        let chunk_bytes = chunk_samples * num_channels * bytes_per_sample;
 
-        let src_chunk = compute_chunk(
-            src,
+        let chunk = compute_chunk(
+            &map,
             bytes_per_sample,
             num_channels,
             src_offset_samples,
             chunk_bytes,
+        )
+        .to_vec();
+        let chunk_duration_ns =
+            (chunk_samples as u128 * sample_rate.denominator as u128 * 1_000_000_000u128)
+                / sample_rate.numerator as u128;
+
+        base_pts += chunk_duration_ns as u64;
+        trace!(
+            "CHUNK WITH SAMPLES {:#?} WITH MXL PTS: {:#?}",
+            samples_per_buffer, mxl_pts
         );
 
-        write_samples_per_channel(
+        let latency_ns = samples_to_ns(audio_state.latency, &sample_rate);
+        let mut pts = mxl_pts + latency_ns;
+        let mxl_now = state.instance.get_time();
+        if pts < mxl_now {
+            let diff_ns = mxl_now - pts;
+            let diff_samples = ns_to_samples(diff_ns, &sample_rate);
+            audio_state.latency += diff_samples;
+            trace!("AUDIO Latency increased by {:#?} samples", diff_samples);
+            let latency_ns = samples_to_ns(audio_state.latency, &sample_rate);
+            pts = mxl_pts + latency_ns + LATENCY_CUSHION;
+        }
+        let mxl_index = state
+            .instance
+            .timestamp_to_index(pts, &sample_rate)
+            .map_err(|_| gst::FlowError::Error)?;
+
+        let data = WriteSampleData {
+            chunk,
             bytes_per_sample,
             num_channels,
-            &mut access,
-            samples_per_channel,
-            src_chunk,
-        )?;
-
-        access.commit().map_err(|_| gst::FlowError::Error)?;
-        trace!(
-            "Committed chunk: {} samples at index {} ({} bytes)",
-            chunk_samples, write_index, chunk_bytes
-        );
-
-        write_index = write_index.wrapping_add(chunk_samples as u64);
+            chunk_samples,
+            index: mxl_index,
+        };
+        audio_state
+            .tx
+            .send(AudioCommand::Write { data })
+            .map_err(|_| gst::FlowError::Error)?;
         src_offset_samples += chunk_samples;
         remaining -= chunk_samples;
     }
-    audio_state.next_write_index = Some(write_index);
     Ok(gst::FlowSuccess::Ok)
-}
-
-fn compute_samples_per_channel(
-    audio_state: &mut mxlsink::state::AudioState,
-    bytes_per_sample: usize,
-    write_index: u64,
-    max_chunk: usize,
-    num_channels: usize,
-    remaining: usize,
-) -> Result<(usize, usize, mxl::SamplesWriteAccess<'_>, usize), gst::FlowError> {
-    let chunk_samples = remaining.min(max_chunk);
-    let chunk_bytes = chunk_samples * num_channels * bytes_per_sample;
-    let access = audio_state
-        .writer
-        .open_samples(write_index, chunk_samples)
-        .map_err(|_| gst::FlowError::Error)?;
-    let samples_per_channel = chunk_samples;
-    Ok((chunk_samples, chunk_bytes, access, samples_per_channel))
 }
 
 fn write_samples_per_channel(
@@ -180,4 +191,87 @@ fn compute_chunk(
 ) -> &[u8] {
     &src[src_offset_samples * num_channels * bytes_per_sample
         ..src_offset_samples * num_channels * bytes_per_sample + chunk_bytes]
+}
+
+pub fn await_audio_buffer(
+    engine: &mut AudioEngine,
+    rx: crossbeam::channel::Receiver<AudioCommand>,
+) -> Result<(), gst::FlowError> {
+    while let Ok(cmd) = rx.recv() {
+        match cmd {
+            AudioCommand::Write { data } => {
+                if let Err(e) = write_buffer(engine, data) {
+                    trace!("Audio engine error: {:?}", e);
+                }
+            }
+        }
+    }
+    trace!("DELETING AUDIO FLOW");
+    engine
+        .writer
+        .take()
+        .ok_or(gst::FlowError::Error)?
+        .destroy()
+        .map_err(|_| gst::FlowError::Error)?;
+    Ok(())
+}
+
+fn write_buffer(engine: &mut AudioEngine, data: WriteSampleData) -> Result<(), gst::FlowError> {
+    let writer = engine.writer.as_mut().ok_or(gst::FlowError::Error)?;
+    let sample_rate = engine.sample_rate;
+    let mxl_index = data.index;
+
+    let pts = engine
+        .instance
+        .index_to_timestamp(mxl_index, &sample_rate)
+        .map_err(|_| gst::FlowError::Error)?;
+    let mxl_now = engine.instance.get_time();
+    if pts > mxl_now {
+        trace!("Audio sleeping: {:#?}", Duration::from_nanos(pts - mxl_now));
+        let (lock, cvar) = &*engine.sleep_flag;
+
+        let shutdown_guard = lock.lock().map_err(|_| gst::FlowError::Error)?;
+
+        let mut shutdown_guard = shutdown_guard;
+
+        while !*shutdown_guard && pts > mxl_now {
+            let remaining = Duration::from_nanos(pts - mxl_now);
+
+            let (guard, timeout_result) = cvar
+                .wait_timeout(shutdown_guard, remaining)
+                .map_err(|_| gst::FlowError::Error)?;
+
+            shutdown_guard = guard;
+
+            if timeout_result.timed_out() {
+                break;
+            }
+        }
+
+        if *shutdown_guard {
+            return Ok(());
+        }
+    }
+
+    let mut access = writer
+        .open_samples(mxl_index, data.chunk_samples)
+        .map_err(|_| gst::FlowError::Error)?;
+    write_samples_per_channel(
+        data.bytes_per_sample,
+        data.num_channels,
+        &mut access,
+        data.chunk_samples,
+        data.chunk.as_slice(),
+    )?;
+    access.commit().map_err(|_| gst::FlowError::Error)?;
+    Ok(())
+}
+
+fn samples_to_ns(samples: u64, rate: &Rational) -> u64 {
+    ((samples as u128 * 1_000_000_000u128 * rate.denominator as u128) / rate.numerator as u128)
+        as u64
+}
+
+fn ns_to_samples(ns: u64, rate: &Rational) -> u64 {
+    ((ns as u128 * rate.numerator as u128) / (rate.denominator as u128 * 1_000_000_000u128)) as u64
 }
