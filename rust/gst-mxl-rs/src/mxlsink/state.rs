@@ -1,15 +1,26 @@
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{collections::HashMap, process, str::FromStr};
+use std::{
+    collections::HashMap,
+    process,
+    str::FromStr,
+    sync::{Arc, Condvar, Mutex},
+    thread,
+};
 
-use crate::mxlsink::imp::CAT;
+use crate::mxlsink::{
+    imp::CAT,
+    render_audio::{WriteGrainData, WriteSampleData, await_audio_buffer},
+    render_video::await_video_buffer,
+};
+use crossbeam::channel::bounded;
 use gst::StructureRef;
 use gst_audio::AudioInfo;
 use gstreamer as gst;
 use gstreamer_audio as gst_audio;
 use mxl::{
-    FlowConfigInfo, GrainWriter, MxlInstance, SamplesWriter,
+    FlowConfigInfo, GrainWriter, MxlInstance, Rational, SamplesWriter,
     flowdef::{
         Component, FlowDef, FlowDefAudio, FlowDefDetails, FlowDefVideo, InterlaceMode, Rate,
     },
@@ -20,6 +31,7 @@ use uuid::Uuid;
 
 pub(crate) const DEFAULT_FLOW_ID: &str = "";
 pub(crate) const DEFAULT_DOMAIN: &str = "";
+const MAX_CHANNEL_SIZE: usize = 50;
 
 #[derive(Debug, Clone)]
 pub(crate) struct Settings {
@@ -41,25 +53,56 @@ pub(crate) struct State {
     pub flow: Option<FlowConfigInfo>,
     pub video: Option<VideoState>,
     pub audio: Option<AudioState>,
+    pub pipeline: gst::Pipeline,
 }
 
 pub(crate) struct VideoState {
-    pub writer: GrainWriter,
+    pub tx: crossbeam::channel::Sender<VideoCommand>,
     pub grain_index: u64,
-    pub grain_count: u32,
+    pub initial_time: Option<InitialTime>,
+    pub latency: u64,
+    pub sleep_flag: Arc<(Mutex<bool>, Condvar)>,
 }
 
+#[derive(Debug)]
 pub(crate) struct AudioState {
-    pub writer: SamplesWriter,
-    pub bit_depth: u8,
-    pub batch_size: usize,
+    pub tx: crossbeam::channel::Sender<AudioCommand>,
     pub flow_def: FlowDefAudio,
-    pub next_write_index: Option<u64>,
+    pub initial_time: Option<InitialTime>,
+    pub latency: u64,
+    pub sleep_flag: Arc<(Mutex<bool>, Condvar)>,
+}
+
+pub enum AudioCommand {
+    Write { data: WriteSampleData },
+}
+
+pub enum VideoCommand {
+    Write { data: WriteGrainData },
 }
 
 #[derive(Default)]
 pub(crate) struct Context {
     pub state: Option<State>,
+}
+
+pub struct AudioEngine {
+    pub writer: Option<SamplesWriter>,
+    pub instance: MxlInstance,
+    pub sample_rate: Rational,
+    pub sleep_flag: Arc<(Mutex<bool>, Condvar)>,
+}
+
+pub struct VideoEngine {
+    pub writer: Option<GrainWriter>,
+    pub instance: MxlInstance,
+    pub grain_rate: Rational,
+    pub sleep_flag: Arc<(Mutex<bool>, Condvar)>,
+}
+
+#[derive(Debug, Clone)]
+pub struct InitialTime {
+    pub mxl_pts_offset: u64,
 }
 
 pub(crate) fn init_state_with_audio(
@@ -99,9 +142,8 @@ pub(crate) fn init_state_with_audio(
         details: FlowDefDetails::Audio(flow_def_details.clone()),
     };
 
-    let instance = &state.instance;
-
-    let (flow_writer, flow, is_created) = instance
+    let (flow_writer, flow, is_created) = state
+        .instance
         .create_flow_writer(
             serde_json::to_string(&flow_def)
                 .map_err(|e| gst::loggable_error!(CAT, "Failed to convert: {}", e))?
@@ -109,27 +151,46 @@ pub(crate) fn init_state_with_audio(
             None,
         )
         .map_err(|e| gst::loggable_error!(CAT, "Failed to create flow writer: {}", e))?;
-
-    let writer = flow_writer
-        .to_samples_writer()
-        .map_err(|e| gst::loggable_error!(CAT, "Failed to create grain writer: {}", e))?;
-
+    let writer = Some(
+        flow_writer
+            .to_samples_writer()
+            .map_err(|e| gst::loggable_error!(CAT, "Failed to create grain writer: {}", e))?,
+    );
+    let (tx, rx) = bounded::<AudioCommand>(MAX_CHANNEL_SIZE);
+    let instance = state.instance.clone();
     if !is_created {
         return Err(gst::loggable_error!(
             CAT,
             "The writer could not be created, the UUID belongs to a flow with another active writer"
         ));
     }
-
-    state.audio = Some(AudioState {
-        writer,
-        bit_depth,
-        batch_size: flow.common().max_commit_batch_size_hint() as usize,
+    let sleep_flag_init = Arc::new((Mutex::new(false), Condvar::new()));
+    let sleep_flag = sleep_flag_init.clone();
+    let audio_state = AudioState {
+        tx,
         flow_def: flow_def_details,
-        next_write_index: None,
-    });
+        initial_time: None,
+        latency: 0,
+        sleep_flag,
+    };
+    state.audio = Some(audio_state);
     state.flow = Some(flow);
 
+    let sample_rate = Rational {
+        numerator: rate as i64,
+        denominator: 1,
+    };
+
+    let sleep_flag = sleep_flag_init.clone();
+    thread::spawn(move || {
+        let mut engine = AudioEngine {
+            writer,
+            instance,
+            sample_rate,
+            sleep_flag,
+        };
+        await_audio_buffer(&mut engine, rx)
+    });
     trace!(
         "Made it to the end of set_caps with format {}, channel_count {}, sample_rate {}, bit_depth {}",
         format, channels, rate, bit_depth
@@ -229,22 +290,36 @@ pub(crate) fn init_state_with_video(
             "The writer could not be created, the UUID belongs to a flow with another active writer"
         ));
     }
-    let writer = flow_writer
-        .to_grain_writer()
-        .map_err(|e| gst::loggable_error!(CAT, "Failed to create grain writer: {}", e))?;
-    let grain_count = flow
-        .discrete()
-        .map_err(|e| gst::loggable_error!(CAT, "Failed to get grain count: {}", e))?
-        .grainCount;
-    let rate = flow
+    let writer = Some(
+        flow_writer
+            .to_grain_writer()
+            .map_err(|e| gst::loggable_error!(CAT, "Failed to create grain writer: {}", e))?,
+    );
+    let grain_rate = flow
         .common()
         .grain_rate()
         .map_err(|e| gst::loggable_error!(CAT, "Failed to get grain rate: {}", e))?;
-    let index = instance.get_current_index(&rate);
+    let index = instance.get_current_index(&grain_rate);
+    let instance = instance.clone();
+    let (tx, rx) = bounded::<VideoCommand>(MAX_CHANNEL_SIZE);
+    let sleep_flag_init = Arc::new((Mutex::new(false), Condvar::new()));
+    let sleep_flag = sleep_flag_init.clone();
+    thread::spawn(move || {
+        let mut engine = VideoEngine {
+            writer,
+            instance,
+            grain_rate,
+            sleep_flag,
+        };
+        await_video_buffer(&mut engine, rx)
+    });
+    let sleep_flag = sleep_flag_init.clone();
     state.video = Some(VideoState {
-        writer,
         grain_index: index,
-        grain_count,
+        initial_time: None,
+        latency: 0,
+        tx,
+        sleep_flag,
     });
     state.flow = Some(flow);
 

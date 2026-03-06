@@ -252,11 +252,20 @@ impl BaseSinkImpl for MxlSink {
             )
         })?;
         let instance = init_mxl_instance(&settings)?;
+        let pipeline = self
+            .obj()
+            .parent()
+            .and_then(|p| p.downcast::<gst::Pipeline>().ok())
+            .ok_or(gst::error_msg!(
+                gst::CoreError::Failed,
+                ["Failed to get pipeline"]
+            ))?;
         context.state = Some(State {
             instance,
             flow: None,
             video: None,
             audio: None,
+            pipeline,
         });
 
         Ok(())
@@ -275,30 +284,26 @@ impl BaseSinkImpl for MxlSink {
             ["Failed to get state"]
         ))?;
 
-        if state.audio.is_some() {
-            state
-                .audio
-                .take()
-                .ok_or(gst::error_msg!(
-                    gst::CoreError::Failed,
-                    ["Failed to get audio state"]
-                ))?
-                .writer
-                .destroy()
-                .map_err(|_| gst::error_msg!(gst::CoreError::Failed, ["Failed to destroy flow"]))?
-        };
+        if let Some(audio) = state.audio.take() {
+            let (lock, cvar) = &*audio.sleep_flag;
 
-        if state.video.is_some() {
-            state
-                .video
-                .take()
-                .ok_or(gst::error_msg!(
-                    gst::CoreError::Failed,
-                    ["Failed to get video state"]
-                ))?
-                .writer
-                .destroy()
-                .map_err(|_| gst::error_msg!(gst::CoreError::Failed, ["Failed to destroy flow"]))?
+            let mut flag = lock.lock().map_err(|_| {
+                gst::error_msg!(gst::CoreError::Failed, ["Failed to get audio sleep lock"])
+            })?;
+            *flag = true;
+            cvar.notify_all();
+            drop(audio.tx);
+        }
+
+        if let Some(video) = state.video.take() {
+            let (lock, cvar) = &*video.sleep_flag;
+
+            let mut flag = lock.lock().map_err(|_| {
+                gst::error_msg!(gst::CoreError::Failed, ["Failed to get video sleep lock"])
+            })?;
+            *flag = true;
+            cvar.notify_all();
+            drop(video.tx);
         }
 
         gst::info!(CAT, imp = self, "Stopped");
