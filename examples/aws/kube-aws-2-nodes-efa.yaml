@@ -1,0 +1,109 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: writer-media-function-efa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: writer-media-function-efa
+  template:
+    metadata:
+      labels:
+        app: writer-media-function-efa
+    spec:
+      nodeSelector:
+        mxl-role: writer
+      containers:
+        - name: writer-container
+          image: 720180693591.dkr.ecr.eu-central-1.amazonaws.com/mxl-writer:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: FI_PROVIDER
+              value: efa
+            - name: FI_EFA_USE_DEVICE_RDMA
+              value: "1"
+          resources:
+            requests:
+              memory: "2Gi"
+              vpc.amazonaws.com/efa: "1"
+            limits:
+              memory: "2Gi"
+              vpc.amazonaws.com/efa: "1"
+          volumeMounts:
+            - name: domain-volume
+              mountPath: /domain
+      volumes:
+        - name: domain-volume
+          hostPath:
+            path: /tmp/domain-data
+            type: DirectoryOrCreate
+      restartPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reader-media-function-efa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reader-media-function-efa
+  template:
+    metadata:
+      labels:
+        app: reader-media-function-efa
+    spec:
+      nodeSelector:
+        mxl-role: reader
+      containers:
+        - name: reader-container
+          image: 720180693591.dkr.ecr.eu-central-1.amazonaws.com/mxl-reader:latest
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              /app/mxl-gst-sink -d /domain -v 5fbec3b1-1b0f-417d-9059-8b94a47197ed &
+              while true; do /app/mxl-info -d /domain -l || true; sleep 2; done
+          env:
+            - name: FI_PROVIDER
+              value: efa
+            - name: FI_EFA_USE_DEVICE_RDMA
+              value: "1"
+          resources:
+            requests:
+              memory: "2Gi"
+              vpc.amazonaws.com/efa: "1"
+            limits:
+              memory: "2Gi"
+              vpc.amazonaws.com/efa: "1"
+          tty: true
+          stdin: true
+          volumeMounts:
+            - name: domain-volume
+              mountPath: /domain
+              readOnly: true
+      volumes:
+        - name: domain-volume
+          hostPath:
+            path: /tmp/domain-data
+            type: DirectoryOrCreate
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reader-media-service-efa
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  selector:
+    app: reader-media-function-efa
+  ports:
+    - protocol: UDP
+      port: 5000
+      targetPort: 5000
