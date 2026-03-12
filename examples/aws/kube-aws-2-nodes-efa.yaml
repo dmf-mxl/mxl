@@ -83,7 +83,6 @@ spec:
           volumeMounts:
             - name: domain-volume
               mountPath: /domain
-              readOnly: true
       volumes:
         - name: domain-volume
           hostPath:
