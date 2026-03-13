@@ -1,0 +1,92 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+# =============================================================================
+# Multi-stage Dockerfile for the MXL reader.
+#
+# Builds MXL from source, then creates a minimal runtime image.
+# No pre-built Linux artifacts required — works directly on macOS via Podman.
+#
+# Build (from project root):
+#   podman build -t mxl-reader -f examples/Dockerfile.reader.multistage .
+#
+# Run:
+#   podman run --rm -v /tmp/mxl:/domain mxl-reader
+# =============================================================================
+
+# ---- Build stage ----
+FROM debian:trixie-slim AS build
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG CLANG_VERSION=19
+
+WORKDIR /src
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        git \
+        zip \
+        unzip \
+        tar \
+        pkg-config \
+        cmake \
+        ninja-build \
+        clang-${CLANG_VERSION} \
+        lld-${CLANG_VERSION} \
+        bison \
+        flex \
+        libgstreamer1.0-dev \
+        libgstreamer-plugins-base1.0-dev \
+        gstreamer1.0-plugins-good \
+        libssl-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && update-alternatives --install /usr/bin/clang   clang   /usr/bin/clang-${CLANG_VERSION}   100 \
+    && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${CLANG_VERSION} 100 \
+    && update-alternatives --install /usr/bin/lld     lld     /usr/bin/lld-${CLANG_VERSION}     100 \
+    && update-alternatives --install /usr/bin/ld.lld  ld.lld  /usr/bin/ld.lld-${CLANG_VERSION}  100
+
+# Clone vcpkg and fetch the baseline commit referenced in vcpkg.json
+RUN git clone https://github.com/microsoft/vcpkg.git /opt/vcpkg \
+    && /opt/vcpkg/bootstrap-vcpkg.sh --disableMetrics
+
+ENV VCPKG_ROOT=/opt/vcpkg
+ENV HOME=/root
+
+# Symlink so the CMakePresets.json toolchainFile (~/vcpkg/...) resolves
+RUN ln -s /opt/vcpkg ~/vcpkg
+
+COPY . /src
+
+RUN cmake --preset Linux-Clang-Release -DBUILD_DOCS=OFF \
+    && cmake --build build/Linux-Clang-Release
+
+
+# ---- Runtime stage ----
+FROM debian:trixie-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get -y install \
+        procps \
+        patchelf \
+        libglib2.0-0 \
+        libgstreamer1.0-0 \
+        libgstreamer-plugins-base1.0-0 \
+        gstreamer1.0-plugins-good \
+        gstreamer1.0-plugins-bad \
+        gstreamer1.0-plugins-ugly \
+        gstreamer1.0-tools \
+        gstreamer1.0-libav \
+        libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /src/build/Linux-Clang-Release/lib/*.so*          /app/
+COPY --from=build /src/build/Linux-Clang-Release/lib/internal/*.so* /app/
+COPY --from=build /src/build/Linux-Clang-Release/tools/mxl-info/mxl-info     /app/
+COPY --from=build /src/build/Linux-Clang-Release/tools/mxl-gst/mxl-gst-sink  /app/
+
+RUN patchelf --set-rpath /app mxl-info \
+    && patchelf --set-rpath /app mxl-gst-sink
+
+CMD ["sh", "-c", "while true; do /app/mxl-info -d /domain -l || true; sleep 2; done"]

@@ -1,0 +1,123 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+# =============================================================================
+# Docker Compose for MXL Demo (multi-stage builds)
+#
+# Builds MXL from source — no pre-built Linux artifacts required.
+# Uses /dev/shm (shared memory) for real-time media exchange.
+#
+# Build:
+#   docker compose -f examples/docker-compose.multistage.yaml --profile '*' build
+#
+# Run (profiles):
+#   docker compose -f examples/docker-compose.multistage.yaml --profile test-source up
+#   docker compose -f examples/docker-compose.multistage.yaml --profile looping-file-source up
+#   docker compose -f examples/docker-compose.multistage.yaml --profile '*' up
+#
+# View video stream:
+#   1. Get flow ID:      docker exec reader-media-function /app/mxl-info -d /domain -l
+#   2. Start SRT stream: docker exec reader-media-function /app/mxl-gst-sink -d /domain -v <flow-uuid>
+#   3. Open VLC → Network → srt://127.0.0.1:5000?mode=caller
+#
+# Stop:
+#   docker compose -f examples/docker-compose.multistage.yaml down
+# =============================================================================
+
+services:
+  init:
+    image: alpine
+    command: ["sh", "-c", "mkdir -p /dev/shm/mxl"]
+    volumes:
+      - type: bind
+        source: /dev/shm
+        target: /dev/shm
+    restart: "no"
+
+  writer-media-function:
+    container_name: writer-media-function
+    image: mxl-writer
+    profiles: [test-source]
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    build:
+      context: ..
+      dockerfile: examples/Dockerfile.writer.multistage
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /dev/shm/mxl
+        target: /domain
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+
+  writer-looper-video-media-function:
+    container_name: writer-looper-video-media-function
+    image: mxl-writer-video-looper
+    profiles: [looping-file-source]
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    build:
+      context: ..
+      dockerfile: examples/Dockerfile.writer.video.loop.multistage
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /dev/shm/mxl
+        target: /domain
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1G
+
+  writer-looper-audio-media-function:
+    container_name: writer-looper-audio-media-function
+    image: mxl-writer-audio-looper
+    profiles: [looping-file-source]
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    build:
+      context: ..
+      dockerfile: examples/Dockerfile.writer.audio.loop.multistage
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /dev/shm/mxl
+        target: /domain
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+
+  reader-media-function:
+    container_name: reader-media-function
+    image: mxl-reader
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    build:
+      context: ..
+      dockerfile: examples/Dockerfile.reader.multistage
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /dev/shm/mxl
+        target: /domain
+    stdin_open: true
+    tty: true
+    # SRT output port for viewing the video stream via VLC
+    ports:
+      - "5000:5000/udp"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1G

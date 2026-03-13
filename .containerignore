@@ -1,0 +1,8 @@
+# Exclude build artifacts, caches, and IDE files from container builds
+build/
+install/
+.cache/
+.git/
+.vscode/
+.idea/
+CMakeUserPresets.json
