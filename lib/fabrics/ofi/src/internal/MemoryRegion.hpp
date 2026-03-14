@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 //
 // SPDX-License-Identifier: Apache-2.0
 
@@ -57,7 +57,7 @@ namespace mxl::lib::fabrics::ofi
 
         /** \brief Get the remote key (rkey) associated with the memory region.
          *
-         * Thisthe mechanism for protecting a registered region. One should be careful and should only share this secret with initiators that are
+         * This the mechanism for protecting a registered region. One should be careful and should only share this secret with initiators that are
          * allowed to access this memory region.
          */
         [[nodiscard]]
