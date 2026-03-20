@@ -151,7 +151,7 @@ namespace
             }
         }
 
-        void launchPipeline(std::string const& pipelineDescription)
+        void launchPipeline(std::string const& pipelineDescription, std::string const& appSourceName = "appsource")
         {
             GError* error = nullptr;
             _pipeline = ::gst_parse_launch(pipelineDescription.c_str(), &error);
@@ -166,7 +166,7 @@ namespace
                 throw std::runtime_error{"Gstreamer pipeline could not be created."};
             }
 
-            _appSource = ::gst_bin_get_by_name(GST_BIN(_pipeline), "appsource");
+            _appSource = ::gst_bin_get_by_name(GST_BIN(_pipeline), appSourceName.c_str());
             if (_appSource == nullptr)
             {
                 throw std::runtime_error{"Well-known application source element could not be found in the gstreamer pipeline."};
@@ -864,7 +864,7 @@ namespace
             // Build the compositor layout pipeline
             auto pipelineDesc = buildMultiviewerPipeline();
             MXL_INFO("Generating multiviewer gstreamer pipeline -> {}", pipelineDesc);
-            launchPipeline(pipelineDesc);
+            launchPipeline(pipelineDesc, "appsource0");
 
             // Get compositor element and configure sink pad positions
             auto compositor = ::gst_bin_get_by_name(GST_BIN(::gst_element_get_parent(getAppSource())), "compositor");
