@@ -291,6 +291,7 @@ namespace
 
                 auto const caps = ::gst_audio_info_to_caps(_audioInfo);
                 ::g_object_set(G_OBJECT(getAppSource()), "caps", caps, nullptr);
+                ::gst_caps_unref(caps);
             }
         }
 
@@ -897,12 +898,49 @@ namespace
             MXL_INFO("Generating multiviewer gstreamer pipeline -> {}", pipelineDesc);
             launchPipeline(pipelineDesc, "appsource0");
 
+            // Configure all appsrc elements to use time format
+            for (std::size_t i = 0; i < _configs.size(); ++i)
+            {
+                auto const sourceName = fmt::format("appsource{}", i);
+                auto* appSrc = ::gst_bin_get_by_name(GST_BIN(_pipeline), sourceName.c_str());
+                if (appSrc)
+                {
+                    ::g_object_set(G_OBJECT(appSrc), "format", GST_FORMAT_TIME, nullptr);
+                    ::gst_object_unref(appSrc);
+                    MXL_INFO("Configured {} with GST_FORMAT_TIME", sourceName);
+                }
+                else
+                {
+                    MXL_WARN("Could not find {} in pipeline", sourceName);
+                }
+            }
+
             // Get compositor element and configure sink pad positions
-            auto compositor = ::gst_bin_get_by_name(GST_BIN(::gst_element_get_parent(getAppSource())), "compositor");
+            auto compositor = ::gst_bin_get_by_name(GST_BIN(_pipeline), "c");
             if (compositor)
             {
+                MXL_INFO("Retrieved compositor element: {}", GST_ELEMENT_NAME(compositor));
+                MXL_INFO("Compositor type: {}", G_OBJECT_TYPE_NAME(compositor));
+
+                // Get compositor properties
+                gint background;
+                ::g_object_get(compositor, "background", &background, nullptr);
+                MXL_INFO("Compositor background mode: {}", background);
+
+                // Get number of sink pads
+                GValue val = G_VALUE_INIT;
+                ::g_value_init(&val, G_TYPE_UINT);
+                ::g_object_get_property(G_OBJECT(compositor), "n-pads", &val);
+                auto numPads = ::g_value_get_uint(&val);
+                ::g_value_unset(&val);
+                MXL_INFO("Compositor has {} sink pads", numPads);
+
                 configureCompositorLayout(compositor);
                 ::gst_object_unref(compositor);
+            }
+            else
+            {
+                MXL_WARN("Could not retrieve compositor element from pipeline");
             }
         }
 
@@ -939,6 +977,7 @@ namespace
 
             // Determine output resolution based on number of inputs
             auto [outputWidth, outputHeight] = getOutputResolution(_configs.size());
+            MXL_INFO("Compositor output resolution: {}x{}", outputWidth, outputHeight);
 
             pipelineDesc << fmt::format(" compositor name=c background=black ! "
                                         "video/x-raw,width={},height={} ! "
@@ -966,14 +1005,41 @@ namespace
         {
             auto const numFlows = _configs.size();
 
+            MXL_INFO("Configuring compositor layout for {} video flows", numFlows);
+
+            // Iterate through all pads to see what's available
+            GstIterator* padIter = ::gst_element_iterate_sink_pads(compositor);
+            GValue item = G_VALUE_INIT;
+            int padCount = 0;
+            while (::gst_iterator_next(padIter, &item) == GST_ITERATOR_OK)
+            {
+                GstPad* pad = static_cast<GstPad*>(::g_value_get_object(&item));
+                MXL_INFO("Found compositor pad: {}", GST_PAD_NAME(pad));
+                ::g_value_reset(&item);
+                padCount++;
+            }
+            ::g_value_unset(&item);
+            ::gst_iterator_free(padIter);
+            MXL_INFO("Total sink pads found: {}", padCount);
+
             for (std::size_t i = 0; i < numFlows; ++i)
             {
+                // Try multiple naming schemes
                 auto sinkPadName = fmt::format("sink_{}", i);
                 auto sinkPad = ::gst_element_get_static_pad(compositor, sinkPadName.c_str());
+
+                if (!sinkPad)
+                {
+                    // Try alternative naming
+                    sinkPadName = fmt::format("sink%d", i);
+                    sinkPad = ::gst_element_get_static_pad(compositor, sinkPadName.c_str());
+                }
 
                 if (sinkPad)
                 {
                     auto [xpos, ypos, width, height] = getLayoutPosition(numFlows, i);
+
+                    MXL_INFO("Setting compositor sink pad {}: xpos={} ypos={} width={} height={}", GST_PAD_NAME(sinkPad), xpos, ypos, width, height);
 
                     g_object_set(sinkPad,
                         "xpos",
@@ -988,9 +1054,21 @@ namespace
                         1.0,
                         NULL);
 
-                    MXL_INFO("Configured compositor sink pad {}: xpos={} ypos={} width={} height={}", i, xpos, ypos, width, height);
+                    // Verify the properties were set
+                    gint verifyX, verifyY, verifyW, verifyH;
+                    ::g_object_get(sinkPad, "xpos", &verifyX, "ypos", &verifyY, "width", &verifyW, "height", &verifyH, nullptr);
+                    MXL_INFO("Verified compositor sink pad {}: xpos={} ypos={} width={} height={}",
+                        GST_PAD_NAME(sinkPad),
+                        verifyX,
+                        verifyY,
+                        verifyW,
+                        verifyH);
 
                     ::gst_object_unref(sinkPad);
+                }
+                else
+                {
+                    MXL_WARN("Could not find sink pad {} in compositor", sinkPadName);
                 }
             }
         }
@@ -1053,7 +1131,9 @@ namespace
 
         // Get the specific appsource for this reader by index
         auto const sourceName = fmt::format("appsource{}", sourceIndex);
-        auto* appSource = ::gst_bin_get_by_name(GST_BIN(::gst_element_get_parent(gstPipeline.getAppSource())), sourceName.c_str());
+        auto* parent = ::gst_element_get_parent(gstPipeline.getAppSource());
+        auto* appSource = ::gst_bin_get_by_name(GST_BIN(parent), sourceName.c_str());
+        ::gst_object_unref(parent);
 
         if (appSource == nullptr)
         {
@@ -1346,14 +1426,20 @@ namespace
                             auto readers = std::vector<MxlReader>{};
 
                             // Create readers and configs for all video flows
-                            for (auto const& flowID : videoFlowIDs)
+                            for (std::size_t i = 0; i < videoFlowIDs.size(); ++i)
                             {
+                                auto const& flowID = videoFlowIDs[i];
+
+                                MXL_INFO("Creating reader {} for flow ID: {}", i, flowID);
                                 readers.emplace_back(domain, flowID);
 
                                 auto const flowDescriptor = readFlowDescriptor(domain, flowID);
                                 auto const flowNmos = json_utils::parseBuffer(flowDescriptor);
 
-                                if (json_utils::getField<std::string>(flowNmos, "interlace_mode") != "progressive")
+                                auto const interlaceMode = json_utils::getField<std::string>(flowNmos, "interlace_mode");
+                                MXL_INFO("  Reader[{}] interlace_mode: {}", i, interlaceMode);
+
+                                if (interlaceMode != "progressive")
                                 {
                                     throw std::invalid_argument{"This application does not support interlaced flows."};
                                 }
@@ -1361,6 +1447,13 @@ namespace
                                 auto const grainRate = json_utils::getRational(flowNmos, "grain_rate");
                                 auto const frameWidth = static_cast<std::uint32_t>(json_utils::getField<double>(flowNmos, "frame_width"));
                                 auto const frameHeight = static_cast<std::uint32_t>(json_utils::getField<double>(flowNmos, "frame_height"));
+
+                                MXL_INFO("  Reader[{}] resolution: {}x{} @ {}/{} fps",
+                                    i,
+                                    frameWidth,
+                                    frameHeight,
+                                    grainRate.numerator,
+                                    grainRate.denominator);
 
                                 configs.emplace_back(VideoPipelineConfig{
                                     .frameRate = grainRate,
@@ -1370,15 +1463,23 @@ namespace
                                 });
                             }
 
-                            auto pipeline = MultiviewerPipeline{configs};
+                            // Print all configs
+                            MXL_INFO("Creating MultiviewerPipeline with {} configs:", configs.size());
+                            for (std::size_t i = 0; i < configs.size(); ++i)
+                            {
+                                MXL_INFO("  Config[{}]: {}", i, configs[i].display());
+                            }
 
+                            auto pipeline = MultiviewerPipeline{configs};
                             // Run all readers in parallel for multiviewer
                             auto readerThreads = std::vector<std::thread>{};
+                            MXL_INFO("Multiviewer pipeline started with {} video flows", videoFlowIDs.size());
+                            MXL_INFO("readers.size(): {}", readers.size());
                             for (std::size_t i = 0; i < readers.size(); ++i)
                             {
                                 readerThreads.emplace_back([&readers, &pipeline, i, readDelay]() { readers[i].run(pipeline, i, readDelay); });
                             }
-
+                            MXL_INFO("readerThreads.size(): {}", readerThreads.size());
                             for (auto& t : readerThreads)
                             {
                                 t.join();
