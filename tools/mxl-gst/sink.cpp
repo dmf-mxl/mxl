@@ -379,11 +379,42 @@ namespace
 
         ~MxlReader()
         {
-            if (_reader != nullptr)
+            close();
+        }
+
+        // A reader can't be duplicated or copy-assigned since that would mess with the internal state of the flow reader.
+        MxlReader(MxlReader const&) = delete;
+        void operator=(MxlReader const&) = delete;
+
+        MxlReader(MxlReader&& other) noexcept
+            : _instance{other._instance}
+            , _reader{other._reader}
+            , _configInfo{other._configInfo}
+        {
+            other._instance = nullptr;
+            other._reader = nullptr;
+        }
+
+        MxlReader& operator=(MxlReader&& other)
+        {
+            this->close();
+
+            _instance = other._instance;
+            other._instance = nullptr;
+
+            _reader = other._reader;
+            other._reader = nullptr;
+
+            return *this;
+        }
+
+        void close()
+        {
+            if (_reader)
             {
                 ::mxlReleaseFlowReader(_instance, _reader);
             }
-            if (_instance != nullptr)
+            if (_instance)
             {
                 ::mxlDestroyInstance(_instance);
             }
