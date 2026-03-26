@@ -259,8 +259,11 @@ namespace mxl::lib
     {
         // Read the mandatory grain_rate field
         auto const sampleRate = parser.getGrainRate();
-        // Compute the grain count based on our configured history duration
-        auto const bufferLength = _historyDuration * sampleRate.numerator / (1'000'000'000ULL * sampleRate.denominator);
+        // Compute the buffer length based on our configured history duration.
+        // The length is divided by 500M instead of 1B to effectively make it twice the
+        // history duration, which is necessary, because only half of the buffer is
+        // accessible for reading at any one point in time.
+        auto const bufferLength = _historyDuration * sampleRate.numerator / (500'000'000ULL * sampleRate.denominator);
 
         auto const sampleWordSize = parser.getPayloadSize();
         // FIXME: The page size is just an educated guess to round to for good measure
