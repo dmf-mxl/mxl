@@ -2,7 +2,7 @@ name: Feature
 description: Feature derived from an MXL Requirement
 type: Feature
 title: "[Feature] <short description>"
-labels: [] # Not required; we gate on Issue Type now.
+labels: []
 
 body:
   - type: textarea
