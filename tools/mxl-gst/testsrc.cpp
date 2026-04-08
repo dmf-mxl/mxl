@@ -3,6 +3,7 @@
 
 #include <csignal>
 #include <cstdint>
+#include <cstring>
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
@@ -686,7 +687,7 @@ namespace
                                     if (fragment.size != 0)
                                     {
                                         auto const dst = static_cast<std::uint8_t*>(fragment.pointer) + (chan * payloadBuffersSlices.stride);
-                                        ::memset(dst, 0, fragment.size); // fill with silence
+                                        std::memset(dst, 0, fragment.size); // fill with silence
                                     }
                                 }
                             }

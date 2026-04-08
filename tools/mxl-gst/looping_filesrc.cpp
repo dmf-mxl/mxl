@@ -4,6 +4,7 @@
 #include <climits>
 #include <csignal>
 #include <cstdint>
+#include <cstring>
 #include <atomic>
 #include <filesystem>
 #include <memory>
@@ -843,7 +844,7 @@ private:
                                     if (fragment.size != 0)
                                     {
                                         auto dst = reinterpret_cast<std::uint8_t*>(fragment.pointer) + (chan * payloadBuffersSlices.stride);
-                                        ::memset(dst, 0, fragment.size); // fill with silence
+                                        std::memset(dst, 0, fragment.size); // fill with silence
                                     }
                                 }
                             }
