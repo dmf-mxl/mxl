@@ -247,6 +247,62 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow (With Alp
     mxlDestroyInstance(instanceWriter);
 }
 
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : 4:2:2 10 bits", "[mxl flows]")
+{
+    auto const opts = "{}";
+    auto flowDef = mxl::tests::readFile("data/422_10bits_flow.json");
+
+    auto instance = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instance != nullptr);
+
+    mxlFlowWriter writer;
+    mxlFlowConfigInfo configInfo;
+    bool flowWasCreated = false;
+    REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), "", &writer, &configInfo, &flowWasCreated) == MXL_STATUS_OK);
+    REQUIRE(flowWasCreated);
+
+    REQUIRE(configInfo.discrete.sliceSizes[0] == 3840);
+    REQUIRE(configInfo.discrete.sliceSizes[1] == 1920);
+    REQUIRE(configInfo.discrete.sliceSizes[2] == 1920);
+    REQUIRE(configInfo.discrete.sliceSizes[3] == 0);
+
+    /// Open the grain.
+    mxlGrainInfo gInfo;
+
+    REQUIRE(mxlFlowWriterGetGrainInfo(writer, 0, &gInfo) == MXL_STATUS_OK);
+
+    REQUIRE(gInfo.grainSize == 8294400);
+    REQUIRE(gInfo.totalSlices == 3240);
+}
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : 4:2:0 8 bits", "[mxl flows]")
+{
+    auto const opts = "{}";
+    auto flowDef = mxl::tests::readFile("data/420_8bits_flow.json");
+
+    auto instance = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instance != nullptr);
+
+    mxlFlowWriter writer;
+    mxlFlowConfigInfo configInfo;
+    bool flowWasCreated = false;
+    REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), "", &writer, &configInfo, &flowWasCreated) == MXL_STATUS_OK);
+    REQUIRE(flowWasCreated);
+
+    REQUIRE(configInfo.discrete.sliceSizes[0] == 1920);
+    REQUIRE(configInfo.discrete.sliceSizes[1] == 960);
+    REQUIRE(configInfo.discrete.sliceSizes[2] == 960);
+    REQUIRE(configInfo.discrete.sliceSizes[3] == 0);
+
+    /// Open the grain.
+    mxlGrainInfo gInfo;
+
+    REQUIRE(mxlFlowWriterGetGrainInfo(writer, 0, &gInfo) == MXL_STATUS_OK);
+
+    REQUIRE(gInfo.grainSize == 3110400);
+    REQUIRE(gInfo.totalSlices == 2160);
+}
+
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : Invalid flow (discrete)", "[mxl flows]")
 {
     auto const opts = "{}";

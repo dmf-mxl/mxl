@@ -104,6 +104,14 @@ namespace mxl::lib
         bool _interlaced;
         /** The flow grain rate, if defined, 0/1 if undefined. */
         mxlRational _grainRate;
+
+        struct Component {
+            size_t height;
+            size_t pitch;
+        };
+
+        /** Data planes. */
+        std::array<Component, MXL_MAX_PLANES_PER_GRAIN> _components;
         /** The parsed flow object. */
         picojson::object _root;
     };

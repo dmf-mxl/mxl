@@ -306,6 +306,23 @@ namespace mxl::lib
                 _grainRate.numerator *= 2;
                 _interlaced = true;
             }
+
+            auto const components = fetchAs<picojson::array>(_root, "components");
+            if (components.size() > MXL_MAX_PLANES_PER_GRAIN)
+            {
+                throw std::invalid_argument{"Unsupported number of planes!"};
+            }
+            _components = {};
+            for (size_t i = 0; i < components.size(); i++)
+            {
+                auto const& component = components[i].get<picojson::object>();
+                auto const planeWidth = static_cast<std::size_t>(fetchAs<double>(component, "width"));
+                auto const planeHeight = static_cast<std::size_t>(fetchAs<double>(component, "height"));
+                auto const bitDepth = static_cast<std::uint8_t>(fetchAs<double>(component, "bit_depth"));
+                uint8_t const bytesPerPixel = (bitDepth + 7) / 8;
+                size_t const pitch = planeWidth * bytesPerPixel;
+                _components[i] = {planeHeight, pitch};
+            }
         }
     }
 
@@ -370,6 +387,18 @@ namespace mxl::lib
                     auto msg = std::string{"Invalid video height for interlaced v210a. Must be even."};
                     throw std::invalid_argument{std::move(msg)};
                 }
+            }
+            else if (mediaType == "video/raw")
+            {
+                if (_interlaced)
+                {
+                    auto msg = std::string{"Interlaced planar video is not supported!"};
+                    throw std::invalid_argument{std::move(msg)};
+                }
+                payloadSize = std::accumulate(_components.begin(),
+                    _components.end(),
+                    0,
+                    [](size_t sum, auto const& component) { return sum + component.pitch * component.height; });
             }
             else
             {
@@ -444,6 +473,13 @@ namespace mxl::lib
                     sliceLengths[0] = v210fillSize;
                     sliceLengths[1] = get10BitAlphaLineLength(width);
                 }
+                else if (mediaType == "video/raw")
+                {
+                    for (size_t i = 0; i < _components.size(); i++)
+                    {
+                        sliceLengths[i] = _components[i].pitch;
+                    }
+                }
                 else
                 {
                     auto msg = std::string{"Unsupported video media_type: "} + mediaType;
@@ -473,20 +509,35 @@ namespace mxl::lib
 
             case MXL_DATA_FORMAT_VIDEO:
             {
-                if (auto const mediaType = fetchAs<std::string>(_root, "media_type"); mediaType != "video/v210" && mediaType != "video/v210a")
+                auto const mediaType = fetchAs<std::string>(_root, "media_type");
+
+                if (mediaType == "video/v210" || mediaType == "video/v210a")
                 {
-                    auto msg = std::string{"Unsupported video media_type: "} + mediaType;
-                    throw std::invalid_argument{std::move(msg)};
+                    auto h = static_cast<std::size_t>(fetchAs<double>(_root, "frame_height"));
+                    if (_interlaced)
+                    {
+                        return h / 2;
+                    }
+                    else
+                    {
+                        return h;
+                    }
                 }
 
-                // For v210, the number of slices is always the number of video lines
-                auto h = static_cast<std::size_t>(fetchAs<double>(_root, "frame_height"));
-                if (_interlaced)
+                if (mediaType == "video/raw")
                 {
-                    return h / 2;
+                    if (_interlaced)
+                    {
+                        auto msg = std::string{"Interlaced planar video is not supported!"};
+                        throw std::invalid_argument{std::move(msg)};
+                    }
+                    size_t slices = std::accumulate(
+                        _components.begin(), _components.end(), 0, [](size_t sum, auto const& component) { return sum + component.height; });
+                    return slices;
                 }
 
-                return h;
+                auto msg = std::string{"Unsupported video media_type: "} + mediaType;
+                throw std::invalid_argument{std::move(msg)};
             }
             default:
             {
