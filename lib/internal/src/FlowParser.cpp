@@ -382,6 +382,23 @@ namespace mxl::lib
             {
                 payloadSize = MXL_DATA_FORMAT_GRAIN_SIZE;
             }
+            else if (mediaType == "application/x-encoded")
+            {
+                // Encoded media (H.264, AAC, etc.) with variable-length payloads.
+                // Grain size is specified in the flow definition via mxl:grain_payload_size.
+                // Each grain is allocated to hold the largest expected frame (e.g., keyframe).
+                // Actual payload per-write is indicated via validSlices.
+                auto const it = _root.find("mxl:grain_payload_size");
+                if (it == _root.end() || !it->second.is<double>())
+                {
+                    throw std::invalid_argument{"application/x-encoded requires 'mxl:grain_payload_size' field."};
+                }
+                payloadSize = static_cast<std::size_t>(it->second.get<double>());
+                if (payloadSize == 0 || payloadSize > 16 * 1024 * 1024)
+                {
+                    throw std::invalid_argument{fmt::format("Invalid mxl:grain_payload_size: {}", payloadSize)};
+                }
+            }
             else
             {
                 auto msg = std::string{"Unsupported data media_type: "} + mediaType;
@@ -418,8 +435,18 @@ namespace mxl::lib
         {
             case MXL_DATA_FORMAT_DATA:
             {
-                // For "data" flows, the slice length is 1 byte
-                sliceLengths[0] = 1;
+                auto const mediaType = fetchAs<std::string>(_root, "media_type");
+                if (mediaType == "application/x-encoded")
+                {
+                    // Encoded media: 256-byte slices so totalSlices (uint16_t) can
+                    // address up to 256 * 65535 = ~16MB per grain.
+                    sliceLengths[0] = 256;
+                }
+                else
+                {
+                    // SMPTE 291 ANC data: 1-byte slices (original behavior)
+                    sliceLengths[0] = 1;
+                }
                 return sliceLengths;
             }
 
@@ -462,8 +489,15 @@ namespace mxl::lib
         {
             case MXL_DATA_FORMAT_DATA:
             {
-                // Since the slice length for data flows is 1 byte, the number of slices must be the
-                // grain size.
+                auto const mediaType = fetchAs<std::string>(_root, "media_type");
+                if (mediaType == "application/x-encoded")
+                {
+                    // Encoded media: total slices = grain_payload_size / 256
+                    auto const payloadSize = getPayloadSize();
+                    constexpr auto kSliceSize = std::size_t{256};
+                    return (payloadSize + kSliceSize - 1) / kSliceSize;
+                }
+                // SMPTE 291: 1-byte slices, grain_size slices total
                 return MXL_DATA_FORMAT_GRAIN_SIZE;
             }
 
