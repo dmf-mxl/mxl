@@ -377,15 +377,33 @@ namespace mxl::lib
         }
         else if (_format == MXL_DATA_FORMAT_DATA)
         {
-            auto const mediaType = fetchAs<std::string>(_root, "media_type");
-            if (mediaType == "video/smpte291")
+            // Variable-length grain opt-in: a data flow can request a custom grain
+            // payload size via mxl:grain_payload_size, independent of media_type.
+            // The 256-byte slice size used downstream lets totalSlices (uint16_t)
+            // address up to ~16 MB per grain; actual payload per write is signalled
+            // via validSlices. When the field is absent we fall back to the original
+            // fixed-size data path (4096-byte grain / 1-byte slice for video/smpte291).
+            if (auto const it = _root.find("mxl:grain_payload_size"); it != _root.end() && it->second.is<double>())
             {
-                payloadSize = MXL_DATA_FORMAT_GRAIN_SIZE;
+                auto const requested = it->second.get<double>();
+                if (!(requested > 0.0) || requested > static_cast<double>(16 * 1024 * 1024))
+                {
+                    throw std::invalid_argument{fmt::format("Invalid mxl:grain_payload_size: {}", requested)};
+                }
+                payloadSize = static_cast<std::size_t>(requested);
             }
             else
             {
-                auto msg = std::string{"Unsupported data media_type: "} + mediaType;
-                throw std::invalid_argument{std::move(msg)};
+                auto const mediaType = fetchAs<std::string>(_root, "media_type");
+                if (mediaType == "video/smpte291")
+                {
+                    payloadSize = MXL_DATA_FORMAT_GRAIN_SIZE;
+                }
+                else
+                {
+                    auto msg = std::string{"Unsupported data media_type: "} + mediaType;
+                    throw std::invalid_argument{std::move(msg)};
+                }
             }
         }
         else if (_format == MXL_DATA_FORMAT_AUDIO)
@@ -418,8 +436,11 @@ namespace mxl::lib
         {
             case MXL_DATA_FORMAT_DATA:
             {
-                // For "data" flows, the slice length is 1 byte
-                sliceLengths[0] = 1;
+                // Variable-length grain flows use 256-byte slices so totalSlices
+                // (uint16_t) can address up to ~16 MB per grain. Fixed-size data
+                // (e.g. video/smpte291) keeps the original 1-byte slice.
+                auto const it = _root.find("mxl:grain_payload_size");
+                sliceLengths[0] = (it != _root.end() && it->second.is<double>()) ? 256 : 1;
                 return sliceLengths;
             }
 
@@ -462,8 +483,13 @@ namespace mxl::lib
         {
             case MXL_DATA_FORMAT_DATA:
             {
-                // Since the slice length for data flows is 1 byte, the number of slices must be the
-                // grain size.
+                // Variable-length grain flows: total slices = ceil(grain / 256).
+                // Fixed-size data flows keep one slice per grain byte.
+                if (auto const it = _root.find("mxl:grain_payload_size"); it != _root.end() && it->second.is<double>())
+                {
+                    constexpr auto kSliceSize = std::size_t{256};
+                    return (getPayloadSize() + kSliceSize - 1) / kSliceSize;
+                }
                 return MXL_DATA_FORMAT_GRAIN_SIZE;
             }
 
