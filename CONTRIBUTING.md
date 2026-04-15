@@ -45,6 +45,8 @@ You'll need:
 - A fork of the GitHub repo.
 - An understanding of the project's development workflow.
 
+A contribution to the project must be reviewed and understood in its entirety by the contributor. AI assisted contributions are allowed but the rule remains the same: the contributor must understand every line of the contribution and should be able to justify all of them.
+
 ## Legal Requirements
 
 MXL follows the Linux Foundation’s best practices for open-source contributions.
@@ -59,7 +61,7 @@ We do not require a CLA at this time.
 
 ## Commit Sign-Off
 
-Every commit must be signed off.  That is, every commit log message must include a “`Signed-off-by`” line (generated, for example, with “`git commit --signoff`”), indicating that the Contributor wrote the code and has the right to release it under the [Apache-2.0](LICENSE.txt) license. 
+Every commit must be signed off.  That is, every commit log message must include a “`Signed-off-by`” line (generated, for example, with “`git commit --signoff`”), indicating that the Contributor wrote the code and has the right to release it under the [Apache-2.0](LICENSE.txt) license.
 
 Contributors are responsible for providing their email address from the organization's domain that owns the copyright for their committed contribution, ensuring the copyright holder can be tracked.
 
@@ -113,9 +115,10 @@ This project uses [Catch2](https://github.com/catchorg/Catch2) automated testing
 
 ## Copyright Notices
 
-According to the [project Charter](https://github.com/dmf-mxl/mxl/blob/main/GOVERNANCE/CHARTER.pdf) (section #8.a.), contribution copyright remains with the copyright holders. This can be tracked using the project's git commit history. 
+According to the [project Charter](https://github.com/dmf-mxl/mxl/blob/main/GOVERNANCE/CHARTER.pdf) (section #8.a.), contribution copyright remains with the copyright holders. This can be tracked using the project's git commit history.
 
 All new source files should begin with a copyright and license stating:
+
 ```
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
