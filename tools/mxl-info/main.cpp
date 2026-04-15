@@ -52,25 +52,44 @@ namespace
             auto const now = ::mxlGetTime();
 
             auto const currentIndex = ::mxlTimestampToIndex(&grainRate, now);
-            auto const latency = currentIndex - headIndex;
+            // The latency should never really be negative (grains in the future), but in case of clock mismatch, incorrect code or similar, this may
+            // happen. This tool is often used for basic problem diagnostics, so let's handle this gracefully.
+            bool inTheFuture;
+            std::uint64_t latencyGrains;
+            std::uint64_t latencyNs;
+            if (currentIndex >= headIndex)
+            {
+                inTheFuture = false;
+                latencyGrains = currentIndex - headIndex;
+                latencyNs = now - mxlIndexToTimestamp(&grainRate, headIndex);
+            }
+            else
+            {
+                inTheFuture = true;
+                latencyGrains = headIndex - currentIndex;
+                latencyNs = mxlIndexToTimestamp(&grainRate, headIndex) - now;
+            }
+            char const* sign = (inTheFuture ? "-" : "");
+            auto const latencyMs = latencyNs / 1'000'000.0;
 
             if (isTerminal(os))
             {
                 auto color = fmt::color::green;
-                if (latency > limit)
+                if (latencyGrains > limit || inTheFuture)
                 {
                     color = fmt::color::red;
                 }
-                else if (latency == limit)
+                else if (latencyGrains == limit)
                 {
                     color = fmt::color::yellow;
                 }
 
-                os << '\t' << fmt::format(fmt::fg(color), "{: >18}: {}", "Latency (grains)", latency) << std::endl;
+                os << '\t' << fmt::format(fmt::fg(color), "{: >18}: {}{}, {}{:.6f}", "Latency (grains, ms)", sign, latencyGrains, sign, latencyMs)
+                   << std::endl;
             }
             else
             {
-                os << '\t' << fmt::format("{: >18}: {}", "Latency (grains)", latency) << std::endl;
+                os << '\t' << fmt::format("{: >18}: {}{}, {}{:.6f}", "Latency (grains, ms)", sign, latencyGrains, sign, latencyMs) << std::endl;
             }
         }
 
