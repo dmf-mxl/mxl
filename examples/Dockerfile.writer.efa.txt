@@ -1,0 +1,26 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+FROM debian:trixie-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get -y install \
+        gstreamer1.0-plugins-good \
+        gstreamer1.0-x \
+        librdmacm1t64 \
+        libibverbs1 \
+        patchelf && rm -rf /var/lib/apt/lists/*
+
+COPY build/Linux-Clang-Release/lib/*.so* /app/
+COPY build/Linux-Clang-Release/lib/internal/*.so* /app/
+COPY build/Linux-Clang-Release/lib/fabrics/ofi/libmxl-fabrics* /app/
+COPY build/Linux-Clang-Release/lib/fabrics/ofi/deps/libfabric.so* /app/
+COPY build/Linux-Clang-Release/lib/tests/data/*.json /app/
+COPY build/Linux-Clang-Release/tools/mxl-gst/mxl-gst-testsrc /app/
+COPY build/Linux-Clang-Release/tools/mxl-fabrics-demo/mxl-fabrics-demo /app/
+
+RUN patchelf --set-rpath /app mxl-gst-testsrc && \
+    patchelf --set-rpath /app mxl-fabrics-demo
+
+CMD ["/app/mxl-gst-testsrc", "-d", "/domain", "-v", "/app/v210_flow.json", "-a", "/app/audio_flow.json"]

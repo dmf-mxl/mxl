@@ -1,0 +1,39 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+FROM debian:trixie-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get -y install \
+        procps \
+        librdmacm1t64 \
+        libibverbs1 \
+        patchelf && rm -rf /var/lib/apt/lists/*
+
+# Install GStreamer and plugins for SRT support.
+RUN apt-get update && apt-get -y install \
+        libglib2.0-0 \
+        libgstreamer1.0-0 \
+        libgstreamer-plugins-base1.0-0 \
+        gstreamer1.0-plugins-good \
+        gstreamer1.0-plugins-bad \
+        gstreamer1.0-plugins-ugly \
+        gstreamer1.0-tools \
+        gstreamer1.0-libav \
+        libssl-dev && rm -rf /var/lib/apt/lists/*
+
+COPY build/Linux-Clang-Release/lib/*.so* /app/
+COPY build/Linux-Clang-Release/lib/internal/*.so* /app/
+COPY build/Linux-Clang-Release/lib/fabrics/ofi/libmxl-fabrics* /app/
+COPY build/Linux-Clang-Release/lib/fabrics/ofi/deps/libfabric.so* /app/
+COPY build/Linux-Clang-Release/tools/mxl-info/mxl-info /app/
+COPY build/Linux-Clang-Release/tools/mxl-gst/mxl-gst-sink /app/
+COPY build/Linux-Clang-Release/tools/mxl-fabrics-demo/mxl-fabrics-demo /app/
+COPY build/Linux-Clang-Release/lib/tests/data/*.json /app/
+
+RUN patchelf --set-rpath /app mxl-info && \
+    patchelf --set-rpath /app mxl-gst-sink && \
+    patchelf --set-rpath /app mxl-fabrics-demo
+
+CMD ["sh", "-c", "while true; do /app/mxl-info -d /domain -l || true; sleep 2; done"]

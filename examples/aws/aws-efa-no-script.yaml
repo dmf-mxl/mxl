@@ -1,0 +1,169 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+# Headless service for fabrics target-info discovery.
+# The writer polls this endpoint to obtain the reader's target-info
+# before starting the EFA initiator.
+apiVersion: v1
+kind: Service
+metadata:
+  name: reader-fabrics-svc
+spec:
+  clusterIP: None
+  selector:
+    app: reader-media-function-efa
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reader-media-function-efa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reader-media-function-efa
+  template:
+    metadata:
+      labels:
+        app: reader-media-function-efa
+    spec:
+      containers:
+        - name: reader-container
+          image: 720180693591.dkr.ecr.eu-central-1.amazonaws.com/mxl-reader-efa:latest
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              # Start fabrics target for the video flow and capture output
+              /app/mxl-fabrics-demo -d /domain -f /app/v210_flow.json -p efa 2>&1 | tee /tmp/fabrics.log &
+              FABRICS_PID=$!
+
+              # Wait for the target-info to be generated
+              echo "Waiting for fabrics target to produce target-info..."
+              while ! grep -q "Target info:" /tmp/fabrics.log 2>/dev/null; do sleep 0.5; done
+
+              # Extract the base64 target-info and write it for the sidecar to serve
+              grep "Target info:" /tmp/fabrics.log | sed 's/.*Target info: //' > /target-info/target-info.txt
+              echo "Target info published for discovery"
+
+              # Wait for the video flow to appear in /domain
+              echo "Waiting for video flow in /domain..."
+              while [ -z "$(ls /domain/ 2>/dev/null | grep '.mxl-flow')" ]; do sleep 0.5; done
+
+              # Start the SRT video sink
+              /app/mxl-gst-sink -d /domain -v 5fbec3b1-1b0f-417d-9059-8b94a47197ed &
+
+              # Keep monitoring flows
+              while true; do /app/mxl-info -d /domain -l || true; sleep 5; done
+          resources:
+            limits:
+              vpc.amazonaws.com/efa: 1
+              memory: "4Gi"
+          tty: true
+          stdin: true
+          volumeMounts:
+            - name: domain-volume
+              mountPath: /domain
+            - name: target-info
+              mountPath: /target-info
+        - name: target-info-server
+          image: busybox:1.36
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              while [ ! -f /target-info/target-info.txt ]; do sleep 0.5; done
+              echo "Serving target-info on port 8080"
+              cd /target-info
+              httpd -f -p 8080
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: target-info
+              mountPath: /target-info
+              readOnly: true
+      volumes:
+        - name: domain-volume
+          emptyDir:
+            medium: Memory
+        - name: target-info
+          emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - writer-media-function-efa
+              topologyKey: kubernetes.io/hostname
+      restartPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: writer-media-function-efa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: writer-media-function-efa
+  template:
+    metadata:
+      labels:
+        app: writer-media-function-efa
+    spec:
+      containers:
+        - name: writer-container
+          image: 720180693591.dkr.ecr.eu-central-1.amazonaws.com/mxl-writer-efa:latest
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              # Start testsrc to produce video and audio flows in /domain
+              /app/mxl-gst-testsrc -d /domain -v /app/v210_flow.json -a /app/audio_flow.json &
+              WRITER_PID=$!
+
+              # Wait for the video flow to be created in /domain
+              echo "Waiting for video flow to be created..."
+              while [ -z "$(ls /domain/ 2>/dev/null | grep '.mxl-flow')" ]; do sleep 0.5; done
+              echo "Video flow created"
+
+              # Poll the reader's target-info via the headless service
+              echo "Waiting for reader target-info via reader-fabrics-svc..."
+              TARGET_INFO=""
+              while [ -z "$TARGET_INFO" ]; do
+                TARGET_INFO=$(wget -qO- http://reader-fabrics-svc:8080/target-info.txt 2>/dev/null || true)
+                [ -z "$TARGET_INFO" ] && sleep 1
+              done
+              echo "Got target-info from reader"
+
+              # Start fabrics initiator to push grains over EFA
+              /app/mxl-fabrics-demo -d /domain -f 5fbec3b1-1b0f-417d-9059-8b94a47197ed -i -p efa --target-info "$TARGET_INFO" &
+
+              # Wait for the testsrc writer
+              wait $WRITER_PID
+          resources:
+            limits:
+              vpc.amazonaws.com/efa: 1
+          volumeMounts:
+            - name: domain-volume
+              mountPath: /domain
+      volumes:
+        - name: domain-volume
+          emptyDir:
+            medium: Memory
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - reader-media-function-efa
+              topologyKey: kubernetes.io/hostname
+      restartPolicy: Always

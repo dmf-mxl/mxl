@@ -29,14 +29,13 @@ kubectl exec -it deployment/reader-media-function -- /app/mxl-info -d /domain -l
 FLOW1_ID=5fbec3b1-1b0f-417d-9059-8b94a47197ed
 
 # For Docker Compose
-docker exec -it examples-reader-media-function-1 /app/mxl-gst-sink -d /domain -v b3bb5be7-9fe9-4324-a5bb-4c70e1084449 5fbec3b1-1b0f-417d-9059-8b94a47197ed
-docker exec -it examples-reader-media-function-1 /app/mxl-gst-sink -d /domain -v 5fbec3b1-1b0f-417d-9059-8b94a47197ed 
+docker exec -it examples-reader-media-function-1 /app/mxl-gst-sink -d /domain -v $FLOW1_ID
 
 # For Kubernetes
-kubectl exec -it deployment/reader-media-function -- /app/mxl-gst-sink -d /domain -v 5fbec3b1-1b0f-417d-9059-8b94a47197ed
+kubectl exec -it deployment/reader-media-function -- /app/mxl-gst-sink -d /domain -v $FLOW1_ID
 ```
 
-Afterwards, you can view the stream by going to VLC > File > Open Networks and inserting srt://127.0.0.1:5000?mode=caller
+Afterwards, you can view the stream by going to VLC > File > Open Networks and inserting srt://IP:5000?mode=caller
 
 ### Gstreamer - SRT Stream
 
