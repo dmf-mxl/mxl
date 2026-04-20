@@ -1,3 +1,6 @@
+<!-- SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project. -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
+
 # EFA Cross-Node Setup Guide
 
 This guide explains how to build and deploy MXL with **EFA (Elastic Fabric Adapter)** support for cross-node media transport on AWS EKS.

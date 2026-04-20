@@ -1,3 +1,6 @@
+<!-- SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project. -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
+
 # Notes
 
 ## MXL - SRT Output
