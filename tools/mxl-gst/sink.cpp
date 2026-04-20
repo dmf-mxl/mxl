@@ -189,19 +189,32 @@ namespace
         {
             MXL_INFO("Creating video pipeline with config: {}", _config.display());
 
+            /*
+                The below adaptation provides a way to output the MXF stream over SRT.
+                Keep in mind that the profiles and presets used where adapted to minimize CPU usage and latency,
+                but are not necessarily producing the best possible quality.
+
+                Unfortunately, till now there is no easy way to combine the Video and Audio pipelines into a single one,
+                because the audio pipeline relies on the audio meta which is not supported by the muxers that can be used for streaming.
+                So we have to use a separate pipeline for video and audio, which means that we cannot use the same SRT sink for both.
+            */
             auto pipelineDesc = fmt::format(
                 "appsrc name=appsource is-live=true ! "
                 "video/x-raw,format=v210,width={},height={},framerate={}/{} ! "
                 "videoconvert ! "
                 "videoscale ! "
-                "autovideosink ts-offset={}",
+                "x264enc speed-preset=ultrafast tune=zerolatency bframes=0 key-int-max=30 ! "
+                "video/x-h264,profile=baseline ! "
+                "mpegtsmux ! "
+                "queue leaky=downstream max-size-buffers=3 max-size-time=1000000000 ! "
+                "srtsink uri=\"srt://:5000?mode=listener\"",
                 _config.frameWidth,
                 _config.frameHeight,
                 _config.frameRate.numerator,
                 _config.frameRate.denominator,
                 _config.offset);
 
-            MXL_INFO("Generating following GStreamer video pipeline -> {}", pipelineDesc);
+            MXL_INFO("Generating following GStreamer video pipeline (SRT Edition) -> {}", pipelineDesc);
             launchPipeline(pipelineDesc);
         }
 
