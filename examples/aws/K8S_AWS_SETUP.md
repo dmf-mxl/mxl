@@ -1,3 +1,6 @@
+<!-- SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project. -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
+
 # Kubernetes on AWS (EKS) Setup Guide
 
 This guide explains how to publish `examples/kube-deployment-1-node.yaml` to AWS EKS in region `eu-central-1` using account `720180693591` with a cost-limited setup.
