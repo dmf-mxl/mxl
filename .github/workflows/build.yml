@@ -1,13 +1,14 @@
 # SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 # SPDX-License-Identifier: Apache-2.0
 
-name: Build and Test the MXL Project
+name: Build, Test and Deploy the MXL Project
 
 on:
   push:
     branches:
       - main
       - release/**
+      - qvest
   pull_request:
   workflow_dispatch:  # manual trigger support
 
@@ -17,11 +18,13 @@ permissions:
   checks: write
   pull-requests: write
   packages: write
+  id-token: write  # OIDC token for AWS
 
 jobs:
   build_c_cxx:
     name: Build C library on Ubuntu ${{ matrix.os }} - ${{matrix.version}} - ${{ matrix.architecture }} - ${{ matrix.compiler }}
     runs-on: ubuntu-latest
+    environment: aws
     strategy:
       matrix:
           os: [ubuntu]
@@ -177,6 +180,26 @@ jobs:
         with:
           files: |
             **/test-results.xml
+
+      - name: Build and push EFA Docker images to ECR
+        if: steps.is-fork-check.outputs.is-fork == 'false' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY_WRITER: ${{ vars.ECR_REPOSITORY_WRITER }}
+          ECR_REPOSITORY_READER: ${{ vars.ECR_REPOSITORY_READER }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Build writer image
+          docker build -f examples/Dockerfile.writer.efa.txt -t ${ECR_REGISTRY}/${ECR_REPOSITORY_WRITER}:${IMAGE_TAG} .
+          docker push ${ECR_REGISTRY}/${ECR_REPOSITORY_WRITER}:${IMAGE_TAG}
+          docker tag ${ECR_REGISTRY}/${ECR_REPOSITORY_WRITER}:${IMAGE_TAG} ${ECR_REGISTRY}/${ECR_REPOSITORY_WRITER}:latest
+          docker push ${ECR_REGISTRY}/${ECR_REPOSITORY_WRITER}:latest
+
+          # Build reader image
+          docker build -f examples/Dockerfile.reader.efa.txt -t ${ECR_REGISTRY}/${ECR_REPOSITORY_READER}:${IMAGE_TAG} .
+          docker push ${ECR_REGISTRY}/${ECR_REPOSITORY_READER}:${IMAGE_TAG}
+          docker tag ${ECR_REGISTRY}/${ECR_REPOSITORY_READER}:${IMAGE_TAG} ${ECR_REGISTRY}/${ECR_REPOSITORY_READER}:latest
+          docker push ${ECR_REGISTRY}/${ECR_REPOSITORY_READER}:latest
 
   build_rust:
     name: Build Rust bindings on Ubuntu ${{ matrix.os }} - ${{matrix.version}} - ${{ matrix.architecture }}
