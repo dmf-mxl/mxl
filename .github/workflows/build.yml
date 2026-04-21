@@ -182,7 +182,7 @@ jobs:
             **/test-results.xml
 
       - name: Build and push EFA Docker images to ECR
-        if: steps.is-fork-check.outputs.is-fork == 'false' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: steps.is-fork-check.outputs.is-fork == 'false' && github.event_name == 'push' &&  (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/mxl-compile-push-ecr')
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY_WRITER: ${{ vars.ECR_REPOSITORY_WRITER }}
