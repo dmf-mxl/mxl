@@ -41,8 +41,8 @@ esac
 
 export PKG_CONFIG_PATH="$BUILD_DIR/pkgconfig_test:$VCPKG_INSTALL_DIR/$VCPKG_TRIPLET/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
+DOMAIN_DIR="/dev/shm/mxl_link_test_domain"
 TEST_DIR="$(mktemp -d /tmp/mxl_pkgconfig_test.XXXXXX)"
-
 (
     set -e
     cd $TEST_DIR
@@ -53,7 +53,7 @@ TEST_DIR="$(mktemp -d /tmp/mxl_pkgconfig_test.XXXXXX)"
 #include <stdlib.h>
 int main(void)
 {
-    mxlInstance instance = mxlCreateInstance("./mxl_link_test_domain", NULL);
+    mxlInstance instance = mxlCreateInstance("/dev/shm/mxl_link_test_domain", NULL);
     int rc = !!instance ? EXIT_SUCCESS : EXIT_FAILURE;
     mxlDestroyInstance(instance);
     return rc;
@@ -74,10 +74,10 @@ EOF
             -o mxl_link_test
     fi
 
-    mkdir ./mxl_link_test_domain
+    mkdir -p $DOMAIN_DIR
     ./mxl_link_test
 
-    rm -rf ./mxl_link_test_domain
+    rm -rf "$DOMAIN_DIR"
     rm  ./mxl_link_test
     rm  ./mxl_link_test.c
 )

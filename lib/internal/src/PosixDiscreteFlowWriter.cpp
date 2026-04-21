@@ -17,9 +17,9 @@
 
 namespace mxl::lib
 {
-    PosixDiscreteFlowWriter::PosixDiscreteFlowWriter(FlowManager const&, uuids::uuid const& flowId, std::unique_ptr<DiscreteFlowData>&& data,
+    PosixDiscreteFlowWriter::PosixDiscreteFlowWriter(FlowManager const& manager, uuids::uuid const& flowId, std::unique_ptr<DiscreteFlowData>&& data,
         std::shared_ptr<DomainWatcher> const& watcher)
-        : DiscreteFlowWriter{flowId}
+        : DiscreteFlowWriter{flowId, manager.getDomain()}
         , _flowData{std::move(data)}
         , _currentIndex{MXL_UNDEFINED_INDEX}
         , _watcher(watcher)
