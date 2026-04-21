@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
 set -e
 if command -v eksctl >/dev/null 2>&1; then
   echo "eksctl already installed: $(eksctl version)"

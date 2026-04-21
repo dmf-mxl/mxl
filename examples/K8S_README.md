@@ -1,3 +1,6 @@
+<!-- SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project. -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
+
 # Kubernetes rollout path: local simulation to AWS EFA
 
 This document captures a practical 2-stage path:
