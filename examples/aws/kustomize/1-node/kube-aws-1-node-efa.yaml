@@ -5,7 +5,6 @@
 #   kubectl apply -k examples/aws/kustomize/1-node/
 # The overlay provides the mxl-config ConfigMap (VIDEO_FLOW_UUID) and pins image tags.
 
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
