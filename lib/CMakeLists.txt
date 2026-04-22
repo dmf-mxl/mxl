@@ -100,6 +100,9 @@ install(TARGETS mxl EXPORT ${PROJECT_NAME}-targets
 include(CMakePackageConfigHelpers)
 
 set(MXL_CMAKE_CONFIG_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
+# Record the installed library type so the package config can decide
+# whether consumers need to resolve private link dependencies.
+set(MXL_BUILT_SHARED ${BUILD_SHARED_LIBS})
 
 # Generate the config file and put it into the build directory.
 configure_package_config_file(
@@ -116,11 +119,6 @@ write_basic_package_version_file(
         VERSION ${PROJECT_VERSION}
         COMPATIBILITY SameMinorVersion
     )
-
-# Install Findpicojson.cmake (picojson is a dependency of mxl)
-install(FILES
-            ${CMAKE_SOURCE_DIR}/cmake/modules/Findpicojson.cmake
-        DESTINATION ${MXL_CMAKE_CONFIG_DESTINATION}/modules)
 
 # Install the generated config and version files.
 install(FILES
