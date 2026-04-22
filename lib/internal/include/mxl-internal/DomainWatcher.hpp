@@ -93,6 +93,10 @@ namespace mxl::lib
         void stop()
         {
             _running = false;
+            if (_watchThread.joinable())
+            {
+                _watchThread.join();
+            }
         }
 
         /** \brief Returns the number of writers registered for flow id 'id'
