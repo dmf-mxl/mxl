@@ -1,8 +1,6 @@
 <!-- SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project. -->
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 
-# MXL Addressability
-
 The following addressing scheme allows applications to refer to one or multiple flows hosted in an MXL domain on a local host or on a remote server.  
 
 ## URI 

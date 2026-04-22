@@ -1,7 +1,7 @@
-# <!-- SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project. -->
-# <!-- SPDX-License-Identifier: CC-BY-4.0 -->
-#
-# Using the MXL C Public API
+<!-- SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project. -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
+
+# API Usage
 
 Below is a minimal example of how to use the MXL SDK C API in your application:
 

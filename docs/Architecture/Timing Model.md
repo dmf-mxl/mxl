@@ -3,7 +3,7 @@
 
 # Timing Model
 
-As described in the [architecture](./Architecture.md) page, the grains of an MXL flow are organized in a ring buffer. Each index of the ring buffer correspond to a timestamp relative to the PTP epoch as defined by SMPTE 2059-1. MXL does NOT require a PTP/SMPTE 2059 time source : it only _leverages_ the epoch and clock definitions (TAI time) as defined in SMPTE 2059-1.
+As described in the [Overview](./Overview.md) page, the grains of an MXL flow are organized in a ring buffer. Each index of the ring buffer correspond to a timestamp relative to the PTP epoch as defined by SMPTE 2059-1. MXL does NOT require a PTP/SMPTE 2059 time source : it only _leverages_ the epoch and clock definitions (TAI time) as defined in SMPTE 2059-1.
 
 ## Requirements
 
@@ -46,7 +46,7 @@ flowchart LR
     A4["ring buffer index=4<br/>gi=4<br/>ts=80'000'000ns"] --> A0
 
     %% head
-    style A2 fill:#030,color:#eee,stroke:#333,stroke-width:2px
+    style A2 stroke:#080,stroke-width:3px
 
 ```
 
