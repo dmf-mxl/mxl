@@ -111,11 +111,7 @@ namespace mxl::lib
 
     DomainWatcher::~DomainWatcher()
     {
-        _running = false;
-        if (_watchThread.joinable())
-        {
-            _watchThread.join();
-        }
+        stop();
 
 #ifdef __APPLE__
         ::close(_kq);
