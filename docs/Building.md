@@ -30,17 +30,10 @@ _Note: the following instructions apply to Ubuntu 22.04._
 ```bash
   "Linux-GCC-Debug"
   "Linux-GCC-Release"
-  "Linux-GCC-AddressSanitizer"
-  "Linux-GCC-ThreadSanitizer"
-  "Linux-GCC-UBSanitizer"
   "Linux-Clang-Debug"
   "Linux-Clang-Release"
-  "Linux-Clang-AddressSanitizer"
-  "Linux-Clang-UBSanitizer"
   "Darwin-Clang-Debug"
   "Darwin-Clang-Release"
-  "Darwin-Clang-AddressSanitizer"
-  "Darwin-Clang-UBSanitizer"
 ```
 
 For example:
