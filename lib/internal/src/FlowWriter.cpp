@@ -26,6 +26,6 @@ namespace mxl::lib
     bool FlowWriter::checkPermissions() const
     {
         // Verify that the domain exists, is a directory and that we can traverse and write into it.
-        return std::filesystem::exists(_domain) && std::filesystem::is_directory(_domain) && (access(_domain.c_str(), X_OK | W_OK) == 0);
+        return std::filesystem::is_directory(_domain) && (::access(_domain.c_str(), X_OK | W_OK) == 0);
     }
 }

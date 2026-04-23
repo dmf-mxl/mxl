@@ -18,7 +18,7 @@ namespace mxl::lib
     {
         if (!checkPermissions())
         {
-            throw std::runtime_error("Flow is not accessible due to insufficient permissions.");
+            throw std::runtime_error{"Flow is not accessible due to insufficient permissions."};
         }
     }
 

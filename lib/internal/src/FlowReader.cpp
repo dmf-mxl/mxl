@@ -3,6 +3,7 @@
 
 #include "mxl-internal/FlowReader.hpp"
 #include <utility>
+#include <unistd.h>
 #include "mxl-internal/PathUtils.hpp"
 
 namespace mxl::lib
@@ -31,7 +32,7 @@ namespace mxl::lib
 
     bool FlowReader::checkPermissions() const
     {
-        auto flowDefPath = makeFlowDescriptorFilePath(_domain, uuids::to_string(_flowId));
-        return std::filesystem::exists(flowDefPath) && std::filesystem::is_regular_file(flowDefPath) && (access(flowDefPath.c_str(), R_OK) == 0);
+        auto const flowDefPath = makeFlowDescriptorFilePath(_domain, uuids::to_string(_flowId));
+        return std::filesystem::is_regular_file(flowDefPath) && (::access(flowDefPath.c_str(), R_OK) == 0);
     }
 }

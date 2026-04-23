@@ -77,8 +77,8 @@ namespace mxl::lib
         [[nodiscard]]
         bool checkPermissions() const;
 
-        explicit FlowWriter(uuids::uuid&& flowId, std::filesystem::path const& domain);
-        explicit FlowWriter(uuids::uuid const& flowId, std::filesystem::path const& domain);
+        FlowWriter(uuids::uuid&& flowId, std::filesystem::path const& domain);
+        FlowWriter(uuids::uuid const& flowId, std::filesystem::path const& domain);
 
     private:
         uuids::uuid _flowId;
