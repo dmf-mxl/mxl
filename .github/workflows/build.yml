@@ -35,6 +35,8 @@ jobs:
       DOCKER_BUILDKIT: 1
       VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg_cache,readwrite
       AWS_REGION: eu-central-1
+      AWS_ECR_ROLE_TO_ASSUME: github-ecr-push-role
+
 
     steps:
       - name: Checkout repository
@@ -47,9 +49,11 @@ jobs:
         run: git submodule update --init --recursive
 
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ env.AWS_ECR_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
