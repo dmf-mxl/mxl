@@ -73,6 +73,13 @@ namespace mxl::lib
         [[nodiscard]]
         virtual bool isFlowValid() const = 0;
 
+        /**
+         * Verifies that we can access the flow_def.json file
+         * \return true if the flow is accessible, false otherwise.
+         */
+        [[nodiscard]]
+        bool checkPermissions() const;
+
     protected:
         explicit FlowReader(uuids::uuid&& flowId, std::filesystem::path const& domain);
         explicit FlowReader(uuids::uuid const& flowId, std::filesystem::path const& domain);

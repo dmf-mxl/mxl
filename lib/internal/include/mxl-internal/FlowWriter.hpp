@@ -70,10 +70,18 @@ namespace mxl::lib
         virtual ~FlowWriter();
 
     protected:
-        explicit FlowWriter(uuids::uuid&& flowId);
-        explicit FlowWriter(uuids::uuid const& flowId);
+        /**
+         * Verifies that we can traverse and write into the domain directory.
+         * \return true if the flow domain is writable, false otherwise.
+         */
+        [[nodiscard]]
+        bool checkPermissions() const;
+
+        FlowWriter(uuids::uuid&& flowId, std::filesystem::path const& domain);
+        FlowWriter(uuids::uuid const& flowId, std::filesystem::path const& domain);
 
     private:
         uuids::uuid _flowId;
+        std::filesystem::path _domain;
     };
 }

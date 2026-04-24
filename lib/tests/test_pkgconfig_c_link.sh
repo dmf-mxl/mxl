@@ -41,19 +41,24 @@ esac
 
 export PKG_CONFIG_PATH="$BUILD_DIR/pkgconfig_test:$VCPKG_INSTALL_DIR/$VCPKG_TRIPLET/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
-TEST_DIR="$(mktemp -d /tmp/mxl_pkgconfig_test.XXXXXX)"
+case "$(uname -s)" in
+  Linux)  DOMAIN_DIR="/dev/shm/mxl_link_test_domain" ;;
+  Darwin) DOMAIN_DIR="$(mktemp -d /tmp/mxl_link_test_domain.XXXXXX)" ;;
+  *)      echo "Unsupported OS: $(uname -s)" >&2; exit 3 ;;
+esac
 
+TEST_DIR="$(mktemp -d /tmp/mxl_pkgconfig_test.XXXXXX)"
 (
     set -e
     cd $TEST_DIR
 
-    cat > mxl_link_test.c <<'EOF'
+    cat > mxl_link_test.c <<EOF
 #include <mxl/mxl.h>
 #include <stddef.h>
 #include <stdlib.h>
 int main(void)
 {
-    mxlInstance instance = mxlCreateInstance("./mxl_link_test_domain", NULL);
+    mxlInstance instance = mxlCreateInstance("$DOMAIN_DIR", NULL);
     int rc = !!instance ? EXIT_SUCCESS : EXIT_FAILURE;
     mxlDestroyInstance(instance);
     return rc;
@@ -74,10 +79,10 @@ EOF
             -o mxl_link_test
     fi
 
-    mkdir ./mxl_link_test_domain
+    mkdir -p $DOMAIN_DIR
     ./mxl_link_test
 
-    rm -rf ./mxl_link_test_domain
+    rm -rf "$DOMAIN_DIR"
     rm  ./mxl_link_test
     rm  ./mxl_link_test.c
 )
