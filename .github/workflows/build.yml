@@ -58,6 +58,11 @@ jobs:
           aws-region: eu-central-1
           audience: sts.amazonaws.com
 
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -194,7 +199,9 @@ jobs:
             **/test-results.xml
 
       - name: Build and push EFA Docker images to ECR
-        if: steps.is-fork-check.outputs.is-fork == 'false' && github.event_name == 'push' &&  (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/mxl-compile-push-ecr')
+        if: |
+          steps.is-fork-check.outputs.is-fork == 'false' && 
+          github.event_name == 'push' 
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY_WRITER: ${{ vars.ECR_REPOSITORY_WRITER }}
@@ -219,6 +226,7 @@ jobs:
     strategy:
       matrix:
           os: [ubuntu] 
+          version: [24.04]
           architecture: [x86_64] # Removed arm64 to speed up CI, can be re-added if needed
           compiler: [Linux-GCC-Release] # Removed Linux-Clang-Release to speed up CI, can be re-added if needed
 
