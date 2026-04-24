@@ -3,6 +3,8 @@
 
 #include "mxl-internal/FlowReader.hpp"
 #include <utility>
+#include <unistd.h>
+#include "mxl-internal/PathUtils.hpp"
 
 namespace mxl::lib
 {
@@ -26,5 +28,11 @@ namespace mxl::lib
     std::filesystem::path const& FlowReader::getDomain() const
     {
         return _domain;
+    }
+
+    bool FlowReader::checkPermissions() const
+    {
+        auto const flowDefPath = makeFlowDescriptorFilePath(_domain, uuids::to_string(_flowId));
+        return std::filesystem::is_regular_file(flowDefPath) && (::access(flowDefPath.c_str(), R_OK) == 0);
     }
 }

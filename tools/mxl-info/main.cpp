@@ -52,25 +52,44 @@ namespace
             auto const now = ::mxlGetTime();
 
             auto const currentIndex = ::mxlTimestampToIndex(&grainRate, now);
-            auto const latency = currentIndex - headIndex;
+            // The latency should never really be negative (grains in the future), but in case of clock mismatch, incorrect code or similar, this may
+            // happen. This tool is often used for basic problem diagnostics, so let's handle this gracefully.
+            bool inTheFuture;
+            std::uint64_t latencyGrains;
+            std::uint64_t latencyNs;
+            if (currentIndex >= headIndex)
+            {
+                inTheFuture = false;
+                latencyGrains = currentIndex - headIndex;
+                latencyNs = now - mxlIndexToTimestamp(&grainRate, headIndex);
+            }
+            else
+            {
+                inTheFuture = true;
+                latencyGrains = headIndex - currentIndex;
+                latencyNs = mxlIndexToTimestamp(&grainRate, headIndex) - now;
+            }
+            char const* sign = (inTheFuture ? "-" : "");
+            auto const latencyMs = latencyNs / 1'000'000.0;
 
             if (isTerminal(os))
             {
                 auto color = fmt::color::green;
-                if (latency > limit)
+                if (latencyGrains > limit || inTheFuture)
                 {
                     color = fmt::color::red;
                 }
-                else if (latency == limit)
+                else if (latencyGrains == limit)
                 {
                     color = fmt::color::yellow;
                 }
 
-                os << '\t' << fmt::format(fmt::fg(color), "{: >18}: {}", "Latency (grains)", latency) << std::endl;
+                os << '\t' << fmt::format(fmt::fg(color), "{: >20}: {}{}, {}{:.6f}", "Latency (grains, ms)", sign, latencyGrains, sign, latencyMs)
+                   << std::endl;
             }
             else
             {
-                os << '\t' << fmt::format("{: >18}: {}", "Latency (grains)", latency) << std::endl;
+                os << '\t' << fmt::format("{: >20}: {}{}, {}{:.6f}", "Latency (grains, ms)", sign, latencyGrains, sign, latencyMs) << std::endl;
             }
         }
 
@@ -102,32 +121,32 @@ namespace
                 const_cast<std::uint8_t*>(info.config.common.id), sizeof info.config.common.id};
             auto const id = uuids::uuid(span);
             os << "- Flow [" << uuids::to_string(id) << ']' << '\n'
-               << '\t' << fmt::format("{: >18}: {}", "Version", info.version) << '\n'
-               << '\t' << fmt::format("{: >18}: {}", "Struct size", info.size) << '\n'
-               << '\t' << fmt::format("{: >18}: {}", "Format", getFormatString(info.config.common.format)) << '\n'
+               << '\t' << fmt::format("{: >20}: {}", "Version", info.version) << '\n'
+               << '\t' << fmt::format("{: >20}: {}", "Struct size", info.size) << '\n'
+               << '\t' << fmt::format("{: >20}: {}", "Format", getFormatString(info.config.common.format)) << '\n'
                << '\t'
-               << fmt::format("{: >18}: {}/{}", "Grain/sample rate", info.config.common.grainRate.numerator, info.config.common.grainRate.denominator)
+               << fmt::format("{: >20}: {}/{}", "Grain/sample rate", info.config.common.grainRate.numerator, info.config.common.grainRate.denominator)
                << '\n'
-               << '\t' << fmt::format("{: >18}: {}", "Commit batch size", info.config.common.maxCommitBatchSizeHint) << '\n'
-               << '\t' << fmt::format("{: >18}: {}", "Sync batch size", info.config.common.maxSyncBatchSizeHint) << '\n'
-               << '\t' << fmt::format("{: >18}: {}", "Payload Location", getPayloadLocationString(info.config.common.payloadLocation)) << '\n'
-               << '\t' << fmt::format("{: >18}: {}", "Device Index", info.config.common.deviceIndex) << '\n'
-               << '\t' << fmt::format("{: >18}: {:0>8x}", "Flags", info.config.common.flags) << '\n';
+               << '\t' << fmt::format("{: >20}: {}", "Commit batch size", info.config.common.maxCommitBatchSizeHint) << '\n'
+               << '\t' << fmt::format("{: >20}: {}", "Sync batch size", info.config.common.maxSyncBatchSizeHint) << '\n'
+               << '\t' << fmt::format("{: >20}: {}", "Payload Location", getPayloadLocationString(info.config.common.payloadLocation)) << '\n'
+               << '\t' << fmt::format("{: >20}: {}", "Device Index", info.config.common.deviceIndex) << '\n'
+               << '\t' << fmt::format("{: >20}: {:0>8x}", "Flags", info.config.common.flags) << '\n';
 
             if (mxlIsDiscreteDataFormat(info.config.common.format))
             {
-                os << '\t' << fmt::format("{: >18}: {}", "Grain count", info.config.discrete.grainCount) << '\n';
+                os << '\t' << fmt::format("{: >20}: {}", "Grain count", info.config.discrete.grainCount) << '\n';
             }
             else if (mxlIsContinuousDataFormat(info.config.common.format))
             {
-                os << '\t' << fmt::format("{: >18}: {}", "Channel count", info.config.continuous.channelCount) << '\n'
-                   << '\t' << fmt::format("{: >18}: {}", "Buffer length", info.config.continuous.bufferLength) << '\n';
+                os << '\t' << fmt::format("{: >20}: {}", "Channel count", info.config.continuous.channelCount) << '\n'
+                   << '\t' << fmt::format("{: >20}: {}", "Buffer length", info.config.continuous.bufferLength) << '\n';
             }
 
             os << '\n'
-               << '\t' << fmt::format("{: >18}: {}", "Head index", info.runtime.headIndex) << '\n'
-               << '\t' << fmt::format("{: >18}: {}", "Last write time", info.runtime.lastWriteTime) << '\n'
-               << '\t' << fmt::format("{: >18}: {}", "Last read time", info.runtime.lastReadTime) << '\n';
+               << '\t' << fmt::format("{: >20}: {}", "Head index", info.runtime.headIndex) << '\n'
+               << '\t' << fmt::format("{: >20}: {}", "Last write time", info.runtime.lastWriteTime) << '\n'
+               << '\t' << fmt::format("{: >20}: {}", "Last read time", info.runtime.lastReadTime) << '\n';
 
             return os;
         }
@@ -421,7 +440,7 @@ namespace
                 if (auto const status = ::mxlIsFlowActive(instance, in_id.c_str(), &active); status == MXL_STATUS_OK)
                 {
                     // Print the status of the flow.
-                    std::cout << '\t' << fmt::format("{: >18}: {}", "Active", active) << std::endl;
+                    std::cout << '\t' << fmt::format("{: >20}: {}", "Active", active) << std::endl;
                 }
                 else
                 {
