@@ -29,7 +29,7 @@ jobs:
           os: [ubuntu]
           version: [24.04]
           architecture: [x86_64] # Removed arm64 to speed up CI, can be re-added if needed
-          compiler: [Linux-GCC-Release, Linux-Clang-Release] # Removed Linux-Clang-Release to speed up CI, can be re-added if needed
+          compiler: [Linux-Clang-Release] # Removed Linux-GCC-Release to speed up CI, can be re-added if needed
 
     env:
       DOCKER_BUILDKIT: 1
