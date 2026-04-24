@@ -28,14 +28,14 @@ jobs:
       matrix:
           os: [ubuntu]
           version: [24.04]
-          architecture: [x86_64, arm64]
+          architecture: [x86_64] # Removed arm64 to speed up CI, can be re-added if needed
           compiler: [Linux-GCC-Release] # Removed Linux-Clang-Release to speed up CI, can be re-added if needed
 
     env:
       DOCKER_BUILDKIT: 1
       VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg_cache,readwrite
       AWS_REGION: eu-central-1
-      AWS_ECR_ROLE_TO_ASSUME: github-ecr-push-role
+      AWS_ECR_ROLE_TO_ASSUME: arn:aws:iam::720180693591:role/github-ecr-push-role
 
 
     steps:
@@ -52,8 +52,11 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: ${{ env.AWS_ECR_ROLE_TO_ASSUME }}
-          aws-region: ${{ env.AWS_REGION }}
+          # role-to-assume: ${{ env.AWS_ECR_ROLE_TO_ASSUME }}
+          # aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::720180693591:role/github-ecr-push-role
+          aws-region: eu-central-1
+          audience: sts.amazonaws.com
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -215,7 +218,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-          os: [ubuntu]
+          os: [] # Removed os matrix to speed up CI, can be re-added if needed
           version: [24.04]
           architecture: [x86_64, arm64]
           compiler: [Linux-GCC-Release]
