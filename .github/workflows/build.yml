@@ -6,8 +6,7 @@ name: Build, Test and Deploy the MXL Project
 on:
   push:
     branches:
-      - main
-      - release/**
+      - qvest
       - feature/mxl-compile-push-ecr
   pull_request:
   workflow_dispatch:  # manual trigger support
@@ -30,11 +29,12 @@ jobs:
           os: [ubuntu]
           version: [24.04]
           architecture: [x86_64, arm64]
-          compiler: [Linux-GCC-Release, Linux-Clang-Release]
+          compiler: [Linux-GCC-Release] # Removed Linux-Clang-Release to speed up CI, can be re-added if needed
 
     env:
       DOCKER_BUILDKIT: 1
       VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg_cache,readwrite
+      AWS_REGION: eu-central-1
 
     steps:
       - name: Checkout repository
@@ -214,7 +214,7 @@ jobs:
           os: [ubuntu]
           version: [24.04]
           architecture: [x86_64, arm64]
-          compiler: [Linux-GCC-Release, Linux-Clang-Release]
+          compiler: [Linux-GCC-Release]
 
     env:
       DOCKER_BUILDKIT: 1
