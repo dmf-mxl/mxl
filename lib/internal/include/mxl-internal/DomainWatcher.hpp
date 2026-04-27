@@ -18,6 +18,7 @@
 #include "mxl-internal/DiscreteFlowData.hpp"
 
 #if defined __linux__
+#   include <sys/eventfd.h>
 #   include <sys/inotify.h>
 #elif defined __APPLE__
 #   include <sys/event.h>
@@ -95,6 +96,15 @@ namespace mxl::lib
             _running = false;
             if (_watchThread.joinable())
             {
+#ifdef __linux__
+                auto value = ::eventfd_t{1};
+                if (::write(_eventFd, &value, sizeof(::eventfd_t)) < 0)
+                {
+                    auto const error = errno;
+                    MXL_ERROR("Failed to signal DomainWatcher stop request: {}", ::strerror(error));
+                }
+#endif
+
                 _watchThread.join();
             }
         }
@@ -133,6 +143,8 @@ namespace mxl::lib
         int _inotifyFd;
         /// The epoll fd monitoring inotify
         int _epollFd;
+        /// The eventfd fd to wake up the epoll thread when a stop is requested
+        int _eventFd;
 #endif
 
         /// Map of watch descriptors to file records.  Multiple records could use the same watchfd
