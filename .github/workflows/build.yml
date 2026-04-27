@@ -70,7 +70,7 @@ jobs:
       - name: Build Base Image
         run: |
           docker build \
-            -f examples/Dockerfile.efa \
+            -f examples/Dockerfile.efa.base \
             -t ${{ steps.vars.outputs.gh_base }}/mxl-base:${{ steps.vars.outputs.tag }} \
             -t ${{ steps.vars.outputs.gh_base }}/mxl-base:latest \
             .
@@ -85,7 +85,7 @@ jobs:
         run: |
           docker build \
             --build-arg BASE_TAG=${TAG} \
-            -f examples/Dockerfile.writer.efa.txt \
+            -f examples/Dockerfile.efa.writer \
             -t ${{ steps.vars.outputs.gh_base }}/mxl-writer:${TAG} \
             -t ${ECR_REGISTRY}/${REPO}:${TAG} \
             -t ${ECR_REGISTRY}/${REPO}:latest \
@@ -103,7 +103,7 @@ jobs:
         run: |
           docker build \
             --build-arg BASE_TAG=${TAG} \
-            -f examples/Dockerfile.reader.efa.txt \
+            -f examples/Dockerfile.efa.reader \
             -t ${{ steps.vars.outputs.gh_base }}/mxl-reader:${TAG} \
             -t ${ECR_REGISTRY}/${REPO}:${TAG} \
             -t ${ECR_REGISTRY}/${REPO}:latest \
