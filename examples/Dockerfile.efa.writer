@@ -13,7 +13,7 @@ USER mxl
 WORKDIR /home/mxl
 
 # FIX: Copy from the mxl-base image (where we just put them) to your local home dir
-COPY --from=mxl-base:latest /usr/share/mxl/data/*.json /home/mxl/
+COPY --from=mxl-base /usr/share/mxl/data/*.json /home/mxl/
 
 # The binary mxl-gst-testsrc is already in /usr/bin from the base image
 CMD ["mxl-gst-testsrc", "-d", "/domain", "-v", "/home/mxl/v210_flow.json", "-a", "/home/mxl/audio_flow.json"]
