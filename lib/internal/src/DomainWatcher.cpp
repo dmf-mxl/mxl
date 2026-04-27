@@ -14,7 +14,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <uuid.h>
-#include <sys/eventfd.h>
 #include <mxl/platform.h>
 #include "mxl-internal/DiscreteFlowWriter.hpp"
 #include "mxl-internal/Logging.hpp"
@@ -25,6 +24,7 @@
 #   include <sys/event.h>
 #elif __linux__
 #   include <sys/epoll.h>
+#   include <sys/eventfd.h>
 #   include <sys/inotify.h>
 #endif
 
@@ -46,6 +46,7 @@ namespace mxl::lib
             auto const error = errno;
             throw std::system_error(error, std::generic_category(), "Failed to create a kqueue");
         }
+
 #elif defined __linux__
         _inotifyFd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
         if (_inotifyFd == -1)
@@ -377,8 +378,8 @@ namespace mxl::lib
         /* Set up a list of events to monitor. */
         constexpr unsigned int vnodeEvents = NOTE_DELETE | NOTE_WRITE | NOTE_ATTRIB;
 
-        _eventsToMonitor.resize(_watches.size());
-        _eventData.resize(_watches.size());
+        _eventsToMonitor.resize(_watches.size() + 1);
+        _eventData.resize(_watches.size() + 1);
 
         auto index = std::size_t{0};
 
@@ -388,6 +389,9 @@ namespace mxl::lib
                 &_eventsToMonitor[index], wd, EVFILT_VNODE, EV_ADD | EV_CLEAR, vnodeEvents, 0, std::bit_cast<void*>(static_cast<std::uintptr_t>(wd)));
             index++;
         }
+
+        // Set user a user event that signals the poll thread to exit
+        EV_SET(&_eventsToMonitor[_eventsToMonitor.size() - 1], USER_IDENT, EVFILT_USER, EV_ADD | EV_CLEAR, 0, 0, nullptr);
     }
 
     void DomainWatcher::processPendingEvents(int numEvents)
@@ -396,6 +400,12 @@ namespace mxl::lib
         auto time = currentTime(Clock::TAI);
         for (int eventIndex = 0; eventIndex < numEvents; eventIndex++)
         {
+            if (_eventData[eventIndex].ident == USER_IDENT)
+            {
+                MXL_DEBUG("Domain watcher thread exit requested");
+                continue;
+            }
+
             auto wd = static_cast<int>(std::bit_cast<std::uintptr_t>(_eventData[eventIndex].udata));
             auto [it, _] = _watches.equal_range(wd);
             if (it == _watches.end())

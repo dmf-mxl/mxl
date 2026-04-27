@@ -26,6 +26,9 @@
 
 namespace mxl::lib
 {
+#ifdef __APPLE__
+    constexpr static std::uintptr_t USER_IDENT = 0x13acab2142;
+#endif
 
     class DiscreteFlowWriter;
 
@@ -102,6 +105,14 @@ namespace mxl::lib
                 {
                     auto const error = errno;
                     MXL_ERROR("Failed to signal DomainWatcher stop request: {}", ::strerror(error));
+                }
+#elif __APPLE__
+                struct kevent kev{};
+                EV_SET(&kev, USER_IDENT, EVFILT_USER, 0, NOTE_TRIGGER, 0, nullptr);
+                if (::kevent(_kq, &kev, 1, nullptr, 0, nullptr) < 0)
+                {
+                    auto const error = errno;
+                    MXL_WARN("Failed so signal DomainWatcher stop request: {}", std::strerror(error));
                 }
 #endif
 
