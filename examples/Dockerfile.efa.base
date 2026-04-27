@@ -1,4 +1,3 @@
-
 # SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 # SPDX-License-Identifier: Apache-2.0
 
@@ -77,6 +76,10 @@ COPY --from=libfabric-build /usr/include/rdma/ /usr/include/rdma/
 COPY --from=libfabric-build /usr/include/rdma/fi_errno.h /usr/include/rdma/
 COPY --from=builder /usr/lib/x86_64-linux-gnu/libmxl* /usr/lib/x86_64-linux-gnu/
 COPY --from=builder /usr/bin/mxl-* /usr/bin/
+
+# ADD THIS LINE: Copy the test data from the builder stage into the final base image
+COPY --from=builder /home/mxl/mxl/lib/tests/data/*.json /usr/share/mxl/data/
+
 USER mxl
 WORKDIR /home/mxl
 ENTRYPOINT ["/bin/bash", "-c"]

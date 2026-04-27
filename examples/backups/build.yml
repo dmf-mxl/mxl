@@ -1,0 +1,368 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+name: Build, Test and Deploy the MXL Project
+
+on:
+  push:
+    branches:
+      - qvest
+      - feature/mxl-compile-push-ecr
+  pull_request:
+  workflow_dispatch:  # manual trigger support
+
+permissions:
+  contents: read
+  issues: read
+  checks: write
+  pull-requests: write
+  packages: write
+  id-token: write  # OIDC token for AWS
+
+jobs:
+  build_c_cxx:
+    name: Build C library on Ubuntu ${{ matrix.os }} - ${{matrix.version}} - ${{ matrix.architecture }} - ${{ matrix.compiler }}
+    runs-on: ubuntu-latest
+    environment: aws
+    strategy:
+      matrix:
+          os: [ubuntu]
+          version: [24.04]
+          architecture: [x86_64] # Removed arm64 to speed up CI, can be re-added if needed
+          compiler: [Linux-Clang-Release] # Removed Linux-GCC-Release to speed up CI, can be re-added if needed
+
+    env:
+      DOCKER_BUILDKIT: 1
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg_cache,readwrite
+      AWS_REGION: eu-central-1
+      AWS_ECR_ROLE_TO_ASSUME: arn:aws:iam::720180693591:role/github-ecr-push-role
+
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: REUSE Compliance Check
+        uses: fsfe/reuse-action@v5
+
+      - name: Initialize Git Submodules (if needed)
+        run: git submodule update --init --recursive
+
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          # role-to-assume: ${{ env.AWS_ECR_ROLE_TO_ASSUME }}
+          # aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::720180693591:role/github-ecr-push-role
+          aws-region: eu-central-1
+          audience: sts.amazonaws.com
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Calculate Docker image hash
+        id: docker-hash
+        run: |
+          # Create a hash based on Dockerfile content and matrix parameters
+          HASH_INPUT=$(cat -- .devcontainer/Dockerfile $(find .devcontainer/scripts/ -type f) vcpkg.json)
+          HASH_INPUT="${HASH_INPUT}${{ matrix.version }}${{ matrix.architecture }}${{ matrix.compiler }}"
+          DOCKER_HASH=$(echo -n "$HASH_INPUT" | sha256sum | cut -d' ' -f1)
+          echo "hash=$DOCKER_HASH" >> $GITHUB_OUTPUT
+          echo "image-tag=ghcr.io/${{ github.repository_owner }}/mxl-build:$DOCKER_HASH" >> $GITHUB_OUTPUT
+
+      - name: Check if Docker image exists
+        id: check-image
+        run: |
+          if docker manifest inspect ${{ steps.docker-hash.outputs.image-tag }} >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Docker image ${{ steps.docker-hash.outputs.image-tag }} already exists"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Docker image ${{ steps.docker-hash.outputs.image-tag }} does not exist"
+          fi
+
+      - name: Get runner UID and GID
+        id: vars
+        run: |
+          echo "uid=$(id -u)" >> $GITHUB_OUTPUT
+          echo "gid=$(id -g)" >> $GITHUB_OUTPUT
+
+      - name: Set workspace permissions for access in the devcontainer
+        run: |
+          mkdir -p ${{ github.workspace }}/build
+          chmod 777 ${{ github.workspace }}/build
+          chmod g+s ${{ github.workspace }}/build
+          mkdir -p ${{ github.workspace }}/install
+          chmod 777 ${{ github.workspace }}/install
+          chmod g+s ${{ github.workspace }}/install
+
+      - name: Build Docker image
+        if: steps.check-image.outputs.exists == 'false'
+        run: |
+          docker build \
+            --build-arg BASE_IMAGE_VERSION=${{ matrix.version }} \
+            --build-arg USER_UID=${{ steps.vars.outputs.uid }} \
+            --build-arg USER_GID=${{ steps.vars.outputs.gid }} \
+            -t ${{ steps.docker-hash.outputs.image-tag }} \
+            -t mxl_build_container_with_source \
+            -f examples/Dockerfile.efa \
+            .
+
+      - name: Check if PR comes from a fork
+        id: is-fork-check
+        run: |
+          if [[ "${{ github.event.pull_request.head.repo.fork }}" == "true" ]]; then
+            echo "This pull request originates from a forked repository."
+            echo "is-fork=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "This pull request originates from the base repository."
+            echo "is-fork=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push Docker image to registry
+        if: steps.check-image.outputs.exists == 'false' && steps.is-fork-check.outputs.is-fork == 'false'
+        run: |
+          docker push ${{ steps.docker-hash.outputs.image-tag }}
+
+      - name: Pull Docker image from registry
+        if: steps.check-image.outputs.exists == 'true'
+        run: |
+          docker pull ${{ steps.docker-hash.outputs.image-tag }}
+          docker tag ${{ steps.docker-hash.outputs.image-tag }} mxl_build_container_with_source
+
+      - name: Run clang-format
+        run: |
+          docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
+            -i mxl_build_container_with_source \
+            bash -c "
+              cd /workspace/mxl && \
+              find lib tools -iregex '.*\.\(h\|c\|hpp\|cpp\)' | xargs clang-format --dry-run --Werror
+            "
+
+      - name: Restore vcpkg cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg_cache
+          key: vcpkg-${{ steps.docker-hash.outputs.image-tag }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: vcpkg-${{ steps.docker-hash.outputs.image-tag }}-
+
+      - name: Configure CMake
+        run: |
+          docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
+            -e VCPKG_BINARY_SOURCES="clear;files,/workspace/mxl/vcpkg_cache,readwrite" \
+            -i mxl_build_container_with_source \
+            bash -c "
+              cmake -S /workspace/mxl -B /workspace/mxl/build/${{ matrix.compiler }} \
+                --preset ${{ matrix.compiler }} \
+                -DMXL_BUILD_NUMBER=${{ github.run_number }} \
+                -DCMAKE_INSTALL_PREFIX=/workspace/mxl/install
+            "
+
+      - name: Save vcpkg cache
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg_cache
+          key: vcpkg-${{ steps.docker-hash.outputs.image-tag }}-${{ hashFiles('vcpkg.json') }}
+
+      - name: Build Project
+        run: |
+          docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
+            -i mxl_build_container_with_source \
+            bash -c "
+              cmake --build /workspace/mxl/build/${{ matrix.compiler }} -t all doc install package
+            "
+
+      - name: Run Tests
+        run: |
+          docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
+            -i mxl_build_container_with_source \
+            bash -c "
+              cd /workspace/mxl/build/${{ matrix.compiler }} && \
+              ctest --output-junit test-results.xml
+            "
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: |
+            **/test-results.xml
+
+      - name: Build and push EFA Docker images to ECR
+        if: |
+          steps.is-fork-check.outputs.is-fork == 'false' && 
+          github.event_name == 'push' 
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY_WRITER: ${{ vars.ECR_REPOSITORY_WRITER }}
+          ECR_REPOSITORY_READER: ${{ vars.ECR_REPOSITORY_READER }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Build writer image
+          docker build -f examples/Dockerfile.writer.efa.txt -t ${ECR_REGISTRY}/${ECR_REPOSITORY_WRITER}:${IMAGE_TAG} .
+          docker push ${ECR_REGISTRY}/${ECR_REPOSITORY_WRITER}:${IMAGE_TAG}
+          docker tag ${ECR_REGISTRY}/${ECR_REPOSITORY_WRITER}:${IMAGE_TAG} ${ECR_REGISTRY}/${ECR_REPOSITORY_WRITER}:latest
+          docker push ${ECR_REGISTRY}/${ECR_REPOSITORY_WRITER}:latest
+
+          # Build reader image
+          docker build -f examples/Dockerfile.reader.efa.txt -t ${ECR_REGISTRY}/${ECR_REPOSITORY_READER}:${IMAGE_TAG} .
+          docker push ${ECR_REGISTRY}/${ECR_REPOSITORY_READER}:${IMAGE_TAG}
+          docker tag ${ECR_REGISTRY}/${ECR_REPOSITORY_READER}:${IMAGE_TAG} ${ECR_REGISTRY}/${ECR_REPOSITORY_READER}:latest
+          docker push ${ECR_REGISTRY}/${ECR_REPOSITORY_READER}:latest
+
+  build_rust:
+    name: Build Rust bindings on Ubuntu ${{ matrix.os }} - ${{matrix.version}} - ${{ matrix.architecture }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+          os: [ubuntu] 
+          version: [24.04]
+          architecture: [x86_64] # Removed arm64 to speed up CI, can be re-added if needed
+          compiler: [Linux-GCC-Release] # Removed Linux-Clang-Release to speed up CI, can be re-added if needed
+
+    env:
+      DOCKER_BUILDKIT: 1
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg_cache,readwrite
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: REUSE Compliance Check
+        uses: fsfe/reuse-action@v5
+
+      - name: Initialize Git Submodules (if needed)
+        run: git submodule update --init --recursive
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Calculate Docker image hash
+        id: docker-hash
+        run: |
+          # Create a hash based on Dockerfile content and matrix parameters
+          HASH_INPUT=$(cat -- .devcontainer/Dockerfile $(find .devcontainer/scripts/ -type f) vcpkg.json)
+          HASH_INPUT="${HASH_INPUT}${{ matrix.version }}${{ matrix.architecture }}${{ matrix.compiler }}"
+          DOCKER_HASH=$(echo -n "$HASH_INPUT" | sha256sum | cut -d' ' -f1)
+          echo "hash=$DOCKER_HASH" >> $GITHUB_OUTPUT
+          echo "image-tag=ghcr.io/${{ github.repository_owner }}/mxl-build:$DOCKER_HASH" >> $GITHUB_OUTPUT
+
+      - name: Check if Docker image exists
+        id: check-image
+        run: |
+          if docker manifest inspect ${{ steps.docker-hash.outputs.image-tag }} >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Docker image ${{ steps.docker-hash.outputs.image-tag }} already exists"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Docker image ${{ steps.docker-hash.outputs.image-tag }} does not exist"
+          fi
+
+      - name: Get runner UID and GID
+        id: vars
+        run: |
+          echo "uid=$(id -u)" >> $GITHUB_OUTPUT
+          echo "gid=$(id -g)" >> $GITHUB_OUTPUT
+          mkdir -p ${{ github.workspace }}/build
+          chmod 777 ${{ github.workspace }}/build
+          chmod g+s ${{ github.workspace }}/build
+
+      - name: Set workspace permissions for access in the devcontainer
+        run: |
+          mkdir -p ${{ github.workspace }}/rust/target
+          chmod 777 ${{ github.workspace }}/rust/target
+          chmod g+s ${{ github.workspace }}/rust/target
+
+      - name: Build Docker image
+        if: steps.check-image.outputs.exists == 'false'
+        run: |
+          docker build \
+            --build-arg BASE_IMAGE_VERSION=${{ matrix.version }} \
+            --build-arg USER_UID=${{ steps.vars.outputs.uid }} \
+            --build-arg USER_GID=${{ steps.vars.outputs.gid }} \
+            -t ${{ steps.docker-hash.outputs.image-tag }} \
+            -t mxl_build_container_with_source \
+            -f .devcontainer/Dockerfile \
+            .devcontainer
+
+      - name: Check if PR comes from a fork
+        id: is-fork-check
+        run: |
+          if [[ "${{ github.event.pull_request.head.repo.fork }}" == "true" ]]; then
+            echo "This pull request originates from a forked repository."
+            echo "is-fork=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "This pull request originates from the base repository."
+            echo "is-fork=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push Docker image to registry
+        if: steps.check-image.outputs.exists == 'false' && steps.is-fork-check.outputs.is-fork == 'false'
+        run: |
+          docker push ${{ steps.docker-hash.outputs.image-tag }}
+
+      - name: Pull Docker image from registry
+        if: steps.check-image.outputs.exists == 'true'
+        run: |
+          docker pull ${{ steps.docker-hash.outputs.image-tag }}
+          docker tag ${{ steps.docker-hash.outputs.image-tag }} mxl_build_container_with_source
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-lint-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: ${{ runner.os }}-cargo-lint-
+
+      - name: Check the Rust bindings
+        env:
+          RUSTFLAGS: "-Dwarnings"
+        run: |
+          docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
+            -i mxl_build_container_with_source \
+            bash -c "
+              cd /workspace/mxl/rust && \
+              cargo fmt -- --check && \
+              cargo clippy --all-targets --all-features --locked -- -D warnings && \
+              cargo audit && \
+              cargo outdated && \
+              cargo machete && \
+              cargo deny check all
+            "
+
+      - name: Build Rust bindings
+        run: |
+          docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
+            -i mxl_build_container_with_source \
+            bash -c "
+              cd /workspace/mxl/rust && \
+              cargo build --release --all-targets --locked
+            "
+
+      - name: Test the Rust bindings
+        run: |
+          docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
+            -i mxl_build_container_with_source \
+            bash -c "
+              cd /workspace/mxl/rust && \
+              cargo nextest run --release --locked
+            "

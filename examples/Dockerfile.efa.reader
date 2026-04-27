@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+
+ARG BASE_TAG=latest
+FROM ghcr.io/qvest-digital/mxl-base:${BASE_TAG} AS mxl-base
+
+# Reader-specific: Add the fake-reader script [cite: 5]
+COPY examples/scripts/fake-reader.sh /home/mxl/fake-reader.sh
+
+# The binary mxl-info is already in /usr/bin from the base image 
+# We use the standard system path, no patchelf needed.
+CMD ["sh", "-c", "while true; do mxl-info -d /domain -l || true; sleep 2; done"] [cite: 10]
