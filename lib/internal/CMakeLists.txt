@@ -17,11 +17,31 @@ target_include_directories(mxl-internal-headers
 target_link_libraries(mxl-internal-headers
         INTERFACE
             mxl-headers
-            stduuid
-            spdlog::spdlog
-            fmt::fmt
-            picojson::picojson
     )
+
+# These dependencies are only needed while building mxl itself. They are
+# not part of the installed link interface for either shared or static builds.
+target_link_libraries(mxl-internal-headers
+        INTERFACE
+            $<BUILD_INTERFACE:stduuid>
+            $<BUILD_INTERFACE:picojson::picojson>
+    )
+# Shared builds link these privately into the library, so the installed
+# package should not expose them. Static builds must keep them in the
+# exported interface so consumers know what to link.
+if(BUILD_SHARED_LIBS)
+    target_link_libraries(mxl-internal-headers
+            INTERFACE
+                $<BUILD_INTERFACE:spdlog::spdlog>
+                $<BUILD_INTERFACE:fmt::fmt>
+        )
+else()
+    target_link_libraries(mxl-internal-headers
+            INTERFACE
+                spdlog::spdlog
+                fmt::fmt
+        )
+endif()
 
 # Common code, used by both the libmxl and libmxl-fabrics library
 # linking this does not give access to the internal headers.
@@ -106,12 +126,14 @@ install(TARGETS mxl-common EXPORT ${PROJECT_NAME}-targets
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
 
-# Exported because mxl-common depends on this INTERFACE
-# target. INTERFACE targets install no files.
-install(TARGETS mxl-internal-headers
-        EXPORT ${PROJECT_NAME}-targets
-        COMPONENT ${PROJECT_NAME}-dev
-    )
+# Static installs need this exported interface target because mxl-common's
+# imported link interface refers to it. Shared installs do not export it.
+if (NOT BUILD_SHARED_LIBS)
+    install(TARGETS mxl-internal-headers
+            EXPORT ${PROJECT_NAME}-targets
+            COMPONENT ${PROJECT_NAME}-dev
+        )
+endif()
 
 if (BUILD_TESTS)
     add_subdirectory(tests)

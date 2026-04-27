@@ -15,7 +15,12 @@ namespace mxl::lib
         , _flowData{std::move(data)}
         , _channelCount{_flowData->channelCount()}
         , _bufferLength{_flowData->channelBufferLength()}
-    {}
+    {
+        if (!checkPermissions())
+        {
+            throw std::runtime_error{"Flow is not accessible due to insufficient permissions."};
+        }
+    }
 
     FlowData const& PosixContinuousFlowReader::getFlowData() const
     {

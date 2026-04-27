@@ -102,7 +102,7 @@ struct MockFlowFiles
 struct MockWriter : mxl::lib::DiscreteFlowWriter
 {
     MockWriter(std::filesystem::path const& domain, uuids::uuid id, DomainWatcher::ptr const& watcher)
-        : mxl::lib::DiscreteFlowWriter(id)
+        : mxl::lib::DiscreteFlowWriter{id, domain}
         , _info{}
         , _id{id}
         , _watcher{watcher}

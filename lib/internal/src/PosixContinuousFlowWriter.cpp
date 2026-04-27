@@ -8,8 +8,9 @@
 
 namespace mxl::lib
 {
-    PosixContinuousFlowWriter::PosixContinuousFlowWriter(FlowManager const&, uuids::uuid const& flowId, std::unique_ptr<ContinuousFlowData>&& data)
-        : ContinuousFlowWriter{flowId}
+    PosixContinuousFlowWriter::PosixContinuousFlowWriter(FlowManager const& manager, uuids::uuid const& flowId,
+        std::unique_ptr<ContinuousFlowData>&& data)
+        : ContinuousFlowWriter{flowId, manager.getDomain()}
         , _flowData{std::move(data)}
         , _channelCount{_flowData->channelCount()}
         , _bufferLength{_flowData->channelBufferLength()}
@@ -18,6 +19,10 @@ namespace mxl::lib
         , _earlySyncThreshold{}
         , _lastSyncSampleBatch{}
     {
+        if (!checkPermissions())
+        {
+            throw std::runtime_error{"Flow is not accessible due to insufficient permissions."};
+        }
         if (_flowData)
         {
             auto const& commonFlowConfigInfo = _flowData->flowInfo()->config.common;
