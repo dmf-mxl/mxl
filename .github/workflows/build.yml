@@ -31,6 +31,7 @@ jobs:
     env:
       DOCKER_BUILDKIT: 1
       AWS_REGION: eu-central-1
+      GH_REGISTRY: ghcr.io/${{ github.repository_owner }}
 
     steps:
       - name: Checkout repository
@@ -66,15 +67,18 @@ jobs:
           fi
           echo "gh_base=ghcr.io/${{ github.repository_owner }}" >> $GITHUB_OUTPUT
 
-      # Step 1: Build and Push the Base Image
-      - name: Build Base Image
-        run: |
-          docker build \
-            -f examples/Dockerfile.efa.base \
-            -t ${{ steps.vars.outputs.gh_base }}/mxl-base:${{ steps.vars.outputs.tag }} \
-            -t ${{ steps.vars.outputs.gh_base }}/mxl-base:latest \
-            .
-          docker push ${{ steps.vars.outputs.gh_base }}/mxl-base:${{ steps.vars.outputs.tag }}
+      # Step 1: Build and Push the Base Image (With Caching)
+      - name: Build and Push Base Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: examples/Dockerfile.efa
+          push: true
+          tags: |
+            ${{ env.GH_REGISTRY }}/mxl-base:${{ steps.vars.outputs.tag }}
+            ${{ env.GH_REGISTRY }}/mxl-base:latest
+          cache-from: type=registry,ref=${{ env.GH_REGISTRY }}/mxl-base:buildcache
+          cache-to: type=registry,ref=${{ env.GH_REGISTRY }}/mxl-base:buildcache,mode=max
 
       # Step 2: Build and Push Writer Image (Inherits from Base)
       - name: Build and Push Writer
