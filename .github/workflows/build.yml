@@ -74,7 +74,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: examples/Dockerfile.efa
+          file: examples/Dockerfile.efa.base
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/mxl-base:${{ steps.vars.outputs.tag }}
