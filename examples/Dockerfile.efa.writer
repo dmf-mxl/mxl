@@ -1,19 +1,43 @@
 # SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 # SPDX-License-Identifier: Apache-2.0
 
-ARG BASE_TAG=latest
-FROM ghcr.io/qvest-digital/mxl-base:${BASE_TAG} AS mxl-base
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
 
-# Switch to root to install writer-specific requirements
+ARG BASE_TAG=latest
+FROM ghcr.io/qvest-digital/mxl-base:${BASE_TAG}
+
+# Switch to root to install writer-specific requirements and move files
 USER 0:0
 RUN apt-get update && apt-get install -y gstreamer1.0-x && rm -rf /var/lib/apt/lists/*
+
+# Move the JSON files that were added to the base image during its build
+# This avoids the circular dependency error
+RUN mkdir -p /home/mxl && \
+    cp /usr/share/mxl/data/*.json /home/mxl/ && \
+    chown -R mxl:mxl /home/mxl/
 
 # Switch back to the mxl user
 USER mxl
 WORKDIR /home/mxl
 
-# FIX: Copy from the mxl-base image (where we just put them) to your local home dir
-COPY --from=mxl-base /usr/share/mxl/data/*.json /home/mxl/
-
-# The binary mxl-gst-testsrc is already in /usr/bin from the base image
+# Use the binary installed in /usr/bin by the base image
 CMD ["mxl-gst-testsrc", "-d", "/domain", "-v", "/home/mxl/v210_flow.json", "-a", "/home/mxl/audio_flow.json"]
+
+
+# ARG BASE_TAG=latest
+# FROM ghcr.io/qvest-digital/mxl-base:${BASE_TAG} AS mxl-base
+
+# # Switch to root to install writer-specific requirements
+# USER 0:0
+# RUN apt-get update && apt-get install -y gstreamer1.0-x && rm -rf /var/lib/apt/lists/*
+
+# # Switch back to the mxl user
+# USER mxl
+# WORKDIR /home/mxl
+
+# # FIX: Copy from the mxl-base image (where we just put them) to your local home dir
+# COPY --from=mxl-base /usr/share/mxl/data/*.json /home/mxl/
+
+# # The binary mxl-gst-testsrc is already in /usr/bin from the base image
+# CMD ["mxl-gst-testsrc", "-d", "/domain", "-v", "/home/mxl/v210_flow.json", "-a", "/home/mxl/audio_flow.json"]
