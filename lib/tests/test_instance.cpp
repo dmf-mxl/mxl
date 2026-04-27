@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+#include <array>
+#include <filesystem>
 #include <uuid.h>
 #include <catch2/catch_test_macros.hpp>
 #include <mxl/flow.h>
@@ -18,6 +20,19 @@ namespace
         struct statfs buf;
         REQUIRE(statfs(path, &buf) == 0);
         return (buf.f_type == TMPFS_MAGIC) || (buf.f_type == RAMFS_MAGIC);
+    }
+
+    std::filesystem::path findNonTmpFsPath()
+    {
+        for (auto const* candidate : std::array{"/var/tmp", "/var", "/home"})
+        {
+            struct statfs buf{};
+            if (::statfs(candidate, &buf) != 0)
+                continue;
+            if (buf.f_type != TMPFS_MAGIC && buf.f_type != RAMFS_MAGIC)
+                return std::filesystem::path{candidate};
+        }
+        return {};
     }
 }
 #endif
@@ -52,6 +67,20 @@ TEST_CASE("mxlIsTmpFs detects /dev/shm as tmpfs on Linux", "[mxlIsTmpFs]")
     bool isTmpFs = false;
     REQUIRE(mxlIsTmpFs("/dev/shm", &isTmpFs) == MXL_STATUS_OK);
     REQUIRE(isTmpFs);
+}
+
+TEST_CASE("mxlCreateInstance returns NULL for non-tmpfs domain", "[mxlCreateInstance]")
+{
+    auto const base = findNonTmpFsPath();
+    if (base.empty())
+        SKIP("No non-tmpfs filesystem found on this system");
+
+    auto const domain = base / "mxl_test_non_tmpfs";
+    std::filesystem::create_directories(domain);
+    auto cleanup = std::shared_ptr<void>(nullptr, [&](void*) { std::filesystem::remove_all(domain); });
+
+    auto instance = mxlCreateInstance(domain.string().c_str(), nullptr);
+    REQUIRE(instance == nullptr);
 }
 #endif
 

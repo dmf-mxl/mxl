@@ -46,6 +46,13 @@ mxlInstance mxlCreateInstance(char const* in_mxlDomain, char const* in_options)
 {
     try
     {
+        bool isTmpFs = false;
+        if (mxlIsTmpFs(in_mxlDomain, &isTmpFs) == MXL_STATUS_OK && !isTmpFs)
+        {
+            MXL_ERROR("Domain '{}' is not on a tmpfs filesystem", in_mxlDomain);
+            return nullptr;
+        }
+
         auto const opts = (in_options != nullptr) ? in_options : "";
         auto domainWatcher = std::make_shared<mxl::lib::DomainWatcher>(in_mxlDomain);
         auto flowIoFactory = std::make_unique<mxl::lib::PosixFlowIoFactory>(domainWatcher);
