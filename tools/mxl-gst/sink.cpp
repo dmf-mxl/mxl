@@ -87,9 +87,30 @@ namespace
             MXL_INFO("Staring pipeline with base time: {} ns", _mxlBaseTime);
         }
 
-        void pushBuffer(GstBuffer* buffer, std::uint64_t now) noexcept
+        // The provided bufferTimestamp will be used to calculate the PTS of the buffer. For video, this should be the time when to show the frame to
+        // the user. For audio, this should be the time of the first sample in the buffer. These values should be based on the MXL origination time of
+        // the data used to construct the buffer.
+        void pushBuffer(GstBuffer* buffer, std::uint64_t bufferTimestampNs) const noexcept
         {
-            GST_BUFFER_PTS(buffer) = now - _mxlBaseTime;
+            // The PTS value is relative to the start of the pipeline (running time).
+            // By definition of how MXL works, all the data read from MXL have origination time in the past. When presenting the data to the user, we
+            // have to be presenting them slightly in the future. We adjust the PTS dynamically to make sure the playback stays smooth, but also that
+            // we present the data with the lowest possible latency.
+
+            constexpr auto const MIN_PTS_OFFSET_NS = std::uint64_t{1'000'000}; // We want all the data to be presented 1 ms in the future.
+            auto const runningTime = gst_element_get_current_running_time(_pipeline);
+            auto currentPtsOffset = std::uint64_t{_ptsOffset};
+            auto pts = bufferTimestampNs - _mxlBaseTime + currentPtsOffset;
+            if (pts < runningTime + MIN_PTS_OFFSET_NS)
+            {
+                auto const newPtsOffset = runningTime + MIN_PTS_OFFSET_NS + _mxlBaseTime - bufferTimestampNs;
+                if (_ptsOffset.compare_exchange_strong(currentPtsOffset, newPtsOffset))
+                {
+                    MXL_INFO("Pipeline(s) PTS offset adjusted to {} ns.", newPtsOffset);
+                    pts = bufferTimestampNs - _mxlBaseTime + newPtsOffset;
+                }
+            }
+            GST_BUFFER_PTS(buffer) = pts;
 
             int ret;
             ::g_signal_emit_by_name(_appSource, "push-buffer", buffer, &ret);
@@ -97,6 +118,11 @@ namespace
             {
                 MXL_ERROR("Could not push buffer to application source.");
             }
+        }
+
+        constexpr static void setPtsOffset(std::uint64_t newPtsOffset) noexcept
+        {
+            _ptsOffset.store(newPtsOffset);
         }
 
     protected:
@@ -148,6 +174,7 @@ namespace
             // The clock returned by gst_pipeline_get_clock() is not guaranteed to be of type
             // GstSystemClock, which would make setting the clock-type a noop. So we create a
             // new clock with the necessary type and make the pipeline use that.
+            // Using the same type of clock as MXL (TAI clock) will make sure we won't drift away from MXL.
             if (auto const clock = GST_CLOCK(::g_object_new(GST_TYPE_SYSTEM_CLOCK, "name", "mxl-tai-clock", nullptr)); clock != nullptr)
             {
                 ::gst_object_ref_sink(clock);
@@ -178,7 +205,11 @@ namespace
         GstElement* _pipeline;
         GstElement* _appSource;
         std::uint64_t _mxlBaseTime;
+        // Has to be shared by all the pipelines, to make sure that we do not introduce audio / video offset.
+        static std::atomic<std::uint64_t> _ptsOffset;
     };
+
+    std::atomic<std::uint64_t> GstreamerPipeline::_ptsOffset = 0;
 
     class VideoPipeline : public GstreamerPipeline
     {
@@ -420,7 +451,7 @@ namespace
                             std::memcpy(map.data, payload, grainInfo.grainSize);
                             ::gst_buffer_unmap(buffer, &map);
 
-                            gstPipeline.pushBuffer(buffer, ::mxlIndexToTimestamp(&rate, cursor.currentIndex() + 1U));
+                            gstPipeline.pushBuffer(buffer, ::mxlIndexToTimestamp(&rate, cursor.requestedIndex()));
 
                             ::gst_buffer_unref(buffer);
                         }
@@ -572,7 +603,8 @@ namespace
 
                     ::gst_audio_buffer_unmap(&audioBuffer);
 
-                    gstPipeline.pushBuffer(buffer, ::mxlIndexToTimestamp(&rate, cursor.requestedIndex() + windowSize));
+                    auto const firstSampleIndex = cursor.requestedIndex() - windowSize + 1;
+                    gstPipeline.pushBuffer(buffer, ::mxlIndexToTimestamp(&rate, firstSampleIndex));
 
                     ::gst_buffer_unref(buffer);
 
@@ -863,9 +895,22 @@ namespace
             "means you are delaying video.");
         audioVideoOffsetOpt->default_val(0);
 
+        auto ptsOffset = std::uint64_t{};
+        auto ptsOffsetOpt = app.add_option("--pts-offset",
+            ptsOffset,
+            "The time in nanoseconds, by which to delay playback of grains compared to their MXL based timestamps. This sets the \
+             initial value, which will get auto-increased to prevent PTS from the past.");
+        ptsOffsetOpt->default_val(0);
+
         CLI11_PARSE(app, argc, argv);
 
         ::gst_init(nullptr, nullptr);
+
+        if (ptsOffset > 0)
+        {
+            MXL_INFO("Pipeline(s) PTS offset initialized to {} ns.", ptsOffset);
+            GstreamerPipeline::setPtsOffset(ptsOffset);
+        }
 
         auto threads = std::vector<std::thread>{};
 
