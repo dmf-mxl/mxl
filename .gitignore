@@ -3,6 +3,8 @@
 
 build
 .cache
+claude.md
+.claude/
 install
 
 CMakeUserPresets.json

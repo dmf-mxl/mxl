@@ -6,6 +6,7 @@ FROM debian:trixie-slim AS base
 RUN apt-get update && apt-get install -y \
    gstreamer1.0-plugins-good \
    gstreamer1.0-plugins-base \
+   gstreamer1.0-plugins-bad \
    curl zip unzip tar \
    dumb-init \
    librdmacm1t64 libibverbs1 \
@@ -74,7 +75,8 @@ COPY --from=libfabric-build /usr/lib/libfabric.so* /usr/lib/
 COPY --from=libfabric-build /usr/lib/pkgconfig/libfabric.pc /usr/lib/pkgconfig/
 COPY --from=libfabric-build /usr/include/rdma/ /usr/include/rdma/
 COPY --from=libfabric-build /usr/include/rdma/fi_errno.h /usr/include/rdma/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libmxl* /usr/lib/x86_64-linux-gnu/
+RUN --mount=type=bind,from=builder,target=/builder \
+    cp -a /builder/usr/lib/$(uname -m)-linux-gnu/libmxl* /usr/lib/$(uname -m)-linux-gnu/
 COPY --from=builder /usr/bin/mxl-* /usr/bin/
 
 # ADD THIS LINE: Copy the test data from the builder stage into the final base image

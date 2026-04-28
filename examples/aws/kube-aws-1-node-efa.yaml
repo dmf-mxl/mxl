@@ -63,8 +63,8 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              /app/mxl-gst-sink -d /domain -v 5fbec3b1-1b0f-417d-9059-8b94a47197ed &
-              while true; do /app/mxl-info -d /domain -l || true; sleep 2; done
+              /usr/bin/mxl-gst-sink -d /domain -v 5fbec3b1-1b0f-417d-9059-8b94a47197ed &
+              while true; do /usr/bin/mxl-info -d /domain -l || true; sleep 2; done
           env:
             - name: FI_PROVIDER
               value: sockets

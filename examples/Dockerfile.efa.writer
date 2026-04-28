@@ -21,5 +21,5 @@ RUN mkdir -p /home/mxl && \
 USER mxl
 WORKDIR /home/mxl
 
-# Use the binary installed in /usr/bin by the base image
-CMD ["mxl-gst-testsrc", "-d", "/domain", "-v", "/home/mxl/v210_flow.json", "-a", "/home/mxl/audio_flow.json"]
+ENTRYPOINT []
+CMD ["/usr/bin/mxl-gst-testsrc", "-d", "/domain", "-v", "/home/mxl/v210_flow.json", "-a", "/home/mxl/audio_flow.json"]
