@@ -29,7 +29,7 @@ target_link_libraries(mxl-tests
         PRIVATE
             mxl
             mxl-internal-headers
-            mxl-common
+            mxl-internal-objects
     )
 
 if (NOT TARGET Catch2::Catch2WithMain)
