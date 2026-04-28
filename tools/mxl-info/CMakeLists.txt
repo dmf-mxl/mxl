@@ -40,9 +40,13 @@ if (NOT TARGET picojson::picojson)
     find_package(picojson REQUIRED)
 endif()
 
+if (NOT TARGET ada::ada)
+    find_package(ada CONFIG REQUIRED)
+endif ()
+
 target_link_libraries(mxl-info
         PRIVATE
-            simple_uri_parser
+            ada::ada
             stduuid
             fmt::fmt
             picojson::picojson

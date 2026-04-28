@@ -34,10 +34,14 @@ if (NOT TARGET picojson::picojson)
     find_package(picojson REQUIRED)
 endif ()
 
+if (NOT TARGET ada::ada)
+    find_package(ada CONFIG REQUIRED)
+endif ()
+
 target_link_libraries(mxl-data-probe
         PRIVATE
             mxl
-            simple_uri_parser
+            ada::ada
             CLI11::CLI11
             fmt::fmt
             picojson::picojson

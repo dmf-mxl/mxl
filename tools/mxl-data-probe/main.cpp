@@ -12,13 +12,13 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <ada.h>
 #include <CLI/CLI.hpp>
 #include <fmt/format.h>
 #include <picojson/picojson.h>
 #include <mxl/flow.h>
 #include <mxl/flowinfo.h>
 #include <mxl/mxl.h>
-#include "uri_parser.h"
 
 namespace
 {
@@ -77,7 +77,7 @@ namespace
         ScopedMxlInstance& operator=(ScopedMxlInstance const&) = delete;
 
         [[nodiscard]]
-        ::mxlInstance get() const noexcept
+        constexpr ::mxlInstance get() const noexcept
         {
             return _instance;
         }
@@ -472,25 +472,32 @@ int main(int argc, char** argv)
     // URI will overwrite any other redundant options. Parse the URI after CLI11 parsing.
     if (!address.empty())
     {
-        auto const parsedUri = uri::parse_uri(address.at(0));
+        auto const parsedUri = ada::parse<ada::url_aggregator>(address.at(0));
+        if (!parsedUri)
+        {
+            fmt::print(stderr, "ERROR: Invalid MXL URI.\n");
+            return EXIT_FAILURE;
+        }
 
-        if (parsedUri.path.empty())
+        auto const path = parsedUri->get_pathname();
+        if (path.empty())
         {
             fmt::print(stderr, "ERROR: Domain must be specified in the MXL URI.\n");
             return EXIT_FAILURE;
         }
 
-        if (!parsedUri.authority.host.empty() || (parsedUri.authority.port != 0))
+        if (!parsedUri->get_hostname().empty() || !parsedUri->get_port().empty())
         {
             fmt::print(stderr, "ERROR: Authority/port not currently supported in MXL URI.\n");
             return EXIT_FAILURE;
         }
 
-        domain = parsedUri.path;
+        domain = std::string{path};
 
-        if (auto const idIter = parsedUri.query.find("id"); idIter != parsedUri.query.end())
+        auto query = ada::url_search_params{parsedUri->get_search()};
+        if (auto const id = query.get("id"))
         {
-            flowId = idIter->second;
+            flowId = std::string{*id};
         }
     }
 

@@ -30,6 +30,10 @@
       "version>=": "2.6.1#0"
     },
     {
+      "name": "ada-url",
+      "version>=": "3.4.4#0"
+    },
+    {
       "name": "pcapplusplus",
       "version>=": "25.5#0",
       "platform": "linux"
