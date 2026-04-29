@@ -19,7 +19,7 @@ spec:
       containers:
         - name: writer-container
           image: 720180693591.dkr.ecr.eu-central-1.amazonaws.com/mxl-writer:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           env:
             - name: FI_PROVIDER
               value: efa
@@ -56,10 +56,21 @@ spec:
       labels:
         app: reader-media-function-efa
     spec:
+      tolerations:
+        - key: vpc.amazonaws.com/efa
+          operator: Exists
+          effect: NoSchedule
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: writer-media-function-efa
+              topologyKey: kubernetes.io/hostname
       containers:
         - name: reader-container
           image: 720180693591.dkr.ecr.eu-central-1.amazonaws.com/mxl-reader:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           command: ["/bin/sh", "-c"]
           args:
             - |

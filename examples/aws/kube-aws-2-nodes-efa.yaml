@@ -1,98 +1,22 @@
 # SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 # SPDX-License-Identifier: Apache-2.0
 
----
-apiVersion: apps/v1
-kind: Deployment
+# Headless service for fabrics target-info discovery.
+# The writer polls this endpoint to obtain the reader's target-info
+# before starting the EFA initiator.
+apiVersion: v1
+kind: Service
 metadata:
-  name: writer-media-function-efa
+  name: reader-fabrics-svc
 spec:
-  replicas: 1
+  clusterIP: None
   selector:
-    matchLabels:
-      app: writer-media-function-efa
-  template:
-    metadata:
-      labels:
-        app: writer-media-function-efa
-    spec:
-      nodeSelector:
-        mxl-role: writer
-      containers:
-        - name: writer-container
-          image: 720180693591.dkr.ecr.eu-central-1.amazonaws.com/mxl-writer:latest
-          imagePullPolicy: IfNotPresent
-          env:
-            - name: FI_PROVIDER
-              value: efa
-            - name: FI_EFA_USE_DEVICE_RDMA
-              value: "1"
-          resources:
-            requests:
-              memory: "2Gi"
-              vpc.amazonaws.com/efa: "1"
-            limits:
-              memory: "2Gi"
-              vpc.amazonaws.com/efa: "1"
-          volumeMounts:
-            - name: domain-volume
-              mountPath: /domain
-      volumes:
-        - name: domain-volume
-          hostPath:
-            path: /tmp/domain-data
-            type: DirectoryOrCreate
-      restartPolicy: Always
+    app: reader-media-function-efa
+  ports:
+    - port: 8080
+      targetPort: 8080
 ---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: reader-media-function-efa
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: reader-media-function-efa
-  template:
-    metadata:
-      labels:
-        app: reader-media-function-efa
-    spec:
-      nodeSelector:
-        mxl-role: reader
-      containers:
-        - name: reader-container
-          image: 720180693591.dkr.ecr.eu-central-1.amazonaws.com/mxl-reader:latest
-          imagePullPolicy: IfNotPresent
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              /usr/bin/mxl-gst-sink -d /domain -v 5fbec3b1-1b0f-417d-9059-8b94a47197ed &
-              while true; do /usr/bin/mxl-info -d /domain -l || true; sleep 2; done
-          env:
-            - name: FI_PROVIDER
-              value: efa
-            - name: FI_EFA_USE_DEVICE_RDMA
-              value: "1"
-          resources:
-            requests:
-              memory: "2Gi"
-              vpc.amazonaws.com/efa: "1"
-            limits:
-              memory: "2Gi"
-              vpc.amazonaws.com/efa: "1"
-          tty: true
-          stdin: true
-          volumeMounts:
-            - name: domain-volume
-              mountPath: /domain
-      volumes:
-        - name: domain-volume
-          hostPath:
-            path: /tmp/domain-data
-            type: DirectoryOrCreate
-      restartPolicy: Always
----
+# NLB to expose SRT stream on UDP 5000
 apiVersion: v1
 kind: Service
 metadata:
@@ -109,3 +33,228 @@ spec:
     - protocol: UDP
       port: 5000
       targetPort: 5000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reader-media-function-efa
+spec:
+  replicas: 1
+  # Recreate instead of RollingUpdate: EFA devices are exclusive per pod.
+  # A rolling update would leave the old pod holding the EFA resource while
+  # the new pod is Pending, causing a deadlock.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: reader-media-function-efa
+  template:
+    metadata:
+      labels:
+        app: reader-media-function-efa
+    spec:
+      # Single-AZ affinity: EFA RDMA requires both pods in the same AZ.
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: topology.kubernetes.io/zone
+                    operator: In
+                    values:
+                      - eu-central-1a
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - writer-media-function-efa
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: reader-container
+          image: 720180693591.dkr.ecr.eu-central-1.amazonaws.com/mxl-reader:latest
+          imagePullPolicy: Always
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              # Start fabrics target for the video flow.
+              # Log throttled to 500 lines to prevent disk exhaustion (~15k lines/s).
+              /app/mxl-fabrics-demo -d /domain -f /app/v210_flow.json -p efa 2>&1 | head -n 500 > /tmp/fabrics.log &
+              FABRICS_PID=$!
+
+              # Wait for target-info to be written to log
+              echo "Waiting for fabrics target-info..."
+              TRIES=0
+              while ! grep -q "Target info:" /tmp/fabrics.log 2>/dev/null; do
+                sleep 0.5
+                TRIES=$((TRIES+1))
+                if [ $TRIES -gt 60 ]; then echo "ERROR: target-info timeout"; cat /tmp/fabrics.log; exit 1; fi
+              done
+
+              # Publish target-info for writer discovery via sidecar HTTP server
+              grep "Target info:" /tmp/fabrics.log | sed 's/.*Target info: //' > /target-info/target-info.txt
+              echo "Target info published"
+
+              # Wait for video flow to appear in domain (written by mxl-fabrics-demo target)
+              echo "Waiting for video flow in /domain..."
+              TRIES=0
+              while [ -z "$(ls /domain/*.mxl-flow 2>/dev/null)" ]; do
+                sleep 0.5
+                TRIES=$((TRIES+1))
+                if [ $TRIES -gt 60 ]; then echo "ERROR: flow timeout"; ls /domain/ 2>/dev/null; exit 1; fi
+              done
+
+              # Start SRT video sink
+              echo "Starting mxl-gst-sink..."
+              /app/mxl-gst-sink -d /domain -v 5fbec3b1-1b0f-417d-9059-8b94a47197ed &
+
+              # Keep domain monitor running
+              while true; do /app/mxl-info -d /domain -l || true; sleep 5; done
+          env:
+            - name: LD_LIBRARY_PATH
+              value: /app
+            - name: FI_PROVIDER
+              value: efa
+            - name: FI_EFA_USE_DEVICE_RDMA
+              value: "1"
+          resources:
+            requests:
+              memory: "4Gi"
+              hugepages-2Mi: "512Mi"
+              vpc.amazonaws.com/efa: "1"
+            limits:
+              memory: "4Gi"
+              hugepages-2Mi: "512Mi"
+              vpc.amazonaws.com/efa: "1"
+          tty: true
+          stdin: true
+          volumeMounts:
+            - name: domain-volume
+              mountPath: /domain
+            - name: target-info
+              mountPath: /target-info
+
+        - name: target-info-server
+          image: busybox:1.36
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              while [ ! -f /target-info/target-info.txt ]; do sleep 0.5; done
+              echo "Serving target-info on port 8080"
+              cd /target-info
+              httpd -f -p 8080
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: target-info
+              mountPath: /target-info
+              readOnly: true
+
+      volumes:
+        - name: domain-volume
+          emptyDir:
+            medium: Memory
+        - name: target-info
+          emptyDir: {}
+      restartPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: writer-media-function-efa
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: writer-media-function-efa
+  template:
+    metadata:
+      labels:
+        app: writer-media-function-efa
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: topology.kubernetes.io/zone
+                    operator: In
+                    values:
+                      - eu-central-1a
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - reader-media-function-efa
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: writer-container
+          image: 720180693591.dkr.ecr.eu-central-1.amazonaws.com/mxl-writer:latest
+          imagePullPolicy: Always
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              # Start testsrc to produce video and audio flows in /domain
+              /app/mxl-gst-testsrc -d /domain -v /app/v210_flow.json -a /app/audio_flow.json &
+              WRITER_PID=$!
+
+              # Wait for the video flow file to appear
+              echo "Waiting for video flow..."
+              TRIES=0
+              while [ -z "$(ls /domain/*.mxl-flow 2>/dev/null)" ]; do
+                sleep 0.5
+                TRIES=$((TRIES+1))
+                if [ $TRIES -gt 60 ]; then echo "ERROR: writer flow timeout"; exit 1; fi
+              done
+              echo "Video flow created"
+
+              # Poll reader's target-info via headless service
+              echo "Waiting for reader target-info via reader-fabrics-svc..."
+              TARGET_INFO=""
+              TRIES=0
+              while [ -z "$TARGET_INFO" ]; do
+                TARGET_INFO=$(wget -qO- http://reader-fabrics-svc:8080/target-info.txt 2>/dev/null || true)
+                [ -z "$TARGET_INFO" ] && sleep 1
+                TRIES=$((TRIES+1))
+                if [ $TRIES -gt 120 ]; then echo "ERROR: target-info discovery timeout"; exit 1; fi
+              done
+              echo "Got target-info from reader"
+
+              # Start fabrics initiator — log throttled to prevent disk exhaustion
+              /app/mxl-fabrics-demo -d /domain -f 5fbec3b1-1b0f-417d-9059-8b94a47197ed \
+                -i -p efa --target-info "$TARGET_INFO" 2>&1 | head -n 500 &
+
+              # Wait for the testsrc writer
+              wait $WRITER_PID
+          env:
+            - name: LD_LIBRARY_PATH
+              value: /app
+            - name: FI_PROVIDER
+              value: efa
+            - name: FI_EFA_USE_DEVICE_RDMA
+              value: "1"
+          resources:
+            requests:
+              memory: "4Gi"
+              hugepages-2Mi: "512Mi"
+              vpc.amazonaws.com/efa: "1"
+            limits:
+              memory: "4Gi"
+              hugepages-2Mi: "512Mi"
+              vpc.amazonaws.com/efa: "1"
+          volumeMounts:
+            - name: domain-volume
+              mountPath: /domain
+
+      volumes:
+        - name: domain-volume
+          emptyDir:
+            medium: Memory
+      restartPolicy: Always
