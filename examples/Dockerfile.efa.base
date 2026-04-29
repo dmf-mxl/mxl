@@ -18,12 +18,12 @@ RUN useradd -m mxl
 FROM debian:trixie-slim AS libfabric-build
 RUN apt-get update && apt-get install -y \
     build-essential libtool autoconf automake \
-    libibverbs-dev librdmacm-dev git ca-certificates && rm -rf /var/lib/apt/lists/*
+    libibverbs-dev librdmacm-dev ibverbs-providers git ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /tmp
 RUN git clone --depth 1 --branch v2.2.0 https://github.com/ofiwg/libfabric.git && \
     cd libfabric && \
     ./autogen.sh && \
-    ./configure --prefix=/usr && \
+    ./configure --prefix=/usr --enable-efa && \
     make -j$(nproc) && \
     make install && \
     ldconfig
@@ -40,9 +40,8 @@ RUN apt-get update && apt-get install -y \
     libgstreamer-plugins-base1.0-dev \
     librdmacm1t64 libibverbs1 \
     && rm -rf /var/lib/apt/lists/*
-# Copy libfabric from previous stage
-COPY --from=libfabric-build /usr/lib/libfabric.so* /usr/lib/
-COPY --from=libfabric-build /usr/lib/libfabric/ /usr/lib/libfabric/
+# Copy libfabric from previous stage (libfabric* glob picks up both .so symlinks and the providers dir)
+COPY --from=libfabric-build /usr/lib/libfabric* /usr/lib/
 COPY --from=libfabric-build /usr/lib/pkgconfig/libfabric.pc /usr/lib/pkgconfig/
 COPY --from=libfabric-build /usr/include/rdma/ /usr/include/rdma/
 COPY --from=libfabric-build /usr/include/rdma/fi_errno.h /usr/include/rdma/
@@ -71,9 +70,8 @@ USER 0:0
 RUN ninja -C "/home/mxl/mxl/build/Linux-GCC-Release" install
 
 FROM base AS mxl
-# Copy libfabric runtime to final image
-COPY --from=libfabric-build /usr/lib/libfabric.so* /usr/lib/
-COPY --from=libfabric-build /usr/lib/libfabric/ /usr/lib/libfabric/
+# Copy libfabric runtime to final image (libfabric* glob picks up both .so symlinks and the providers dir)
+COPY --from=libfabric-build /usr/lib/libfabric* /usr/lib/
 COPY --from=libfabric-build /usr/lib/pkgconfig/libfabric.pc /usr/lib/pkgconfig/
 COPY --from=libfabric-build /usr/include/rdma/ /usr/include/rdma/
 COPY --from=libfabric-build /usr/include/rdma/fi_errno.h /usr/include/rdma/
