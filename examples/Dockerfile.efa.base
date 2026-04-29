@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y \
     build-essential libtool autoconf automake \
     libibverbs-dev librdmacm-dev ibverbs-providers git ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /tmp
-RUN git clone --depth 1 --branch v2.2.0 https://github.com/ofiwg/libfabric.git && \
+RUN git clone --depth 1 --branch v1.22.0 https://github.com/ofiwg/libfabric.git && \
     cd libfabric && \
     ./autogen.sh && \
     ./configure --prefix=/usr --enable-efa && \
