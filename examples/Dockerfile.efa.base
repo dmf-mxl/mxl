@@ -42,6 +42,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 # Copy libfabric from previous stage
 COPY --from=libfabric-build /usr/lib/libfabric.so* /usr/lib/
+COPY --from=libfabric-build /usr/lib/libfabric/ /usr/lib/libfabric/
 COPY --from=libfabric-build /usr/lib/pkgconfig/libfabric.pc /usr/lib/pkgconfig/
 COPY --from=libfabric-build /usr/include/rdma/ /usr/include/rdma/
 COPY --from=libfabric-build /usr/include/rdma/fi_errno.h /usr/include/rdma/
@@ -72,6 +73,7 @@ RUN ninja -C "/home/mxl/mxl/build/Linux-GCC-Release" install
 FROM base AS mxl
 # Copy libfabric runtime to final image
 COPY --from=libfabric-build /usr/lib/libfabric.so* /usr/lib/
+COPY --from=libfabric-build /usr/lib/libfabric/ /usr/lib/libfabric/
 COPY --from=libfabric-build /usr/lib/pkgconfig/libfabric.pc /usr/lib/pkgconfig/
 COPY --from=libfabric-build /usr/include/rdma/ /usr/include/rdma/
 COPY --from=libfabric-build /usr/include/rdma/fi_errno.h /usr/include/rdma/
