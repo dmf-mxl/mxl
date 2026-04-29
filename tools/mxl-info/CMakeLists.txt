@@ -54,11 +54,9 @@ target_link_libraries(mxl-info
             CLI11::CLI11
     )
 
-# Not really a fan of having this relative to the binary, we should leave this
-# at the default.
 set_target_properties(mxl-info
         PROPERTIES
-            INSTALL_RPATH "$ORIGIN/../lib"
+            INSTALL_RPATH "${MXL_TOOLS_INSTALL_RPATH}"
     )
 
 # Install targets

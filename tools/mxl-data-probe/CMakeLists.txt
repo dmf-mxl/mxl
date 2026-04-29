@@ -49,7 +49,7 @@ target_link_libraries(mxl-data-probe
 
 set_target_properties(mxl-data-probe
         PROPERTIES
-            INSTALL_RPATH "$ORIGIN/../lib"
+            INSTALL_RPATH "${MXL_TOOLS_INSTALL_RPATH}"
     )
 
 install(TARGETS mxl-data-probe
