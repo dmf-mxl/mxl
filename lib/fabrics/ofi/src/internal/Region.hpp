@@ -202,9 +202,10 @@ namespace mxl::lib::fabrics::ofi
     class MxlRegions
     {
     public:
-        MxlRegions(std::vector<Region> regions, DataLayout dataLayout)
+        MxlRegions(std::vector<Region> regions, DataLayout dataLayout, std::uint32_t maxSyncBatchSize = 0)
             : _regions(std::move(regions))
             , _layout(dataLayout)
+            , _maxSyncBatchSize(maxSyncBatchSize)
         {}
 
         /** \brief Convert between external and internal versions of this type
@@ -223,6 +224,9 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         DataLayout const& dataLayout() const noexcept;
 
+        [[nodiscard]]
+        std::uint32_t maxSyncBatchSize() const noexcept;
+
     private:
         friend MxlRegions mxlFabricsRegionsFromFlow(FlowData& flow);
         friend MxlRegions mxlFabricsRegionsFromMutableFlow(FlowData& flow);
@@ -230,6 +234,7 @@ namespace mxl::lib::fabrics::ofi
     private:
         std::vector<Region> _regions;
         DataLayout _layout;
+        std::uint32_t _maxSyncBatchSize{0};
     };
 
     /** \brief Convert a FlowData's memory regions to MxlRegions.

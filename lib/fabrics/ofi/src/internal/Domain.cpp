@@ -45,7 +45,13 @@ namespace mxl::lib::fabrics::ofi
 
     void Domain::registerRegions(std::vector<Region> const& regions, std::uint64_t access)
     {
-        std::ranges::transform(regions, std::back_inserter(_registeredRegions), [&](auto const& region) { return registerRegion(region, access); });
+        std::ranges::transform(
+            regions, std::back_inserter(_registeredRegions), [&](auto const& region) { return registerRegionImpl(region, access); });
+    }
+
+    void Domain::registerRegion(Region const& region, std::uint64_t access)
+    {
+        _registeredRegions.push_back(registerRegionImpl(region, access));
     }
 
     std::vector<LocalRegion> Domain::localRegions() const noexcept
@@ -73,7 +79,7 @@ namespace mxl::lib::fabrics::ofi
         return _fabric;
     }
 
-    RegisteredRegion Domain::registerRegion(Region const& region, std::uint64_t access)
+    RegisteredRegion Domain::registerRegionImpl(Region const& region, std::uint64_t access)
     {
         return RegisteredRegion{MemoryRegion::reg(*this, region, access), region};
     }

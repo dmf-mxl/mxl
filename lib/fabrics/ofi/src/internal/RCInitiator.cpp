@@ -213,6 +213,14 @@ namespace mxl::lib::fabrics::ofi
         }
     }
 
+    void RCInitiatorEndpoint::transferSamples(uint64_t headIndex, size_t count)
+    {
+        if (auto state = std::get_if<Connected>(&_state); state != nullptr)
+        {
+            _proto->transferSamples(state->ep, headIndex, count);
+        }
+    }
+
     void RCInitiatorEndpoint::handleCompletionData(Completion::Data completion)
     {
         _state = std::visit(
@@ -309,6 +317,7 @@ namespace mxl::lib::fabrics::ofi
         auto endpoint = Endpoint::create(_domain);
         auto id = endpoint.id();
         auto proto = _proto->createInstance(Endpoint::tokenFromId(id), targetInfo);
+        proto->registerMemory(_domain);
 
         _targets.emplace(id, RCInitiatorEndpoint{std::move(endpoint), std::move(proto), targetInfo});
     }
@@ -345,6 +354,14 @@ namespace mxl::lib::fabrics::ofi
         }
 
         it->second.transferGrain(localIndex, remoteIndex, payloadOffset, SliceRange::make(startSlice, endSlice));
+    }
+
+    void RCInitiator::transferSamples(uint64_t headIndex, size_t count)
+    {
+        for (auto& [_, target] : _targets)
+        {
+            target.transferSamples(headIndex, count);
+        }
     }
 
     bool RCInitiator::hasPendingWork() const noexcept

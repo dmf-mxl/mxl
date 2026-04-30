@@ -42,6 +42,15 @@ namespace mxl::lib::fabrics::ofi
          */
         virtual void transferGrain(std::uint64_t grainIndex, std::uint16_t startSlice, std::uint16_t endSlice) = 0;
 
+        /** \brief Transfer samples to all targets.
+         *
+         * This is a non-blocking operation. The transfer is complete only after makeProgress() or makeProgressBlocking() returns false.
+         *
+         * \param headIndex The head index to transfer.
+         * \param count The number of samples per channel to transfer.
+         */
+        virtual void transferSamples(uint64_t headIndex, size_t count) = 0;
+
         /** \brief Transfer a grain to a specific target.
          *
          * This is a non-blocking operation. The transfer is complete only after makeProgress() or makeProgressBlocking() returns false.
@@ -125,6 +134,10 @@ namespace mxl::lib::fabrics::ofi
          */
         void transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t payloadOffset,
             std::uint16_t startSlice, std::uint16_t endSlice);
+
+        /** \copydoc Initiator::transferSamples()
+         */
+        void transferSamples(uint64_t headIndex, size_t count);
 
         /** \copydoc Initiator::makeProgress()
          */

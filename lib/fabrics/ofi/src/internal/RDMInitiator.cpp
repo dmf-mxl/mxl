@@ -72,12 +72,20 @@ namespace mxl::lib::fabrics::ofi
             std::move(_state));
     }
 
-    void RDMInitiatorTarget::transfer(Endpoint& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t remoteOffset,
+    void RDMInitiatorTarget::transferGrain(Endpoint& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t remotePayloadOffset,
         SliceRange const& sliceRange)
     {
         if (auto state = std::get_if<Activated>(&_state); state != nullptr)
         {
-            _proto->transferGrain(ep, localIndex, remoteIndex, remoteOffset, sliceRange, state->fiAddr);
+            _proto->transferGrain(ep, localIndex, remoteIndex, remotePayloadOffset, sliceRange, state->fiAddr);
+        }
+    }
+
+    void RDMInitiatorTarget::transferSamples(Endpoint& ep, std::uint64_t headIndex, std::size_t count)
+    {
+        if (auto state = std::get_if<Activated>(&_state); state != nullptr)
+        {
+            _proto->transferSamples(ep, headIndex, count, state->fiAddr);
         }
     }
 
@@ -173,13 +181,14 @@ namespace mxl::lib::fabrics::ofi
 
     void RDMInitiator::addTarget(TargetInfo const& targetInfo)
     {
-        if (_remoteEndpoints.find(targetInfo.id) != _remoteEndpoints.end())
+        if (_remoteEndpoints.contains(targetInfo.id))
         {
             throw Exception::exists("A target with endpoint id {} has already been added to this initiator.", targetInfo.id);
         }
 
         auto token = Completion::randomToken();
         auto proto = _proto->createInstance(token, targetInfo);
+        proto->registerMemory(_endpoint.domain());
 
         _remoteEndpoints.emplace(targetInfo.id, token);
         _targets.emplace(token, RDMInitiatorTarget(std::move(proto), targetInfo));
@@ -202,7 +211,7 @@ namespace mxl::lib::fabrics::ofi
         for (auto& [_, target] : _targets)
         {
             // A completion will be posted to the completion queue, after which the counter will be decremented again
-            target.transfer(_endpoint, grainIndex, grainIndex, MXL_GRAIN_PAYLOAD_OFFSET, SliceRange::make(startSlice, endSlice));
+            target.transferGrain(_endpoint, grainIndex, grainIndex, MXL_GRAIN_PAYLOAD_OFFSET, SliceRange::make(startSlice, endSlice));
         }
     }
 
@@ -210,7 +219,15 @@ namespace mxl::lib::fabrics::ofi
         std::uint16_t startSlice, std::uint16_t endSlice)
     {
         // A completion will be posted to the completion queue per transfer, after which the counter will be decremented again
-        findRemoteByEndpoint(targetId).transfer(_endpoint, localIndex, remoteIndex, payloadOffset, SliceRange::make(startSlice, endSlice));
+        findRemoteByEndpoint(targetId).transferGrain(_endpoint, localIndex, remoteIndex, payloadOffset, SliceRange::make(startSlice, endSlice));
+    }
+
+    void RDMInitiator::transferSamples(uint64_t headIndex, size_t count)
+    {
+        for (auto& [_, target] : _targets)
+        {
+            target.transferSamples(_endpoint, headIndex, count);
+        }
     }
 
     // makeProgress

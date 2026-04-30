@@ -184,6 +184,32 @@ extern "C"
     mxlStatus mxlFabricsTargetReadGrain(mxlFabricsTarget in_target, uint16_t in_timeoutMs, uint64_t* out_entryIndex);
 
     /**
+     * Non-blocking accessor for a flow sample.
+     * \param in_target A valid fabrics target
+     * \param out_headIndex The head index of the samples that were written, if any.
+     * \param out_count The number of samples per channel that were written, if any.
+     * \return The result code. MXL_ERR_NOT_READY if no grain was available at the time of the call, and the call should be retried. \see mxlStatus
+     * \note One can simply pass the returned headIndex and count to the flow reader's GetSamples() function to obtain a pointer to the written
+     * samples after this call returns MXL_STATUS_OK.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFabricsTargetReadSamplesNonBlocking(mxlFabricsTarget in_target, uint64_t* out_headIndex, size_t* out_count);
+
+    /**
+     * Blocking accessor for a flow grain at a specific index.
+     * \param in_target A valid fabrics target
+     * \param out_headIndex The head index of the samples that were written, if any.
+     * \param out_count The number of samples per channel that were written, if any.
+     * \param in_timeoutMs How long should we wait for the samples (in milliseconds)
+     * \return The result code. MXL_ERR_NOT_READY if no grain was available before the timeout. \see mxlStatus
+     * \note One can simply pass the returned headIndex and count to the flow reader's GetSamples() function to obtain a pointer to the written
+     * samples after this call returns MXL_STATUS_OK.
+     */
+
+    MXL_EXPORT
+    mxlStatus mxlFabricsTargetReadSamples(mxlFabricsTarget in_target, uint16_t in_timeoutMs, uint64_t* out_headIndex, size_t* out_count);
+
+    /**
      * Create a fabrics initiator instance.
      * \param in_fabricsInstance A valid mxl fabrics instance
      * \param out_initiator A valid fabrics initiator
@@ -243,6 +269,18 @@ extern "C"
     MXL_EXPORT
     mxlStatus mxlFabricsInitiatorTransferGrain(mxlFabricsInitiator in_initiator, uint64_t in_grainIndex, uint16_t in_startSlice,
         uint16_t in_endSlice);
+
+    /**
+     * Enqueue a transfer operation to all added targets. This function is always non-blocking. The transfer operation might be started right
+     * away, but is only guaranteed to have completed after mxlFabricsInitiatorMakeProgress*() no longer returns MXL_ERR_NOT_READY.
+     * \param in_initiator A valid fabrics initiator
+     * \param in_headIndex The head index to transfer. The ordering was given when mxlFabricsRegions object were created. This is true for both
+     * local and remote memory regions.
+     * \param in_count The number of samples per channel to transfer, starting from the headIndex - in_count.
+     * \return The result code. \see mxlStatus
+     */
+    MXL_EXPORT
+    mxlStatus mxlFabricsInitiatorTransferSamples(mxlFabricsInitiator in_initiator, uint64_t in_headIndex, size_t in_count);
 
     /**
      * This function must be called regularly for the initiator to make progress on queued transfer operations, connection establishment

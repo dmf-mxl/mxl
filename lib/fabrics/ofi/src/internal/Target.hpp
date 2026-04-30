@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <variant>
 #include "TargetInfo.hpp"
 
 namespace mxl::lib::fabrics::ofi
@@ -24,6 +25,14 @@ namespace mxl::lib::fabrics::ofi
             std::uint64_t grainIndex;
         };
 
+        struct SampleReadResult
+        {
+            std::uint64_t headIndex;
+            size_t count;
+        };
+
+        using ReadResult = std::variant<GrainReadResult, SampleReadResult>;
+
     public:
         virtual ~Target() = default;
 
@@ -36,9 +45,22 @@ namespace mxl::lib::fabrics::ofi
 
         /** \brief Determine if new data can be consumed.
          *
-         * A blocking version of read. see read().
+         * A blocking version of read. see readGrain().
          */
         virtual std::optional<GrainReadResult> readGrainBlocking(std::chrono::steady_clock::duration timeout) = 0;
+
+        /** \brief Determine if new data can be consumed.
+         *
+         * A non-blocking operation that also drives the connection forward. Continuous invocation of this function is necessary for connection
+         * establishment and ongoing progress.
+         */
+        virtual std::optional<SampleReadResult> readSamples() = 0;
+
+        /** \brief Determine if new data can be consumed.
+         *
+         * A blocking version of read. see readSamples().
+         */
+        virtual std::optional<SampleReadResult> readSamplesBlocking(std::chrono::steady_clock::duration timeout) = 0;
 
         /** \brief Shut down the target gracefully.
          * Initiates a graceful shutdown of the target and blocks until the shutdown is complete.
@@ -85,13 +107,21 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         mxlFabricsTarget toAPI() noexcept;
 
-        /** \copydoc Target::read()
+        /** \copydoc Target::readGrain()
          */
         std::optional<Target::GrainReadResult> readGrain();
 
-        /** \copydoc Target::readBlocking(std::chrono::steady_clock::duration)
+        /** \copydoc Target::readGrainBlocking(std::chrono::steady_clock::duration)
          */
         std::optional<Target::GrainReadResult> readGrainBlocking(std::chrono::steady_clock::duration timeout);
+
+        /** \copydoc Target::readSamples()
+         */
+        std::optional<Target::SampleReadResult> readSamples();
+
+        /** \copydoc Target::readSamplesBlocking(std::chrono::steady_clock::duration)
+         */
+        std::optional<Target::SampleReadResult> readSamplesBlocking(std::chrono::steady_clock::duration timeout);
 
         /** \brief Set up the target with the specified configuration.
          *

@@ -10,24 +10,44 @@
 
 namespace mxl::lib::fabrics::ofi
 {
-    std::unique_ptr<IngressProtocol> selectIngressProtocol(DataLayout const& layout, std::vector<Region> regions)
+    std::unique_ptr<IngressProtocol> selectIngressProtocol(DataLayout const& layout, std::vector<Region> regions, std::uint32_t maxSyncBatchSize)
     {
-        if (!layout.isVideo())
+        if (layout.isVideo())
         {
-            throw Exception::internal("Only grain transport supported for now.");
+            return std::make_unique<RMAGrainIngressProtocol>(std::move(regions));
         }
-
-        return std::make_unique<RMAGrainIngressProtocol>(std::move(regions));
+        else if (layout.isAudio())
+        {
+            if (regions.size() != 1)
+            {
+                throw Exception::invalidArgument("Expected exactly 1 region for sample protocol.");
+            }
+            return std::make_unique<RMASampleIngressProtocol>(regions.front(), layout.asAudio(), maxSyncBatchSize);
+        }
+        else
+        {
+            throw Exception::invalidArgument("Unsupported data layout");
+        }
     }
 
     std::unique_ptr<EgressProtocolTemplate> selectEgressProtocol(DataLayout const& layout, std::vector<Region> regions)
     {
         if (!layout.isVideo())
         {
-            throw Exception::internal("Only grain transport supported for now.");
+            return std::make_unique<RMAGrainEgressProtocolTemplate>(layout.asVideo(), std::move(regions));
         }
-
-        return std::make_unique<RMAGrainEgressProtocolTemplate>(layout, std::move(regions));
+        else if (layout.isAudio())
+        {
+            if (regions.size() != 1)
+            {
+                throw Exception::invalidArgument("Expected exactly 1 region for sample protocol.");
+            }
+            return std::make_unique<RMASampleEgressProtocolTemplate>(layout.asAudio(), regions.front());
+        }
+        else
+        {
+            throw Exception::invalidArgument("Unsupported data layout");
+        }
     }
 
 }

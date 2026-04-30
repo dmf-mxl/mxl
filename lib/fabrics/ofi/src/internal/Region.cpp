@@ -9,6 +9,7 @@
 #include <bits/types/struct_iovec.h>
 #include <mxl-internal/DiscreteFlowData.hpp>
 #include <mxl-internal/Flow.hpp>
+#include "mxl-internal/ContinuousFlowData.hpp"
 #include "mxl/dataformat.h"
 #include "mxl/fabrics.h"
 #include "mxl/flow.h"
@@ -120,6 +121,11 @@ namespace mxl::lib::fabrics::ofi
         return _layout;
     }
 
+    std::uint32_t MxlRegions::maxSyncBatchSize() const noexcept
+    {
+        return _maxSyncBatchSize;
+    }
+
     MxlRegions mxlFabricsRegionsFromMutableFlow(FlowData& flow)
     {
         auto mxlRegions = mxlFabricsRegionsFromFlow(flow);
@@ -159,7 +165,7 @@ namespace mxl::lib::fabrics::ofi
         {
             auto& discreteFlow = static_cast<DiscreteFlowData const&>(flow);
             std::vector<Region> regions;
-
+            regions.reserve(discreteFlow.grainCount());
             for (std::size_t i = 0; i < discreteFlow.grainCount(); ++i)
             {
                 auto grain = discreteFlow.grainAt(i);
@@ -168,30 +174,31 @@ namespace mxl::lib::fabrics::ofi
                 auto grainInfoSize = sizeof(GrainHeader);
                 auto grainPayloadSize = grain->header.info.grainSize;
 
-                if (flow.flowInfo()->config.common.payloadLocation != MXL_PAYLOAD_LOCATION_HOST_MEMORY)
-                {
-                    throw Exception::make(MXL_ERR_UNKNOWN,
-                        "GPU memory is not currently supported in the Flow API of MXL. Edit the code below when it is supported");
-                }
-
                 regions.emplace_back(grainInfoBaseAddr, grainInfoSize + grainPayloadSize, nullptr, nullptr, Region::Location::host());
             }
 
-            // TODO: Add an utility function to retrieve the number of available planes when alpha support is added.
-            return {std::move(regions), DataLayout::fromVideo(std::to_array(discreteFlow.flowInfo()->config.discrete.sliceSizes))};
+            return {std::move(regions),
+                DataLayout::fromVideo(std::to_array(discreteFlow.flowInfo()->config.discrete.sliceSizes)),
+                discreteFlow.flowInfo()->config.common.maxSyncBatchSizeHint};
         }
-        // else if (mxlIsContinuousDataFormat(flow.flowInfo()->config.common.format))
-        // {
-        //     auto& continuousFlow = static_cast<ContinuousFlowData const&>(flow);
-        //     std::vector<Region> regions;
-        //
-        //     // For the continuous flow, the data layout is a single contiguous buffer
-        //     regions.emplace_back(
-        //         reinterpret_cast<std::uintptr_t>(continuousFlow.channelData()), continuousFlow.channelDataLength(), Region::Location::host());
-        //
-        //     return {std::move(regions)};
-        // }
-        //
+        else if (mxlIsContinuousDataFormat(static_cast<int>(flow.flowInfo()->config.common.format)))
+        {
+            auto& continuousFlow = static_cast<ContinuousFlowData const&>(flow);
+            std::vector<Region> regions;
+
+            // For the continuous flow, the data layout is a single contiguous buffer
+            regions.emplace_back(reinterpret_cast<std::uintptr_t>(continuousFlow.channelData()),
+                continuousFlow.channelDataLength(),
+                nullptr,
+                nullptr,
+                Region::Location::host());
+
+            return {std::move(regions),
+                DataLayout::fromAudio(4 /*TODO: How to get the actual number of bytes per samples?? Can we assume it's always 32 bits?*/,
+                    continuousFlow.flowInfo()->config.continuous.channelCount,
+                    continuousFlow.flowInfo()->config.continuous.channelCount),
+                continuousFlow.flowInfo()->config.common.maxSyncBatchSizeHint};
+        }
         else
         {
             throw Exception::make(MXL_ERR_UNKNOWN, "Unsupported flow fromat {}", flow.flowInfo()->config.common.format);

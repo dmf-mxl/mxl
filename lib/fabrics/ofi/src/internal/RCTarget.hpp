@@ -39,6 +39,14 @@ namespace mxl::lib::fabrics::ofi
          */
         std::optional<Target::GrainReadResult> readGrainBlocking(std::chrono::steady_clock::duration timeout) final;
 
+        /** \copydoc Target::readSamples()
+         */
+        std::optional<Target::SampleReadResult> readSamples() final;
+
+        /** copydoc Target::readSamplesBlocking()
+         */
+        std::optional<Target::SampleReadResult> readSamplesBlocking(std::chrono::steady_clock::duration timeout) final;
+
         /** \brief Shut down the target.
          */
         void shutdown() override;
@@ -89,7 +97,7 @@ namespace mxl::lib::fabrics::ofi
          * \return The result of the read operation.
          */
         template<QueueReadMode>
-        std::optional<Target::GrainReadResult> readNextGrain(std::chrono::steady_clock::duration timeout);
+        std::optional<Target::ReadResult> readNext(std::chrono::steady_clock::duration timeout);
 
         [[nodiscard]]
         static PassiveEndpoint makeListener(std::shared_ptr<Fabric> const& fabric);

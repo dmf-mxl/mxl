@@ -272,6 +272,10 @@ namespace mxl::lib::fabrics::ofi
          * \param destAddr The destination address of the target endpoint. This is unused when using connected endpoints.
          * \param 64 bits of user data that will be available in the completion entry associated with this transfer.
          * \return The number of requests posted to the endpoint work queue
+         * \note  In this function, there will potentially be more than a single writen transfer. This occurs if the IOV limit supported by the
+         * endpoint is smaller than the number of local region in the local region group. In that case, multiple writes are performed. This behavior
+         * is handled completely by the function and will the number of writes performed accordingly. Note that, only the last transfer is posted with
+         * immediate data to signal completion to the target.
          */
         std::size_t write(Completion::Token token, LocalRegionGroup const& localGroup, RemoteRegion const& remote,
             ::fi_addr_t destAddr = FI_ADDR_UNSPEC, std::optional<std::uint32_t> immData = std::nullopt);
@@ -298,7 +302,7 @@ namespace mxl::lib::fabrics::ofi
     private:
         /** \brief Internal implementation of the  remote write request
          */
-        std::size_t writeImpl(Completion::Token token, ::iovec const* msgIov, std::size_t iovCount, void** desc, ::fi_rma_iov const* rmaIov,
+        void writeImpl(Completion::Token token, ::iovec const* msgIov, std::size_t iovCount, void** desc, ::fi_rma_iov const* rmaIov,
             ::fi_addr_t destAddr, std::optional<std::uint32_t> immData);
 
         /** \brief Close the endpoint and release all resources. Called from the destructor and the move assignment operator.

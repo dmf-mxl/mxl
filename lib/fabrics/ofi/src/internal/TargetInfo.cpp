@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "TargetInfo.hpp"
+#include <optional>
 #include <string>
 #include <picojson/wrapper.h>
 #include <uuid/uuid.h>
@@ -39,6 +40,15 @@ namespace mxl::lib::fabrics::ofi
             regions.emplace_back(region);
         }
         root["regions"] = picojson::value(regions);
+
+        if (bounceBufferInfo)
+        {
+            auto bounceBufferInfo = picojson::object{};
+            bounceBufferInfo["entryCount"] = picojson::value(std::to_string(this->bounceBufferInfo->entryCount));
+            bounceBufferInfo["entrySize"] = picojson::value(std::to_string(this->bounceBufferInfo->entrySize));
+            root["bounceBufferInfo"] = picojson::value(bounceBufferInfo);
+        }
+
         root["id"] = picojson::value(std::to_string(id));
 
         return picojson::value(root).serialize(false);
@@ -76,9 +86,18 @@ namespace mxl::lib::fabrics::ofi
             regions.emplace_back(addr, len, rkey);
         }
 
+        auto bounceBufferInfo = std::optional<TargetInfoBounceBufferInfo>{std::nullopt};
+        if (root.contains("bounceBufferInfo"))
+        {
+            auto bounceBufferInfoObj = root.at("bounceBufferInfo").get<picojson::object>();
+            auto entryCount = std::stoull(bounceBufferInfoObj.at("entryCount").get<std::string>());
+            auto entrySize = std::stoul(bounceBufferInfoObj.at("entrySize").get<std::string>());
+            bounceBufferInfo = std::make_optional<TargetInfoBounceBufferInfo>(entryCount, entrySize);
+        }
+
         auto id = std::stoull(root.at("id").get<std::string>());
 
-        return {.id = id, .fabricAddress = fabricAddress, .remoteRegions = regions};
+        return {.id = id, .fabricAddress = fabricAddress, .remoteRegions = regions, .bounceBufferInfo = bounceBufferInfo};
     }
 
     bool TargetInfo::operator==(TargetInfo const& other) const noexcept

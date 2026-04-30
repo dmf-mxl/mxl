@@ -53,8 +53,8 @@ namespace mxl::lib::fabrics::ofi
         auto pep = makeListener(fabric);
 
         auto const mxlRegions = MxlRegions::fromAPI(config.regions);
-        auto proto = selectIngressProtocol(mxlRegions->dataLayout(), mxlRegions->regions());
-        auto targetInfo = std::make_unique<TargetInfo>(pep.id(), pep.localAddress(), proto->registerMemory(domain));
+        auto proto = selectIngressProtocol(mxlRegions->dataLayout(), mxlRegions->regions(), mxlRegions->maxSyncBatchSize());
+        auto targetInfo = std::make_unique<TargetInfo>(pep.id(), pep.localAddress(), proto->registerMemory(domain), proto->bounceBufferInfo());
 
         // Helper struct to enable the std::make_unique function to access the private constructor of this class.
         struct MakeUniqueEnabler : RCTarget
@@ -76,21 +76,47 @@ namespace mxl::lib::fabrics::ofi
 
     std::optional<Target::GrainReadResult> RCTarget::readGrain()
     {
-        return readNextGrain<QueueReadMode::NonBlocking>({});
+        if (auto res = readNext<QueueReadMode::NonBlocking>(std::chrono::steady_clock::duration::zero()); res)
+        {
+            return std::get<Target::GrainReadResult>(*res);
+        }
+        return std::nullopt;
     }
 
     std::optional<Target::GrainReadResult> RCTarget::readGrainBlocking(std::chrono::steady_clock::duration timeout)
     {
-        return readNextGrain<QueueReadMode::Blocking>(timeout);
+        if (auto res = readNext<QueueReadMode::Blocking>(timeout); res)
+        {
+            return std::get<Target::GrainReadResult>(*res);
+        }
+        return std::nullopt;
+    }
+
+    std::optional<Target::SampleReadResult> RCTarget::readSamples()
+    {
+        if (auto res = readNext<QueueReadMode::NonBlocking>(std::chrono::steady_clock::duration::zero()); res)
+        {
+            return std::get<Target::SampleReadResult>(*res);
+        }
+        return std::nullopt;
+    }
+
+    std::optional<Target::SampleReadResult> RCTarget::readSamplesBlocking(std::chrono::steady_clock::duration timeout)
+    {
+        if (auto res = readNext<QueueReadMode::Blocking>(timeout); res)
+        {
+            return std::get<Target::SampleReadResult>(*res);
+        }
+        return std::nullopt;
     }
 
     void RCTarget::shutdown()
     {}
 
     template<QueueReadMode queueReadMode>
-    std::optional<Target::GrainReadResult> RCTarget::readNextGrain(std::chrono::steady_clock::duration timeout)
+    std::optional<Target::ReadResult> RCTarget::readNext(std::chrono::steady_clock::duration timeout)
     {
-        auto result = std::optional<Target::GrainReadResult>{std::nullopt};
+        auto result = std::optional<Target::ReadResult>{std::nullopt};
 
         _state = std::visit(
             overloaded{[](std::monostate) -> State { throw Exception::invalidState("Target is in an invalid state an can no longer make progress"); },
@@ -150,7 +176,7 @@ namespace mxl::lib::fabrics::ofi
 
                     if (completion)
                     {
-                        result = _proto->readGrain(state.ep, *completion);
+                        result = _proto->read(state.ep, *completion);
                     }
 
                     return Connected{.ep = std::move(state.ep)};

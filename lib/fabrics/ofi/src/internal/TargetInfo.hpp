@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <optional>
 #include "mxl/fabrics.h"
 #include "Address.hpp"
 #include "Endpoint.hpp"
@@ -11,6 +12,14 @@
 
 namespace mxl::lib::fabrics::ofi
 {
+
+    /** \brief Information about the bounce buffer on the target, if the target uses one.
+     */
+    struct TargetInfoBounceBufferInfo
+    {
+        std::size_t entryCount;  /**< Number of entries in the bounce buffer. */
+        std::uint32_t entrySize; /**< Size of each bounce buffer entry in bytes. */
+    };
 
     /** \brief TargetInfo contains all the information required by an initiator to operate transfers to the given target.
      *
@@ -46,5 +55,6 @@ namespace mxl::lib::fabrics::ofi
         FabricAddress fabricAddress; /**< Target's endpoint libfabric address */
         std::vector<RemoteRegion>
             remoteRegions; /**< Target's memory regions (and keys) which an initiator can operate on. This is used only for RMA operations */
+        std::optional<TargetInfoBounceBufferInfo> bounceBufferInfo; /**< Information about the bounce buffer on the target, if the target uses one.*/
     };
 }

@@ -315,7 +315,7 @@ namespace mxl::lib::fabrics::ofi
         return _raw;
     }
 
-    std::size_t Endpoint::writeImpl(Completion::Token token, ::iovec const* msgIov, std::size_t iovCount, void** desc, ::fi_rma_iov const* rmaIov,
+    void Endpoint::writeImpl(Completion::Token token, ::iovec const* msgIov, std::size_t iovCount, void** desc, ::fi_rma_iov const* rmaIov,
         ::fi_addr_t destAddr, std::optional<std::uint32_t> immData)
     {
         std::uint64_t data = immData.value_or(0);
@@ -334,8 +334,6 @@ namespace mxl::lib::fabrics::ofi
         };
 
         fiCall(::fi_writemsg, "Failed to push rma write to work queue.", _raw, &msg, flags);
-
-        return 1;
     }
 
     std::size_t Endpoint::write(Completion::Token token, LocalRegion const& local, RemoteRegion const& remote, ::fi_addr_t destAddr,
@@ -346,14 +344,51 @@ namespace mxl::lib::fabrics::ofi
         auto msgIov = local.toIovec();
         auto rmaIov = remote.toRmaIov();
 
-        return writeImpl(token, &msgIov, 1, descs.data(), &rmaIov, destAddr, immData);
+        writeImpl(token, &msgIov, 1, descs.data(), &rmaIov, destAddr, immData);
+
+        return 1;
     }
 
     std::size_t Endpoint::write(Completion::Token token, LocalRegionGroup const& localGroup, RemoteRegion const& remote, ::fi_addr_t destAddr,
         std::optional<std::uint32_t> immData)
     {
-        auto rmaIov = remote.toRmaIov();
-        return writeImpl(token, localGroup.asIovec(), localGroup.size(), const_cast<void**>(localGroup.desc()), &rmaIov, destAddr, immData);
+        auto remoteRmaIov = remote.toRmaIov();
+        auto remoteOffset = std::size_t{0};
+
+        auto iovLimit = info().raw()->tx_attr->iov_limit;
+        auto nbWrites = (localGroup.size() + iovLimit - 1) / iovLimit; // ceil(group.size() / iovLimit)
+
+        for (std::size_t i = 0; i < nbWrites; i++)
+        {
+            auto begin = i * iovLimit;
+            auto end = begin + std::min(iovLimit, localGroup.size() - begin);
+
+            auto localGroupSpan = localGroup.span(begin, end);
+
+            // vadlidate that we don't bust the remote region
+            if ((remoteOffset + localGroupSpan.byteSize()) > remote.len)
+            {
+                throw Exception::invalidArgument("Local region group is too large for the remote region.");
+            }
+
+            remoteRmaIov.addr = remote.addr + remoteOffset;
+            remoteRmaIov.len = localGroupSpan.byteSize();
+
+            auto isLastWrite = (i == nbWrites - 1);
+            auto immDataForWrite = isLastWrite ? immData : std::nullopt;
+
+            writeImpl(token,
+                localGroupSpan.asIovec(),
+                localGroupSpan.size(),
+                const_cast<void**>(localGroupSpan.desc()),
+                &remoteRmaIov,
+                destAddr,
+                immDataForWrite);
+
+            remoteOffset += localGroupSpan.byteSize();
+        }
+
+        return nbWrites;
     }
 
     void Endpoint::recv(LocalRegion region)

@@ -25,6 +25,7 @@ target_sources(mxl-fabrics-objects
             src/fabrics.cpp
             src/internal/Address.cpp
             src/internal/AddressVector.cpp
+            src/internal/AudioBounceBuffer.cpp
             src/internal/Completion.cpp
             src/internal/CompletionQueue.cpp
             src/internal/DataLayout.cpp

@@ -237,7 +237,6 @@ mxlStatus mxlFabricsTargetReadGrainNonBlocking(mxlFabricsTarget in_target, uint6
             auto res = ofi::TargetWrapper::fromAPI(in_target)->readGrain();
             if (!res)
             {
-                MXL_INFO("not ready");
                 return MXL_ERR_NOT_READY;
             }
 
@@ -268,6 +267,54 @@ mxlStatus mxlFabricsTargetReadGrain(mxlFabricsTarget in_target, uint16_t in_time
             return MXL_STATUS_OK;
         },
         "Failed to wait for new grain");
+}
+
+extern "C" MXL_EXPORT
+mxlStatus mxlFabricsTargetReadSamplesNonBlocking(mxlFabricsTarget in_target, uint64_t* out_headIndex, size_t* out_count)
+{
+    if ((in_target == nullptr) || (out_headIndex == nullptr) || (out_count == nullptr))
+    {
+        return MXL_ERR_INVALID_ARG;
+    }
+
+    return ofi::try_run(
+        [&]()
+        {
+            auto res = ofi::TargetWrapper::fromAPI(in_target)->readSamples();
+            if (!res)
+            {
+                return MXL_ERR_NOT_READY;
+            }
+
+            *out_headIndex = res->headIndex;
+            *out_count = res->count;
+            return MXL_STATUS_OK;
+        },
+        "Failed to try for new samples");
+}
+
+extern "C" MXL_EXPORT
+mxlStatus mxlFabricsTargetReadSamples(mxlFabricsTarget in_target, uint16_t in_timeoutMs, uint64_t* out_headIndex, size_t* out_count)
+{
+    if ((in_target == nullptr) || (out_headIndex == nullptr) || (out_count == nullptr))
+    {
+        return MXL_ERR_INVALID_ARG;
+    }
+
+    return ofi::try_run(
+        [&]()
+        {
+            auto res = ofi::TargetWrapper::fromAPI(in_target)->readSamplesBlocking(std::chrono::milliseconds(in_timeoutMs));
+            if (!res)
+            {
+                return MXL_ERR_NOT_READY;
+            }
+
+            *out_headIndex = res->headIndex;
+            *out_count = res->count;
+            return MXL_STATUS_OK;
+        },
+        "Failed to wait for new samples");
 }
 
 extern "C" MXL_EXPORT
@@ -379,6 +426,24 @@ mxlStatus mxlFabricsInitiatorTransferGrain(mxlFabricsInitiator in_initiator, uin
             return MXL_STATUS_OK;
         },
         "Failed to transfer grain");
+}
+
+extern "C" MXL_EXPORT
+mxlStatus mxlFabricsInitiatorTransferSamples(mxlFabricsInitiator in_initiator, uint64_t in_headIndex, size_t in_count)
+{
+    if (in_initiator == nullptr)
+    {
+        return MXL_ERR_INVALID_ARG;
+    }
+
+    return ofi::try_run(
+        [&]()
+        {
+            ofi::InitiatorWrapper::fromAPI(in_initiator)->transferSamples(in_headIndex, in_count);
+
+            return MXL_STATUS_OK;
+        },
+        "Failed to transfer samples");
 }
 
 extern "C" MXL_EXPORT

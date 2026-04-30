@@ -90,6 +90,16 @@ namespace mxl::lib::fabrics::ofi
         _inner->transferGrainToTarget(targetId, localIndex, remoteIndex, payloadOffset, startSlice, endSlice);
     }
 
+    void InitiatorWrapper::transferSamples(std::uint64_t headIndex, size_t count)
+    {
+        if (!_inner)
+        {
+            throw Exception::invalidState("Initiator is not set up");
+        }
+
+        _inner->transferSamples(headIndex, count);
+    }
+
     bool InitiatorWrapper::makeProgress()
     {
         if (!_inner)

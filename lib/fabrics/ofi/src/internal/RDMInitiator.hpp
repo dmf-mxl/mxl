@@ -48,10 +48,14 @@ namespace mxl::lib::fabrics::ofi
          */
         void shutdown(Endpoint& ep);
 
-        /** \brief Post a data transfer request to this endpoint.
+        /** \brief Post a grain data transfer request to this endpoint.
          */
-        void transfer(Endpoint& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t remotePayloadOffset,
+        void transferGrain(Endpoint& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t remotePayloadOffset,
             SliceRange const& sliceRange);
+
+        /** \brief Post a sample data transfer request to this endpoint.
+         */
+        void transferSamples(Endpoint& ep, std::uint64_t headIndex, std::size_t count);
 
         /** \brief Returns true if there's pending work for this target.
          */
@@ -127,6 +131,10 @@ namespace mxl::lib::fabrics::ofi
         void transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t payloadOffset,
             std::uint16_t startSlice, std::uint16_t endSlice) override;
 
+        /** \copydoc Initiator::transferSamples()
+         */
+        void transferSamples(std::uint64_t headIndex, std::size_t count) override;
+
         /** \copydoc Initiator::makeProgress()
          */
         bool makeProgress() override;
@@ -140,7 +148,7 @@ namespace mxl::lib::fabrics::ofi
          *
          * \param ep The local endpoint to use for all transfers.
          */
-        RDMInitiator(Endpoint endpoint, std::unique_ptr<EgressProtocolTemplate> tmpl);
+        RDMInitiator(Endpoint ep, std::unique_ptr<EgressProtocolTemplate> proto);
 
         /** \brief Find a remote target by its endpoint id.
          *

@@ -50,6 +50,12 @@ namespace mxl::lib::fabrics::ofi
          */
         void registerRegions(std::vector<Region> const& regions, std::uint64_t access);
 
+        /** \briof Register a single memory region to this domain.
+         *
+         * The domain will own its own version of the registered memory region.
+         */
+        void registerRegion(Region const& region, std::uint64_t access);
+
         /** \brief Get the local regions associated to the registered regions to this domain.
          *
          * If no regions was registered previously, this will
@@ -92,7 +98,7 @@ namespace mxl::lib::fabrics::ofi
          * The domain will own its own version of the registered memory region.
          */
         [[nodiscard]]
-        RegisteredRegion registerRegion(Region const& region, std::uint64_t access);
+        RegisteredRegion registerRegionImpl(Region const& region, std::uint64_t access);
 
         Domain(::fid_domain*, std::shared_ptr<Fabric>, std::vector<RegisteredRegion>);
 

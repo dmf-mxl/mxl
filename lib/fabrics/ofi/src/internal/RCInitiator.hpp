@@ -77,6 +77,10 @@ namespace mxl::lib::fabrics::ofi
          */
         void transferGrain(std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t remotePayloadOffset, SliceRange const& sliceRange);
 
+        /** \brief Post a data transfer request to this endpoint.
+         */
+        void transferSamples(std::uint64_t headIndex, std::size_t count);
+
     private:
         /** \brief The idle state.
          *
@@ -179,6 +183,10 @@ namespace mxl::lib::fabrics::ofi
          */
         void transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t payloadOffset,
             std::uint16_t startSlice, std::uint16_t endSlice) override;
+
+        /** \copydoc Initiator::transferSamples()
+         */
+        void transferSamples(std::uint64_t headIndex, std::size_t count) override;
 
         /** \copydoc Initiator::makeProgress()
          */

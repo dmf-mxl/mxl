@@ -10,7 +10,6 @@
 #include <rdma/fi_errno.h>
 #include "mxl/fabrics.h"
 #include "Exception.hpp"
-#include "ImmData.hpp"
 #include "LocalRegion.hpp"
 #include "RCTarget.hpp"
 #include "RDMTarget.hpp"
@@ -54,6 +53,26 @@ namespace mxl::lib::fabrics::ofi
         }
 
         return _inner->readGrainBlocking(timeout);
+    }
+
+    std::optional<Target::SampleReadResult> TargetWrapper::readSamples()
+    {
+        if (!_inner)
+        {
+            throw Exception::invalidState("Target is not set up.");
+        }
+
+        return _inner->readSamples();
+    }
+
+    std::optional<Target::SampleReadResult> TargetWrapper::readSamplesBlocking(std::chrono::steady_clock::duration timeout)
+    {
+        if (!_inner)
+        {
+            throw Exception::invalidState("Target is not set up.");
+        }
+
+        return _inner->readSamplesBlocking(timeout);
     }
 
     std::unique_ptr<TargetInfo> TargetWrapper::setup(mxlFabricsTargetConfig const& config)
