@@ -1,0 +1,107 @@
+
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+# --- Stage 1: Build libfabric with EFA support ---
+FROM debian:trixie-slim AS libfabric-build
+WORKDIR /build
+RUN apt-get update && apt-get install -y \
+    build-essential libtool autoconf automake \
+    libibverbs-dev librdmacm-dev git ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN git clone --depth 1 --branch v2.2.0 https://github.com/ofiwg/libfabric.git && \
+    cd libfabric && \
+    ./autogen.sh && \
+    ./configure --prefix=/usr && \
+    make -j$(nproc) && \
+    make install && \
+    ldconfig
+
+# --- Stage 2: Build MXL with Fabrics enabled ---
+# FROM debian:trixie-slim AS mxl-build
+# WORKDIR /src
+# RUN apt-get update && apt-get install -y \
+#     build-essential ninja-build cmake clang pkg-config \
+#     libspdlog-dev libcatch2-dev wget \
+#     gstreamer1.0-plugins-good gstreamer1.0-x \
+#     librdmacm1t64 libibverbs1 patchelf git ca-certificates && rm -rf /var/lib/apt/lists/*
+# # Copy libfabric from previous stage
+# COPY --from=libfabric-build /usr/lib/libfabric.so* /usr/lib/
+# COPY --from=libfabric-build /usr/lib/pkgconfig/libfabric.pc /usr/lib/pkgconfig/
+# COPY --from=libfabric-build /usr/include/rdma/ /usr/include/rdma/
+# COPY --from=libfabric-build /usr/include/rdma/fi_errno.h /usr/include/rdma/
+#     # Install stduuid (header-only, CMake package)
+# RUN git clone --depth 1 https://github.com/mariusbancila/stduuid.git /tmp/stduuid && \
+#     cmake -S /tmp/stduuid -B /tmp/stduuid/build -DBUILD_TESTING=OFF && \
+#     cmake --install /tmp/stduuid/build && \
+#     # Install picojson (header-only)
+#     wget -O /usr/include/picojson.h https://raw.githubusercontent.com/kazuho/picojson/master/picojson.h
+# COPY . /src
+# # Set PKG_CONFIG_PATH so pkg-config can find libfabric
+# ENV PKG_CONFIG_PATH=/usr/lib/pkgconfig
+# # Use direct CMake configure to avoid preset path issues
+# RUN cmake -S /src -B /src/build/Linux-Clang-Release -DCMAKE_BUILD_TYPE=Release -DMXL_ENABLE_FABRICS_OFI=ON && \
+#     ninja -C /src/build/Linux-Clang-Release all
+
+# --- Stage 2: Build MXL with Fabrics enabled ---
+FROM debian:trixie-slim AS mxl-build
+WORKDIR /src
+RUN apt-get update && apt-get install -y \
+    build-essential ninja-build cmake clang pkg-config \
+    libspdlog-dev libcatch2-dev wget \
+    libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \ 
+    gstreamer1.0-plugins-good gstreamer1.0-x \
+    libcli11-dev \ 
+    libfmt-dev \
+    libc++-dev \
+    libc++abi-dev \
+    librdmacm1t64 libibverbs1 patchelf git ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=libfabric-build /usr/lib/libfabric.so* /usr/lib/
+COPY --from=libfabric-build /usr/lib/pkgconfig/libfabric.pc /usr/lib/pkgconfig/
+COPY --from=libfabric-build /usr/include/rdma/ /usr/include/rdma/
+
+RUN git clone --depth 1 https://github.com/mariusbancila/stduuid.git /tmp/stduuid && \
+    cmake -S /tmp/stduuid -B /tmp/stduuid/build -DBUILD_TESTING=OFF && \
+    cmake --install /tmp/stduuid/build && \
+    # Fix: Create directory for picojson
+    mkdir -p /usr/include/picojson && \
+    wget -O /usr/include/picojson/picojson.h https://raw.githubusercontent.com/kazuho/picojson/master/picojson.h
+
+COPY . /src
+ENV PKG_CONFIG_PATH=/usr/lib/pkgconfig
+
+# Added Clang explicit selection
+RUN cmake -S /src -B /src/build/Linux-Clang-Release \
+    -G Ninja \
+    -DCMAKE_C_COMPILER=gcc \
+    -DCMAKE_CXX_COMPILER=g++ \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DMXL_ENABLE_FABRICS_OFI=ON && \
+    ninja -C /src/build/Linux-Clang-Release all
+
+# --- Stage 3: Runtime image ---
+FROM debian:trixie-slim
+WORKDIR /app
+RUN apt-get update && apt-get -y install \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-x \
+    librdmacm1t64 \
+    libibverbs1 \
+    libspdlog1.15 \
+    libfmt10 \
+    patchelf && rm -rf /var/lib/apt/lists/*
+    
+# Copy runtime artifacts from build
+COPY --from=mxl-build /usr/lib/libfabric.so* /app/
+# COPY --from=mxl-build /src/build/Linux-Clang-Release/lib/*.so* /app/
+# COPY --from=mxl-build /src/build/Linux-Clang-Release/lib/internal/*.so* /app/
+# COPY --from=mxl-build /src/build/Linux-Clang-Release/lib/fabrics/ofi/libmxl-fabrics* /app/
+# COPY --from=mxl-build /src/build/Linux-Clang-Release/lib/tests/data/*.json /app/
+# COPY --from=mxl-build /src/build/Linux-Clang-Release/tools/mxl-gst/mxl-gst-testsrc /app/
+# COPY --from=mxl-build /src/build/Linux-Clang-Release/tools/mxl-fabrics-demo/mxl-fabrics-demo /app/
+
+# RUN patchelf --set-rpath /app mxl-gst-testsrc && \
+#     patchelf --set-rpath /app mxl-fabrics-demo
+
+# CMD ["/app/mxl-gst-testsrc", "-d", "/domain", "-v", "/app/v210_flow.json", "-a", "/app/audio_flow.json"]

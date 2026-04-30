@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+ARG BASE_TAG=latest
+FROM ghcr.io/qvest-digital/mxl-base:${BASE_TAG}
+
+# Switch to root to install writer-specific requirements and move files
+USER 0:0
+RUN apt-get update && apt-get install -y gstreamer1.0-x && rm -rf /var/lib/apt/lists/*
+
+# Move the JSON files that were added to the base image during its build
+# This avoids the circular dependency error
+RUN mkdir -p /home/mxl && \
+    cp /usr/share/mxl/data/*.json /home/mxl/ && \
+    chown -R mxl:mxl /home/mxl/
+
+# Switch back to the mxl user
+USER mxl
+WORKDIR /home/mxl
+
+ENTRYPOINT []
+CMD ["/usr/bin/mxl-gst-testsrc", "-d", "/domain", "-v", "/home/mxl/v210_flow.json", "-a", "/home/mxl/audio_flow.json"]

@@ -1,0 +1,97 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+FROM debian:trixie-slim AS base
+
+RUN apt-get update && apt-get install -y \
+   gstreamer1.0-plugins-good \
+   gstreamer1.0-plugins-base \
+   gstreamer1.0-plugins-bad \
+   curl zip unzip tar \
+   dumb-init \
+   librdmacm1t64 libibverbs1 \
+   && rm -r /var/lib/apt/lists/*
+
+RUN useradd -m mxl
+
+# --- Stage: libfabric build with EFA support ---
+FROM debian:trixie-slim AS libfabric-build
+RUN apt-get update && apt-get install -y \
+    build-essential libtool autoconf automake \
+    libibverbs-dev librdmacm-dev ibverbs-providers git ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /tmp
+RUN git clone --depth 1 --branch v2.2.0 https://github.com/ofiwg/libfabric.git && \
+    cd libfabric && \
+    ./autogen.sh && \
+    ./configure --prefix=/usr --enable-efa && \
+    make -j$(nproc) && \
+    make install && \
+    ldconfig
+
+FROM base AS builder
+
+ARG CLANG_VERSION=19
+RUN apt-get update && apt-get install -y \
+    build-essential bison flex \
+    cmake ninja-build \
+    pkg-config \
+    git \
+    libgstreamer1.0-dev \
+    libgstreamer-plugins-base1.0-dev \
+    librdmacm1t64 libibverbs1 \
+    && rm -rf /var/lib/apt/lists/*
+# Copy libfabric from previous stage (libfabric* glob picks up both .so symlinks and the providers dir)
+COPY --from=libfabric-build /usr/lib/libfabric* /usr/lib/
+COPY --from=libfabric-build /usr/lib/pkgconfig/libfabric.pc /usr/lib/pkgconfig/
+COPY --from=libfabric-build /usr/include/rdma/ /usr/include/rdma/
+COPY --from=libfabric-build /usr/include/rdma/fi_errno.h /usr/include/rdma/
+
+USER mxl
+WORKDIR /home/mxl
+
+RUN git clone https://github.com/microsoft/vcpkg.git "${HOME}/vcpkg" \
+    && cd "${HOME}/vcpkg" \
+    && ./bootstrap-vcpkg.sh -disableMetrics
+
+RUN mkdir mxl
+COPY CMakeLists.txt mxl/CMakeLists.txt
+COPY CMakePresets.json mxl/CMakePresets.json
+COPY Doxyfile.in mxl/Doxyfile.in
+COPY vcpkg.json mxl/vcpkg.json
+COPY lib mxl/lib
+COPY cmake mxl/cmake
+COPY tools mxl/tools
+COPY utils mxl/utils
+
+RUN cmake -S "${HOME}/mxl" --preset Linux-GCC-Release -DCMAKE_INSTALL_PREFIX=/usr -DMXL_ENABLE_FABRICS_OFI=ON
+RUN ninja -C "${HOME}/mxl/build/Linux-GCC-Release"
+
+USER 0:0
+RUN ninja -C "/home/mxl/mxl/build/Linux-GCC-Release" install
+
+FROM base AS mxl
+# Copy libfabric runtime to final image (libfabric* glob picks up both .so symlinks and the providers dir)
+COPY --from=libfabric-build /usr/lib/libfabric* /usr/lib/
+COPY --from=libfabric-build /usr/lib/pkgconfig/libfabric.pc /usr/lib/pkgconfig/
+COPY --from=libfabric-build /usr/include/rdma/ /usr/include/rdma/
+COPY --from=libfabric-build /usr/include/rdma/fi_errno.h /usr/include/rdma/
+RUN --mount=type=bind,from=builder,target=/builder \
+    cp -a /builder/usr/lib/$(uname -m)-linux-gnu/libmxl* /usr/lib/$(uname -m)-linux-gnu/
+COPY --from=builder /usr/bin/mxl-* /usr/bin/
+
+# ADD THIS LINE: Copy the test data from the builder stage into the final base image
+COPY --from=builder /home/mxl/mxl/lib/tests/data/*.json /usr/share/mxl/data/
+
+USER mxl
+WORKDIR /home/mxl
+ENTRYPOINT ["/bin/bash", "-c"]
+
+FROM mxl AS mxl-info
+ENTRYPOINT ["/usr/bin/mxl-info"]
+
+FROM mxl AS mxl-gst-testsrc
+ENTRYPOINT ["/usr/bin/mxl-gst-testsrc"]
+
+FROM mxl AS mxl-fake-reader
+COPY examples/scripts/fake-reader.sh /home/mxl/fake-reader.sh
+ENTRYPOINT ["/usr/bin/dumb-init", "--", "/home/mxl/fake-reader.sh"]

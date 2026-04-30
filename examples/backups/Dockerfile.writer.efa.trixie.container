@@ -1,0 +1,88 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+FROM debian:trixie-slim
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Optimization: Disable swappiness [cite: 1]
+RUN echo 'vm.swappiness=0' >> /etc/sysctl.conf
+
+# Install basic build and runtime dependencies [cite: 2, 3]
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
+    curl \
+    zip \
+    unzip \
+    tar \
+    lsb-release \
+    apt-transport-https \
+    ca-certificates \
+    git \
+    git-lfs \
+    openssh-client \
+    pkg-config \
+    build-essential \
+    gdb \
+    nasm \
+    doxygen \
+    graphviz \
+    autoconf \
+    automake \
+    libtool \
+    bison \
+    flex \
+    ccache \
+    rustup \
+    htop \
+    libibverbs-dev \
+    librdmacm-dev \
+    cmake \
+    ninja-build \
+    libgstreamer1.0-dev \
+    libgstreamer-plugins-base1.0-dev \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-plugins-ugly \
+    gstreamer1.0-x \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Clang 19 [cite: 3, 4]
+ARG CLANG_VERSION=19
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    "clang-${CLANG_VERSION}" \
+    "clang-tools-${CLANG_VERSION}" \
+    "clang-tidy-${CLANG_VERSION}" \
+    "clang-format-${CLANG_VERSION}" \
+    "libclang-rt-${CLANG_VERSION}-dev" \
+    && rm -rf /var/lib/apt/lists/*
+
+
+# --- MFA ADAPTER STEP 1: Build libfabric from source with EFA support ---
+WORKDIR /tmp
+RUN git clone --depth 1 --branch v2.2.0 https://github.com/ofiwg/libfabric.git \
+    && cd libfabric \
+    && ./autogen.sh \
+    && ./configure --prefix=/usr \
+    && make -j$(nproc) \
+    && make install \
+    && ldconfig \
+    && cd /tmp && rm -rf libfabric
+
+# Verify EFA provider is available
+RUN fi_info -l | grep efa
+
+
+# --- MFA ADAPTER STEP 2: Build MXL with Fabrics Enabled ---
+# Note: This assumes you are mounting your source code to /src or copying it in
+WORKDIR /src
+# ENV commands to ensure the build environment uses the right tools
+ENV CC=clang
+ENV CXX=clang++
+
+# Instructions for the build process (can be run during build or as CMD)
+RUN cmake --preset Linux-Clang-Release -DMXL_ENABLE_FABRICS_OFI=ON \
+    && ninja -C build/Linux-Clang-Release all
+
+# clean up scripts
+RUN rm -rf /tmp/scripts

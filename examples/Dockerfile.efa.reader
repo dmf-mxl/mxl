@@ -1,0 +1,17 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+ARG BASE_TAG=latest
+FROM ghcr.io/qvest-digital/mxl-base:${BASE_TAG} AS mxl-base
+
+USER 0:0
+RUN apt-get update && apt-get install -y gstreamer1.0-plugins-ugly && rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /home/mxl && \
+    cp /usr/share/mxl/data/*.json /home/mxl/ && \
+    chown -R mxl:mxl /home/mxl/
+USER mxl
+
+COPY examples/scripts/fake-reader.sh /home/mxl/fake-reader.sh
+
+ENTRYPOINT []
+CMD ["sh", "-c", "while true; do /usr/bin/mxl-info -d /domain -l || true; sleep 2; done"]

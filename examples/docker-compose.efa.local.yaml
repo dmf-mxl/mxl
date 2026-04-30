@@ -1,0 +1,30 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Local smoke-test for EFA images. No EFA hardware required — uses TCP fabric.
+# Build images first: ./examples/build-efa-local.sh
+
+services:
+  writer:
+    image: mxl-writer:local
+    environment:
+      FI_PROVIDER: tcp
+    volumes:
+      - mxl-domain:/domain
+
+  reader:
+    image: mxl-reader:local
+    environment:
+      FI_PROVIDER: tcp
+    volumes:
+      - mxl-domain:/domain
+    depends_on:
+      - writer
+
+volumes:
+  mxl-domain:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: uid=1000,gid=1000,mode=0755

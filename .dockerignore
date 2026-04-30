@@ -2,12 +2,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
 build
-.cache
-claude.md
-.claude/
-install
-
-CMakeUserPresets.json
-
-.idea
-.vscode
+CMakeCache.txt
+CMakeFiles
