@@ -196,7 +196,7 @@ namespace mxl::lib::fabrics::ofi
             return {std::move(regions),
                 DataLayout::fromAudio(4 /*TODO: How to get the actual number of bytes per samples?? Can we assume it's always 32 bits?*/,
                     continuousFlow.flowInfo()->config.continuous.channelCount,
-                    continuousFlow.flowInfo()->config.continuous.channelCount),
+                    continuousFlow.flowInfo()->config.continuous.bufferLength),
                 continuousFlow.flowInfo()->config.common.maxSyncBatchSizeHint};
         }
         else

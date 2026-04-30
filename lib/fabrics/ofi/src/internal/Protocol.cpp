@@ -32,7 +32,7 @@ namespace mxl::lib::fabrics::ofi
 
     std::unique_ptr<EgressProtocolTemplate> selectEgressProtocol(DataLayout const& layout, std::vector<Region> regions)
     {
-        if (!layout.isVideo())
+        if (layout.isVideo())
         {
             return std::make_unique<RMAGrainEgressProtocolTemplate>(layout.asVideo(), std::move(regions));
         }

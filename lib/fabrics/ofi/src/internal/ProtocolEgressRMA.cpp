@@ -171,8 +171,14 @@ namespace mxl::lib::fabrics::ofi
 
     void RMASampleEgressProtocol::transferSamples(Endpoint& ep, std::uint64_t headIndex, std::size_t count, ::fi_addr_t destAddr)
     {
+        // FIXME: We assume that the initiator and target have the same maxSyncBatchSizeHint configured. Is this fine to assume? Should it be
+        // enforced? Otherwise, we would need to split the transfer into multiple transfers of size at most maxSyncBatchSizeHint (target).
+
         // 1- Create the scatter-gather list for the transfer and prepend the audio header.
         auto sgl = makeScatterGatherList(_layout, headIndex, count, _localRegion);
+        // set the header and prepend it to the scatter-gather list.
+        _entryHeaders[_bounceBufferEntryIndex].headIndex = headIndex;
+        _entryHeaders[_bounceBufferEntryIndex].count = count;
         sgl.insert(sgl.begin(), _entryHeaderRegions[_bounceBufferEntryIndex]);
 
         // 2- Get the remote region
@@ -212,7 +218,9 @@ namespace mxl::lib::fabrics::ofi
             throw Exception::invalidState("Memory already registered.");
         }
 
-        // First, Register the audio region provided by the user
+        // Register the audio region provided by the user. When the actual protocol instance is created, the protocol will register additional
+        // regions for the bounce buffer entry headers, but we can only do that once we have the actual protocol instance since the bounce buffer
+        // entry count is a parameter of the protocol instance.
         domain->registerRegion(_region, FI_WRITE);
 
         _localRegion = domain->localRegions().front();

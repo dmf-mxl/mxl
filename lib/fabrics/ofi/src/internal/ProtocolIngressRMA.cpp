@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ProtocolIngressRMA.hpp"
+#include "mxl-internal/Logging.hpp"
 #include "AudioBounceBuffer.hpp"
 #include "DataLayout.hpp"
 #include "Exception.hpp"
@@ -26,6 +27,12 @@ namespace mxl::lib::fabrics::ofi
 
             auto entryCount = (historySize + entrySize - 1) / entrySize; // ceil(historySize / entrySize)
 
+            MXL_INFO("Creating audio bounce buffer with entry size {} bytes and entry count {}, maxSyncBatchSize {} historySize {} bufferLength {}",
+                entrySize,
+                entryCount,
+                maxSyncBatchSize,
+                historySize,
+                layout.bufferLength);
             return {entryCount, entrySize, layout};
         }
 
