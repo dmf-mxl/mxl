@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # EFA deployment verification tests.
-# Run after deploying kube-aws-2-nodes-efa.yaml against an EFA-capable EKS cluster.
+# Run after deploying via `kubectl apply -k examples/aws/kustomize/2-nodes/` against an EFA-capable EKS cluster.
 # Usage: ./test-efa-deployment.sh
 # Exit code 0 = all tests passed, 1 = one or more tests failed.
 
