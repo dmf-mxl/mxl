@@ -221,6 +221,61 @@ A few important rules fall straight out of the data structure:
 
 ![Continuous Flow Memory Layout](./assets/continuous-flow-memory-layout.png)
 
+# Aligned Processing of Multiple Flows
+
+Media functions oftentimes have the requirement to consume multiple, time aligned flows concurrently. In order to
+facilitate this use case MXL offers *Flow Synchronization Groups* that allow synchronizing on data availability across
+multiple flows.
+
+A *Flow Synchronization Group* is set up by creating it and adding one or more readers to it, by calling either
+* `mxlFlowSynchronizationGroupAddReader()` if the reader operates on a continuous flow or the reader operates on
+    a discrete flow and the intention is to consume entire grains, or
+* `mxlFlowSynchronizationGroupAddPartialGrainReader()` if the reader operates on a discrete flow and the intention is to
+    consume partial grains, for which a specified number of slices has to be available at the time of synchronization.
+
+Once a *Flow Synchronization Group* is set up clients can synchronize on grain(slice)s or samples corresponding to a
+specified time stamp to become available by calling `mxlFlowSynchronizationGroupWaitForDataAt()`.
+
+Please note that the choice has been made to synchronize on timestamps rather than indices, because the former
+identifies a specific head index across all flows that are part of a group, while the latter would only be valid with
+regards to one specific grain/sample rate.
+
+A media function consuming multiple flows should define a nominal output rate from which it can derive the time stamps
+to synchronize on, like so:
+
+```c
+// Assume the following variables to be initialized out of the scope of this code section
+mxlRational outputRate = ...;
+uint64_t nextIndex = ...;
+
+// ...
+
+uint64_t const nextTimestamp = mxlIndexToTimestamp(&outputRate, nextIndex);
+```
+
+Then the processing loop consuming multiple flows tracked by a *Flow Synchronization Group* can look like this:
+
+```c
+// Assume the following variables to be initialized out of the scope of this code section
+mxlFlowSynchronizationGroup inputFlowSyncGroup = ...;
+
+mxlRational outputRate = ...;
+uint64_t nextIndex = ...;
+
+while (running)
+{
+    // Wait 5ms for the corresponding indices to become available
+    uint64_t const nextTimestamp = mxlIndexToTimestamp(&outputRate, nextIndex);
+    mxlStatus waitResult = mxlFlowSynchronizationGroupWaitForDataAt(inputFlowSyncGroup, nextTimestamp, 5'000'000);
+    if (waitResult == MXL_STATUS_OK)
+    {
+        // For each input flow consume the grains/samples at or up until
+        // mxlTimestampToIndex(&inputFlowRate, nextTimestamp)
+        // ...
+    }
+}
+```
+
 # Grain formats
 
 ## Video
