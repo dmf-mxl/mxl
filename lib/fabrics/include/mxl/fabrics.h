@@ -217,7 +217,7 @@ extern "C"
      * \param in_targetInfo The target information. This should be the same as the one returned from "mxlFabricsTargetSetup".
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsInitiatorAddTarget(mxlFabricsInitiator in_initiator, mxlFabricsTargetInfo const in_targetInfo);
+    mxlStatus mxlFabricsInitiatorAddTarget(mxlFabricsInitiator in_initiator, mxlFabricsTargetInfo in_targetInfo);
 
     /**
      * Remove a target from the initiator. This function is always non-blocking. If any additional communication for a graceful shutdown is
@@ -228,7 +228,7 @@ extern "C"
      * \param in_targetInfo The target information. This should be the same as the one returned from "mxlFabricsTargetSetup".
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsInitiatorRemoveTarget(mxlFabricsInitiator in_initiator, mxlFabricsTargetInfo const in_targetInfo);
+    mxlStatus mxlFabricsInitiatorRemoveTarget(mxlFabricsInitiator in_initiator, mxlFabricsTargetInfo in_targetInfo);
 
     /**
      * Enqueue a transfer operation to all added targets. This function is always non-blocking. The transfer operation might be started right
@@ -291,7 +291,7 @@ extern "C"
      * \param in_stringSize The size of the output string.
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsTargetInfoToString(mxlFabricsTargetInfo const in_targetInfo, char* out_string, size_t* in_stringSize);
+    mxlStatus mxlFabricsTargetInfoToString(mxlFabricsTargetInfo in_targetInfo, char* out_string, size_t* in_stringSize);
 
     /**
      * Parse a targetInfo object from its string representation.

@@ -87,7 +87,8 @@ namespace mxl::lib::fabrics::ofi
             std::vector<std::uint8_t>(2048),
         };
 
-        std::vector<Region> regions;
+        auto regions = std::vector<Region>{};
+        regions.reserve(innerRegions.size());
         for (auto const& innerRegion : innerRegions)
         {
             regions.emplace_back(*innerRegion.data(), innerRegion.size(), nullptr, nullptr);
@@ -100,7 +101,8 @@ namespace mxl::lib::fabrics::ofi
     inline MxlRegions getMxlRegions(std::vector<std::vector<std::uint8_t>> const& innerRegions,
         DataLayout dataLayout = DataLayout::fromVideo({8, 0, 0, 0}))
     {
-        std::vector<Region> regions;
+        auto regions = std::vector<Region>{};
+        regions.reserve(innerRegions.size());
         for (auto const& innerRegion : innerRegions)
         {
             regions.emplace_back(*innerRegion.data(), innerRegion.size(), nullptr, nullptr);

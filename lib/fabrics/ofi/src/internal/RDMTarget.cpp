@@ -27,7 +27,7 @@ namespace mxl::lib::fabrics::ofi
             throw Exception::invalidArgument("Invalid provider specified");
         }
 
-        uint64_t caps = FI_RMA | FI_REMOTE_WRITE;
+        std::uint64_t caps = FI_RMA | FI_REMOTE_WRITE;
         caps |= config.deviceSupport ? FI_HMEM : 0;
 
         auto fabricInfoList = FabricInfoList::get(config.endpointAddress.node, config.endpointAddress.service, provider.value(), caps, FI_EP_RDM);

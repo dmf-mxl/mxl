@@ -67,6 +67,9 @@ namespace mxl::lib::fabrics::ofi
         for (auto const& regionValue : regionsArray)
         {
             auto regionObj = regionValue.get<picojson::object>();
+
+            // Conversios of types that represent memory addresses to strings is preferred over converting to float
+            // to make sure nobody can reduce precision when converting on the way.
             auto addr = std::stoull(regionObj.at("addr").get<std::string>());
             auto len = std::stoull(regionObj.at("len").get<std::string>());
             auto rkey = std::stoull(regionObj.at("rkey").get<std::string>());
@@ -80,6 +83,6 @@ namespace mxl::lib::fabrics::ofi
 
     bool TargetInfo::operator==(TargetInfo const& other) const noexcept
     {
-        return fabricAddress == other.fabricAddress && remoteRegions == other.remoteRegions && id == other.id;
+        return (fabricAddress == other.fabricAddress) && (remoteRegions == other.remoteRegions) && (id == other.id);
     }
 }
