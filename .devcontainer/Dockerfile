@@ -12,7 +12,7 @@ COPY ./scripts/ /tmp/scripts
 
 # Install basic and runtime dependencies
 RUN apt clean all && apt-get update \
- && apt-get install -y --no-install-recommends \
+    && apt-get install -y --no-install-recommends \
     wget \
     curl \
     zip \
@@ -40,7 +40,8 @@ RUN apt clean all && apt-get update \
     htop \
     ccache \
     rustup \
-    librdmacm-dev
+    librdmacm-dev \
+    libsysprof-capture-4-dev
 
 
 ARG CLANG_VERSION=19
@@ -50,6 +51,8 @@ RUN apt-get install -y --no-install-recommends \
     "clang-tidy-${CLANG_VERSION}" \
     "clang-format-${CLANG_VERSION}" \
     "llvm-${CLANG_VERSION}" \
+    "clangd-${CLANG_VERSION}" \
+    "lld-${CLANG_VERSION}" \
     cmake \
     ninja-build
 
@@ -69,7 +72,6 @@ RUN /tmp/scripts/common/libfabric/install.sh
 # Install GST dependencies for plugins
 RUN apt-get install -y --no-install-recommends \
     libglib2.0-dev \
-    libgdk-pixbuf2.0-dev \
     libcairo2-dev \
     libpango1.0-dev \
     libgraphene-1.0-dev \
@@ -88,17 +90,17 @@ ARG USER_GID=${USER_UID}
 
 # Create the user
 RUN groupadd --gid "${USER_GID}" "${USERNAME}" \
- && useradd --uid "${USER_UID}" --gid "${USER_GID}" -m -s /bin/bash "${USERNAME}" \
- && apt-get install -y sudo \
- && printf '%s ALL=(root) NOPASSWD:ALL\n' "${USERNAME}" > "/etc/sudoers.d/${USERNAME}" \
- && chmod 0440 "/etc/sudoers.d/${USERNAME}"
+    && useradd --uid "${USER_UID}" --gid "${USER_GID}" -m -s /bin/bash "${USERNAME}" \
+    && apt-get install -y sudo \
+    && printf '%s ALL=(root) NOPASSWD:ALL\n' "${USERNAME}" > "/etc/sudoers.d/${USERNAME}" \
+    && chmod 0440 "/etc/sudoers.d/${USERNAME}"
 
 USER "${USERNAME}"
 WORKDIR "/home/${USERNAME}"
 
 # Install vcpkg
 RUN git clone https://github.com/microsoft/vcpkg \
- && ./vcpkg/bootstrap-vcpkg.sh --disableMetrics
+    && ./vcpkg/bootstrap-vcpkg.sh --disableMetrics
 
 ENV VCPKG_ROOT="/home/${USERNAME}/vcpkg"
 

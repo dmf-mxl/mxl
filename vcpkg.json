@@ -3,7 +3,7 @@
   "dependencies": [
     {
       "name": "catch2",
-      "version>=": "3.11.0#0"
+      "version>=": "3.14.0#0"
     },
     {
       "name": "stduuid",
@@ -15,7 +15,7 @@
     },
     {
       "name": "spdlog",
-      "version>=": "1.16.0#0"
+      "version>=": "1.17.0#0"
     },
     {
       "name": "fmt",
@@ -27,7 +27,7 @@
     },
     {
       "name": "cli11",
-      "version>=": "2.6.1#0"
+      "version>=": "2.6.2#0"
     },
     {
       "name": "pcapplusplus",
