@@ -24,6 +24,7 @@
 #   include <sys/event.h>
 #elif __linux__
 #   include <sys/epoll.h>
+#   include <sys/eventfd.h>
 #   include <sys/inotify.h>
 #endif
 
@@ -45,6 +46,7 @@ namespace mxl::lib
             auto const error = errno;
             throw std::system_error(error, std::generic_category(), "Failed to create a kqueue");
         }
+
 #elif defined __linux__
         _inotifyFd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
         if (_inotifyFd == -1)
@@ -78,6 +80,27 @@ namespace mxl::lib
             ::close(_epollFd);
             throw std::system_error(error, std::generic_category(), "epoll_ctl ADD inotify failed");
         }
+
+        _eventFd = ::eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
+        if (_eventFd < 0)
+        {
+            auto const error = errno;
+            ::close(_inotifyFd);
+            ::close(_epollFd);
+            throw std::system_error{error, std::generic_category(), "failed to create evenfd"};
+        }
+
+        auto efdEvent = ::epoll_event{};
+        efdEvent.events = EPOLLIN;
+        efdEvent.data.fd = _eventFd;
+        if (::epoll_ctl(_epollFd, EPOLL_CTL_ADD, _eventFd, &efdEvent) == -1)
+        {
+            auto const error = errno;
+            ::close(_inotifyFd);
+            ::close(_epollFd);
+            ::close(_eventFd);
+            throw std::system_error(error, std::generic_category(), "epoll_ctl ADD eventfd failed");
+        }
 #endif
 
         // Start event processing thread
@@ -93,6 +116,7 @@ namespace mxl::lib
 #elif defined __linux__
             ::close(_inotifyFd);
             ::close(_epollFd);
+            ::close(_eventFd);
 #endif
             throw;
         }
@@ -104,6 +128,7 @@ namespace mxl::lib
 #elif defined __linux__
             ::close(_inotifyFd);
             ::close(_epollFd);
+            ::close(_eventFd);
 #endif
             throw;
         }
@@ -129,6 +154,11 @@ namespace mxl::lib
         {
             auto const error = errno;
             MXL_ERROR("Error closing inotify FD: {}", std::strerror(error));
+        }
+        if (::close(_eventFd) == -1)
+        {
+            auto const error = errno;
+            MXL_ERROR("Error closing epoll FD: {}", std::strerror(error));
         }
         if (::close(_epollFd) == -1)
         {
@@ -297,24 +327,44 @@ namespace mxl::lib
                 continue; // no events, continue looping
             }
 
-            // We have an inotify event ready
-            auto length = ::read(_inotifyFd, buffer, sizeof buffer);
-            if (length == -1)
+            for (auto ev = events; ev != events + nfds; ++ev)
             {
-                auto const error = errno;
-                if ((error == EINTR) || (error == EAGAIN))
+                if (ev->data.fd == _eventFd)
                 {
-                    continue; // spurious interrupt or non-blocking empty read, retry
-                }
-                MXL_ERROR("Error reading inotify events: {}", std::strerror(error));
-                break; // break on critical read error
-            }
-            if (length == 0)
-            {
-                continue; // nothing to read (should not happen if nfds > 0)
-            }
+                    auto value = ::eventfd_t{};
+                    if (::read(_eventFd, &value, sizeof(::eventfd_t)) < 0)
+                    {
+                        MXL_WARN("Failed to read event file descriptor: {}", ::strerror(errno));
+                        continue;
+                    }
 
-            processEventBuffer(reinterpret_cast<::inotify_event const*>(buffer), length / sizeof(::inotify_event));
+                    if (value > 0)
+                    {
+                        MXL_DEBUG("Domain watcher thread exit requested");
+                    }
+                }
+                else
+                {
+                    // We have an inotify event ready
+                    auto length = ::read(_inotifyFd, buffer, sizeof buffer);
+                    if (length == -1)
+                    {
+                        auto const error = errno;
+                        if ((error == EINTR) || (error == EAGAIN))
+                        {
+                            continue; // spurious interrupt or non-blocking empty read, retry
+                        }
+                        MXL_ERROR("Error reading inotify events: {}", std::strerror(error));
+                        break; // break on critical read error
+                    }
+                    if (length == 0)
+                    {
+                        continue; // nothing to read (should not happen if nfds > 0)
+                    }
+
+                    processEventBuffer(reinterpret_cast<::inotify_event const*>(buffer), length / sizeof(::inotify_event));
+                }
+            }
         }
 #endif
     }
@@ -328,8 +378,8 @@ namespace mxl::lib
         /* Set up a list of events to monitor. */
         constexpr unsigned int vnodeEvents = NOTE_DELETE | NOTE_WRITE | NOTE_ATTRIB;
 
-        _eventsToMonitor.resize(_watches.size());
-        _eventData.resize(_watches.size());
+        _eventsToMonitor.resize(_watches.size() + 1);
+        _eventData.resize(_watches.size() + 1);
 
         auto index = std::size_t{0};
 
@@ -339,6 +389,9 @@ namespace mxl::lib
                 &_eventsToMonitor[index], wd, EVFILT_VNODE, EV_ADD | EV_CLEAR, vnodeEvents, 0, std::bit_cast<void*>(static_cast<std::uintptr_t>(wd)));
             index++;
         }
+
+        // Set user a user event that signals the poll thread to exit
+        EV_SET(&_eventsToMonitor[_eventsToMonitor.size() - 1], USER_IDENT, EVFILT_USER, EV_ADD | EV_CLEAR, 0, 0, nullptr);
     }
 
     void DomainWatcher::processPendingEvents(int numEvents)
@@ -347,6 +400,12 @@ namespace mxl::lib
         auto time = currentTime(Clock::TAI);
         for (int eventIndex = 0; eventIndex < numEvents; eventIndex++)
         {
+            if (_eventData[eventIndex].ident == USER_IDENT)
+            {
+                MXL_DEBUG("Domain watcher thread exit requested");
+                continue;
+            }
+
             auto wd = static_cast<int>(std::bit_cast<std::uintptr_t>(_eventData[eventIndex].udata));
             auto [it, _] = _watches.equal_range(wd);
             if (it == _watches.end())

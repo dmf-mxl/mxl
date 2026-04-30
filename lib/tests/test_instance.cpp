@@ -7,6 +7,54 @@
 #include <mxl/mxl.h>
 #include "Utils.hpp"
 
+#ifdef __linux__
+#   include <sys/vfs.h>
+#   include <linux/magic.h>
+
+namespace
+{
+    bool pathIsTmpFs(char const* path)
+    {
+        struct statfs buf;
+        REQUIRE(statfs(path, &buf) == 0);
+        return (buf.f_type == TMPFS_MAGIC) || (buf.f_type == RAMFS_MAGIC);
+    }
+}
+#endif
+
+TEST_CASE("mxlIsTmpFs returns MXL_ERR_INVALID_ARG for NULL path", "[mxlIsTmpFs]")
+{
+    bool isTmpFs = true;
+    REQUIRE(mxlIsTmpFs(nullptr, &isTmpFs) == MXL_ERR_INVALID_ARG);
+}
+
+TEST_CASE("mxlIsTmpFs returns MXL_ERR_INVALID_ARG for NULL out pointer", "[mxlIsTmpFs]")
+{
+    REQUIRE(mxlIsTmpFs("/tmp", nullptr) == MXL_ERR_INVALID_ARG);
+}
+
+TEST_CASE("mxlIsTmpFs returns error for non-existent path", "[mxlIsTmpFs]")
+{
+    bool isTmpFs = true;
+    REQUIRE(mxlIsTmpFs("/this/path/does/not/exist", &isTmpFs) != MXL_STATUS_OK);
+}
+
+#ifdef __linux__
+TEST_CASE("mxlIsTmpFs matches statfs filesystem type on Linux", "[mxlIsTmpFs]")
+{
+    bool isTmpFs = false;
+    REQUIRE(mxlIsTmpFs("/", &isTmpFs) == MXL_STATUS_OK);
+    REQUIRE(isTmpFs == pathIsTmpFs("/"));
+}
+
+TEST_CASE("mxlIsTmpFs detects /dev/shm as tmpfs on Linux", "[mxlIsTmpFs]")
+{
+    bool isTmpFs = false;
+    REQUIRE(mxlIsTmpFs("/dev/shm", &isTmpFs) == MXL_STATUS_OK);
+    REQUIRE(isTmpFs);
+}
+#endif
+
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow readers / writers caching", "[instance]")
 {
     auto const opts = "{}";

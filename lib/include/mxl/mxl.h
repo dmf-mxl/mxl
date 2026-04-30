@@ -6,6 +6,7 @@
 #ifdef __cplusplus
 #   include <cstdint>
 #else
+#   include <stdbool.h>
 #   include <stdint.h>
 #endif
 
@@ -87,6 +88,23 @@ extern "C"
     ///
     MXL_EXPORT
     mxlStatus mxlGarbageCollectFlows(mxlInstance in_instance);
+
+    ///
+    /// Checks whether the given path resides on a RAM-backed filesystem.
+    ///
+    /// On Linux, this detects tmpfs and ramfs using statfs().
+    /// On macOS, this checks the filesystem type name reported by statfs().
+    /// On other platforms, this always sets out_isTmpFs to false.
+    ///
+    /// \param in_path The filesystem path to check.
+    /// \param out_isTmpFs Pointer to a bool that will be set to true if the path
+    ///        is on a RAM-backed filesystem, false otherwise.
+    /// \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if in_path or
+    ///         out_isTmpFs is NULL, MXL_ERR_UNKNOWN if the filesystem type
+    ///         could not be determined.
+    ///
+    MXL_EXPORT
+    mxlStatus mxlIsTmpFs(char const* in_path, bool* out_isTmpFs);
 
     ///
     /// Destroy the MXL instance.  This will also release all flows readers/writers associated with the instance.
