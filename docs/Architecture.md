@@ -168,8 +168,8 @@ mxlWrappedMultiBufferSlice slices;
 mxlFlowRuntimeInfo runtime;
 mxlFlowReaderGetRuntimeInfo(reader, &runtime);
 
-const uint64_t lastSample = runtime.headIndex;
-const size_t windowLength = 256;
+uint64_t const lastSample = runtime.headIndex;
+size_t const windowLength = 256;
 mxlFlowReaderGetSamples(
     reader,
     lastSample,
@@ -177,25 +177,29 @@ mxlFlowReaderGetSamples(
     5'000'000,  // 5 milliseconds
     &slices);
 
-const size_t channels = slices.count;
-const size_t strideBytes = slices.stride;
-const size_t fragment0Samples = slices.base.fragments[0].size / sizeof(float);
-const size_t fragment1Samples = slices.base.fragments[1].size / sizeof(float);
+size_t const channels = slices.count;
+size_t const strideBytes = slices.stride;
+size_t const fragment0Samples = slices.base.fragments[0].size / sizeof(float);
+size_t const fragment1Samples = slices.base.fragments[1].size / sizeof(float);
 
-for (size_t channel = 0; channel < channels; ++channel) {
-    const uint8_t *channelBase0 = static_cast<const uint8_t *>(slices.base.fragments[0].pointer) + channel * strideBytes;
-    const uint8_t *channelBase1 = static_cast<const uint8_t *>(slices.base.fragments[1].pointer) + channel * strideBytes;
+for (size_t channel = 0; channel < channels; ++channel)
+{
+    size_t const channelOffset = channel * strideBytes;
+    uint8_t const* const channelBase0 = (uint8_t const*)(slices.base.fragments[0].pointer) + channelOffset;
+    uint8_t const* const channelBase1 = (uint8_t const*)(slices.base.fragments[1].pointer) + channelOffset;
 
-    const float *firstSlice = reinterpret_cast<const float *>(channelBase0);
-    const float *secondSlice = reinterpret_cast<const float *>(channelBase1);
+    float const* const firstSlice = (float const*)(channelBase0);
+    float const* const secondSlice = (float const*s)(channelBase1);
 
     // Process the first fragment (may already contain the entire window).
-    for (size_t i = 0; i < fragment0Samples; ++i) {
+    for (size_t i = 0; i < fragment0Samples; ++i)
+    {
         consume_sample(channel, firstSlice[i]);
     }
 
     // Only needed when the window wrapped around the ring buffer.
-    for (size_t i = 0; i < fragment1Samples; ++i) {
+    for (size_t i = 0; i < fragment1Samples; ++i)
+    {
         consume_sample(channel, secondSlice[i]);
     }
 }
