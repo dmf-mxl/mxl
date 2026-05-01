@@ -27,7 +27,7 @@ target_sources(mxl-internal-tests
 
 target_link_libraries(mxl-internal-tests
         PRIVATE
-            mxl-common
+            mxl-internal-objects
             mxl-internal-headers
     )
 

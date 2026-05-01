@@ -8,6 +8,5 @@ Version: @PROJECT_VERSION@
 Description: Media eXchange Layer SDK
 Libs: -L${libdir} -lmxl
 Requires.private: spdlog
-Libs.private: -pthread -lmxl-common -lstdc++ -lm
+Libs.private: -pthread -lstdc++ -lm
 Cflags: -I${includedir}
-

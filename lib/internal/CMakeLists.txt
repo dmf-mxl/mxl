@@ -43,14 +43,14 @@ else()
         )
 endif()
 
-# Common code, used by both the libmxl and libmxl-fabrics library
-# linking this does not give access to the internal headers.
-add_library(mxl-common)
-target_compile_features(mxl-common
+# Internal implementation objects. These are consumed by libmxl and by internal
+# tests, but are not installed or exported as a user-visible library.
+add_library(mxl-internal-objects OBJECT)
+target_compile_features(mxl-internal-objects
         PUBLIC
             cxx_std_20
     )
-set_target_properties(mxl-common
+set_target_properties(mxl-internal-objects
         PROPERTIES 
             POSITION_INDEPENDENT_CODE ${MXL_POSITION_INDEPENDENT_CODE}
             VISIBILITY_INLINES_HIDDEN ON
@@ -58,10 +58,8 @@ set_target_properties(mxl-common
             CXX_VISIBILITY_PRESET     hidden
             C_EXTENSIONS              OFF
             CXX_EXTENSIONS            OFF
-            VERSION                   "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
-            SOVERSION                 "${PROJECT_VERSION_MAJOR}"
     )
-target_sources(mxl-common
+target_sources(mxl-internal-objects
         PRIVATE
             src/DomainWatcher.cpp
             src/FlowData.cpp
@@ -105,29 +103,20 @@ if (NOT TARGET picojson::picojson)
     find_package(picojson REQUIRED)
 endif()
 
-target_include_directories(mxl-common
+target_include_directories(mxl-internal-objects
         PRIVATE
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )
-target_link_libraries(mxl-common
+target_link_libraries(mxl-internal-objects
         PRIVATE
             mxl-internal-headers
     )
 
-# Add common linker options
-#mxl_add_common_target_link_options(mxl-common PRIVATE)
 # Enable LTO/IPO on target if enabled and supported
-mxl_enable_target_ipo(mxl-common)
+mxl_enable_target_ipo(mxl-internal-objects)
 
-install(TARGETS mxl-common EXPORT ${PROJECT_NAME}-targets
-        COMPONENT ${PROJECT_NAME}-lib
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    )
-
-# Static installs need this exported interface target because mxl-common's
-# imported link interface refers to it. Shared installs do not export it.
+# Static installs need this exported interface target because mxl's imported
+# link interface refers to private dependencies through it.
 if (NOT BUILD_SHARED_LIBS)
     install(TARGETS mxl-internal-headers
             EXPORT ${PROJECT_NAME}-targets
