@@ -11,7 +11,7 @@ DONE Feature or Bug fix
 - Has just enough documentation to understand what it is doing and how this should be used
 - Has been seen working in a simple scenario
 - Include most relevant unit automated tests
-- Validated if the PR needs to be [backported](./Release%20Process.md#backports-of-features-and-fixes) to previous versions as per our [versionning system](./Release%20Process.md#versioning-scheme)
+- Validated if the PR needs to be [backported](./Release%20Process.md#backports-of-features-and-fixes) to previous versions as per our [versioning scheme](./Release%20Process.md#versioning-scheme)
    
 2. (Feature only) Implemented Feature has been reviewed by at least two members of the Requirement Council 
 - Feature demonstrated or tried out
