@@ -73,17 +73,14 @@ namespace mxl::lib::fabrics::ofi
          * \param payloadOffset The payload offset within the grain.
          * \param sliceRange The range of slices to transfer.
          * \param destAddr The destination address. This is ignored for connection-oriented endpoints.
-         * \return The number of requests posted to the endpoint work queue.
          */
         virtual void transferGrain(Endpoint& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint32_t payloadOffset,
             SliceRange const& sliceRange, ::fi_addr_t destAddr = FI_ADDR_UNSPEC) = 0;
 
         /** \brief Transfer samples to a remote target.
-         * \param headIndex The head index to transfer. The ordering was given when mxlFabricsRegions object were created. This is true for both
-         * local and remote memory regions.
-         * \param count The number of samples per channel to transfer, starting from the headIndex - count.
+         * \param headIndex The head index of the samples to transfer.
+         * \param count The number of samples per channel to transfer.
          * \param destAddr The destination address. This is ignored for connection-oriented endpoints.
-         * \return The number of requests posted to the endpoint work queue.
          */
         virtual void transferSamples(Endpoint& ep, std::uint64_t headIndex, std::size_t count, ::fi_addr_t destAddr = FI_ADDR_UNSPEC) = 0;
 
@@ -124,7 +121,7 @@ namespace mxl::lib::fabrics::ofi
     /** \brief Select an appropriate ingress protocol based on the data layout
      * \param layout The data layout.
      * \param regions The regions involved.
-     * \param maxSyncBatchSize The maximum batch size for synchronous transfers.
+     * \param maxSyncBatchSize The maximum batch size for transfers.
      * \return A unique pointer to the selected ingress protocol.
      */
     [[nodiscard]]

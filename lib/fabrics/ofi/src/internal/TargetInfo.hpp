@@ -17,8 +17,8 @@ namespace mxl::lib::fabrics::ofi
      */
     struct TargetInfoBounceBufferInfo
     {
-        std::size_t entryCount;  /**< Number of entries in the bounce buffer. */
-        std::uint32_t entrySize; /**< Size of each bounce buffer entry in bytes. */
+        std::size_t entryCount; /**< Number of entries in the bounce buffer. */
+        std::size_t entrySize;  /**< Size of each bounce buffer entry in bytes. */
     };
 
     /** \brief TargetInfo contains all the information required by an initiator to operate transfers to the given target.

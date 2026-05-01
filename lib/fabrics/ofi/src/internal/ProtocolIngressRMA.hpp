@@ -86,6 +86,12 @@ namespace mxl::lib::fabrics::ofi
     private:
         LocalRegion immDataRegion();
 
+        /** \brief Helper function to create an AudioBounceBuffer based on the given audio data layout and maximum synchronous batch size.
+         * Entries are as big as the maximum number of samples that can be transferred in a single batch, which is determined by maxSyncBatchSize.
+         * The number of entries is determined by how many batches are needed to cover the entire history buffer.
+         */
+        AudioBounceBuffer makeAudioBounceBuffer(DataLayout::AudioDataLayout const& layout, std::uint32_t maxSyncBatchSize);
+
     private:
         AudioBounceBuffer _bounceBuffer;
         Region _region;

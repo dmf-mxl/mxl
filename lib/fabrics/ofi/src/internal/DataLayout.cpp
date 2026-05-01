@@ -14,7 +14,7 @@ namespace mxl::lib::fabrics::ofi
         return DataLayout{DataLayout::VideoDataLayout{.sliceSizes = sliceSizes}};
     };
 
-    DataLayout DataLayout::fromAudio(std::uint32_t sampleSize, std::uint32_t channelCount, std::uint32_t bufferLength) noexcept
+    DataLayout DataLayout::fromAudio(std::size_t sampleSize, std::size_t channelCount, std::size_t bufferLength) noexcept
     {
         return DataLayout{
             DataLayout::AudioDataLayout{.sampleSize = sampleSize, .channelCount = channelCount, .bufferLength = bufferLength}

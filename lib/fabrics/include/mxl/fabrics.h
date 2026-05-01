@@ -165,7 +165,7 @@ extern "C"
     mxlStatus mxlFabricsTargetSetup(mxlFabricsTarget in_target, mxlFabricsTargetConfig const* in_config, mxlFabricsTargetInfo* out_info);
 
     /**
-     * Non-blocking accessor for a flow grain at a specific index.
+     * Non-blocking accessor for a flow grain.
      * \param in_target A valid fabrics target
      * \param out_grainIndex The index of the grain that was written, if any.
      * \return The result code. MXL_ERR_NOT_READY if no grain was available at the time of the call, and the call should be retried. \see mxlStatus
@@ -174,7 +174,7 @@ extern "C"
     mxlStatus mxlFabricsTargetReadGrainNonBlocking(mxlFabricsTarget in_target, uint64_t* out_grainIndex);
 
     /**
-     * Blocking accessor for a flow grain at a specific index.
+     * Blocking accessor for a flow grain.
      * \param in_target A valid fabrics target
      * \param out_grainIndex The index of the grain that was written, if any.
      * \param in_timeoutMs How long should we wait for the grain (in milliseconds)
@@ -188,7 +188,7 @@ extern "C"
      * \param in_target A valid fabrics target
      * \param out_headIndex The head index of the samples that were written, if any.
      * \param out_count The number of samples per channel that were written, if any.
-     * \return The result code. MXL_ERR_NOT_READY if no grain was available at the time of the call, and the call should be retried. \see mxlStatus
+     * \return The result code. MXL_ERR_NOT_READY if no samples were available at the time of the call, and the call should be retried. \see mxlStatus
      * \note One can simply pass the returned headIndex and count to the flow reader's GetSamples() function to obtain a pointer to the written
      * samples after this call returns MXL_STATUS_OK.
      */
@@ -196,12 +196,12 @@ extern "C"
     mxlStatus mxlFabricsTargetReadSamplesNonBlocking(mxlFabricsTarget in_target, uint64_t* out_headIndex, size_t* out_count);
 
     /**
-     * Blocking accessor for a flow grain at a specific index.
+     * Blocking accessor for a flow sample.
      * \param in_target A valid fabrics target
      * \param out_headIndex The head index of the samples that were written, if any.
      * \param out_count The number of samples per channel that were written, if any.
      * \param in_timeoutMs How long should we wait for the samples (in milliseconds)
-     * \return The result code. MXL_ERR_NOT_READY if no grain was available before the timeout. \see mxlStatus
+     * \return The result code. MXL_ERR_NOT_READY if no samples were available before the timeout. \see mxlStatus
      * \note One can simply pass the returned headIndex and count to the flow reader's GetSamples() function to obtain a pointer to the written
      * samples after this call returns MXL_STATUS_OK.
      */
@@ -274,9 +274,8 @@ extern "C"
      * Enqueue a transfer operation to all added targets. This function is always non-blocking. The transfer operation might be started right
      * away, but is only guaranteed to have completed after mxlFabricsInitiatorMakeProgress*() no longer returns MXL_ERR_NOT_READY.
      * \param in_initiator A valid fabrics initiator
-     * \param in_headIndex The head index to transfer. The ordering was given when mxlFabricsRegions object were created. This is true for both
-     * local and remote memory regions.
-     * \param in_count The number of samples per channel to transfer, starting from the headIndex - in_count.
+     * \param in_headIndex The head index to transfer.
+     * \param in_count The number of samples per channel to transfer.
      * \return The result code. \see mxlStatus
      */
     MXL_EXPORT

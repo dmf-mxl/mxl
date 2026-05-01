@@ -11,41 +11,6 @@
 
 namespace mxl::lib::fabrics::ofi
 {
-    namespace
-    {
-        std::vector<LocalRegion> makeScatterGatherList(DataLayout::AudioDataLayout const& layout, std::uint64_t headIndex, std::size_t count,
-            LocalRegion const& region)
-        {
-            mxlMutableWrappedMultiBufferSlice slice = {};
-            AudioBounceBuffer::getMutableMultiBufferSlices(headIndex,
-                count,
-                layout.bufferLength,
-                layout.sampleSize,
-                layout.channelCount,
-                reinterpret_cast<std::uint8_t*>(region.addr), // NOLINT
-                slice);
-
-            // Create the scatter-gather list using the slices. We create at least one scatter-gather entry per channel. We potentially create an
-            // additional one per channel if 2 fragments are present (wrap-around). When a fragment is not present its size will be 0.
-            std::vector<LocalRegion> sgList;
-
-            for (auto& fragment : slice.base.fragments)
-            {
-                // check if the fragment present
-                if (fragment.size > 0)
-                {
-                    for (size_t chan = 0; chan < slice.count; chan++)
-                    {
-                        auto srcAddr = reinterpret_cast<std::uintptr_t>(fragment.pointer) + (slice.stride * chan);
-
-                        sgList.emplace_back(LocalRegion{.addr = srcAddr, .len = fragment.size, .desc = region.desc});
-                    }
-                }
-            }
-
-            return sgList;
-        }
-    }
 
     RMAGrainEgressProtocol::RMAGrainEgressProtocol(Completion::Token token, TargetInfo info, DataLayout::VideoDataLayout layout,
         std::vector<LocalRegion> localRegions)
@@ -204,6 +169,39 @@ namespace mxl::lib::fabrics::ofi
     std::size_t RMASampleEgressProtocol::reset()
     {
         return std::exchange(_pending, 0);
+    }
+
+    std::vector<LocalRegion> RMASampleEgressProtocol::makeScatterGatherList(DataLayout::AudioDataLayout const& layout, std::uint64_t headIndex,
+        std::size_t count, LocalRegion const& region)
+    {
+        mxlMutableWrappedMultiBufferSlice slice = {};
+        AudioBounceBuffer::getMutableMultiBufferSlices(headIndex,
+            count,
+            layout.bufferLength,
+            layout.sampleSize,
+            layout.channelCount,
+            reinterpret_cast<std::uint8_t*>(region.addr), // NOLINT
+            slice);
+
+        // Create the scatter-gather list using the slices. We create at least one scatter-gather entry per channel. We potentially create an
+        // additional one per channel if 2 fragments are present (wrap-around). When a fragment is not present its size will be 0.
+        std::vector<LocalRegion> sgList;
+
+        for (auto& fragment : slice.base.fragments)
+        {
+            // check if the fragment present
+            if (fragment.size > 0)
+            {
+                for (size_t chan = 0; chan < slice.count; chan++)
+                {
+                    auto srcAddr = reinterpret_cast<std::uintptr_t>(fragment.pointer) + (slice.stride * chan);
+
+                    sgList.emplace_back(LocalRegion{.addr = srcAddr, .len = fragment.size, .desc = region.desc});
+                }
+            }
+        }
+
+        return sgList;
     }
 
     RMASampleEgressProtocolTemplate::RMASampleEgressProtocolTemplate(DataLayout::AudioDataLayout layout, Region region)

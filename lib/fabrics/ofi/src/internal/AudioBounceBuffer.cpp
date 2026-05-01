@@ -9,7 +9,7 @@ namespace mxl::lib::fabrics::ofi
 {
 
     // TODO: could be shared with PosixContinuousFlowReader
-    void AudioBounceBuffer::getMutableMultiBufferSlices(std::uint64_t index, std::size_t count, size_t bufferLength, std::size_t sampleWordSize,
+    void AudioBounceBuffer::getMutableMultiBufferSlices(std::uint64_t index, std::size_t count, std::size_t bufferLength, std::size_t sampleWordSize,
         std::size_t channelCount, std::uint8_t* baseBufferPtr, mxlMutableWrappedMultiBufferSlice& slice) noexcept
     {
         auto const startOffset = (index + bufferLength - count) % bufferLength;
@@ -53,7 +53,7 @@ namespace mxl::lib::fabrics::ofi
         return _data.size() + sizeof(AudioEntryHeader);
     }
 
-    AudioBounceBuffer::AudioBounceBuffer(size_t entryCount, std::uint32_t entrySize, DataLayout::AudioDataLayout layout)
+    AudioBounceBuffer::AudioBounceBuffer(size_t entryCount, std::size_t entrySize, DataLayout::AudioDataLayout layout)
         : _entries(entryCount, AudioBounceBufferEntry(entrySize))
         , _layout(layout)
     {}
@@ -69,15 +69,20 @@ namespace mxl::lib::fabrics::ofi
         return out;
     }
 
-    size_t AudioBounceBuffer::nbEntries() const noexcept
+    std::size_t AudioBounceBuffer::nbEntries() const noexcept
     {
         return _entries.size();
+    }
+
+    std::size_t AudioBounceBuffer::entrySize() const noexcept
+    {
+        return _entries.empty() ? 0 : _entries.front().size();
     }
 
     AudioEntryHeader const& AudioBounceBuffer::unpack(std::size_t entryIndex, Region& outRegion) const noexcept
     {
         auto const& entry = _entries.at(entryIndex);
-        auto header = entry.header();
+        auto const* header = entry.header();
 
         // Using the given audio data layout, head index and number of samples recover the slices
         mxlMutableWrappedMultiBufferSlice slices;
@@ -95,7 +100,7 @@ namespace mxl::lib::fabrics::ofi
             // check if the fragment present
             if (fragment.size > 0)
             {
-                for (size_t chan = 0; chan < slices.count; chan++)
+                for (std::size_t chan = 0; chan < slices.count; chan++)
                 {
                     auto dstAddr = reinterpret_cast<std::uintptr_t>(fragment.pointer) + (slices.stride * chan);
                     std::memcpy(reinterpret_cast<void*>(dstAddr), srcAddr, fragment.size); // NOLINT

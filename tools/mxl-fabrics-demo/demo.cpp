@@ -344,7 +344,6 @@ public:
 
         while (!g_exit_requested)
         {
-            // auto status = mxlFlowReaderGetSamples(_reader, headIndex, batchSize, 2'000'000'000, &payload);
             auto status = mxlFlowReaderGetSamplesNonBlocking(_reader, headIndex, batchSize, &payload);
             if (status == MXL_ERR_OUT_OF_RANGE_TOO_LATE)
             {

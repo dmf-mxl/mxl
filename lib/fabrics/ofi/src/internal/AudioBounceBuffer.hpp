@@ -18,33 +18,36 @@ namespace mxl::lib::fabrics::ofi
     };
 
     /**\brief An audio bounce buffer entry is backed by a collection of samples
-     * The layout is:  AudioEntryHeader, followed by samples of ch0, followed by samples of ch1, etc.
+     * The layout is:  AudioEntryHeader, followed by samples.
      */
     class AudioBounceBufferEntry
 
     {
     public:
-        /** Construct an AudioBounceBufferEntry with the given size in bytes. The size should be large enough to hold the samples for all channels.
+        /** \brief Construct an AudioBounceBufferEntry with the given size in bytes. The size should be large enough to hold the samples for all
+         * channels of a given batch size.
          *\note The header size is not included in the size parameter, it will be added on top of it. The total size of the bounce buffer entry will
-         * be header size + size parameter.
+         * be header size + samples size.
          */
         AudioBounceBufferEntry(std::uint32_t size);
 
-        /** Return the header of the bounce buffer entry. The header is located at the beginning of the entry data. */
+        /** \brief Return a view on the header of the bounce buffer entry.
+         */
         [[nodiscard]]
         AudioEntryHeader const* header() const noexcept;
 
-        /** Return a pointer to the samples data of the bounce buffer entry. The samples data is located immediately after the header.
+        /** \brief Return a view to the samples data of the bounce buffer entry.
          */
         [[nodiscard]]
         std::uint8_t const* samples() const noexcept;
 
-        /** Return a pointer to the beginning of the bounce buffer entry data, including the header.
+        /** \brief Return a view to the beginning of the bounce buffer entry data.
          */
         [[nodiscard]]
         std::uint8_t const* data() const noexcept;
 
-        /** The total size of the bounce buffer entry in bytes, including header and samples. */
+        /** \brief The total size of the bounce buffer entry in bytes.
+         */
         [[nodiscard]]
         std::size_t size() const noexcept;
 
@@ -61,19 +64,25 @@ namespace mxl::lib::fabrics::ofi
     class AudioBounceBuffer
     {
     public:
-        AudioBounceBuffer(size_t entryCount, std::uint32_t entrySize, DataLayout::AudioDataLayout layout);
+        AudioBounceBuffer(size_t entryCount, std::size_t entrySize, DataLayout::AudioDataLayout layout);
 
-        /** Return the regions corresponding to the bounce buffer entries. Each region corresponds to one bounce buffer entry. The regions are
+        /** \brief Return the regions corresponding to the bounce buffer entries. Each region corresponds to one bounce buffer entry. The regions are
          * returned in the same order as the bounce buffer entries. */
         [[nodiscard]]
         std::vector<Region> getRegions() const noexcept;
 
-        /** Return the number of entries in the bounce buffer. */
+        /** \brief Return the number of entries in the bounce buffer. */
         [[nodiscard]]
-        size_t nbEntries() const noexcept;
+        std::size_t nbEntries() const noexcept;
 
-        /** Copy the samples from the bounce buffer entry to the provided output region, and return the header of the entry. Internally the header
-         * will be used to correctly map the bounce buffer entry slices to the output region slices.
+        /** \briof Return the size of a bounce buffer entry in bytes.
+         */
+        [[nodiscard]]
+        std::size_t entrySize() const noexcept;
+
+        /** \brief Copy the samples from the bounce buffer entry to the provided output region, and return the header of the entry.
+         *
+         * Internally the header will be used to correctly map the bounce buffer entry slices to the output region slices.
          */
         AudioEntryHeader const& unpack(std::size_t entryIndex, Region& outRegion) const noexcept;
 

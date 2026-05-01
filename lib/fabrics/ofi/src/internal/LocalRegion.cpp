@@ -57,13 +57,14 @@ namespace mxl::lib::fabrics::ofi
     {
         if (end < begin)
         {
-            throw Exception::internal("end {} is smaller than begin {}", end, begin);
+            throw Exception::invalidArgument("end {} is smaller than begin {}", end, begin);
         }
 
         auto spanLength = end - begin;
         if (spanLength > _inner.size())
         {
-            throw Exception::internal("requested span size {} will be bigger than the actual size of the full vector {}", spanLength, _inner.size());
+            throw Exception::invalidArgument(
+                "requested span size {} will be bigger than the actual size of the full vector {}", spanLength, _inner.size());
         }
 
         return LocalRegionGroupSpan{

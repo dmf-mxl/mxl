@@ -29,9 +29,9 @@ namespace mxl::lib::fabrics::ofi
          */
         struct AudioDataLayout
         {
-            std::uint32_t sampleSize;   /**< Size of each audio sample in bytes. */
-            std::uint32_t channelCount; /**< Number of audio channels. */
-            std::uint32_t bufferLength; /**< The number of samples per channel. */
+            std::size_t sampleSize;   /**< Size of each audio sample in bytes. */
+            std::size_t channelCount; /**< Number of audio channels. */
+            std::size_t bufferLength; /**< The number of samples per channel. */
         };
 
     public:
@@ -49,7 +49,7 @@ namespace mxl::lib::fabrics::ofi
          * \return A DataLayout representing the specified audio layout.
          */
         [[nodiscard]]
-        static DataLayout fromAudio(std::uint32_t sampleSize, std::uint32_t channelCount, std::uint32_t bufferLength) noexcept;
+        static DataLayout fromAudio(std::size_t sampleSize, std::size_t channelCount, std::size_t bufferLength) noexcept;
 
         /** \brief Check if the DataLayout is of video type.
          * \return true if the DataLayout is of video type, false otherwise.

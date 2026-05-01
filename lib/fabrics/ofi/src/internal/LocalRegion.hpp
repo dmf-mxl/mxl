@@ -156,7 +156,8 @@ namespace mxl::lib::fabrics::ofi
             return _inner.size();
         }
 
-        /// Returns the sum of all region "len" in the span which corresponds to the total amount of bytes for all non-contiguous buffers uses.
+        /** \brief Returns the sum of each region size in the span.
+         */
         [[nodiscard]]
         std::size_t byteSize() const noexcept;
 

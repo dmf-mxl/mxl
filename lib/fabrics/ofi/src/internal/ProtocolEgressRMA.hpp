@@ -40,7 +40,7 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         bool hasPendingWork() const override;
 
-        /** \copydoc EgressProtocol::destroy()
+        /** \copydoc EgressProtocol::reset()
          */
         std::size_t reset() override;
 
@@ -50,6 +50,7 @@ namespace mxl::lib::fabrics::ofi
         RMAGrainEgressProtocol(Completion::Token token, TargetInfo info, DataLayout::VideoDataLayout dataLayout,
             std::vector<LocalRegion> _localRegions);
 
+    private:
         Completion::Token _token;
         TargetInfo _remoteInfo;
         DataLayout::VideoDataLayout _layout;
@@ -57,9 +58,8 @@ namespace mxl::lib::fabrics::ofi
         std::size_t _pending = 0;
     };
 
-    /** \brief Egress protocol for RMA writer endpoint.
-     *
-     * Handles transferring data to remote targets using remote write operations without bounce buffering.
+    /** \brief Template for creating an Egress protocol for RMA writer endpoint to Handle transferring grains to remote targets using remote write
+     * operations.
      */
     class RMAGrainEgressProtocolTemplate final : public EgressProtocolTemplate
     {
@@ -105,7 +105,7 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         bool hasPendingWork() const override;
 
-        /** \copydoc EgressProtocol::destroy()
+        /** \copydoc EgressProtocol::reset()
          */
         std::size_t reset() override;
 
@@ -116,22 +116,34 @@ namespace mxl::lib::fabrics::ofi
         RMASampleEgressProtocol(Completion::Token token, TargetInfo info, DataLayout::AudioDataLayout dataLayout, LocalRegion _localRegion,
             std::size_t bounceBufferEntryCount);
 
+        /** \brief Create the scatter-gather list for a given audio region and data layout. This will be used for the remote write transfer. The list
+         * will be created based on the head index and count of samples to transfer.
+         * \param layout The audio data layout.
+         * \param headIndex The head index of the audio samples to transfer.
+         * \param count The number of samples per channel to transfer.
+         * \param region The local region corresponding to the user provided audio region. This is used to calculate the addresses for the
+         * scatter-gather list entries.
+         * \return A vector of local regions representing the scatter-gather list for the transfer.
+         */
+        static std::vector<LocalRegion> makeScatterGatherList(DataLayout::AudioDataLayout const& layout, std::uint64_t headIndex, std::size_t count,
+            LocalRegion const& region);
+
     private:
         Completion::Token _token;
         TargetInfo _remoteInfo;
         DataLayout::AudioDataLayout _layout;
-        LocalRegion _localRegion;                     /**> Registered local region corresponding to the user provided audio region.  */
-        std::vector<AudioEntryHeader> _entryHeaders;  /**> A vector of audio entry headers used for the bounce buffer. This is needed to keep track of
+        LocalRegion _localRegion;                     /**< Registered local region corresponding to the user provided audio region.  */
+        std::vector<AudioEntryHeader> _entryHeaders;  /**< A vector of audio entry headers used for the bounce buffer. This is needed to keep track of
                                                         the metadata of each bounce buffer entry. */
-        std::vector<LocalRegion> _entryHeaderRegions; /**> A vector of local regions corresponding to the entry headers. These regions are registered
+        std::vector<LocalRegion> _entryHeaderRegions; /**< A vector of local regions corresponding to the entry headers. These regions are registered
                                                          and used for remote writes to the bounce buffer. */
         std::size_t _pending = 0;
-        std::uint32_t _bounceBufferEntryIndex{0};     /**> The index of the bounce buffer entry to use for the next transfer. */
-        std::size_t _bounceBufferEntryCount; /**> The total number of bounce buffer entries. Used to wrap around the bounce buffer entry index. */
+        std::uint32_t _bounceBufferEntryIndex{0};     /**< The index of the bounce buffer entry to use for the next transfer. */
+        std::size_t _bounceBufferEntryCount; /**< The total number of bounce buffer entries. Used to wrap around the bounce buffer entry index. */
     };
 
-    /** \brief Egress protocol for RMA writer endpoint for audio data.
-     * Handles transferring audio data to remote targets using remote write operations with bounce buffering.
+    /** \brief Template for creating an Egress protocol for RMA writer endpoint to handles transferring audio data to remote targets using remote
+     * write operations.
      */
     class RMASampleEgressProtocolTemplate final : public EgressProtocolTemplate
     {
@@ -143,8 +155,8 @@ namespace mxl::lib::fabrics::ofi
 
     private:
         DataLayout::AudioDataLayout _layout;
-        Region _region;                          /**> Unregistered region provided by the user. */
-        std::optional<LocalRegion> _localRegion; /**> Registered local region corresponding to the user provided region. This is what will actually be
+        Region _region;                          /**< Region provided by the user. */
+        std::optional<LocalRegion> _localRegion; /**< Registered local region corresponding to the user provided region. This is what will actually be
                                                     used for remote writes. */
     };
 

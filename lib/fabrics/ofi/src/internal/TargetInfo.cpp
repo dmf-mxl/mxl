@@ -43,10 +43,10 @@ namespace mxl::lib::fabrics::ofi
 
         if (bounceBufferInfo)
         {
-            auto bounceBufferInfo = picojson::object{};
-            bounceBufferInfo["entryCount"] = picojson::value(std::to_string(this->bounceBufferInfo->entryCount));
-            bounceBufferInfo["entrySize"] = picojson::value(std::to_string(this->bounceBufferInfo->entrySize));
-            root["bounceBufferInfo"] = picojson::value(bounceBufferInfo);
+            auto bounceBufferInfoObj = picojson::object{};
+            bounceBufferInfoObj["entryCount"] = picojson::value(std::to_string(bounceBufferInfo->entryCount));
+            bounceBufferInfoObj["entrySize"] = picojson::value(std::to_string(bounceBufferInfo->entrySize));
+            root["bounceBufferInfo"] = picojson::value(bounceBufferInfoObj);
         }
 
         root["id"] = picojson::value(std::to_string(id));
@@ -91,7 +91,7 @@ namespace mxl::lib::fabrics::ofi
         {
             auto bounceBufferInfoObj = root.at("bounceBufferInfo").get<picojson::object>();
             auto entryCount = std::stoull(bounceBufferInfoObj.at("entryCount").get<std::string>());
-            auto entrySize = std::stoul(bounceBufferInfoObj.at("entrySize").get<std::string>());
+            auto entrySize = std::stoull(bounceBufferInfoObj.at("entrySize").get<std::string>());
             bounceBufferInfo = std::make_optional<TargetInfoBounceBufferInfo>(entryCount, entrySize);
         }
 

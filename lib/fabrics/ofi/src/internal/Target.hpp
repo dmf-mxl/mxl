@@ -28,7 +28,7 @@ namespace mxl::lib::fabrics::ofi
         struct SampleReadResult
         {
             std::uint64_t headIndex;
-            size_t count;
+            std::size_t count;
         };
 
         using ReadResult = std::variant<GrainReadResult, SampleReadResult>;

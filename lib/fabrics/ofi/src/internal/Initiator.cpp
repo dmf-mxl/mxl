@@ -90,7 +90,7 @@ namespace mxl::lib::fabrics::ofi
         _inner->transferGrainToTarget(targetId, localIndex, remoteIndex, payloadOffset, startSlice, endSlice);
     }
 
-    void InitiatorWrapper::transferSamples(std::uint64_t headIndex, size_t count)
+    void InitiatorWrapper::transferSamples(std::uint64_t headIndex, std::size_t count)
     {
         if (!_inner)
         {
