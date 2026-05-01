@@ -502,14 +502,11 @@ namespace mxl::lib::fabrics::ofi
 
         for (;;)
         {
-            // If there is nothing more to do, return control to the caller.
-            if (!hasPendingWork())
+            // Poll all queues, execute all maintainance actions
+            if (!makeProgress())
             {
                 return false;
             }
-
-            // Poll all queues, execute all maintainance actions
-            makeProgress();
 
             // Calculate the remaining time until the user wants the blocking function to return. If there is no time left
             // (millisecond precision) return right away.
