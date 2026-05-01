@@ -25,7 +25,7 @@ namespace mxl::lib::fabrics::ofi
     {
         if (_inner)
         {
-            _inner.release();
+            _inner.reset();
         }
 
         switch (config.provider)
