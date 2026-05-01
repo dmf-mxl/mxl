@@ -47,13 +47,12 @@ namespace mxl::lib::fabrics::ofi
     private:
         friend class RMAGrainEgressProtocolTemplate;
 
-        RMAGrainEgressProtocol(Completion::Token token, TargetInfo info, DataLayout::VideoDataLayout dataLayout,
-            std::vector<LocalRegion> _localRegions);
+        RMAGrainEgressProtocol(Completion::Token token, TargetInfo info, DataLayout::Discrete dataLayout, std::vector<LocalRegion> _localRegions);
 
     private:
         Completion::Token _token;
         TargetInfo _remoteInfo;
-        DataLayout::VideoDataLayout _layout;
+        DataLayout::Discrete _layout;
         std::vector<LocalRegion> _localRegions;
         std::size_t _pending = 0;
     };
@@ -64,13 +63,13 @@ namespace mxl::lib::fabrics::ofi
     class RMAGrainEgressProtocolTemplate final : public EgressProtocolTemplate
     {
     public:
-        RMAGrainEgressProtocolTemplate(DataLayout::VideoDataLayout layout, std::vector<Region> regions);
+        RMAGrainEgressProtocolTemplate(DataLayout::Discrete layout, std::vector<Region> regions);
 
         void registerMemory(std::shared_ptr<Domain> domain) override;
         std::unique_ptr<EgressProtocol> createInstance(Completion::Token, TargetInfo remoteInfo) override;
 
     private:
-        DataLayout::VideoDataLayout _layout;
+        DataLayout::Discrete _layout;
         std::vector<Region> _regions;
         std::optional<std::vector<LocalRegion>> _localRegions{};
     };
@@ -113,7 +112,7 @@ namespace mxl::lib::fabrics::ofi
         friend class RMASampleEgressProtocolTemplate;
 
     private:
-        RMASampleEgressProtocol(Completion::Token token, TargetInfo info, DataLayout::AudioDataLayout dataLayout, LocalRegion _localRegion,
+        RMASampleEgressProtocol(Completion::Token token, TargetInfo info, DataLayout::Continuous dataLayout, LocalRegion _localRegion,
             std::size_t bounceBufferEntryCount);
 
         /** \brief Create the scatter-gather list for a given audio region and data layout. This will be used for the remote write transfer. The list
@@ -125,13 +124,13 @@ namespace mxl::lib::fabrics::ofi
          * scatter-gather list entries.
          * \return A vector of local regions representing the scatter-gather list for the transfer.
          */
-        static std::vector<LocalRegion> makeScatterGatherList(DataLayout::AudioDataLayout const& layout, std::uint64_t headIndex, std::size_t count,
+        static std::vector<LocalRegion> makeScatterGatherList(DataLayout::Continuous const& layout, std::uint64_t headIndex, std::size_t count,
             LocalRegion const& region);
 
     private:
         Completion::Token _token;
         TargetInfo _remoteInfo;
-        DataLayout::AudioDataLayout _layout;
+        DataLayout::Continuous _layout;
         LocalRegion _localRegion;                     /**< Registered local region corresponding to the user provided audio region.  */
         std::vector<AudioEntryHeader> _entryHeaders;  /**< A vector of audio entry headers used for the bounce buffer. This is needed to keep track of
                                                         the metadata of each bounce buffer entry. */
@@ -148,13 +147,13 @@ namespace mxl::lib::fabrics::ofi
     class RMASampleEgressProtocolTemplate final : public EgressProtocolTemplate
     {
     public:
-        RMASampleEgressProtocolTemplate(DataLayout::AudioDataLayout layout, Region region);
+        RMASampleEgressProtocolTemplate(DataLayout::Continuous layout, Region region);
 
         void registerMemory(std::shared_ptr<Domain> domain) override;
         std::unique_ptr<EgressProtocol> createInstance(Completion::Token, TargetInfo remoteInfo) override;
 
     private:
-        DataLayout::AudioDataLayout _layout;
+        DataLayout::Continuous _layout;
         Region _region;                          /**< Region provided by the user. */
         std::optional<LocalRegion> _localRegion; /**< Registered local region corresponding to the user provided region. This is what will actually be
                                                     used for remote writes. */

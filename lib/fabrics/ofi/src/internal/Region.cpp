@@ -178,7 +178,7 @@ namespace mxl::lib::fabrics::ofi
             }
 
             return {std::move(regions),
-                DataLayout::fromVideo(std::to_array(discreteFlow.flowInfo()->config.discrete.sliceSizes)),
+                DataLayout::fromDiscrete(std::to_array(discreteFlow.flowInfo()->config.discrete.sliceSizes)),
                 discreteFlow.flowInfo()->config.common.maxSyncBatchSizeHint};
         }
         else if (mxlIsContinuousDataFormat(static_cast<int>(flow.flowInfo()->config.common.format)))
@@ -194,7 +194,7 @@ namespace mxl::lib::fabrics::ofi
                 Region::Location::host());
 
             return {std::move(regions),
-                DataLayout::fromAudio(continuousFlow.sampleWordSize(),
+                DataLayout::fromContinuous(continuousFlow.sampleWordSize(),
                     continuousFlow.flowInfo()->config.continuous.channelCount,
                     continuousFlow.flowInfo()->config.continuous.bufferLength),
                 continuousFlow.flowInfo()->config.common.maxSyncBatchSizeHint};

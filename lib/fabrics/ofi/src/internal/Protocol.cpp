@@ -12,17 +12,17 @@ namespace mxl::lib::fabrics::ofi
 {
     std::unique_ptr<IngressProtocol> selectIngressProtocol(DataLayout const& layout, std::vector<Region> regions, std::uint32_t maxSyncBatchSize)
     {
-        if (layout.isVideo())
+        if (layout.isDiscrete())
         {
             return std::make_unique<RMAGrainIngressProtocol>(std::move(regions));
         }
-        else if (layout.isAudio())
+        else if (layout.isContinuous())
         {
             if (regions.size() != 1)
             {
                 throw Exception::invalidArgument("Expected exactly 1 region for sample protocol.");
             }
-            return std::make_unique<RMASampleIngressProtocol>(regions.front(), layout.asAudio(), maxSyncBatchSize);
+            return std::make_unique<RMASampleIngressProtocol>(regions.front(), layout.asContinuous(), maxSyncBatchSize);
         }
         else
         {
@@ -32,17 +32,17 @@ namespace mxl::lib::fabrics::ofi
 
     std::unique_ptr<EgressProtocolTemplate> selectEgressProtocol(DataLayout const& layout, std::vector<Region> regions)
     {
-        if (layout.isVideo())
+        if (layout.isDiscrete())
         {
-            return std::make_unique<RMAGrainEgressProtocolTemplate>(layout.asVideo(), std::move(regions));
+            return std::make_unique<RMAGrainEgressProtocolTemplate>(layout.asDiscrete(), std::move(regions));
         }
-        else if (layout.isAudio())
+        else if (layout.isContinuous())
         {
             if (regions.size() != 1)
             {
                 throw Exception::invalidArgument("Expected exactly 1 region for sample protocol.");
             }
-            return std::make_unique<RMASampleEgressProtocolTemplate>(layout.asAudio(), regions.front());
+            return std::make_unique<RMASampleEgressProtocolTemplate>(layout.asContinuous(), regions.front());
         }
         else
         {

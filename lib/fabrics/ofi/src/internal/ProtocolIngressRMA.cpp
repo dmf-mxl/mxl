@@ -90,7 +90,7 @@ namespace mxl::lib::fabrics::ofi
 
     //
     // RMASampleIngressProtocol implementations below
-    RMASampleIngressProtocol::RMASampleIngressProtocol(Region region, DataLayout::AudioDataLayout const& layout, std::uint32_t maxSyncBatchSize)
+    RMASampleIngressProtocol::RMASampleIngressProtocol(Region region, DataLayout::Continuous const& layout, std::uint32_t maxSyncBatchSize)
         : _bounceBuffer(makeAudioBounceBuffer(layout, maxSyncBatchSize))
         , _region(region)
     {}
@@ -111,7 +111,7 @@ namespace mxl::lib::fabrics::ofi
     std::optional<TargetInfoBounceBufferInfo> RMASampleIngressProtocol::bounceBufferInfo()
     {
         auto entrySize = _bounceBuffer.entrySize(); // All entries have the same size, we can just take the size of the first one
-        auto entryCount = _bounceBuffer.nbEntries();
+        auto entryCount = _bounceBuffer.entryCount();
 
         return TargetInfoBounceBufferInfo{.entryCount = entryCount, .entrySize = entrySize};
     }
@@ -163,7 +163,7 @@ namespace mxl::lib::fabrics::ofi
         return _immDataBuffer->toLocalRegion();
     }
 
-    AudioBounceBuffer RMASampleIngressProtocol::makeAudioBounceBuffer(DataLayout::AudioDataLayout const& layout, std::uint32_t maxSyncBatchSize)
+    AudioBounceBuffer RMASampleIngressProtocol::makeAudioBounceBuffer(DataLayout::Continuous const& layout, std::uint32_t maxSyncBatchSize)
     {
         auto oneSampleSize = layout.sampleSize * layout.channelCount;
         auto entrySize = oneSampleSize * maxSyncBatchSize;

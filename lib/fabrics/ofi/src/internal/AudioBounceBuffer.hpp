@@ -21,7 +21,6 @@ namespace mxl::lib::fabrics::ofi
      * The layout is:  AudioEntryHeader, followed by samples.
      */
     class AudioBounceBufferEntry
-
     {
     public:
         /** \brief Construct an AudioBounceBufferEntry with the given size in bytes. The size should be large enough to hold the samples for all
@@ -64,7 +63,7 @@ namespace mxl::lib::fabrics::ofi
     class AudioBounceBuffer
     {
     public:
-        AudioBounceBuffer(size_t entryCount, std::size_t entrySize, DataLayout::AudioDataLayout layout);
+        AudioBounceBuffer(size_t entryCount, std::size_t entrySize, DataLayout::Continuous layout);
 
         /** \brief Return the regions corresponding to the bounce buffer entries. Each region corresponds to one bounce buffer entry. The regions are
          * returned in the same order as the bounce buffer entries. */
@@ -73,7 +72,7 @@ namespace mxl::lib::fabrics::ofi
 
         /** \brief Return the number of entries in the bounce buffer. */
         [[nodiscard]]
-        std::size_t nbEntries() const noexcept;
+        std::size_t entryCount() const noexcept;
 
         /** \briof Return the size of a bounce buffer entry in bytes.
          */
@@ -91,6 +90,6 @@ namespace mxl::lib::fabrics::ofi
 
     private:
         std::vector<AudioBounceBufferEntry> _entries;
-        DataLayout::AudioDataLayout _layout;
+        DataLayout::Continuous _layout;
     };
 }

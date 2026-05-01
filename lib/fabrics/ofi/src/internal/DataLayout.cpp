@@ -9,36 +9,36 @@
 
 namespace mxl::lib::fabrics::ofi
 {
-    DataLayout DataLayout::fromVideo(std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN> const& sliceSizes) noexcept
+    DataLayout DataLayout::fromDiscrete(std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN> const& sliceSizes) noexcept
     {
-        return DataLayout{DataLayout::VideoDataLayout{.sliceSizes = sliceSizes}};
+        return DataLayout{DataLayout::Discrete{.sliceSizes = sliceSizes}};
     };
 
-    DataLayout DataLayout::fromAudio(std::size_t sampleSize, std::size_t channelCount, std::size_t bufferLength) noexcept
+    DataLayout DataLayout::fromContinuous(std::size_t sampleSize, std::size_t channelCount, std::size_t bufferLength) noexcept
     {
         return DataLayout{
-            DataLayout::AudioDataLayout{.sampleSize = sampleSize, .channelCount = channelCount, .bufferLength = bufferLength}
+            DataLayout::Continuous{.sampleSize = sampleSize, .channelCount = channelCount, .bufferLength = bufferLength}
         };
     }
 
-    bool DataLayout::isVideo() const noexcept
+    bool DataLayout::isDiscrete() const noexcept
     {
-        return std::holds_alternative<VideoDataLayout>(_inner);
+        return std::holds_alternative<Discrete>(_inner);
     }
 
-    bool DataLayout::isAudio() const noexcept
+    bool DataLayout::isContinuous() const noexcept
     {
-        return std::holds_alternative<AudioDataLayout>(_inner);
+        return std::holds_alternative<Continuous>(_inner);
     }
 
-    DataLayout::VideoDataLayout const& DataLayout::asVideo() const noexcept
+    DataLayout::Discrete const& DataLayout::asDiscrete() const noexcept
     {
-        return std::get<VideoDataLayout>(_inner);
+        return std::get<Discrete>(_inner);
     }
 
-    DataLayout::AudioDataLayout const& DataLayout::asAudio() const noexcept
+    DataLayout::Continuous const& DataLayout::asContinuous() const noexcept
     {
-        return std::get<AudioDataLayout>(_inner);
+        return std::get<Continuous>(_inner);
     }
 
     DataLayout::DataLayout(InnerLayout inner) noexcept

@@ -60,7 +60,7 @@ namespace mxl::lib::fabrics::ofi
          * \param region The memory region containing audio. The audio samples will be first received in one of the bounce buffer entry and will
    then be copied to this region.
          */
-        RMASampleIngressProtocol(Region region, DataLayout::AudioDataLayout const& dataLayout, std::uint32_t maxSyncBatchSize);
+        RMASampleIngressProtocol(Region region, DataLayout::Continuous const& dataLayout, std::uint32_t maxSyncBatchSize);
 
         /** \copydoc IngressProtocol::registerMemory()
          * \note This actually registers the memory of the internal bounce buffer, not the region passed in the constructor.
@@ -90,12 +90,12 @@ namespace mxl::lib::fabrics::ofi
          * Entries are as big as the maximum number of samples that can be transferred in a single batch, which is determined by maxSyncBatchSize.
          * The number of entries is determined by how many batches are needed to cover the entire history buffer.
          */
-        AudioBounceBuffer makeAudioBounceBuffer(DataLayout::AudioDataLayout const& layout, std::uint32_t maxSyncBatchSize);
+        AudioBounceBuffer makeAudioBounceBuffer(DataLayout::Continuous const& layout, std::uint32_t maxSyncBatchSize);
 
     private:
         AudioBounceBuffer _bounceBuffer;
         Region _region;
-        bool _isMemoryRegistered{false};
+        bool _isMemoryRegistered = false;
         std::optional<Target::ImmediateDataLocation> _immDataBuffer{};
     };
 }

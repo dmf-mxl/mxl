@@ -18,16 +18,16 @@ namespace mxl::lib::fabrics::ofi
     class DataLayout
     {
     public:
-        /** \brief Video layout variant of DataLayout.
+        /** \brief Discrete layout variant of DataLayout.
          */
-        struct VideoDataLayout
+        struct Discrete
         {
             std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN> sliceSizes; /**< Number of slices per plane. \see MXL_MAX_PLANES_PER_GRAIN */
         };
 
-        /** \brief Audio layout variant of DataLayout.
+        /** \brief Continuous layout variant of DataLayout.
          */
-        struct AudioDataLayout
+        struct Continuous
         {
             std::size_t sampleSize;   /**< Size of each audio sample in bytes. */
             std::size_t channelCount; /**< Number of audio channels. */
@@ -40,7 +40,7 @@ namespace mxl::lib::fabrics::ofi
          * \return A DataLayout representing the specified video layout.
          */
         [[nodiscard]]
-        static DataLayout fromVideo(std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN> const& sliceSizes) noexcept; // NOLINT
+        static DataLayout fromDiscrete(std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN> const& sliceSizes) noexcept; // NOLINT
 
         /** \brief Create a DataLayout representing audio data.
          * \param sampleSize The size of each audio sample in bytes.
@@ -49,34 +49,34 @@ namespace mxl::lib::fabrics::ofi
          * \return A DataLayout representing the specified audio layout.
          */
         [[nodiscard]]
-        static DataLayout fromAudio(std::size_t sampleSize, std::size_t channelCount, std::size_t bufferLength) noexcept;
+        static DataLayout fromContinuous(std::size_t sampleSize, std::size_t channelCount, std::size_t bufferLength) noexcept;
 
-        /** \brief Check if the DataLayout is of video type.
-         * \return true if the DataLayout is of video type, false otherwise.
+        /** \brief Check if the DataLayout is of discrete type.
+         * \return true if the DataLayout is of discrete type, false otherwise.
          */
         [[nodiscard]]
-        bool isVideo() const noexcept;
+        bool isDiscrete() const noexcept;
 
-        /** \brief Check if the DataLayout is of audio type.
-         * \return true if the DataLayout is of audio type, false otherwise.
+        /** \brief Check if the DataLayout is of continuous type.
+         * \return true if the DataLayout is of continuous type, false otherwise.
          */
         [[nodiscard]]
-        bool isAudio() const noexcept;
+        bool isContinuous() const noexcept;
 
-        /** \brief Get the DataLayout as a VideoDataLayout.
-         * \throws std::bad_variant_access if the DataLayout is not of video type.
+        /** \brief Get the DataLayout as Discrete.
+         * \throws std::bad_variant_access if the DataLayout is not of discrete type.
          */
         [[nodiscard]]
-        VideoDataLayout const& asVideo() const noexcept;
+        Discrete const& asDiscrete() const noexcept;
 
-        /** \brief Get the DataLayout as an AudioDataLayout.
-         * \throws std::bad_variant_access if the DataLayout is not of audio type.
+        /** \brief Get the DataLayout as Continuous.
+         * \throws std::bad_variant_access if the DataLayout is not of continuous type.
          */
         [[nodiscard]]
-        AudioDataLayout const& asAudio() const noexcept;
+        Continuous const& asContinuous() const noexcept;
 
     private:
-        using InnerLayout = std::variant<VideoDataLayout, AudioDataLayout>;
+        using InnerLayout = std::variant<Discrete, Continuous>;
 
     private:
         DataLayout(InnerLayout) noexcept;

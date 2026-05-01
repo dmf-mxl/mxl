@@ -12,7 +12,7 @@
 namespace mxl::lib::fabrics::ofi
 {
 
-    RMAGrainEgressProtocol::RMAGrainEgressProtocol(Completion::Token token, TargetInfo info, DataLayout::VideoDataLayout layout,
+    RMAGrainEgressProtocol::RMAGrainEgressProtocol(Completion::Token token, TargetInfo info, DataLayout::Discrete layout,
         std::vector<LocalRegion> localRegions)
         : _token(token)
         , _remoteInfo(std::move(info))
@@ -60,7 +60,7 @@ namespace mxl::lib::fabrics::ofi
         return std::exchange(_pending, 0);
     }
 
-    RMAGrainEgressProtocolTemplate::RMAGrainEgressProtocolTemplate(DataLayout::VideoDataLayout layout, std::vector<Region> regions)
+    RMAGrainEgressProtocolTemplate::RMAGrainEgressProtocolTemplate(DataLayout::Discrete layout, std::vector<Region> regions)
         : _layout(layout)
         , _regions(std::move(regions))
     {}
@@ -85,7 +85,7 @@ namespace mxl::lib::fabrics::ofi
 
         struct MakeUniqueEnabler : RMAGrainEgressProtocol
         {
-            MakeUniqueEnabler(Completion::Token token, TargetInfo info, DataLayout::VideoDataLayout layout, std::vector<LocalRegion> localRegion)
+            MakeUniqueEnabler(Completion::Token token, TargetInfo info, DataLayout::Discrete layout, std::vector<LocalRegion> localRegion)
                 : RMAGrainEgressProtocol(token, std::move(info), layout, std::move(localRegion))
             {}
         };
@@ -93,8 +93,8 @@ namespace mxl::lib::fabrics::ofi
         return std::make_unique<MakeUniqueEnabler>(token, std::move(remoteInfo), _layout, *_localRegions);
     }
 
-    RMASampleEgressProtocol::RMASampleEgressProtocol(Completion::Token token, TargetInfo info, DataLayout::AudioDataLayout layout,
-        LocalRegion localRegion, std::size_t bounceBufferEntryCount)
+    RMASampleEgressProtocol::RMASampleEgressProtocol(Completion::Token token, TargetInfo info, DataLayout::Continuous layout, LocalRegion localRegion,
+        std::size_t bounceBufferEntryCount)
         : _token(token)
         , _remoteInfo(std::move(info))
         , _layout(layout)
@@ -110,7 +110,7 @@ namespace mxl::lib::fabrics::ofi
             throw Exception::invalidState("Entry headers buffer is not initialized.");
         }
 
-        std::vector<Region> entryHeaderRegions;
+        auto entryHeaderRegions = std::vector<Region>{};
         entryHeaderRegions.reserve(_entryHeaders.size());
         for (auto& header : _entryHeaders)
         {
@@ -171,7 +171,7 @@ namespace mxl::lib::fabrics::ofi
         return std::exchange(_pending, 0);
     }
 
-    std::vector<LocalRegion> RMASampleEgressProtocol::makeScatterGatherList(DataLayout::AudioDataLayout const& layout, std::uint64_t headIndex,
+    std::vector<LocalRegion> RMASampleEgressProtocol::makeScatterGatherList(DataLayout::Continuous const& layout, std::uint64_t headIndex,
         std::size_t count, LocalRegion const& region)
     {
         mxlMutableWrappedMultiBufferSlice slice = {};
@@ -183,10 +183,13 @@ namespace mxl::lib::fabrics::ofi
             reinterpret_cast<std::uint8_t*>(region.addr), // NOLINT
             slice);
 
+        // Double the scatter-gather list length if the second fragment is present.
+        auto sgListLen = slice.base.fragments[1].size > 0 ? 2 * slice.count : slice.count;
+
         // Create the scatter-gather list using the slices. We create at least one scatter-gather entry per channel. We potentially create an
         // additional one per channel if 2 fragments are present (wrap-around). When a fragment is not present its size will be 0.
-        std::vector<LocalRegion> sgList;
-
+        auto sgList = std::vector<LocalRegion>{};
+        sgList.reserve(sgListLen);
         for (auto& fragment : slice.base.fragments)
         {
             // check if the fragment present
@@ -204,7 +207,7 @@ namespace mxl::lib::fabrics::ofi
         return sgList;
     }
 
-    RMASampleEgressProtocolTemplate::RMASampleEgressProtocolTemplate(DataLayout::AudioDataLayout layout, Region region)
+    RMASampleEgressProtocolTemplate::RMASampleEgressProtocolTemplate(DataLayout::Continuous layout, Region region)
         : _layout(layout)
         , _region(region)
     {}
@@ -238,7 +241,7 @@ namespace mxl::lib::fabrics::ofi
 
         struct MakeUniqueEnabler : RMASampleEgressProtocol
         {
-            MakeUniqueEnabler(Completion::Token token, TargetInfo info, DataLayout::AudioDataLayout layout, LocalRegion localRegion,
+            MakeUniqueEnabler(Completion::Token token, TargetInfo info, DataLayout::Continuous layout, LocalRegion localRegion,
                 std::uint32_t bounceBufferEntryCount)
                 : RMASampleEgressProtocol(token, std::move(info), layout, localRegion, bounceBufferEntryCount)
             {}

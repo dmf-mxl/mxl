@@ -74,7 +74,7 @@ namespace mxl::lib::fabrics::ofi
 
     inline MxlRegions getEmptyVideoMxlRegions()
     {
-        return MxlRegions({}, DataLayout::fromVideo({8, 0, 0, 0}));
+        return MxlRegions({}, DataLayout::fromDiscrete({8, 0, 0, 0}));
     }
 
     inline std::pair<MxlRegions, InnerRegions> getHostRegionGroups()
@@ -94,12 +94,12 @@ namespace mxl::lib::fabrics::ofi
             regions.emplace_back(*innerRegion.data(), innerRegion.size(), nullptr, nullptr);
         }
 
-        auto mxlRegions = MxlRegions(regions, DataLayout::fromVideo({8, 0, 0, 0}));
+        auto mxlRegions = MxlRegions(regions, DataLayout::fromDiscrete({8, 0, 0, 0}));
         return {mxlRegions, innerRegions};
     }
 
     inline MxlRegions getMxlRegions(std::vector<std::vector<std::uint8_t>> const& innerRegions,
-        DataLayout dataLayout = DataLayout::fromVideo({8, 0, 0, 0}))
+        DataLayout dataLayout = DataLayout::fromDiscrete({8, 0, 0, 0}))
     {
         auto regions = std::vector<Region>{};
         regions.reserve(innerRegions.size());

@@ -53,7 +53,7 @@ namespace mxl::lib::fabrics::ofi
         return _data.size() + sizeof(AudioEntryHeader);
     }
 
-    AudioBounceBuffer::AudioBounceBuffer(size_t entryCount, std::size_t entrySize, DataLayout::AudioDataLayout layout)
+    AudioBounceBuffer::AudioBounceBuffer(size_t entryCount, std::size_t entrySize, DataLayout::Continuous layout)
         : _entries(entryCount, AudioBounceBufferEntry(entrySize))
         , _layout(layout)
     {}
@@ -69,7 +69,7 @@ namespace mxl::lib::fabrics::ofi
         return out;
     }
 
-    std::size_t AudioBounceBuffer::nbEntries() const noexcept
+    std::size_t AudioBounceBuffer::entryCount() const noexcept
     {
         return _entries.size();
     }
