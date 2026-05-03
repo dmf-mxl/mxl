@@ -26,12 +26,12 @@ pub enum AncillaryMapError {
 
 /// RFC 8331 ANC from `start_pos` occupies a multiple of 4 bytes. `w` must be byte-aligned.
 fn writer_word_aligned(w: &mut BitWriter<Cursor<&mut Vec<u8>>, BigEndian>, start_pos: u64) -> bool {
-    (w.writer().expect("byte_aligned").position() - start_pos) % 4 == 0
+    (w.writer().expect("byte_aligned").position() - start_pos).is_multiple_of(4)
 }
 
 /// RFC 8331 ANC from `start_pos` occupies a multiple of 4 bytes. `r` must be byte-aligned.
 fn reader_word_aligned(r: &mut BitReader<Cursor<&[u8]>, BigEndian>, start_pos: u64) -> bool {
-    (r.reader().expect("byte_aligned").position() - start_pos) % 4 == 0
+    (r.reader().expect("byte_aligned").position() - start_pos).is_multiple_of(4)
 }
 
 /// Read one GStreamer ST 2038 ANC packet (including ST 2038 end padding) and
