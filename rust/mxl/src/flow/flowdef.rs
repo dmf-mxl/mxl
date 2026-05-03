@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2025-2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
 use std::{collections::HashMap, str::FromStr};
@@ -26,6 +26,8 @@ pub enum FlowDefDetails {
     // TODO: Add support for "video/v210a".
     #[serde(rename = "urn:x-nmos:format:audio")]
     Audio(FlowDefAudio),
+    #[serde(rename = "urn:x-nmos:format:data")]
+    Data(FlowDefData),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -66,6 +68,11 @@ pub struct FlowDefAudio {
     pub sample_rate: Rate,
     pub channel_count: i32,
     pub bit_depth: u8,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct FlowDefData {
+    pub grain_rate: Rate,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

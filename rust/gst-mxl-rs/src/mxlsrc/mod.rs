@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2025-2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
 // Copyright (C) 2020 Sebastian Dröge <sebastian@centricular.com>
@@ -17,6 +17,7 @@ use gstreamer as gst;
 use gstreamer_base as gst_base;
 
 mod create_audio;
+mod create_data;
 mod create_video;
 mod imp;
 mod mxl_helper;

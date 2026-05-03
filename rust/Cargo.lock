@@ -76,6 +76,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "812e12b5285cc515a9c72a5c1d3b6d46a19dac5acfef5265968c166106e31dd3"
 
 [[package]]
+name = "bitstream-io"
+version = "4.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7eff00be299a18769011411c9def0d827e8f2d7bf0c3dbf53633147a8867fd1f"
+dependencies = [
+ "no_std_io2",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -412,6 +421,7 @@ dependencies = [
 name = "gst-mxl-rs"
 version = "0.1.0"
 dependencies = [
+ "bitstream-io",
  "crossbeam",
  "glib",
  "gst-plugin-version-helper",
@@ -421,6 +431,7 @@ dependencies = [
  "mxl",
  "regex",
  "serde_json",
+ "thiserror",
  "tracing",
  "tracing-subscriber",
  "tracing-test",
@@ -683,6 +694,7 @@ dependencies = [
  "libloading",
  "mxl-sys",
  "serde",
+ "serde_json",
  "thiserror",
  "tracing",
  "tracing-subscriber",
@@ -696,6 +708,15 @@ dependencies = [
  "bindgen",
  "cmake",
  "libloading",
+]
+
+[[package]]
+name = "no_std_io2"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b51ed7824b6e07d354605f4abb3d9d300350701299da96642ee084f5ce631550"
+dependencies = [
+ "memchr",
 ]
 
 [[package]]

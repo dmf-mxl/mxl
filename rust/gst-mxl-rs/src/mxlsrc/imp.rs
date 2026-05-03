@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2025-2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
 // Copyright (C) 2018 Sebastian Dröge <sebastian@centricular.com>
@@ -27,6 +27,7 @@ use std::sync::Mutex;
 
 use crate::mxlsrc;
 use crate::mxlsrc::create_audio::create_audio;
+use crate::mxlsrc::create_data::create_data;
 use crate::mxlsrc::create_video::create_video;
 use crate::mxlsrc::mxl_helper;
 use crate::mxlsrc::state::Context;
@@ -87,6 +88,12 @@ impl ObjectImpl for MxlSrc {
                     .default_value(DEFAULT_FLOW_ID)
                     .mutable_ready()
                     .build(),
+                glib::ParamSpecString::builder("data-flow-id")
+                    .nick("DataFlowID")
+                    .blurb("Data Flow ID")
+                    .default_value(DEFAULT_FLOW_ID)
+                    .mutable_ready()
+                    .build(),
                 glib::ParamSpecString::builder("domain")
                     .nick("Domain")
                     .blurb("Domain")
@@ -138,6 +145,13 @@ impl ObjectImpl for MxlSrc {
                         gst::error!(CAT, imp = self, "Invalid type for audio-flow-id property");
                     }
                 }
+                "data-flow-id" => {
+                    if let Ok(flow_id) = value.get::<String>() {
+                        settings.data_flow = Some(flow_id);
+                    } else {
+                        gst::error!(CAT, imp = self, "Invalid type for data-flow-id property");
+                    }
+                }
                 "domain" => {
                     if let Ok(domain) = value.get::<String>() {
                         gst::info!(
@@ -170,6 +184,7 @@ impl ObjectImpl for MxlSrc {
             match pspec.name() {
                 "video-flow-id" => settings.video_flow.to_value(),
                 "audio-flow-id" => settings.audio_flow.to_value(),
+                "data-flow-id" => settings.data_flow.to_value(),
                 "domain" => settings.domain.to_value(),
                 _ => {
                     gst::error!(CAT, imp = self, "Unknown property {}", pspec.name());
@@ -214,6 +229,11 @@ impl ElementImpl for MxlSrc {
                     caps.make_mut().append(
                         gst::Caps::builder("audio/x-raw")
                             .field("format", "F32LE")
+                            .build(),
+                    );
+                    caps.make_mut().append(
+                        gst::Caps::builder("meta/x-st-2038")
+                            .field("alignment", "frame")
                             .build(),
                     );
                 }
@@ -265,13 +285,16 @@ impl BaseSrcImpl for MxlSrc {
             .as_ref()
             .ok_or(gst::loggable_error!(CAT, "Failed to get state"))?
             .instance;
-        if settings.audio_flow.is_some() && settings.video_flow.is_some() {
-            gst::warning!(CAT, imp = self, "You can't set both video and audio flows");
+        let flow_id_count = settings.flow_id_count();
+        if flow_id_count > 1 {
+            gst::warning!(
+                CAT,
+                imp = self,
+                "Set exactly one of video-flow-id, audio-flow-id, or data-flow-id"
+            );
             return self.parent_negotiate();
         }
-        if settings.domain.is_empty()
-            || settings.video_flow.is_none() && settings.audio_flow.is_none()
-        {
+        if settings.domain.is_empty() || flow_id_count == 0 {
             gst::warning!(CAT, imp = self, "domain or flow-id not set yet");
             return self.parent_negotiate();
         }
@@ -285,12 +308,19 @@ impl BaseSrcImpl for MxlSrc {
         let structure = caps
             .structure(0)
             .ok_or_else(|| gst::loggable_error!(CAT, "No structure in caps {}", caps))?;
+        let name = structure.name();
 
-        let format = structure
-            .get::<String>("format")
-            .map_err(|e| gst::loggable_error!(CAT, "Failed to set caps {}", e))?;
-
-        if format == "v210" {
+        if name == "video/x-raw" {
+            let format = structure
+                .get::<String>("format")
+                .map_err(|e| gst::loggable_error!(CAT, "Failed to set caps {}", e))?;
+            if format != "v210" {
+                return Err(gst::loggable_error!(
+                    CAT,
+                    "Unsupported video format (expected v210): {}",
+                    format
+                ));
+            }
             let width = structure
                 .get::<i32>("width")
                 .map_err(|e| gst::loggable_error!(CAT, "Failed to set caps {}", e))?;
@@ -319,7 +349,17 @@ impl BaseSrcImpl for MxlSrc {
             );
 
             Ok(())
-        } else if format == "F32LE" {
+        } else if name == "audio/x-raw" {
+            let format = structure
+                .get::<String>("format")
+                .map_err(|e| gst::loggable_error!(CAT, "Failed to get format from caps: {}", e))?;
+            if format != "F32LE" {
+                return Err(gst::loggable_error!(
+                    CAT,
+                    "Unsupported audio format (expected F32LE): {}",
+                    format
+                ));
+            }
             let rate = structure
                 .get::<i32>("rate")
                 .map_err(|e| gst::loggable_error!(CAT, "Failed to get rate from caps: {}", e))?;
@@ -328,19 +368,31 @@ impl BaseSrcImpl for MxlSrc {
                 gst::loggable_error!(CAT, "Failed to get channels from caps: {}", e)
             })?;
 
-            let format = structure
-                .get::<String>("format")
-                .map_err(|e| gst::loggable_error!(CAT, "Failed to get format from caps: {}", e))?;
             trace!(
                 "Negotiated caps: format={}, rate={}, channel_count={} ",
                 format, rate, channels
             );
 
             Ok(())
+        } else if name == "meta/x-st-2038" {
+            let framerate = structure
+                .get::<gst::Fraction>("framerate")
+                .map_err(|e| gst::loggable_error!(CAT, "Failed to set caps {}", e))?;
+            let alignment = structure
+                .get::<String>("alignment")
+                .unwrap_or_else(|_| "<missing>".to_owned());
+            trace!(
+                "Negotiated caps: meta/x-st-2038 @ {}/{}, alignment={}",
+                framerate.numer(),
+                framerate.denom(),
+                alignment
+            );
+            Ok(())
         } else {
             Err(gst::loggable_error!(
                 CAT,
-                "Failed to set caps: No valid format"
+                "Unsupported caps structure: {}",
+                caps
             ))
         }
     }
@@ -437,6 +489,8 @@ impl MxlSrc {
             create_video(self, state)
         } else if state.audio.is_some() {
             create_audio(self, state)
+        } else if state.data.is_some() {
+            create_data(self, state)
         } else {
             Err(gst::FlowError::Error)
         }
