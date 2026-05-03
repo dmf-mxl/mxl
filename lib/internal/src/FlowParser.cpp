@@ -12,6 +12,7 @@
 #include <uuid.h>
 #include <fmt/format.h>
 #include <picojson/picojson.h>
+#include <mxl/dataformat.h>
 #include <mxl/mxl.h>
 #include "mxl-internal/Logging.hpp"
 #include "mxl-internal/MediaUtils.hpp"
@@ -27,9 +28,6 @@ namespace mxl::lib
         // from allocating all the RAM on the system.
         constexpr auto MAX_WIDTH = 7680u;  // 8K UHD
         constexpr auto MAX_HEIGHT = 4320u; // 8K UHD
-
-        // Grain size when the grain data format is "data"
-        constexpr auto DATA_FORMAT_GRAIN_SIZE = 4096;
 
         /**
          * Translate a NMOS IS-04 data format to a an mxlDataFormat enum.
@@ -382,9 +380,7 @@ namespace mxl::lib
             auto const mediaType = fetchAs<std::string>(_root, "media_type");
             if (mediaType == "video/smpte291")
             {
-                // This is large enough to hold all the ANC data in a single grain.
-                // This size is an usual VFS page. no point at going smaller.
-                payloadSize = DATA_FORMAT_GRAIN_SIZE;
+                payloadSize = MXL_DATA_FORMAT_GRAIN_SIZE;
             }
             else
             {
@@ -468,7 +464,7 @@ namespace mxl::lib
             {
                 // Since the slice length for data flows is 1 byte, the number of slices must be the
                 // grain size.
-                return DATA_FORMAT_GRAIN_SIZE;
+                return MXL_DATA_FORMAT_GRAIN_SIZE;
             }
 
             case MXL_DATA_FORMAT_VIDEO:
