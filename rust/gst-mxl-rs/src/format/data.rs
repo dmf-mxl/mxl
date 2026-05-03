@@ -41,8 +41,8 @@ pub fn smpte291_from_st2038_anc_packet(
     smpte291: &mut Vec<u8>,
     st2038: &mut &[u8],
 ) -> Result<(), AncillaryMapError> {
-    let rcursor = Cursor::new(*st2038);
-    let mut r = BitReader::endian(rcursor, BigEndian);
+    let r_cursor = Cursor::new(*st2038);
+    let mut r = BitReader::endian(r_cursor, BigEndian);
 
     let zeroes = r
         .read::<6, u8>()
@@ -72,10 +72,10 @@ pub fn smpte291_from_st2038_anc_packet(
         .map_err(|_| AncillaryMapError::Invalid("read data count"))?;
     let data_count8 = (data_count & 0xff) as u8;
 
-    let start_pos = smpte291.len() as u64;
-    let mut wcursor: Cursor<&mut Vec<u8>> = Cursor::new(smpte291);
-    wcursor.set_position(start_pos);
-    let mut w = BitWriter::endian(wcursor, BigEndian);
+    let w_start_pos = smpte291.len() as u64;
+    let mut w_cursor: Cursor<&mut Vec<u8>> = Cursor::new(smpte291);
+    w_cursor.set_position(w_start_pos);
+    let mut w = BitWriter::endian(w_cursor, BigEndian);
 
     w.write_bit(c_not_y_channel_flag)
         .map_err(|_| AncillaryMapError::Invalid("write C"))?;
@@ -126,7 +126,7 @@ pub fn smpte291_from_st2038_anc_packet(
     // Byte-align and then pad with zero bits to a 4-byte boundary.
     w.byte_align()
         .map_err(|_| AncillaryMapError::Invalid("write word_align (bits)"))?;
-    while !writer_word_aligned(&mut w, start_pos) {
+    while !writer_word_aligned(&mut w, w_start_pos) {
         w.write::<8, u8>(0u8)
             .map_err(|_| AncillaryMapError::Invalid("write word_align (bytes)"))?;
     }
