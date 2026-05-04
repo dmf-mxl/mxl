@@ -119,6 +119,10 @@ namespace mxl::lib::fabrics::ofi
          */
         FabricInfo owned() noexcept;
 
+        /** \brief Return the IOV limit for this fabric info, which is the maximum number of iovecs that can be posted in a single send operation.
+         */
+        std::size_t txIovLimit() const noexcept;
+
     private:
         friend FabricInfoIterator<true>;
         friend FabricInfoIterator<false>;

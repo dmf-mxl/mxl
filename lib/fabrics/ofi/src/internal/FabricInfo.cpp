@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "FabricInfo.hpp"
+#include <cstddef>
 #include <cstdint>
 #include <rdma/fabric.h>
 #include <rdma/fi_errno.h>
@@ -152,6 +153,11 @@ namespace mxl::lib::fabrics::ofi
     FabricInfo FabricInfoView::owned() noexcept
     {
         return FabricInfo::clone(_raw);
+    }
+
+    std::size_t FabricInfoView::txIovLimit() const noexcept
+    {
+        return _raw->tx_attr->iov_limit;
     }
 
     FabricInfoList FabricInfoList::get(char const* node, char const* service, Provider provider, uint64_t caps, ::fi_ep_type epType)

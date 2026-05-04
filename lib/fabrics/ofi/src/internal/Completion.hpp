@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <bit>
 #include <memory>
 #include <optional>

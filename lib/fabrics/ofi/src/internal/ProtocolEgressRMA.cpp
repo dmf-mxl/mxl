@@ -107,7 +107,7 @@ namespace mxl::lib::fabrics::ofi
     {
         if (_entryHeaders.empty())
         {
-            throw Exception::invalidState("Entry headers buffer is not initialized.");
+            throw Exception::invalidState("Entry headers buffer are not initialized.");
         }
 
         auto entryHeaderRegions = std::vector<Region>{};

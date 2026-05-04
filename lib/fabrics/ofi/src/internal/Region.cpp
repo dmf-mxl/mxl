@@ -188,15 +188,13 @@ namespace mxl::lib::fabrics::ofi
 
             // For the continuous flow, the data layout is a single contiguous buffer
             regions.emplace_back(reinterpret_cast<std::uintptr_t>(continuousFlow.channelData()),
-                continuousFlow.channelDataLength(),
+                continuousFlow.channelDataSize(),
                 nullptr,
                 nullptr,
                 Region::Location::host());
 
             return {std::move(regions),
-                DataLayout::fromContinuous(continuousFlow.sampleWordSize(),
-                    continuousFlow.flowInfo()->config.continuous.channelCount,
-                    continuousFlow.flowInfo()->config.continuous.bufferLength),
+                DataLayout::fromContinuous(continuousFlow.sampleWordSize(), continuousFlow.channelCount(), continuousFlow.channelBufferLength()),
                 continuousFlow.flowInfo()->config.common.maxSyncBatchSizeHint};
         }
         else

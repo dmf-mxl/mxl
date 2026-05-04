@@ -355,7 +355,7 @@ namespace mxl::lib::fabrics::ofi
         auto remoteRmaIov = remote.toRmaIov();
         auto remoteOffset = std::size_t{0};
 
-        auto iovLimit = info().raw()->tx_attr->iov_limit;
+        auto iovLimit = info().txIovLimit();
         auto nbWrites = (localGroup.size() + iovLimit - 1) / iovLimit; // ceil(group.size() / iovLimit)
 
         for (std::size_t i = 0; i < nbWrites; i++)
