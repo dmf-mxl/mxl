@@ -9,3 +9,6 @@ CMakeUserPresets.json
 
 .idea
 .vscode
+
+# Doxygen generated output
+Doxygen/
