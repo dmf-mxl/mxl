@@ -87,9 +87,21 @@ namespace
             MXL_INFO("Staring pipeline with base time: {} ns", _mxlBaseTime);
         }
 
-        void pushBuffer(GstBuffer* buffer, std::uint64_t now) noexcept
+        // The provided bufferTimestamp will be used to calculate the PTS of the buffer. For video, this should be the time when to show the frame to
+        // the user. For audio, this should be the time of the first sample in the buffer. These values should be based on the MXL origination time of
+        // the data used to construct the buffer.
+        void pushBuffer(GstBuffer* buffer, std::uint64_t bufferTimestampNs) const noexcept
         {
-            GST_BUFFER_PTS(buffer) = now - _mxlBaseTime;
+            // The PTS value is relative to the start of the pipeline (running time).
+            // By definition of how MXL works, all the data read from MXL have origination time in the past. When presenting the data to the user, we
+            // have to be presenting them slightly in the future. Currently, we just offset the PTS few milliseconds into the future. This of course
+            // causes various problems when playing signals with larger latency. GStreamer then plays the data immediately, or not at all. Some of
+            // these problems may be mitigated by using the `playback-delay` command line parameter, but this still won't fix everything (for example
+            // not significant latency difference between audio and video, or significant latency in general).
+            // Proper compensation mechanism was introduced in main, but because it adds a new command line parameter, it has been decided to not
+            // backport it and only do smaller fix which makes audio and video being synchronized.
+            constexpr auto const PTS_OFFSET_NS = std::uint64_t{33'366'667}; // Corresponds approx. to 1 frame in 29.97
+            GST_BUFFER_PTS(buffer) = bufferTimestampNs - _mxlBaseTime + PTS_OFFSET_NS;
 
             int ret;
             ::g_signal_emit_by_name(_appSource, "push-buffer", buffer, &ret);
@@ -148,6 +160,7 @@ namespace
             // The clock returned by gst_pipeline_get_clock() is not guaranteed to be of type
             // GstSystemClock, which would make setting the clock-type a noop. So we create a
             // new clock with the necessary type and make the pipeline use that.
+            // Using the same type of clock as MXL (TAI clock) will make sure we won't drift away from MXL.
             if (auto const clock = GST_CLOCK(::g_object_new(GST_TYPE_SYSTEM_CLOCK, "name", "mxl-tai-clock", nullptr)); clock != nullptr)
             {
                 ::gst_object_ref_sink(clock);
@@ -420,7 +433,7 @@ namespace
                             std::memcpy(map.data, payload, grainInfo.grainSize);
                             ::gst_buffer_unmap(buffer, &map);
 
-                            gstPipeline.pushBuffer(buffer, ::mxlIndexToTimestamp(&rate, cursor.currentIndex() + 1U));
+                            gstPipeline.pushBuffer(buffer, ::mxlIndexToTimestamp(&rate, cursor.requestedIndex()));
 
                             ::gst_buffer_unref(buffer);
                         }
@@ -572,7 +585,8 @@ namespace
 
                     ::gst_audio_buffer_unmap(&audioBuffer);
 
-                    gstPipeline.pushBuffer(buffer, ::mxlIndexToTimestamp(&rate, cursor.requestedIndex() + windowSize));
+                    auto const firstSampleIndex = cursor.requestedIndex() - windowSize + 1;
+                    gstPipeline.pushBuffer(buffer, ::mxlIndexToTimestamp(&rate, firstSampleIndex));
 
                     ::gst_buffer_unref(buffer);
 
