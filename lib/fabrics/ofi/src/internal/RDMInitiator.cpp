@@ -137,7 +137,11 @@ namespace mxl::lib::fabrics::ofi
         auto cqAttr = CompletionQueue::Attributes::defaults();
         if (provider == Provider::EFA)
         {
-            cqAttr.waitObject = FI_WAIT_NONE;
+            if (!CompletionQueue::isWaitObjectSupportedForEFA())
+            {
+                MXL_WARN("Wait objects not supported in EFA provider for this libfabric version. Only non-blocking API available.");
+                cqAttr.waitObject = FI_WAIT_NONE;
+            }
         }
         auto cq = CompletionQueue::open(endpoint.domain(), cqAttr);
         endpoint.bind(cq, FI_TRANSMIT | FI_RECV);
