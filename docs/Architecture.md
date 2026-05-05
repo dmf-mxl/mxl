@@ -168,8 +168,8 @@ mxlWrappedMultiBufferSlice slices;
 mxlFlowRuntimeInfo runtime;
 mxlFlowReaderGetRuntimeInfo(reader, &runtime);
 
-const uint64_t lastSample = runtime.headIndex;
-const size_t windowLength = 256;
+uint64_t const lastSample = runtime.headIndex;
+size_t const windowLength = 256;
 mxlFlowReaderGetSamples(
     reader,
     lastSample,
@@ -177,25 +177,29 @@ mxlFlowReaderGetSamples(
     5'000'000,  // 5 milliseconds
     &slices);
 
-const size_t channels = slices.count;
-const size_t strideBytes = slices.stride;
-const size_t fragment0Samples = slices.base.fragments[0].size / sizeof(float);
-const size_t fragment1Samples = slices.base.fragments[1].size / sizeof(float);
+size_t const channels = slices.count;
+size_t const strideBytes = slices.stride;
+size_t const fragment0Samples = slices.base.fragments[0].size / sizeof(float);
+size_t const fragment1Samples = slices.base.fragments[1].size / sizeof(float);
 
-for (size_t channel = 0; channel < channels; ++channel) {
-    const uint8_t *channelBase0 = static_cast<const uint8_t *>(slices.base.fragments[0].pointer) + channel * strideBytes;
-    const uint8_t *channelBase1 = static_cast<const uint8_t *>(slices.base.fragments[1].pointer) + channel * strideBytes;
+for (size_t channel = 0; channel < channels; ++channel)
+{
+    size_t const channelOffset = channel * strideBytes;
+    uint8_t const* const channelBase0 = (uint8_t const*)(slices.base.fragments[0].pointer) + channelOffset;
+    uint8_t const* const channelBase1 = (uint8_t const*)(slices.base.fragments[1].pointer) + channelOffset;
 
-    const float *firstSlice = reinterpret_cast<const float *>(channelBase0);
-    const float *secondSlice = reinterpret_cast<const float *>(channelBase1);
+    float const* const firstSlice = (float const*)(channelBase0);
+    float const* const secondSlice = (float const*s)(channelBase1);
 
     // Process the first fragment (may already contain the entire window).
-    for (size_t i = 0; i < fragment0Samples; ++i) {
+    for (size_t i = 0; i < fragment0Samples; ++i)
+    {
         consume_sample(channel, firstSlice[i]);
     }
 
     // Only needed when the window wrapped around the ring buffer.
-    for (size_t i = 0; i < fragment1Samples; ++i) {
+    for (size_t i = 0; i < fragment1Samples; ++i)
+    {
         consume_sample(channel, secondSlice[i]);
     }
 }
@@ -220,6 +224,61 @@ A few important rules fall straight out of the data structure:
   identifies how far you have to slide (hence “stride”) to reach the same sample in the next channel.
 
 ![Continuous Flow Memory Layout](./assets/continuous-flow-memory-layout.png)
+
+# Aligned Processing of Multiple Flows
+
+Media functions oftentimes have the requirement to consume multiple, time aligned flows concurrently. In order to
+facilitate this use case MXL offers *Flow Synchronization Groups* that allow synchronizing on data availability across
+multiple flows.
+
+A *Flow Synchronization Group* is set up by creating it and adding one or more readers to it, by calling either
+* `mxlFlowSynchronizationGroupAddReader()` if the reader operates on a continuous flow or the reader operates on
+    a discrete flow and the intention is to consume entire grains, or
+* `mxlFlowSynchronizationGroupAddPartialGrainReader()` if the reader operates on a discrete flow and the intention is to
+    consume partial grains, for which a specified number of slices has to be available at the time of synchronization.
+
+Once a *Flow Synchronization Group* is set up clients can synchronize on grain(slice)s or samples corresponding to a
+specified time stamp to become available by calling `mxlFlowSynchronizationGroupWaitForDataAt()`.
+
+Please note that the choice has been made to synchronize on timestamps rather than indices, because the former
+identifies a specific head index across all flows that are part of a group, while the latter would only be valid with
+regards to one specific grain/sample rate.
+
+A media function consuming multiple flows should define a nominal output rate from which it can derive the time stamps
+to synchronize on, like so:
+
+```c
+// Assume the following variables to be initialized out of the scope of this code section
+mxlRational outputRate = ...;
+uint64_t nextIndex = ...;
+
+// ...
+
+uint64_t const nextTimestamp = mxlIndexToTimestamp(&outputRate, nextIndex);
+```
+
+Then the processing loop consuming multiple flows tracked by a *Flow Synchronization Group* can look like this:
+
+```c
+// Assume the following variables to be initialized out of the scope of this code section
+mxlFlowSynchronizationGroup inputFlowSyncGroup = ...;
+
+mxlRational outputRate = ...;
+uint64_t nextIndex = ...;
+
+while (running)
+{
+    // Wait 5ms for the corresponding indices to become available
+    uint64_t const nextTimestamp = mxlIndexToTimestamp(&outputRate, nextIndex);
+    mxlStatus waitResult = mxlFlowSynchronizationGroupWaitForDataAt(inputFlowSyncGroup, nextTimestamp, 5'000'000);
+    if (waitResult == MXL_STATUS_OK)
+    {
+        // For each input flow consume the grains/samples at or up until
+        // mxlTimestampToIndex(&inputFlowRate, nextTimestamp)
+        // ...
+    }
+}
+```
 
 # Grain formats
 
