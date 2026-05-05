@@ -1,5 +1,9 @@
 # SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 # SPDX-License-Identifier: Apache-2.0
+#
+# Parameterized base manifest. Deploy via Kustomize overlay:
+#   kubectl apply -k examples/aws/kustomize/2-nodes/
+# The overlay provides the mxl-config ConfigMap (VIDEO_FLOW_UUID) and pins image tags.
 
 # Headless service for fabrics target-info discovery.
 # The writer polls this endpoint to obtain the reader's target-info
@@ -75,7 +79,7 @@ spec:
       containers:
         - name: reader-container
           image: 720180693591.dkr.ecr.eu-central-1.amazonaws.com/mxl-reader:latest
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           command: ["/bin/sh", "-c"]
           args:
             - |
@@ -108,7 +112,7 @@ spec:
 
               # Start SRT video sink
               echo "Starting mxl-gst-sink..."
-              /usr/bin/mxl-gst-sink -d /domain -v 5fbec3b1-1b0f-417d-9059-8b94a47197ed &
+              /usr/bin/mxl-gst-sink -d /domain -v $(VIDEO_FLOW_UUID) &
 
               # Keep domain monitor running
               while true; do /usr/bin/mxl-info -d /domain -l || true; sleep 5; done
@@ -117,6 +121,9 @@ spec:
               value: efa
             - name: FI_EFA_USE_DEVICE_RDMA
               value: "1"
+          envFrom:
+            - configMapRef:
+                name: mxl-config
           resources:
             requests:
               memory: "4Gi"
@@ -195,7 +202,7 @@ spec:
       containers:
         - name: writer-container
           image: 720180693591.dkr.ecr.eu-central-1.amazonaws.com/mxl-writer:latest
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           command: ["/bin/sh", "-c"]
           args:
             - |
@@ -226,7 +233,7 @@ spec:
               echo "Got target-info from reader"
 
               # Start fabrics initiator — log throttled to prevent disk exhaustion
-              /usr/bin/mxl-fabrics-demo -d /domain -f 5fbec3b1-1b0f-417d-9059-8b94a47197ed \
+              /usr/bin/mxl-fabrics-demo -d /domain -f $(VIDEO_FLOW_UUID) \
                 -i -p efa --target-info "$TARGET_INFO" 2>&1 | head -n 500 &
 
               # Wait for the testsrc writer
@@ -236,6 +243,9 @@ spec:
               value: efa
             - name: FI_EFA_USE_DEVICE_RDMA
               value: "1"
+          envFrom:
+            - configMapRef:
+                name: mxl-config
           resources:
             requests:
               memory: "4Gi"

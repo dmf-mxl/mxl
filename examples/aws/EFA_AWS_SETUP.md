@@ -159,9 +159,12 @@ kubectl get pods -n kube-system | grep efa
 
 ## Step 6: Deploy the Manifest
 
+The base manifest is parameterized; deploy via the Kustomize overlay (provides
+the `mxl-config` ConfigMap with the flow UUID and pins image tags):
+
 ```bash
 cd /path/to/mxl-dmf-demo
-kubectl apply -f examples/aws/kube-aws-2-nodes-efa.yaml
+kubectl apply -k examples/aws/kustomize/2-nodes/
 ```
 
 Check deployment:
@@ -303,7 +306,7 @@ kubectl logs deployment/reader-media-function-efa -c reader-container | grep -i 
 ## Cleanup
 
 ```bash
-kubectl delete -f examples/aws/kube-aws-2-nodes-efa.yaml
+kubectl delete -k examples/aws/kustomize/2-nodes/
 
 # To destroy all infrastructure:
 cd /path/to/mxl-dmf-terraform
@@ -325,4 +328,7 @@ aws ecr delete-repository --repository-name mxl-reader-efa --force --region $AWS
 | `examples/Dockerfile.reader.efa.txt` | Reader image with fabrics target + SRT sink |
 | `examples/aws/entrypoint-writer-efa.sh` | Writer entrypoint: testsrc + fetch target-info + initiator |
 | `examples/aws/entrypoint-reader-efa.sh` | Reader entrypoint: target + write target-info + gst-sink |
-| `examples/aws/kube-aws-2-nodes-efa.yaml` | K8s manifest: 2 deployments + headless service |
+| `examples/aws/kustomize/2-nodes/kube-aws-2-nodes-efa.yaml` | K8s base manifest: 2 deployments + headless service (parameterized) |
+| `examples/aws/kustomize/2-nodes/kustomization.yaml` | Kustomize overlay: pins image tags, provides `mxl-config` ConfigMap |
+| `examples/aws/kustomize/1-node/kube-aws-1-node-efa.yaml` | K8s base manifest for 1-node variant (parameterized) |
+| `examples/aws/kustomize/1-node/kustomization.yaml` | Kustomize overlay for 1-node variant |
