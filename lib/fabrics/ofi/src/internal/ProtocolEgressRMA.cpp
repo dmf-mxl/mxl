@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ProtocolEgressRMA.hpp"
+#include <cstddef>
 #include "AudioBounceBuffer.hpp"
 #include "DataLayout.hpp"
 #include "Exception.hpp"
@@ -121,12 +122,15 @@ namespace mxl::lib::fabrics::ofi
                 Region::Location::host()); // Host, because the bounce buffer will always be stored on host memory.
         }
 
+        // The domain is shared with all endpoints, if there's more than 1 target, we can't assume that the first audio header entry for this target
+        // will be at index 1 (right after the audio samples buffer). Read the number of regions already registered to the domain, then
+        // register the entry header regions, and finally get the local regions again to retrieve the actual regions corresponding to the entry
+        // headers we just registered. Use the offset to correctly get the entry header regions in the list of local regions.
+        auto offset = domain->localRegions().size();
         domain->registerRegions(entryHeaderRegions, FI_WRITE);
         auto localRegions = domain->localRegions();
 
-        // We must skip the first region since it corresponds to the user provided audio region, and the rest correspond to the entry headers we just
-        // registered.
-        _entryHeaderRegions = std::vector(localRegions.begin() + 1, localRegions.end());
+        _entryHeaderRegions = std::vector(localRegions.begin() + static_cast<std::ptrdiff_t>(offset), localRegions.end());
     }
 
     void RMASampleEgressProtocol::transferGrain(Endpoint&, std::uint64_t, std::uint64_t, std::uint32_t, SliceRange const&, ::fi_addr_t)
