@@ -50,7 +50,7 @@ namespace mxl::lib::fabrics::ofi
 
     std::size_t AudioBounceBufferEntry::size() const noexcept
     {
-        return _data.size() + sizeof(AudioEntryHeader);
+        return _data.size();
     }
 
     AudioBounceBuffer::AudioBounceBuffer(size_t entryCount, std::size_t entrySize, DataLayout::Continuous layout)

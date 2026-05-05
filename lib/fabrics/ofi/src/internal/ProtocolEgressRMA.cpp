@@ -140,8 +140,19 @@ namespace mxl::lib::fabrics::ofi
 
     void RMASampleEgressProtocol::transferSamples(Endpoint& ep, std::uint64_t headIndex, std::size_t count, ::fi_addr_t destAddr)
     {
-        // FIXME: We assume that the initiator and target have the same maxSyncBatchSizeHint configured. Is this fine to assume? Should it be
-        // enforced? Otherwise, we would need to split the transfer into multiple transfers of size at most maxSyncBatchSizeHint (target).
+        if (count == 0)
+        {
+            throw Exception::invalidArgument("Count must be greater than 0.");
+        }
+
+        auto entrySizeRequired = _layout.sampleSize * _layout.channelCount * count;
+        if (entrySizeRequired > _remoteInfo.bounceBufferInfo->entrySize)
+        {
+            throw Exception::invalidArgument("Count is too large for the bounce buffer entry size. Count {}, entry size {}, required entry size {}.",
+                count,
+                _remoteInfo.bounceBufferInfo->entrySize,
+                entrySizeRequired);
+        }
 
         // 1- Create the scatter-gather list for the transfer and prepend the audio header.
         auto sgl = makeScatterGatherList(_layout, headIndex, count, _localRegion);
@@ -253,5 +264,4 @@ namespace mxl::lib::fabrics::ofi
 
         return std::make_unique<MakeUniqueEnabler>(token, std::move(remoteInfo), _layout, *_localRegion, remoteInfo.bounceBufferInfo->entryCount);
     };
-
 }
