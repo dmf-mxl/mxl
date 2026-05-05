@@ -246,8 +246,13 @@ fn require_factories(names: &[&str]) {
 /// ST 2038, sent through MXL via `mxlsink` and `mxlsrc`, decoded back to plain
 /// text, and the first one asserted to contain "cats". `ccconverter` does the
 /// `format=raw` ↔ `format=s334-1a` translation on both sides.
+///
+/// Requires `ccconverter` from `gstreamer1.0-plugins-bad` and the
+/// `cctost2038anc` / `st2038anctocc` / `tttocea608` / `cea608tott` elements
+/// from the `rsclosedcaption` plugin in `gst-plugins-rs`. The plugin isn't
+/// apt-packaged on Ubuntu 24.04 — `.devcontainer/Dockerfile` builds it
+/// from source.
 #[test]
-#[ignore = "requires gst-plugins-rs rsclosedcaption (cctost2038anc, st2038anctocc, cea608tott) and gst-plugins-bad (ccconverter); run with cargo test -- --ignored"]
 fn cea608_round_trip_via_mxl() {
     init();
     require_factories(&[
