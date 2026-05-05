@@ -16,7 +16,7 @@ use gst::glib;
 use gstreamer as gst;
 
 mod format;
-mod mxlsink;
+pub mod mxlsink;
 pub mod mxlsrc;
 
 fn plugin_init(plugin: &gst::Plugin) -> Result<(), glib::BoolError> {

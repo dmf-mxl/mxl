@@ -286,9 +286,15 @@ fn pad_grain(buf: &mut Vec<u8>) -> Result<(), AncillaryMapError> {
 mod tests {
     use super::*;
 
-    /// Same bytes as `gst-plugin-rtp` `smpte291::tests::packets[0]` (100 octets).
-    fn st2038_test_packet() -> Vec<u8> {
-        vec![
+    /// Known-good ST 2038 ANC packets used by tests. Same bytes as
+    /// `gst-plugin-rtp` `smpte291::tests::packets`. Each is 100 octets and
+    /// parses cleanly, so single-packet tests use index 0 by convention.
+    /// The two packets differ in one user-data word and the resulting
+    /// checksum, so multi-ANC round-trip tests can verify per-packet
+    /// independence rather than coincidentally returning the same packet
+    /// twice.
+    const ST2038_TEST_PACKETS: &[&[u8]] = &[
+        &[
             0x00, 0x02, 0x40, 0x02, 0x61, 0x80, 0x64, 0x96, 0x59, 0x69, 0x92, 0x64, 0xf9, 0x0e,
             0x02, 0x8f, 0x57, 0x2b, 0xd1, 0xfc, 0xa0, 0x28, 0x0b, 0xf6, 0x80, 0xa0, 0x1f, 0xa4,
             0x01, 0x00, 0x7e, 0x90, 0x04, 0x01, 0xfa, 0x40, 0x10, 0x07, 0xe9, 0x00, 0x40, 0x1f,
@@ -297,14 +303,24 @@ mod tests {
             0x40, 0x1f, 0xa4, 0x01, 0x00, 0x7e, 0x90, 0x04, 0x01, 0xfa, 0x40, 0x10, 0x07, 0xe9,
             0x00, 0x40, 0x1f, 0xa4, 0x01, 0x00, 0x7e, 0x90, 0x04, 0x01, 0x74, 0x80, 0xa3, 0xd5,
             0x06, 0xab,
-        ]
-    }
+        ],
+        &[
+            0x00, 0x02, 0x40, 0x02, 0x61, 0x80, 0x64, 0x96, 0x59, 0x69, 0x92, 0x64, 0xf9, 0x0e,
+            0x02, 0x8f, 0x97, 0x2b, 0xd1, 0xfc, 0xa0, 0x28, 0x0b, 0xf6, 0x80, 0xa0, 0x1f, 0xa4,
+            0x01, 0x00, 0x7e, 0x90, 0x04, 0x01, 0xfa, 0x40, 0x10, 0x07, 0xe9, 0x00, 0x40, 0x1f,
+            0xa4, 0x01, 0x00, 0x7e, 0x90, 0x04, 0x01, 0xfa, 0x40, 0x10, 0x07, 0xe9, 0x00, 0x40,
+            0x1f, 0xa4, 0x01, 0x00, 0x7e, 0x90, 0x04, 0x01, 0xfa, 0x40, 0x10, 0x07, 0xe9, 0x00,
+            0x40, 0x1f, 0xa4, 0x01, 0x00, 0x7e, 0x90, 0x04, 0x01, 0xfa, 0x40, 0x10, 0x07, 0xe9,
+            0x00, 0x40, 0x1f, 0xa4, 0x01, 0x00, 0x7e, 0x90, 0x04, 0x01, 0x74, 0x80, 0xa3, 0xe4,
+            0xfe, 0xab,
+        ],
+    ];
 
     #[test]
     fn smpte291_from_st2038_anc_packet_round_trip() {
-        let expected = st2038_test_packet();
+        let expected = ST2038_TEST_PACKETS[0];
         let mut smpte291 = Vec::new();
-        let mut remaining_st2038 = expected.as_slice();
+        let mut remaining_st2038 = expected;
         smpte291_from_st2038_anc_packet(&mut smpte291, &mut remaining_st2038).unwrap();
         assert!(remaining_st2038.is_empty());
         let mut remaining_smpte291 = smpte291.as_slice();
@@ -331,8 +347,8 @@ mod tests {
 
     #[test]
     fn mxl_smpte291_grain_from_gst_st2038_single_anc_round_trip() {
-        let expected = st2038_test_packet();
-        let grain = mxl_smpte291_grain_from_gst_st2038(&expected).unwrap();
+        let expected = ST2038_TEST_PACKETS[0];
+        let grain = mxl_smpte291_grain_from_gst_st2038(expected).unwrap();
         let actual = gst_st2038_from_mxl_smpte291_grain(&grain).unwrap();
         assert_eq!(actual, expected);
     }
@@ -346,7 +362,7 @@ mod tests {
 
     #[test]
     fn gst_st2038_from_mxl_smpte291_grain_rejects_length_past_buffer() {
-        let mut grain = mxl_smpte291_grain_from_gst_st2038(&st2038_test_packet()).unwrap();
+        let mut grain = mxl_smpte291_grain_from_gst_st2038(ST2038_TEST_PACKETS[0]).unwrap();
         grain[0] = 0xff;
         grain[1] = 0xff;
         match gst_st2038_from_mxl_smpte291_grain(&grain) {
@@ -360,7 +376,7 @@ mod tests {
 
     #[test]
     fn gst_st2038_from_mxl_smpte291_grain_rejects_anc_count_zero_with_payload() {
-        let mut grain = mxl_smpte291_grain_from_gst_st2038(&st2038_test_packet()).unwrap();
+        let mut grain = mxl_smpte291_grain_from_gst_st2038(ST2038_TEST_PACKETS[0]).unwrap();
         grain[2] = 0;
         match gst_st2038_from_mxl_smpte291_grain(&grain) {
             Err(AncillaryMapError::Invalid(msg)) => {
@@ -373,9 +389,7 @@ mod tests {
 
     #[test]
     fn gst_st2038_from_mxl_smpte291_grain_rejects_anc_count_above_rfc_payload() {
-        let a = st2038_test_packet();
-        let b = st2038_test_packet();
-        let expected = [a.as_slice(), b.as_slice()].concat();
+        let expected = ST2038_TEST_PACKETS.concat();
         let mut grain = mxl_smpte291_grain_from_gst_st2038(&expected).unwrap();
         grain[2] = 3;
         match gst_st2038_from_mxl_smpte291_grain(&grain) {
@@ -389,9 +403,7 @@ mod tests {
 
     #[test]
     fn mxl_smpte291_grain_from_gst_st2038_two_anc_round_trip() {
-        let a = st2038_test_packet();
-        let b = st2038_test_packet();
-        let expected = [a.as_slice(), b.as_slice()].concat();
+        let expected = ST2038_TEST_PACKETS.concat();
         let grain = mxl_smpte291_grain_from_gst_st2038(&expected).unwrap();
         let actual = gst_st2038_from_mxl_smpte291_grain(&grain).unwrap();
         assert_eq!(actual, expected);
