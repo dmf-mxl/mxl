@@ -79,7 +79,7 @@ namespace mxl::lib::fabrics::ofi
         return _entries.empty() ? 0 : _entries.front().size();
     }
 
-    AudioEntryHeader const& AudioBounceBuffer::unpack(std::size_t entryIndex, Region& outRegion) const noexcept
+    AudioEntryHeader const& AudioBounceBuffer::unpack(std::size_t entryIndex, Region& outRegion) const
     {
         auto const& entry = _entries.at(entryIndex);
         auto const* header = entry.header();

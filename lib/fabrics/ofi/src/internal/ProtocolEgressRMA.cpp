@@ -145,7 +145,7 @@ namespace mxl::lib::fabrics::ofi
             throw Exception::invalidArgument("Count must be greater than 0.");
         }
 
-        auto entrySizeRequired = _layout.sampleSize * _layout.channelCount * count;
+        auto entrySizeRequired = (_layout.sampleSize * _layout.channelCount * count) + sizeof(AudioEntryHeader);
         if (entrySizeRequired > _remoteInfo.bounceBufferInfo->entrySize)
         {
             throw Exception::invalidArgument("Count is too large for the bounce buffer entry size. Count {}, entry size {}, required entry size {}.",

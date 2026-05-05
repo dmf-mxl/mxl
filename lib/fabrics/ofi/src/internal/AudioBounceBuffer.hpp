@@ -83,7 +83,7 @@ namespace mxl::lib::fabrics::ofi
          *
          * Internally the header will be used to correctly map the bounce buffer entry slices to the output region slices.
          */
-        AudioEntryHeader const& unpack(std::size_t entryIndex, Region& outRegion) const noexcept;
+        AudioEntryHeader const& unpack(std::size_t entryIndex, Region& outRegion) const;
 
         static void getMutableMultiBufferSlices(std::uint64_t index, std::size_t count, size_t bufferLength, std::size_t sampleWordSize,
             std::size_t channelCount, std::uint8_t* baseBufferPtr, mxlMutableWrappedMultiBufferSlice& slice) noexcept;
