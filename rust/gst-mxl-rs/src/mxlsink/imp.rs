@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2025-2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
 // Copyright (C) 2018 Sebastian Dröge <sebastian@centricular.com>
@@ -35,8 +35,9 @@ use crate::mxlsink::state::DEFAULT_FLOW_ID;
 use crate::mxlsink::state::Settings;
 use crate::mxlsink::state::State;
 use crate::mxlsink::state::init_state_with_audio;
+use crate::mxlsink::state::init_state_with_data;
 use crate::mxlsink::state::init_state_with_video;
-use crate::mxlsink::{render_audio, render_video};
+use crate::mxlsink::{render_audio, render_data, render_video};
 
 pub(crate) static CAT: LazyLock<gst::DebugCategory> = LazyLock::new(|| {
     gst::DebugCategory::new("mxlsink", gst::DebugColorFlags::empty(), Some("MXL Sink"))
@@ -211,6 +212,14 @@ impl ElementImpl for MxlSink {
                                 .build(),
                         );
                     }
+                    // `meta/x-st-2038` without `alignment` in the pad template so negotiation can
+                    // link peers that use `alignment=frame` or `alignment=packet`. The MXL data
+                    // path is only thought through for frame-like buffer timing; we do not
+                    // yet define correct handling for packet-aligned streams (e.g. potentially
+                    // multiple buffers per frame).
+                    // See https://github.com/dmf-mxl/mxl/issues/496
+                    caps.make_mut()
+                        .append(gst::Caps::builder("meta/x-st-2038").build());
                 }
 
                 let sink_pad_template = gst::PadTemplate::new(
@@ -265,6 +274,7 @@ impl BaseSinkImpl for MxlSink {
             flow: None,
             video: None,
             audio: None,
+            data: None,
             pipeline,
         });
 
@@ -284,6 +294,17 @@ impl BaseSinkImpl for MxlSink {
             ["Failed to get state"]
         ))?;
 
+        if let Some(video) = state.video.take() {
+            let (lock, cvar) = &*video.sleep_flag;
+
+            let mut flag = lock.lock().map_err(|_| {
+                gst::error_msg!(gst::CoreError::Failed, ["Failed to get video sleep lock"])
+            })?;
+            *flag = true;
+            cvar.notify_all();
+            drop(video.tx);
+        }
+
         if let Some(audio) = state.audio.take() {
             let (lock, cvar) = &*audio.sleep_flag;
 
@@ -295,15 +316,15 @@ impl BaseSinkImpl for MxlSink {
             drop(audio.tx);
         }
 
-        if let Some(video) = state.video.take() {
-            let (lock, cvar) = &*video.sleep_flag;
+        if let Some(data) = state.data.take() {
+            let (lock, cvar) = &*data.sleep_flag;
 
             let mut flag = lock.lock().map_err(|_| {
-                gst::error_msg!(gst::CoreError::Failed, ["Failed to get video sleep lock"])
+                gst::error_msg!(gst::CoreError::Failed, ["Failed to get data sleep lock"])
             })?;
             *flag = true;
             cvar.notify_all();
-            drop(video.tx);
+            drop(data.tx);
         }
 
         gst::info!(CAT, imp = self, "Stopped");
@@ -317,8 +338,12 @@ impl BaseSinkImpl for MxlSink {
         let state = context.state.as_mut().ok_or(gst::FlowError::Error)?;
         if state.video.is_some() {
             render_video::video(state, buffer)
-        } else {
+        } else if state.audio.is_some() {
             render_audio::audio(state, buffer)
+        } else if state.data.is_some() {
+            render_data::data(state, buffer)
+        } else {
+            Err(gst::FlowError::Error)
         }
     }
 
@@ -365,14 +390,20 @@ impl BaseSinkImpl for MxlSink {
             .structure(0)
             .ok_or_else(|| gst::loggable_error!(CAT, "No structure in caps {}", caps))?;
         let name = structure.name();
-        if name == "audio/x-raw" {
+        if name == "video/x-raw" {
+            init_state_with_video(state, structure, &settings.flow_id)?;
+            Ok(())
+        } else if name == "audio/x-raw" {
             let info = gst_audio::AudioInfo::from_caps(caps)
                 .map_err(|e| gst::loggable_error!(CAT, "Invalid audio caps: {}", e))?;
 
             init_state_with_audio(state, info, &settings.flow_id)?;
             Ok(())
+        } else if name == "meta/x-st-2038" {
+            init_state_with_data(state, structure, &settings.flow_id)?;
+            Ok(())
         } else {
-            init_state_with_video(state, structure, &settings.flow_id)
+            Err(gst::loggable_error!(CAT, "Unknown caps: {}", caps))
         }
     }
 

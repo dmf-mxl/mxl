@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2025-2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
 // Copyright (C) 2017 Sebastian Dröge <sebastian@centricular.com>
@@ -15,7 +15,8 @@
 use gst::glib;
 use gstreamer as gst;
 
-mod mxlsink;
+mod format;
+pub mod mxlsink;
 pub mod mxlsrc;
 
 fn plugin_init(plugin: &gst::Plugin) -> Result<(), glib::BoolError> {

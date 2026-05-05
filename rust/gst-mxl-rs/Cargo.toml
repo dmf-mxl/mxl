@@ -14,6 +14,7 @@ license.workspace = true
 ignored = ["regex"]
 
 [dependencies]
+bitstream-io = "4"
 crossbeam = "0.8.4"
 glib = "0.21.5"
 gstreamer = "0.24.4"
@@ -21,6 +22,7 @@ gstreamer-audio = "0.24.4"
 gstreamer-base = "0.24.4"
 mxl = { path = "../mxl" }
 serde_json.workspace = true
+thiserror.workspace = true
 uuid.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
@@ -28,6 +30,9 @@ tracing-test = "0.2.5"
 
 # If this is not included, tracing won't work while debugging
 regex = { version = "1", features = ["unicode-case"] }
+
+[dev-dependencies]
+gstreamer-app = "0.24.4"
 
 [features]
 tracing = []
