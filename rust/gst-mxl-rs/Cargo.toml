@@ -31,6 +31,9 @@ tracing-test = "0.2.5"
 # If this is not included, tracing won't work while debugging
 regex = { version = "1", features = ["unicode-case"] }
 
+[dev-dependencies]
+gstreamer-app = "0.24.4"
+
 [features]
 tracing = []
 
