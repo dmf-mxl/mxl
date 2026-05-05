@@ -107,6 +107,42 @@ Hint : Live monitoring of a flow details (updates every second)
 watch -n 1 -p ./mxl-info mxl:///dev/shm/mxl?id=5fbec3b1-1b0f-417d-9059-8b94a47197ed
 ```
 
+## mxl-data-probe
+
+A tool that opens an MXL ancillary Data flow (`media_type: video/smpte291`), reads one or more grains starting at the current head index, and prints the RFC-8331 ANC elements found in each grain.
+
+```bash
+./mxl-data-probe [OPTIONS] [ADDRESS...]
+
+POSITIONALS:
+  ADDRESS TEXT ...            MXL URI
+
+OPTIONS:
+  -h,     --help              Print this help message and exit
+          --version           Display program version information and exit
+  -d,     --domain TEXT:DIR   The MXL domain directory
+  -f,     --flow TEXT         The flow id to read
+  -c,     --count UINT [1]    Number of grains to read from the current head index
+  -t,     --timeout-ms UINT [1000]
+                              Timeout per grain read in milliseconds
+
+MXL URI format:
+mxl://[authority[:port]]/domain[?id=...]
+See: https://github.com/dmf-mxl/mxl/docs/Addressability.md
+```
+
+Example using command line options:
+
+```bash
+./mxl-data-probe -d /dev/shm/mxl -f db3bd465-2772-484f-8fac-830b0471258b --count 3
+```
+
+Example using an MXL URI:
+
+```bash
+./mxl-data-probe mxl:///dev/shm/mxl?id=db3bd465-2772-484f-8fac-830b0471258b --count 3
+```
+
 ## mxl-gst-testsrc
 
 A binary that uses the gstreamer 'videotestsrc' and 'audiotestsrc' elements to produce video grains and/or audio samples which will be pushed to a MXL Flow. The flow is configured from a NMOS Flow json file. Here's an example of such file :
@@ -362,4 +398,4 @@ OPTIONS:
 
 ## Gstreamer filters
 
-MXL Source and Sink filters for GStreamer are available [here](../rust/gst-mxl-rs/README.md). 
+MXL Source and Sink filters for GStreamer are available [here](../rust/gst-mxl-rs/README.md).

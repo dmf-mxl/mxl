@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 //
 // SPDX-License-Identifier: Apache-2.0
 
@@ -6,6 +6,7 @@
 #include <memory>
 #include <optional>
 #include <utility>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <mxl-internal/Logging.hpp>
 #include <rdma/fi_eq.h>
@@ -36,6 +37,14 @@ namespace mxl::lib::fabrics::ofi
         raw.flags = 0;                   // if signaling vector is required, this should use the flag "FI_AFFINITY"
         raw.signaling_vector = 0;        // this should indicate the CPU core that interrupts associated with the cq should target.
         return raw;
+    }
+
+    bool CompletionQueue::isWaitObjectSupportedForEFA() noexcept
+    {
+        auto const fiVersion = ::fi_version();
+
+        // check that library version >= 2.5
+        return (FI_MAJOR(fiVersion) > 2) || ((FI_MAJOR(fiVersion) == 2) && (FI_MINOR(fiVersion) >= 5));
     }
 
     std::shared_ptr<CompletionQueue> CompletionQueue::open(std::shared_ptr<Domain> domain, CompletionQueue::Attributes const& attr)
@@ -86,7 +95,7 @@ namespace mxl::lib::fabrics::ofi
 
     CompletionQueue::~CompletionQueue()
     {
-        close();
+        catchAndLogFabricError([this]() { close(); }, "Failed to close completion queue");
     }
 
     ::fid_cq* CompletionQueue::raw() noexcept

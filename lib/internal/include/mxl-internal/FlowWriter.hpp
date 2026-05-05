@@ -27,6 +27,13 @@ namespace mxl::lib
          * The flow writer must first open the flow before invoking this method.
          */
         [[nodiscard]]
+        virtual FlowData& getFlowData() = 0;
+
+        /**
+         * Accessor for the underlying flow data.
+         * The flow writer must first open the flow before invoking this method.
+         */
+        [[nodiscard]]
         virtual FlowData const& getFlowData() const = 0;
 
         /**

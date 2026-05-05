@@ -1,8 +1,9 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 //
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Endpoint.hpp"
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -33,16 +34,6 @@ namespace mxl::lib::fabrics::ofi
         std::mt19937 eng{rd()};
 
         return dist(eng);
-    }
-
-    void* Endpoint::idToContextValue(Id id) noexcept
-    {
-        return reinterpret_cast<void*>(id);
-    }
-
-    Endpoint::Id Endpoint::contextValueToId(void* contextValue) noexcept
-    {
-        return reinterpret_cast<Endpoint::Id>(contextValue);
     }
 
     Endpoint::Id Endpoint::idFromFID(::fid_t fid) noexcept
@@ -94,7 +85,7 @@ namespace mxl::lib::fabrics::ofi
 
     Endpoint::~Endpoint()
     {
-        close();
+        catchAndLogFabricError([this]() { close(); }, "Failed to close endpoint");
     }
 
     Endpoint::Endpoint(::fid_ep* raw, FabricInfoView info, std::shared_ptr<Domain> domain, std::optional<std::shared_ptr<CompletionQueue>> cq,
@@ -178,7 +169,7 @@ namespace mxl::lib::fabrics::ofi
 
     void Endpoint::accept()
     {
-        uint8_t dummy;
+        auto dummy = std::uint8_t{};
         fiCall(::fi_accept, "Failed to accept connection", _raw, &dummy, sizeof(dummy));
     }
 
@@ -324,8 +315,8 @@ namespace mxl::lib::fabrics::ofi
         return _raw;
     }
 
-    void Endpoint::writeImpl(::iovec const* msgIov, std::size_t iovCount, void** desc, ::fi_rma_iov const* rmaIov, ::fi_addr_t destAddr,
-        std::optional<std::uint32_t> immData)
+    std::size_t Endpoint::writeImpl(Completion::Token token, ::iovec const* msgIov, std::size_t iovCount, void** desc, ::fi_rma_iov const* rmaIov,
+        ::fi_addr_t destAddr, std::optional<std::uint32_t> immData)
     {
         std::uint64_t data = immData.value_or(0);
         std::uint64_t flags = FI_DELIVERY_COMPLETE;
@@ -338,27 +329,31 @@ namespace mxl::lib::fabrics::ofi
             .addr = destAddr,
             .rma_iov = rmaIov,
             .rma_iov_count = 1,
-            .context = _raw,
+            .context = Completion::tokenToContextValue(token),
             .data = data,
         };
 
         fiCall(::fi_writemsg, "Failed to push rma write to work queue.", _raw, &msg, flags);
+
+        return 1;
     }
 
-    void Endpoint::write(LocalRegion const& local, RemoteRegion const& remote, ::fi_addr_t destAddr, std::optional<std::uint32_t> immData)
+    std::size_t Endpoint::write(Completion::Token token, LocalRegion const& local, RemoteRegion const& remote, ::fi_addr_t destAddr,
+        std::optional<std::uint32_t> immData)
     {
         std::vector<void*> descs{local.desc};
 
         auto msgIov = local.toIovec();
         auto rmaIov = remote.toRmaIov();
 
-        return writeImpl(&msgIov, 1, descs.data(), &rmaIov, destAddr, immData);
+        return writeImpl(token, &msgIov, 1, descs.data(), &rmaIov, destAddr, immData);
     }
 
-    void Endpoint::write(LocalRegionGroup const& localGroup, RemoteRegion const& remote, ::fi_addr_t destAddr, std::optional<std::uint32_t> immData)
+    std::size_t Endpoint::write(Completion::Token token, LocalRegionGroup const& localGroup, RemoteRegion const& remote, ::fi_addr_t destAddr,
+        std::optional<std::uint32_t> immData)
     {
         auto rmaIov = remote.toRmaIov();
-        return writeImpl(localGroup.asIovec(), localGroup.size(), const_cast<void**>(localGroup.desc()), &rmaIov, destAddr, immData);
+        return writeImpl(token, localGroup.asIovec(), localGroup.size(), const_cast<void**>(localGroup.desc()), &rmaIov, destAddr, immData);
     }
 
     void Endpoint::recv(LocalRegion region)

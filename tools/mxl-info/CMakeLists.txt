@@ -2,21 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 include(GNUInstallDirs)
-include(FetchContent)
-
-FetchContent_Declare(
-    simple_uri_parser
-    GIT_REPOSITORY https://github.com/jholloc/simple-uri-parser.git
-    GIT_TAG        v1.0.0
-)
-
-FetchContent_MakeAvailable(simple_uri_parser)
-add_library(simple_uri_parser INTERFACE)
-
-target_include_directories(simple_uri_parser
-    INTERFACE
-        ${simple_uri_parser_SOURCE_DIR}
-)
 
 
 add_executable(mxl-info)
@@ -55,9 +40,13 @@ if (NOT TARGET picojson::picojson)
     find_package(picojson REQUIRED)
 endif()
 
+if (NOT TARGET ada::ada)
+    find_package(ada CONFIG REQUIRED)
+endif ()
+
 target_link_libraries(mxl-info
         PRIVATE
-            simple_uri_parser
+            ada::ada
             stduuid
             fmt::fmt
             picojson::picojson
@@ -65,11 +54,9 @@ target_link_libraries(mxl-info
             CLI11::CLI11
     )
 
-# Not really a fan of having this relative to the binary, we should leave this
-# at the default.
 set_target_properties(mxl-info
         PROPERTIES
-            INSTALL_RPATH "$ORIGIN/../lib"
+            INSTALL_RPATH "${MXL_TOOLS_INSTALL_RPATH}"
     )
 
 # Install targets

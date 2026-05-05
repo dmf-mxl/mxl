@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 //
 // SPDX-License-Identifier: Apache-2.0
 
@@ -81,7 +81,7 @@ namespace mxl::lib::fabrics::ofi
 
     MemoryRegion::~MemoryRegion()
     {
-        close();
+        catchAndLogFabricError([this]() { close(); }, "Failed to close memory region");
     }
 
     MemoryRegion::MemoryRegion(MemoryRegion&& other) noexcept
