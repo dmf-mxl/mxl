@@ -23,7 +23,7 @@ jobs:
   build_and_deploy:
     name: Build and Deploy MXL EFA Images
     runs-on: ubuntu-latest
-    environment: aws
+    environment: ${{ github.ref_name == 'qvest' && github.event_name == 'push' && 'aws' || '' }}
     strategy:
       matrix:
         compiler: [Linux-GCC-Release] # Matching your multi-stage Dockerfile setup
@@ -31,18 +31,21 @@ jobs:
     env:
       DOCKER_BUILDKIT: 1
       AWS_REGION: eu-central-1
+      DEPLOY: ${{ github.ref_name == 'qvest' && github.event_name == 'push' }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Configure AWS credentials (OIDC)
+        if: env.DEPLOY == 'true'
         uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::720180693591:role/github-ecr-push-role
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
+        if: env.DEPLOY == 'true'
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
@@ -83,7 +86,6 @@ jobs:
           cache-to: type=registry,ref=ghcr.io/${{ github.repository_owner }}/mxl-base:buildcache,mode=max
 
       # Step 2: Build and Push Writer Image (Inherits from Base)
-
       - name: Build and Push Writer
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -94,12 +96,14 @@ jobs:
             --build-arg BASE_TAG=${TAG} \
             -f examples/Dockerfile.efa.writer \
             -t ${{ steps.vars.outputs.gh_base }}/mxl-writer:${TAG} \
-            -t ${ECR_REGISTRY}/${REPO}:${TAG} \
-            -t ${ECR_REGISTRY}/${REPO}:latest \
             .
           docker push ${{ steps.vars.outputs.gh_base }}/mxl-writer:${TAG}
-          docker push ${ECR_REGISTRY}/${REPO}:${TAG}
-          docker push ${ECR_REGISTRY}/${REPO}:latest
+          if [[ "${{ env.DEPLOY }}" == "true" ]]; then
+            docker tag ${{ steps.vars.outputs.gh_base }}/mxl-writer:${TAG} ${ECR_REGISTRY}/${REPO}:${TAG}
+            docker tag ${{ steps.vars.outputs.gh_base }}/mxl-writer:${TAG} ${ECR_REGISTRY}/${REPO}:latest
+            docker push ${ECR_REGISTRY}/${REPO}:${TAG}
+            docker push ${ECR_REGISTRY}/${REPO}:latest
+          fi
 
       # Step 3: Build and Push Reader Image (Inherits from Base)
       - name: Build and Push Reader
@@ -112,9 +116,11 @@ jobs:
             --build-arg BASE_TAG=${TAG} \
             -f examples/Dockerfile.efa.reader \
             -t ${{ steps.vars.outputs.gh_base }}/mxl-reader:${TAG} \
-            -t ${ECR_REGISTRY}/${REPO}:${TAG} \
-            -t ${ECR_REGISTRY}/${REPO}:latest \
             .
           docker push ${{ steps.vars.outputs.gh_base }}/mxl-reader:${TAG}
-          docker push ${ECR_REGISTRY}/${REPO}:${TAG}
-          docker push ${ECR_REGISTRY}/${REPO}:latest
+          if [[ "${{ env.DEPLOY }}" == "true" ]]; then
+            docker tag ${{ steps.vars.outputs.gh_base }}/mxl-reader:${TAG} ${ECR_REGISTRY}/${REPO}:${TAG}
+            docker tag ${{ steps.vars.outputs.gh_base }}/mxl-reader:${TAG} ${ECR_REGISTRY}/${REPO}:latest
+            docker push ${ECR_REGISTRY}/${REPO}:${TAG}
+            docker push ${ECR_REGISTRY}/${REPO}:latest
+          fi
