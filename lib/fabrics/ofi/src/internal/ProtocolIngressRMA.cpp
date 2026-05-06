@@ -75,6 +75,16 @@ namespace mxl::lib::fabrics::ofi
         return std::make_optional<Target::GrainReadResult>(grainIndex);
     }
 
+    bool RMAGrainIngressProtocol::canReadGrains() const noexcept
+    {
+        return true;
+    }
+
+    bool RMAGrainIngressProtocol::canReadSamples() const noexcept
+    {
+        return false;
+    }
+
     void RMAGrainIngressProtocol::reset()
     {}
 
@@ -148,6 +158,16 @@ namespace mxl::lib::fabrics::ofi
         auto header = _bounceBuffer.unpack(entryIndex, _region);
 
         return std::make_optional<Target::SampleReadResult>(header.headIndex, header.count);
+    }
+
+    bool RMASampleIngressProtocol::canReadGrains() const noexcept
+    {
+        return false;
+    }
+
+    bool RMASampleIngressProtocol::canReadSamples() const noexcept
+    {
+        return true;
     }
 
     void RMASampleIngressProtocol::reset()

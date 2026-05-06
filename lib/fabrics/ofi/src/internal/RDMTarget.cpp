@@ -85,6 +85,11 @@ namespace mxl::lib::fabrics::ofi
 
     std::optional<Target::GrainReadResult> RDMTarget::readGrain()
     {
+        if (!_protocol->canReadGrains())
+        {
+            throw Exception::invalidState("This target does not support reading grains.");
+        }
+
         if (auto res = readNext<QueueReadMode::NonBlocking>({}); res)
         {
             return std::get<Target::GrainReadResult>(*res);
@@ -94,6 +99,11 @@ namespace mxl::lib::fabrics::ofi
 
     std::optional<Target::GrainReadResult> RDMTarget::readGrainBlocking(std::chrono::steady_clock::duration timeout)
     {
+        if (!_protocol->canReadGrains())
+        {
+            throw Exception::unsupportedOperation("The current protocol does not support reading grains.");
+        }
+
         if (auto res = readNext<QueueReadMode::Blocking>(timeout); res)
         {
             return std::get<Target::GrainReadResult>(*res);
@@ -103,6 +113,11 @@ namespace mxl::lib::fabrics::ofi
 
     std::optional<Target::SampleReadResult> RDMTarget::readSamples()
     {
+        if (!_protocol->canReadSamples())
+        {
+            throw Exception::unsupportedOperation("The current protocol does not support reading samples.");
+        }
+
         if (auto res = readNext<QueueReadMode::NonBlocking>({}); res)
         {
             return std::get<Target::SampleReadResult>(*res);
@@ -112,6 +127,11 @@ namespace mxl::lib::fabrics::ofi
 
     std::optional<Target::SampleReadResult> RDMTarget::readSamplesBlocking(std::chrono::steady_clock::duration timeout)
     {
+        if (!_protocol->canReadSamples())
+        {
+            throw Exception::unsupportedOperation("The current protocol does not support reading samples.");
+        }
+
         if (auto res = readNext<QueueReadMode::Blocking>(timeout); res)
         {
             return std::get<Target::SampleReadResult>(*res);

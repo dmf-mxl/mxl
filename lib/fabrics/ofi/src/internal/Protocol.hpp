@@ -44,6 +44,16 @@ namespace mxl::lib::fabrics::ofi
          */
         virtual std::optional<Target::ReadResult> read(Endpoint& endpoint, Completion const& completion) = 0;
 
+        /** \brief Check if this protocol can read grains.
+         */
+        [[nodiscard]]
+        virtual bool canReadGrains() const noexcept = 0;
+
+        /** \brief Check if this protocol can read samples.
+         */
+        [[nodiscard]]
+        virtual bool canReadSamples() const noexcept = 0;
+
         /** \brief Destroy the protocol object.
          */
         virtual void reset() = 0;

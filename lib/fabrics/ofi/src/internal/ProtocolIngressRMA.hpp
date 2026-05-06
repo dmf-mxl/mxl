@@ -38,6 +38,16 @@ namespace mxl::lib::fabrics::ofi
          */
         std::optional<Target::ReadResult> read(Endpoint& endpoint, Completion const& completion) override;
 
+        /**\brief This protocol can read grains, but not samples, since it is designed for remote writes of grain buffers.
+         */
+        [[nodiscard]]
+        bool canReadGrains() const noexcept override;
+
+        /** \brief This protocol cannot read samples, since it is designed for remote writes of grain buffers.
+         */
+        [[nodiscard]]
+        bool canReadSamples() const noexcept override;
+
         /** \copydoc IngressProtocol::destroy()
          */
         void reset() override;
@@ -78,6 +88,16 @@ namespace mxl::lib::fabrics::ofi
         /** \copydoc IngressProtocol::processCompletion()
          */
         std::optional<Target::ReadResult> read(Endpoint& endpoint, Completion const& completion) override;
+
+        /** \brief This protocol cannot read grains, since it is designed for remote writes of audio samples.
+         */
+        [[nodiscard]]
+        bool canReadGrains() const noexcept override;
+
+        /** \brief This protocol can read samples, since it is designed for remote writes of audio samples.
+         */
+        [[nodiscard]]
+        bool canReadSamples() const noexcept override;
 
         /** \copydoc IngressProtocol::destroy()
          */
