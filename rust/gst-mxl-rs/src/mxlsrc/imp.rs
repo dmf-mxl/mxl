@@ -38,9 +38,9 @@ pub(crate) static CAT: LazyLock<gst::DebugCategory> = LazyLock::new(|| {
     gst::DebugCategory::new("mxlsrc", gst::DebugColorFlags::empty(), Some("MXL Source"))
 });
 
-struct ClockWait {
+pub(crate) struct ClockWait {
     clock_id: Option<gst::SingleShotClockId>,
-    flushing: bool,
+    pub(crate) flushing: bool,
 }
 
 impl Default for ClockWait {
@@ -56,7 +56,7 @@ impl Default for ClockWait {
 pub struct MxlSrc {
     pub settings: Mutex<Settings>,
     pub context: Mutex<Context>,
-    clock_wait: Mutex<ClockWait>,
+    pub(crate) clock_wait: Mutex<ClockWait>,
 }
 
 pub enum CreateState {
@@ -252,6 +252,43 @@ impl BaseSrcImpl for MxlSrc {
     fn negotiate(&self) -> Result<(), gst::LoggableError> {
         gst::info!(CAT, imp = self, "Negotiating caps…");
 
+        {
+            let settings = self
+                .settings
+                .lock()
+                .map_err(|e| gst::loggable_error!(CAT, "Failed to lock settings mutex {}", e))?;
+            if settings.audio_flow.is_some() && settings.video_flow.is_some() {
+                gst::warning!(CAT, imp = self, "You can't set both video and audio flows");
+                return self.parent_negotiate();
+            }
+            if settings.domain.is_empty()
+                || (settings.video_flow.is_none() && settings.audio_flow.is_none())
+            {
+                gst::warning!(CAT, imp = self, "domain or flow-id not set yet");
+                return self.parent_negotiate();
+            }
+        }
+
+        // `start()` does not attach the MXL reader (so PLAYING is reachable
+        // before the producer creates the flow). Attach here on the streaming
+        // thread. `init_mxl_reader` polls until the flow exists; `unlock()` sets
+        // `clock_wait.flushing` so teardown can interrupt that wait.
+        let need_init = {
+            let context = self
+                .context
+                .lock()
+                .map_err(|e| gst::loggable_error!(CAT, "Failed to lock context mutex {}", e))?;
+            context
+                .state
+                .as_ref()
+                .map(|s| s.video.is_none() && s.audio.is_none())
+                .unwrap_or(true)
+        };
+        if need_init {
+            mxl_helper::init(self)
+                .map_err(|e| gst::loggable_error!(CAT, "Failed to attach flow: {}", e))?;
+        }
+
         let settings = self
             .settings
             .lock()
@@ -265,16 +302,6 @@ impl BaseSrcImpl for MxlSrc {
             .as_ref()
             .ok_or(gst::loggable_error!(CAT, "Failed to get state"))?
             .instance;
-        if settings.audio_flow.is_some() && settings.video_flow.is_some() {
-            gst::warning!(CAT, imp = self, "You can't set both video and audio flows");
-            return self.parent_negotiate();
-        }
-        if settings.domain.is_empty()
-            || settings.video_flow.is_none() && settings.audio_flow.is_none()
-        {
-            gst::warning!(CAT, imp = self, "domain or flow-id not set yet");
-            return self.parent_negotiate();
-        }
         let flow_id = mxl_helper::get_flow_type_id(&settings)?;
         let json_flow_description = mxl_helper::get_mxl_flow_json(instance, flow_id)?;
         let flow_description = mxl_helper::get_flow_def(self, json_flow_description)?;
@@ -346,8 +373,10 @@ impl BaseSrcImpl for MxlSrc {
     }
 
     fn start(&self) -> Result<(), gst::ErrorMessage> {
+        // Do not attach here: `start()` runs on the state-change thread; blocking
+        // on `FlowNotFound` would freeze the transition. Flow attach runs from
+        // `negotiate()` instead.
         self.unlock_stop()?;
-        mxl_helper::init(self)?;
         gst::info!(CAT, imp = self, "Started");
 
         Ok(())
