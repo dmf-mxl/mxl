@@ -40,6 +40,10 @@ namespace mxl::lib::fabrics::ofi
             enum fi_wait_obj waitObject; /**< The underlying wait object that should be used. */
         };
 
+        /** \brief Check if wait any wait object type supported by the EFA provider for this libfabric version
+         */
+        static bool isWaitObjectSupportedForEFA() noexcept;
+
     public:
         /** \brief Create a new completion queue in the specified domain.
          */

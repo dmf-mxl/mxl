@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 //
 // SPDX-License-Identifier: Apache-2.0
 
@@ -20,15 +20,15 @@ struct fmt::formatter<mxlFabricsProvider>
     }
 
     template<typename Context>
-    constexpr auto format(mxlFabricsProvider const& provider, Context& ctx) const
+    auto format(mxlFabricsProvider const& provider, Context& ctx) const
     {
         switch (provider)
         {
-            case MXL_SHARING_PROVIDER_AUTO:  return fmt::format_to(ctx.out(), "auto");
-            case MXL_SHARING_PROVIDER_TCP:   return fmt::format_to(ctx.out(), "tcp");
-            case MXL_SHARING_PROVIDER_VERBS: return fmt::format_to(ctx.out(), "verbs");
-            case MXL_SHARING_PROVIDER_EFA:   return fmt::format_to(ctx.out(), "efa");
-            case MXL_SHARING_PROVIDER_SHM:   return fmt::format_to(ctx.out(), "shm");
+            case MXL_FABRICS_PROVIDER_AUTO:  return fmt::format_to(ctx.out(), "auto");
+            case MXL_FABRICS_PROVIDER_TCP:   return fmt::format_to(ctx.out(), "tcp");
+            case MXL_FABRICS_PROVIDER_VERBS: return fmt::format_to(ctx.out(), "verbs");
+            case MXL_FABRICS_PROVIDER_EFA:   return fmt::format_to(ctx.out(), "efa");
+            case MXL_FABRICS_PROVIDER_SHM:   return fmt::format_to(ctx.out(), "shm");
             default:                         return fmt::format_to(ctx.out(), "unknown");
         }
     }
@@ -43,7 +43,7 @@ struct fmt::formatter<ofi::Provider>
     }
 
     template<typename Context>
-    constexpr auto format(ofi::Provider const& provider, Context& ctx) const
+    auto format(ofi::Provider const& provider, Context& ctx) const
     {
         switch (provider)
         {
@@ -55,9 +55,3 @@ struct fmt::formatter<ofi::Provider>
         }
     }
 };
-
-namespace mxl::lib::fabrics::ofi
-
-{
-    std::string fiProtocolToString(std::uint64_t) noexcept;
-}

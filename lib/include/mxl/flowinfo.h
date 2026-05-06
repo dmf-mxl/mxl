@@ -129,6 +129,8 @@ extern "C"
 
         /**
          * The number of samples in each of the ring buffers.
+         * Please be aware that it is only ever possible to read or write a fraction of this buffer, whose upper bound
+         * can be obtained by calling mxlFlowReaderGetMaxReadLengthSamples() or mxlFlowWriterGetMaxWriteLengthSamples().
          */
         uint32_t bufferLength;
 

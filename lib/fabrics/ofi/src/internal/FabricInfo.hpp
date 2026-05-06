@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 //
 // SPDX-License-Identifier: Apache-2.0
 
@@ -206,7 +206,8 @@ namespace mxl::lib::fabrics::ofi
          * \brief  Get a list of provider configurations supported to the specified
          * node/service
          */
-        static FabricInfoList get(std::string node, std::string service, Provider provider, std::uint64_t caps, ::fi_ep_type epType);
+        [[nodiscard]]
+        static FabricInfoList get(char const* node, char const* service, Provider provider, std::uint64_t caps, ::fi_ep_type epType);
 
         /** \brief Take ownership over a fi_info raw pointer.
          */

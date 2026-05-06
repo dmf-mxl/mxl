@@ -502,6 +502,30 @@ mxlStatus mxlFlowWriterCommitGrain(mxlFlowWriter writer, mxlGrainInfo const* gra
 
 extern "C"
 MXL_EXPORT
+mxlStatus mxlFlowReaderGetMaxReadLengthSamples(mxlFlowReader reader, size_t* maxReadLength)
+{
+    try
+    {
+        if (maxReadLength != nullptr)
+        {
+            if (auto const cppReader = dynamic_cast<ContinuousFlowReader*>(to_FlowReader(reader)); cppReader != nullptr)
+            {
+                *maxReadLength = cppReader->getMaxReadLength();
+                return MXL_STATUS_OK;
+            }
+
+            return MXL_ERR_INVALID_FLOW_READER;
+        }
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
 mxlStatus mxlFlowReaderGetSamples(mxlFlowReader reader, uint64_t index, size_t count, uint64_t timeoutNs,
     mxlWrappedMultiBufferSlice* payloadBuffersSlices)
 {
@@ -514,7 +538,7 @@ mxlStatus mxlFlowReaderGetSamples(mxlFlowReader reader, uint64_t index, size_t c
                 return cppReader->getSamples(index, count, toDeadline(timeoutNs), *payloadBuffersSlices);
             }
 
-            return MXL_ERR_INVALID_FLOW_WRITER;
+            return MXL_ERR_INVALID_FLOW_READER;
         }
         return MXL_ERR_INVALID_ARG;
     }
@@ -535,6 +559,30 @@ mxlStatus mxlFlowReaderGetSamplesNonBlocking(mxlFlowReader reader, uint64_t inde
             if (auto const cppReader = dynamic_cast<ContinuousFlowReader*>(to_FlowReader(reader)); cppReader != nullptr)
             {
                 return cppReader->getSamples(index, count, *payloadBuffersSlices);
+            }
+
+            return MXL_ERR_INVALID_FLOW_READER;
+        }
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowWriterGetMaxWriteLengthSamples(mxlFlowWriter writer, size_t* maxWriteLength)
+{
+    try
+    {
+        if (maxWriteLength != nullptr)
+        {
+            if (auto const cppWriter = dynamic_cast<ContinuousFlowWriter*>(to_FlowWriter(writer)); cppWriter != nullptr)
+            {
+                *maxWriteLength = cppWriter->getMaxWriteLength();
+                return MXL_STATUS_OK;
             }
 
             return MXL_ERR_INVALID_FLOW_WRITER;

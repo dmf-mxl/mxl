@@ -11,6 +11,15 @@ namespace mxl::lib
     {
     public:
         /**
+         * Return the maximum number of samples a write operation can write in
+         * one go.
+         * \return The maximum number of samples a write operation can write in
+         *      one go.
+         */
+        [[nodiscard]]
+        virtual std::size_t getMaxWriteLength() const = 0;
+
+        /**
          * Accessor for a specific set of mutable samples across all
          * channels ending at a specific index (`count` samples up to
          * `index`).

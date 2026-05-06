@@ -46,6 +46,11 @@ namespace mxl::lib
         return getFlowData().flowInfo()->runtime;
     }
 
+    std::size_t PosixContinuousFlowReader::getMaxReadLength() const
+    {
+        return _bufferLength / 2U;
+    }
+
     mxlStatus PosixContinuousFlowReader::waitForSamples(std::uint64_t index, Timepoint deadline) const
     {
         if (_flowData)
