@@ -1,12 +1,28 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 //
 // SPDX-License-Identifier: Apache-2.0
 
 #include "RemoteRegion.hpp"
+#include <cassert>
 #include <algorithm>
+#include "Exception.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
+
+    RemoteRegion RemoteRegion::sub(std::uint64_t offset, std::size_t length) const
+    {
+        if (offset + length > len)
+        {
+            throw Exception::invalidArgument("Invalid offset and length for remote region");
+        }
+
+        return RemoteRegion{
+            .addr = addr + offset,
+            .len = length,
+            .rkey = rkey,
+        };
+    }
 
     ::fi_rma_iov RemoteRegion::toRmaIov() const noexcept
     {
@@ -27,12 +43,4 @@ namespace mxl::lib::fabrics::ofi
     {
         return _inner == other._inner;
     }
-
-    std::vector<::fi_rma_iov> RemoteRegionGroup::rmaIovsFromGroup(std::vector<RemoteRegion> group) noexcept
-    {
-        std::vector<::fi_rma_iov> rmaIovs;
-        std::ranges::transform(group, std::back_inserter(rmaIovs), [](RemoteRegion const& reg) { return reg.toRmaIov(); });
-        return rmaIovs;
-    }
-
 }

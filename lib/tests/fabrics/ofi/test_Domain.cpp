@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 //
 // SPDX-License-Identifier: Apache-2.0
 
@@ -8,11 +8,11 @@
 
 using namespace mxl::lib::fabrics::ofi;
 
-TEST_CASE("Domain - RegisteredRegion to Local Region", "[ofi][Domain][LocalRegion]")
+TEST_CASE("ofi: Domain - RegisteredRegion to Local Region", "[ofi][Domain][LocalRegion]")
 {
     auto domain = getDomain();
-    auto [mxlRegions, buffers] = getHostRegionGroups();
-    auto regions = mxlRegions.regions();
+    auto [mxlFabricsRegions, buffers] = getHostRegionGroups();
+    auto regions = mxlFabricsRegions.regions();
 
     domain->registerRegions(regions, FI_WRITE);
 
@@ -29,13 +29,13 @@ TEST_CASE("Domain - RegisteredRegion to Local Region", "[ofi][Domain][LocalRegio
     REQUIRE(localRegions[3].len == 2048);
 }
 
-TEST_CASE("Domain - RegisteredRegion to Remote Region with Virtual Addresses", "[ofi][Domain][RemoteRegion][VirtAddr]")
+TEST_CASE("ofi: Domain - RegisteredRegion to Remote Region with Virtual Addresses", "[ofi][Domain][RemoteRegion][VirtAddr]")
 {
     auto domain = getDomain(true);
     REQUIRE(domain->usingVirtualAddresses() == true);
 
-    auto [mxlRegions, buffers] = getHostRegionGroups();
-    auto regions = mxlRegions.regions();
+    auto [mxlFabricsRegions, buffers] = getHostRegionGroups();
+    auto regions = mxlFabricsRegions.regions();
 
     domain->registerRegions(regions, FI_WRITE);
 
@@ -56,8 +56,8 @@ TEST_CASE("Domain - RegisteredRegion to Remote Region with Relative Addresses", 
     auto domain = getDomain(false);
     REQUIRE(domain->usingVirtualAddresses() == false);
 
-    auto [mxlRegions, buffers] = getHostRegionGroups();
-    auto regions = mxlRegions.regions();
+    auto [mxlFabricsRegions, buffers] = getHostRegionGroups();
+    auto regions = mxlFabricsRegions.regions();
 
     domain->registerRegions(regions, FI_WRITE);
 

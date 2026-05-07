@@ -45,6 +45,10 @@ namespace mxl::lib
         [[nodiscard]]
         virtual mxlFlowRuntimeInfo getFlowRuntimeInfo() const override;
 
+        /** \see ContinuousFlowReader::getMaxReadLength */
+        [[nodiscard]]
+        virtual std::size_t getMaxReadLength() const override;
+
         /** \see ContinuousFlowReader::waitForSamples */
         virtual mxlStatus waitForSamples(std::uint64_t index, Timepoint deadline) const override;
 

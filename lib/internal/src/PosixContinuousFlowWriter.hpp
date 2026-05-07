@@ -34,6 +34,10 @@ namespace mxl::lib
     public:
         /** \see FlowWriter::getFlowData */
         [[nodiscard]]
+        virtual FlowData& getFlowData() override;
+
+        /** \see FlowWriter::getFlowData */
+        [[nodiscard]]
         virtual FlowData const& getFlowData() const override;
 
         /** \see FlowWriter::getFlowInfo */
@@ -47,6 +51,10 @@ namespace mxl::lib
         /** \see FlowWriter::getFlowRuntimeInfo */
         [[nodiscard]]
         virtual mxlFlowRuntimeInfo getFlowRuntimeInfo() const override;
+
+        /** \see ContinuousFlowWriter::getMaxWriteLength */
+        [[nodiscard]]
+        virtual std::size_t getMaxWriteLength() const override;
 
         /** \see ContinuousFlowWriter::openSamples */
         virtual mxlStatus openSamples(std::uint64_t index, std::size_t count, mxlMutableWrappedMultiBufferSlice& payloadBufferSlices) override;

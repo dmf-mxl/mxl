@@ -1,0 +1,45 @@
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
+//
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "Protocol.hpp"
+
+namespace mxl::lib::fabrics::ofi
+{
+    /** \brief Ingress protocol for RMA writer endpoint.
+     *
+     * Handles processing of completions when paired with an endpoint that does remote write to our buffers without bounce buffering.
+     */
+    class RMAGrainIngressProtocol final : public IngressProtocol
+    {
+    public:
+        RMAGrainIngressProtocol(std::vector<Region> regions);
+
+        /** \copydoc IngressProtocol::registerMemory()
+         */
+        [[nodiscard]]
+        std::vector<RemoteRegion> registerMemory(std::shared_ptr<Domain> domain) override;
+
+        /** \copydoc IngressProtocol::start()
+         */
+        void start(Endpoint& endpoint) override;
+
+        /** \copydoc IngressProtocol::processCompletion()
+         */
+        std::optional<Target::GrainReadResult> readGrain(Endpoint& endpoint, Completion const& completion) override;
+
+        /** \copydoc IngressProtocol::destroy()
+         */
+        void reset() override;
+
+    private:
+        LocalRegion immDataRegion();
+
+        std::vector<Region> _regions;
+        bool _isMemoryRegistered{false};
+        std::optional<Target::ImmediateDataLocation> _immDataBuffer{};
+    };
+
+}

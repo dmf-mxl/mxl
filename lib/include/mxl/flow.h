@@ -393,14 +393,29 @@ extern "C"
     mxlStatus mxlFlowWriterCancelGrain(mxlFlowWriter writer);
 
     /**
-     * Inform mxl that a user is done writing the grain that was previously opened.  This will in turn signal all readers waiting on the ringbuffer
-     * that a new grain is available. The mxlGrainInfo flags field in shared memory will be updated based on grain->flags This will increase the head
-     * and potentially the tail IF this grain is the new head.
+     * Inform mxl that a user is done writing the grain that was previously opened.
+     * This will in turn signal all readers waiting on the ringbuffer that a new grain is available. The mxlGrainInfo
+     * flags field in shared memory will be updated based on grain->flags This will increase the head and potentially
+     * the tail IF this grain is the new head.
      *
      * \return The result code. \see mxlStatus
      */
     MXL_EXPORT
     mxlStatus mxlFlowWriterCommitGrain(mxlFlowWriter writer, mxlGrainInfo const* grain);
+
+    /**
+     * Return the absolute maximum number of samples a read operation may retrieve from a flow.
+     *
+     * \param[in] reader A valid flow reader
+     * \param[out] maxReadLength A valid pointer referring to the location, in which to store
+     *      the maximum number of samples a read operation may retrieve from the flow \p reader operates on.
+     * \return The result code. \see mxlStatus
+     * \note Please note that a read of the specified length is only guaranteed to be possible, if
+     *      1. enough history is available, and
+     *      2. the read is performed at the current head index.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowReaderGetMaxReadLengthSamples(mxlFlowReader reader, size_t* maxReadLength);
 
     /**
      * Accessor for a specific set of samples across all channels ending at a
@@ -444,6 +459,17 @@ extern "C"
     MXL_EXPORT
     mxlStatus mxlFlowReaderGetSamplesNonBlocking(mxlFlowReader reader, uint64_t index, size_t count,
         mxlWrappedMultiBufferSlice* payloadBuffersSlices);
+
+    /**
+     * Return the absolute maximum number of samples a write operation may write to a flow.
+     *
+     * \param[in] writer A valid flow writer
+     * \param[out] maxWriteLength A valid pointer referring to the location, at which to store
+     *      the maximum number of samples a write operation may write to the flow \p writer operates on.
+     * \return The result code. \see mxlStatus
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowWriterGetMaxWriteLengthSamples(mxlFlowWriter writer, size_t* maxWriteLength);
 
     /**
      * Open a specific set of mutable samples across all channels starting at a

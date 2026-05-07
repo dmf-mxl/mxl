@@ -12,6 +12,15 @@ namespace mxl::lib
     {
     public:
         /**
+         * Return the maximum number of samples that can be retrieved by a read
+         * operation in one go.
+         * \return The maximum number of samples a read operation can return in
+         *      one go.
+         */
+        [[nodiscard]]
+        virtual std::size_t getMaxReadLength() const = 0;
+
+        /**
          * Blocking wait function for the sample at the specified index to
          * become available.
          *

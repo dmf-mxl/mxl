@@ -7,6 +7,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <ada.h>
 #include <unistd.h>
 #include <uuid.h>
 #include <sys/file.h>
@@ -19,7 +20,6 @@
 #include <mxl/flowinfo.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
-#include "uri_parser.h"
 
 namespace
 {
@@ -527,27 +527,34 @@ int main(int argc, char** argv)
     // URI will overwrite any other redudant options.  Parse the URI after CLI11 parsing.
     if (!address.empty())
     {
-        auto parsedUri = uri::parse_uri(address.at(0));
+        auto parsedUri = ada::parse<ada::url_aggregator>(address.at(0));
+        if (!parsedUri)
+        {
+            std::cerr << "ERROR: Invalid MXL URI." << std::endl;
+            return EXIT_FAILURE;
+        }
 
-        if (parsedUri.path.empty())
+        auto const path = parsedUri->get_pathname();
+        if (path.empty())
         {
             std::cerr << "ERROR: Domain must be specified in the MXL URI." << std::endl;
             return EXIT_FAILURE;
         }
 
-        if (!parsedUri.authority.host.empty() || (parsedUri.authority.port != 0))
+        if (!parsedUri->get_hostname().empty() || !parsedUri->get_port().empty())
         {
             std::cerr << "ERROR: Authority/port not currently supported in MXL URI." << std::endl;
             return EXIT_FAILURE;
         }
 
         // We know that there won't be any error since the URI passed CLI11 validation.
-        domain = parsedUri.path;
+        domain = std::string{path};
 
         // Check for the first flow id in the query parameters.
-        if (parsedUri.query.find("id") != parsedUri.query.end())
+        auto query = ada::url_search_params{parsedUri->get_search()};
+        if (auto const id = query.get("id"))
         {
-            flowId = parsedUri.query.at("id");
+            flowId = std::string{*id};
         }
     }
 

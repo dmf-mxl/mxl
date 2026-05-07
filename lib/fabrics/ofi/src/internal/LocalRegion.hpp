@@ -1,9 +1,10 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 //
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
@@ -19,7 +20,17 @@ namespace mxl::lib::fabrics::ofi
     struct LocalRegion
     {
     public:
-        // \brief Convert this LocalRegion to a struct iovec used by libfabric transfer functions.
+        /** \brief Create a sub-region of this LocalRegion.
+         *
+         * \param offset The offset within this region where the sub-region starts.
+         * \param length The length of the sub-region.
+         * \return A new LocalRegion representing the specified sub-region.
+         */
+        [[nodiscard]]
+        LocalRegion sub(std::uint64_t offset, std::size_t length) const;
+
+        /** \brief Convert this LocalRegion to a struct iovec used by libfabric transfer functions.
+         */
         [[nodiscard]]
         ::iovec toIovec() const noexcept;
 
