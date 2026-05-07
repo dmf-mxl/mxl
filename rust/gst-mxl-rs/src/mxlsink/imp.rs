@@ -212,14 +212,11 @@ impl ElementImpl for MxlSink {
                                 .build(),
                         );
                     }
-                    // `meta/x-st-2038` without `alignment` in the pad template so negotiation can
-                    // link peers that use `alignment=frame` or `alignment=packet`. The MXL data
-                    // path is only thought through for frame-like buffer timing; we do not
-                    // yet define correct handling for packet-aligned streams (e.g. potentially
-                    // multiple buffers per frame).
-                    // See https://github.com/dmf-mxl/mxl/issues/496
-                    caps.make_mut()
-                        .append(gst::Caps::builder("meta/x-st-2038").build());
+                    caps.make_mut().append(
+                        gst::Caps::builder("meta/x-st-2038")
+                            .field("alignment", "frame")
+                            .build(),
+                    );
                 }
 
                 let sink_pad_template = gst::PadTemplate::new(
