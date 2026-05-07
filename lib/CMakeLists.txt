@@ -61,7 +61,6 @@ target_sources(mxl
             src/flow.cpp
             src/mxl.cpp
             src/time.cpp
-            $<TARGET_OBJECTS:mxl-internal-objects>
     )
 
 target_link_libraries(mxl
@@ -69,6 +68,7 @@ target_link_libraries(mxl
             mxl-headers # C Headers in <mxl/*.h>
         PRIVATE
             mxl-internal-headers # Internal C++ headers in <mxl-internal/*.hpp>
+            mxl-internal-objects
     )
 
 # Add common linker options
