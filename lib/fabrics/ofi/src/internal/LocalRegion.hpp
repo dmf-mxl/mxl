@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <span>
 #include <vector>
-#include <bits/types/struct_iovec.h>
+#include <sys/uio.h>
 
 namespace mxl::lib::fabrics::ofi
 {

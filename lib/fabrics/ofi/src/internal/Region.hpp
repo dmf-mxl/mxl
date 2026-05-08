@@ -9,7 +9,7 @@
 #include <variant>
 #include <vector>
 #include <uuid.h>
-#include <bits/types/struct_iovec.h>
+#include <sys/uio.h>
 #include <mxl-internal/FlowData.hpp>
 #include <rdma/fi_domain.h>
 #include "mxl/fabrics.h"

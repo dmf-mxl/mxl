@@ -5,7 +5,7 @@
 #pragma once
 
 #include <vector>
-#include <bits/types/struct_iovec.h>
+#include <sys/uio.h>
 #include "Domain.hpp"
 #include "LocalRegion.hpp"
 #include "MemoryRegion.hpp"

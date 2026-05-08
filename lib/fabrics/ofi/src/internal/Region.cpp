@@ -6,7 +6,7 @@
 #include <cassert>
 #include <cstdint>
 #include <algorithm>
-#include <bits/types/struct_iovec.h>
+#include <sys/uio.h>
 #include <mxl-internal/DiscreteFlowData.hpp>
 #include <mxl-internal/Flow.hpp>
 #include "mxl-internal/ContinuousFlowData.hpp"

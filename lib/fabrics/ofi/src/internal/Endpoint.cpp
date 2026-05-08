@@ -9,7 +9,7 @@
 #include <optional>
 #include <utility>
 #include <uuid.h>
-#include <bits/types/struct_iovec.h>
+#include <sys/uio.h>
 #include <mxl-internal/Logging.hpp>
 #include <rdma/fabric.h>
 #include <rdma/fi_cm.h>
