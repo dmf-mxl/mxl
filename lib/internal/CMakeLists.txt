@@ -115,10 +115,10 @@ target_link_libraries(mxl-internal-objects
 # Enable LTO/IPO on target if enabled and supported
 mxl_enable_target_ipo(mxl-internal-objects)
 
-# Static installs need this exported interface target because mxl's imported
+# Static library build needs these exported interface targets because mxl's imported
 # link interface refers to private dependencies through it.
 if (NOT BUILD_SHARED_LIBS)
-    install(TARGETS mxl-internal-headers
+    install(TARGETS mxl-internal-objects mxl-internal-headers
             EXPORT ${PROJECT_NAME}-targets
             COMPONENT ${PROJECT_NAME}-dev
         )
