@@ -8,6 +8,9 @@
 //! RFC 8331 includes `S` (Data Stream Flag) and `StreamNum`, which ST 2038 omits. GStreamer
 //! `rtpsmpte291pay` and `rtpsmpte291depay` perform a similar translation; see
 //! <https://centricular.com/devlog/2025-11/st291-anc-rtp/>.
+//!
+//! [`AncillaryMeta`] represents ST 2038 / RFC 8331 ANC packets with the same logical fields as
+//! `gstreamer_video::video_meta::AncillaryMeta`.
 
 use bitstream_io::{BigEndian, BitRead, BitReader, BitWrite, BitWriter};
 use mxl::MXL_DATA_FORMAT_GRAIN_SIZE;
@@ -19,6 +22,22 @@ pub enum AncillaryMapError {
     Invalid(&'static str),
     #[error("bitstream I/O error: {0}")]
     Io(#[from] std::io::Error),
+}
+
+/// One ancillary data packet: field names match
+/// [`gstreamer_video::video_meta::AncillaryMeta`](https://docs.rs/gstreamer-video/) accessors
+/// (`c_not_y_channel`, `line`, `offset`, `did`, `sdid_block_number`, `data_count`, `data`, `checksum`).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AncillaryMeta {
+    pub c_not_y_channel: bool,
+    pub line: u16,
+    pub offset: u16,
+    pub did: u16,
+    pub sdid_block_number: u16,
+    /// Full 10-bit `data_count`; low 8 bits are `data.len()` for a well-formed packet.
+    pub data_count: u16,
+    pub data: Vec<u16>,
+    pub checksum: u16,
 }
 
 /// RFC 8331 ANC from `start_pos` occupies a multiple of 4 bytes. `w` must already be byte-aligned
@@ -33,13 +52,13 @@ fn reader_word_aligned(r: &mut BitReader<Cursor<&[u8]>, BigEndian>, start_pos: u
     (r.reader().expect("byte_aligned").position() - start_pos).is_multiple_of(4)
 }
 
-/// Read one GStreamer ST 2038 ANC packet (including ST 2038 end padding) and
-/// write one RFC 8331 ANC packet into `smpte291`. Advances `st2038` past the consumed bytes.
+/// Read one GStreamer ST 2038 ANC packet (including ST 2038 end padding) from
+/// the front of `st2038` and advance `st2038` past consumed bytes.
+///
 /// Compare to `RtpSmpte291Pay::convert_next_packet` in gst-plugins-rs.
-pub fn smpte291_from_st2038_anc_packet(
-    smpte291: &mut Vec<u8>,
+pub fn ancillary_meta_from_st2038_anc_packet(
     st2038: &mut &[u8],
-) -> Result<(), AncillaryMapError> {
+) -> Result<AncillaryMeta, AncillaryMapError> {
     let r_cursor = Cursor::new(*st2038);
     let mut r = BitReader::endian(r_cursor, BigEndian);
 
@@ -51,64 +70,36 @@ pub fn smpte291_from_st2038_anc_packet(
             "ST 2038 leading zero bits must be zero",
         ));
     }
-    let c_not_y_channel_flag = r
+    let c_not_y_channel = r
         .read_bit()
         .map_err(|_| AncillaryMapError::Invalid("read C flag"))?;
-    let line_number = r
+    let line = r
         .read::<11, u16>()
         .map_err(|_| AncillaryMapError::Invalid("read line number"))?;
-    let horizontal_offset = r
+    let offset = r
         .read::<12, u16>()
         .map_err(|_| AncillaryMapError::Invalid("read horizontal offset"))?;
     let did = r
         .read::<10, u16>()
         .map_err(|_| AncillaryMapError::Invalid("read DID"))?;
-    let sdid = r
+    let sdid_block_number = r
         .read::<10, u16>()
         .map_err(|_| AncillaryMapError::Invalid("read SDID"))?;
     let data_count = r
         .read::<10, u16>()
         .map_err(|_| AncillaryMapError::Invalid("read data count"))?;
-    let data_count8 = (data_count & 0xff) as u8;
+    let data_count8 = (data_count & 0xff) as usize;
 
-    let w_start_pos = smpte291.len() as u64;
-    let mut w_cursor: Cursor<&mut Vec<u8>> = Cursor::new(smpte291);
-    w_cursor.set_position(w_start_pos);
-    let mut w = BitWriter::endian(w_cursor, BigEndian);
-
-    w.write_bit(c_not_y_channel_flag)
-        .map_err(|_| AncillaryMapError::Invalid("write C"))?;
-    w.write::<11, u16>(line_number)
-        .map_err(|_| AncillaryMapError::Invalid("write line"))?;
-    w.write::<12, u16>(horizontal_offset)
-        .map_err(|_| AncillaryMapError::Invalid("write horizontal offset"))?;
-
-    // ST 2038 has no S or StreamNum here; RFC 8331 inserts them
-    // (cf. `RtpSmpte291Pay::convert_next_packet`).
-    w.write_bit(false)
-        .map_err(|_| AncillaryMapError::Invalid("write S"))?;
-    w.write::<7, u8>(0u8)
-        .map_err(|_| AncillaryMapError::Invalid("write StreamNum"))?;
-
-    w.write::<10, u16>(did)
-        .map_err(|_| AncillaryMapError::Invalid("write DID"))?;
-    w.write::<10, u16>(sdid)
-        .map_err(|_| AncillaryMapError::Invalid("write SDID"))?;
-    w.write::<10, u16>(data_count)
-        .map_err(|_| AncillaryMapError::Invalid("write data_count"))?;
-
+    let mut data = Vec::new();
     for _ in 0..data_count8 {
         let udw = r
             .read::<10, u16>()
             .map_err(|_| AncillaryMapError::Invalid("read user data word"))?;
-        w.write::<10, u16>(udw)
-            .map_err(|_| AncillaryMapError::Invalid("write user data word"))?;
+        data.push(udw);
     }
-    let csum = r
+    let checksum = r
         .read::<10, u16>()
         .map_err(|_| AncillaryMapError::Invalid("read checksum"))?;
-    w.write::<10, u16>(csum)
-        .map_err(|_| AncillaryMapError::Invalid("write checksum"))?;
 
     // ST 2038 pads to a byte boundary with 1 bits.
     while !r.byte_aligned() {
@@ -122,6 +113,59 @@ pub fn smpte291_from_st2038_anc_packet(
         }
     }
 
+    let consumed = r.into_reader().position() as usize;
+    *st2038 = &st2038[consumed..];
+
+    Ok(AncillaryMeta {
+        c_not_y_channel,
+        line,
+        offset,
+        did,
+        sdid_block_number,
+        data_count,
+        checksum,
+        data,
+    })
+}
+
+/// Append one RFC 8331 ANC packet to `smpte291` from [`AncillaryMeta`].
+pub fn smpte291_anc_packet_from_ancillary_meta(
+    smpte291: &mut Vec<u8>,
+    meta: &AncillaryMeta,
+) -> Result<(), AncillaryMapError> {
+    let w_start_pos = smpte291.len() as u64;
+    let mut w_cursor: Cursor<&mut Vec<u8>> = Cursor::new(smpte291);
+    w_cursor.set_position(w_start_pos);
+    let mut w = BitWriter::endian(w_cursor, BigEndian);
+
+    w.write_bit(meta.c_not_y_channel)
+        .map_err(|_| AncillaryMapError::Invalid("write C"))?;
+    w.write::<11, u16>(meta.line)
+        .map_err(|_| AncillaryMapError::Invalid("write line"))?;
+    w.write::<12, u16>(meta.offset)
+        .map_err(|_| AncillaryMapError::Invalid("write horizontal offset"))?;
+
+    // ST 2038 has no S or StreamNum here; RFC 8331 inserts them
+    // (cf. `RtpSmpte291Pay::convert_next_packet`).
+    w.write_bit(false)
+        .map_err(|_| AncillaryMapError::Invalid("write S"))?;
+    w.write::<7, u8>(0u8)
+        .map_err(|_| AncillaryMapError::Invalid("write StreamNum"))?;
+
+    w.write::<10, u16>(meta.did)
+        .map_err(|_| AncillaryMapError::Invalid("write DID"))?;
+    w.write::<10, u16>(meta.sdid_block_number)
+        .map_err(|_| AncillaryMapError::Invalid("write SDID"))?;
+    w.write::<10, u16>(meta.data_count)
+        .map_err(|_| AncillaryMapError::Invalid("write data_count"))?;
+
+    for &udw in &meta.data {
+        w.write::<10, u16>(udw)
+            .map_err(|_| AncillaryMapError::Invalid("write user data word"))?;
+    }
+    w.write::<10, u16>(meta.checksum)
+        .map_err(|_| AncillaryMapError::Invalid("write checksum"))?;
+
     // Byte-align and then pad with zero bits to a 4-byte boundary.
     w.byte_align()
         .map_err(|_| AncillaryMapError::Invalid("write word_align (bits)"))?;
@@ -133,49 +177,45 @@ pub fn smpte291_from_st2038_anc_packet(
     w.flush()?;
     let _ = w.into_writer();
 
-    let consumed = r.into_reader().position() as usize;
-    *st2038 = &st2038[consumed..];
     Ok(())
 }
 
-/// Read one RFC 8331 ANC packet from `smpte291` (including word-align padding) and
-/// write one ST 2038 ANC packet into `st2038`. Advances `smpte291` past the consumed bytes.
-pub fn st2038_from_smpte291_anc_packet(
-    st2038: &mut Vec<u8>,
-    smpte291: &mut &[u8],
+/// Read one GStreamer ST 2038 ANC packet (including ST 2038 end padding) and
+/// write one RFC 8331 ANC packet into `smpte291`. Advances `st2038` past the consumed bytes.
+/// Compare to `RtpSmpte291Pay::convert_next_packet` in gst-plugins-rs.
+pub fn smpte291_from_st2038_anc_packet(
+    smpte291: &mut Vec<u8>,
+    st2038: &mut &[u8],
 ) -> Result<(), AncillaryMapError> {
+    let meta = ancillary_meta_from_st2038_anc_packet(st2038)?;
+    smpte291_anc_packet_from_ancillary_meta(smpte291, &meta)?;
+    Ok(())
+}
+
+/// Read one RFC 8331 ANC packet from the front of `smpte291` (including word-align padding)
+/// and advance `smpte291` past consumed bytes.
+pub fn ancillary_meta_from_smpte291_anc_packet(
+    smpte291: &mut &[u8],
+) -> Result<AncillaryMeta, AncillaryMapError> {
     let r_cursor = Cursor::new(*smpte291);
     let r_start_pos = r_cursor.position();
     let mut r = BitReader::endian(r_cursor, BigEndian);
 
-    let c_not_y_channel_flag = r.read_bit()?;
-    let line_number = r.read::<11, u16>()?;
-    let horizontal_offset = r.read::<12, u16>()?;
+    let c_not_y_channel = r.read_bit()?;
+    let line = r.read::<11, u16>()?;
+    let offset = r.read::<12, u16>()?;
     let _s = r.read::<1, u8>()?;
     let _stream_num = r.read::<7, u8>()?;
     let did = r.read::<10, u16>()?;
-    let sdid = r.read::<10, u16>()?;
+    let sdid_block_number = r.read::<10, u16>()?;
     let data_count = r.read::<10, u16>()?;
-    let data_count8 = (data_count & 0xff) as u8;
+    let data_count8 = (data_count & 0xff) as usize;
 
-    let w_start_pos = st2038.len() as u64;
-    let mut w_cursor: Cursor<&mut Vec<u8>> = Cursor::new(st2038);
-    w_cursor.set_position(w_start_pos);
-    let mut w = BitWriter::endian(w_cursor, BigEndian);
-
-    w.write::<6, u8>(0)?;
-    w.write_bit(c_not_y_channel_flag)?;
-    w.write::<11, u16>(line_number)?;
-    w.write::<12, u16>(horizontal_offset)?;
-    w.write::<10, u16>(did)?;
-    w.write::<10, u16>(sdid)?;
-    w.write::<10, u16>(data_count)?;
+    let mut data = Vec::new();
     for _ in 0..data_count8 {
-        let udw = r.read::<10, u16>()?;
-        w.write::<10, u16>(udw)?;
+        data.push(r.read::<10, u16>()?);
     }
-    let csum = r.read::<10, u16>()?;
-    w.write::<10, u16>(csum)?;
+    let checksum = r.read::<10, u16>()?;
 
     // RFC 8331 pads to 4-byte boundary with zero bits.
     while !r.byte_aligned() {
@@ -195,14 +235,60 @@ pub fn st2038_from_smpte291_anc_packet(
         }
     }
 
+    let consumed = r.into_reader().position() as usize;
+    *smpte291 = &smpte291[consumed..];
+
+    Ok(AncillaryMeta {
+        c_not_y_channel,
+        line,
+        offset,
+        did,
+        sdid_block_number,
+        data_count,
+        checksum,
+        data,
+    })
+}
+
+/// Append one ST 2038 ANC packet to `st2038` from [`AncillaryMeta`].
+pub fn st2038_anc_packet_from_ancillary_meta(
+    st2038: &mut Vec<u8>,
+    meta: &AncillaryMeta,
+) -> Result<(), AncillaryMapError> {
+    let w_start_pos = st2038.len() as u64;
+    let mut w_cursor: Cursor<&mut Vec<u8>> = Cursor::new(st2038);
+    w_cursor.set_position(w_start_pos);
+    let mut w = BitWriter::endian(w_cursor, BigEndian);
+
+    w.write::<6, u8>(0)?;
+    w.write_bit(meta.c_not_y_channel)?;
+    w.write::<11, u16>(meta.line)?;
+    w.write::<12, u16>(meta.offset)?;
+    w.write::<10, u16>(meta.did)?;
+    w.write::<10, u16>(meta.sdid_block_number)?;
+    w.write::<10, u16>(meta.data_count)?;
+    for &udw in &meta.data {
+        w.write::<10, u16>(udw)?;
+    }
+    w.write::<10, u16>(meta.checksum)?;
+
     while !w.byte_aligned() {
         w.write_bit(true)?;
     }
     w.flush()?;
     let _ = w.into_writer();
 
-    let consumed = r.into_reader().position() as usize;
-    *smpte291 = &smpte291[consumed..];
+    Ok(())
+}
+
+/// Read one RFC 8331 ANC packet from `smpte291` (including word-align padding) and
+/// write one ST 2038 ANC packet into `st2038`. Advances `smpte291` past the consumed bytes.
+pub fn st2038_from_smpte291_anc_packet(
+    st2038: &mut Vec<u8>,
+    smpte291: &mut &[u8],
+) -> Result<(), AncillaryMapError> {
+    let meta = ancillary_meta_from_smpte291_anc_packet(smpte291)?;
+    st2038_anc_packet_from_ancillary_meta(st2038, &meta)?;
     Ok(())
 }
 

@@ -15,7 +15,7 @@
 use gst::glib;
 use gstreamer as gst;
 
-mod format;
+pub mod format;
 pub mod mxlsink;
 pub mod mxlsrc;
 
