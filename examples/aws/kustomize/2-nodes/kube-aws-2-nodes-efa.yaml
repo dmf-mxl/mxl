@@ -261,3 +261,20 @@ spec:
           emptyDir:
             medium: Memory
       restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reader-media-service
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  selector:
+    app: reader-media-function
+  ports:
+    - protocol: UDP
+      port: 5000
+      targetPort: 5000
