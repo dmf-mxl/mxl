@@ -12,7 +12,8 @@
 
 # Checklist
 
-- [ ] PR has been peer reviewed (code review completed)
+- [ ] PR has a **appropriate title**
+- [ ] PR has been **peer reviewed** (code review completed)
 - [ ] Change has been **seen working in a simple scenario**
 - [ ] Relevant **unit / automated tests** are included
 - [ ] Relevant, clear and sufficient **documentation** is included
