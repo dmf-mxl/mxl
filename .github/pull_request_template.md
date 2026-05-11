@@ -13,12 +13,8 @@
 # Checklist
 
 - [ ] PR has a **appropriate title**
-- [ ] PR has been **peer reviewed** (code review completed)
-- [ ] Change has been **seen working in a simple scenario**
-- [ ] Relevant **unit / automated tests** are included
-- [ ] Relevant, clear and sufficient **documentation** is included
-- [ ] (Feature only) Confirmed to Address **corresponding Requirement**
-- [ ] Considered if **backport** needed (enter details below if needed)
+- [ ] Sufficient description is provided for reviewers
+- [ ] Have considered whether **backport** is needed (enter details below if so)
 
 # Backport Notes
 <!-- If backport is needed, describe scope and target versions -->
