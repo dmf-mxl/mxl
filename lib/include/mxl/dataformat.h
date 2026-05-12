@@ -3,6 +3,13 @@
 
 #pragma once
 
+/**
+ * Fixed size in bytes of one MXL `video/smpte291` data format grain.
+ * This is large enough to hold all the ANC data in a single grain.
+ * This size is a usual VFS page; no point in going smaller.
+ */
+#define MXL_DATA_FORMAT_GRAIN_SIZE 4096
+
 #ifdef __cplusplus
 extern "C"
 {

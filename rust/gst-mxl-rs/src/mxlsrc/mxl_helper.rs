@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2025-2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
 use std::{
@@ -15,7 +15,7 @@ use mxl::{FlowReader, MxlInstance, config::get_mxl_so_path, flowdef::*};
 
 use crate::mxlsrc::{
     imp::*,
-    state::{AudioState, InitialTime, Settings, State, VideoState},
+    state::{AudioState, DataState, InitialTime, Settings, State, VideoState},
 };
 
 static CAT: LazyLock<gst::DebugCategory> = LazyLock::new(|| {
@@ -29,18 +29,9 @@ static CAT: LazyLock<gst::DebugCategory> = LazyLock::new(|| {
 pub(crate) fn get_flow_type_id<'a>(
     settings: &'a MutexGuard<'a, Settings>,
 ) -> Result<&'a String, gst::LoggableError> {
-    let id = if settings.video_flow.is_some() {
-        settings
-            .video_flow
-            .as_ref()
-            .ok_or(gst::loggable_error!(CAT, "No video flow id was found"))?
-    } else {
-        settings
-            .audio_flow
-            .as_ref()
-            .ok_or(gst::loggable_error!(CAT, "No audio flow id was found"))?
-    };
-    Ok(id)
+    settings
+        .flow_id()
+        .ok_or(gst::loggable_error!(CAT, "No flow id was found"))
 }
 
 pub(crate) fn get_mxl_flow_json(
@@ -100,6 +91,22 @@ pub(crate) fn set_json_caps(src: &MxlSrc, json: FlowDefDetails) -> Result<(), gs
             gst::info!(CAT, imp = src, "Negotiated caps: {}", caps);
             Ok(())
         }
+        FlowDefDetails::Data(data) => {
+            let caps = gst::Caps::builder("meta/x-st-2038")
+                .field(
+                    "framerate",
+                    gst::Fraction::new(data.grain_rate.numerator, data.grain_rate.denominator),
+                )
+                .field("alignment", "frame")
+                .build();
+
+            src.obj()
+                .set_caps(&caps)
+                .map_err(|err| gst::loggable_error!(CAT, "Failed to set caps: {}", err))?;
+
+            gst::info!(CAT, imp = src, "Negotiated caps: {}", caps);
+            Ok(())
+        }
     }
 }
 
@@ -122,6 +129,11 @@ pub(crate) fn get_flow_def(
                 .map_err(|e| gst::loggable_error!(CAT, "Invalid audio flow JSON: {}", e))?;
             FlowDefDetails::Audio(flow)
         }
+        "urn:x-nmos:format:data" => {
+            let flow: FlowDefData = serde_json::from_value(serde_json)
+                .map_err(|e| gst::loggable_error!(CAT, "Invalid data flow JSON: {}", e))?;
+            FlowDefDetails::Data(flow)
+        }
         _ => {
             gst::warning!(CAT, imp = src, "Unknown format '{}'", format);
             return Err(gst::loggable_error!(CAT, "Unknown format {}", format));
@@ -138,11 +150,12 @@ pub(crate) fn generate_channel_mask_from_channels(channels: u32) -> gst::Bitmask
     gst::Bitmask::new(mask)
 }
 
-/// Video or audio.
+/// Video, audio, or discrete data.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum FlowKind {
     Video,
     Audio,
+    Data,
 }
 
 /// Blocks until `create_flow_reader` succeeds, sleeping briefly and retrying
@@ -207,10 +220,12 @@ pub(crate) fn init(mxlsrc: &MxlSrc) -> Result<(), gst::ErrorMessage> {
             (domain, FlowKind::Video, flow_id)
         } else if let Some(flow_id) = settings.audio_flow.clone() {
             (domain, FlowKind::Audio, flow_id)
+        } else if let Some(flow_id) = settings.data_flow.clone() {
+            (domain, FlowKind::Data, flow_id)
         } else {
             return Err(gst::error_msg!(
                 gst::CoreError::Failed,
-                ["Set exactly one of video-flow-id or audio-flow-id"]
+                ["Set exactly one of video-flow-id, audio-flow-id, or data-flow-id"]
             ));
         }
     };
@@ -274,11 +289,12 @@ pub(crate) fn init(mxlsrc: &MxlSrc) -> Result<(), gst::ErrorMessage> {
                     grain_reader,
                 }),
                 audio: None,
+                data: None,
             });
         }
         FlowKind::Audio => {
-            let reader_audio = init_mxl_reader(mxlsrc, domain.as_str(), flow_id.as_str())?;
-            let samples_reader = reader_audio.to_samples_reader().map_err(|e| {
+            let reader_samples = init_mxl_reader(mxlsrc, domain.as_str(), flow_id.as_str())?;
+            let samples_reader = reader_samples.to_samples_reader().map_err(|e| {
                 gst::error_msg!(
                     gst::CoreError::Failed,
                     ["Failed to initialize MXL grain reader: {}", e]
@@ -295,6 +311,44 @@ pub(crate) fn init(mxlsrc: &MxlSrc) -> Result<(), gst::ErrorMessage> {
                     is_initialized: false,
                     index: 0,
                     next_discont: false,
+                }),
+                data: None,
+            });
+        }
+        FlowKind::Data => {
+            let grain_rate = reader_info
+                .map_err(|e| {
+                    gst::error_msg!(
+                        gst::CoreError::Failed,
+                        ["Failed to initialize MXL reader info: {}", e]
+                    )
+                })?
+                .config
+                .common()
+                .grain_rate()
+                .map_err(|e| {
+                    gst::error_msg!(
+                        gst::CoreError::Failed,
+                        ["Failed to initialize MXL discrete flow info: {}", e]
+                    )
+                })?;
+            let grain_reader = reader.to_grain_reader().map_err(|e| {
+                gst::error_msg!(
+                    gst::CoreError::Failed,
+                    ["Failed to initialize MXL grain reader: {}", e]
+                )
+            })?;
+
+            context.state = Some(State {
+                instance,
+                initial_info,
+                video: None,
+                audio: None,
+                data: Some(DataState {
+                    grain_rate,
+                    frame_counter: 0,
+                    is_initialized: false,
+                    grain_reader,
                 }),
             });
         }
