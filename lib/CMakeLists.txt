@@ -37,7 +37,7 @@ install(DIRECTORY
             PATTERN "*.h"
     )
 
-
+add_subdirectory(internal)
 
 add_library(mxl)
 target_compile_features(mxl
@@ -68,7 +68,7 @@ target_link_libraries(mxl
             mxl-headers # C Headers in <mxl/*.h>
         PRIVATE
             mxl-internal-headers # Internal C++ headers in <mxl-internal/*.hpp>
-            mxl-common  # Common objects for libmxl and libmxl-fabrics
+            mxl-internal-objects
     )
 
 # Add common linker options
@@ -154,8 +154,7 @@ if (BUILD_TESTS)
 endif()
 
 # Install the generated pkg-config file
-install(FILES
-            ${CMAKE_CURRENT_BINARY_DIR}/libmxl.pc
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libmxl.pc
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
         COMPONENT ${PROJECT_NAME}-dev
     )
@@ -166,5 +165,3 @@ install(EXPORT ${PROJECT_NAME}-targets
         DESTINATION ${MXL_CMAKE_CONFIG_DESTINATION}
         COMPONENT ${PROJECT_NAME}-dev
     )
-
-add_subdirectory(internal)

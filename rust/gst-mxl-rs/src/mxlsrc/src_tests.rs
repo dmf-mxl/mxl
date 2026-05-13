@@ -94,12 +94,14 @@ mod tests {
         gst::Element::link_many([&src1, &sink])
             .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
 
-        pipeline_producer
-            .set_state(gst::State::Playing)
-            .map_err(|_| glib::Error::new(CoreError::Failed, "Producer state change failed"))?;
+        // Consumer first to demonstrate that mxlsrc does not block the state change
+        // if the MXL flow does not exist yet.
         pipeline_consumer
             .set_state(gst::State::Playing)
             .map_err(|_| glib::Error::new(CoreError::Failed, "Consumer state change failed"))?;
+        pipeline_producer
+            .set_state(gst::State::Playing)
+            .map_err(|_| glib::Error::new(CoreError::Failed, "Producer state change failed"))?;
 
         thread::sleep(Duration::from_millis(600));
 
