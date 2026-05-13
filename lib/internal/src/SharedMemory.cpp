@@ -46,7 +46,11 @@ namespace mxl::lib
         }
         else
         {
-            if ((_fd = ::open(path, (mode == AccessMode::READ_ONLY) ? OMODE_RO : OMODE_RW)) == -1)
+            // Always open RW even for read-only callers: ibv_reg_mr (used by the fabrics OFI
+            // layer for EFA/RDMA memory registration) requires PROT_WRITE on the mapped pages,
+            // which in turn requires the file descriptor to be opened with O_RDWR. See the
+            // original fabrics PR (dmf-mxl/mxl#78) discussion for context.
+            if ((_fd = ::open(path, OMODE_RW)) == -1)
             {
                 throw std::system_error(errno, std::generic_category(), "Could not open shared memory segment.");
             }
@@ -82,8 +86,10 @@ namespace mxl::lib
         {
             if (static_cast<std::size_t>(statBuf.st_size) >= payloadSize)
             {
+                // Always map PROT_READ|PROT_WRITE — see open() comment above; the kernel verbs
+                // path requires PROT_WRITE on registered memory.
                 auto const shared_data_buffer = ::mmap(
-                    nullptr, statBuf.st_size, PROT_READ | ((mode != AccessMode::READ_ONLY) ? PROT_WRITE : 0), MAP_FILE | MAP_SHARED, _fd, 0);
+                    nullptr, statBuf.st_size, PROT_READ | PROT_WRITE, MAP_FILE | MAP_SHARED, _fd, 0);
                 if (shared_data_buffer != MAP_FAILED)
                 {
                     _data = shared_data_buffer;
