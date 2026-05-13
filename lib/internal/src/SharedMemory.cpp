@@ -82,17 +82,8 @@ namespace mxl::lib
         {
             if (static_cast<std::size_t>(statBuf.st_size) >= payloadSize)
             {
-                // On Linux, MAP_POPULATE + MAP_LOCKED forces pages out of movable zones at mmap
-                // time, making them eligible for FOLL_LONGTERM pinning by RDMA / EFA
-                // (ibv_reg_mr). Without this, tmpfs-backed /domain causes ibv_reg_mr to return
-                // EFAULT. MAP_LOCKED is best-effort and silently succeeds without locking if
-                // RLIMIT_MEMLOCK is exceeded.
-                int mmapFlags = MAP_FILE | MAP_SHARED;
-#ifdef __linux__
-                mmapFlags |= MAP_POPULATE | MAP_LOCKED;
-#endif
-                auto const shared_data_buffer = ::mmap(nullptr, statBuf.st_size,
-                    PROT_READ | ((mode != AccessMode::READ_ONLY) ? PROT_WRITE : 0), mmapFlags, _fd, 0);
+                auto const shared_data_buffer = ::mmap(
+                    nullptr, statBuf.st_size, PROT_READ | ((mode != AccessMode::READ_ONLY) ? PROT_WRITE : 0), MAP_FILE | MAP_SHARED, _fd, 0);
                 if (shared_data_buffer != MAP_FAILED)
                 {
                     _data = shared_data_buffer;
