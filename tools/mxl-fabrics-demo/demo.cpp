@@ -297,6 +297,7 @@ public:
                 return status;
             }
 
+            auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(2);
             do
             {
                 status = makeProgress(std::chrono::milliseconds(10));
@@ -310,8 +311,7 @@ public:
                     return status;
                 }
             }
-            while (status == MXL_ERR_NOT_READY);
-
+            while (status == MXL_ERR_NOT_READY && deadline > std::chrono::steady_clock::now());
             MXL_DEBUG("Transferred grain index={} slices {}-{}", grainIndex, startSlice, grainInfo.validSlices);
 
             if (grainInfo.validSlices != grainInfo.totalSlices)
@@ -385,9 +385,8 @@ public:
                 return status;
             }
 
-            auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(2);
-
             // wait for completion
+            auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(2);
             do
             {
                 status = makeProgress(std::chrono::milliseconds(10));
