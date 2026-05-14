@@ -30,6 +30,11 @@ namespace mxl::lib::fabrics::ofi
          */
         RCInitiatorEndpoint(Endpoint, std::unique_ptr<EgressProtocol> proto, TargetInfo info);
 
+        /** \brief Get the target info of the remote endpoint.
+         */
+        [[nodiscard]]
+        TargetInfo const& info() const noexcept;
+
         /** \brief Returns true if there is any pending events that the endpoint is waiting for, and for which
          * the queues must be polled.
          */

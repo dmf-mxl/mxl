@@ -4,6 +4,8 @@
 #include "AudioBounceBuffer.hpp"
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
+#include <bit>
 
 namespace mxl::lib::fabrics::ofi
 {

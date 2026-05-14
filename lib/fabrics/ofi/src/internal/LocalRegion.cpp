@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "LocalRegion.hpp"
+#include <cstddef>
 #include <algorithm>
 #include <numeric>
 #include "Exception.hpp"
@@ -82,6 +83,6 @@ namespace mxl::lib::fabrics::ofi
 
     std::size_t LocalRegionGroupSpan::byteSize() const noexcept
     {
-        return std::accumulate(_inner.begin(), _inner.end(), 0, [](size_t sum, auto const region) { return sum + region.len; });
+        return std::accumulate(_inner.begin(), _inner.end(), std::size_t{0}, [](std::size_t sum, auto const region) { return sum + region.len; });
     }
 } // namespace mxl::lib::fabrics::ofi

@@ -7,6 +7,7 @@
 #include <chrono>
 #include <cstdint>
 #include <algorithm>
+#include <ranges>
 #include <uuid.h>
 #include <mxl-internal/Logging.hpp>
 #include <rdma/fabric.h>
@@ -26,6 +27,11 @@ namespace mxl::lib::fabrics::ofi
         , _info(std::move(info))
         , _proto(std::move(proto))
     {}
+
+    TargetInfo const& RCInitiatorEndpoint::info() const noexcept
+    {
+        return _info;
+    }
 
     bool RCInitiatorEndpoint::isIdle() const noexcept
     {
@@ -324,9 +330,10 @@ namespace mxl::lib::fabrics::ofi
 
     void RCInitiator::removeTarget(TargetInfo const& targetInfo)
     {
-        if (auto it = _targets.find(targetInfo.id); it != _targets.end())
+        if (auto target = std::ranges::find_if(_targets, [&targetInfo](auto const& item) { return item.second.info().id == targetInfo.id; });
+            target != _targets.end())
         {
-            it->second.shutdown();
+            target->second.shutdown();
         }
         else
         {

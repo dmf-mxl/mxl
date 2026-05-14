@@ -359,6 +359,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
 
             // Wait up to 5 seconds for the transfer to complete
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+            auto transferCompleted = false;
             do
             {
                 mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
@@ -370,12 +371,13 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
                 if (status == MXL_STATUS_OK)
                 {
                     // transfer complete
-                    return;
+                    transferCompleted = true;
+                    break;
                 }
             }
             while (std::chrono::steady_clock::now() < deadline);
 
-            FAIL("Failed to complete transfer in 5 seconds");
+            REQUIRE(transferCompleted);
         }
 
         SECTION("blocking")
@@ -401,6 +403,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
 
             // Wait up to 5 seconds for the transfer to complete
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+            auto transferCompleted = false;
             do
             {
                 mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
@@ -411,13 +414,13 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
                 }
                 if (status == MXL_STATUS_OK)
                 {
-                    // transfer complete
-                    return;
+                    transferCompleted = true;
+                    break;
                 }
             }
             while (std::chrono::steady_clock::now() < deadline);
 
-            FAIL("Failed to complete transfer in 5 seconds");
+            REQUIRE(transferCompleted);
         }
 
         mxlFabricsFreeTargetInfo(targetInfo);
@@ -491,6 +494,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
 
             // Wait up to 5 seconds for the transfer to complete
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+            auto transferCompleted = false;
             do
             {
                 mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
@@ -501,13 +505,13 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
                 }
                 if (status == MXL_STATUS_OK)
                 {
-                    // transfer complete
-                    return;
+                    transferCompleted = true;
+                    break;
                 }
             }
             while (std::chrono::steady_clock::now() < deadline);
 
-            FAIL("Failed to complete transfer in 5 seconds");
+            REQUIRE(transferCompleted);
         }
 
         SECTION("blocking")
@@ -533,6 +537,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
 
             // Wait up to 5 seconds for the transfer to complete
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+            auto transferCompleted = false;
             do
             {
                 mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
@@ -543,13 +548,13 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
                 }
                 if (status == MXL_STATUS_OK)
                 {
-                    // transfer complete
-                    return;
+                    transferCompleted = true;
+                    break;
                 }
             }
             while (std::chrono::steady_clock::now() < deadline);
 
-            FAIL("Failed to complete transfer in 5 seconds");
+            REQUIRE(transferCompleted);
         }
 
         mxlFabricsFreeTargetInfo(targetInfo);
@@ -662,6 +667,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             }
             while (std::chrono::steady_clock::now() < deadline);
 
+            auto transferCompleted = false;
             // Wait up to 5 seconds for the transfer to complete
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             do
@@ -674,13 +680,13 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
                 }
                 if (status == MXL_STATUS_OK)
                 {
-                    // transfer complete
-                    return;
+                    transferCompleted = true;
+                    break;
                 }
             }
             while (std::chrono::steady_clock::now() < deadline);
 
-            FAIL("Failed to complete transfer in 5 seconds");
+            REQUIRE(transferCompleted);
         }
 
         SECTION("blocking")
@@ -704,6 +710,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             }
             while (std::chrono::steady_clock::now() < deadline);
 
+            auto transferCompleted = false;
             // Wait up to 5 seconds for the transfer to complete
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             do
@@ -716,13 +723,13 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
                 }
                 if (status == MXL_STATUS_OK)
                 {
-                    // transfer complete
-                    return;
+                    transferCompleted = true;
+                    break;
                 }
             }
             while (std::chrono::steady_clock::now() < deadline);
 
-            FAIL("Failed to complete transfer in 5 seconds");
+            REQUIRE(transferCompleted);
         }
 
         mxlFabricsFreeTargetInfo(targetInfo);
@@ -795,6 +802,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             }
             while (std::chrono::steady_clock::now() < deadline);
 
+            auto transferCompleted = false;
             // Wait up to 5 seconds for the transfer to complete
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             do
@@ -807,13 +815,13 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
                 }
                 if (status == MXL_STATUS_OK)
                 {
-                    // transfer complete
-                    return;
+                    transferCompleted = true;
+                    break;
                 }
             }
             while (std::chrono::steady_clock::now() < deadline);
 
-            FAIL("Failed to complete transfer in 5 seconds");
+            REQUIRE(transferCompleted);
         }
 
         SECTION("blocking")
@@ -837,6 +845,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             }
             while (std::chrono::steady_clock::now() < deadline);
 
+            auto transferCompleted = false;
             // Wait up to 5 seconds for the transfer to complete
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             do
@@ -849,13 +858,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
                 }
                 if (status == MXL_STATUS_OK)
                 {
-                    // transfer complete
-                    return;
+                    transferCompleted = true;
                 }
             }
             while (std::chrono::steady_clock::now() < deadline);
 
-            FAIL("Failed to complete transfer in 5 seconds");
+            REQUIRE(transferCompleted);
         }
 
         mxlFabricsFreeTargetInfo(targetInfo);
@@ -1002,6 +1010,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             // Wait up to 5 seconds for the transfer to complete
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             std::array<bool, nbTargets> transferComplete = {};
+            auto transferCompleted = false;
             do
             {
                 mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
@@ -1021,12 +1030,13 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
 
                 if (std::ranges::all_of(transferComplete, [](bool v) { return v; }))
                 {
-                    return;
+                    transferCompleted = true;
+                    break;
                 }
             }
             while (std::chrono::steady_clock::now() < deadline);
 
-            FAIL("Failed to complete transfer in 5 seconds");
+            REQUIRE(transferCompleted);
         }
 
         SECTION("blocking")
@@ -1056,6 +1066,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             // Wait up to 5 seconds for the transfer to complete
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             std::array<bool, nbTargets> transferComplete = {};
+            auto transferCompleted = false;
             do
             {
                 mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
@@ -1074,12 +1085,13 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
                 }
                 if (std::ranges::all_of(transferComplete, [](bool v) { return v; }))
                 {
-                    return;
+                    transferCompleted = true;
+                    break;
                 }
             }
             while (std::chrono::steady_clock::now() < deadline);
 
-            FAIL("Failed to complete transfer in 5 seconds");
+            REQUIRE(transferCompleted);
         }
 
         for (size_t i = 0; i < nbTargets; i++)
@@ -1173,6 +1185,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             // Wait up to 5 seconds for the transfer to complete
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             std::array<bool, nbTargets> transferComplete = {};
+            auto transferCompleted = false;
             do
             {
                 mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
@@ -1191,12 +1204,13 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
                 }
                 if (std::ranges::all_of(transferComplete, [](bool v) { return v; }))
                 {
-                    return;
+                    transferCompleted = true;
+                    break;
                 }
             }
             while (std::chrono::steady_clock::now() < deadline);
 
-            FAIL("Failed to complete transfer in 5 seconds");
+            REQUIRE(transferCompleted);
         }
 
         SECTION("blocking")
@@ -1226,6 +1240,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             // Wait up to 5 seconds for the transfer to complete
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             std::array<bool, nbTargets> transferComplete = {};
+            auto transferCompleted = false;
             do
             {
                 mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
@@ -1244,12 +1259,13 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
                 }
                 if (std::ranges::all_of(transferComplete, [](bool v) { return v; }))
                 {
-                    return;
+                    transferCompleted = true;
+                    break;
                 }
             }
             while (std::chrono::steady_clock::now() < deadline);
 
-            FAIL("Failed to complete transfer in 5 seconds");
+            REQUIRE(transferCompleted);
         }
 
         for (size_t i = 0; i < nbTargets; i++)
@@ -1403,6 +1419,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             // Wait up to 5 seconds for the transfer to complete
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             std::array<bool, nbTargets> transferComplete = {};
+            auto transferCompleted = false;
             do
             {
                 mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
@@ -1422,12 +1439,13 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
 
                 if (std::ranges::all_of(transferComplete, [](bool v) { return v; }))
                 {
-                    return;
+                    transferCompleted = true;
+                    break;
                 }
             }
             while (std::chrono::steady_clock::now() < deadline);
 
-            FAIL("Failed to complete transfer in 5 seconds");
+            REQUIRE(transferCompleted);
         }
 
         SECTION("blocking")
@@ -1457,6 +1475,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             // Wait up to 5 seconds for the transfer to complete
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             std::array<bool, nbTargets> transferComplete = {};
+            auto transferCompleted = false;
             do
             {
                 mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
@@ -1475,12 +1494,13 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
                 }
                 if (std::ranges::all_of(transferComplete, [](bool v) { return v; }))
                 {
-                    return;
+                    transferCompleted = true;
+                    break;
                 }
             }
             while (std::chrono::steady_clock::now() < deadline);
 
-            FAIL("Failed to complete transfer in 5 seconds");
+            REQUIRE(transferCompleted);
         }
 
         for (size_t i = 0; i < nbTargets; i++)
@@ -1575,6 +1595,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             // Wait up to 5 seconds for the transfer to complete
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             std::array<bool, nbTargets> transferComplete = {};
+            auto transferCompleted = false;
             do
             {
                 mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
@@ -1593,12 +1614,13 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
                 }
                 if (std::ranges::all_of(transferComplete, [](bool v) { return v; }))
                 {
-                    return;
+                    transferCompleted = true;
+                    break;
                 }
             }
             while (std::chrono::steady_clock::now() < deadline);
 
-            FAIL("Failed to complete transfer in 5 seconds");
+            REQUIRE(transferCompleted);
         }
 
         SECTION("blocking")
@@ -1628,6 +1650,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             // Wait up to 5 seconds for the transfer to complete
             deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             std::array<bool, nbTargets> transferComplete = {};
+            auto transferCompleted = false;
             do
             {
                 mxlFabricsInitiatorMakeProgressBlocking(initiator, std::chrono::milliseconds(20).count());
@@ -1646,12 +1669,13 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
                 }
                 if (std::ranges::all_of(transferComplete, [](bool v) { return v; }))
                 {
-                    return;
+                    transferCompleted = true;
+                    break;
                 }
             }
             while (std::chrono::steady_clock::now() < deadline);
 
-            FAIL("Failed to complete transfer in 5 seconds");
+            REQUIRE(transferCompleted);
         }
 
         for (size_t i = 0; i < nbTargets; i++)

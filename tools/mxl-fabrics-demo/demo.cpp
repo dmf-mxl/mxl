@@ -62,6 +62,25 @@ public:
     {
         mxlStatus status;
 
+        if (_initiator && _targetInfo && _targetAdded)
+        {
+            // We're done let's remove the target
+            status = mxlFabricsInitiatorRemoveTarget(_initiator, _targetInfo);
+            if (status == MXL_STATUS_OK)
+            {
+                // Wait for graceful shutdown of the connection and for all transfers to complete before exiting
+                status = mxlFabricsInitiatorMakeProgressBlocking(_initiator, 500);
+                if (status != MXL_STATUS_OK)
+                {
+                    MXL_ERROR("Failed to wait in time for remove target to complete with status '{}'", static_cast<int>(status));
+                }
+            }
+            else
+            {
+                MXL_ERROR("Failed to remove target with status '{}'", static_cast<int>(status));
+            }
+        }
+
         if (_targetInfo != nullptr)
         {
             if (status = mxlFabricsFreeTargetInfo(_targetInfo); status != MXL_STATUS_OK)
@@ -104,6 +123,7 @@ public:
     }
 
     mxlStatus setup(std::string const& targetInfoStr)
+
     {
         _instance = mxlCreateInstance(_config.domain.c_str(), "");
         if (_instance == nullptr)
@@ -170,6 +190,7 @@ public:
             MXL_ERROR("Failed to add target with status '{}'", static_cast<int>(status));
             return status;
         }
+        _targetAdded = true;
 
         do
         {
@@ -219,7 +240,6 @@ public:
     mxlStatus runDiscrete(mxlFlowConfigInfo const& configInfo)
     { // Extract the FlowInfo structure.
 
-        mxlStatus status;
         std::uint16_t slicesPerBatch = configInfo.common.maxSyncBatchSizeHint;
         MXL_INFO("Using batch size of {} slices", slicesPerBatch);
 
@@ -232,27 +252,27 @@ public:
 
         while (!g_exit_requested)
         {
-            auto ret = mxlFlowReaderGetGrainSlice(_reader, grainIndex, endSlice, 200000000, &grainInfo, &payload);
-            if (ret == MXL_ERR_OUT_OF_RANGE_TOO_LATE)
+            auto status = mxlFlowReaderGetGrainSlice(_reader, grainIndex, endSlice, 200000000, &grainInfo, &payload);
+            if (status == MXL_ERR_OUT_OF_RANGE_TOO_LATE)
             {
                 // We are too late.. time travel!
                 grainIndex = mxlGetCurrentIndex(&configInfo.common.grainRate);
                 continue;
             }
-            else if (ret == MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
+            else if (status == MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
             { // NOLINT(bugprone-branch-clone): Repeated for clarity.
                 // We are too early somehow.. retry the same grain later.
                 continue;
             }
-            else if (ret == MXL_ERR_TIMEOUT)
+            else if (status == MXL_ERR_TIMEOUT)
             {
                 // No grains available before a timeout was triggered.. most likely a problem upstream.
                 continue;
             }
-            else if (ret != MXL_STATUS_OK)
+            else if (status != MXL_STATUS_OK)
             {
                 // Something  unexpected occured, not much we can do, but log and retry
-                MXL_ERROR("Missed grain {}, err : {}", grainIndex, (int)ret);
+                MXL_ERROR("Missed grain {}, err : {}", grainIndex, (int)status);
 
                 continue;
             }
@@ -260,20 +280,20 @@ public:
             if (grainInfo.flags & MXL_GRAIN_FLAG_INVALID)
             {
                 // If we've got an invalid grain, do not waster bandwidth, transfer only the grain header and go to the next grain.
-                ret = mxlFabricsInitiatorTransferGrain(_initiator, grainIndex, 0, 0);
+                status = mxlFabricsInitiatorTransferGrain(_initiator, grainIndex, 0, 0);
                 ++grainIndex;
                 continue;
             }
 
             // Okay the grain is ready, we can transfer it to the targets.
-            ret = mxlFabricsInitiatorTransferGrain(_initiator, grainIndex, startSlice, grainInfo.validSlices);
-            if (ret == MXL_ERR_NOT_READY)
+            status = mxlFabricsInitiatorTransferGrain(_initiator, grainIndex, startSlice, grainInfo.validSlices);
+            if (status == MXL_ERR_NOT_READY)
             {
                 continue;
             }
-            if (ret != MXL_STATUS_OK)
+            if (status != MXL_STATUS_OK)
             {
-                MXL_ERROR("Failed to transfer grain with status '{}'", static_cast<int>(ret));
+                MXL_ERROR("Failed to transfer grain with status '{}'", static_cast<int>(status));
                 return status;
             }
 
@@ -308,32 +328,11 @@ public:
             ++grainIndex;
         }
 
-        status = mxlFabricsInitiatorRemoveTarget(_initiator, _targetInfo);
-        if (status != MXL_STATUS_OK)
-        {
-            return status;
-        }
-
-        do
-        {
-            status = makeProgress(std::chrono::milliseconds(250));
-            if (status == MXL_ERR_INTERRUPTED)
-            {
-                return MXL_STATUS_OK;
-            }
-            if (status != MXL_ERR_NOT_READY && status != MXL_STATUS_OK)
-            {
-                return status;
-            }
-        }
-        while (status == MXL_ERR_NOT_READY);
-
         return MXL_STATUS_OK;
     }
 
     mxlStatus runContinuous(mxlFlowConfigInfo const& configInfo)
     {
-        mxlStatus status;
         mxlWrappedMultiBufferSlice payload;
 
         mxlFlowRuntimeInfo runtimeInfo;
@@ -376,7 +375,8 @@ public:
             status = mxlFabricsInitiatorTransferSamples(_initiator, headIndex, batchSize);
             if (status == MXL_ERR_NOT_READY)
             {
-                MXL_INFO("not ready..");
+                status = mxlFabricsInitiatorMakeProgressNonBlocking(_initiator);
+                MXL_WARN("Targets not ready for transfer, makeProgress returned '{}'", static_cast<int>(status));
                 continue;
             }
             if (status != MXL_STATUS_OK)
@@ -385,10 +385,12 @@ public:
                 return status;
             }
 
+            auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(2);
+
             // wait for completion
             do
             {
-                status = mxlFabricsInitiatorMakeProgressBlocking(_initiator, 10);
+                status = makeProgress(std::chrono::milliseconds(10));
                 if (status == MXL_ERR_INTERRUPTED)
                 {
                     return MXL_STATUS_OK;
@@ -399,7 +401,8 @@ public:
                     return status;
                 }
             }
-            while (status == MXL_ERR_NOT_READY);
+            while (status == MXL_ERR_NOT_READY && deadline > std::chrono::steady_clock::now());
+            MXL_DEBUG("Transferred samples headIndex={} count={}", headIndex, batchSize);
 
             auto previousHeadIndex = headIndex;
 
@@ -408,28 +411,6 @@ public:
             MXL_DEBUG("Transferred samples headIndex={} count={} nextHeadIndex={}", previousHeadIndex, batchSize, headIndex);
             mxlSleepForNs(mxlGetNsUntilIndex(headIndex, &configInfo.common.grainRate));
         }
-
-        // We're done let's remote the target
-        status = mxlFabricsInitiatorRemoveTarget(_initiator, _targetInfo);
-        if (status != MXL_STATUS_OK)
-        {
-            return status;
-        }
-
-        // Wait for graceful shutdown of the connection and for all transfers to complete before exiting
-        do
-        {
-            status = mxlFabricsInitiatorMakeProgressBlocking(_initiator, 250);
-            if (status == MXL_ERR_INTERRUPTED)
-            {
-                return MXL_STATUS_OK;
-            }
-            if (status != MXL_ERR_NOT_READY && status != MXL_STATUS_OK)
-            {
-                return status;
-            }
-        }
-        while (status == MXL_ERR_NOT_READY);
 
         return MXL_STATUS_OK;
     }
@@ -455,6 +436,7 @@ private:
     mxlFlowReader _reader;
     mxlFabricsInitiator _initiator;
     mxlFabricsTargetInfo _targetInfo;
+    bool _targetAdded = false;
 };
 
 class AppTarget
