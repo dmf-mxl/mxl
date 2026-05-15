@@ -229,9 +229,14 @@ namespace mxl::lib::fabrics::ofi
 
     void RMASampleEgressProtocolTemplate::registerMemory(std::shared_ptr<Domain> domain)
     {
+        // This function should be called once during setup and be the first memory to register, otherwise it's a bug.
         if (_localRegion)
         {
             throw Exception::invalidState("Memory already registered.");
+        }
+        if (domain->localRegions().size() != 0)
+        {
+            throw Exception::invalidState("No memory should be previously registered.");
         }
 
         // Register the audio region provided by the user. When the actual protocol instance is created, the protocol will register additional
