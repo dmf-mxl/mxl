@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Event.hpp"
+#include <fmt/format.h>
 #include <rdma/fabric.h>
 #include "EventQueue.hpp"
 #include "Exception.hpp"
@@ -69,7 +70,17 @@ namespace mxl::lib::fabrics::ofi
 
     std::string Event::Error::toString() const
     {
-        return ::fi_eq_strerror(_eq->raw(), _providerErr, _errData.data(), nullptr, 0);
+        // _err is the libfabric-level error (FI_E*); _providerErr is set by the
+        // underlying provider (e.g. the tcp provider's errno). Surface both so
+        // callers see the real reason even when the provider has nothing extra
+        // to say (in which case fi_eq_strerror would otherwise return "Success").
+        auto const* fiStr = ::fi_strerror(_err);
+        auto const* provStr = ::fi_eq_strerror(_eq->raw(), _providerErr, _errData.data(), nullptr, 0);
+        return fmt::format("fi_err={} ({}) prov_err={} ({})",
+            _err,
+            fiStr ? fiStr : "",
+            _providerErr,
+            provStr ? provStr : "");
     }
 
     Event::Event(Inner ev)
