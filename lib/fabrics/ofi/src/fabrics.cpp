@@ -237,7 +237,6 @@ mxlStatus mxlFabricsTargetReadGrainNonBlocking(mxlFabricsTarget in_target, uint6
             auto res = ofi::TargetWrapper::fromAPI(in_target)->readGrain();
             if (!res)
             {
-                MXL_INFO("not ready");
                 return MXL_ERR_NOT_READY;
             }
 
