@@ -30,7 +30,7 @@ target_sources(mxl-fabrics-tests
 target_link_libraries(mxl-fabrics-tests
         PRIVATE
             mxl
-            mxl-common
+            mxl-internal-objects
             mxl-internal-headers
             mxl-fabrics
             mxl-fabrics-objects
