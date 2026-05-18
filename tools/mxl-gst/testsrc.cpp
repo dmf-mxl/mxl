@@ -38,17 +38,25 @@ namespace
         std::uint64_t pattern{0};
         std::string textOverlay{"EBU DMF MXL"};
         std::uint32_t sliceSize;
+        // When non-empty, the pipeline reads frames from this file path
+        // instead of the videotestsrc test pattern. The file is treated
+        // as a standard container (MP4/MKV/TS) decoded via decodebin,
+        // scaled/converted to v210 to match the rest of the chain, and
+        // looped on EOS via a bus watch that issues a seek to t=0.
+        // `pattern` is ignored when this is set.
+        std::string inputFile{};
 
         [[nodiscard]]
         std::string display() const
         {
-            return fmt::format("frameWidth={} frameHeight={} frameRate={}/{} pattern={} textOverlay={}",
+            return fmt::format("frameWidth={} frameHeight={} frameRate={}/{} pattern={} textOverlay={} inputFile={}",
                 frameWidth,
                 frameHeight,
                 frameRate.numerator,
                 frameRate.denominator,
                 pattern,
-                textOverlay);
+                textOverlay,
+                inputFile);
         }
     };
 
@@ -325,7 +333,36 @@ namespace
             return _appSink;
         }
 
+        // Loop-on-EOS for file-backed pipelines. Registers an async bus
+        // watch that, when EOS travels up the bus, seeks the pipeline
+        // back to t=0 and stays in PLAYING. The watch runs on the
+        // default GLib main context but we don't run a main loop here —
+        // gst's source-controller pushes bus messages on the streaming
+        // thread, so the seek happens off the appsink path and doesn't
+        // stall the MXL writer's grain consumption.
+        void installLoopOnEos()
+        {
+            if (_pipeline == nullptr) return;
+            auto* bus = ::gst_element_get_bus(_pipeline);
+            if (bus == nullptr) return;
+            ::gst_bus_add_watch(bus, &GstreamerPipeline::on_bus_message, _pipeline);
+            ::gst_object_unref(bus);
+        }
+
     private:
+        static gboolean on_bus_message(GstBus* /*bus*/, GstMessage* message, gpointer user_data)
+        {
+            if (GST_MESSAGE_TYPE(message) != GST_MESSAGE_EOS) return TRUE;
+            auto* pipeline = GST_ELEMENT(user_data);
+            MXL_INFO("Pipeline reached EOS, seeking to t=0 to loop input file");
+            ::gst_element_seek_simple(
+                pipeline,
+                GST_FORMAT_TIME,
+                static_cast<GstSeekFlags>(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_KEY_UNIT),
+                0);
+            return TRUE;
+        }
+
         mxlRational _grainRate;
         GstElement* _pipeline;
         GstElement* _appSink;
@@ -341,24 +378,56 @@ namespace
         {
             MXL_INFO("Creating video pipeline with config: {}", _config.display());
 
+            // Source-element selection: filesrc+decodebin when an input
+            // file is configured, videotestsrc otherwise. The rest of the
+            // pipeline (textoverlay, clockoverlay, format conversion to
+            // v210, appsink) is shared so the downstream MXL writer sees
+            // the same shape either way.
+            auto sourceChain = _config.inputFile.empty()
+                ? fmt::format(
+                    "videotestsrc name=videotestsrc is-live=true do-timestamp=true pattern={} ! "
+                    "video/x-raw,format=v210,width={},height={},framerate={}/{}",
+                    _config.pattern,
+                    _config.frameWidth,
+                    _config.frameHeight,
+                    _config.frameRate.numerator,
+                    _config.frameRate.denominator)
+                : fmt::format(
+                    "filesrc name=filesrc location=\"{}\" ! "
+                    "decodebin ! "
+                    "videoconvert ! "
+                    "videoscale ! "
+                    "videorate ! "
+                    "video/x-raw,format=v210,width={},height={},framerate={}/{}",
+                    _config.inputFile,
+                    _config.frameWidth,
+                    _config.frameHeight,
+                    _config.frameRate.numerator,
+                    _config.frameRate.denominator);
+
             auto pipelineDesc = fmt::format(
-                "videotestsrc name=videotestsrc is-live=true do-timestamp=true pattern={} ! "
-                "video/x-raw,format=v210,width={},height={},framerate={}/{} ! "
+                "{} ! "
                 "textoverlay text=\"{}\" font-desc=\"Sans, 36\" ! "
                 "clockoverlay ! "
                 "videoconvert ! "
                 "videoscale ! "
                 "queue ! "
                 "appsink name=appsink ",
-                _config.pattern,
-                _config.frameWidth,
-                _config.frameHeight,
-                _config.frameRate.numerator,
-                _config.frameRate.denominator,
+                sourceChain,
                 _config.textOverlay);
 
             MXL_INFO("Generating following GStreamer video pipeline -> {}", pipelineDesc);
             launchPipeline(pipelineDesc, _config.frameRate);
+
+            // For file input, install a bus watch that seeks back to t=0
+            // on EOS so the snippet loops forever instead of stopping at
+            // the first end-of-stream. Test-pattern mode has no EOS so
+            // this is a no-op there — it's harmless to install always but
+            // we gate it on inputFile to keep intent explicit.
+            if (!_config.inputFile.empty())
+            {
+                installLoopOnEos();
+            }
 
             // Configure appsink
             auto const appSink = getAppSink();
@@ -844,6 +913,13 @@ int main(int argc, char** argv)
     auto groupHintOpt = app.add_option("-g, --group-hint", groupHint, "The group-hint value to use in the flow json definition");
     groupHintOpt->default_val("mxl-gst-testsrc-group");
 
+    auto inputFile = std::string{};
+    auto inputFileOpt = app.add_option("-i,--input-file", inputFile,
+        "Path to a media file (MP4/MKV/TS/...) to loop instead of generating a test pattern. "
+        "When set, --pattern is ignored; the file is decoded, scaled/converted to v210 to match "
+        "the flow JSON, and seeks back to t=0 on EOS so the snippet loops forever.");
+    inputFileOpt->check(CLI::ExistingFile);
+
     CLI11_PARSE(app, argc, argv);
 
     ::gst_init(nullptr, nullptr);
@@ -878,7 +954,8 @@ int main(int argc, char** argv)
                         .frameRate = json_utils::getRational(flowNmos, "grain_rate"),
                         .pattern = pattern_map.at(pattern),
                         .textOverlay = textOverlay,
-                        .sliceSize = media_utils::getV210LineLength(frameWidth)};
+                        .sliceSize = media_utils::getV210LineLength(frameWidth),
+                        .inputFile = inputFile};
 
                     auto gstPipeline = VideoPipeline{gstConfig};
 
