@@ -6,7 +6,18 @@ FROM ghcr.io/qvest-digital/mxl-base:${BASE_TAG}
 
 # Switch to root to install writer-specific requirements and move files
 USER 0:0
-RUN apt-get update && apt-get install -y gstreamer1.0-x && rm -rf /var/lib/apt/lists/*
+# gstreamer1.0-libav + plugins-good/bad/ugly carry the H.264/AAC decoders
+# and the demuxers `decodebin` needs when mxl-gst-testsrc runs in the
+# new -i/--input-file mode (filesrc → decodebin → ...). Without these
+# decodebin finds the demuxer but fails with "no decoder available" and
+# the pipeline never reaches PLAYING.
+RUN apt-get update && apt-get install -y \
+        gstreamer1.0-x \
+        gstreamer1.0-plugins-good \
+        gstreamer1.0-plugins-bad \
+        gstreamer1.0-plugins-ugly \
+        gstreamer1.0-libav \
+    && rm -rf /var/lib/apt/lists/*
 
 # Move the JSON files that were added to the base image during its build
 # This avoids the circular dependency error
