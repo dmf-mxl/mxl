@@ -67,13 +67,13 @@ namespace mxl::lib::fabrics::ofi
          * \throws std::bad_variant_access if the DataLayout is not of discrete type.
          */
         [[nodiscard]]
-        Discrete const& asDiscrete() const noexcept;
+        Discrete const& asDiscrete() const;
 
         /** \brief Get the DataLayout as Continuous.
          * \throws std::bad_variant_access if the DataLayout is not of continuous type.
          */
         [[nodiscard]]
-        Continuous const& asContinuous() const noexcept;
+        Continuous const& asContinuous() const;
 
     private:
         using InnerLayout = std::variant<Discrete, Continuous>;

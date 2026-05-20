@@ -67,8 +67,8 @@ namespace mxl::lib::fabrics::ofi
     {
     public:
         /** Construct an RMASampleIngressProtocol with the given region and data layout.
-         * \param region The memory region containing audio. The audio samples will be first received in one of the bounce buffer entry and will
-   then be copied to this region.
+         * \param region The memory region containing audio. The audio samples will be first received in one of the bounce buffer entry and will then
+         * be copied to this region.
          */
         RMASampleIngressProtocol(Region region, DataLayout::Continuous const& dataLayout, std::uint32_t maxSyncBatchSize);
 

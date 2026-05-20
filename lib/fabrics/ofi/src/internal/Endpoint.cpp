@@ -365,7 +365,7 @@ namespace mxl::lib::fabrics::ofi
 
             auto localGroupSpan = localGroup.span(begin, end);
 
-            // vadlidate that we don't bust the remote region
+            // Validate that we don't bust the remote region
             if ((remoteOffset + localGroupSpan.byteSize()) > remote.len)
             {
                 throw Exception::invalidArgument("Local region group is too large for the remote region.");

@@ -45,7 +45,7 @@ namespace mxl::lib::fabrics::ofi
 
         /** \brief Determine if new data can be consumed.
          *
-         * A blocking version of read. see readGrain().
+         * A blocking version of readGrain. see readGrain().
          */
         virtual std::optional<GrainReadResult> readGrainBlocking(std::chrono::steady_clock::duration timeout) = 0;
 
@@ -58,7 +58,7 @@ namespace mxl::lib::fabrics::ofi
 
         /** \brief Determine if new data can be consumed.
          *
-         * A blocking version of read. see readSamples().
+         * A blocking version of readSamples. see readSamples().
          */
         virtual std::optional<SampleReadResult> readSamplesBlocking(std::chrono::steady_clock::duration timeout) = 0;
 

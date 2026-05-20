@@ -123,7 +123,6 @@ public:
     }
 
     mxlStatus setup(std::string const& targetInfoStr)
-
     {
         _instance = mxlCreateInstance(_config.domain.c_str(), "");
         if (_instance == nullptr)
@@ -238,8 +237,8 @@ public:
     }
 
     mxlStatus runDiscrete(mxlFlowConfigInfo const& configInfo)
-    { // Extract the FlowInfo structure.
-
+    {
+        // Extract the FlowInfo structure.
         std::uint16_t slicesPerBatch = configInfo.common.maxSyncBatchSizeHint;
         MXL_INFO("Using batch size of {} slices", slicesPerBatch);
 
@@ -338,6 +337,7 @@ public:
         mxlFlowRuntimeInfo runtimeInfo;
         mxlFlowReaderGetRuntimeInfo(_reader, &runtimeInfo);
         std::uint64_t headIndex = runtimeInfo.headIndex;
+        auto previousHeadIndex = std::uint64_t{0};
         std::size_t batchSize = configInfo.common.maxSyncBatchSizeHint;
         MXL_INFO("batch size in samples: {}", batchSize);
 
@@ -348,9 +348,9 @@ public:
             {
                 // We are too late.. time travel to the last headIndex commited!
                 mxlFlowReaderGetRuntimeInfo(_reader, &runtimeInfo);
-                auto previousHeadIndex = headIndex;
+                previousHeadIndex = headIndex;
                 headIndex = runtimeInfo.headIndex;
-                MXL_INFO("Too late! new previousHeadIndex={}  headIndex={}", previousHeadIndex, headIndex);
+                MXL_INFO("Too late! previous headIndex={}  new headIndex={}", previousHeadIndex, headIndex);
                 continue;
             }
             if (status == MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
@@ -403,11 +403,10 @@ public:
             while (status == MXL_ERR_NOT_READY && deadline > std::chrono::steady_clock::now());
             MXL_DEBUG("Transferred samples headIndex={} count={}", headIndex, batchSize);
 
-            auto previousHeadIndex = headIndex;
+            previousHeadIndex = headIndex;
 
             // If we get here, we have transfered the samples, we can work on the next samples.
             headIndex += batchSize;
-            MXL_DEBUG("Transferred samples headIndex={} count={} nextHeadIndex={}", previousHeadIndex, batchSize, headIndex);
             mxlSleepForNs(mxlGetNsUntilIndex(headIndex, &configInfo.common.grainRate));
         }
 

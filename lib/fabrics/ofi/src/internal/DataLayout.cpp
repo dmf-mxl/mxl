@@ -31,12 +31,12 @@ namespace mxl::lib::fabrics::ofi
         return std::holds_alternative<Continuous>(_inner);
     }
 
-    DataLayout::Discrete const& DataLayout::asDiscrete() const noexcept
+    DataLayout::Discrete const& DataLayout::asDiscrete() const
     {
         return std::get<Discrete>(_inner);
     }
 
-    DataLayout::Continuous const& DataLayout::asContinuous() const noexcept
+    DataLayout::Continuous const& DataLayout::asContinuous() const
     {
         return std::get<Continuous>(_inner);
     }

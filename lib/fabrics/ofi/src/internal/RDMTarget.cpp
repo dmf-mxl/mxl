@@ -87,7 +87,7 @@ namespace mxl::lib::fabrics::ofi
     {
         if (!_protocol->canReadGrains())
         {
-            throw Exception::invalidState("This target does not support reading grains.");
+            throw Exception::unsupportedOperation("The current protocol does not support reading grains.");
         }
 
         if (auto res = readNext<QueueReadMode::NonBlocking>({}); res)

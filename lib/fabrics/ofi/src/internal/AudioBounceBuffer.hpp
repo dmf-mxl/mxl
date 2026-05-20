@@ -74,7 +74,7 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         std::size_t entryCount() const noexcept;
 
-        /** \briof Return the size of a bounce buffer entry in bytes.
+        /** \brief Return the size of a bounce buffer entry in bytes.
          */
         [[nodiscard]]
         std::size_t entrySize() const noexcept;

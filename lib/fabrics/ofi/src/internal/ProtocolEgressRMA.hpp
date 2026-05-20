@@ -26,7 +26,7 @@ namespace mxl::lib::fabrics::ofi
             SliceRange const& sliceRange, ::fi_addr_t destAddr = FI_ADDR_UNSPEC) override;
 
         /** \copydoc EgressProtocol::transferSamples()
-         * \note This is unsupported in this protocol since it is designed for video data. Calling this function will result in an
+         * \note This is unsupported in this protocol since it is designed for grain data. Calling this function will result in an
          * Exception::invalidState being thrown.
          */
         void transferSamples(Endpoint&, std::uint64_t, std::size_t, ::fi_addr_t) override;
@@ -57,7 +57,7 @@ namespace mxl::lib::fabrics::ofi
         std::size_t _pending = 0;
     };
 
-    /** \brief Template for creating an Egress protocol for RMA writer endpoint to Handle transferring grains to remote targets using remote write
+    /** \brief Template for creating an Egress protocol for RMA writer endpoint to handle transferring grains to remote targets using remote write
      * operations.
      */
     class RMAGrainEgressProtocolTemplate final : public EgressProtocolTemplate
