@@ -181,7 +181,7 @@ fn st2038_round_trip_via_mxl() {
     // Push a couple more buffers than we're going to pull, because the
     // consumer's first MXL read index can be a grain or two after the
     // producer's first MXL write index depending on scheduler ordering.
-    const PUSH_COUNT: usize = PULL_COUNT + 2;
+    const PUSH_COUNT: usize = PULL_COUNT + 64;
     for i in 0..PUSH_COUNT {
         let pts = gst::ClockTime::from_nseconds(i as u64 * GRAIN_PERIOD_NS);
         let bytes = ST2038_TEST_PACKETS[i % ST2038_TEST_PACKETS.len()];
