@@ -179,7 +179,7 @@ TEST_CASE("Fabrics basic creation/destroy", "[fabrics][basics]")
     mxlFabricsInstance fabrics;
     SECTION("instance creation/destruction")
     {
-        REQUIRE(mxlFabricsCreateInstance(instance, &fabrics) == MXL_STATUS_OK);
+        REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
 
         SECTION("target creation/destruction")
         {
@@ -210,7 +210,7 @@ TEST_CASE("Fabrics connection oriented activation tests", "[fabrics][connected][
     auto instance = mxlCreateInstance("/dev/shm/", "");
 
     mxlFabricsInstance fabrics;
-    REQUIRE(mxlFabricsCreateInstance(instance, &fabrics) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
 
     mxlFabricsTarget target;
     REQUIRE(mxlFabricsCreateTarget(fabrics, &target) == MXL_STATUS_OK);
@@ -221,21 +221,21 @@ TEST_CASE("Fabrics connection oriented activation tests", "[fabrics][connected][
     SECTION("target/initiator setup")
     {
         auto targetConfig = mxlFabricsTargetConfig{
+            .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
             .provider = MXL_FABRICS_PROVIDER_TCP,
             .regions = regions,
-            .deviceSupport = false
         };
         mxlFabricsTargetInfo targetInfo;
-        REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, &targetInfo) == MXL_STATUS_OK);
+        REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, nullptr, &targetInfo) == MXL_STATUS_OK);
 
         auto initiatorConfig = mxlFabricsInitiatorConfig{
+            .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
             .provider = MXL_FABRICS_PROVIDER_TCP,
             .regions = regions,
-            .deviceSupport = false
         };
-        REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig) == MXL_STATUS_OK);
+        REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
 
         SECTION("initiator add/remove target")
         {
@@ -278,7 +278,7 @@ TEST_CASE("Fabrics connectionless activation tests", "[fabrics][connectionless][
     auto instance = mxlCreateInstance("/dev/shm/", "");
 
     mxlFabricsInstance fabrics;
-    REQUIRE(mxlFabricsCreateInstance(instance, &fabrics) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
 
     mxlFabricsTarget target;
     REQUIRE(mxlFabricsCreateTarget(fabrics, &target) == MXL_STATUS_OK);
@@ -287,21 +287,21 @@ TEST_CASE("Fabrics connectionless activation tests", "[fabrics][connectionless][
     REQUIRE(mxlFabricsCreateInitiator(fabrics, &initiator) == MXL_STATUS_OK);
 
     auto targetConfig = mxlFabricsTargetConfig{
+        .version = MXL_FABRICS_API_VERSION,
         .endpointAddress = mxlFabricsEndpointAddress{.node = "target", .service = "activation"},
         .provider = MXL_FABRICS_PROVIDER_SHM,
         .regions = regions,
-        .deviceSupport = false
     };
     mxlFabricsTargetInfo targetInfo;
-    REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, &targetInfo) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, nullptr, &targetInfo) == MXL_STATUS_OK);
 
     auto initiatorConfig = mxlFabricsInitiatorConfig{
+        .version = MXL_FABRICS_API_VERSION,
         .endpointAddress = mxlFabricsEndpointAddress{.node = "initiator", .service = "activation"},
         .provider = MXL_FABRICS_PROVIDER_SHM,
         .regions = regions,
-        .deviceSupport = false
     };
-    REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
 
     SECTION("initiator add/remove target")
     {
@@ -336,7 +336,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
     auto instance = mxlCreateInstance(domain.c_str(), "");
 
     mxlFabricsInstance fabrics;
-    REQUIRE(mxlFabricsCreateInstance(instance, &fabrics) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
 
     mxlFabricsTarget target;
     REQUIRE(mxlFabricsCreateTarget(fabrics, &target) == MXL_STATUS_OK);
@@ -364,21 +364,21 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
     SECTION("RC")
     {
         auto targetConfig = mxlFabricsTargetConfig{
+            .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
             .provider = MXL_FABRICS_PROVIDER_TCP,
             .regions = mxlTargetRegions,
-            .deviceSupport = false
         };
         mxlFabricsTargetInfo targetInfo;
-        REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, &targetInfo) == MXL_STATUS_OK);
+        REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, nullptr, &targetInfo) == MXL_STATUS_OK);
 
         auto initiatorConfig = mxlFabricsInitiatorConfig{
+            .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
             .provider = MXL_FABRICS_PROVIDER_TCP,
             .regions = mxlInitiatorRegions,
-            .deviceSupport = false
         };
-        REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig) == MXL_STATUS_OK);
+        REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
         REQUIRE(mxlFabricsInitiatorAddTarget(initiator, targetInfo) == MXL_STATUS_OK);
 
         std::uint64_t dummyIndex;
@@ -414,21 +414,21 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
     SECTION("RDM")
     {
         auto targetConfig = mxlFabricsTargetConfig{
+            .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "target", .service = "test"},
             .provider = MXL_FABRICS_PROVIDER_SHM,
             .regions = mxlTargetRegions,
-            .deviceSupport = false
         };
         mxlFabricsTargetInfo targetInfo;
-        REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, &targetInfo) == MXL_STATUS_OK);
+        REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, nullptr, &targetInfo) == MXL_STATUS_OK);
 
         auto initiatorConfig = mxlFabricsInitiatorConfig{
+            .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "initiator", .service = "test"},
             .provider = MXL_FABRICS_PROVIDER_SHM,
             .regions = mxlInitiatorRegions,
-            .deviceSupport = false
         };
-        REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig) == MXL_STATUS_OK);
+        REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
         REQUIRE(mxlFabricsInitiatorAddTarget(initiator, targetInfo) == MXL_STATUS_OK);
 
         std::uint64_t dummyIndex;
@@ -476,7 +476,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
     auto instance = mxlCreateInstance(domain.c_str(), "");
 
     mxlFabricsInstance fabrics;
-    REQUIRE(mxlFabricsCreateInstance(instance, &fabrics) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
 
     mxlFabricsTarget target;
     REQUIRE(mxlFabricsCreateTarget(fabrics, &target) == MXL_STATUS_OK);
@@ -504,21 +504,21 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
     SECTION("RC")
     {
         auto targetConfig = mxlFabricsTargetConfig{
+            .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
             .provider = MXL_FABRICS_PROVIDER_TCP,
             .regions = mxlTargetRegions,
-            .deviceSupport = false
         };
         mxlFabricsTargetInfo targetInfo;
-        REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, &targetInfo) == MXL_STATUS_OK);
+        REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, nullptr, &targetInfo) == MXL_STATUS_OK);
 
         auto initiatorConfig = mxlFabricsInitiatorConfig{
+            .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
             .provider = MXL_FABRICS_PROVIDER_TCP,
             .regions = mxlInitiatorRegions,
-            .deviceSupport = false
         };
-        REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig) == MXL_STATUS_OK);
+        REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
         REQUIRE(mxlFabricsInitiatorAddTarget(initiator, targetInfo) == MXL_STATUS_OK);
 
         std::uint64_t dummyIndex;
@@ -555,21 +555,21 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
     SECTION("RDM")
     {
         auto targetConfig = mxlFabricsTargetConfig{
+            .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "target", .service = "test"},
             .provider = MXL_FABRICS_PROVIDER_SHM,
             .regions = mxlTargetRegions,
-            .deviceSupport = false
         };
         mxlFabricsTargetInfo targetInfo;
-        REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, &targetInfo) == MXL_STATUS_OK);
+        REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, nullptr, &targetInfo) == MXL_STATUS_OK);
 
         auto initiatorConfig = mxlFabricsInitiatorConfig{
+            .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "initiator", .service = "test"},
             .provider = MXL_FABRICS_PROVIDER_SHM,
             .regions = mxlInitiatorRegions,
-            .deviceSupport = false
         };
-        REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig) == MXL_STATUS_OK);
+        REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
         REQUIRE(mxlFabricsInitiatorAddTarget(initiator, targetInfo) == MXL_STATUS_OK);
 
         std::uint64_t dummyIndex;
@@ -624,7 +624,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
 
     mxlFabricsInstance fabrics;
     auto instance = mxlCreateInstance(domain.c_str(), "");
-    REQUIRE(mxlFabricsCreateInstance(instance, &fabrics) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
 
     constexpr auto nbTargets = 2;
     std::array<mxlFabricsTarget, nbTargets> targets;
@@ -656,25 +656,25 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
     SECTION("RC")
     {
         auto initiatorConfig = mxlFabricsInitiatorConfig{
+            .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
             .provider = MXL_FABRICS_PROVIDER_TCP,
             .regions = mxlInitiatorRegions,
-            .deviceSupport = false
         };
 
-        REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig) == MXL_STATUS_OK);
+        REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
 
         std::array<mxlFabricsTargetConfig, nbTargets> targetConfig;
         std::array<mxlFabricsTargetInfo, nbTargets> targetInfo;
         for (size_t i = 0; i < nbTargets; i++)
         {
             targetConfig[i] = mxlFabricsTargetConfig{
+                .version = MXL_FABRICS_API_VERSION,
                 .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
                 .provider = MXL_FABRICS_PROVIDER_TCP,
                 .regions = mxlTargetRegions[i],
-                .deviceSupport = false
             };
-            REQUIRE(mxlFabricsTargetSetup(targets[i], &targetConfig[i], &targetInfo[i]) == MXL_STATUS_OK);
+            REQUIRE(mxlFabricsTargetSetup(targets[i], &targetConfig[i], nullptr, &targetInfo[i]) == MXL_STATUS_OK);
 
             REQUIRE(mxlFabricsInitiatorAddTarget(initiator, targetInfo[i]) == MXL_STATUS_OK);
         }
@@ -724,24 +724,24 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
     SECTION("RDM")
     {
         auto initiatorConfig = mxlFabricsInitiatorConfig{
+            .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "initiator", .service = "test"},
             .provider = MXL_FABRICS_PROVIDER_SHM,
             .regions = mxlInitiatorRegions,
-            .deviceSupport = false
         };
-        REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig) == MXL_STATUS_OK);
+        REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
 
         std::array<mxlFabricsTargetConfig, nbTargets> targetConfig;
         std::array<mxlFabricsTargetInfo, nbTargets> targetInfo;
         for (size_t i = 0; i < nbTargets; i++)
         {
             targetConfig[i] = mxlFabricsTargetConfig{
+                .version = MXL_FABRICS_API_VERSION,
                 .endpointAddress = mxlFabricsEndpointAddress{.node = "target", .service = "test"},
                 .provider = MXL_FABRICS_PROVIDER_SHM,
                 .regions = mxlTargetRegions[i],
-                .deviceSupport = false
             };
-            REQUIRE(mxlFabricsTargetSetup(targets[i], &targetConfig[i], &targetInfo[i]) == MXL_STATUS_OK);
+            REQUIRE(mxlFabricsTargetSetup(targets[i], &targetConfig[i], nullptr, &targetInfo[i]) == MXL_STATUS_OK);
 
             REQUIRE(mxlFabricsInitiatorAddTarget(initiator, targetInfo[i]) == MXL_STATUS_OK);
         }
@@ -812,7 +812,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
 
     mxlFabricsInstance fabrics;
     auto instance = mxlCreateInstance(domain.c_str(), "");
-    REQUIRE(mxlFabricsCreateInstance(instance, &fabrics) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
 
     constexpr auto nbTargets = 2;
     std::array<mxlFabricsTarget, nbTargets> targets;
@@ -844,25 +844,25 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
     SECTION("RC")
     {
         auto initiatorConfig = mxlFabricsInitiatorConfig{
+            .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
             .provider = MXL_FABRICS_PROVIDER_TCP,
             .regions = mxlInitiatorRegions,
-            .deviceSupport = false
         };
 
-        REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig) == MXL_STATUS_OK);
+        REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
 
         std::array<mxlFabricsTargetConfig, nbTargets> targetConfig;
         std::array<mxlFabricsTargetInfo, nbTargets> targetInfo;
         for (size_t i = 0; i < nbTargets; i++)
         {
             targetConfig[i] = mxlFabricsTargetConfig{
+                .version = MXL_FABRICS_API_VERSION,
                 .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
                 .provider = MXL_FABRICS_PROVIDER_TCP,
                 .regions = mxlTargetRegions[i],
-                .deviceSupport = false
             };
-            REQUIRE(mxlFabricsTargetSetup(targets[i], &targetConfig[i], &targetInfo[i]) == MXL_STATUS_OK);
+            REQUIRE(mxlFabricsTargetSetup(targets[i], &targetConfig[i], nullptr, &targetInfo[i]) == MXL_STATUS_OK);
 
             REQUIRE(mxlFabricsInitiatorAddTarget(initiator, targetInfo[i]) == MXL_STATUS_OK);
         }
@@ -914,24 +914,24 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
     SECTION("RDM")
     {
         auto initiatorConfig = mxlFabricsInitiatorConfig{
+            .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "initiator", .service = "test"},
             .provider = MXL_FABRICS_PROVIDER_SHM,
             .regions = mxlInitiatorRegions,
-            .deviceSupport = false
         };
-        REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig) == MXL_STATUS_OK);
+        REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
 
         std::array<mxlFabricsTargetConfig, nbTargets> targetConfig;
         std::array<mxlFabricsTargetInfo, nbTargets> targetInfo;
         for (size_t i = 0; i < nbTargets; i++)
         {
             targetConfig[i] = mxlFabricsTargetConfig{
+                .version = MXL_FABRICS_API_VERSION,
                 .endpointAddress = mxlFabricsEndpointAddress{.node = "target", .service = "test"},
                 .provider = MXL_FABRICS_PROVIDER_SHM,
                 .regions = mxlTargetRegions[i],
-                .deviceSupport = false
             };
-            REQUIRE(mxlFabricsTargetSetup(targets[i], &targetConfig[i], &targetInfo[i]) == MXL_STATUS_OK);
+            REQUIRE(mxlFabricsTargetSetup(targets[i], &targetConfig[i], nullptr, &targetInfo[i]) == MXL_STATUS_OK);
 
             REQUIRE(mxlFabricsInitiatorAddTarget(initiator, targetInfo[i]) == MXL_STATUS_OK);
         }
@@ -1003,21 +1003,21 @@ TEST_CASE("Fabrics: TargetInfo serialize/deserialize", "[fabrics][ofi][target-in
     mxlFabricsTarget target;
     mxlFabricsTargetInfo targetInfo;
 
-    REQUIRE(mxlFabricsCreateInstance(instance, &fabrics) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
     REQUIRE(mxlFabricsCreateTarget(fabrics, &target) == MXL_STATUS_OK);
 
     auto mxlRegions = ofi::getEmptyVideoMxlRegions();
     auto regions = mxlRegions.toAPI();
 
     auto config = mxlFabricsTargetConfig{
+        .version = MXL_FABRICS_API_VERSION,
         .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
         .provider = MXL_FABRICS_PROVIDER_TCP,
         .regions = regions,
-        .deviceSupport = false
     };
 
     // Retrieve the target info from the target setup
-    REQUIRE(mxlFabricsTargetSetup(target, &config, &targetInfo) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsTargetSetup(target, &config, nullptr, &targetInfo) == MXL_STATUS_OK);
 
     // Serialize the target info to a string
     size_t targetInfoStrSize = 0;

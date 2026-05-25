@@ -29,10 +29,8 @@ namespace mxl::lib::fabrics::ofi
             throw Exception::invalidArgument("Invalid provider passed");
         }
 
-        std::uint64_t caps = FI_RMA | FI_REMOTE_WRITE;
-        caps |= config.deviceSupport ? FI_HMEM : 0;
-
         // Get a list of available fabric configurations available on this machine.
+        std::uint64_t caps = FI_RMA | FI_REMOTE_WRITE;
         auto fabricInfoList = FabricInfoList::get(config.endpointAddress.node, config.endpointAddress.service, provider.value(), caps, FI_EP_MSG);
 
         if (fabricInfoList.begin() == fabricInfoList.end())

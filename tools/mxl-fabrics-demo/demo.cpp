@@ -131,7 +131,7 @@ public:
             return MXL_ERR_INVALID_ARG;
         }
 
-        auto status = mxlFabricsCreateInstance(_instance, &_fabricsInstance);
+        auto status = mxlFabricsCreateInstance(_instance, nullptr, &_fabricsInstance);
         if (status != MXL_STATUS_OK)
         {
             MXL_ERROR("Failed to create fabrics instance with status '{}'", static_cast<int>(status));
@@ -162,14 +162,14 @@ public:
         }
 
         mxlFabricsInitiatorConfig initiatorConfig = {
+            .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = {.node = _config.node ? _config.node.value().c_str() : nullptr,
                                 .service = _config.service ? _config.service.value().c_str() : nullptr},
             .provider = _config.provider,
-            .regions = regions,
-            .deviceSupport = false,
+            .regions = regions
         };
 
-        status = mxlFabricsInitiatorSetup(_initiator, &initiatorConfig);
+        status = mxlFabricsInitiatorSetup(_initiator, &initiatorConfig, nullptr);
         if (status != MXL_STATUS_OK)
         {
             MXL_ERROR("Failed to setup fabrics initiator with status '{}'", static_cast<int>(status));
@@ -498,7 +498,7 @@ public:
             return MXL_ERR_INVALID_ARG;
         }
 
-        auto status = mxlFabricsCreateInstance(_instance, &_fabricsInstance);
+        auto status = mxlFabricsCreateInstance(_instance, nullptr, &_fabricsInstance);
         if (status != MXL_STATUS_OK)
         {
             MXL_ERROR("Failed to create fabrics instance with status '{}'", static_cast<int>(status));
@@ -533,13 +533,13 @@ public:
         }
 
         mxlFabricsTargetConfig targetConfig = {
+            .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = {.node = _config.node ? _config.node.value().c_str() : nullptr,
                                 .service = _config.service ? _config.service.value().c_str() : nullptr},
             .provider = _config.provider,
             .regions = memoryRegions,
-            .deviceSupport = false,
         };
-        status = mxlFabricsTargetSetup(_target, &targetConfig, &_targetInfo);
+        status = mxlFabricsTargetSetup(_target, &targetConfig, nullptr, &_targetInfo);
         if (status != MXL_STATUS_OK)
         {
             MXL_ERROR("Failed to setup fabrics target with status '{}'", static_cast<int>(status));

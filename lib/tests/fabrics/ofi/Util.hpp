@@ -27,7 +27,6 @@ namespace mxl::lib::fabrics::ofi
         config.endpointAddress.node = "127.0.0.1";
         config.endpointAddress.service = "9090";
         config.provider = MXL_FABRICS_PROVIDER_TCP;
-        config.deviceSupport = false;
         config.regions = regions;
         return config;
     }
@@ -38,7 +37,6 @@ namespace mxl::lib::fabrics::ofi
         config.endpointAddress.node = "127.0.0.1";
         config.endpointAddress.service = "9091";
         config.provider = MXL_FABRICS_PROVIDER_TCP;
-        config.deviceSupport = false;
         config.regions = regions;
         return config;
     }

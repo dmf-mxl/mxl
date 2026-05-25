@@ -127,8 +127,9 @@ mxlStatus mxlFabricsRegionsFree(mxlFabricsRegions in_regions)
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsCreateInstance(mxlInstance in_instance, mxlFabricsInstance* out_fabricsInstance)
+mxlStatus mxlFabricsCreateInstance(mxlInstance in_instance, char const* options, mxlFabricsInstance* out_fabricsInstance)
 {
+    (void)options;
     if ((in_instance == nullptr) || (out_fabricsInstance == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
@@ -204,8 +205,10 @@ mxlStatus mxlFabricsDestroyTarget(mxlFabricsInstance in_fabricsInstance, mxlFabr
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsTargetSetup(mxlFabricsTarget in_target, mxlFabricsTargetConfig const* in_config, mxlFabricsTargetInfo* out_info)
+mxlStatus mxlFabricsTargetSetup(mxlFabricsTarget in_target, mxlFabricsTargetConfig const* in_config, char const* options,
+    mxlFabricsTargetInfo* out_info)
 {
+    (void)options;
     if ((in_target == nullptr) || (in_config == nullptr) || (out_info == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
@@ -355,8 +358,9 @@ mxlStatus mxlFabricsDestroyInitiator(mxlFabricsInstance in_fabricsInstance, mxlF
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsInitiatorSetup(mxlFabricsInitiator in_initiator, mxlFabricsInitiatorConfig const* in_config)
+mxlStatus mxlFabricsInitiatorSetup(mxlFabricsInitiator in_initiator, mxlFabricsInitiatorConfig const* in_config, char const* options)
 {
+    (void)options;
     if ((in_initiator == nullptr) || (in_config == nullptr))
     {
         return MXL_ERR_INVALID_ARG;

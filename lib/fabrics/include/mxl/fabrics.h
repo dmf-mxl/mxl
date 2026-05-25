@@ -16,6 +16,8 @@
 #include <mxl/mxl.h>
 #include <mxl/platform.h>
 
+#define MXL_FABRICS_API_VERSION 0 /**< Version of the API defined by this header. */
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -71,20 +73,20 @@ extern "C"
      */
     typedef struct mxlFabricsTargetConfig_t
     {
+        int version;                               /**< Struct version, must be set to MXL_FABRICS_API_VERSION by the caller */
         mxlFabricsEndpointAddress endpointAddress; /**< Bind address for the local endpoint. */
         mxlFabricsProvider provider;               /**< The provider that should be used */
         mxlFabricsRegions regions;                 /**< Local memory regions of the flow that grains should be written to. */
-        bool deviceSupport;                        /**< Require support of transfers involving device memory. */
     } mxlFabricsTargetConfig;
 
     /** Configuration object required to set up an initiator.
      */
     typedef struct mxlFabricsInitiatorConfig_t
     {
+        int version;                               /**< Struct version, must be set to MXL_FABRICS_API_VERSION by the caller */
         mxlFabricsEndpointAddress endpointAddress; /**< Bind address for the local endpoint. */
         mxlFabricsProvider provider;               /**< The provider that should be used. */
         mxlFabricsRegions regions;                 /**< Local memory regions of the flow that grains should source of remote write requests. */
-        bool deviceSupport;                        /**< Require support of transfers involving device memory. */
     } mxlFabricsInitiatorConfig;
 
     /**
@@ -124,7 +126,7 @@ extern "C"
      * \return MXL_STATUS_OK if the instance was successfully created
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsCreateInstance(mxlInstance in_instance, mxlFabricsInstance* out_fabricsInstance);
+    mxlStatus mxlFabricsCreateInstance(mxlInstance in_instance, char const* options, mxlFabricsInstance* out_fabricsInstance);
 
     /**
      * Destroy a mxlFabricsInstance.
@@ -162,7 +164,8 @@ extern "C"
      * \return The result code. \see mxlStatus
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsTargetSetup(mxlFabricsTarget in_target, mxlFabricsTargetConfig const* in_config, mxlFabricsTargetInfo* out_info);
+    mxlStatus mxlFabricsTargetSetup(mxlFabricsTarget in_target, mxlFabricsTargetConfig const* in_config, char const* in_options,
+        mxlFabricsTargetInfo* out_info);
 
     /**
      * Non-blocking accessor for a flow grain.
@@ -230,10 +233,11 @@ extern "C"
      * \param in_initiator A valid fabrics initiator
      * \param in_config The initiator configuration. This will be used to create an endpoint and register a memory region. The memory region
      * corresponds to the one that will be shared with targets.
+     * \param in_options A json-formatted string with additional options
      * \return The result code. \see mxlStatus
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsInitiatorSetup(mxlFabricsInitiator in_initiator, mxlFabricsInitiatorConfig const* in_config);
+    mxlStatus mxlFabricsInitiatorSetup(mxlFabricsInitiator in_initiator, mxlFabricsInitiatorConfig const* in_config, char const* in_options);
 
     /**
      * Add a target to the initiator. This will allow the initiator to send data to the target in subsequent calls to
