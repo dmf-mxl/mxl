@@ -21,6 +21,7 @@ const LATENCY_CUSHION: u64 = 5_000_000;
 
 pub(crate) fn data(
     state: &mut mxlsink::state::State,
+    element: &gst::Element,
     buffer: &gst::Buffer,
 ) -> Result<gst::FlowSuccess, gst::FlowError> {
     let data_state = state.data.as_mut().ok_or(gst::FlowError::Error)?;
@@ -30,7 +31,7 @@ pub(crate) fn data(
         .grain_rate()
         .map_err(|_| gst::FlowError::Error)?;
 
-    let clock = state.pipeline.clock().ok_or(gst::FlowError::Error)?;
+    let clock = element.clock().ok_or(gst::FlowError::Error)?;
     let gst_now = clock.time();
     let mxl_now = state.instance.get_time();
     let initial = data_state.initial_time.get_or_insert(InitialTime {

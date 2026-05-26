@@ -258,21 +258,12 @@ impl BaseSinkImpl for MxlSink {
             )
         })?;
         let instance = init_mxl_instance(&settings)?;
-        let pipeline = self
-            .obj()
-            .parent()
-            .and_then(|p| p.downcast::<gst::Pipeline>().ok())
-            .ok_or(gst::error_msg!(
-                gst::CoreError::Failed,
-                ["Failed to get pipeline"]
-            ))?;
         context.state = Some(State {
             instance,
             flow: None,
             video: None,
             audio: None,
             data: None,
-            pipeline,
         });
 
         Ok(())
@@ -333,12 +324,18 @@ impl BaseSinkImpl for MxlSink {
 
         let mut context = self.context.lock().map_err(|_| gst::FlowError::Error)?;
         let state = context.state.as_mut().ok_or(gst::FlowError::Error)?;
+        // Borrow the element for the duration of this render call so
+        // the format-specific paths can read its propagated pipeline
+        // clock via `Element::clock()` without `State` having to
+        // cache a strong ref (which would form a refcount cycle).
+        let element = self.obj();
+        let element: &gst::Element = element.upcast_ref();
         if state.video.is_some() {
-            render_video::video(state, buffer)
+            render_video::video(state, element, buffer)
         } else if state.audio.is_some() {
-            render_audio::audio(state, buffer)
+            render_audio::audio(state, element, buffer)
         } else if state.data.is_some() {
-            render_data::data(state, buffer)
+            render_data::data(state, element, buffer)
         } else {
             Err(gst::FlowError::Error)
         }

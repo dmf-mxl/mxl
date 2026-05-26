@@ -20,6 +20,7 @@ const LATENCY_CUSHION: u64 = 5_000_000;
 
 pub(crate) fn video(
     state: &mut mxlsink::state::State,
+    element: &gst::Element,
     buffer: &gst::Buffer,
 ) -> Result<gst::FlowSuccess, gst::FlowError> {
     let video_state = state.video.as_mut().ok_or(gst::FlowError::Error)?;
@@ -29,7 +30,7 @@ pub(crate) fn video(
         .grain_rate()
         .map_err(|_| gst::FlowError::Error)?;
 
-    let clock = state.pipeline.clock().ok_or(gst::FlowError::Error)?;
+    let clock = element.clock().ok_or(gst::FlowError::Error)?;
     let gst_now = clock.time();
     let mxl_now = state.instance.get_time();
     let initial = video_state.initial_time.get_or_insert(InitialTime {

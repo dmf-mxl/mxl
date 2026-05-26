@@ -56,7 +56,6 @@ pub(crate) struct State {
     pub video: Option<VideoState>,
     pub audio: Option<AudioState>,
     pub data: Option<DataState>,
-    pub pipeline: gst::Pipeline,
 }
 
 pub(crate) struct VideoState {

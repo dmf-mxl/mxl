@@ -32,6 +32,7 @@ const LATENCY_CUSHION: u64 = 5_000_000;
 
 pub(crate) fn audio(
     state: &mut mxlsink::state::State,
+    element: &gst::Element,
     buffer: &gst::Buffer,
 ) -> Result<gst::FlowSuccess, gst::FlowError> {
     let map = buffer.map_readable().map_err(|_| gst::FlowError::Error)?;
@@ -44,7 +45,7 @@ pub(crate) fn audio(
         .map_err(|_| gst::FlowError::Error)?;
     let buffer_length = flow_info.bufferLength as u64;
     let max_chunk = (buffer_length / 2) as usize;
-    let clock = state.pipeline.clock().ok_or(gst::FlowError::Error)?;
+    let clock = element.clock().ok_or(gst::FlowError::Error)?;
     let gst_now = clock.time();
     let audio_state = state.audio.as_mut().ok_or(gst::FlowError::Error)?;
     let bytes_per_sample = (audio_state.flow_def.bit_depth / 8) as usize;
