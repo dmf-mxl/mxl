@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ProtocolEgressRMA.hpp"
-#include <cstddef>
 #include "AudioBounceBuffer.hpp"
 #include "DataLayout.hpp"
 #include "Exception.hpp"
@@ -15,10 +14,10 @@ namespace mxl::lib::fabrics::ofi
 
     RMAGrainEgressProtocol::RMAGrainEgressProtocol(Completion::Token token, TargetInfo info, DataLayout::Discrete layout,
         std::vector<LocalRegion> localRegions)
-        : _token(token)
-        , _remoteInfo(std::move(info))
-        , _layout(layout)
-        , _localRegions(std::move(localRegions))
+        : _token{token}
+        , _remoteInfo{std::move(info)}
+        , _layout{layout}
+        , _localRegions{std::move(localRegions)}
     {}
 
     void RMAGrainEgressProtocol::registerMemory(std::shared_ptr<Domain>)
@@ -26,22 +25,22 @@ namespace mxl::lib::fabrics::ofi
         // For this protocol, memory registration is completely handled at the protocol template level, so this function doesn't need to do anything.
     }
 
-    void RMAGrainEgressProtocol::transferGrain(Endpoint& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint32_t payloadOffset,
+    void RMAGrainEgressProtocol::transferGrain(Endpoint const& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint32_t payloadOffset,
         SliceRange const& sliceRange, ::fi_addr_t destAddr)
     {
-        auto localSize = sliceRange.transferSize(payloadOffset, _layout.sliceSizes[0]);
-        auto localOffset = sliceRange.transferOffset(payloadOffset, _layout.sliceSizes[0]);
-        auto remoteSize = sliceRange.transferSize(payloadOffset, _layout.sliceSizes[0]);
-        auto remoteOffset = sliceRange.transferOffset(payloadOffset, _layout.sliceSizes[0]);
+        auto const localSize = sliceRange.transferSize(payloadOffset, _layout.sliceSizes[0]);
+        auto const localOffset = sliceRange.transferOffset(payloadOffset, _layout.sliceSizes[0]);
+        auto const remoteSize = sliceRange.transferSize(payloadOffset, _layout.sliceSizes[0]);
+        auto const remoteOffset = sliceRange.transferOffset(payloadOffset, _layout.sliceSizes[0]);
 
-        auto localRegion = _localRegions[localIndex % _localRegions.size()].sub(localOffset, localSize);
-        auto remoteRegion = _remoteInfo.remoteRegions[remoteIndex % _remoteInfo.remoteRegions.size()].sub(remoteOffset, remoteSize);
-        auto remoteSlot = remoteIndex % _remoteInfo.remoteRegions.size();
+        auto const localRegion = _localRegions[localIndex % _localRegions.size()].sub(localOffset, localSize);
+        auto const remoteRegion = _remoteInfo.remoteRegions[remoteIndex % _remoteInfo.remoteRegions.size()].sub(remoteOffset, remoteSize);
+        auto const remoteSlot = remoteIndex % _remoteInfo.remoteRegions.size();
 
         _pending += ep.write(_token, localRegion, remoteRegion, destAddr, ImmDataGrain{remoteSlot, sliceRange.end()}.data());
     }
 
-    void RMAGrainEgressProtocol::transferSamples(Endpoint&, std::uint64_t, std::size_t, ::fi_addr_t)
+    void RMAGrainEgressProtocol::transferSamples(Endpoint const&, std::uint64_t, std::size_t, ::fi_addr_t)
     {
         throw Exception::invalidState("transferSamples is not supported in RMAGrainEgressProtocol.");
     }
@@ -62,8 +61,8 @@ namespace mxl::lib::fabrics::ofi
     }
 
     RMAGrainEgressProtocolTemplate::RMAGrainEgressProtocolTemplate(DataLayout::Discrete layout, std::vector<Region> regions)
-        : _layout(layout)
-        , _regions(std::move(regions))
+        : _layout{layout}
+        , _regions{std::move(regions)}
     {}
 
     void RMAGrainEgressProtocolTemplate::registerMemory(std::shared_ptr<Domain> domain)
@@ -87,7 +86,7 @@ namespace mxl::lib::fabrics::ofi
         struct MakeUniqueEnabler : RMAGrainEgressProtocol
         {
             MakeUniqueEnabler(Completion::Token token, TargetInfo info, DataLayout::Discrete layout, std::vector<LocalRegion> localRegion)
-                : RMAGrainEgressProtocol(token, std::move(info), layout, std::move(localRegion))
+                : RMAGrainEgressProtocol{token, std::move(info), layout, std::move(localRegion)}
             {}
         };
 
@@ -96,12 +95,12 @@ namespace mxl::lib::fabrics::ofi
 
     RMASampleEgressProtocol::RMASampleEgressProtocol(Completion::Token token, TargetInfo info, DataLayout::Continuous layout, LocalRegion localRegion,
         std::size_t bounceBufferEntryCount)
-        : _token(token)
-        , _remoteInfo(std::move(info))
-        , _layout(layout)
-        , _localRegion(localRegion)
-        , _entryHeaders(bounceBufferEntryCount)
-        , _bounceBufferEntryCount(bounceBufferEntryCount)
+        : _token{token}
+        , _remoteInfo{std::move(info)}
+        , _layout{layout}
+        , _localRegion{localRegion}
+        , _entryHeaders{bounceBufferEntryCount}
+        , _bounceBufferEntryCount{bounceBufferEntryCount}
     {}
 
     void RMASampleEgressProtocol::registerMemory(std::shared_ptr<Domain> domain)
@@ -126,26 +125,26 @@ namespace mxl::lib::fabrics::ofi
         // will be at index 1 (right after the audio samples buffer). Read the number of regions already registered to the domain, then
         // register the entry header regions, and finally get the local regions again to retrieve the actual regions corresponding to the entry
         // headers we just registered. Use the offset to correctly get the entry header regions in the list of local regions.
-        auto offset = domain->localRegions().size();
+        auto const offset = domain->localRegions().size();
         domain->registerRegions(entryHeaderRegions, FI_WRITE);
-        auto localRegions = domain->localRegions();
+        auto const localRegions = domain->localRegions();
 
-        _entryHeaderRegions = std::vector(localRegions.begin() + static_cast<std::ptrdiff_t>(offset), localRegions.end());
+        _entryHeaderRegions = std::vector(localRegions.cbegin() + static_cast<std::ptrdiff_t>(offset), localRegions.cend());
     }
 
-    void RMASampleEgressProtocol::transferGrain(Endpoint&, std::uint64_t, std::uint64_t, std::uint32_t, SliceRange const&, ::fi_addr_t)
+    void RMASampleEgressProtocol::transferGrain(Endpoint const&, std::uint64_t, std::uint64_t, std::uint32_t, SliceRange const&, ::fi_addr_t)
     {
         throw Exception::invalidState("transferGrain is not supported in RMASampleEgressProtocol.");
     }
 
-    void RMASampleEgressProtocol::transferSamples(Endpoint& ep, std::uint64_t headIndex, std::size_t count, ::fi_addr_t destAddr)
+    void RMASampleEgressProtocol::transferSamples(Endpoint const& ep, std::uint64_t headIndex, std::size_t count, ::fi_addr_t destAddr)
     {
         if (count == 0)
         {
             throw Exception::invalidArgument("Count must be greater than 0.");
         }
 
-        auto entrySizeRequired = (_layout.sampleSize * _layout.channelCount * count) + sizeof(AudioEntryHeader);
+        auto const entrySizeRequired = (_layout.sampleSize * _layout.channelCount * count) + sizeof(AudioEntryHeader);
         if (entrySizeRequired > _remoteInfo.bounceBufferInfo->entrySize)
         {
             throw Exception::invalidArgument("Count is too large for the bounce buffer entry size. Count {}, entry size {}, required entry size {}.",
@@ -162,7 +161,7 @@ namespace mxl::lib::fabrics::ofi
         sgl.insert(sgl.begin(), _entryHeaderRegions[_bounceBufferEntryIndex]);
 
         // 2- Get the remote region
-        auto remoteRegion = _remoteInfo.remoteRegions[_bounceBufferEntryIndex % _remoteInfo.remoteRegions.size()];
+        auto const remoteRegion = _remoteInfo.remoteRegions[_bounceBufferEntryIndex % _remoteInfo.remoteRegions.size()];
 
         // 3- Send the remote write
         _pending += ep.write(_token, sgl, remoteRegion, destAddr, _bounceBufferEntryIndex);
@@ -189,7 +188,7 @@ namespace mxl::lib::fabrics::ofi
     std::vector<LocalRegion> RMASampleEgressProtocol::makeScatterGatherList(DataLayout::Continuous const& layout, std::uint64_t headIndex,
         std::size_t count, LocalRegion const& region)
     {
-        mxlMutableWrappedMultiBufferSlice slice = {};
+        auto slice = mxlMutableWrappedMultiBufferSlice{};
         AudioBounceBuffer::getMutableMultiBufferSlices(headIndex,
             count,
             layout.bufferLength,
@@ -199,7 +198,7 @@ namespace mxl::lib::fabrics::ofi
             slice);
 
         // Double the scatter-gather list length if the second fragment is present.
-        auto sgListLen = slice.base.fragments[1].size > 0 ? 2 * slice.count : slice.count;
+        auto const sgListLen = (slice.base.fragments[1].size > 0) ? 2 * slice.count : slice.count;
 
         // Create the scatter-gather list using the slices. We create at least one scatter-gather entry per channel. We potentially create an
         // additional one per channel if 2 fragments are present (wrap-around). When a fragment is not present its size will be 0.
@@ -210,9 +209,9 @@ namespace mxl::lib::fabrics::ofi
             // check if the fragment present
             if (fragment.size > 0)
             {
-                for (size_t chan = 0; chan < slice.count; chan++)
+                for (auto chan = std::size_t{0}; chan < slice.count; chan++)
                 {
-                    auto srcAddr = reinterpret_cast<std::uintptr_t>(fragment.pointer) + (slice.stride * chan);
+                    auto const srcAddr = reinterpret_cast<std::uintptr_t>(fragment.pointer) + (slice.stride * chan);
 
                     sgList.emplace_back(LocalRegion{.addr = srcAddr, .len = fragment.size, .desc = region.desc});
                 }
@@ -223,8 +222,8 @@ namespace mxl::lib::fabrics::ofi
     }
 
     RMASampleEgressProtocolTemplate::RMASampleEgressProtocolTemplate(DataLayout::Continuous layout, Region region)
-        : _layout(layout)
-        , _region(region)
+        : _layout{layout}
+        , _region{region}
     {}
 
     void RMASampleEgressProtocolTemplate::registerMemory(std::shared_ptr<Domain> domain)
@@ -234,7 +233,7 @@ namespace mxl::lib::fabrics::ofi
         {
             throw Exception::invalidState("Memory already registered.");
         }
-        if (domain->localRegions().size() != 0)
+        if (!domain->localRegions().empty())
         {
             throw Exception::invalidState("No memory should be previously registered.");
         }
@@ -263,7 +262,7 @@ namespace mxl::lib::fabrics::ofi
         {
             MakeUniqueEnabler(Completion::Token token, TargetInfo info, DataLayout::Continuous layout, LocalRegion localRegion,
                 std::uint32_t bounceBufferEntryCount)
-                : RMASampleEgressProtocol(token, std::move(info), layout, localRegion, bounceBufferEntryCount)
+                : RMASampleEgressProtocol{token, std::move(info), layout, localRegion, bounceBufferEntryCount}
             {}
         };
 

@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "LocalRegion.hpp"
-#include <cstddef>
 #include <algorithm>
 #include <numeric>
 #include "Exception.hpp"
@@ -61,7 +60,7 @@ namespace mxl::lib::fabrics::ofi
             throw Exception::invalidArgument("end {} is smaller than begin {}", end, begin);
         }
 
-        auto spanLength = end - begin;
+        auto const spanLength = end - begin;
         if (spanLength > _inner.size())
         {
             throw Exception::invalidArgument(
@@ -69,9 +68,9 @@ namespace mxl::lib::fabrics::ofi
         }
 
         return LocalRegionGroupSpan{
-            std::span(_inner.begin() + begin, spanLength),
-            std::span(_iovs.begin() + begin, spanLength),
-            std::span(_descs.begin() + begin, spanLength),
+            std::span{_inner.cbegin() + begin, spanLength},
+            std::span{_iovs.cbegin() + begin,  spanLength},
+            std::span{_descs.cbegin() + begin, spanLength},
         };
     }
 

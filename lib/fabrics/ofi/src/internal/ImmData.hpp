@@ -52,45 +52,4 @@ namespace mxl::lib::fabrics::ofi
         uint32_t _inner; /**< Packed representation of immediate data. */
     };
 
-    /** \brief Immediate data representation for continuous flow transfers.
-     */
-    class ImmDataSample
-    {
-    public:
-        struct Unpacked //**< Unpacked representation of immediate data. */
-        {
-            std::uint32_t bounceBufferEntry;
-        };
-
-    public:
-        /** \brief Create immediate data from packed data.
-         *
-         * \param data The packed immediate data.
-         */
-        ImmDataSample(std::uint32_t data) noexcept;
-
-        /** \brief Create immediate data from bounce buffer entry.
-         *
-         * \param index The bounce buffer entry.
-         */
-        ImmDataSample(std::uint64_t entry) noexcept;
-
-        /** \brief Unpack the immediate data into bounce buffer entry.
-         *
-         * \return A struct containing the bounce buffer entry.
-         */
-        [[nodiscard]]
-        Unpacked unpack() const noexcept;
-
-        /** \brief Get the packed immediate data.
-         *
-         * \return The packed immediate data.
-         */
-        [[nodiscard]]
-        std::uint32_t data() const noexcept;
-
-    private:
-        std::uint32_t _inner; /**< Packed representation of immediate data. */
-    };
-
 }

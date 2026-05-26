@@ -15,7 +15,7 @@ namespace mxl::lib::fabrics::ofi
     //
     // RMAGrainIngressProtocol implementations below
     RMAGrainIngressProtocol::RMAGrainIngressProtocol(std::vector<Region> regions)
-        : _regions(std::move(regions))
+        : _regions{std::move(regions)}
     {}
 
     std::vector<RemoteRegion> RMAGrainIngressProtocol::registerMemory(std::shared_ptr<Domain> domain)
@@ -31,12 +31,12 @@ namespace mxl::lib::fabrics::ofi
         return domain->remoteRegions();
     }
 
-    std::optional<TargetInfoBounceBufferInfo> RMAGrainIngressProtocol::bounceBufferInfo()
+    std::optional<TargetInfoBounceBufferInfo> RMAGrainIngressProtocol::bounceBufferInfo() const
     {
         return std::nullopt;
     }
 
-    void RMAGrainIngressProtocol::start(Endpoint& endpoint)
+    void RMAGrainIngressProtocol::start(Endpoint const& endpoint)
     {
         if (endpoint.domain()->usingRecvBufForCqData())
         {
@@ -44,7 +44,7 @@ namespace mxl::lib::fabrics::ofi
         }
     }
 
-    std::optional<Target::ReadResult> RMAGrainIngressProtocol::read(Endpoint& endpoint, Completion const& completion)
+    std::optional<Target::ReadResult> RMAGrainIngressProtocol::read(Endpoint const& endpoint, Completion const& completion)
     {
         auto completionData = completion.tryData();
         if (!completionData)
@@ -101,8 +101,8 @@ namespace mxl::lib::fabrics::ofi
     //
     // RMASampleIngressProtocol implementations below
     RMASampleIngressProtocol::RMASampleIngressProtocol(Region region, DataLayout::Continuous const& layout, std::uint32_t maxSyncBatchSize)
-        : _bounceBuffer(makeAudioBounceBuffer(layout, maxSyncBatchSize))
-        , _region(region)
+        : _bounceBuffer{makeAudioBounceBuffer(layout, maxSyncBatchSize)}
+        , _region{region}
     {}
 
     std::vector<RemoteRegion> RMASampleIngressProtocol::registerMemory(std::shared_ptr<Domain> domain)
@@ -118,15 +118,15 @@ namespace mxl::lib::fabrics::ofi
         return domain->remoteRegions();
     }
 
-    std::optional<TargetInfoBounceBufferInfo> RMASampleIngressProtocol::bounceBufferInfo()
+    std::optional<TargetInfoBounceBufferInfo> RMASampleIngressProtocol::bounceBufferInfo() const
     {
-        auto entrySize = _bounceBuffer.entrySize(); // All entries have the same size, we can just take the size of the first one
-        auto entryCount = _bounceBuffer.entryCount();
+        auto const entrySize = _bounceBuffer.entrySize(); // All entries have the same size, we can just take the size of the first one
+        auto const entryCount = _bounceBuffer.entryCount();
 
         return TargetInfoBounceBufferInfo{.entryCount = entryCount, .entrySize = entrySize};
     }
 
-    void RMASampleIngressProtocol::start(Endpoint& endpoint)
+    void RMASampleIngressProtocol::start(Endpoint const& endpoint)
     {
         if (endpoint.domain()->usingRecvBufForCqData())
         {
@@ -134,7 +134,7 @@ namespace mxl::lib::fabrics::ofi
         }
     }
 
-    std::optional<Target::ReadResult> RMASampleIngressProtocol::read(Endpoint& endpoint, Completion const& completion)
+    std::optional<Target::ReadResult> RMASampleIngressProtocol::read(Endpoint const& endpoint, Completion const& completion)
     {
         auto completionData = completion.tryData();
         if (!completionData)
@@ -147,16 +147,13 @@ namespace mxl::lib::fabrics::ofi
             endpoint.recv(immDataRegion());
         }
 
-        auto immData = completionData->data();
+        auto const immData = completionData->data();
         if (!immData)
         {
             throw Exception::invalidState("Received a completion without immediate data.");
         }
 
-        auto entryIndex = ImmDataSample{static_cast<std::uint32_t>(*immData)}.unpack().bounceBufferEntry;
-
-        auto header = _bounceBuffer.unpack(entryIndex, _region);
-
+        auto const header = _bounceBuffer.unpack(*immData, _region);
         return std::make_optional<Target::SampleReadResult>(header.headIndex, header.count);
     }
 
@@ -185,11 +182,11 @@ namespace mxl::lib::fabrics::ofi
 
     AudioBounceBuffer RMASampleIngressProtocol::makeAudioBounceBuffer(DataLayout::Continuous const& layout, std::uint32_t maxSyncBatchSize)
     {
-        auto oneSampleSize = layout.sampleSize * layout.channelCount;
-        auto entrySize = oneSampleSize * maxSyncBatchSize;
-        auto historySize = layout.bufferLength * oneSampleSize;
+        auto const oneSampleSize = layout.sampleSize * layout.channelCount;
+        auto const entrySize = oneSampleSize * maxSyncBatchSize;
+        auto const historySize = layout.bufferLength * oneSampleSize;
 
-        auto entryCount = (historySize + entrySize - 1) / entrySize; // ceil(historySize / entrySize)
+        auto const entryCount = (historySize + entrySize - 1U) / entrySize; // ceil(historySize / entrySize)
 
         MXL_INFO("Creating audio bounce buffer with entry size {} bytes and entry count {}, maxSyncBatchSize {} historySize {} bufferLength {}",
             entrySize,

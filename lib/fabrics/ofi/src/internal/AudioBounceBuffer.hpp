@@ -28,7 +28,7 @@ namespace mxl::lib::fabrics::ofi
          *\note The header size is not included in the size parameter, it will be added on top of it. The total size of the bounce buffer entry will
          * be header size + samples size.
          */
-        AudioBounceBufferEntry(std::uint32_t size);
+        explicit AudioBounceBufferEntry(std::uint32_t size);
 
         /** \brief Return a view on the header of the bounce buffer entry.
          */
@@ -83,7 +83,7 @@ namespace mxl::lib::fabrics::ofi
          *
          * Internally the header will be used to correctly map the bounce buffer entry slices to the output region slices.
          */
-        AudioEntryHeader const& unpack(std::size_t entryIndex, Region& outRegion) const;
+        AudioEntryHeader const& unpack(std::size_t entryIndex, Region const& outRegion) const;
 
         static void getMutableMultiBufferSlices(std::uint64_t index, std::size_t count, size_t bufferLength, std::size_t sampleWordSize,
             std::size_t channelCount, std::uint8_t* baseBufferPtr, mxlMutableWrappedMultiBufferSlice& slice) noexcept;

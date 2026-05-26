@@ -49,7 +49,7 @@ namespace mxl::lib::fabrics::ofi
          * \param headIndex The head index to transfer.
          * \param count The number of samples per channel to transfer.
          */
-        virtual void transferSamples(uint64_t headIndex, std::size_t count) = 0;
+        virtual void transferSamples(std::uint64_t headIndex, std::size_t count) = 0;
 
         /** \brief Transfer a grain to a specific target.
          *

@@ -137,6 +137,8 @@ namespace mxl::lib::fabrics::ofi
      */
     class LocalRegionGroupSpan
     {
+        friend class LocalRegionGroup;
+
     public:
         [[nodiscard]]
         ::iovec const* asIovec() const noexcept
@@ -160,9 +162,6 @@ namespace mxl::lib::fabrics::ofi
          */
         [[nodiscard]]
         std::size_t byteSize() const noexcept;
-
-    private:
-        friend class LocalRegionGroup;
 
     private:
         LocalRegionGroupSpan(std::span<LocalRegion const>, std::span<::iovec const>, std::span<void* const>);

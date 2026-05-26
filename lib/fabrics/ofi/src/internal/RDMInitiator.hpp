@@ -50,12 +50,12 @@ namespace mxl::lib::fabrics::ofi
 
         /** \brief Post a grain data transfer request to this endpoint.
          */
-        void transferGrain(Endpoint& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t remotePayloadOffset,
+        void transferGrain(Endpoint const& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t remotePayloadOffset,
             SliceRange const& sliceRange);
 
         /** \brief Post a sample data transfer request to this endpoint.
          */
-        void transferSamples(Endpoint& ep, std::uint64_t headIndex, std::size_t count);
+        void transferSamples(Endpoint const& ep, std::uint64_t headIndex, std::size_t count);
 
         /** \brief Returns true if there's pending work for this target.
          */

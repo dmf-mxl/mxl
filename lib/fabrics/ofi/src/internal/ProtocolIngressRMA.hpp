@@ -28,15 +28,16 @@ namespace mxl::lib::fabrics::ofi
          *\note This protocol does not use a bounce buffer, so this function returns an empty optional.
          */
         [[nodiscard]]
-        std::optional<TargetInfoBounceBufferInfo> bounceBufferInfo() override;
+        std::optional<TargetInfoBounceBufferInfo> bounceBufferInfo() const override;
 
         /** \copydoc IngressProtocol::start()
          */
-        void start(Endpoint& endpoint) override;
+        void start(Endpoint const& endpoint) override;
 
         /** \copydoc IngressProtocol::processCompletion()
          */
-        std::optional<Target::ReadResult> read(Endpoint& endpoint, Completion const& completion) override;
+        [[nodiscard]]
+        std::optional<Target::ReadResult> read(Endpoint const& endpoint, Completion const& completion) override;
 
         /**\brief This protocol can read grains, but not samples, since it is designed for remote writes of grain buffers.
          */
@@ -81,13 +82,14 @@ namespace mxl::lib::fabrics::ofi
         /** \copydoc IngressProtocol::bounceBufferInfo()
          */
         [[nodiscard]]
-        std::optional<TargetInfoBounceBufferInfo> bounceBufferInfo() override;
+        std::optional<TargetInfoBounceBufferInfo> bounceBufferInfo() const override;
 
-        void start(Endpoint& endpoint) override;
+        void start(Endpoint const& endpoint) override;
 
         /** \copydoc IngressProtocol::processCompletion()
          */
-        std::optional<Target::ReadResult> read(Endpoint& endpoint, Completion const& completion) override;
+        [[nodiscard]]
+        std::optional<Target::ReadResult> read(Endpoint const& endpoint, Completion const& completion) override;
 
         /** \brief This protocol cannot read grains, since it is designed for remote writes of audio samples.
          */

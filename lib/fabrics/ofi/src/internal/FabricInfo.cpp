@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "FabricInfo.hpp"
-#include <cstddef>
-#include <cstdint>
 #include <rdma/fabric.h>
 #include <rdma/fi_errno.h>
 #include "Exception.hpp"

@@ -32,17 +32,19 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         virtual std::vector<RemoteRegion> registerMemory(std::shared_ptr<Domain> domain) = 0;
 
-        virtual std::optional<TargetInfoBounceBufferInfo> bounceBufferInfo() = 0;
+        [[nodiscard]]
+        virtual std::optional<TargetInfoBounceBufferInfo> bounceBufferInfo() const = 0;
 
         /** \brief Start receiving.
          */
-        virtual void start(Endpoint& endpoint) = 0;
+        virtual void start(Endpoint const& endpoint) = 0;
 
         /** \brief Process a completion with the given immediate data.
          * \param endpoint The endpoint associated with the completion
          * \param completion The completion object to process.
          */
-        virtual std::optional<Target::ReadResult> read(Endpoint& endpoint, Completion const& completion) = 0;
+        [[nodiscard]]
+        virtual std::optional<Target::ReadResult> read(Endpoint const& endpoint, Completion const& completion) = 0;
 
         /** \brief Check if this protocol can read grains.
          */
@@ -84,7 +86,7 @@ namespace mxl::lib::fabrics::ofi
          * \param sliceRange The range of slices to transfer.
          * \param destAddr The destination address. This is ignored for connection-oriented endpoints.
          */
-        virtual void transferGrain(Endpoint& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint32_t payloadOffset,
+        virtual void transferGrain(Endpoint const& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint32_t payloadOffset,
             SliceRange const& sliceRange, ::fi_addr_t destAddr = FI_ADDR_UNSPEC) = 0;
 
         /** \brief Transfer samples to a remote target.
@@ -92,7 +94,7 @@ namespace mxl::lib::fabrics::ofi
          * \param count The number of samples per channel to transfer.
          * \param destAddr The destination address. This is ignored for connection-oriented endpoints.
          */
-        virtual void transferSamples(Endpoint& ep, std::uint64_t headIndex, std::size_t count, ::fi_addr_t destAddr = FI_ADDR_UNSPEC) = 0;
+        virtual void transferSamples(Endpoint const& ep, std::uint64_t headIndex, std::size_t count, ::fi_addr_t destAddr = FI_ADDR_UNSPEC) = 0;
 
         /** \brief Process a completion event. Any post-processing after a transfer should be done here.
          */

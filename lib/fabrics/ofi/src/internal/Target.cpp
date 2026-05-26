@@ -16,7 +16,7 @@
 
 namespace mxl::lib::fabrics::ofi
 {
-    LocalRegion Target::ImmediateDataLocation::toLocalRegion() noexcept
+    LocalRegion Target::ImmediateDataLocation::toLocalRegion() const noexcept
     {
         return LocalRegion{
             .addr = std::bit_cast<std::uint64_t>(&data),

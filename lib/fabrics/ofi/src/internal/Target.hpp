@@ -77,7 +77,7 @@ namespace mxl::lib::fabrics::ofi
             /** \brief Get the underlying local region of the immediate data.
              */
             [[nodiscard]]
-            LocalRegion toLocalRegion() noexcept;
+            LocalRegion toLocalRegion() const noexcept;
 
         public:
             std::uint64_t data; /**< The immediate data value. Libfabric uses a uint64_t, but some provider might only transfer 4 bytes. (Verbs) */

@@ -28,25 +28,4 @@ namespace mxl::lib::fabrics::ofi
     {
         return _inner;
     }
-
-    ImmDataSample::ImmDataSample(std::uint32_t data) noexcept
-    {
-        _inner = data;
-    }
-
-    ImmDataSample::ImmDataSample(std::uint64_t entry) noexcept
-    {
-        auto bounceBufferEntry = static_cast<std::uint32_t>(entry);
-        _inner = std::bit_cast<std::uint32_t>(Unpacked{.bounceBufferEntry = bounceBufferEntry});
-    }
-
-    ImmDataSample::Unpacked ImmDataSample::unpack() const noexcept
-    {
-        return std::bit_cast<Unpacked>(_inner);
-    }
-
-    std::uint32_t ImmDataSample::data() const noexcept
-    {
-        return _inner;
-    }
 }

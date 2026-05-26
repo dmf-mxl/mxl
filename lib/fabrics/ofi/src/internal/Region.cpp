@@ -163,10 +163,10 @@ namespace mxl::lib::fabrics::ofi
 
         if (mxlIsDiscreteDataFormat(static_cast<int>(flow.flowInfo()->config.common.format)))
         {
-            auto& discreteFlow = static_cast<DiscreteFlowData const&>(flow);
-            std::vector<Region> regions;
+            auto const& discreteFlow = static_cast<DiscreteFlowData const&>(flow);
+            auto regions = std::vector<Region>{};
             regions.reserve(discreteFlow.grainCount());
-            for (std::size_t i = 0; i < discreteFlow.grainCount(); ++i)
+            for (auto i = std::size_t{0}; i < discreteFlow.grainCount(); ++i)
             {
                 auto grain = discreteFlow.grainAt(i);
 
@@ -183,8 +183,8 @@ namespace mxl::lib::fabrics::ofi
         }
         else if (mxlIsContinuousDataFormat(static_cast<int>(flow.flowInfo()->config.common.format)))
         {
-            auto& continuousFlow = static_cast<ContinuousFlowData const&>(flow);
-            std::vector<Region> regions;
+            auto const& continuousFlow = static_cast<ContinuousFlowData const&>(flow);
+            auto regions = std::vector<Region>{};
 
             // For the continuous flow, the data layout is a single contiguous buffer
             regions.emplace_back(reinterpret_cast<std::uintptr_t>(continuousFlow.channelData()),

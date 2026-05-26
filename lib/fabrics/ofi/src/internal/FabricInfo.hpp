@@ -58,16 +58,22 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Dereferencing the FabricInfo return the raw ::fi_info object managed
          * by this object.
          */
+        [[nodiscard]]
         ::fi_info& operator*() noexcept;
         /** \copydoc operator*() */
+        [[nodiscard]]
         ::fi_info const& operator*() const noexcept;
         /** \copydoc operator*() */
+        [[nodiscard]]
         ::fi_info* operator->() noexcept;
+        [[nodiscard]]
         /** \copydoc operator*() */
+        [[nodiscard]]
         ::fi_info const* operator->() const noexcept;
 
         /** \brief Returns the raw ::fi_info object managed by this FabricInfo instance.
          */
+        [[nodiscard]]
         ::fi_info* raw() noexcept;
         /** \copydoc raw() */
         [[nodiscard]]
@@ -99,12 +105,16 @@ namespace mxl::lib::fabrics::ofi
     public:
         /** \brief Dereferencing returns the raw ::fi_info object associated with this view.
          */
+        [[nodiscard]]
         ::fi_info& operator*() noexcept;
         /** \copydoc operator*() */
+        [[nodiscard]]
         ::fi_info const& operator*() const noexcept;
         /** \copydoc operator*() */
+        [[nodiscard]]
         ::fi_info* operator->() noexcept;
         /** \copydoc operator*() */
+        [[nodiscard]]
         ::fi_info const* operator->() const noexcept;
 
         /** \brief Returns the raw ::fi_info object associated with this view.
@@ -117,10 +127,12 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Return an owned version that can be moved, copied and dereferenced safely even if
          * the original FabricInfo object has been released.
          */
+        [[nodiscard]]
         FabricInfo owned() noexcept;
 
         /** \brief Return the IOV limit for this fabric info, which is the maximum number of iovecs that can be posted in a single send operation.
          */
+        [[nodiscard]]
         std::size_t txIovLimit() const noexcept;
 
     private:

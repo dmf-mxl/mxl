@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstring>
 #include <bit>
+#include "Exception.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
@@ -56,13 +57,13 @@ namespace mxl::lib::fabrics::ofi
     }
 
     AudioBounceBuffer::AudioBounceBuffer(size_t entryCount, std::size_t entrySize, DataLayout::Continuous layout)
-        : _entries(entryCount, AudioBounceBufferEntry(entrySize))
-        , _layout(layout)
+        : _entries{entryCount, AudioBounceBufferEntry{static_cast<uint32_t>(entrySize)}}
+        , _layout{layout}
     {}
 
     std::vector<Region> AudioBounceBuffer::getRegions() const noexcept
     {
-        std::vector<Region> out;
+        auto out = std::vector<Region>{};
         out.reserve(_entries.size());
         for (auto const& entry : _entries)
         {
@@ -81,10 +82,18 @@ namespace mxl::lib::fabrics::ofi
         return _entries.empty() ? 0 : _entries.front().size();
     }
 
-    AudioEntryHeader const& AudioBounceBuffer::unpack(std::size_t entryIndex, Region& outRegion) const
+    AudioEntryHeader const& AudioBounceBuffer::unpack(std::size_t entryIndex, Region const& outRegion) const
     {
         auto const& entry = _entries.at(entryIndex);
         auto const* header = entry.header();
+
+        auto const maxCountPerEntry = (entrySize() - sizeof(AudioEntryHeader)) / (_layout.channelCount * _layout.sampleSize);
+
+        if (header->count > maxCountPerEntry)
+        {
+            throw Exception::invalidArgument(
+                "Invalid 'count' {} received in the header. That number of samples per channel would bust the bounce buffer entry.", header->count);
+        }
 
         // Using the given audio data layout, head index and number of samples recover the slices
         mxlMutableWrappedMultiBufferSlice slices;
@@ -102,10 +111,10 @@ namespace mxl::lib::fabrics::ofi
             // check if the fragment present
             if (fragment.size > 0)
             {
-                for (std::size_t chan = 0; chan < slices.count; chan++)
+                for (auto chan = std::size_t{0}; chan < slices.count; chan++)
                 {
-                    auto dstAddr = reinterpret_cast<std::uintptr_t>(fragment.pointer) + (slices.stride * chan);
-                    std::memcpy(reinterpret_cast<void*>(dstAddr), srcAddr, fragment.size); // NOLINT
+                    auto const dstAddr = reinterpret_cast<std::uint8_t*>(fragment.pointer) + (slices.stride * chan);
+                    std::memcpy(dstAddr, srcAddr, fragment.size);
                     srcAddr += fragment.size;
                 }
             }

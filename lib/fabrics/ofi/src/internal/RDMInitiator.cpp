@@ -72,18 +72,18 @@ namespace mxl::lib::fabrics::ofi
             std::move(_state));
     }
 
-    void RDMInitiatorTarget::transferGrain(Endpoint& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t remotePayloadOffset,
+    void RDMInitiatorTarget::transferGrain(Endpoint const& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t remotePayloadOffset,
         SliceRange const& sliceRange)
     {
-        if (auto state = std::get_if<Activated>(&_state); state != nullptr)
+        if (auto const state = std::get_if<Activated>(&_state); state != nullptr)
         {
             _proto->transferGrain(ep, localIndex, remoteIndex, remotePayloadOffset, sliceRange, state->fiAddr);
         }
     }
 
-    void RDMInitiatorTarget::transferSamples(Endpoint& ep, std::uint64_t headIndex, std::size_t count)
+    void RDMInitiatorTarget::transferSamples(Endpoint const& ep, std::uint64_t headIndex, std::size_t count)
     {
-        if (auto state = std::get_if<Activated>(&_state); state != nullptr)
+        if (auto const state = std::get_if<Activated>(&_state); state != nullptr)
         {
             _proto->transferSamples(ep, headIndex, count, state->fiAddr);
         }
@@ -186,7 +186,7 @@ namespace mxl::lib::fabrics::ofi
             throw Exception::exists("A target with endpoint id {} has already been added to this initiator.", targetInfo.id);
         }
 
-        auto token = Completion::randomToken();
+        auto const token = Completion::randomToken();
         auto proto = _proto->createInstance(token, targetInfo);
         proto->registerMemory(_endpoint.domain());
 
@@ -222,7 +222,7 @@ namespace mxl::lib::fabrics::ofi
         findRemoteByEndpoint(targetId).transferGrain(_endpoint, localIndex, remoteIndex, payloadOffset, SliceRange::make(startSlice, endSlice));
     }
 
-    void RDMInitiator::transferSamples(uint64_t headIndex, size_t count)
+    void RDMInitiator::transferSamples(std::uint64_t headIndex, std::size_t count)
     {
         for (auto& [_, target] : _targets)
         {

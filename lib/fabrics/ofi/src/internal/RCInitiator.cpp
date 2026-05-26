@@ -213,15 +213,15 @@ namespace mxl::lib::fabrics::ofi
     void RCInitiatorEndpoint::transferGrain(std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t remotePayloadOffset,
         SliceRange const& sliceRange)
     {
-        if (auto state = std::get_if<Connected>(&_state); state != nullptr)
+        if (auto const state = std::get_if<Connected>(&_state); state != nullptr)
         {
             _proto->transferGrain(state->ep, localIndex, remoteIndex, remotePayloadOffset, sliceRange);
         }
     }
 
-    void RCInitiatorEndpoint::transferSamples(uint64_t headIndex, size_t count)
+    void RCInitiatorEndpoint::transferSamples(std::uint64_t headIndex, std::size_t count)
     {
-        if (auto state = std::get_if<Connected>(&_state); state != nullptr)
+        if (auto const state = std::get_if<Connected>(&_state); state != nullptr)
         {
             _proto->transferSamples(state->ep, headIndex, count);
         }

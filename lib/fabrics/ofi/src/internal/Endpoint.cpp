@@ -316,7 +316,7 @@ namespace mxl::lib::fabrics::ofi
     }
 
     void Endpoint::writeImpl(Completion::Token token, ::iovec const* msgIov, std::size_t iovCount, void** desc, ::fi_rma_iov const* rmaIov,
-        ::fi_addr_t destAddr, std::optional<std::uint32_t> immData)
+        ::fi_addr_t destAddr, std::optional<std::uint32_t> immData) const
     {
         std::uint64_t data = immData.value_or(0);
         std::uint64_t flags = FI_DELIVERY_COMPLETE;
@@ -337,7 +337,7 @@ namespace mxl::lib::fabrics::ofi
     }
 
     std::size_t Endpoint::write(Completion::Token token, LocalRegion const& local, RemoteRegion const& remote, ::fi_addr_t destAddr,
-        std::optional<std::uint32_t> immData)
+        std::optional<std::uint32_t> immData) const
     {
         std::vector<void*> descs{local.desc};
 
@@ -350,20 +350,20 @@ namespace mxl::lib::fabrics::ofi
     }
 
     std::size_t Endpoint::write(Completion::Token token, LocalRegionGroup const& localGroup, RemoteRegion const& remote, ::fi_addr_t destAddr,
-        std::optional<std::uint32_t> immData)
+        std::optional<std::uint32_t> immData) const
     {
         auto remoteRmaIov = remote.toRmaIov();
         auto remoteOffset = std::size_t{0};
 
-        auto iovLimit = info().txIovLimit();
-        auto nbWrites = (localGroup.size() + iovLimit - 1) / iovLimit; // ceil(group.size() / iovLimit)
+        auto const iovLimit = info().txIovLimit();
+        auto const nbWrites = (localGroup.size() + iovLimit - 1) / iovLimit; // ceil(group.size() / iovLimit)
 
-        for (std::size_t i = 0; i < nbWrites; i++)
+        for (auto i = std::size_t{0}; i < nbWrites; i++)
         {
-            auto begin = i * iovLimit;
-            auto end = begin + std::min(iovLimit, localGroup.size() - begin);
+            auto const begin = i * iovLimit;
+            auto const end = begin + std::min(iovLimit, localGroup.size() - begin);
 
-            auto localGroupSpan = localGroup.span(begin, end);
+            auto const localGroupSpan = localGroup.span(begin, end);
 
             // Validate that we don't bust the remote region
             if ((remoteOffset + localGroupSpan.byteSize()) > remote.len)
@@ -374,8 +374,8 @@ namespace mxl::lib::fabrics::ofi
             remoteRmaIov.addr = remote.addr + remoteOffset;
             remoteRmaIov.len = localGroupSpan.byteSize();
 
-            auto isLastWrite = (i == nbWrites - 1);
-            auto immDataForWrite = isLastWrite ? immData : std::nullopt;
+            auto const isLastWrite = (i == nbWrites - 1);
+            auto const immDataForWrite = isLastWrite ? immData : std::nullopt;
 
             writeImpl(token,
                 localGroupSpan.asIovec(),
@@ -391,7 +391,7 @@ namespace mxl::lib::fabrics::ofi
         return nbWrites;
     }
 
-    void Endpoint::recv(LocalRegion region)
+    void Endpoint::recv(LocalRegion region) const
     {
         auto iovec = region.toIovec();
         fiCall(::fi_recv, "Failed to push recv to work queue", _raw, iovec.iov_base, iovec.iov_len, nullptr, FI_ADDR_UNSPEC, nullptr);

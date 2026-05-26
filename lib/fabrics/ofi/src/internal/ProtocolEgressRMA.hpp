@@ -22,14 +22,14 @@ namespace mxl::lib::fabrics::ofi
 
         /** \copydoc EgressProtocol::transferGrain()
          */
-        void transferGrain(Endpoint& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint32_t payloadOffset,
+        void transferGrain(Endpoint const& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint32_t payloadOffset,
             SliceRange const& sliceRange, ::fi_addr_t destAddr = FI_ADDR_UNSPEC) override;
 
         /** \copydoc EgressProtocol::transferSamples()
          * \note This is unsupported in this protocol since it is designed for grain data. Calling this function will result in an
          * Exception::invalidState being thrown.
          */
-        void transferSamples(Endpoint&, std::uint64_t, std::size_t, ::fi_addr_t) override;
+        void transferSamples(Endpoint const&, std::uint64_t, std::size_t, ::fi_addr_t) override;
 
         /** \copydoc EgressProtocol::processCompletion()
          */
@@ -88,12 +88,12 @@ namespace mxl::lib::fabrics::ofi
          *\note This is unsupported in this protocol since it is designed for audio data. Calling this function will result in an
          * Exception::invalidState being thrown.
          */
-        void transferGrain(Endpoint& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint32_t payloadOffset,
+        void transferGrain(Endpoint const& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint32_t payloadOffset,
             SliceRange const& sliceRange, ::fi_addr_t destAddr = FI_ADDR_UNSPEC) override;
 
         /** \copydoc EgressProtocol::transferSamples()
          */
-        void transferSamples(Endpoint& ep, std::uint64_t headIndex, std::size_t count, ::fi_addr_t destAddr = FI_ADDR_UNSPEC) override;
+        void transferSamples(Endpoint const& ep, std::uint64_t headIndex, std::size_t count, ::fi_addr_t destAddr = FI_ADDR_UNSPEC) override;
 
         /** \copydoc EgressProtocol::processCompletion()
          */
