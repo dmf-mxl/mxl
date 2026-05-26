@@ -50,6 +50,18 @@ pub enum InterlaceMode {
     InterlacedBff,
 }
 
+impl InterlaceMode {
+    /// String form matching the `#[serde(rename = ...)]` wire names, suitable
+    /// for direct use in GStreamer caps (no surrounding JSON quote characters).
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Progressive => "progressive",
+            Self::InterlacedTff => "interlaced_tff",
+            Self::InterlacedBff => "interlaced_bff",
+        }
+    }
+}
+
 impl FromStr for InterlaceMode {
     type Err = ();
 
