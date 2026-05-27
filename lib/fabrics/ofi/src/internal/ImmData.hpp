@@ -49,7 +49,7 @@ namespace mxl::lib::fabrics::ofi
         std::uint32_t data() const noexcept;
 
     private:
-        uint32_t _inner; /**< Packed representation of immediate data. */
+        std::uint32_t _inner; /**< Packed representation of immediate data. */
     };
 
 }

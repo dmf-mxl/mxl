@@ -72,7 +72,7 @@ namespace mxl::lib::fabrics::ofi
     std::string AddressVector::addrToString(FabricAddress const& addr) const
     {
         std::string s;
-        size_t len = 0;
+        std::size_t len = 0;
 
         ::fi_av_straddr(_raw, addr.raw(), nullptr, &len);
         s.resize(len);

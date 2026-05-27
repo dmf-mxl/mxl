@@ -104,7 +104,7 @@ namespace mxl::lib::fabrics::ofi
      *
      * RDM endpoints provide connectionless communication with reliability guarantees. An address vector is used to manage destination addresses.
      */
-    class RDMInitiator : public Initiator
+    class RDMInitiator /*final*/ : public Initiator
     {
     public:
         /** \brief Set up a new RDMInitiator.
@@ -114,34 +114,34 @@ namespace mxl::lib::fabrics::ofi
 
         /** \copydoc Initiator::addTarget()
          */
-        void addTarget(TargetInfo const& remoteTargetInfo) override;
+        virtual void addTarget(TargetInfo const& remoteTargetInfo) final;
 
         /** \copydoc Initiator::removeTarget()
          */
-        void removeTarget(TargetInfo const& remoteTargetInfo) override;
+        virtual void removeTarget(TargetInfo const& remoteTargetInfo) final;
 
-        void shutdown() override;
+        virtual void shutdown() final;
 
         /** \copydoc Initiator::transferGrain()
          */
-        void transferGrain(std::uint64_t grainIndex, std::uint16_t startSlice, std::uint16_t endSlice) override;
+        virtual void transferGrain(std::uint64_t grainIndex, std::uint16_t startSlice, std::uint16_t endSlice) final;
 
         /** \copydoc Initiator::transferGrainToTarget()
          */
-        void transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t payloadOffset,
-            std::uint16_t startSlice, std::uint16_t endSlice) override;
+        virtual void transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t payloadOffset,
+            std::uint16_t startSlice, std::uint16_t endSlice) final;
 
         /** \copydoc Initiator::transferSamples()
          */
-        void transferSamples(std::uint64_t headIndex, std::size_t count) override;
+        virtual void transferSamples(std::uint64_t headIndex, std::size_t count) final;
 
         /** \copydoc Initiator::makeProgress()
          */
-        bool makeProgress() override;
+        virtual bool makeProgress() final;
 
         /** \copydoc Initiator::makeProgressBlocking()
          */
-        bool makeProgressBlocking(std::chrono::steady_clock::duration timeout) override;
+        virtual bool makeProgressBlocking(std::chrono::steady_clock::duration timeout) final;
 
     private:
         /** \brief Construct a new RDMInitiator object.

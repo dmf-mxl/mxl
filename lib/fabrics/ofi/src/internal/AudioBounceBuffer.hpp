@@ -63,7 +63,7 @@ namespace mxl::lib::fabrics::ofi
     class AudioBounceBuffer
     {
     public:
-        AudioBounceBuffer(size_t entryCount, std::size_t entrySize, DataLayout::Continuous layout);
+        AudioBounceBuffer(std::size_t entryCount, std::size_t entrySize, DataLayout::Continuous layout);
 
         /** \brief Return the regions corresponding to the bounce buffer entries. Each region corresponds to one bounce buffer entry. The regions are
          * returned in the same order as the bounce buffer entries. */
@@ -85,7 +85,7 @@ namespace mxl::lib::fabrics::ofi
          */
         AudioEntryHeader const& unpack(std::size_t entryIndex, Region const& outRegion) const;
 
-        static void getMutableMultiBufferSlices(std::uint64_t index, std::size_t count, size_t bufferLength, std::size_t sampleWordSize,
+        static void getMutableMultiBufferSlices(std::uint64_t index, std::size_t count, std::size_t bufferLength, std::size_t sampleWordSize,
             std::size_t channelCount, std::uint8_t* baseBufferPtr, mxlMutableWrappedMultiBufferSlice& slice) noexcept;
 
     private:

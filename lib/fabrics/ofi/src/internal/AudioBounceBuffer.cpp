@@ -56,8 +56,8 @@ namespace mxl::lib::fabrics::ofi
         return _data.size();
     }
 
-    AudioBounceBuffer::AudioBounceBuffer(size_t entryCount, std::size_t entrySize, DataLayout::Continuous layout)
-        : _entries{entryCount, AudioBounceBufferEntry{static_cast<uint32_t>(entrySize)}}
+    AudioBounceBuffer::AudioBounceBuffer(std::size_t entryCount, std::size_t entrySize, DataLayout::Continuous layout)
+        : _entries{entryCount, AudioBounceBufferEntry{static_cast<std::uint32_t>(entrySize)}}
         , _layout{layout}
     {}
 

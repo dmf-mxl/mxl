@@ -28,23 +28,23 @@ namespace mxl::lib::fabrics::ofi
 
         /** \copydoc Target::read()
          */
-        std::optional<Target::GrainReadResult> readGrain() final;
+        virtual std::optional<Target::GrainReadResult> readGrain() final;
 
         /** \copydoc Target::readSamples()
          */
-        std::optional<Target::SampleReadResult> readSamples() final;
+        virtual std::optional<Target::SampleReadResult> readSamples() final;
 
         /** \copydoc Target::readBlocking()
          */
-        std::optional<Target::GrainReadResult> readGrainBlocking(std::chrono::steady_clock::duration timeout) final;
+        virtual std::optional<Target::GrainReadResult> readGrainBlocking(std::chrono::steady_clock::duration timeout) final;
 
         /** \copydoc Target::readSamplesBlocking()
          */
-        std::optional<Target::SampleReadResult> readSamplesBlocking(std::chrono::steady_clock::duration timeout) final;
+        virtual std::optional<Target::SampleReadResult> readSamplesBlocking(std::chrono::steady_clock::duration timeout) final;
 
         /** \copydoc Target::shutdown()
          */
-        void shutdown() final;
+        virtual void shutdown() final;
 
     private:
         /** \brief Construct an RDMTarget with the given endpoint and immediate data location.

@@ -29,15 +29,15 @@ namespace mxl::lib::fabrics::ofi
         return {Region::Location::Cuda{deviceId}};
     }
 
-    uint64_t Region::Location::id() const noexcept
+    std::uint64_t Region::Location::id() const noexcept
     {
         return std::visit(
             overloaded{
-                [](std::monostate) -> uint64_t { throw Exception::invalidState("Region type is not set"); },
-                [](Host const&) -> uint64_t { return 0; }, // Host region has no device ID
-                [](Cuda const& cuda) -> uint64_t
+                [](std::monostate) -> std::uint64_t { throw Exception::invalidState("Region type is not set"); },
+                [](Host const&) -> std::uint64_t { return 0; }, // Host region has no device ID
+                [](Cuda const& cuda) -> std::uint64_t
                 {
-                    return static_cast<uint64_t>(cuda._deviceId);
+                    return static_cast<std::uint64_t>(cuda._deviceId);
                 } // Cuda region returns its device ID
             },
             _inner);
@@ -84,7 +84,7 @@ namespace mxl::lib::fabrics::ofi
     }
 
     // Region implementations
-    ::iovec Region::iovecFromRegion(std::uintptr_t base, size_t size) noexcept
+    ::iovec Region::iovecFromRegion(std::uintptr_t base, std::size_t size) noexcept
     {
         return ::iovec{.iov_base = reinterpret_cast<void*>(base), .iov_len = size};
     }

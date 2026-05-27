@@ -60,7 +60,7 @@ namespace mxl::lib::fabrics::ofi
     FabricAddress FabricAddress::retrieveFabricAddress(::fid_t fid)
     {
         // First obtain the address length
-        size_t addrlen = 0;
+        std::size_t addrlen = 0;
         auto ret = fi_getname(fid, nullptr, &addrlen);
         if (ret != -FI_ETOOSMALL)
         {

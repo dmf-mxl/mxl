@@ -12,37 +12,37 @@
 
 namespace mxl::lib::fabrics::ofi
 {
-    class RMAGrainEgressProtocol : public EgressProtocol
+    class RMAGrainEgressProtocol /*final*/ : public EgressProtocol
     {
     public:
         /** \copydoc EgressProtocol::registerMemory()
          * \note This is a NOP for this protocol
          */
-        void registerMemory(std::shared_ptr<Domain> domain) override;
+        virtual void registerMemory(std::shared_ptr<Domain> domain) final;
 
         /** \copydoc EgressProtocol::transferGrain()
          */
-        void transferGrain(Endpoint const& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint32_t payloadOffset,
-            SliceRange const& sliceRange, ::fi_addr_t destAddr = FI_ADDR_UNSPEC) override;
+        virtual void transferGrain(Endpoint const& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint32_t payloadOffset,
+            SliceRange const& sliceRange, ::fi_addr_t destAddr = FI_ADDR_UNSPEC) final;
 
         /** \copydoc EgressProtocol::transferSamples()
          * \note This is unsupported in this protocol since it is designed for grain data. Calling this function will result in an
          * Exception::invalidState being thrown.
          */
-        void transferSamples(Endpoint const&, std::uint64_t, std::size_t, ::fi_addr_t) override;
+        virtual void transferSamples(Endpoint const&, std::uint64_t, std::size_t, ::fi_addr_t) final;
 
         /** \copydoc EgressProtocol::processCompletion()
          */
-        void processCompletion(Completion::Data const&) override;
+        virtual void processCompletion(Completion::Data const&) final;
 
         /** \copydoc EgressProtocol::hasPendingWork()
          */
         [[nodiscard]]
-        bool hasPendingWork() const override;
+        virtual bool hasPendingWork() const final;
 
         /** \copydoc EgressProtocol::reset()
          */
-        std::size_t reset() override;
+        virtual std::size_t reset() final;
 
     private:
         friend class RMAGrainEgressProtocolTemplate;
@@ -65,8 +65,8 @@ namespace mxl::lib::fabrics::ofi
     public:
         RMAGrainEgressProtocolTemplate(DataLayout::Discrete layout, std::vector<Region> regions);
 
-        void registerMemory(std::shared_ptr<Domain> domain) override;
-        std::unique_ptr<EgressProtocol> createInstance(Completion::Token, TargetInfo remoteInfo) override;
+        virtual void registerMemory(std::shared_ptr<Domain> domain) override;
+        virtual std::unique_ptr<EgressProtocol> createInstance(Completion::Token, TargetInfo remoteInfo) override;
 
     private:
         DataLayout::Discrete _layout;
@@ -76,37 +76,37 @@ namespace mxl::lib::fabrics::ofi
 
     //
     // RMASampleEgressProtocol below
-    class RMASampleEgressProtocol : public EgressProtocol
+    class RMASampleEgressProtocol /*final*/ : public EgressProtocol
     {
     public:
         /** \copydoc EgressProtocol::registerMemory()
          * \note With this protocol, the audio entry headers will get registered.
          */
-        void registerMemory(std::shared_ptr<Domain> domain) override;
+        virtual void registerMemory(std::shared_ptr<Domain> domain) final;
 
         /** \copydoc EgressProtocol::transferGrain()
          *\note This is unsupported in this protocol since it is designed for audio data. Calling this function will result in an
          * Exception::invalidState being thrown.
          */
-        void transferGrain(Endpoint const& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint32_t payloadOffset,
-            SliceRange const& sliceRange, ::fi_addr_t destAddr = FI_ADDR_UNSPEC) override;
+        virtual void transferGrain(Endpoint const& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint32_t payloadOffset,
+            SliceRange const& sliceRange, ::fi_addr_t destAddr = FI_ADDR_UNSPEC) final;
 
         /** \copydoc EgressProtocol::transferSamples()
          */
-        void transferSamples(Endpoint const& ep, std::uint64_t headIndex, std::size_t count, ::fi_addr_t destAddr = FI_ADDR_UNSPEC) override;
+        virtual void transferSamples(Endpoint const& ep, std::uint64_t headIndex, std::size_t count, ::fi_addr_t destAddr = FI_ADDR_UNSPEC) final;
 
         /** \copydoc EgressProtocol::processCompletion()
          */
-        void processCompletion(Completion::Data const&) override;
+        virtual void processCompletion(Completion::Data const&) final;
 
         /** \copydoc EgressProtocol::hasPendingWork()
          */
         [[nodiscard]]
-        bool hasPendingWork() const override;
+        virtual bool hasPendingWork() const final;
 
         /** \copydoc EgressProtocol::reset()
          */
-        std::size_t reset() override;
+        virtual std::size_t reset() final;
 
     private:
         friend class RMASampleEgressProtocolTemplate;
@@ -149,8 +149,8 @@ namespace mxl::lib::fabrics::ofi
     public:
         RMASampleEgressProtocolTemplate(DataLayout::Continuous layout, Region region);
 
-        void registerMemory(std::shared_ptr<Domain> domain) override;
-        std::unique_ptr<EgressProtocol> createInstance(Completion::Token, TargetInfo remoteInfo) override;
+        virtual void registerMemory(std::shared_ptr<Domain> domain) override;
+        virtual std::unique_ptr<EgressProtocol> createInstance(Completion::Token, TargetInfo remoteInfo) override;
 
     private:
         DataLayout::Continuous _layout;

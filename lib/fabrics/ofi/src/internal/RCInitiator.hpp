@@ -158,7 +158,7 @@ namespace mxl::lib::fabrics::ofi
 
     /** \brief An initiator that uses reliable connected endpoints to transfer data to targets.
      */
-    class RCInitiator : public Initiator
+    class RCInitiator /*final*/ : public Initiator
     {
     public:
         /** \brief Set up a fresh initiator without any targets assigned to it.
@@ -174,34 +174,34 @@ namespace mxl::lib::fabrics::ofi
 
         /** \copydoc Initiator::addTarget()
          */
-        void addTarget(TargetInfo const& targetInfo) override;
+        virtual void addTarget(TargetInfo const& targetInfo) final;
 
         /** \copydoc Initiator::removeTarget()
          */
-        void removeTarget(TargetInfo const& targetInfo) override;
+        virtual void removeTarget(TargetInfo const& targetInfo) final;
 
         /** \copydoc Initiator::transferGrain()
          */
-        void transferGrain(std::uint64_t grainIndex, std::uint16_t startSlice, std::uint16_t endSlice) override;
+        virtual void transferGrain(std::uint64_t grainIndex, std::uint16_t startSlice, std::uint16_t endSlice) final;
 
         /** \copydoc Initiator::transferGrainToTarget()
          */
-        void transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t payloadOffset,
-            std::uint16_t startSlice, std::uint16_t endSlice) override;
+        virtual void transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t payloadOffset,
+            std::uint16_t startSlice, std::uint16_t endSlice) final;
 
         /** \copydoc Initiator::transferSamples()
          */
-        void transferSamples(std::uint64_t headIndex, std::size_t count) override;
+        virtual void transferSamples(std::uint64_t headIndex, std::size_t count) final;
 
         /** \copydoc Initiator::makeProgress()
          */
-        bool makeProgress() override;
+        virtual bool makeProgress() final;
 
         /** \copydoc Initiator::makeProgressBlocking()
          */
-        bool makeProgressBlocking(std::chrono::steady_clock::duration) override;
+        virtual bool makeProgressBlocking(std::chrono::steady_clock::duration) final;
 
-        void shutdown() override;
+        virtual void shutdown() final;
 
     private:
         /** \brief Returns true if any of the endpoints contained in this initiator have pending work.

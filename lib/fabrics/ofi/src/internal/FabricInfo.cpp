@@ -158,7 +158,7 @@ namespace mxl::lib::fabrics::ofi
         return _raw->tx_attr->iov_limit;
     }
 
-    FabricInfoList FabricInfoList::get(char const* node, char const* service, Provider provider, uint64_t caps, ::fi_ep_type epType)
+    FabricInfoList FabricInfoList::get(char const* node, char const* service, Provider provider, std::uint64_t caps, ::fi_ep_type epType)
     {
         ::fi_info* info;
         auto hints = FabricInfo::empty();

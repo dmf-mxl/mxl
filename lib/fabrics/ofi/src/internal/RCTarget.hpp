@@ -33,23 +33,23 @@ namespace mxl::lib::fabrics::ofi
 
         /** \copydoc Target::readGrain()
          */
-        std::optional<Target::GrainReadResult> readGrain() final;
+        virtual std::optional<Target::GrainReadResult> readGrain() final;
 
         /** \copydoc Target::readGrainBlocking()
          */
-        std::optional<Target::GrainReadResult> readGrainBlocking(std::chrono::steady_clock::duration timeout) final;
+        virtual std::optional<Target::GrainReadResult> readGrainBlocking(std::chrono::steady_clock::duration timeout) final;
 
         /** \copydoc Target::readSamples()
          */
-        std::optional<Target::SampleReadResult> readSamples() final;
+        virtual std::optional<Target::SampleReadResult> readSamples() final;
 
         /** copydoc Target::readSamplesBlocking()
          */
-        std::optional<Target::SampleReadResult> readSamplesBlocking(std::chrono::steady_clock::duration timeout) final;
+        virtual std::optional<Target::SampleReadResult> readSamplesBlocking(std::chrono::steady_clock::duration timeout) final;
 
         /** \brief Shut down the target.
          */
-        void shutdown() override;
+        virtual void shutdown() final;
 
     private:
         /** \brief The wait for connection request state.

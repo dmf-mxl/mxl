@@ -179,7 +179,7 @@ namespace mxl::lib::fabrics::ofi
         }
 
         [[nodiscard]]
-        size_t size() const noexcept
+        std::size_t size() const noexcept
         {
             return _inner.size();
         }

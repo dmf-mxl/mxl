@@ -22,36 +22,36 @@ namespace mxl::lib::fabrics::ofi
         /** \copydoc IngressProtocol::registerMemory()
          */
         [[nodiscard]]
-        std::vector<RemoteRegion> registerMemory(std::shared_ptr<Domain> domain) override;
+        virtual std::vector<RemoteRegion> registerMemory(std::shared_ptr<Domain> domain) override;
 
         /** \copydoc IngressProtocol::bounceBufferInfo()
          *\note This protocol does not use a bounce buffer, so this function returns an empty optional.
          */
         [[nodiscard]]
-        std::optional<TargetInfoBounceBufferInfo> bounceBufferInfo() const override;
+        virtual std::optional<TargetInfoBounceBufferInfo> bounceBufferInfo() const override;
 
         /** \copydoc IngressProtocol::start()
          */
-        void start(Endpoint const& endpoint) override;
+        virtual void start(Endpoint const& endpoint) override;
 
         /** \copydoc IngressProtocol::processCompletion()
          */
         [[nodiscard]]
-        std::optional<Target::ReadResult> read(Endpoint const& endpoint, Completion const& completion) override;
+        virtual std::optional<Target::ReadResult> read(Endpoint const& endpoint, Completion const& completion) override;
 
         /**\brief This protocol can read grains, but not samples, since it is designed for remote writes of grain buffers.
          */
         [[nodiscard]]
-        bool canReadGrains() const noexcept override;
+        virtual bool canReadGrains() const noexcept override;
 
         /** \brief This protocol cannot read samples, since it is designed for remote writes of grain buffers.
          */
         [[nodiscard]]
-        bool canReadSamples() const noexcept override;
+        virtual bool canReadSamples() const noexcept override;
 
         /** \copydoc IngressProtocol::destroy()
          */
-        void reset() override;
+        virtual void reset() override;
 
     private:
         LocalRegion immDataRegion();
@@ -77,33 +77,33 @@ namespace mxl::lib::fabrics::ofi
          * \note This actually registers the memory of the internal bounce buffer, not the region passed in the constructor.
          */
         [[nodiscard]]
-        std::vector<RemoteRegion> registerMemory(std::shared_ptr<Domain> domain) override;
+        virtual std::vector<RemoteRegion> registerMemory(std::shared_ptr<Domain> domain) override;
 
         /** \copydoc IngressProtocol::bounceBufferInfo()
          */
         [[nodiscard]]
-        std::optional<TargetInfoBounceBufferInfo> bounceBufferInfo() const override;
+        virtual std::optional<TargetInfoBounceBufferInfo> bounceBufferInfo() const override;
 
-        void start(Endpoint const& endpoint) override;
+        virtual void start(Endpoint const& endpoint) override;
 
         /** \copydoc IngressProtocol::processCompletion()
          */
         [[nodiscard]]
-        std::optional<Target::ReadResult> read(Endpoint const& endpoint, Completion const& completion) override;
+        virtual std::optional<Target::ReadResult> read(Endpoint const& endpoint, Completion const& completion) override;
 
         /** \brief This protocol cannot read grains, since it is designed for remote writes of audio samples.
          */
         [[nodiscard]]
-        bool canReadGrains() const noexcept override;
+        virtual bool canReadGrains() const noexcept override;
 
         /** \brief This protocol can read samples, since it is designed for remote writes of audio samples.
          */
         [[nodiscard]]
-        bool canReadSamples() const noexcept override;
+        virtual bool canReadSamples() const noexcept override;
 
         /** \copydoc IngressProtocol::destroy()
          */
-        void reset() override;
+        virtual void reset() override;
 
     private:
         LocalRegion immDataRegion();

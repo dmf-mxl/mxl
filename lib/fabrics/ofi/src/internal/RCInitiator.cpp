@@ -276,7 +276,7 @@ namespace mxl::lib::fabrics::ofi
             throw Exception::make(MXL_ERR_NO_FABRIC, "No provider available");
         }
 
-        uint64_t caps = FI_RMA | FI_WRITE | FI_REMOTE_WRITE;
+        std::uint64_t caps = FI_RMA | FI_WRITE | FI_REMOTE_WRITE;
         caps |= config.deviceSupport ? FI_HMEM : 0;
 
         auto fabricInfoList = FabricInfoList::get(config.endpointAddress.node, config.endpointAddress.service, provider.value(), caps, FI_EP_MSG);
@@ -363,7 +363,7 @@ namespace mxl::lib::fabrics::ofi
         it->second.transferGrain(localIndex, remoteIndex, payloadOffset, SliceRange::make(startSlice, endSlice));
     }
 
-    void RCInitiator::transferSamples(uint64_t headIndex, size_t count)
+    void RCInitiator::transferSamples(std::uint64_t headIndex, std::size_t count)
     {
         for (auto& [_, target] : _targets)
         {

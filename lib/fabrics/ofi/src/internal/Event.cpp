@@ -96,7 +96,7 @@ namespace mxl::lib::fabrics::ofi
 
     Event Event::fromError(std::shared_ptr<EventQueue> queue, ::fi_eq_err_entry const* raw)
     {
-        auto errDataBuffer = reinterpret_cast<uint8_t*>(raw->err_data);
+        auto errDataBuffer = reinterpret_cast<std::uint8_t*>(raw->err_data);
 
         return {
             Error{
