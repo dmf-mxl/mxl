@@ -161,6 +161,23 @@ impl MxlInstance {
             .map_err(|_| Error::Other("Invalid UTF-8 in flow definition".to_string()))
     }
 
+    /// Garbage-collect orphan flow directories in the MXL domain.
+    ///
+    /// Iterates over the domain's `<flowId>.mxl-flow/` directories and removes
+    /// any whose `data` file is no longer flock'd, i.e. that have no live
+    /// writer or reader holding the shared advisory lock. This typically
+    /// happens when a writer process exits or crashes without unwinding its
+    /// destructors (SIGKILL, segfault, host reboot).
+    pub fn garbage_collect_flows(&self) -> Result<()> {
+        unsafe {
+            Error::from_status(
+                self.context
+                    .api
+                    .garbage_collect_flows(self.context.instance),
+            )
+        }
+    }
+
     pub fn get_current_index(&self, rational: &mxl_sys::Rational) -> u64 {
         unsafe { self.context.api.get_current_index(rational) }
     }

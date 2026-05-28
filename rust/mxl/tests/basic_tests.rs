@@ -158,3 +158,14 @@ fn get_flow_def() {
     drop(flow_writer);
     mxl_instance.destroy().unwrap();
 }
+
+#[test]
+fn garbage_collect_flows_succeeds() {
+    // Smoke test that the `mxlGarbageCollectFlows` FFI binding is wired
+    // correctly. The C++ test suite already exercises the underlying
+    // behaviour; this just confirms the safe wrapper hands the call off
+    // without crashing and propagates a successful status.
+    let (mxl_instance, _domain_guard) = setup_test("garbage_collect_flows");
+    mxl_instance.garbage_collect_flows().unwrap();
+    mxl_instance.destroy().unwrap();
+}
