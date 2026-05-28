@@ -25,6 +25,72 @@ namespace
 {
     namespace detail
     {
+        /// Helper class to parse the domain definition JSON file and extract relevant information for display.
+        class DomainDefParser
+        {
+        public:
+            /// Construct the parser and parse the domain definition JSON file at the given path.
+            /// \param domainDefPath The path to the domain definition JSON file.
+            /// \throws std::runtime_error if the file cannot be read or parsed.
+            explicit DomainDefParser(std::filesystem::path const& domainDefPath)
+            {
+                // Read the whole file into a string
+                auto file = std::ifstream{domainDefPath};
+                if (!file)
+                {
+                    throw std::runtime_error{"Failed to open domain definition file: " + domainDefPath.string()};
+                }
+
+                // Read the whole file
+                auto buffer = std::stringstream{};
+                buffer << file.rdbuf();
+
+                // Parse JSON
+                auto jsonText = buffer.str();
+                std::string err = picojson::parse(_doc, jsonText);
+                if (!err.empty())
+                {
+                    throw std::runtime_error{"JSON parse error: " + err};
+                }
+
+                if (!_doc.is<picojson::object>())
+                {
+                    throw std::runtime_error{"Root is not an object"};
+                }
+            }
+
+            std::ostream& print(std::ostream& os) const
+            {
+                os << "Domain Definition:" << std::endl;
+                os << "\tid: " << getStringField("id") << std::endl;
+                os << "\tlabel: " << getStringField("label") << std::endl;
+                os << "\tdescription: " << getStringField("description") << std::endl;
+                return os;
+            }
+
+        private:
+            std::string getStringField(std::string const& fieldName) const
+            {
+                auto const& obj = _doc.get<picojson::object>();
+                auto const it = obj.find(fieldName);
+
+                if (it == obj.end())
+                {
+                    return "-- Required field missing --";
+                }
+                else if (!it->second.is<std::string>())
+                {
+                    return "-- Invalid type --";
+                }
+                else
+                {
+                    return it->second.get<std::string>();
+                }
+            }
+
+            picojson::value _doc;
+        };
+
         struct LatencyPrinter
         {
             constexpr explicit LatencyPrinter(::mxlFlowInfo const& info) noexcept
@@ -563,6 +629,24 @@ int main(int argc, char** argv)
     {
         std::cerr << "ERROR: Domain must be specified either via --domain or in the URI." << std::endl;
         return EXIT_FAILURE;
+    }
+    else
+    {
+        try
+        {
+            auto const domainDefPath = std::filesystem::path{domain} / "domain_def.json";
+            if (std::filesystem::exists(domainDefPath))
+            {
+                auto parser = detail::DomainDefParser{domainDefPath};
+                parser.print(std::cout);
+                std::cout << std::endl;
+            }
+        }
+        catch (std::exception const& ex)
+        {
+            std::cerr << "ERROR: Caught exception while validating domain: " << ex.what() << std::endl;
+            return EXIT_FAILURE;
+        }
     }
 
     auto status = EXIT_SUCCESS;
