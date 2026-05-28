@@ -362,5 +362,12 @@ fn init_mxl_instance(domain: &str) -> Result<MxlInstance, gst::ErrorMessage> {
         )
     })?;
 
+    // Best-effort: reclaim any flow directories left behind by a writer that
+    // exited or crashed before its destructors ran. Long-running processes
+    // get a fresh GC pass every time an element opens an instance.
+    if let Err(e) = mxl_instance.garbage_collect_flows() {
+        gst::warning!(CAT, "MXL garbage collection on init failed: {}", e);
+    }
+
     Ok(mxl_instance)
 }
