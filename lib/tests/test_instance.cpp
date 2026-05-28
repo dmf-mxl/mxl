@@ -180,3 +180,30 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow deletion on ins
     mxlDestroyInstance(instanceB);
     REQUIRE_FALSE(flowDirectoryExists(id));
 }
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlCreateInstance garbage-collects orphan flow directories", "[instance]")
+{
+    // Fabricate a leftover flow directory + `data` file with no flock held,
+    // mimicking the on-disk state a previous writer leaves behind when its
+    // process is killed before the C++ destructor chain can run (SIGKILL,
+    // segfault, host reboot). The public `mxlGarbageCollectFlows` API is
+    // documented to be invoked automatically by `mxlCreateInstance`; this
+    // test pins that contract.
+    auto const orphanId = uuids::to_string(uuids::uuid_system_generator{}());
+    auto const orphanDir = mxl::lib::makeFlowDirectoryName(domain, orphanId);
+    auto const orphanDataFile = mxl::lib::makeFlowDataFilePath(domain, orphanId);
+
+    std::filesystem::create_directories(orphanDir);
+    REQUIRE(flowDirectoryExists(orphanId));
+    // The garbage collector only checks whether the `data` file is flock'd,
+    // not its contents, so an empty file is enough.
+    std::ofstream{orphanDataFile};
+    REQUIRE(std::filesystem::exists(orphanDataFile));
+
+    auto instance = mxlCreateInstance(domain.string().c_str(), nullptr);
+    REQUIRE(instance != nullptr);
+
+    REQUIRE_FALSE(flowDirectoryExists(orphanId));
+
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+}

@@ -90,6 +90,19 @@ namespace mxl::lib
         std::call_once(loggingFlag, [&]() { initializeLogging(); });
         parseOptions(options);
         MXL_DEBUG("Instance created. MXL Domain: {}", mxlDomain.string());
+
+        // Honour the contract documented for `mxlGarbageCollectFlows` in
+        // `lib/include/mxl/mxl.h` and `docs/Architecture.md`: "automatically
+        // called when the instance is created". A previous writer that died
+        // without releasing its flow (process crash, SIGKILL, host reboot)
+        // leaves its `<flowId>.mxl-flow/` directory on disk; without this
+        // pass, the next `createFlowWriter` would silently re-open those
+        // stale files, and downstream readers would see no fresh data.
+        // `garbageCollect()` is best-effort and swallows its own errors, so
+        // failures here cannot abort instance creation.
+        [[maybe_unused]]
+        auto const collected = garbageCollect();
+        MXL_DEBUG("Garbage-collected {} orphan flow(s) at instance startup.", collected);
     }
 
     Instance::~Instance()
