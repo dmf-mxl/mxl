@@ -21,23 +21,23 @@ namespace mxl::lib::fabrics::ofi
     using InnerRegions = std::vector<InnerRegion>;
 
     [[nodiscard]]
-    inline mxlFabricsTargetConfig getDefaultTargetConfig(mxlFabricsRegions regions)
+    inline mxlFabricsTargetConfig getDefaultTargetConfig(mxlFlowWriter writer)
     {
         auto config = mxlFabricsTargetConfig{};
         config.endpointAddress.node = "127.0.0.1";
         config.endpointAddress.service = "9090";
         config.provider = MXL_FABRICS_PROVIDER_TCP;
-        config.regions = regions;
+        config.writer = writer;
         return config;
     }
 
-    inline mxlFabricsInitiatorConfig getDefaultInitiatorConfig(mxlFabricsRegions regions)
+    inline mxlFabricsInitiatorConfig getDefaultInitiatorConfig(mxlFlowReader reader)
     {
         auto config = mxlFabricsInitiatorConfig{};
         config.endpointAddress.node = "127.0.0.1";
         config.endpointAddress.service = "9091";
         config.provider = MXL_FABRICS_PROVIDER_TCP;
-        config.regions = regions;
+        config.reader = reader;
         return config;
     }
 

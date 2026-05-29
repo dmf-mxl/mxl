@@ -16,9 +16,7 @@
 #include <mxl/fabrics.h>
 #include "mxl/flow.h"
 #include "mxl/mxl.h"
-#include "ofi/Util.hpp"
 #include "../Utils.hpp"
-#include "Region.hpp"
 
 #ifdef MXL_FABRICS_OFI
 // clang-format off
@@ -199,15 +197,19 @@ TEST_CASE("Fabrics basic creation/destroy", "[fabrics][basics]")
     }
 }
 
-TEST_CASE("Fabrics connection oriented activation tests", "[fabrics][connected][activation]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connection oriented activation tests", "[fabrics][connected][activation]")
 {
-    namespace ofi = mxl::lib::fabrics::ofi;
+    auto instance = mxlCreateInstance(domain.c_str(), "");
 
-    // Create an empty region, because management tests does not need to do transfers
-    auto mxlRegions = ofi::getEmptyVideoMxlRegions();
-    auto regions = mxlRegions.toAPI();
+    auto flowDef = mxl::tests::readFile("../data/v210_flow.json");
+    auto const flowId = "5fbec3b1-1b0f-417d-9059-8b94a47197ed";
 
-    auto instance = mxlCreateInstance("/dev/shm/", "");
+    // A flow writer and reader provide the memory regions for the target and initiator respectively.
+    mxlFlowWriter writer;
+    REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), nullptr, &writer, nullptr, nullptr) == MXL_STATUS_OK);
+
+    mxlFlowReader reader;
+    REQUIRE(mxlCreateFlowReader(instance, flowId, "", &reader) == MXL_STATUS_OK);
 
     mxlFabricsInstance fabrics;
     REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
@@ -224,7 +226,7 @@ TEST_CASE("Fabrics connection oriented activation tests", "[fabrics][connected][
             .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
             .provider = MXL_FABRICS_PROVIDER_TCP,
-            .regions = regions,
+            .writer = writer,
         };
         mxlFabricsTargetInfo targetInfo;
         REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, nullptr, &targetInfo) == MXL_STATUS_OK);
@@ -233,7 +235,7 @@ TEST_CASE("Fabrics connection oriented activation tests", "[fabrics][connected][
             .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
             .provider = MXL_FABRICS_PROVIDER_TCP,
-            .regions = regions,
+            .reader = reader,
         };
         REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
 
@@ -264,18 +266,24 @@ TEST_CASE("Fabrics connection oriented activation tests", "[fabrics][connected][
     REQUIRE(mxlFabricsDestroyInitiator(fabrics, initiator) == MXL_STATUS_OK);
     REQUIRE(mxlFabricsDestroyTarget(fabrics, target) == MXL_STATUS_OK);
     REQUIRE(mxlFabricsDestroyInstance(fabrics) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowReader(instance, reader) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
 }
 
-TEST_CASE("Fabrics connectionless activation tests", "[fabrics][connectionless][activation]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connectionless activation tests", "[fabrics][connectionless][activation]")
 {
-    namespace ofi = mxl::lib::fabrics::ofi;
+    auto instance = mxlCreateInstance(domain.c_str(), "");
 
-    // Create an empty region, because management tests does not need to do transfers
-    auto mxlRegions = ofi::getEmptyVideoMxlRegions();
-    auto regions = mxlRegions.toAPI();
+    auto flowDef = mxl::tests::readFile("../data/v210_flow.json");
+    auto const flowId = "5fbec3b1-1b0f-417d-9059-8b94a47197ed";
 
-    auto instance = mxlCreateInstance("/dev/shm/", "");
+    // A flow writer and reader provide the memory regions for the target and initiator respectively.
+    mxlFlowWriter writer;
+    REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), nullptr, &writer, nullptr, nullptr) == MXL_STATUS_OK);
+
+    mxlFlowReader reader;
+    REQUIRE(mxlCreateFlowReader(instance, flowId, "", &reader) == MXL_STATUS_OK);
 
     mxlFabricsInstance fabrics;
     REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
@@ -290,7 +298,7 @@ TEST_CASE("Fabrics connectionless activation tests", "[fabrics][connectionless][
         .version = MXL_FABRICS_API_VERSION,
         .endpointAddress = mxlFabricsEndpointAddress{.node = "target", .service = "activation"},
         .provider = MXL_FABRICS_PROVIDER_SHM,
-        .regions = regions,
+        .writer = writer,
     };
     mxlFabricsTargetInfo targetInfo;
     REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, nullptr, &targetInfo) == MXL_STATUS_OK);
@@ -299,7 +307,7 @@ TEST_CASE("Fabrics connectionless activation tests", "[fabrics][connectionless][
         .version = MXL_FABRICS_API_VERSION,
         .endpointAddress = mxlFabricsEndpointAddress{.node = "initiator", .service = "activation"},
         .provider = MXL_FABRICS_PROVIDER_SHM,
-        .regions = regions,
+        .reader = reader,
     };
     REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
 
@@ -328,6 +336,8 @@ TEST_CASE("Fabrics connectionless activation tests", "[fabrics][connectionless][
     REQUIRE(mxlFabricsFreeTargetInfo(targetInfo) == MXL_STATUS_OK);
     REQUIRE(mxlFabricsDestroyTarget(fabrics, target) == MXL_STATUS_OK);
     REQUIRE(mxlFabricsDestroyInstance(fabrics) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowReader(instance, reader) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
 }
 
@@ -350,16 +360,9 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
     mxlFlowWriter writer;
     REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), nullptr, &writer, nullptr, nullptr) == MXL_STATUS_OK);
 
-    mxlFabricsRegions mxlTargetRegions;
-    REQUIRE(mxlFabricsRegionsForFlowWriter(writer, &mxlTargetRegions) == MXL_STATUS_OK);
-
     // Initiator
     mxlFlowReader reader;
     REQUIRE(mxlCreateFlowReader(instance, flowId, "", &reader) == MXL_STATUS_OK);
-
-    // Setup initiator regions
-    mxlFabricsRegions mxlInitiatorRegions;
-    REQUIRE(mxlFabricsRegionsForFlowReader(reader, &mxlInitiatorRegions) == MXL_STATUS_OK);
 
     SECTION("RC")
     {
@@ -367,7 +370,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
             .provider = MXL_FABRICS_PROVIDER_TCP,
-            .regions = mxlTargetRegions,
+            .writer = writer,
         };
         mxlFabricsTargetInfo targetInfo;
         REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, nullptr, &targetInfo) == MXL_STATUS_OK);
@@ -376,7 +379,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
             .provider = MXL_FABRICS_PROVIDER_TCP,
-            .regions = mxlInitiatorRegions,
+            .reader = reader,
         };
         REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
         REQUIRE(mxlFabricsInitiatorAddTarget(initiator, targetInfo) == MXL_STATUS_OK);
@@ -417,7 +420,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "target", .service = "test"},
             .provider = MXL_FABRICS_PROVIDER_SHM,
-            .regions = mxlTargetRegions,
+            .writer = writer,
         };
         mxlFabricsTargetInfo targetInfo;
         REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, nullptr, &targetInfo) == MXL_STATUS_OK);
@@ -426,7 +429,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "initiator", .service = "test"},
             .provider = MXL_FABRICS_PROVIDER_SHM,
-            .regions = mxlInitiatorRegions,
+            .reader = reader,
         };
         REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
         REQUIRE(mxlFabricsInitiatorAddTarget(initiator, targetInfo) == MXL_STATUS_OK);
@@ -461,8 +464,6 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
         mxlFabricsFreeTargetInfo(targetInfo);
     }
 
-    REQUIRE(mxlFabricsRegionsFree(mxlInitiatorRegions) == MXL_STATUS_OK);
-    REQUIRE(mxlFabricsRegionsFree(mxlTargetRegions) == MXL_STATUS_OK);
     REQUIRE(mxlReleaseFlowReader(instance, reader) == MXL_STATUS_OK);
     REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
     REQUIRE(mxlFabricsDestroyInitiator(fabrics, initiator) == MXL_STATUS_OK);
@@ -490,16 +491,9 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
     mxlFlowWriter writer;
     REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), nullptr, &writer, nullptr, nullptr) == MXL_STATUS_OK);
 
-    mxlFabricsRegions mxlTargetRegions;
-    REQUIRE(mxlFabricsRegionsForFlowWriter(writer, &mxlTargetRegions) == MXL_STATUS_OK);
-
     // Initiator
     mxlFlowReader reader;
     REQUIRE(mxlCreateFlowReader(instance, flowId, "", &reader) == MXL_STATUS_OK);
-
-    // Setup initiator regions
-    mxlFabricsRegions mxlInitiatorRegions;
-    REQUIRE(mxlFabricsRegionsForFlowReader(reader, &mxlInitiatorRegions) == MXL_STATUS_OK);
 
     SECTION("RC")
     {
@@ -507,7 +501,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
             .provider = MXL_FABRICS_PROVIDER_TCP,
-            .regions = mxlTargetRegions,
+            .writer = writer,
         };
         mxlFabricsTargetInfo targetInfo;
         REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, nullptr, &targetInfo) == MXL_STATUS_OK);
@@ -516,7 +510,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
             .provider = MXL_FABRICS_PROVIDER_TCP,
-            .regions = mxlInitiatorRegions,
+            .reader = reader,
         };
         REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
         REQUIRE(mxlFabricsInitiatorAddTarget(initiator, targetInfo) == MXL_STATUS_OK);
@@ -558,7 +552,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "target", .service = "test"},
             .provider = MXL_FABRICS_PROVIDER_SHM,
-            .regions = mxlTargetRegions,
+            .writer = writer,
         };
         mxlFabricsTargetInfo targetInfo;
         REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, nullptr, &targetInfo) == MXL_STATUS_OK);
@@ -567,7 +561,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "initiator", .service = "test"},
             .provider = MXL_FABRICS_PROVIDER_SHM,
-            .regions = mxlInitiatorRegions,
+            .reader = reader,
         };
         REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
         REQUIRE(mxlFabricsInitiatorAddTarget(initiator, targetInfo) == MXL_STATUS_OK);
@@ -603,8 +597,6 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
         mxlFabricsFreeTargetInfo(targetInfo);
     }
 
-    REQUIRE(mxlFabricsRegionsFree(mxlInitiatorRegions) == MXL_STATUS_OK);
-    REQUIRE(mxlFabricsRegionsFree(mxlTargetRegions) == MXL_STATUS_OK);
     REQUIRE(mxlReleaseFlowReader(instance, reader) == MXL_STATUS_OK);
     REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
     REQUIRE(mxlFabricsDestroyInitiator(fabrics, initiator) == MXL_STATUS_OK);
@@ -632,7 +624,6 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
     std::array<std::string, nbTargets> flowDefs;
     std::array<mxlFlowConfigInfo, nbTargets> configInfo;
     std::array<mxlFlowWriter, nbTargets> writer;
-    std::array<mxlFabricsRegions, nbTargets> mxlTargetRegions;
     for (size_t i = 0; i < nbTargets; i++)
     {
         REQUIRE(mxlFabricsCreateTarget(fabrics, &targets[i]) == MXL_STATUS_OK);
@@ -640,7 +631,6 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
         root.at("id") = picojson::value{flowIds[i]};
         flowDefs[i] = picojson::value{root}.serialize();
         REQUIRE(mxlCreateFlowWriter(instance, flowDefs[i].c_str(), nullptr, &writer[i], &configInfo[i], nullptr) == MXL_STATUS_OK);
-        REQUIRE(mxlFabricsRegionsForFlowWriter(writer[i], &mxlTargetRegions[i]) == MXL_STATUS_OK);
     }
 
     // Initiator
@@ -649,9 +639,6 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
 
     mxlFabricsInitiator initiator;
     REQUIRE(mxlFabricsCreateInitiator(fabrics, &initiator) == MXL_STATUS_OK);
-    // Setup initiator regions
-    mxlFabricsRegions mxlInitiatorRegions;
-    REQUIRE(mxlFabricsRegionsForFlowReader(reader, &mxlInitiatorRegions) == MXL_STATUS_OK);
 
     SECTION("RC")
     {
@@ -659,7 +646,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
             .provider = MXL_FABRICS_PROVIDER_TCP,
-            .regions = mxlInitiatorRegions,
+            .reader = reader,
         };
 
         REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
@@ -672,7 +659,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
                 .version = MXL_FABRICS_API_VERSION,
                 .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
                 .provider = MXL_FABRICS_PROVIDER_TCP,
-                .regions = mxlTargetRegions[i],
+                .writer = writer[i],
             };
             REQUIRE(mxlFabricsTargetSetup(targets[i], &targetConfig[i], nullptr, &targetInfo[i]) == MXL_STATUS_OK);
 
@@ -727,7 +714,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "initiator", .service = "test"},
             .provider = MXL_FABRICS_PROVIDER_SHM,
-            .regions = mxlInitiatorRegions,
+            .reader = reader,
         };
         REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
 
@@ -739,7 +726,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
                 .version = MXL_FABRICS_API_VERSION,
                 .endpointAddress = mxlFabricsEndpointAddress{.node = "target", .service = "test"},
                 .provider = MXL_FABRICS_PROVIDER_SHM,
-                .regions = mxlTargetRegions[i],
+                .writer = writer[i],
             };
             REQUIRE(mxlFabricsTargetSetup(targets[i], &targetConfig[i], nullptr, &targetInfo[i]) == MXL_STATUS_OK);
 
@@ -788,12 +775,10 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
         }
     }
 
-    REQUIRE(mxlFabricsRegionsFree(mxlInitiatorRegions) == MXL_STATUS_OK);
     REQUIRE(mxlReleaseFlowReader(instance, reader) == MXL_STATUS_OK);
     REQUIRE(mxlFabricsDestroyInitiator(fabrics, initiator) == MXL_STATUS_OK);
     for (size_t i = 0; i < nbTargets; i++)
     {
-        REQUIRE(mxlFabricsRegionsFree(mxlTargetRegions[i]) == MXL_STATUS_OK);
         REQUIRE(mxlReleaseFlowWriter(instance, writer[i]) == MXL_STATUS_OK);
         REQUIRE(mxlFabricsDestroyTarget(fabrics, targets[i]) == MXL_STATUS_OK);
     }
@@ -820,7 +805,6 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
     std::array<std::string, nbTargets> flowDefs;
     std::array<mxlFlowConfigInfo, nbTargets> configInfo;
     std::array<mxlFlowWriter, nbTargets> writer;
-    std::array<mxlFabricsRegions, nbTargets> mxlTargetRegions;
     for (size_t i = 0; i < nbTargets; i++)
     {
         REQUIRE(mxlFabricsCreateTarget(fabrics, &targets[i]) == MXL_STATUS_OK);
@@ -828,7 +812,6 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
         root.at("id") = picojson::value{flowIds[i]};
         flowDefs[i] = picojson::value{root}.serialize();
         REQUIRE(mxlCreateFlowWriter(instance, flowDefs[i].c_str(), nullptr, &writer[i], &configInfo[i], nullptr) == MXL_STATUS_OK);
-        REQUIRE(mxlFabricsRegionsForFlowWriter(writer[i], &mxlTargetRegions[i]) == MXL_STATUS_OK);
     }
 
     // Initiator
@@ -837,9 +820,6 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
 
     mxlFabricsInitiator initiator;
     REQUIRE(mxlFabricsCreateInitiator(fabrics, &initiator) == MXL_STATUS_OK);
-    // Setup initiator regions
-    mxlFabricsRegions mxlInitiatorRegions;
-    REQUIRE(mxlFabricsRegionsForFlowReader(reader, &mxlInitiatorRegions) == MXL_STATUS_OK);
 
     SECTION("RC")
     {
@@ -847,7 +827,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
             .provider = MXL_FABRICS_PROVIDER_TCP,
-            .regions = mxlInitiatorRegions,
+            .reader = reader,
         };
 
         REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
@@ -860,7 +840,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
                 .version = MXL_FABRICS_API_VERSION,
                 .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
                 .provider = MXL_FABRICS_PROVIDER_TCP,
-                .regions = mxlTargetRegions[i],
+                .writer = writer[i],
             };
             REQUIRE(mxlFabricsTargetSetup(targets[i], &targetConfig[i], nullptr, &targetInfo[i]) == MXL_STATUS_OK);
 
@@ -917,7 +897,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = mxlFabricsEndpointAddress{.node = "initiator", .service = "test"},
             .provider = MXL_FABRICS_PROVIDER_SHM,
-            .regions = mxlInitiatorRegions,
+            .reader = reader,
         };
         REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
 
@@ -929,7 +909,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
                 .version = MXL_FABRICS_API_VERSION,
                 .endpointAddress = mxlFabricsEndpointAddress{.node = "target", .service = "test"},
                 .provider = MXL_FABRICS_PROVIDER_SHM,
-                .regions = mxlTargetRegions[i],
+                .writer = writer[i],
             };
             REQUIRE(mxlFabricsTargetSetup(targets[i], &targetConfig[i], nullptr, &targetInfo[i]) == MXL_STATUS_OK);
 
@@ -980,12 +960,10 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
         }
     }
 
-    REQUIRE(mxlFabricsRegionsFree(mxlInitiatorRegions) == MXL_STATUS_OK);
     REQUIRE(mxlReleaseFlowReader(instance, reader) == MXL_STATUS_OK);
     REQUIRE(mxlFabricsDestroyInitiator(fabrics, initiator) == MXL_STATUS_OK);
     for (size_t i = 0; i < nbTargets; i++)
     {
-        REQUIRE(mxlFabricsRegionsFree(mxlTargetRegions[i]) == MXL_STATUS_OK);
         REQUIRE(mxlReleaseFlowWriter(instance, writer[i]) == MXL_STATUS_OK);
         REQUIRE(mxlFabricsDestroyTarget(fabrics, targets[i]) == MXL_STATUS_OK);
     }
@@ -994,11 +972,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
 }
 
 #ifdef MXL_FABRICS_OFI
-TEST_CASE("Fabrics: TargetInfo serialize/deserialize", "[fabrics][ofi][target-info]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: TargetInfo serialize/deserialize", "[fabrics][ofi][target-info]")
 {
     namespace ofi = mxl::lib::fabrics::ofi;
 
-    auto instance = mxlCreateInstance("/dev/shm/", "");
+    auto instance = mxlCreateInstance(domain.c_str(), "");
     mxlFabricsInstance fabrics;
     mxlFabricsTarget target;
     mxlFabricsTargetInfo targetInfo;
@@ -1006,14 +984,15 @@ TEST_CASE("Fabrics: TargetInfo serialize/deserialize", "[fabrics][ofi][target-in
     REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
     REQUIRE(mxlFabricsCreateTarget(fabrics, &target) == MXL_STATUS_OK);
 
-    auto mxlRegions = ofi::getEmptyVideoMxlRegions();
-    auto regions = mxlRegions.toAPI();
+    auto flowDef = mxl::tests::readFile("../data/v210_flow.json");
+    mxlFlowWriter writer;
+    REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), nullptr, &writer, nullptr, nullptr) == MXL_STATUS_OK);
 
     auto config = mxlFabricsTargetConfig{
         .version = MXL_FABRICS_API_VERSION,
         .endpointAddress = mxlFabricsEndpointAddress{.node = "127.0.0.1", .service = "0"},
         .provider = MXL_FABRICS_PROVIDER_TCP,
-        .regions = regions,
+        .writer = writer,
     };
 
     // Retrieve the target info from the target setup
@@ -1038,6 +1017,7 @@ TEST_CASE("Fabrics: TargetInfo serialize/deserialize", "[fabrics][ofi][target-in
     // Cleanup
     REQUIRE(mxlFabricsDestroyTarget(fabrics, target) == MXL_STATUS_OK);
     REQUIRE(mxlFabricsDestroyInstance(fabrics) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
 }
 #endif
