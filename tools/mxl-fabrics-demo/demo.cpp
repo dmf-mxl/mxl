@@ -153,20 +153,12 @@ public:
             return status;
         }
 
-        mxlFabricsRegions regions;
-        status = mxlFabricsRegionsForFlowReader(_reader, &regions);
-        if (status != MXL_STATUS_OK)
-        {
-            MXL_ERROR("Failed to get flow memory region with status '{}'", static_cast<int>(status));
-            return status;
-        }
-
         mxlFabricsInitiatorConfig initiatorConfig = {
             .version = MXL_FABRICS_API_VERSION,
             .endpointAddress = {.node = _config.node ? _config.node.value().c_str() : nullptr,
                                 .service = _config.service ? _config.service.value().c_str() : nullptr},
             .provider = _config.provider,
-            .regions = regions
+            .reader = _reader,
         };
 
         status = mxlFabricsInitiatorSetup(_initiator, &initiatorConfig, nullptr);
@@ -517,14 +509,6 @@ public:
             MXL_WARN("Reusing existing flow");
         }
 
-        mxlFabricsRegions memoryRegions;
-        status = mxlFabricsRegionsForFlowWriter(_writer, &memoryRegions);
-        if (status != MXL_STATUS_OK)
-        {
-            MXL_ERROR("Failed to get flow memory region with status '{}'", static_cast<int>(status));
-            return status;
-        }
-
         status = mxlFabricsCreateTarget(_fabricsInstance, &_target);
         if (status != MXL_STATUS_OK)
         {
@@ -537,19 +521,12 @@ public:
             .endpointAddress = {.node = _config.node ? _config.node.value().c_str() : nullptr,
                                 .service = _config.service ? _config.service.value().c_str() : nullptr},
             .provider = _config.provider,
-            .regions = memoryRegions,
+            .writer = _writer,
         };
         status = mxlFabricsTargetSetup(_target, &targetConfig, nullptr, &_targetInfo);
         if (status != MXL_STATUS_OK)
         {
             MXL_ERROR("Failed to setup fabrics target with status '{}'", static_cast<int>(status));
-            return status;
-        }
-
-        status = mxlFabricsRegionsFree(memoryRegions);
-        if (status != MXL_STATUS_OK)
-        {
-            MXL_ERROR("Failed to free memory regions with status '{}'", static_cast<int>(status));
             return status;
         }
 

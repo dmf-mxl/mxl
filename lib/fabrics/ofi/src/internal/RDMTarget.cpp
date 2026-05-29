@@ -61,8 +61,8 @@ namespace mxl::lib::fabrics::ofi
         // Connectionless endpoints must be explictely enabled when they are ready to be used.
         endpoint.enable();
 
-        auto mxlRegions = MxlRegions::fromAPI(config.regions);
-        auto protocol = selectIngressProtocol(mxlRegions->dataLayout(), mxlRegions->regions(), mxlRegions->maxSyncBatchSize());
+        auto mxlRegions = MxlRegions::forWriter(config.writer);
+        auto protocol = selectIngressProtocol(mxlRegions.dataLayout(), mxlRegions.regions(), mxlRegions.maxSyncBatchSize());
         auto targetInfo = std::make_unique<TargetInfo>(
             endpoint.id(), endpoint.localAddress(), protocol->registerMemory(domain), protocol->bounceBufferInfo());
 

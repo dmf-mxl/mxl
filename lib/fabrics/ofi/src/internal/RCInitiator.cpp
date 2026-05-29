@@ -293,8 +293,8 @@ namespace mxl::lib::fabrics::ofi
         auto eq = EventQueue::open(fabric);
         auto cq = CompletionQueue::open(domain);
 
-        auto regions = MxlRegions::fromAPI(config.regions);
-        auto proto = selectEgressProtocol(regions->dataLayout(), regions->regions());
+        auto regions = MxlRegions::forReader(config.reader);
+        auto proto = selectEgressProtocol(regions.dataLayout(), regions.regions());
         proto->registerMemory(domain);
 
         struct MakeUniqueEnabler : RCInitiator

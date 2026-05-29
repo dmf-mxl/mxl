@@ -42,12 +42,6 @@ extern "C"
      */
     typedef struct mxlFabricsInitiator_t* mxlFabricsInitiator;
 
-    /** A collection of memory regions that can be the target or the source of remote write operations.
-     * Can be obtained by using a flow reader or writer, and converting it to a regions collection
-     * with mxlFabricsRegionsForFlowReader() or mxlFabricsRegionsForFlowWriter().
-     */
-    typedef struct mxlFabricsRegions_t* mxlFabricsRegions;
-
     typedef enum mxlFabricsProvider_t
     {
         MXL_FABRICS_PROVIDER_AUTO = 0,  /**< Auto select the best provider. ** This might not be supported by all implementations. */
@@ -76,7 +70,7 @@ extern "C"
         int version;                               /**< Struct version, must be set to MXL_FABRICS_API_VERSION by the caller */
         mxlFabricsEndpointAddress endpointAddress; /**< Bind address for the local endpoint. */
         mxlFabricsProvider provider;               /**< The provider that should be used */
-        mxlFabricsRegions regions;                 /**< Local memory regions of the flow that grains should be written to. */
+        mxlFlowWriter writer;                      /**< A flow writer for the flow that should be written to by remote initiators */
     } mxlFabricsTargetConfig;
 
     /** Configuration object required to set up an initiator.
@@ -86,37 +80,8 @@ extern "C"
         int version;                               /**< Struct version, must be set to MXL_FABRICS_API_VERSION by the caller */
         mxlFabricsEndpointAddress endpointAddress; /**< Bind address for the local endpoint. */
         mxlFabricsProvider provider;               /**< The provider that should be used. */
-        mxlFabricsRegions regions;                 /**< Local memory regions of the flow that grains should source of remote write requests. */
+        mxlFlowReader reader;                      /**< A flow reader that will be used as the source of write operations to remote targets. */
     } mxlFabricsInitiatorConfig;
-
-    /**
-     * Get the backing memory regions of a flow associated with a flow reader.
-     * The regions will be used to register the shared memory of the reader as source of data transfer operations.
-     * The returned object must be freed with mxlFabricsRegionsFree(). The object can be freed after the target or initiator has been created.
-     * \param in_reader FlowReader to use to obtain these regions.
-     * \param out_regions A pointer to a memory location where the address of the returned collection of memory regions will be written.
-     */
-    MXL_EXPORT
-    mxlStatus mxlFabricsRegionsForFlowReader(mxlFlowReader in_reader, mxlFabricsRegions* out_regions);
-
-    /**
-     * Get the backing memory regions of a flow associated with a flow writer.
-     * The regions will be used to register the shared memory of the writer as the target of data transfer operations.
-     * The returned object must be freed with mxlFabricsRegionsFree(). The object can be freed after the target or initiator has been created.
-     * \param in_writer FlowWriter to use to obtain these regions.
-     * \param out_regions A pointer to a memory location where the address of the returned collection of memory regions will be written.
-     */
-    MXL_EXPORT
-    mxlStatus mxlFabricsRegionsForFlowWriter(mxlFlowWriter in_writer, mxlFabricsRegions* out_regions);
-
-    /**
-     * Free a regions object previously allocated by mxlFabricsRegionsForFlowReader(), mxlFabricsRegionsForFlowWriter() or
-     * mxlFabricsRegionsFromUserBuffers().
-     * \param in_regions The regions object to free
-     * \return MXL_STATUS_OK if the regions object was freed
-     */
-    MXL_EXPORT
-    mxlStatus mxlFabricsRegionsFree(mxlFabricsRegions in_regions);
 
     /**
      * Create a new mxl-fabrics from an mxl instance. Targets and initiators created from this mxl-fabrics instance

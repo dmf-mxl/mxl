@@ -50,8 +50,8 @@ namespace mxl::lib::fabrics::ofi
 
         auto pep = makeListener(fabric);
 
-        auto const mxlRegions = MxlRegions::fromAPI(config.regions);
-        auto proto = selectIngressProtocol(mxlRegions->dataLayout(), mxlRegions->regions(), mxlRegions->maxSyncBatchSize());
+        auto const mxlRegions = MxlRegions::forWriter(config.writer);
+        auto proto = selectIngressProtocol(mxlRegions.dataLayout(), mxlRegions.regions(), mxlRegions.maxSyncBatchSize());
         auto targetInfo = std::make_unique<TargetInfo>(pep.id(), pep.localAddress(), proto->registerMemory(domain), proto->bounceBufferInfo());
 
         // Helper struct to enable the std::make_unique function to access the private constructor of this class.

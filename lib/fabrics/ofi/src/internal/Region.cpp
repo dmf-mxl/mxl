@@ -10,6 +10,7 @@
 #include <mxl-internal/DiscreteFlowData.hpp>
 #include <mxl-internal/Flow.hpp>
 #include "mxl-internal/ContinuousFlowData.hpp"
+#include "mxl-internal/Instance.hpp"
 #include "mxl/dataformat.h"
 #include "mxl/fabrics.h"
 #include "mxl/flow.h"
@@ -101,14 +102,14 @@ namespace mxl::lib::fabrics::ofi
         return iovecs;
     }
 
-    MxlRegions* MxlRegions::fromAPI(mxlFabricsRegions regions) noexcept
+    MxlRegions MxlRegions::forReader(::mxlFlowReader reader)
     {
-        return reinterpret_cast<MxlRegions*>(regions);
+        return mxlFabricsRegionsFromFlow(mxl::lib::to_FlowReader(reader)->getFlowData());
     }
 
-    mxlFabricsRegions MxlRegions::toAPI() noexcept
+    MxlRegions MxlRegions::forWriter(::mxlFlowWriter writer)
     {
-        return reinterpret_cast<mxlFabricsRegions>(this);
+        return mxlFabricsRegionsFromMutableFlow(mxl::lib::to_FlowWriter(writer)->getFlowData());
     }
 
     std::vector<Region> const& MxlRegions::regions() const noexcept

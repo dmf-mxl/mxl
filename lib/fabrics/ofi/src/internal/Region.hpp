@@ -208,13 +208,8 @@ namespace mxl::lib::fabrics::ofi
             , _maxSyncBatchSize{maxSyncBatchSize}
         {}
 
-        /** \brief Convert between external and internal versions of this type
-         */
-        [[nodiscard]]
-        static MxlRegions* fromAPI(mxlFabricsRegions regions) noexcept;
-
-        [[nodiscard]]
-        mxlFabricsRegions toAPI() noexcept;
+        static MxlRegions forReader(mxlFlowReader);
+        static MxlRegions forWriter(mxlFlowWriter);
 
         /** \brief View accessor for the underlying regions.
          */
