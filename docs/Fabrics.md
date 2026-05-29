@@ -40,7 +40,8 @@ As stated in the proposition, the preferred method to use to transfer data is Re
 Remote Write supports scatter-gather functionality on the source side, allowing the initiator to specify multiple non-contiguous buffers as the source. However, the destination is limited to a single contiguous address, which prevents unpacking the results back into multiple non-contiguous buffers and creates an asymmetry in the transfer operation. To address this problem, we have to use a bouncing buffer on the target side. On completion, the target is responsible for unpacking data back to non-contiguous buffers.
 
 ## 3.2 Send/Recv
-There are some cases where the hardware does not support Remote Write. One example of this is some AWS instances that have EFA enabled hardware only have support for Send/Recv transfers. One problem with Send/Recv is that there is no guarantee that a transfer will always end up in the buffer the target expects. One example of this is when a target posts a receive for grain index X, but the initiator never transfers X and instead transfers X+1. Grain X+1 ends up in grain X’s buffer region, which is incorrect. To avoid this situation, we must use a bouncing buffer. Naturally, we would like to avoid that extra copy to save on CPU resources and reduce latency.
+There are some cases where the hardware does not support Remote Write. One example of this is some AWS instances that have EFA enabled hardware only have support for Send/Recv transfers.
+With untagged Send/Recv, the receiver cannot direct an incoming message to a specific buffer as posted receives are consumed in FIFO order. Since the target doesn't know in advance which grain the initiator will send next, it cannot pre-post the grain's final buffer and rely on the data landing there. To land data directly in the correct per-grain buffer one would need tag matching (FI_TAGGED, tag = grain index), otherwise a single bounce buffer is used and the grain index is recovered from the immediate data, which results in an extra copy.
 
 # 4. Communication establishment (connected and connection-less)
 
@@ -333,3 +334,12 @@ Upon completion, we need to accomplish these tasks:
 
 # 9. Memory Registration
 RDMA operations require memory registration. Two types of target buffers are available: Media Flow Buffers and Bouncing Buffers. The registration logic is straightforward: if Bouncing Buffers exist, they are registered; if not, the Media Flow Buffers are registered instead.
+
+# 10. Current Implementation Status
+
+The currently implemented feature set covers the optimal paths for both discrete and continuous flows:
+
+- **Discrete flow (grains):** Transferred using Remote Write (RMA) directly into the target's media buffer, with immediate data carrying the grain index. This is the optimal path that requires no involvement from the target during the transfer itself.
+- **Continuous flow (samples):** Transferred using Remote Write (RMA) with scatter-gather on the source side, landing data into a bouncing buffer on the target. Upon completion, the target unpacks the bouncing buffer back into the non-contiguous per-channel buffers of the MXL audio flow.
+
+Send/Recv and tag-matching fallback paths are not yet implemented. Send/Recv without tag matching requires a bouncing buffer and an extra copy, while tag matching requires explicit synchronization between initiator and target and may not benefit from hardware acceleration depending on the NIC. Given these trade-offs and that Remote Write covers the primary use cases, the fallback paths have been deferred.
