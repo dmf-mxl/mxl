@@ -126,6 +126,8 @@ namespace mxl::lib::fabrics::ofi
         }
 
         auto caps = FI_RMA | FI_WRITE;
+        // To enable device memory support:
+        // caps |=  FI_HMEM;
         auto fabricInfoList = FabricInfoList::get(config.endpointAddress.node, config.endpointAddress.service, provider.value(), caps, FI_EP_RDM);
         if (fabricInfoList.begin() == fabricInfoList.end())
         {
