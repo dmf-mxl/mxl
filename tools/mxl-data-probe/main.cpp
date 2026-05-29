@@ -15,7 +15,7 @@
 #include <ada.h>
 #include <CLI/CLI.hpp>
 #include <fmt/format.h>
-#include <picojson/picojson.h>
+#include <picojson/wrapper.h>
 #include <mxl/flow.h>
 #include <mxl/flowinfo.h>
 #include <mxl/mxl.h>
