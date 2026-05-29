@@ -17,3 +17,4 @@ cmake = "0.1.54"
 
 [features]
 mxl-not-built = []
+mxl-fabrics-ofi = []

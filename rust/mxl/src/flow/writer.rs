@@ -34,6 +34,10 @@ impl FlowWriter {
         }
     }
 
+    pub(crate) fn inner(&self) -> mxl_sys::FlowWriter {
+        self.writer
+    }
+
     pub fn to_grain_writer(mut self) -> Result<GrainWriter> {
         let flow_type = self.get_flow_type()?;
         if !is_discrete_data_format(flow_type) {

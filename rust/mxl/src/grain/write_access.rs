@@ -50,6 +50,9 @@ impl<'a> GrainWriteAccess<'a> {
     pub fn total_slices(&self) -> u16 {
         self.grain_info.totalSlices
     }
+    pub fn valid_slices(&self) -> u16 {
+        self.grain_info.validSlices
+    }
 
     pub fn commit(mut self, valid_slices: u16) -> Result<()> {
         self.committed_or_canceled = true;
