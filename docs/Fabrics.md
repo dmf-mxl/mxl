@@ -1,3 +1,6 @@
+<!-- SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project. -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
+
 This page presents the details of the libfabric implementation of the Fabrics API. This page assumes familiarity with the MXL Flow API, with asynchronous networking workflows and RDMA. A good place to start would be to read the proposition [MXL Inter host memory sharing ‐ Proposition](https://github.com/dmf-mxl/mxl/wiki/MXL-Inter-host-memory-sharing-%E2%80%90-Proposition).
 
 # 1. Requirements
