@@ -129,7 +129,7 @@ pub(crate) fn create_initiator(
         Error::from_status(
             ctx.api()
                 .fabrics_create_initiator(ctx.inner, &mut initiator),
-        )?;
+        )?
     }
     if initiator.is_null() {
         return Err(Error::Other(

@@ -34,7 +34,7 @@ impl<'a> TryFrom<&Config<'a>> for mxl_sys::fabrics::FabricsInitiatorConfig {
             version: value.version,
             endpointAddress: (&value.endpoint_addr).try_into()?,
             provider: (&value.provider).into(),
-            // SAFETY: The type cast is necessary, because this FlowReader is scoped in mxl_sys::fabrics::*, not mxl_sys::*
+            // SAFETY: The type cast is necessary, because this FlowReader is scoped in mxl_sys::fabrics::*, not mxl_sys::*, but this is the same type.
             reader: unsafe {
                 std::mem::transmute::<mxl_sys::FlowReader, mxl_sys::fabrics::FlowReader>(
                     value.flow_reader.inner(),
