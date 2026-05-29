@@ -87,6 +87,7 @@ extern "C"
      * Create a new mxl-fabrics from an mxl instance. Targets and initiators created from this mxl-fabrics instance
      * will have access to the flows created in the supplied mxl instance.
      * \param in_instance An mxlInstance previously created with mxlCreateInstance().
+     * \param options A json-formatted string with options. Currently not used.
      * \param out_fabricsInstance Returns a pointer to the created mxlFabricsInstance.
      * \return MXL_STATUS_OK if the instance was successfully created
      */
@@ -124,6 +125,7 @@ extern "C"
      * \param in_target A valid fabrics target
      * \param in_config The target configuration. This will be used to create an endpoint and register a memory region. The memory region
      * corresponds to the one that will be written to by the initiator.
+     * \param options A json-formatted string with options. Currently not used.
      * \param out_info An mxlFabricsTargetInfo_t object which should be shared to a remote initiator which this target should receive data from. The
      * object must be freed with mxlFabricsFreeTargetInfo().
      * \return The result code. \see mxlStatus
