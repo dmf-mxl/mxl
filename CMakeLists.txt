@@ -407,9 +407,8 @@ if(BUILD_DOCS)
         # Generate the Doxyfile
         set(DOXYFILE_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
         set(DOXYFILE_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+        set(DOXYGEN_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Doxygen")
         configure_file(${DOXYFILE_IN} ${DOXYFILE_OUT} @ONLY)
-
-        set(DOXYGEN_OUTPUT_DIR "${CMAKE_BINARY_DIR}/docs")
 
         add_custom_target(doc
             COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
@@ -419,7 +418,7 @@ if(BUILD_DOCS)
             VERBATIM
         )
 
-        install(DIRECTORY "${CMAKE_BINARY_DIR}/docs/html"
+        install(DIRECTORY "${DOXYGEN_OUTPUT_DIR}/html"
             DESTINATION share/doc/mxl
             FILES_MATCHING PATTERN "*")
     endif()

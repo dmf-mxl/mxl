@@ -1,57 +1,138 @@
 # SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 # SPDX-License-Identifier: Apache-2.0
 
-# Doxyfile configuration for generating documentation for C, C++, and .h files
-# located in the lib/ and mxlapp/ subdirectories.
+# Doxyfile configuration for the MXL project.
+# This template is processed by CMake (configure_file) to substitute @variables@.
 
+#---------------------------------------------------------------------------
 # Project settings
+#---------------------------------------------------------------------------
 PROJECT_NAME           = "MXL : Media eXchange Layer"
-PROJECT_BRIEF          = "MXL"
-OUTPUT_DIRECTORY       = docs
+PROJECT_BRIEF          = "Open-source SDK for high-performance shared media exchange"
+PROJECT_NUMBER         = @PROJECT_VERSION@
+OUTPUT_DIRECTORY       = @DOXYGEN_OUTPUT_DIR@
 OUTPUT_LANGUAGE        = English
+STRIP_FROM_PATH        = @CMAKE_CURRENT_SOURCE_DIR@
+JAVADOC_AUTOBRIEF      = YES
+MARKDOWN_SUPPORT       = YES
+AUTOLINK_SUPPORT       = YES
+BUILTIN_STL_SUPPORT    = YES
+NUM_PROC_THREADS       = 0
 
+#---------------------------------------------------------------------------
 # Input settings
-INPUT                  = @CMAKE_CURRENT_SOURCE_DIR@/README.md @CMAKE_CURRENT_SOURCE_DIR@/lib
-FILE_PATTERNS          = *.c *.cpp *.h *.hpp *.md
+#---------------------------------------------------------------------------
+INPUT                  = @CMAKE_CURRENT_SOURCE_DIR@/README.md \
+                         @CMAKE_CURRENT_SOURCE_DIR@/lib/include \
+                         @CMAKE_CURRENT_SOURCE_DIR@/lib/internal/include \
+                         @CMAKE_CURRENT_SOURCE_DIR@/lib/internal/src \
+                         @CMAKE_CURRENT_SOURCE_DIR@/lib/src \
+                         @CMAKE_CURRENT_SOURCE_DIR@/lib/fabrics \
+                         @CMAKE_CURRENT_SOURCE_DIR@/tools \
+                         @CMAKE_CURRENT_SOURCE_DIR@/utils \
+                         @CMAKE_CURRENT_SOURCE_DIR@/docs
+INPUT_ENCODING         = UTF-8
+FILE_PATTERNS          = *.h *.hpp *.c *.cpp *.md
 RECURSIVE              = YES
+EXCLUDE                = @CMAKE_CURRENT_SOURCE_DIR@/build \
+                         @CMAKE_CURRENT_SOURCE_DIR@/rust \
+                         @CMAKE_CURRENT_SOURCE_DIR@/.claude
+EXCLUDE_PATTERNS       = */build/* */rust/* */.claude/*
+IMAGE_PATH             = @CMAKE_CURRENT_SOURCE_DIR@/docs \
+                         @CMAKE_CURRENT_SOURCE_DIR@/docs/assets \
+                         @CMAKE_CURRENT_SOURCE_DIR@/docs/fabrics/img
 USE_MDFILE_AS_MAINPAGE = README.md
 
-# Build settings
+#---------------------------------------------------------------------------
+# Build / extraction settings
+#---------------------------------------------------------------------------
 EXTRACT_ALL            = YES
 EXTRACT_PRIVATE        = YES
 EXTRACT_STATIC         = YES
 EXTRACT_LOCAL_CLASSES  = YES
 EXTRACT_LOCAL_METHODS  = YES
+HIDE_UNDOC_MEMBERS     = NO
+HIDE_UNDOC_CLASSES     = NO
+SHOW_INCLUDE_FILES     = YES
+SHOW_GROUPED_MEMB_INC  = NO
+INLINE_INFO            = YES
+SORT_MEMBER_DOCS       = YES
+SORT_BRIEF_DOCS        = YES
+SORT_BY_SCOPE_NAME     = YES
+GENERATE_TODOLIST      = YES
+GENERATE_TESTLIST      = YES
+GENERATE_BUGLIST       = YES
+GENERATE_DEPRECATEDLIST= YES
+SHOW_USED_FILES        = YES
+SHOW_FILES             = YES
+SHOW_NAMESPACES        = YES
 
+#---------------------------------------------------------------------------
 # Source browsing settings
+#---------------------------------------------------------------------------
 SOURCE_BROWSER         = YES
 INLINE_SOURCES         = YES
+STRIP_CODE_COMMENTS    = YES
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION    = YES
+REFERENCES_LINK_SOURCE = YES
+SOURCE_TOOLTIPS        = YES
+VERBATIM_HEADERS       = YES
 
-# Documentation generation format (HTML enabled by default)
+#---------------------------------------------------------------------------
+# Warning and progress messages
+#---------------------------------------------------------------------------
+QUIET                  = NO
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_NO_PARAMDOC       = YES
+WARN_FORMAT            = "$file:$line: $text"
+WARN_LOGFILE           = @DOXYGEN_OUTPUT_DIR@/doxygen_warnings.log
+
+#---------------------------------------------------------------------------
+# HTML output
+#---------------------------------------------------------------------------
 GENERATE_HTML          = YES
 HTML_OUTPUT            = html
+HTML_COLORSTYLE        = LIGHT
+HTML_DYNAMIC_MENUS     = YES
+GENERATE_TREEVIEW      = YES
+TREEVIEW_WIDTH         = 250
+DISABLE_INDEX          = NO
+FULL_SIDEBAR           = NO
+HTML_EXTRA_STYLESHEET  = @AWESOME_CSS_DIR@/doxygen-awesome.css
+SEARCHENGINE           = YES
+SERVER_BASED_SEARCH    = NO
 
-# Optional: Enable LaTeX or other formats as needed
+#---------------------------------------------------------------------------
+# Other output formats (disabled)
+#---------------------------------------------------------------------------
 GENERATE_LATEX         = NO
 GENERATE_XML           = NO
 GENERATE_MAN           = NO
 GENERATE_RTF           = NO
 
-# Warnings and diagnostics
-WARNINGS               = YES
-WARN_IF_UNDOCUMENTED   = YES
-WARN_NO_PARAMDOC       = YES
+#---------------------------------------------------------------------------
+# Preprocessor
+#---------------------------------------------------------------------------
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = NO
+SEARCH_INCLUDES        = YES
+INCLUDE_PATH           = @CMAKE_CURRENT_SOURCE_DIR@/lib/include \
+                         @CMAKE_CURRENT_SOURCE_DIR@/lib/internal/include \
+                         @CMAKE_CURRENT_SOURCE_DIR@/lib/fabrics/include
 
-# Additional options (optional)
-SHOW_USED_FILES        = YES
-SHOW_FILES             = YES
-SORT_MEMBER_DOCS       = YES
-SORT_BRIEF_DOCS        = YES
-SORT_BY_SCOPE_NAME     = YES
-
-GENERATE_TREEVIEW      = YES 
-DISABLE_INDEX          = NO
-FULL_SIDEBAR           = NO
-HTML_EXTRA_STYLESHEET  = @AWESOME_CSS_DIR@/doxygen-awesome.css
-HTML_COLORSTYLE        = LIGHT 
-GENERATE_TODOLIST      = YES
+#---------------------------------------------------------------------------
+# Diagrams (set HAVE_DOT = YES if Graphviz is available)
+#---------------------------------------------------------------------------
+HAVE_DOT               = NO
+CLASS_GRAPH            = YES
+COLLABORATION_GRAPH    = YES
+GROUP_GRAPHS           = YES
+INCLUDE_GRAPH          = YES
+INCLUDED_BY_GRAPH      = YES
+CALL_GRAPH             = NO
+CALLER_GRAPH           = NO
+DIRECTORY_GRAPH        = YES
