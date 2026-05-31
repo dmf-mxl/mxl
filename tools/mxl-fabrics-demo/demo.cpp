@@ -6,6 +6,7 @@
 #include <csignal>
 #include <cstdint>
 #include <cstdlib>
+#include <fstream>
 #include <optional>
 #include <string>
 #include <uuid.h>
@@ -17,7 +18,6 @@
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
-#include "CLI/CLI.hpp"
 #include "mxl/dataformat.h"
 #include "mxl/flowinfo.h"
 #include "../../lib/fabrics/ofi/src/internal/Base64.hpp"
@@ -533,7 +533,7 @@ public:
         return MXL_STATUS_OK;
     }
 
-    mxlStatus printInfo()
+    mxlStatus printInfo(std::string const& targetInfoFile = {})
     {
         auto targetInfoStr = std::string{};
         size_t targetInfoStrSize;
@@ -554,6 +554,17 @@ public:
         }
 
         MXL_INFO("Target info:  {}", base64::to_base64(targetInfoStr));
+
+        if (!targetInfoFile.empty())
+        {
+            std::ofstream of{targetInfoFile};
+            of << targetInfoStr;
+            if (of.fail())
+            {
+                MXL_ERROR("Failed to write target info to '{}'", targetInfoFile);
+                return MXL_ERR_INTERNAL;
+            }
+        }
 
         return MXL_STATUS_OK;
     }
@@ -758,8 +769,8 @@ int main(int argc, char** argv)
     std::string targetInfo;
     app.add_option("--target-info",
         targetInfo,
-        "The target information. This is used when configured as an initiator . This is the target information to send to."
-        "You first start the target and it will print the targetInfo that you paste to this argument");
+        "As target: output file path for raw target info (optional, always logged as base64). "
+        "As initiator: base64-encoded target info, or a path prefixed with '@' to read raw target info from a file.");
 
     CLI11_PARSE(app, argc, argv);
 
@@ -784,6 +795,24 @@ int main(int argc, char** argv)
         std::string flowDescriptor{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
         mxl::lib::FlowParser descriptorParser{flowDescriptor};
 
+        std::string resolvedTargetInfo;
+        if (!targetInfo.empty() && targetInfo[0] == '@')
+        {
+            // Read raw target info from file
+            std::string filePath{targetInfo.begin() + 1, targetInfo.end()};
+            std::ifstream of{filePath};
+            if (of.fail())
+            {
+                MXL_ERROR("Failed to open target info file '{}'", filePath);
+                return MXL_ERR_INTERNAL;
+            }
+            resolvedTargetInfo = std::string{std::istreambuf_iterator<char>{of}, std::istreambuf_iterator<char>{}};
+        }
+        else
+        {
+            resolvedTargetInfo = base64::from_base64(targetInfo);
+        }
+
         auto app = AppInitator{
             Config{
                    .domain = domain,
@@ -794,7 +823,7 @@ int main(int argc, char** argv)
                    },
         };
 
-        if (status = app.setup(base64::from_base64(targetInfo)); status != MXL_STATUS_OK)
+        if (status = app.setup(resolvedTargetInfo); status != MXL_STATUS_OK)
         {
             MXL_ERROR("Failed to setup initiator with status '{}'", static_cast<int>(status));
             return status;
@@ -849,7 +878,7 @@ int main(int argc, char** argv)
             return status;
         }
 
-        if (status = app.printInfo(); status != MXL_STATUS_OK)
+        if (status = app.printInfo(targetInfo); status != MXL_STATUS_OK)
         {
             MXL_ERROR("Failed to print target info with status '{}'", static_cast<int>(status));
             return status;
