@@ -19,7 +19,15 @@ namespace mxl::lib::fabrics::ofi
 {
     std::pair<std::unique_ptr<RDMTarget>, std::unique_ptr<TargetInfo>> RDMTarget::setup(mxlFabricsTargetConfig const& config)
     {
-        MXL_INFO("setting up target [endpoint = {}:{}, provider = {}]", config.endpointAddress.node, config.endpointAddress.service, config.provider);
+        // Both fields may arrive as null at this call site — libfabric's FI_SOURCE path
+        // accepts that as "bind to any local address". fmt's `{}` formatter for char const*
+        // throws fmt::format_error("string pointer is null") on a nullptr, which MXL_INFO
+        // silently swallows. Substitute a printable sentinel for the log only — the original
+        // pointers still go to fi_getinfo so the wildcard semantics are preserved.
+        char const* const nodeStr = config.endpointAddress.node ? config.endpointAddress.node : "<unspecified>";
+        char const* const serviceStr = config.endpointAddress.service ? config.endpointAddress.service : "<unspecified>";
+
+        MXL_INFO("setting up target [endpoint = {}:{}, provider = {}]", nodeStr, serviceStr, config.provider);
 
         auto provider = providerFromAPI(config.provider);
         if (!provider)

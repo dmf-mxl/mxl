@@ -20,7 +20,18 @@ namespace mxl::lib::fabrics::ofi
 
     std::pair<std::unique_ptr<RCTarget>, std::unique_ptr<TargetInfo>> RCTarget::setup(mxlFabricsTargetConfig const& config)
     {
-        MXL_INFO("setting up target [endpoint = {}:{}, provider = {}]", config.endpointAddress.node, config.endpointAddress.service, config.provider);
+        // Both fields may arrive as null at this call site — libfabric's FI_SOURCE path
+        // accepts that and treats it as "bind to any local address". fmt's `{}` formatter
+        // for char const*, however, throws fmt::format_error("string pointer is null") on a
+        // nullptr argument. The MXL_INFO macro swallows that exception and emits an
+        // unhelpful "*** LOG ERROR #NNNN ***" line; the Exception::make below would re-throw
+        // it as the exception out of setup() instead of MXL_ERR_NO_FABRIC, masking the real
+        // failure. Substitute a printable sentinel for formatting only — the original
+        // pointers still go to fi_getinfo so the wildcard semantics are preserved.
+        char const* const nodeStr = config.endpointAddress.node ? config.endpointAddress.node : "<unspecified>";
+        char const* const serviceStr = config.endpointAddress.service ? config.endpointAddress.service : "<unspecified>";
+
+        MXL_INFO("setting up target [endpoint = {}:{}, provider = {}]", nodeStr, serviceStr, config.provider);
 
         // Convert to our internal enum type.
         auto provider = providerFromAPI(config.provider);
@@ -37,11 +48,7 @@ namespace mxl::lib::fabrics::ofi
 
         if (fabricInfoList.begin() == fabricInfoList.end())
         {
-            throw Exception::make(MXL_ERR_NO_FABRIC,
-                "No fabric available for provider {} at {}:{}",
-                config.provider,
-                config.endpointAddress.node,
-                config.endpointAddress.service);
+            throw Exception::make(MXL_ERR_NO_FABRIC, "No fabric available for provider {} at {}:{}", config.provider, nodeStr, serviceStr);
         }
 
         // Open fabric and domain. These represent the context of the local network fabric adapter that will be used
