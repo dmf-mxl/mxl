@@ -878,7 +878,8 @@ int main(int argc, char** argv)
             return status;
         }
 
-        if (status = app.printInfo(targetInfo); status != MXL_STATUS_OK)
+        auto targetInfoPath = targetInfo.empty() || targetInfo[0] != '@' ? targetInfo : std::string{targetInfo.begin() + 1, targetInfo.end()};
+        if (status = app.printInfo(targetInfoPath); status != MXL_STATUS_OK)
         {
             MXL_ERROR("Failed to print target info with status '{}'", static_cast<int>(status));
             return status;
