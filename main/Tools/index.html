@@ -1,0 +1,1163 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Media eXchange Layer">
+      
+      
+        <meta name="author" content="The MXL Project">
+      
+      
+      
+        <link rel="prev" href="../Timing/">
+      
+      
+        <link rel="next" href="../Usage/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.43">
+    
+    
+      
+        <title>Tools - MXL</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../assets/stylesheets/modern/main.fba56155.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../assets/stylesheets/modern/palette.dfe2e883.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tools" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="./.." title="MXL" class="md-header__button md-logo" aria-label="MXL" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 7v14M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MXL
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Tools
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="none" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="none" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="./.." title="MXL" class="md-nav__button md-logo" aria-label="MXL" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 7v14M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>
+
+    </a>
+    MXL
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  MXL : Media eXchange Layer
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Addressability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  MXL Addressability
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Architecture
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Building/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Building
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Configuration
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Timing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Timing Model
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Tools
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Tools
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#mxl-info" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        mxl-info
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mxl-data-probe" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        mxl-data-probe
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mxl-gst-testsrc" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        mxl-gst-testsrc
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mxl-gst-sink" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        mxl-gst-sink
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="mxl-gst-sink">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mxl-gst-looping-filesrc" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        mxl-gst-looping-filesrc
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="mxl-gst-looping-filesrc">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Prerequisites
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Usage
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gstreamer-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Gstreamer filters
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#mxl-info" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        mxl-info
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mxl-data-probe" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        mxl-data-probe
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mxl-gst-testsrc" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        mxl-gst-testsrc
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mxl-gst-sink" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        mxl-gst-sink
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="mxl-gst-sink">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mxl-gst-looping-filesrc" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        mxl-gst-looping-filesrc
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="mxl-gst-looping-filesrc">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Prerequisites
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Usage
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gstreamer-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Gstreamer filters
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+<!-- SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project. -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
+
+<h1 id="tools">Tools</h1>
+<h2 id="mxl-info">mxl-info</h2>
+<p>Simple tool that uses the MXL sdk to open a flow by ID and prints the flow details.</p>
+<div class="highlight"><pre><span></span><code>./mxl-info<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">[</span>ADDRESS...<span class="o">]</span>
+
+POSITIONALS:
+<span class="w">  </span>ADDRESS<span class="w"> </span>TEXT<span class="w"> </span>...<span class="w">            </span>MXL<span class="w"> </span>URI
+
+OPTIONS:
+<span class="w">  </span>-h,<span class="w">     </span>--help<span class="w">              </span>Print<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
+<span class="w">          </span>--version<span class="w">           </span>Display<span class="w"> </span>program<span class="w"> </span>version<span class="w"> </span>information<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
+<span class="w">  </span>-d,<span class="w">     </span>--domain<span class="w"> </span>TEXT:DIR<span class="w">   </span>The<span class="w"> </span>MXL<span class="w"> </span>domain<span class="w"> </span>directory
+<span class="w">  </span>-f,<span class="w">     </span>--flow<span class="w"> </span>TEXT<span class="w">         </span>The<span class="w"> </span>flow<span class="w"> </span>id<span class="w"> </span>to<span class="w"> </span>analyse
+<span class="w">  </span>-l,<span class="w">     </span>--list<span class="w">              </span>List<span class="w"> </span>all<span class="w"> </span>flows<span class="w"> </span><span class="k">in</span><span class="w"> </span>the<span class="w"> </span>MXL<span class="w"> </span>domain
+<span class="w">  </span>-g,<span class="w">     </span>--garbage-collect<span class="w">   </span>Garbage<span class="w"> </span>collect<span class="w"> </span>inactive<span class="w"> </span>flows<span class="w"> </span>found<span class="w"> </span><span class="k">in</span><span class="w"> </span>the<span class="w"> </span>MXL<span class="w"> </span>domain
+
+MXL<span class="w"> </span>URI<span class="w"> </span>format:
+mxl://<span class="o">[</span>authority<span class="o">[</span>:port<span class="o">]]</span>/domain<span class="o">[</span>?id<span class="o">=</span>...<span class="o">]</span>
+See:<span class="w"> </span>https://github.com/dmf-mxl/mxl/docs/Addressability.md
+</code></pre></div>
+<p>Example 1a : listing all flows in a domain using command line options.</p>
+<div class="highlight"><pre><span></span><code>../mxl-info/mxl-info<span class="w"> </span>-d<span class="w"> </span>/dev/shm/mxl/<span class="w"> </span>-l
+CAM1:<span class="w"> </span>mxl:///dev/shm/mxl/?id<span class="o">=</span>5fbec3b1-1b0f-417d-9059-8b94a47197ed<span class="p">&amp;</span><span class="nv">id</span><span class="o">=</span>b3bb5be7-9fe9-4324-a5bb-4c70e1084449
+<span class="w">        </span>video<span class="w"> </span>:<span class="w"> </span>5fbec3b1-1b0f-417d-9059-8b94a47197ed<span class="w"> </span>-<span class="w"> </span>Camera<span class="w"> </span><span class="m">1</span>
+<span class="w">        </span>audio<span class="w"> </span>:<span class="w"> </span>b3bb5be7-9fe9-4324-a5bb-4c70e1084449<span class="w"> </span>-<span class="w"> </span>Camera<span class="w"> </span><span class="m">1</span>
+
+CAM2:<span class="w"> </span>mxl:///dev/shm/mxl/?id<span class="o">=</span>53c36c15-10c8-48a3-9ba1-41f31d557fba<span class="p">&amp;</span><span class="nv">id</span><span class="o">=</span>20e6824e-44b1-43ad-b198-99ebb7fa7092
+<span class="w">        </span>video<span class="w"> </span>:<span class="w"> </span>53c36c15-10c8-48a3-9ba1-41f31d557fba<span class="w"> </span>-<span class="w"> </span>Camera<span class="w"> </span><span class="m">2</span>
+<span class="w">        </span>audio<span class="w"> </span>:<span class="w"> </span>20e6824e-44b1-43ad-b198-99ebb7fa7092<span class="w"> </span>-<span class="w"> </span>Camera<span class="w"> </span><span class="m">2</span>
+</code></pre></div>
+<p>Example 1b : listing all flows in a domain by specifying an MXL domain URI.</p>
+<div class="highlight"><pre><span></span><code>./mxl-info<span class="w"> </span>mxl:///dev/shm/mxl
+CAM1:<span class="w"> </span>mxl:///dev/shm/mxl/?id<span class="o">=</span>5fbec3b1-1b0f-417d-9059-8b94a47197ed<span class="p">&amp;</span><span class="nv">id</span><span class="o">=</span>b3bb5be7-9fe9-4324-a5bb-4c70e1084449
+<span class="w">        </span>video<span class="w"> </span>:<span class="w"> </span>5fbec3b1-1b0f-417d-9059-8b94a47197ed<span class="w"> </span>-<span class="w"> </span>Camera<span class="w"> </span><span class="m">1</span>
+<span class="w">        </span>audio<span class="w"> </span>:<span class="w"> </span>b3bb5be7-9fe9-4324-a5bb-4c70e1084449<span class="w"> </span>-<span class="w"> </span>Camera<span class="w"> </span><span class="m">1</span>
+
+CAM2:<span class="w"> </span>mxl:///dev/shm/mxl/?id<span class="o">=</span>53c36c15-10c8-48a3-9ba1-41f31d557fba<span class="p">&amp;</span><span class="nv">id</span><span class="o">=</span>20e6824e-44b1-43ad-b198-99ebb7fa7092
+<span class="w">        </span>video<span class="w"> </span>:<span class="w"> </span>53c36c15-10c8-48a3-9ba1-41f31d557fba<span class="w"> </span>-<span class="w"> </span>Camera<span class="w"> </span><span class="m">2</span>
+<span class="w">        </span>audio<span class="w"> </span>:<span class="w"> </span>20e6824e-44b1-43ad-b198-99ebb7fa7092<span class="w"> </span>-<span class="w"> </span>Camera<span class="w"> </span><span class="m">2</span>
+</code></pre></div>
+<p>Example 2a : Printing details about a specific flow using command line options.</p>
+<div class="highlight"><pre><span></span><code>./mxl-info<span class="w"> </span>-d<span class="w"> </span>~/mxl_domain/<span class="w"> </span>-f<span class="w"> </span>5fbec3b1-1b0f-417d-9059-8b94a47197ed
+
+-<span class="w"> </span>Flow<span class="w"> </span><span class="o">[</span>5fbec3b1-1b0f-417d-9059-8b94a47197ed<span class="o">]</span>
+<span class="w">                   </span>Version:<span class="w"> </span><span class="m">1</span>
+<span class="w">               </span>Struct<span class="w"> </span>size:<span class="w"> </span><span class="m">2048</span>
+<span class="w">                    </span>Format:<span class="w"> </span>Video
+<span class="w">         </span>Grain/sample<span class="w"> </span>rate:<span class="w"> </span><span class="m">30000</span>/1001
+<span class="w">         </span>Commit<span class="w"> </span>batch<span class="w"> </span>size:<span class="w"> </span><span class="m">1080</span>
+<span class="w">           </span>Sync<span class="w"> </span>batch<span class="w"> </span>size:<span class="w"> </span><span class="m">1080</span>
+<span class="w">          </span>Payload<span class="w"> </span>Location:<span class="w"> </span>Host
+<span class="w">              </span>Device<span class="w"> </span>Index:<span class="w"> </span>-1
+<span class="w">                     </span>Flags:<span class="w"> </span><span class="m">00000000</span>
+<span class="w">               </span>Grain<span class="w"> </span>count:<span class="w"> </span><span class="m">2</span>
+
+<span class="w">                </span>Head<span class="w"> </span>index:<span class="w"> </span><span class="m">52939144165</span>
+<span class="w">           </span>Last<span class="w"> </span>write<span class="w"> </span>time:<span class="w"> </span><span class="m">1766402776989915517</span>
+<span class="w">            </span>Last<span class="w"> </span><span class="nb">read</span><span class="w"> </span>time:<span class="w"> </span><span class="m">1766402716054676488</span>
+<span class="w">          </span>Latency<span class="w"> </span><span class="o">(</span>grains<span class="o">)</span>:<span class="w"> </span><span class="m">1</span>
+<span class="w">                    </span>Active:<span class="w"> </span><span class="nb">true</span>
+</code></pre></div>
+<p>Example 2a : Printing details about a specific flow using an MXL URI </p>
+<div class="highlight"><pre><span></span><code>./mxl-info<span class="w"> </span>mxl:///dev/shm/mxl?id<span class="o">=</span>5fbec3b1-1b0f-417d-9059-8b94a47197ed
+
+-<span class="w"> </span>Flow<span class="w"> </span><span class="o">[</span>5fbec3b1-1b0f-417d-9059-8b94a47197ed<span class="o">]</span>
+<span class="w">                   </span>Version:<span class="w"> </span><span class="m">1</span>
+<span class="w">               </span>Struct<span class="w"> </span>size:<span class="w"> </span><span class="m">2048</span>
+<span class="w">                    </span>Format:<span class="w"> </span>Video
+<span class="w">         </span>Grain/sample<span class="w"> </span>rate:<span class="w"> </span><span class="m">30000</span>/1001
+<span class="w">         </span>Commit<span class="w"> </span>batch<span class="w"> </span>size:<span class="w"> </span><span class="m">1080</span>
+<span class="w">           </span>Sync<span class="w"> </span>batch<span class="w"> </span>size:<span class="w"> </span><span class="m">1080</span>
+<span class="w">          </span>Payload<span class="w"> </span>Location:<span class="w"> </span>Host
+<span class="w">              </span>Device<span class="w"> </span>Index:<span class="w"> </span>-1
+<span class="w">                     </span>Flags:<span class="w"> </span><span class="m">00000000</span>
+<span class="w">               </span>Grain<span class="w"> </span>count:<span class="w"> </span><span class="m">2</span>
+
+<span class="w">                </span>Head<span class="w"> </span>index:<span class="w"> </span><span class="m">52939144165</span>
+<span class="w">           </span>Last<span class="w"> </span>write<span class="w"> </span>time:<span class="w"> </span><span class="m">1766402776989915517</span>
+<span class="w">            </span>Last<span class="w"> </span><span class="nb">read</span><span class="w"> </span>time:<span class="w"> </span><span class="m">1766402716054676488</span>
+<span class="w">          </span>Latency<span class="w"> </span><span class="o">(</span>grains<span class="o">)</span>:<span class="w"> </span><span class="m">1</span>
+<span class="w">                    </span>Active:<span class="w"> </span><span class="nb">true</span>
+</code></pre></div>
+<p>Hint : Live monitoring of a flow details (updates every second)</p>
+<div class="highlight"><pre><span></span><code>watch<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>-p<span class="w"> </span>./mxl-info<span class="w"> </span>mxl:///dev/shm/mxl?id<span class="o">=</span>5fbec3b1-1b0f-417d-9059-8b94a47197ed
+</code></pre></div>
+<h2 id="mxl-data-probe">mxl-data-probe</h2>
+<p>A tool that opens an MXL ancillary Data flow (<code>media_type: video/smpte291</code>), reads one or more grains starting at the current head index, and prints the RFC-8331 ANC elements found in each grain.</p>
+<div class="highlight"><pre><span></span><code>./mxl-data-probe<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">[</span>ADDRESS...<span class="o">]</span>
+
+POSITIONALS:
+<span class="w">  </span>ADDRESS<span class="w"> </span>TEXT<span class="w"> </span>...<span class="w">            </span>MXL<span class="w"> </span>URI
+
+OPTIONS:
+<span class="w">  </span>-h,<span class="w">     </span>--help<span class="w">              </span>Print<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
+<span class="w">          </span>--version<span class="w">           </span>Display<span class="w"> </span>program<span class="w"> </span>version<span class="w"> </span>information<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
+<span class="w">  </span>-d,<span class="w">     </span>--domain<span class="w"> </span>TEXT:DIR<span class="w">   </span>The<span class="w"> </span>MXL<span class="w"> </span>domain<span class="w"> </span>directory
+<span class="w">  </span>-f,<span class="w">     </span>--flow<span class="w"> </span>TEXT<span class="w">         </span>The<span class="w"> </span>flow<span class="w"> </span>id<span class="w"> </span>to<span class="w"> </span><span class="nb">read</span>
+<span class="w">  </span>-c,<span class="w">     </span>--count<span class="w"> </span>UINT<span class="w"> </span><span class="o">[</span><span class="m">1</span><span class="o">]</span><span class="w">    </span>Number<span class="w"> </span>of<span class="w"> </span>grains<span class="w"> </span>to<span class="w"> </span><span class="nb">read</span><span class="w"> </span>from<span class="w"> </span>the<span class="w"> </span>current<span class="w"> </span>head<span class="w"> </span>index
+<span class="w">  </span>-t,<span class="w">     </span>--timeout-ms<span class="w"> </span>UINT<span class="w"> </span><span class="o">[</span><span class="m">1000</span><span class="o">]</span>
+<span class="w">                              </span>Timeout<span class="w"> </span>per<span class="w"> </span>grain<span class="w"> </span><span class="nb">read</span><span class="w"> </span><span class="k">in</span><span class="w"> </span>milliseconds
+
+MXL<span class="w"> </span>URI<span class="w"> </span>format:
+mxl://<span class="o">[</span>authority<span class="o">[</span>:port<span class="o">]]</span>/domain<span class="o">[</span>?id<span class="o">=</span>...<span class="o">]</span>
+See:<span class="w"> </span>https://github.com/dmf-mxl/mxl/docs/Addressability.md
+</code></pre></div>
+<p>Example using command line options:</p>
+<div class="highlight"><pre><span></span><code>./mxl-data-probe<span class="w"> </span>-d<span class="w"> </span>/dev/shm/mxl<span class="w"> </span>-f<span class="w"> </span>db3bd465-2772-484f-8fac-830b0471258b<span class="w"> </span>--count<span class="w"> </span><span class="m">3</span>
+</code></pre></div>
+<p>Example using an MXL URI:</p>
+<div class="highlight"><pre><span></span><code>./mxl-data-probe<span class="w"> </span>mxl:///dev/shm/mxl?id<span class="o">=</span>db3bd465-2772-484f-8fac-830b0471258b<span class="w"> </span>--count<span class="w"> </span><span class="m">3</span>
+</code></pre></div>
+<h2 id="mxl-gst-testsrc">mxl-gst-testsrc</h2>
+<p>A binary that uses the gstreamer 'videotestsrc' and 'audiotestsrc' elements to produce video grains and/or audio samples which will be pushed to a MXL Flow. The flow is configured from a NMOS Flow json file. Here's an example of such file :</p>
+<p>&emsp; <strong>Note</strong> Don't forget to provide valid description, label and grouphint tag.</p>
+<p><div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;___CHANGE ME___ Long description of the video flow&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;5fbec3b1-1b0f-417d-9059-8b94a47197ed&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;tags&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;urn:x-nmos:tag:grouphint/v1.0&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="s2">&quot;___CHANGE ME FOR A NAME UNIQUE TO YOUR MEDIA FUNCTION INSTANCE___:Video&quot;</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;format&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;urn:x-nmos:format:video&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;___CHANGE ME___ Short description of the video flow&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;parents&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nt">&quot;media_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;video/v210&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;grain_rate&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;numerator&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">30000</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;denominator&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1001</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;frame_width&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1920</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;frame_height&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1080</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;interlace_mode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;progressive&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;colorspace&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;BT709&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;components&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Y&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;width&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1920</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;height&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1080</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;bit_depth&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Cb&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;width&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">960</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;height&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1080</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;bit_depth&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Cr&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;width&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">960</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;height&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1080</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;bit_depth&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+Below is an example of an <strong>augmented NMOS Flow JSON</strong> for audio.<br />
+&emsp; <strong>Note 1:</strong> The <em>channel_count</em> property is a mandatory MXL requirement (not found in standard NMOS definition). To adjust the number of audio channels, simply update the <em>channel_count</em> value.</p>
+<p>&emsp; <strong>Note 2:</strong> Don't forget to provide valid description, label and grouphint tag.</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;___CHANGE ME___ Long description of the audio flow&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;format&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;urn:x-nmos:format:audio&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;tags&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;urn:x-nmos:tag:grouphint/v1.0&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="s2">&quot;___CHANGE ME FOR A NAME UNIQUE TO YOUR MEDIA FUNCTION INSTANCE___:Audio #1&quot;</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;___CHANGE ME___ Short description of the audio flow&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1441812152:154331951&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;b3bb5be7-9fe9-4324-a5bb-4c70e1084449&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;media_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;audio/float32&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;sample_rate&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;numerator&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">48000</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;channel_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;bit_depth&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;parents&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nt">&quot;source_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2aa143ac-0ab7-4d75-bc32-5c00c13d186f&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;device_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;169feb2c-3fae-42a5-ae2e-f6f8cbce29cf&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>./mxl-gst-testsrc<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+
+OPTIONS:
+<span class="w">  </span>-h,<span class="w">     </span>--help<span class="w">              </span>Print<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
+<span class="w">  </span>-v,<span class="w">     </span>--video-config-file<span class="w"> </span>TEXT
+<span class="w">                              </span>The<span class="w"> </span>json<span class="w"> </span>file<span class="w"> </span>which<span class="w"> </span>contains<span class="w"> </span>the<span class="w"> </span>Video<span class="w"> </span>NMOS<span class="w"> </span>Flow<span class="w"> </span>configuration.
+<span class="w">          </span>--video-options-file<span class="w"> </span>TEXT
+<span class="w">                              </span>The<span class="w"> </span>json<span class="w"> </span>file<span class="w"> </span>which<span class="w"> </span>contains<span class="w"> </span>the<span class="w"> </span>Video<span class="w"> </span>Flow<span class="w"> </span>options.
+<span class="w">  </span>-a,<span class="w">     </span>--audio-config-file<span class="w"> </span>TEXT
+<span class="w">                              </span>The<span class="w"> </span>json<span class="w"> </span>file<span class="w"> </span>which<span class="w"> </span>contains<span class="w"> </span>the<span class="w"> </span>Audio<span class="w"> </span>NMOS<span class="w"> </span>Flow<span class="w"> </span>configuration
+<span class="w">          </span>--audio-options-file<span class="w"> </span>TEXT
+<span class="w">                              </span>The<span class="w"> </span>json<span class="w"> </span>file<span class="w"> </span>which<span class="w"> </span>contains<span class="w"> </span>the<span class="w"> </span>Audio<span class="w"> </span>Flow<span class="w"> </span>options.
+<span class="w">          </span>--audio-offset<span class="w"> </span>INT<span class="w"> </span><span class="o">[</span><span class="m">0</span><span class="o">]</span>
+<span class="w">                              </span>Audio<span class="w"> </span>sample<span class="w"> </span>offset<span class="w"> </span><span class="k">in</span><span class="w"> </span>number<span class="w"> </span>of<span class="w"> </span>samples.<span class="w"> </span>Positive<span class="w"> </span>value<span class="w"> </span>means
+<span class="w">                              </span>you<span class="w"> </span>are<span class="w"> </span>adding<span class="w"> </span>a<span class="w"> </span>delay<span class="w"> </span><span class="o">(</span>commit<span class="w"> </span><span class="k">in</span><span class="w"> </span>the<span class="w"> </span>past<span class="o">)</span>.
+<span class="w">          </span>--video-offset<span class="w"> </span>INT<span class="w"> </span><span class="o">[</span><span class="m">0</span><span class="o">]</span>
+<span class="w">                              </span>Video<span class="w"> </span>frame<span class="w"> </span>offset<span class="w"> </span><span class="k">in</span><span class="w"> </span>number<span class="w"> </span>of<span class="w"> </span>frames.<span class="w"> </span>Positive<span class="w"> </span>value<span class="w"> </span>means<span class="w"> </span>you
+<span class="w">                              </span>are<span class="w"> </span>adding<span class="w"> </span>a<span class="w"> </span>delay<span class="w"> </span><span class="o">(</span>commit<span class="w"> </span><span class="k">in</span><span class="w"> </span>the<span class="w"> </span>past<span class="o">)</span>.
+<span class="w">  </span>-d,<span class="w">     </span>--domain<span class="w"> </span>TEXT:DIR<span class="w"> </span>REQUIRED
+<span class="w">                              </span>The<span class="w"> </span>MXL<span class="w"> </span>domain<span class="w"> </span>directory
+<span class="w">  </span>-p,<span class="w">     </span>--pattern<span class="w"> </span>TEXT<span class="w"> </span><span class="o">[</span>smpte<span class="o">]</span>
+<span class="w">                              </span>Test<span class="w"> </span>pattern<span class="w"> </span>to<span class="w"> </span>use.<span class="w"> </span>For<span class="w"> </span>available<span class="w"> </span>options<span class="w"> </span>see
+<span class="w">                              </span>https://gstreamer.freedesktop.org/documentation/videotestsrc/index.html?gi-language<span class="o">=</span>c#GstVideoTestSrcPattern
+<span class="w">  </span>-t,<span class="w">     </span>--overlay-text<span class="w"> </span>TEXT<span class="w"> </span><span class="o">[</span>EBU<span class="w"> </span>DMF<span class="w"> </span>MXL<span class="o">]</span>
+<span class="w">                              </span>Change<span class="w"> </span>the<span class="w"> </span>text<span class="w"> </span>overlay<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span><span class="nb">test</span><span class="w"> </span><span class="nb">source</span>
+<span class="w">  </span>-g,<span class="w">     </span>--group-hint<span class="w"> </span>TEXT<span class="w"> </span><span class="o">[</span>mxl-gst-testsrc-group<span class="o">]</span>
+<span class="w">                              </span>The<span class="w"> </span>group-hint<span class="w"> </span>value<span class="w"> </span>to<span class="w"> </span>use<span class="w"> </span><span class="k">in</span><span class="w"> </span>the<span class="w"> </span>flow<span class="w"> </span>json<span class="w"> </span>definition<span class="w">                               </span>
+</code></pre></div>
+<p>Example to run with video only:</p>
+<div class="highlight"><pre><span></span><code>./mxl-gst-testsrc<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-v<span class="w"> </span>lib/tests/data/v210_flow.json
+</code></pre></div>
+<p>Example to run with audio only:</p>
+<div class="highlight"><pre><span></span><code>./mxl-gst-testsrc<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-a<span class="w"> </span>lib/tests/data/audio_flow.json
+</code></pre></div>
+<p>Example to run with both video and audio:</p>
+<div class="highlight"><pre><span></span><code>./mxl-gst-testsrc<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-v<span class="w"> </span>lib/tests/data/v210_flow.json<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-a<span class="w"> </span>lib/tests/data/audio_flow.json
+</code></pre></div>
+<p>By default, <code>videotestsrc</code> produces one slice and one sample at a time because it relies on the<code>maxSyncBatchSizeHint</code> field in the flow options to determine batch size, which defaults to 1 when not configured. To modify this behavior, create separate flow option files for video and audio.</p>
+<p>video_options.json</p>
+<div class="highlight"><pre><span></span><code>{
+  &quot;maxCommitBatchSizeHint&quot;: 60,
+  &quot;maxSyncBatchSizeHint&quot;: 60
+}
+</code></pre></div>
+<p>audio_options.json</p>
+<div class="highlight"><pre><span></span><code>{
+  &quot;maxCommitBatchSizeHint&quot;: 512,
+  &quot;maxSyncBatchSizeHint&quot;: 512
+}
+</code></pre></div>
+<p>You can run the full example with:</p>
+<div class="highlight"><pre><span></span><code>./mxl-gst-testsrc<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-v<span class="w"> </span>lib/tests/data/v210_flow.json<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--video-options-file<span class="w"> </span>video_options.json<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-a<span class="w"> </span>lib/tests/data/audio_flow.json<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--audio-options-file<span class="w"> </span>audio_options.json
+</code></pre></div>
+<h2 id="mxl-gst-sink">mxl-gst-sink</h2>
+<p>A binary that reads from a MXL Flow and display the flow using the gstreamer element 'autovideosink'.</p>
+<div class="highlight"><pre><span></span><code>./mxl-gst-sink<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+
+
+OPTIONS:
+<span class="w">  </span>-h,<span class="w">     </span>--help<span class="w">              </span>Print<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
+<span class="w">  </span>-v,<span class="w">     </span>--video-flow-id<span class="w"> </span>TEXT
+<span class="w">                              </span>The<span class="w"> </span>video<span class="w"> </span>flow<span class="w"> </span>ID
+<span class="w">  </span>-a,<span class="w">     </span>--audio-flow-id<span class="w"> </span>TEXT
+<span class="w">                              </span>The<span class="w"> </span>audio<span class="w"> </span>flow<span class="w"> </span>ID
+<span class="w">  </span>-d,<span class="w">     </span>--domain<span class="w"> </span>TEXT:DIR<span class="w"> </span>REQUIRED
+<span class="w">                              </span>The<span class="w"> </span>MXL<span class="w"> </span>domain<span class="w"> </span>directory.
+<span class="w">  </span>-l,<span class="w">     </span>--listen-channels<span class="w"> </span>UINT<span class="w"> </span><span class="o">[[</span><span class="m">0</span>,1<span class="o">]]</span><span class="w">  </span>...
+<span class="w">                              </span>Audio<span class="w"> </span>channels<span class="w"> </span>to<span class="w"> </span>listen.
+<span class="w">          </span>--read-delay<span class="w"> </span>INT<span class="w"> </span><span class="o">[</span><span class="m">40000000</span><span class="o">]</span>
+<span class="w">                              </span>How<span class="w"> </span>far<span class="w"> </span><span class="k">in</span><span class="w"> </span>the<span class="w"> </span>past/future<span class="w"> </span>to<span class="w"> </span><span class="nb">read</span><span class="w"> </span><span class="o">(</span><span class="k">in</span><span class="w"> </span>nanoseconds<span class="o">)</span>.<span class="w"> </span>A<span class="w"> </span>positive
+<span class="w">                              </span>values<span class="w"> </span>means<span class="w"> </span>you<span class="w"> </span>are<span class="w"> </span>delaying<span class="w"> </span>the<span class="w"> </span>read.
+<span class="w">          </span>--playback-delay<span class="w"> </span>INT<span class="w"> </span><span class="o">[</span><span class="m">0</span><span class="o">]</span>
+<span class="w">                              </span>The<span class="w"> </span><span class="nb">time</span><span class="w"> </span><span class="k">in</span><span class="w"> </span>nanoseconds,<span class="w"> </span>by<span class="w"> </span>which<span class="w"> </span>to<span class="w"> </span>delay<span class="w"> </span>playback<span class="w"> </span>of<span class="w"> </span>audio
+<span class="w">                              </span>and/or<span class="w"> </span>video.
+<span class="w">          </span>--av-delay<span class="w"> </span>INT<span class="w"> </span><span class="o">[</span><span class="m">0</span><span class="o">]</span><span class="w">  </span>The<span class="w"> </span><span class="nb">time</span><span class="w"> </span><span class="k">in</span><span class="w"> </span>nanoseconds,<span class="w"> </span>by<span class="w"> </span>which<span class="w"> </span>to<span class="w"> </span>delay<span class="w"> </span>the<span class="w"> </span>audio<span class="w"> </span>relative<span class="w"> </span>to
+<span class="w">                              </span>video.<span class="w"> </span>A<span class="w"> </span>positive<span class="w"> </span>value<span class="w"> </span>means<span class="w"> </span>you<span class="w"> </span>are<span class="w"> </span>delaying<span class="w"> </span>audio,<span class="w"> </span>a<span class="w"> </span>negative
+<span class="w">                              </span>value<span class="w"> </span>means<span class="w"> </span>you<span class="w"> </span>are<span class="w"> </span>delaying<span class="w"> </span>video.
+</code></pre></div>
+<p>Example to run with video only:</p>
+<div class="highlight"><pre><span></span><code>./mxl-gst-sink<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-v<span class="w"> </span>5fbec3b1-1b0f-417d-9059-8b94a47197ed
+</code></pre></div>
+<p>Example to run with audio only:</p>
+<div class="highlight"><pre><span></span><code>./mxl-gst-sink<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-a<span class="w"> </span>b3bb5be7-9fe9-4324-a5bb-4c70e1084449
+</code></pre></div>
+<p>Example to run with both video and audio:</p>
+<div class="highlight"><pre><span></span><code>./mxl-gst-sink<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-v<span class="w"> </span>5fbec3b1-1b0f-417d-9059-8b94a47197ed<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-a<span class="w"> </span>b3bb5be7-9fe9-4324-a5bb-4c70e1084449
+</code></pre></div>
+<h3 id="mxl-gst-looping-filesrc">mxl-gst-looping-filesrc</h3>
+<p>A utility that continuously loops through MPEG-TS files to generate video grains to push into MXL flows.</p>
+<h4 id="prerequisites">Prerequisites</h4>
+<p>This application requires the <code>looping_filesrc</code> GStreamer plugin located in <code>utils/gst-looping-filesrc/</code>.  After building the plugin successfully, set the GST_PLUGIN_PATH environment variable to enable GStreamer to locate and load the plugin.</p>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">GST_PLUGIN_PATH</span><span class="o">=</span><span class="s2">&quot;./build/Linux-GCC-Release/utils/gst-looping-filesrc:</span><span class="si">${</span><span class="nv">GST_PLUGIN_PATH</span><span class="si">}</span><span class="s2">&quot;</span>
+</code></pre></div>
+<p><strong>Verify Installation:</strong></p>
+<div class="highlight"><pre><span></span><code>gst-inspect-1.0<span class="w"> </span>looping_filesrc
+</code></pre></div>
+<h4 id="usage">Usage</h4>
+<div class="highlight"><pre><span></span><code>./mxl-gst-looping-filesrc<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+
+
+OPTIONS:
+<span class="w">  </span>-h,<span class="w">     </span>--help<span class="w">              </span>Print<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
+<span class="w">  </span>-d,<span class="w">     </span>--domain<span class="w"> </span>TEXT<span class="w"> </span>REQUIRED
+<span class="w">                              </span>The<span class="w"> </span>MXL<span class="w"> </span>domain<span class="w"> </span>directory
+<span class="w">  </span>-i,<span class="w">     </span>--input<span class="w"> </span>TEXT:FILE<span class="w"> </span>REQUIRED
+<span class="w">                              </span>MPEGTS<span class="w"> </span>media<span class="w"> </span>file<span class="w"> </span>location
+</code></pre></div>
+<h2 id="gstreamer-filters">Gstreamer filters</h2>
+<p>MXL Source and Sink filters for GStreamer are available <a href="https://github.com/dmf-mxl/mxl/blob/main/rust/gst-mxl-rs/README.md">here</a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../Timing/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Timing Model">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Timing Model
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../Usage/" class="md-footer__link md-footer__link--next" aria-label="Next: ">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Contributors to the Media eXchange Layer project.
+
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["announce.dismiss","content.code.annotate","content.code.copy","content.code.select","content.footnote.tooltips","content.tabs.link","content.tooltips","navigation.expand","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.prefetch","navigation.path","navigation.sections","navigation.top","navigation.tracking","search.highlight"],"search":"../assets/javascripts/workers/search.e2d2d235.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":{"provider":"mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.6e5f0216.min.js"></script>
+      
+        <script src="../javascripts/mermaid.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
