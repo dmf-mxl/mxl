@@ -796,8 +796,8 @@ int main(int argc, char** argv)
         std::string flowDescriptor{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
         mxl::lib::FlowParser descriptorParser{flowDescriptor};
 
-        std::string resolvedTargetInfo;
-        if (!targetInfo.empty() && targetInfo[0] == '@')
+        auto resolvedTargetInfo = std::string{};
+        if (!targetInfo.empty() && targetInfo.starts_with('@'))
         {
             // Read raw target info from file
             auto filePath = std::string{targetInfo.begin() + 1, targetInfo.end()};
