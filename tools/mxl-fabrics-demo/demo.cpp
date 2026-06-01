@@ -552,6 +552,7 @@ public:
             MXL_ERROR("Failed to convert target info to string with status '{}'", static_cast<int>(status));
             return status;
         }
+        targetInfoStr.pop_back();
 
         MXL_INFO("Target info:  {}", base64::to_base64(targetInfoStr));
 
