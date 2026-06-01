@@ -557,7 +557,7 @@ public:
 
         if (!targetInfoFile.empty())
         {
-            std::ofstream of{targetInfoFile};
+            auto of = std::ofstream{targetInfoFile};
             of << targetInfoStr;
             if (of.fail())
             {
@@ -799,8 +799,8 @@ int main(int argc, char** argv)
         if (!targetInfo.empty() && targetInfo[0] == '@')
         {
             // Read raw target info from file
-            std::string filePath{targetInfo.begin() + 1, targetInfo.end()};
-            std::ifstream of{filePath};
+            auto filePath = std::string{targetInfo.begin() + 1, targetInfo.end()};
+            auto of = std::ifstream{filePath};
             if (of.fail())
             {
                 MXL_ERROR("Failed to open target info file '{}'", filePath);
