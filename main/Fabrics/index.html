@@ -1,0 +1,1073 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Media eXchange Layer">
+      
+      
+        <meta name="author" content="The MXL Project">
+      
+      
+      
+        <link rel="prev" href="../Configuration/">
+      
+      
+        <link rel="next" href="../Timing/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.43">
+    
+    
+      
+        <title>1. Requirements - MXL</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../assets/stylesheets/modern/main.fba56155.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../assets/stylesheets/modern/palette.dfe2e883.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#1-requirements" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="./.." title="MXL" class="md-header__button md-logo" aria-label="MXL" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 7v14M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MXL
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              1. Requirements
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="none" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="none" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="./.." title="MXL" class="md-nav__button md-logo" aria-label="MXL" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 7v14M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>
+
+    </a>
+    MXL
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  MXL : Media eXchange Layer
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Addressability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  MXL Addressability
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Architecture
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Building/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Building
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Configuration
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  1. Requirements
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Timing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Timing Model
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Tools
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+<!-- SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project. -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
+
+<p>This page presents the details of the libfabric implementation of the Fabrics API. This page assumes familiarity with the MXL Flow API, with asynchronous networking workflows and RDMA. A good place to start would be to read the proposition <a href="https://github.com/dmf-mxl/mxl/wiki/MXL-Inter-host-memory-sharing-%E2%80%90-Proposition">MXL Inter host memory sharing ‐ Proposition</a>.</p>
+<h1 id="1-requirements">1. Requirements</h1>
+<ul>
+<li>Support for continuous and discrete flows memory layouts</li>
+<li>Support user media buffers (that follow mxl memory layouts)</li>
+<li>Support both Host and Device memory</li>
+<li>Support different providers<ul>
+<li>TCP</li>
+<li>Verbs (RDMA)</li>
+<li>EFA </li>
+</ul>
+</li>
+<li>Node / Service (ip:port) to establish communication (connected or connection-less)</li>
+<li>Support One-Way transfers (Remote Write)</li>
+<li>Support Two-Way transfers (Send/Recv) as fallback (if One-Way transfers are not supported)</li>
+<li>Support TX/RX message size limits</li>
+<li>Support of using scatter-gather feature while considering scatter-gather list size limits (sge_max).</li>
+<li>Least amount of memory copies possible (ideally zerocopy)</li>
+</ul>
+<h1 id="2-workflow">2. Workflow</h1>
+<p>From a user perspective, here’s the workflow to follow when using the Fabrics API:</p>
+<p>The target has “media buffers” that it exposes to an initiator. That initiator also has “media buffers” that it will copy to the target. The user sets up the target, which will generate a <code>TargetInfo</code>. That <code>TargetInfo</code> is shared with the initiator through any out-of-band mechanism. The user sets up the initiator and adds the target using the <code>TargetInfo</code>. The initiator can start transferring grains or samples to the target. When transfers are completed, the target receives a notification with the required information to retrieve which part of the ring buffer was modified. It can use that information to commit to the media buffers.</p>
+<p><img alt="alt" src="https://github.com/dmf-mxl/mxl/blob/main/docs/fabrics/img/mxl-fabrics-overview.png" /></p>
+<h1 id="3-transfers">3. Transfers</h1>
+<p>To cover all the cases, there are two types of transfers we intend to use: </p>
+<h2 id="31-remote-write">3.1 Remote Write</h2>
+<p>As stated in the proposition, the preferred method to use to transfer data is Remote Write. Remote Write allows to modify target’s memory directly without it being involved. In RDMA, we can use “immediate data” to signal the target that a remote write operation occurred on its memory region. Immediate data also allows a user to embed 32-bit user data that will be available at the destination. Libfabric also supports this immediate data feature, and we will use it to communicate specific information to the target. Such information includes grainIndex and slice index for the “Discrete flow”, and head index and count for “Continuous flow”.</p>
+<h3 id="scatter-gather">Scatter-Gather</h3>
+<p>Remote Write supports scatter-gather functionality on the source side, allowing the initiator to specify multiple non-contiguous buffers as the source. However, the destination is limited to a single contiguous address, which prevents unpacking the results back into multiple non-contiguous buffers and creates an asymmetry in the transfer operation. To address this problem, we have to use a bouncing buffer on the target side. On completion, the target is responsible for unpacking data back to non-contiguous buffers.</p>
+<h2 id="32-sendrecv">3.2 Send/Recv</h2>
+<p>There are some cases where the hardware does not support Remote Write. One example of this is some AWS instances that have EFA enabled hardware only have support for Send/Recv transfers.
+With untagged Send/Recv, the receiver cannot direct an incoming message to a specific buffer as posted receives are consumed in FIFO order. Since the target doesn't know in advance which grain the initiator will send next, it cannot pre-post the grain's final buffer and rely on the data landing there. To land data directly in the correct per-grain buffer one would need tag matching (FI_TAGGED, tag = grain index), otherwise a single bounce buffer is used and the grain index is recovered from the immediate data, which results in an extra copy.</p>
+<h1 id="4-communication-establishment-connected-and-connection-less">4. Communication establishment (connected and connection-less)</h1>
+<h2 id="41-connection-parameters">4.1 Connection parameters</h2>
+<p>To establish a connection between two endpoints, certain capabilities and parameters need to be exchanged. Some of these can be queried from the library; others can be taken from the flow information.</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Acquisition</th>
+<th>Exchanged with peer</th>
+<th>Comment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Provider</td>
+<td>Query-able</td>
+<td>Yes</td>
+<td>TCP, Verbs, EFA, etc.</td>
+</tr>
+<tr>
+<td>Transfer method</td>
+<td>Query-able</td>
+<td>Yes</td>
+<td>RMA, Send/Recv, etc.</td>
+</tr>
+<tr>
+<td>Maximum size</td>
+<td>Query-able</td>
+<td>Yes</td>
+<td>Tx/Rx</td>
+</tr>
+<tr>
+<td>Support Immediate data</td>
+<td>Query-able</td>
+<td>Yes</td>
+<td>FI_RX_CQ_DATA</td>
+</tr>
+<tr>
+<td>Buffer Type</td>
+<td>User-supplied</td>
+<td>Yes</td>
+<td>Discrete/Continuous</td>
+</tr>
+<tr>
+<td>Alpha channel presence</td>
+<td>User-supplied</td>
+<td>No</td>
+<td>(necessitates two remote writes for partial grains)</td>
+</tr>
+<tr>
+<td>Audio parameters</td>
+<td>User-supplied</td>
+<td>No</td>
+<td>Channel count, Samples per channel, Bytes per sample (sampleWordSize)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="42-connection-parameters">4.2 Connection parameters</h2>
+<h2 id="43-targetinfo">4.3 TargetInfo</h2>
+<p>The TargetInfo object is created during target setup and encapsulates all necessary information for an initiator to transfer grains or samples to the target. It contains the following components:</p>
+<ul>
+<li>Libfabric endpoint address: A byte vector (up to 256 bytes) representing the endpoint's address within the libfabric context</li>
+<li>Remote write transfer data (if applicable):<ul>
+<li>Virtual addresses of registered buffers used in the transfer</li>
+<li>Remote keys corresponding to these registered buffers</li>
+</ul>
+</li>
+<li>Endpoint identifier: Used for referencing completions and events</li>
+</ul>
+<p>The fabrics API offers functions to convert TargetInfo to and from string format: <code>mxlFabricsTargetInfoToString</code> for serialization and <code>mxlFabricsTargetInfoFromString</code> for de-serialization. While the API exposes an opaque <code>mxlTargetInfo</code> type, the underlying implementation uses the <code>TargetInfo</code> type. The serialized format is in JSON format.</p>
+<h1 id="5-target-and-initiator">5. Target and initiator</h1>
+<p>This section describes the design of the target and initiator.</p>
+<h2 id="51-connection-management">5.1 Connection Management</h2>
+<p>In libfabric, there’s currently 3 types of endpoint: 
+- FI_EP_MSG: reliable connection-oriented data transfer.
+- FI_EP_RDM: reliable connection-less data transfer.
+- FI_EP_DGRAM: unreliable connection-less data transfer.</p>
+<h3 id="512-connection-oriented">5.1.2 Connection oriented</h3>
+<p>Connection-oriented data transfer follows the Berkeley Sockets model. A listener (server) waits to accept incoming connections while a client initiates the connection to that listener. After the connection is established, bidirectional data transfer becomes possible.</p>
+<h3 id="513-connection-less">5.1.3 Connection-less</h3>
+<p>As the name implies, the connection-less approach operates without a server-client relationship. Instead, each initiating endpoint maintains an address vector containing the target addresses for data transfers.</p>
+<h3 id="514-providers-and-capabilities">5.1.4 Providers and Capabilities</h3>
+<p>Connection type selection is crucial since not all providers support every connection type. Additionally, the available transfer types may depend on the chosen connection type. The following table shows provider support for different transfer and connection types:
+- FI_MSG: Send/Recv operations
+- FI_TAGGED: Send/Recv with tag matching
+- FI_RMA: Remote Write and Remote Read operations
+- FI_ATOMIC: Remote atomic operations
+- FI_COLLECTIVE: N-to-M point transfers</p>
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>FI_EP_MSG</th>
+<th>FI_EP_RDM</th>
+<th>FI_DGRAM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TCP</td>
+<td>FI_MSG<br>FI_RMA</td>
+<td>FI_MSG<br>FI_TAGGED<br>FI_RMA<br>FI_ATOMIC<br>FI_COLLECTIVE</td>
+<td></td>
+</tr>
+<tr>
+<td>UDP</td>
+<td> </td>
+<td>FI_MSG<br>FI_TAGGED<br>FI_RMA<br>FI_ATOMIC (Experimental)</td>
+<td>FI_MSG<br>FI_MULTICAST</td>
+</tr>
+<tr>
+<td>Verbs</td>
+<td>FI_MSG<br>FI_RMA<br>FI_ATOMIC</td>
+<td>FI_MSG<br>FI_TAGGED<br>FI_RMA<br>FI_ATOMIC<br>FI_COLLECTIVE</td>
+<td>FI_MSG (Experimental)</td>
+</tr>
+<tr>
+<td>EFA</td>
+<td> </td>
+<td>FI_MSG<br>FI_TAGGED<br>FI_RMA<br>FI_ATOMIC</td>
+<td>FI_MSG</td>
+</tr>
+<tr>
+<td>SHM</td>
+<td> </td>
+<td>FI_MSG<br>FI_TAGGED<br>FI_RMA<br>FI_ATOMIC</td>
+<td> </td>
+</tr>
+</tbody>
+</table>
+<p>As shown above, EFA, for example, does not support connected endpoints, whereas Verbs and TCP support connected endpoints. Connection-less Verbs is supported with RDM endpoint and provides a wide variety of transfers, but there is limitation (such as max_sge being hardcoded to 4) and performance might not be optimal compared to MSG endpoint. Because of this, we have chosen the following combinations:</p>
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>Endpoint Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TCP</td>
+<td>FI_EP_MSG</td>
+</tr>
+<tr>
+<td>Verbs</td>
+<td>FI_EP_MSG</td>
+</tr>
+<tr>
+<td>EFA</td>
+<td>FI_EP_RDM</td>
+</tr>
+<tr>
+<td>SHM</td>
+<td>FI_EP_RDM</td>
+</tr>
+</tbody>
+</table>
+<p>Connected-oriented target and initiator in the code are referred as RCTarget and RCInitiator. Whereas connection-less target and initiator as referred as RDMTarget and RDMInitiator.</p>
+<h2 id="52-target-setup">5.2 Target Setup</h2>
+<p>The target setup consist of several steps:</p>
+<ol>
+<li>
+<p>Select the provider by using the configuration information</p>
+<ul>
+<li>Provider Type</li>
+<li>Node and Service (IP address and port in most case)</li>
+<li>Device support</li>
+</ul>
+</li>
+<li>
+<p>[Optionally] create the bouncing buffer </p>
+</li>
+<li>Register the local buffer that will be involved in the transfer (media buffer or bouncing buffer)</li>
+<li>Select the transfer protocol</li>
+<li>Generate the TargetInfo</li>
+</ol>
+<p>After these steps, if we have a connection-oriented target, we wait for an initiator to connect. If we have a connection-less target, we wait for transfers.</p>
+<h2 id="53-initiator-setup">5.3 Initiator Setup</h2>
+<p>The initiator has fewer steps:
+1. Select the provider
+2. Register the local buffer that will be involved in the transfer 
+3. Select the transfer protocol</p>
+<p>After that, it is ready to connect to targets by using their TargetInfo.</p>
+<h2 id="54-connection-phase">5.4 Connection phase</h2>
+<p>The connection phase begins when a Fabrics API user invokes mxlFabricsInitiatorAddTarget(). Both the Initiator and Target maintain an internal State object that manages the operational state. This design enables handling of failures at any point during the connection process.</p>
+<p>State transitions occur differently for each component:</p>
+<ul>
+<li>The Target state changes only when <code>mxlFabricsTargetTryNewGrain</code> or <code>mxlFabricsTargetWaitForNewGrain</code> are called</li>
+<li>The Initiator state changes only when <code>mxlFabricsInitiatorMakeProgressNonBlocking</code> or <code>mxlFabricsInitiatorMakeProgressBlocking</code> are called</li>
+</ul>
+<p>Therefore, it is important to keep calling these methods to progress not only transfers but also for progressing the connection phase.</p>
+<h2 id="55-abstracting-the-transfer-method">5.5 Abstracting the transfer method</h2>
+<p>We can already see that we will need different transfer method, simply by the fact that some hardware does not support the preferred Remote Write transfer. </p>
+<p>We can already select the correct type of connection and choose and implementation of the <code>Initiator</code> and <code>Target</code> interface based on our own capabilities.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span> <span class="nc">Initiator</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">transferGrain</span><span class="p">(</span><span class="n">uint64</span><span class="w"> </span><span class="n">index</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">interface</span> <span class="nc">Target</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">receiveGrain</span><span class="p">(</span><span class="n">uint64_t</span><span class="o">*</span><span class="w"> </span><span class="n">index</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">// RDM (connectionless) endpoints</span>
+<span class="kd">class</span> <span class="nc">RDMInitiator</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Initiator</span><span class="p">;</span>
+<span class="kd">class</span> <span class="nc">RDMTarget</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Target</span><span class="p">;</span>
+
+<span class="c1">// RC (Connected endpoints) endpoints</span>
+<span class="kd">class</span> <span class="nc">RCInititor</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Initiator</span><span class="p">;</span>
+<span class="kd">class</span> <span class="nc">RCTarget</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Target</span><span class="p">;</span>
+</code></pre></div>
+<p>We need to add another level of indirection to support protocol switching.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span> <span class="nc">Egress</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">transmit</span><span class="p">(</span><span class="n">uint64_t</span><span class="w"> </span><span class="n">index</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">interface</span> <span class="nc">Ingress</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">receive</span><span class="p">(</span><span class="n">uint64_t</span><span class="o">*</span><span class="w"> </span><span class="n">index</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">// Implements send/receive</span>
+<span class="kd">class</span> <span class="nc">Sender</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Egress</span><span class="p">;</span>
+<span class="kd">class</span> <span class="nc">Receiver</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Ingress</span><span class="p">;</span>
+
+<span class="c1">// Implements remote write</span>
+<span class="kd">class</span> <span class="nc">Writer</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Egress</span><span class="p">;</span>
+<span class="kd">class</span> <span class="nc">Reader</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Ingress</span><span class="p">;</span>
+
+<span class="c1">// Called when transitioning into the &#39;Connected&#39; state to obtain a </span>
+<span class="c1">// compatible protocol</span>
+<span class="n">function</span><span class="w"> </span><span class="nf">selectProtocol</span><span class="p">(</span><span class="n">localInfo</span><span class="p">:</span><span class="w"> </span><span class="n">InitiatorInfo</span><span class="p">,</span><span class="w"> </span><span class="n">remoteInfo</span><span class="p">:</span><span class="w"> </span><span class="n">TargetInfo</span><span class="p">,</span><span class="w"> </span><span class="n">ep</span><span class="p">:</span><span class="w"> </span><span class="n">Endpoint</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Egress</span><span class="p">;</span>
+<span class="n">function</span><span class="w"> </span><span class="nf">selectProtocol</span><span class="p">(</span><span class="n">localInfo</span><span class="p">:</span><span class="w"> </span><span class="n">TargetInfo</span><span class="p">,</span><span class="w"> </span><span class="n">remoteInfo</span><span class="p">:</span><span class="w"> </span><span class="n">InitiatorInfo</span><span class="p">,</span><span class="w"> </span><span class="n">ep</span><span class="p">:</span><span class="w"> </span><span class="n">Endpoint</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Ingress</span><span class="p">;</span>
+</code></pre></div>
+<p>Inside both, the connected and connection-less implementation of the Target and Initiator, the states they can be in, are represented as a tagged union where each member represents a possible connection state. Most of these state-structs contain an <code>Endpoint</code> member that enables any kind of communication (send/receive/rma). We will wrap this <code>Endpoint</code> type in a concrete protocol type when the Target or Initiator enter their respective <code>Connected</code> state.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Initiator example</span>
+<span class="n">function</span><span class="w"> </span><span class="nf">processEvent</span><span class="p">(</span><span class="n">ev</span><span class="p">:</span><span class="w"> </span><span class="n">Event</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">switch</span><span class="w"> </span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="na">_state</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">case</span><span class="w"> </span><span class="n">Connecting</span><span class="p">(</span><span class="n">Endpoint</span><span class="w"> </span><span class="n">ep</span><span class="p">):</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">event</span><span class="p">.</span><span class="na">isConnectedEvent</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="n">panic</span><span class="p">(</span><span class="s">&quot;connection failed&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="n">Emitter</span><span class="w"> </span><span class="n">emitter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">selectProtocol</span><span class="p">(</span><span class="n">_localInfo</span><span class="p">,</span><span class="w"> </span><span class="n">event</span><span class="p">.</span><span class="na">remoteInfo</span><span class="p">,</span><span class="w"> </span><span class="n">ep</span><span class="p">);</span>
+
+<span class="w">        </span><span class="n">self</span><span class="p">.</span><span class="na">_state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Connected</span><span class="p">(</span><span class="n">emitter</span><span class="p">);</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="k">case</span><span class="w"> </span><span class="p">(...):</span><span class="w"> </span><span class="p">...</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Target example</span>
+<span class="n">function</span><span class="w"> </span><span class="nf">processEvent</span><span class="p">(</span><span class="n">ev</span><span class="p">:</span><span class="w"> </span><span class="n">Event</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">switch</span><span class="w"> </span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="na">_state</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">case</span><span class="w"> </span><span class="n">Connecting</span><span class="p">(</span><span class="n">Endpoint</span><span class="w"> </span><span class="n">ep</span><span class="p">):</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">event</span><span class="p">.</span><span class="na">isConnectedEvent</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="n">panic</span><span class="p">(</span><span class="s">&quot;connection failed&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="n">Collector</span><span class="w"> </span><span class="n">collector</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">selectProtocol</span><span class="p">(</span><span class="n">_localInfo</span><span class="p">,</span><span class="w"> </span><span class="n">event</span><span class="p">.</span><span class="na">remoteInfo</span><span class="p">,</span><span class="w"> </span><span class="n">ep</span><span class="p">);</span>
+
+<span class="w">        </span><span class="n">self</span><span class="p">.</span><span class="na">_state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Connected</span><span class="p">(</span><span class="n">collector</span><span class="p">);</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="k">case</span><span class="w"> </span><span class="p">(...):</span><span class="w"> </span><span class="p">...</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h1 id="6-discrete-flow-support">6. Discrete Flow Support</h1>
+<h2 id="61-moving-a-discrete-flow">6.1 Moving a Discrete Flow</h2>
+<p>For discrete flow transfers in the optimal case, Remote Write is used without a bouncing buffer. When Remote Write is unavailable, the system falls back to Send/Recv with a bouncing buffer.</p>
+<h3 id="611-moving-a-discrete-flow-with-rma">6.1.1 Moving a discrete flow with RMA</h3>
+<p>Below is the workflow when Remote Write is used.
+<img alt="rma" src="https://github.com/dmf-mxl/mxl/blob/main/docs/fabrics/img/mxl-fabrics-rma.png" /></p>
+<h3 id="612-moving-a-discrete-flow-with-sendreceive">6.1.2 Moving a discrete flow with Send/Receive</h3>
+<p>Below is the workflow for send/recv.
+<img alt="sndrcv" src="https://github.com/dmf-mxl/mxl/blob/main/docs/fabrics/img/mxl-fabrics-bouncebuffer.png" /></p>
+<h3 id="613-txrx-maximum-message-size">6.1.3 TX/RX Maximum Message Size</h3>
+<p>Hardware may impose constraints on maximum message size, which can be smaller than a grain size. When this occurs, the Initiator divides the message into N write requests. Immediate data is posted only with the final write request, ensuring completion is signaled exclusively on the last partial message.</p>
+<h3 id="614-optional-alpha-plane">6.1.4 Optional Alpha plane</h3>
+<p>The alpha plane represents a special case requiring distinct handling. Within the grain data layout, the alpha plane follows the color plane.
+<img alt="alpha-grain-layout" src="https://github.com/dmf-mxl/mxl/blob/main/docs/fabrics/img/mxl-fabrics-grain-layout.png" /></p>
+<p>When transferring a complete grain, a single Remote Write suffices. However, when transferring grain slices, two Remote Writes are required: the first for the color plane and the second for the alpha plane.</p>
+<p><img alt="rma-with-alpha" src="https://github.com/dmf-mxl/mxl/blob/main/docs/fabrics/img/mxl-fabrics-rma-with-alpha.png" /></p>
+<h1 id="7-continuous-flow-support">7. Continuous Flow Support</h1>
+<p>The MXL audio flow is called a “ContinuousFlow”. Information about the audio flow such as sample rate, channel count, the number of samples per channel can be found in the structure mxlContinuousFlowInfo. The underlying data structure is a single tmpfs file where each sample takes 32 bits. Samples follow a “planar” format, where the buffer is constructed as follow: all samples of channel 0 followed by all samples of channel 1 follow by all samples of channel 2, etc.</p>
+<p><img alt="cont-flow" src="https://github.com/dmf-mxl/mxl/blob/main/docs/fabrics/img/mxl-fabrics-cont-flow-layout.png" /></p>
+<h2 id="71-remote-write-sendrecv-with-bouncing-buffer-vs-tag-matching">7.1 Remote Write, Send/Recv with bouncing buffer vs Tag matching</h2>
+<p>The design for the Discrete flow uses Remote Write to transfer grains. This was chosen over Send/Recv operations because it does not require synchronization between the initiator and the target. If we decide to use Send/Recv, because Remote Write is not supported, we have 2 choices:</p>
+<ul>
+<li>Send/Recv Bouncing buffer: We use a bouncing buffer on the receiver side. All receives are posted to the same buffer. Upon completion, we can retrieve the head index associated with the transfer and the data must be copied from this bouncing buffer to the actual buffer.</li>
+<li>Tag matching: We use tag matching, where the tag corresponds to the head index. With this solution we avoid the bouncing buffer, but then the receiver has to know exactly which head index to expect. <em>This means we need to keep both the target and initiator synchronized, which can be cumbersome. Also, a copy is involved if hardware tag matching is not correctly leveraged or if the NIC does not support it.</em></li>
+</ul>
+<h2 id="72-moving-an-audio-continuous-flow">7.2 - Moving an audio (continuous) flow</h2>
+<p>When moving audio flow samples across hosts, one will typically determine the number of samples per channel to move at once. Since the audio format is planar and not interleave I see many options:</p>
+<h3 id="721-remote-write">7.2.1 - Remote Write</h3>
+<p>This solution allows to re-use the remote write approach that is used for the grains. The solution is to use scatter-gather feature on the source buffers. On the receiver side, we have a bouncing buffer, and upon completion, we need to unpack the samples back to the associated non-contiguous buffers.</p>
+<h3 id="722-rdm-endpoint-scatter-gather-with-tagged-sendrecv">7.2.2 - RDM endpoint Scatter-Gather with Tagged Send/Recv</h3>
+<p>Leverage the scatter-gather feature to select multiple non-contiguous buffers at the source and use the same feature at the destination. The only caveat with this approach is that the NIC is required to support this feature (RDMA) and operations like Remote Write and Read in RDMA only supports scatter-gather at the initiator side. To have support of the scatter-gather feature at both the initiator and target side, one has to use the Send/Receive or Tagged API. With the tagged API, each message has a tag which ensure that a specific range of samples will end-up in the receive buffer that was called with the associated tag. This means we don’t need the bouncing buffer that would be required with only send and receive. The only caveat to this is that libfabric only supports a scatter-gather list of size 4 when using Verbs over an RDM endpoint. This means that to transfer 64 channels, 16 transfers would be required.</p>
+<h3 id="723-sendrecv-with-dgram-endpoint">7.2.3 - Send/Recv with DGRAM endpoint</h3>
+<p>DGRAM Endpoint when used with Verbs it uses UD Queue Pairs. Only Send/Recv API (no tag matching) is supported by this endpoint. The idea is similar to the remote write approach, we use send (with IMM_DATA) with scatter-gather feature with the source buffers. On the receiving side, we always receive in the same buffer, but we unpack the buffer to the associated non-contiguous buffers. We get better capabilities for scatter-gather (up to hardware max_sge value) than RDM endpoint, but the Queue Pair is unreliable, meaning no guarantees on the delivery and ordering. As a comparison with RDM endpoint which only support scatter-gather list of size 4, on both ConnectX-5 and ConnectX-4 the max scatter-gather list size is 30 instead. Also, it is important to note that on libfabric documentation, DGRAM endpoint for Verbs is supposedly “beta”. It is unclear exactly what this entails — whether it implies performance or operational limitations. It is also worth noting that leveraging fabrics multicast in RDMA requires the DGRAM endpoint, or implementing UD queue pairs directly with libibverbs.</p>
+<h3 id="724-sendrecv-with-msg-endpoint">7.2.4 - Send/Recv with MSG Endpoint</h3>
+<p>Another solution that would work and is maybe more suited to our requirements is using Send/Recv API with scatter-gather feature but using RC Queue pairs through the MSG Endpoint. We get all the same advantages as with the DGRAM endpoint, but we also get reliability and ordering. The only thing, we are potentially giving up is fabrics multicast, which could be a good compromise.</p>
+<h3 id="725-summary">7.2.5 Summary</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Verb Used</th>
+<th>Reliable</th>
+<th>Copy at Source</th>
+<th>Copy at Destination</th>
+<th>Synchronization Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Remote Write</td>
+<td>Remote Write</td>
+<td>Yes</td>
+<td>No</td>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<td>RDM Tagged</td>
+<td>Tagged Send/Recv</td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>DGRAM Send/Recv</td>
+<td>Send/Recv</td>
+<td>No</td>
+<td>No</td>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<td>MSG Send/Recv</td>
+<td>Send/Recv</td>
+<td>Yes</td>
+<td>No</td>
+<td>Yes</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<p>Considering the trade-offs, Remote Write is chosen as the primary protocol, but falls back to Send/Recv if Remote Write is not available.</p>
+<h2 id="73-bouncing-buffer-unpacking">7.3 - Bouncing Buffer Unpacking</h2>
+<p>The transfer will now use the scatter-gather feature on the source buffer to target a ring bouncing buffer on the target side. Upon completion, the target side will copy the entry of the bouncing buffer back to the MXL Audio Flow.</p>
+<p><img alt="cont-flow-rma" src="https://github.com/dmf-mxl/mxl/blob/main/docs/fabrics/img/mxl-fabrics-cont-flow-rma.png" /></p>
+<p>To be able to unpack the bouncing buffer entry back to the mxl audio flow, we require some static information found in the ContinuousFlowData type.
+- Channel count
+- Number of samples per channel
+- Base pointer of MXL Audio Flow Data
+- Bytes per sample (sampleWordSize)</p>
+<p>Upon completion, we need to accomplish these tasks:
+- OpenSamples (aka. getting <code>mxlMutableWrappedMultiBufferSlice</code> instance for the current count/index)
+- Using <code>mxlMutableWrapperMultiBufferSlice</code>, copy from bounce buffer to the flow buffer (the flow buffer can be user defined, but it’s layout should follow MXL Continuous Flow definition).</p>
+<h1 id="8-transfers-summary">8. Transfers summary</h1>
+<table>
+<thead>
+<tr>
+<th>Flow Type</th>
+<th>Initiator</th>
+<th>Target</th>
+<th>Comment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Discrete</td>
+<td>1x Remote Write with ImmData to Media Buffer</td>
+<td>Nothing</td>
+<td>Optimal path</td>
+</tr>
+<tr>
+<td>Discrete</td>
+<td>1x Send with ImmData to a bouncing buffer</td>
+<td>1x Recv + copy to the media flow buffer</td>
+<td>When Remote Write is not available</td>
+</tr>
+<tr>
+<td>Discrete</td>
+<td>Nx Remote Write to Media Buffer<br>1x Remote Write with Imm Data (last)</td>
+<td>Nothing</td>
+<td>When tx or rx maxmium message size &lt; transfer size</td>
+</tr>
+<tr>
+<td>Discrete</td>
+<td>1x Remote Write to Media Buffer (color)<br>1x Remote Write with ImmData to Media Buffer (alpha)</td>
+<td>Nothing</td>
+<td>When doing slice transfer with an Alpha plane present</td>
+</tr>
+<tr>
+<td>Continuous</td>
+<td>1x Remote Write with Scatter-gather to a bouncing buffer</td>
+<td>Unpack samples to media flow buffer</td>
+<td>Requires information about the data layout<br>- Number of channels<br>- Number of samples per channel<br>- Number of bytes per sample</td>
+</tr>
+</tbody>
+</table>
+<h1 id="9-memory-registration">9. Memory Registration</h1>
+<p>RDMA operations require memory registration. Two types of target buffers are available: Media Flow Buffers and Bouncing Buffers. The registration logic is straightforward: if Bouncing Buffers exist, they are registered; if not, the Media Flow Buffers are registered instead.</p>
+<h1 id="10-current-implementation-status">10. Current Implementation Status</h1>
+<p>The currently implemented feature set covers the optimal paths for both discrete and continuous flows:</p>
+<ul>
+<li><strong>Discrete flow (grains):</strong> Transferred using Remote Write (RMA) directly into the target's media buffer, with immediate data carrying the grain index. This is the optimal path that requires no involvement from the target during the transfer itself.</li>
+<li><strong>Continuous flow (samples):</strong> Transferred using Remote Write (RMA) with scatter-gather on the source side, landing data into a bouncing buffer on the target. Upon completion, the target unpacks the bouncing buffer back into the non-contiguous per-channel buffers of the MXL audio flow.</li>
+</ul>
+<p>Send/Recv and tag-matching fallback paths are not yet implemented. Send/Recv without tag matching requires a bouncing buffer and an extra copy, while tag matching requires explicit synchronization between initiator and target and may not benefit from hardware acceleration depending on the NIC. Given these trade-offs and that Remote Write covers the primary use cases, the fallback paths have been deferred.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../Configuration/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Configuration">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Configuration
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../Timing/" class="md-footer__link md-footer__link--next" aria-label="Next: Timing Model">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Timing Model
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Contributors to the Media eXchange Layer project.
+
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["announce.dismiss","content.code.annotate","content.code.copy","content.code.select","content.footnote.tooltips","content.tabs.link","content.tooltips","navigation.expand","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.prefetch","navigation.path","navigation.sections","navigation.top","navigation.tracking","search.highlight"],"search":"../assets/javascripts/workers/search.e2d2d235.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":{"provider":"mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.6e5f0216.min.js"></script>
+      
+        <script src="../javascripts/mermaid.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
