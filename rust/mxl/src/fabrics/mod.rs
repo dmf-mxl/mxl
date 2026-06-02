@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
+// SPDX-License-Identifier: Apache-2.0
+
 //! This module provides the Fabrics API extension for this library. The main type is the
 //! [FabricsInstance], which is used to create Targets and Initiators for remote data transfers.
 //! This module is gated by the `mxl-fabrics-ofi` feature flag.
