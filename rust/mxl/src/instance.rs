@@ -250,6 +250,6 @@ impl MxlInstance {
     ) -> Result<crate::fabrics::FabricsInstance> {
         use crate::fabrics;
 
-        fabrics::create_instance(&self.context, fabrics_api)
+        fabrics::create_instance(self.context.clone(), fabrics_api)
     }
 }

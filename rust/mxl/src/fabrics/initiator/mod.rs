@@ -10,7 +10,7 @@ use crate::{
 
 pub use config::Config;
 
-use std::{marker::PhantomData, rc::Rc};
+use std::{marker::PhantomData, sync::Arc};
 
 use states::*;
 
@@ -43,9 +43,11 @@ pub mod states {
 
 /// Wrapper class that holds a reference count to the Fabrics Instance and the actual initiator instance.
 struct InitiatorInstance {
-    ctx: Rc<FabricsInstanceContext>,
+    ctx: Arc<FabricsInstanceContext>,
     inner: mxl_sys::fabrics::FabricsInitiator,
 }
+unsafe impl Send for InitiatorInstance {}
+
 impl Drop for InitiatorInstance {
     fn drop(&mut self) {
         if !self.inner.is_null() {
@@ -62,6 +64,8 @@ pub struct Initiator<S: InitiatorState> {
     instance: InitiatorInstance,
     _marker: std::marker::PhantomData<S>,
 }
+//SAFETY: An initiator is safe to be sent across threads, but it's not thread-safe to use its API functions.
+unsafe impl<S: InitiatorState> Send for Initiator<S> {}
 
 pub enum Either {
     Grain(Initiator<Grain>),
@@ -71,7 +75,7 @@ pub enum Either {
 impl Initiator<New> {
     /// Create a new initiator
     pub(crate) fn new(
-        ctx: Rc<FabricsInstanceContext>,
+        ctx: Arc<FabricsInstanceContext>,
         initiator: mxl_sys::fabrics::FabricsInitiator,
     ) -> Initiator<Initializing> {
         let instance = InitiatorInstance {
@@ -122,7 +126,7 @@ impl Initiator<Specializing> {
 /// Create a new initiator
 #[doc(hidden)]
 pub(crate) fn create_initiator(
-    ctx: &Rc<FabricsInstanceContext>,
+    ctx: Arc<FabricsInstanceContext>,
 ) -> Result<Initiator<Initializing>> {
     let mut initiator = mxl_sys::fabrics::FabricsInitiator::default();
     unsafe {

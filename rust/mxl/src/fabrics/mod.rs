@@ -23,10 +23,8 @@ pub mod target;
 mod target_info;
 
 pub use config::EndpointAddress;
-// pub use initiator::{Config as InitiatorConfig, Either as InitiatorEither, Initiator};
 pub use instance::FabricsInstance;
 pub use provider::Provider;
-// pub use target::{Config as TargetConfig, Target};
 pub use target_info::TargetInfo;
 
 pub(crate) use instance::create_instance;

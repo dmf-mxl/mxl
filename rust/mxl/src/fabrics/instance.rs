@@ -1,4 +1,3 @@
-use std::rc::Rc;
 use std::sync::Arc;
 
 use crate::{
@@ -14,7 +13,7 @@ use crate::{
 };
 
 pub(crate) fn create_instance(
-    ctx: &Arc<InstanceContext>,
+    ctx: Arc<InstanceContext>,
     fabrics_api: &MxlFabricsAPiHandle,
 ) -> Result<FabricsInstance> {
     let mut inst = std::ptr::null_mut();
@@ -33,7 +32,9 @@ pub(crate) fn create_instance(
         ));
     }
 
-    let ctx = Rc::new(FabricsInstanceContext {
+    #[allow(clippy::arc_with_non_send_sync)]
+    // This is intentional, this Arc<T> only implement Send, because fabric API as a whole is not thread-safe to use.
+    let ctx = Arc::new(FabricsInstanceContext {
         _parent_ctx: ctx.clone(),
         api: fabrics_api.clone(),
         inner: inst,
@@ -47,6 +48,7 @@ pub(crate) struct FabricsInstanceContext {
     api: MxlFabricsAPiHandle,
     pub(crate) inner: mxl_sys::fabrics::FabricsInstance,
 }
+unsafe impl Send for FabricsInstanceContext {}
 
 impl FabricsInstanceContext {
     pub(crate) fn api(&self) -> &MxlFabricsAPiHandle {
@@ -68,21 +70,25 @@ impl Drop for FabricsInstanceContext {
 /// The fabrics instance and its pointer are held in the `FabricsInstanceContext`` object.
 /// This is created via an [MxlInstance](crate::MxlInstance).
 pub struct FabricsInstance {
-    ctx: Rc<FabricsInstanceContext>,
+    /// The fabric API is not-thread safe (Sync).
+    ctx: Arc<FabricsInstanceContext>,
 }
+/// SAFETY: FabricsInstance is safe to send to another thread, but fabric API as a whole is not thread-safe
+unsafe impl Send for FabricsInstance {}
+
 impl FabricsInstance {
-    fn new(ctx: Rc<FabricsInstanceContext>) -> Self {
+    fn new(ctx: Arc<FabricsInstanceContext>) -> Self {
         Self { ctx }
     }
 
     /// Create a fabrics target. The target is the receiver of write operations from an initiator.
     pub fn create_target(&self) -> Result<Target<target::states::Initializing>> {
-        create_target(&self.ctx)
+        create_target(self.ctx.clone())
     }
 
     /// Create a fabrics initiator instance.
     pub fn create_initiator(&self) -> Result<Initiator<initiator::states::Initializing>> {
-        create_initiator(&self.ctx)
+        create_initiator(self.ctx.clone())
     }
 
     pub fn provider_from_str(&self, provider: &str) -> Result<Provider> {

@@ -12,7 +12,7 @@ pub struct GrainReadResult {
 }
 
 impl Target<Grain> {
-    ///Blocking accessor for a new grain.
+    /// Blocking accessor for a new grain.
     pub fn read(&self, timeout: Duration) -> Result<GrainReadResult> {
         let mut grain_index = 0;
         Error::from_status(unsafe {

@@ -1,4 +1,4 @@
-use std::{ffi::CString, rc::Rc};
+use std::{ffi::CString, sync::Arc};
 
 use crate::error::{Error, Result};
 use mxl_sys::fabrics::FabricsTargetInfo;
@@ -8,19 +8,22 @@ use crate::fabrics::instance::FabricsInstanceContext;
 /// The TargetInfo object holds the local fabric address, keys and memory region addresses for a target.
 /// It is returned after setting up a new target and must be passed to the initiator to connect it.
 pub struct TargetInfo {
-    ctx: Rc<FabricsInstanceContext>,
+    ctx: Arc<FabricsInstanceContext>,
     pub(crate) inner: FabricsTargetInfo,
 }
+unsafe impl Send for TargetInfo {}
+/// SAFETY: Although the `FabricsInstanceContext` type as a whole is not thread-safe, the subset of functions that this `TargetInfo` type uses is thread-safe: `fabrics_target_info_from_string` and `fabrics_target_info_to_string`
+unsafe impl Sync for TargetInfo {}
 
 impl TargetInfo {
-    pub(crate) fn new(ctx: Rc<FabricsInstanceContext>, inner: FabricsTargetInfo) -> Self {
+    pub(crate) fn new(ctx: Arc<FabricsInstanceContext>, inner: FabricsTargetInfo) -> Self {
         Self { ctx, inner }
     }
 
     /// Parse a targetInfo object from its string representation.
     /// Public visibility is set to crate only, because a `FabricsInstanceContext` is required.
     /// See [FabricsInstance](crate::FabricsInstance).
-    pub(crate) fn from_str(ctx: Rc<FabricsInstanceContext>, s: &str) -> Result<Self> {
+    pub(crate) fn from_str(ctx: Arc<FabricsInstanceContext>, s: &str) -> Result<Self> {
         let mut inner = FabricsTargetInfo::default();
 
         Error::from_status(unsafe {

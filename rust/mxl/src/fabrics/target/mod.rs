@@ -2,7 +2,7 @@ mod config;
 mod grain;
 mod samples;
 
-use std::{marker::PhantomData, rc::Rc};
+use std::{marker::PhantomData, sync::Arc};
 
 use crate::{
     FlowConfigInfo,
@@ -42,9 +42,10 @@ pub mod states {
 /// Wrapper class that holds a reference count to the Fabrics Instance and the actual target
 /// instance.
 pub struct TargetInstance {
-    ctx: Rc<FabricsInstanceContext>,
+    ctx: Arc<FabricsInstanceContext>,
     inner: mxl_sys::fabrics::FabricsTarget,
 }
+unsafe impl Send for TargetInstance {}
 
 impl Drop for TargetInstance {
     fn drop(&mut self) {
@@ -62,6 +63,9 @@ pub struct Target<S: TargetState> {
     instance: TargetInstance,
     _marker: PhantomData<S>,
 }
+//SAFETY: A target is safe to be sent across threads, but it's not thread-safe to use its API functions.
+unsafe impl<S: TargetState> Send for Target<S> {}
+
 pub enum Either {
     Grain(Target<Grain>),
     Sample(Target<Sample>),
@@ -69,7 +73,7 @@ pub enum Either {
 
 impl Target<New> {
     pub(crate) fn new(
-        ctx: Rc<FabricsInstanceContext>,
+        ctx: Arc<FabricsInstanceContext>,
         target: mxl_sys::fabrics::FabricsTarget,
     ) -> Target<Initializing> {
         let instance = TargetInstance { ctx, inner: target };
@@ -126,7 +130,7 @@ impl Target<Specializing> {
 
 /// Create a new target.
 #[doc(hidden)]
-pub(crate) fn create_target(ctx: &Rc<FabricsInstanceContext>) -> Result<Target<Initializing>> {
+pub(crate) fn create_target(ctx: Arc<FabricsInstanceContext>) -> Result<Target<Initializing>> {
     let mut target = mxl_sys::fabrics::FabricsTarget::default();
     unsafe {
         Error::from_status(ctx.api().fabrics_create_target(ctx.inner, &mut target))?;

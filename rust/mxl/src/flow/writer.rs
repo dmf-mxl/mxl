@@ -34,6 +34,7 @@ impl FlowWriter {
         }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn inner(&self) -> mxl_sys::FlowWriter {
         self.writer
     }

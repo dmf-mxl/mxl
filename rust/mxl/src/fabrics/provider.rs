@@ -1,7 +1,7 @@
 use mxl_sys::fabrics::FabricsProvider;
 
 use crate::error::{Error, Result};
-use std::{ffi::CString, rc::Rc};
+use std::{ffi::CString, sync::Arc};
 
 use crate::fabrics::instance::FabricsInstanceContext;
 
@@ -10,8 +10,11 @@ use crate::fabrics::instance::FabricsInstanceContext;
 #[derive(Clone)]
 pub struct Provider {
     inner: ProviderType,
-    ctx: Rc<FabricsInstanceContext>,
+    ctx: Arc<FabricsInstanceContext>,
 }
+unsafe impl Send for Provider {}
+/// SAFETY: Although the `FabricsInstanceContext` type as a whole is not thread-safe, the subset of functions that this `Provider type uses is thread-safe: `fabrics_provider_from_string` and `fabrics_provider_to_string`
+unsafe impl Sync for Provider {}
 
 /// The available transports
 #[derive(Clone)]
@@ -55,7 +58,7 @@ impl From<&Provider> for mxl_sys::fabrics::FabricsProvider {
 }
 
 impl Provider {
-    fn new(ctx: Rc<FabricsInstanceContext>, inner: FabricsProvider) -> Self {
+    fn new(ctx: Arc<FabricsInstanceContext>, inner: FabricsProvider) -> Self {
         Self {
             inner: inner.into(),
             ctx,
@@ -65,7 +68,7 @@ impl Provider {
     /// Convert a string to a fabrics provider enum value.
     /// Public visibility is set to crate only, because a `FabricsInstanceContext` is required.
     /// See [FabricsInstance](crate::FabricsInstance).
-    pub(crate) fn from_str(ctx: Rc<FabricsInstanceContext>, s: &str) -> Result<Provider> {
+    pub(crate) fn from_str(ctx: Arc<FabricsInstanceContext>, s: &str) -> Result<Provider> {
         let mut inner = FabricsProvider::default();
 
         Error::from_status(unsafe {

@@ -124,8 +124,6 @@ fn main() {
         println!("cargo:include={include_dir}");
     }
 
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-
     let bindings = bindgen::builder()
         .clang_args(
             bindgen_specs
@@ -143,6 +141,7 @@ fn main() {
         .generate()
         .unwrap();
 
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     bindings
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Could not write bindings");
