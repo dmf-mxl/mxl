@@ -84,7 +84,7 @@ extern "C"
     {
         int version;                       /**< Struct version, must be set to MXL_FABRICS_API_VERSION by the caller. */
         mxlFabricsProvider provider;       /**< The provider that the interface can be used with */
-        mxlFabricsCaps_t caps;             /**< Interface capabilities */
+        mxlFabricsCaps caps;               /**< Interface capabilities */
         mxlFabricsEndpointAddress address; /**< Address (node/service) of this interface */
 
         /**
