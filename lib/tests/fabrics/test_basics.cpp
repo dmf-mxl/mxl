@@ -224,7 +224,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connection o
     {
         auto targetConfig = mxlFabricsTargetConfig{
             .version = MXL_FABRICS_API_VERSION,
-            .interface = {.version = MXL_FABRICS_API_VERSION, .provider = MXL_FABRICS_PROVIDER_TCP, .caps = {}, .address = {.node = "127.0.0.1", .service = "0"}, .attr = nullptr},
+            .interface = {.version = MXL_FABRICS_API_VERSION,
+                          .provider = MXL_FABRICS_PROVIDER_TCP,
+                          .caps = {},
+                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .attr = nullptr},
             .writer = writer,
         };
         mxlFabricsTargetInfo targetInfo;
@@ -232,7 +236,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connection o
 
         auto initiatorConfig = mxlFabricsInitiatorConfig{
             .version = MXL_FABRICS_API_VERSION,
-            .interface = {.version = MXL_FABRICS_API_VERSION, .provider = MXL_FABRICS_PROVIDER_TCP, .caps = {}, .address = {.node = "127.0.0.1", .service = "0"}, .attr = nullptr},
+            .interface = {.version = MXL_FABRICS_API_VERSION,
+                          .provider = MXL_FABRICS_PROVIDER_TCP,
+                          .caps = {},
+                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .attr = nullptr},
             .reader = reader,
         };
         REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
@@ -294,7 +302,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connectionle
 
     auto targetConfig = mxlFabricsTargetConfig{
         .version = MXL_FABRICS_API_VERSION,
-        .interface = {.version = MXL_FABRICS_API_VERSION, .provider = MXL_FABRICS_PROVIDER_SHM, .caps = {}, .address = {.node = "target", .service = "activation"}, .attr = nullptr},
+        .interface = {.version = MXL_FABRICS_API_VERSION,
+                      .provider = MXL_FABRICS_PROVIDER_SHM,
+                      .caps = {},
+                      .address = {.node = "target", .service = "activation"},
+                      .attr = nullptr},
         .writer = writer,
     };
     mxlFabricsTargetInfo targetInfo;
@@ -302,7 +314,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connectionle
 
     auto initiatorConfig = mxlFabricsInitiatorConfig{
         .version = MXL_FABRICS_API_VERSION,
-        .interface = {.version = MXL_FABRICS_API_VERSION, .provider = MXL_FABRICS_PROVIDER_SHM, .caps = {}, .address = {.node = "initiator", .service = "activation"}, .attr = nullptr},
+        .interface = {.version = MXL_FABRICS_API_VERSION,
+                      .provider = MXL_FABRICS_PROVIDER_SHM,
+                      .caps = {},
+                      .address = {.node = "initiator", .service = "activation"},
+                      .attr = nullptr},
         .reader = reader,
     };
     REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
@@ -364,7 +380,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
     {
         auto targetConfig = mxlFabricsTargetConfig{
             .version = MXL_FABRICS_API_VERSION,
-            .interface = {.version = MXL_FABRICS_API_VERSION, .provider = MXL_FABRICS_PROVIDER_TCP, .caps = {}, .address = {.node = "127.0.0.1", .service = "0"}, .attr = nullptr},
+            .interface = {.version = MXL_FABRICS_API_VERSION,
+                          .provider = MXL_FABRICS_PROVIDER_TCP,
+                          .caps = {},
+                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .attr = nullptr},
             .writer = writer,
         };
         mxlFabricsTargetInfo targetInfo;
@@ -372,7 +392,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
 
         auto initiatorConfig = mxlFabricsInitiatorConfig{
             .version = MXL_FABRICS_API_VERSION,
-            .interface = {.version = MXL_FABRICS_API_VERSION, .provider = MXL_FABRICS_PROVIDER_TCP, .caps = {}, .address = {.node = "127.0.0.1", .service = "0"}, .attr = nullptr},
+            .interface = {.version = MXL_FABRICS_API_VERSION,
+                          .provider = MXL_FABRICS_PROVIDER_TCP,
+                          .caps = {},
+                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .attr = nullptr},
             .reader = reader,
         };
         REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
@@ -412,7 +436,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
     {
         auto targetConfig = mxlFabricsTargetConfig{
             .version = MXL_FABRICS_API_VERSION,
-            .interface = {.version = MXL_FABRICS_API_VERSION, .provider = MXL_FABRICS_PROVIDER_SHM, .caps = {}, .address = {.node = "target", .service = "test"}, .attr = nullptr},
+            .interface = {.version = MXL_FABRICS_API_VERSION,
+                          .provider = MXL_FABRICS_PROVIDER_SHM,
+                          .caps = {},
+                          .address = {.node = "target", .service = "test"},
+                          .attr = nullptr},
             .writer = writer,
         };
         mxlFabricsTargetInfo targetInfo;
@@ -420,7 +448,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
 
         auto initiatorConfig = mxlFabricsInitiatorConfig{
             .version = MXL_FABRICS_API_VERSION,
-            .interface = {.version = MXL_FABRICS_API_VERSION, .provider = MXL_FABRICS_PROVIDER_SHM, .caps = {}, .address = {.node = "initiator", .service = "test"}, .attr = nullptr},
+            .interface = {.version = MXL_FABRICS_API_VERSION,
+                          .provider = MXL_FABRICS_PROVIDER_SHM,
+                          .caps = {},
+                          .address = {.node = "initiator", .service = "test"},
+                          .attr = nullptr},
             .reader = reader,
         };
         REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
@@ -491,7 +523,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
     {
         auto targetConfig = mxlFabricsTargetConfig{
             .version = MXL_FABRICS_API_VERSION,
-            .interface = {.version = MXL_FABRICS_API_VERSION, .provider = MXL_FABRICS_PROVIDER_TCP, .caps = {}, .address = {.node = "127.0.0.1", .service = "0"}, .attr = nullptr},
+            .interface = {.version = MXL_FABRICS_API_VERSION,
+                          .provider = MXL_FABRICS_PROVIDER_TCP,
+                          .caps = {},
+                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .attr = nullptr},
             .writer = writer,
         };
         mxlFabricsTargetInfo targetInfo;
@@ -499,7 +535,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
 
         auto initiatorConfig = mxlFabricsInitiatorConfig{
             .version = MXL_FABRICS_API_VERSION,
-            .interface = {.version = MXL_FABRICS_API_VERSION, .provider = MXL_FABRICS_PROVIDER_TCP, .caps = {}, .address = {.node = "127.0.0.1", .service = "0"}, .attr = nullptr},
+            .interface = {.version = MXL_FABRICS_API_VERSION,
+                          .provider = MXL_FABRICS_PROVIDER_TCP,
+                          .caps = {},
+                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .attr = nullptr},
             .reader = reader,
         };
         REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
@@ -540,7 +580,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
     {
         auto targetConfig = mxlFabricsTargetConfig{
             .version = MXL_FABRICS_API_VERSION,
-            .interface = {.version = MXL_FABRICS_API_VERSION, .provider = MXL_FABRICS_PROVIDER_SHM, .caps = {}, .address = {.node = "target", .service = "test"}, .attr = nullptr},
+            .interface = {.version = MXL_FABRICS_API_VERSION,
+                          .provider = MXL_FABRICS_PROVIDER_SHM,
+                          .caps = {},
+                          .address = {.node = "target", .service = "test"},
+                          .attr = nullptr},
             .writer = writer,
         };
         mxlFabricsTargetInfo targetInfo;
@@ -548,7 +592,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
 
         auto initiatorConfig = mxlFabricsInitiatorConfig{
             .version = MXL_FABRICS_API_VERSION,
-            .interface = {.version = MXL_FABRICS_API_VERSION, .provider = MXL_FABRICS_PROVIDER_SHM, .caps = {}, .address = {.node = "initiator", .service = "test"}, .attr = nullptr},
+            .interface = {.version = MXL_FABRICS_API_VERSION,
+                          .provider = MXL_FABRICS_PROVIDER_SHM,
+                          .caps = {},
+                          .address = {.node = "initiator", .service = "test"},
+                          .attr = nullptr},
             .reader = reader,
         };
         REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
@@ -632,7 +680,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
     {
         auto initiatorConfig = mxlFabricsInitiatorConfig{
             .version = MXL_FABRICS_API_VERSION,
-            .interface = {.version = MXL_FABRICS_API_VERSION, .provider = MXL_FABRICS_PROVIDER_TCP, .caps = {}, .address = {.node = "127.0.0.1", .service = "0"}, .attr = nullptr},
+            .interface = {.version = MXL_FABRICS_API_VERSION,
+                          .provider = MXL_FABRICS_PROVIDER_TCP,
+                          .caps = {},
+                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .attr = nullptr},
             .reader = reader,
         };
 
@@ -644,7 +696,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
         {
             targetConfig[i] = mxlFabricsTargetConfig{
                 .version = MXL_FABRICS_API_VERSION,
-                .interface = {.version = MXL_FABRICS_API_VERSION, .provider = MXL_FABRICS_PROVIDER_TCP, .caps = {}, .address = {.node = "127.0.0.1", .service = "0"}, .attr = nullptr},
+                .interface = {.version = MXL_FABRICS_API_VERSION,
+                              .provider = MXL_FABRICS_PROVIDER_TCP,
+                              .caps = {},
+                              .address = {.node = "127.0.0.1", .service = "0"},
+                              .attr = nullptr},
                 .writer = writer[i],
             };
             REQUIRE(mxlFabricsTargetSetup(targets[i], &targetConfig[i], nullptr, &targetInfo[i]) == MXL_STATUS_OK);
@@ -698,7 +754,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
     {
         auto initiatorConfig = mxlFabricsInitiatorConfig{
             .version = MXL_FABRICS_API_VERSION,
-            .interface = {.version = MXL_FABRICS_API_VERSION, .provider = MXL_FABRICS_PROVIDER_SHM, .caps = {}, .address = {.node = "initiator", .service = "test"}, .attr = nullptr},
+            .interface = {.version = MXL_FABRICS_API_VERSION,
+                          .provider = MXL_FABRICS_PROVIDER_SHM,
+                          .caps = {},
+                          .address = {.node = "initiator", .service = "test"},
+                          .attr = nullptr},
             .reader = reader,
         };
         REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
@@ -709,7 +769,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
         {
             targetConfig[i] = mxlFabricsTargetConfig{
                 .version = MXL_FABRICS_API_VERSION,
-                .interface = {.version = MXL_FABRICS_API_VERSION, .provider = MXL_FABRICS_PROVIDER_SHM, .caps = {}, .address = {.node = "target", .service = "test"}, .attr = nullptr},
+                .interface = {.version = MXL_FABRICS_API_VERSION,
+                              .provider = MXL_FABRICS_PROVIDER_SHM,
+                              .caps = {},
+                              .address = {.node = "target", .service = "test"},
+                              .attr = nullptr},
                 .writer = writer[i],
             };
             REQUIRE(mxlFabricsTargetSetup(targets[i], &targetConfig[i], nullptr, &targetInfo[i]) == MXL_STATUS_OK);
@@ -809,7 +873,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
     {
         auto initiatorConfig = mxlFabricsInitiatorConfig{
             .version = MXL_FABRICS_API_VERSION,
-            .interface = {.version = MXL_FABRICS_API_VERSION, .provider = MXL_FABRICS_PROVIDER_TCP, .caps = {}, .address = {.node = "127.0.0.1", .service = "0"}, .attr = nullptr},
+            .interface = {.version = MXL_FABRICS_API_VERSION,
+                          .provider = MXL_FABRICS_PROVIDER_TCP,
+                          .caps = {},
+                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .attr = nullptr},
             .reader = reader,
         };
 
@@ -821,7 +889,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
         {
             targetConfig[i] = mxlFabricsTargetConfig{
                 .version = MXL_FABRICS_API_VERSION,
-                .interface = {.version = MXL_FABRICS_API_VERSION, .provider = MXL_FABRICS_PROVIDER_TCP, .caps = {}, .address = {.node = "127.0.0.1", .service = "0"}, .attr = nullptr},
+                .interface = {.version = MXL_FABRICS_API_VERSION,
+                              .provider = MXL_FABRICS_PROVIDER_TCP,
+                              .caps = {},
+                              .address = {.node = "127.0.0.1", .service = "0"},
+                              .attr = nullptr},
                 .writer = writer[i],
             };
             REQUIRE(mxlFabricsTargetSetup(targets[i], &targetConfig[i], nullptr, &targetInfo[i]) == MXL_STATUS_OK);
@@ -877,7 +949,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
     {
         auto initiatorConfig = mxlFabricsInitiatorConfig{
             .version = MXL_FABRICS_API_VERSION,
-            .interface = {.version = MXL_FABRICS_API_VERSION, .provider = MXL_FABRICS_PROVIDER_SHM, .caps = {}, .address = {.node = "initiator", .service = "test"}, .attr = nullptr},
+            .interface = {.version = MXL_FABRICS_API_VERSION,
+                          .provider = MXL_FABRICS_PROVIDER_SHM,
+                          .caps = {},
+                          .address = {.node = "initiator", .service = "test"},
+                          .attr = nullptr},
             .reader = reader,
         };
         REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
@@ -888,7 +964,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
         {
             targetConfig[i] = mxlFabricsTargetConfig{
                 .version = MXL_FABRICS_API_VERSION,
-                .interface = {.version = MXL_FABRICS_API_VERSION, .provider = MXL_FABRICS_PROVIDER_SHM, .caps = {}, .address = {.node = "target", .service = "test"}, .attr = nullptr},
+                .interface = {.version = MXL_FABRICS_API_VERSION,
+                              .provider = MXL_FABRICS_PROVIDER_SHM,
+                              .caps = {},
+                              .address = {.node = "target", .service = "test"},
+                              .attr = nullptr},
                 .writer = writer[i],
             };
             REQUIRE(mxlFabricsTargetSetup(targets[i], &targetConfig[i], nullptr, &targetInfo[i]) == MXL_STATUS_OK);
@@ -970,7 +1050,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: TargetInfo 
 
     auto config = mxlFabricsTargetConfig{
         .version = MXL_FABRICS_API_VERSION,
-        .interface = {.version = MXL_FABRICS_API_VERSION, .provider = MXL_FABRICS_PROVIDER_TCP, .caps = {}, .address = {.node = "127.0.0.1", .service = "0"}, .attr = nullptr},
+        .interface = {.version = MXL_FABRICS_API_VERSION,
+                      .provider = MXL_FABRICS_PROVIDER_TCP,
+                      .caps = {},
+                      .address = {.node = "127.0.0.1", .service = "0"},
+                      .attr = nullptr},
         .writer = writer,
     };
 
