@@ -82,10 +82,10 @@ namespace mxl::lib::fabrics::ofi
             _inner.reset();
         }
 
-        switch (config.provider)
+        switch (config.interface.provider)
         {
-            case MXL_FABRICS_PROVIDER_AUTO: [[fallthrough]];
-            case MXL_FABRICS_PROVIDER_TCP:  [[fallthrough]];
+            case MXL_FABRICS_PROVIDER_ANY: [[fallthrough]];
+            case MXL_FABRICS_PROVIDER_TCP: [[fallthrough]];
             case MXL_FABRICS_PROVIDER_VERBS:
             {
                 auto [target, info] = RCTarget::setup(config);

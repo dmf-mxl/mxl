@@ -24,9 +24,9 @@ namespace mxl::lib::fabrics::ofi
     inline mxlFabricsTargetConfig getDefaultTargetConfig(mxlFlowWriter writer)
     {
         auto config = mxlFabricsTargetConfig{};
-        config.endpointAddress.node = "127.0.0.1";
-        config.endpointAddress.service = "9090";
-        config.provider = MXL_FABRICS_PROVIDER_TCP;
+        config.interface.address.node = "127.0.0.1";
+        config.interface.address.service = "9090";
+        config.interface.provider = MXL_FABRICS_PROVIDER_TCP;
         config.writer = writer;
         return config;
     }
@@ -34,9 +34,9 @@ namespace mxl::lib::fabrics::ofi
     inline mxlFabricsInitiatorConfig getDefaultInitiatorConfig(mxlFlowReader reader)
     {
         auto config = mxlFabricsInitiatorConfig{};
-        config.endpointAddress.node = "127.0.0.1";
-        config.endpointAddress.service = "9091";
-        config.provider = MXL_FABRICS_PROVIDER_TCP;
+        config.interface.address.node = "127.0.0.1";
+        config.interface.address.service = "9091";
+        config.interface.provider = MXL_FABRICS_PROVIDER_TCP;
         config.reader = reader;
         return config;
     }

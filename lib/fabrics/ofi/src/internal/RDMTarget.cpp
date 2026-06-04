@@ -24,12 +24,12 @@ namespace mxl::lib::fabrics::ofi
         // throws fmt::format_error("string pointer is null") on a nullptr, which MXL_INFO
         // silently swallows. Substitute a printable sentinel for the log only — the original
         // pointers still go to fi_getinfo so the wildcard semantics are preserved.
-        char const* const nodeStr = config.endpointAddress.node ? config.endpointAddress.node : "<unspecified>";
-        char const* const serviceStr = config.endpointAddress.service ? config.endpointAddress.service : "<unspecified>";
+        char const* const nodeStr = config.interface.address.node ? config.interface.address.node : "<unspecified>";
+        char const* const serviceStr = config.interface.address.service ? config.interface.address.service : "<unspecified>";
 
-        MXL_INFO("setting up target [endpoint = {}:{}, provider = {}]", nodeStr, serviceStr, config.provider);
+        MXL_INFO("setting up target [endpoint = {}:{}, provider = {}]", nodeStr, serviceStr, config.interface.provider);
 
-        auto provider = providerFromAPI(config.provider);
+        auto provider = providerFromAPI(config.interface.provider);
         if (!provider)
         {
             throw Exception::invalidArgument("Invalid provider specified");
@@ -38,7 +38,7 @@ namespace mxl::lib::fabrics::ofi
         std::uint64_t caps = FI_RMA | FI_REMOTE_WRITE;
         // To enable device memory support:
         // caps |=  FI_HMEM;
-        auto fabricInfoList = FabricInfoList::get(config.endpointAddress.node, config.endpointAddress.service, provider.value(), caps, FI_EP_RDM);
+        auto fabricInfoList = FabricInfoList::get(config.interface.address.node, config.interface.address.service, provider.value(), caps, FI_EP_RDM);
         if (fabricInfoList.begin() == fabricInfoList.end())
         {
             throw Exception::make(MXL_ERR_NO_FABRIC, "No suitable fabric available");

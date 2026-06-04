@@ -119,7 +119,7 @@ namespace mxl::lib::fabrics::ofi
 
     std::unique_ptr<RDMInitiator> RDMInitiator::setup(mxlFabricsInitiatorConfig const& config)
     {
-        auto provider = providerFromAPI(config.provider);
+        auto provider = providerFromAPI(config.interface.provider);
         if (!provider)
         {
             throw Exception::make(MXL_ERR_NO_FABRIC, "No provider available.");
@@ -128,7 +128,7 @@ namespace mxl::lib::fabrics::ofi
         auto caps = FI_RMA | FI_WRITE;
         // To enable device memory support:
         // caps |=  FI_HMEM;
-        auto fabricInfoList = FabricInfoList::get(config.endpointAddress.node, config.endpointAddress.service, provider.value(), caps, FI_EP_RDM);
+        auto fabricInfoList = FabricInfoList::get(config.interface.address.node, config.interface.address.service, provider.value(), caps, FI_EP_RDM);
         if (fabricInfoList.begin() == fabricInfoList.end())
         {
             throw Exception::make(MXL_ERR_NO_FABRIC, "No suitable fabric available");

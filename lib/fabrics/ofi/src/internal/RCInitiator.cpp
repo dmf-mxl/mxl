@@ -270,7 +270,7 @@ namespace mxl::lib::fabrics::ofi
 
     std::unique_ptr<RCInitiator> RCInitiator::setup(mxlFabricsInitiatorConfig const& config)
     {
-        auto provider = providerFromAPI(config.provider);
+        auto provider = providerFromAPI(config.interface.provider);
         if (!provider)
         {
             throw Exception::make(MXL_ERR_NO_FABRIC, "No provider available");
@@ -279,7 +279,7 @@ namespace mxl::lib::fabrics::ofi
         uint64_t caps = FI_RMA | FI_WRITE | FI_REMOTE_WRITE;
         // To enable device memory support:
         // caps |=  FI_HMEM;
-        auto fabricInfoList = FabricInfoList::get(config.endpointAddress.node, config.endpointAddress.service, provider.value(), caps, FI_EP_MSG);
+        auto fabricInfoList = FabricInfoList::get(config.interface.address.node, config.interface.address.service, provider.value(), caps, FI_EP_MSG);
 
         if (fabricInfoList.begin() == fabricInfoList.end())
         {
