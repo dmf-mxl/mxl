@@ -71,7 +71,7 @@ extern "C"
         MXL_FABRICS_IFACE_CAP_SEND_RECEIVE = MXL_FABRICS_FLAG(2),        /**< The interface supports send/receive type operations */
     } mxlFabricsInterfaceCapFlags;
 
-    /** */
+    /** Capabilities of an interface */
     typedef struct mxlFabricsCaps_t
     {
         int version;             /**< Struct version, must be set to MXL_FABRICS_API_VERSION by the caller. */
@@ -79,6 +79,7 @@ extern "C"
         uint64_t maxMessageSize; /**< Maximum message size supported on this interface. */
     } mxlFabricsCaps;
 
+    /** Fabric interface configuration */
     typedef struct mxlFabricsInterfaceConfig_t
     {
         int version;                       /**< Struct version, must be set to MXL_FABRICS_API_VERSION by the caller. */
