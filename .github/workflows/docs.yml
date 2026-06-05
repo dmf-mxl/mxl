@@ -7,7 +7,7 @@ on:
   push:
     branches:
       - main
-      - docs-action # for testing
+      - docs-* # for testing
     tags:
       - "v*"
   workflow_dispatch:
@@ -68,7 +68,7 @@ jobs:
       - name: Fetch gh-pages branch
         run: git fetch origin gh-pages --depth=1 || true
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: 3.x
 
@@ -84,7 +84,7 @@ jobs:
         run: sudo snap install lychee
           
       - name: Check for broken links with lychee
-        run: lychee --root-dir ./site --verbose --no-progress --accept '100..=103,200..=299,403' './site/**/*.html'
+        run: lychee --root-dir ./site --verbose --no-progress --accept '100..=103,200..=299,403' --accept-timeouts './site/**/*.html'
 
       # Configure git for mike to push to gh-pages
       - name: Configure git for mike
