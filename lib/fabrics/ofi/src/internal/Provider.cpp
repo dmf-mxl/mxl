@@ -34,7 +34,7 @@ namespace mxl::lib::fabrics::ofi
     {
         switch (api)
         {
-            case MXL_FABRICS_PROVIDER_ANY:
+            case MXL_FABRICS_PROVIDER_ANY:   [[fallthrough]];
             case MXL_FABRICS_PROVIDER_TCP:   return Provider::TCP;
             case MXL_FABRICS_PROVIDER_VERBS: return Provider::VERBS;
             case MXL_FABRICS_PROVIDER_EFA:   return Provider::EFA;
