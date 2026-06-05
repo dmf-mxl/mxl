@@ -73,19 +73,19 @@ extern "C"
     } mxlFabricsInterfaceCapFlags;
 
     /** Capabilities of an interface */
-    typedef struct mxlFabricsCaps_t
+    typedef struct mxlFabricsInterfaceCaps_t
     {
         int version;             /**< Struct version, must be set to MXL_FABRICS_API_VERSION by the caller. */
         uint64_t flags;          /**< Capabilities expressed as binary flags. Value can be a bitset of any of mxlFabricsInterfaceCapFlags */
         uint64_t maxMessageSize; /**< Maximum message size supported on this interface. */
-    } mxlFabricsCaps;
+    } mxlFabricsInterfaceCaps;
 
     /** Fabric interface configuration */
     typedef struct mxlFabricsInterfaceConfig_t
     {
         int version;                       /**< Struct version, must be set to MXL_FABRICS_API_VERSION by the caller. */
         mxlFabricsProvider provider;       /**< The provider that the interface can be used with */
-        mxlFabricsCaps caps;               /**< Interface capabilities */
+        mxlFabricsInterfaceCaps caps;      /**< Interface capabilities */
         mxlFabricsEndpointAddress address; /**< Address (node/service) of this interface */
 
         /**
