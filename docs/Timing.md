@@ -86,7 +86,7 @@ MXL Flow replication between hosts will preserve the indexing of the grains. In 
 
 - A 2110-20 receiver media function can unroll the RTP timestamp of the first RTP packet of the frame and use it to compute the grain index write to. This index may be slightly in the past.
 - A media function that generates grains locally (CG, Test Pattern Generator, etc) can simply use the current TAI time as a timestamp and convert it to a grain index.
-- A well behaved writer media function should try to 'pace itself' according to the MXL host clock.  It should write to the ring buffer at a mostly constant rate and avoid writing large number of grains at once.
+- A well behaved writer media function should try to 'pace itself' according to the MXL host clock.  It should write to the ring buffer at a mostly constant rate and avoid writing chunks of media representing large amounts of time (i.e. multiple frames for video, multiple seconds of audio, etc)."
 - A well behaved writer media function will not create flows whose latency drift over time. An implementer can monitor a flow latency using the 'mxl-info' tool part of the SDK.  The flow latency should be low and mostly constant (minimal variation) over a long period of time (hours).
 
 ### Example Flow Readers behaviors
