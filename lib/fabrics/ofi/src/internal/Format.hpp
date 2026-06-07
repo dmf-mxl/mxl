@@ -24,7 +24,7 @@ struct fmt::formatter<mxlFabricsProvider>
     {
         switch (provider)
         {
-            case MXL_FABRICS_PROVIDER_AUTO:  return fmt::format_to(ctx.out(), "auto");
+            case MXL_FABRICS_PROVIDER_ANY:   return fmt::format_to(ctx.out(), "any");
             case MXL_FABRICS_PROVIDER_TCP:   return fmt::format_to(ctx.out(), "tcp");
             case MXL_FABRICS_PROVIDER_VERBS: return fmt::format_to(ctx.out(), "verbs");
             case MXL_FABRICS_PROVIDER_EFA:   return fmt::format_to(ctx.out(), "efa");

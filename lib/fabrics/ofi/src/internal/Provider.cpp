@@ -27,14 +27,14 @@ namespace mxl::lib::fabrics::ofi
             case Provider::SHM:   return MXL_FABRICS_PROVIDER_SHM;
         }
 
-        return MXL_FABRICS_PROVIDER_AUTO;
+        return MXL_FABRICS_PROVIDER_ANY;
     }
 
     std::optional<Provider> providerFromAPI(mxlFabricsProvider api) noexcept
     {
         switch (api)
         {
-            case MXL_FABRICS_PROVIDER_AUTO:
+            case MXL_FABRICS_PROVIDER_ANY:   [[fallthrough]];
             case MXL_FABRICS_PROVIDER_TCP:   return Provider::TCP;
             case MXL_FABRICS_PROVIDER_VERBS: return Provider::VERBS;
             case MXL_FABRICS_PROVIDER_EFA:   return Provider::EFA;

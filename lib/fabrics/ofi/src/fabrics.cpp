@@ -481,7 +481,7 @@ mxlStatus mxlFabricsProviderToString(mxlFabricsProvider in_provider, char* out_s
 
             switch (in_provider)
             {
-                case MXL_FABRICS_PROVIDER_AUTO:  return providerEnumValueToString(out_string, in_out_stringSize, "auto");
+                case MXL_FABRICS_PROVIDER_ANY:   return providerEnumValueToString(out_string, in_out_stringSize, "any");
                 case MXL_FABRICS_PROVIDER_TCP:   return providerEnumValueToString(out_string, in_out_stringSize, "tcp");
                 case MXL_FABRICS_PROVIDER_EFA:   return providerEnumValueToString(out_string, in_out_stringSize, "efa");
                 case MXL_FABRICS_PROVIDER_VERBS: return providerEnumValueToString(out_string, in_out_stringSize, "verbs");

@@ -28,13 +28,13 @@ namespace mxl::lib::fabrics::ofi
         // it as the exception out of setup() instead of MXL_ERR_NO_FABRIC, masking the real
         // failure. Substitute a printable sentinel for formatting only — the original
         // pointers still go to fi_getinfo so the wildcard semantics are preserved.
-        char const* const nodeStr = config.endpointAddress.node ? config.endpointAddress.node : "<unspecified>";
-        char const* const serviceStr = config.endpointAddress.service ? config.endpointAddress.service : "<unspecified>";
+        char const* const nodeStr = config.interface.address.node ? config.interface.address.node : "<unspecified>";
+        char const* const serviceStr = config.interface.address.service ? config.interface.address.service : "<unspecified>";
 
-        MXL_INFO("setting up target [endpoint = {}:{}, provider = {}]", nodeStr, serviceStr, config.provider);
+        MXL_INFO("setting up target [endpoint = {}:{}, provider = {}]", nodeStr, serviceStr, config.interface.provider);
 
         // Convert to our internal enum type.
-        auto provider = providerFromAPI(config.provider);
+        auto provider = providerFromAPI(config.interface.provider);
         if (!provider)
         {
             throw Exception::invalidArgument("Invalid provider passed");
@@ -44,11 +44,11 @@ namespace mxl::lib::fabrics::ofi
         std::uint64_t caps = FI_RMA | FI_REMOTE_WRITE;
         // To enable device memory support:
         // caps |=  FI_HMEM;
-        auto fabricInfoList = FabricInfoList::get(config.endpointAddress.node, config.endpointAddress.service, provider.value(), caps, FI_EP_MSG);
+        auto fabricInfoList = FabricInfoList::get(config.interface.address.node, config.interface.address.service, provider.value(), caps, FI_EP_MSG);
 
         if (fabricInfoList.begin() == fabricInfoList.end())
         {
-            throw Exception::make(MXL_ERR_NO_FABRIC, "No fabric available for provider {} at {}:{}", config.provider, nodeStr, serviceStr);
+            throw Exception::make(MXL_ERR_NO_FABRIC, "No fabric available for provider {} at {}:{}", config.interface.provider, nodeStr, serviceStr);
         }
 
         // Open fabric and domain. These represent the context of the local network fabric adapter that will be used

@@ -17,6 +17,7 @@
 #include <mxl/platform.h>
 
 #define MXL_FABRICS_API_VERSION 0 /**< Version of the API defined by this header. */
+#define MXL_FABRICS_FLAG(n)     (1 << n)
 
 #ifdef __cplusplus
 extern "C"
@@ -44,7 +45,8 @@ extern "C"
 
     typedef enum mxlFabricsProvider_t
     {
-        MXL_FABRICS_PROVIDER_AUTO = 0,  /**< Auto select the best provider. ** This might not be supported by all implementations. */
+        MXL_FABRICS_PROVIDER_ANY = 0,   /**< Auto select the best provider. ** This might not be supported by all implementations. Currently this
+                                           allways falls back to the TCP provider. */
         MXL_FABRICS_PROVIDER_TCP = 1,   /**< Provider that uses linux tcp sockets. */
         MXL_FABRICS_PROVIDER_VERBS = 2, /**< Provider for userspace verbs (libibverbs) and librdmcm for connection management. */
         MXL_FABRICS_PROVIDER_EFA = 3,   /**< Provider for AWS Elastic Fabric Adapter. */
@@ -63,24 +65,53 @@ extern "C"
         char const* service;
     } mxlFabricsEndpointAddress;
 
+    typedef enum mxlFabricsInterfaceCapFlags_t
+    {
+        MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS = MXL_FABRICS_FLAG(0), /**< The interface supports blocking operations */
+        MXL_FABRICS_IFACE_CAP_REMOTE_WRITE = MXL_FABRICS_FLAG(1),        /**< The interface supports remote-write operations */
+        MXL_FABRICS_IFACE_CAP_SEND_RECEIVE = MXL_FABRICS_FLAG(2),        /**< The interface supports send/receive type operations */
+    } mxlFabricsInterfaceCapFlags;
+
+    /** Capabilities of an interface */
+    typedef struct mxlFabricsInterfaceCaps_t
+    {
+        int version;             /**< Struct version, must be set to MXL_FABRICS_API_VERSION by the caller. */
+        uint64_t flags;          /**< Capabilities expressed as binary flags. Value can be a bitset of any of mxlFabricsInterfaceCapFlags */
+        uint64_t maxMessageSize; /**< Maximum message size supported on this interface. */
+    } mxlFabricsInterfaceCaps;
+
+    /** Fabric interface configuration */
+    typedef struct mxlFabricsInterfaceConfig_t
+    {
+        int version;                       /**< Struct version, must be set to MXL_FABRICS_API_VERSION by the caller. */
+        mxlFabricsProvider provider;       /**< The provider that the interface can be used with */
+        mxlFabricsInterfaceCaps caps;      /**< Interface capabilities */
+        mxlFabricsEndpointAddress address; /**< Address (node/service) of this interface */
+
+        /**
+         * Extra information about the interface in a json document. Provided on a best-effort basis. Not all fields are available on certain
+         * platforms and hardware.
+         * Only provided by a call to mxlFabricsGetInterfaces, and ignored when provided through a setup function.
+         */
+        char const* attr;
+    } mxlFabricsInterfaceConfig;
+
     /** Configuration object required to set up a new target.
      */
     typedef struct mxlFabricsTargetConfig_t
     {
-        int version;                               /**< Struct version, must be set to MXL_FABRICS_API_VERSION by the caller */
-        mxlFabricsEndpointAddress endpointAddress; /**< Bind address for the local endpoint. */
-        mxlFabricsProvider provider;               /**< The provider that should be used */
-        mxlFlowWriter writer;                      /**< A flow writer for the flow that should be written to by remote initiators */
+        int version;                         /**< Struct version, must be set to MXL_FABRICS_API_VERSION by the caller */
+        mxlFabricsInterfaceConfig interface; /**< Bind address for the local endpoint. */
+        mxlFlowWriter writer;                /**< A flow writer for the flow that should be written to by remote initiators */
     } mxlFabricsTargetConfig;
 
     /** Configuration object required to set up an initiator.
      */
     typedef struct mxlFabricsInitiatorConfig_t
     {
-        int version;                               /**< Struct version, must be set to MXL_FABRICS_API_VERSION by the caller */
-        mxlFabricsEndpointAddress endpointAddress; /**< Bind address for the local endpoint. */
-        mxlFabricsProvider provider;               /**< The provider that should be used. */
-        mxlFlowReader reader;                      /**< A flow reader that will be used as the source of write operations to remote targets. */
+        int version;                         /**< Struct version, must be set to MXL_FABRICS_API_VERSION by the caller */
+        mxlFabricsInterfaceConfig interface; /**< Bind address for the local endpoint. */
+        mxlFlowReader reader;                /**< A flow reader that will be used as the source of write operations to remote targets. */
     } mxlFabricsInitiatorConfig;
 
     /**

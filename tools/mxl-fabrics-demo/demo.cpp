@@ -153,13 +153,22 @@ public:
             return status;
         }
 
+        // clang-format off
         mxlFabricsInitiatorConfig initiatorConfig = {
             .version = MXL_FABRICS_API_VERSION,
-            .endpointAddress = {.node = _config.node ? _config.node.value().c_str() : nullptr,
-                                .service = _config.service ? _config.service.value().c_str() : nullptr},
-            .provider = _config.provider,
+            .interface = {
+                .version = MXL_FABRICS_API_VERSION,
+                .provider = _config.provider,
+                .caps = {},
+                .address = {
+                    .node = _config.node ? _config.node.value().c_str() : nullptr,
+                    .service = _config.service ? _config.service.value().c_str() : nullptr
+                },
+                .attr = nullptr,
+            },
             .reader = _reader,
         };
+        // clang-format on
 
         status = mxlFabricsInitiatorSetup(_initiator, &initiatorConfig, nullptr);
         if (status != MXL_STATUS_OK)
@@ -516,13 +525,22 @@ public:
             return status;
         }
 
+        // clang-format off
         mxlFabricsTargetConfig targetConfig = {
             .version = MXL_FABRICS_API_VERSION,
-            .endpointAddress = {.node = _config.node ? _config.node.value().c_str() : nullptr,
-                                .service = _config.service ? _config.service.value().c_str() : nullptr},
-            .provider = _config.provider,
+            .interface = {
+                .version = MXL_FABRICS_API_VERSION,
+                .provider = _config.provider,
+                .caps = {},
+                .address = {
+                    .node = _config.node ? _config.node.value().c_str() : nullptr,
+                    .service = _config.service ? _config.service.value().c_str() : nullptr
+                },
+                .attr = nullptr,
+            },
             .writer = _writer,
         };
+        // clang-format on
         status = mxlFabricsTargetSetup(_target, &targetConfig, nullptr, &_targetInfo);
         if (status != MXL_STATUS_OK)
         {

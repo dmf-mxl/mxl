@@ -28,9 +28,9 @@ namespace mxl::lib::fabrics::ofi
             _inner.reset();
         }
 
-        switch (config.provider)
+        switch (config.interface.provider)
         {
-            case MXL_FABRICS_PROVIDER_AUTO:
+            case MXL_FABRICS_PROVIDER_ANY:
             case MXL_FABRICS_PROVIDER_TCP:
             case MXL_FABRICS_PROVIDER_VERBS:
             {
