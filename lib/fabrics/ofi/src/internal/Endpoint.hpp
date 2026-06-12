@@ -190,7 +190,7 @@ namespace mxl::lib::fabrics::ofi
          * connection was established,
          * A Event::Connected event will be posted to the event queue associated with this endpoint.
          */
-        void connect(FabricAddress const& addr);
+        void connect(RawFabricAddress const& addr);
 
         /** \brief Initiate a graceful shutdown on a connection-oriented endpoint.
          *
@@ -201,7 +201,7 @@ namespace mxl::lib::fabrics::ofi
         /** Obtain the local fabric address for this endpoint.
          */
         [[nodiscard]]
-        FabricAddress localAddress() const;
+        RawFabricAddress localAddress() const;
 
         /** \brief Get the associated completion queue.
          *

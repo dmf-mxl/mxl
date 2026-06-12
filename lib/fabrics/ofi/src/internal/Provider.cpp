@@ -11,6 +11,7 @@ namespace mxl::lib::fabrics::ofi
 {
 
     static std::map<std::string_view, Provider> const providerStringMap = {
+        {"any",   Provider::ANY  },
         {"tcp",   Provider::TCP  },
         {"verbs", Provider::VERBS},
         {"efa",   Provider::EFA  },
@@ -21,6 +22,7 @@ namespace mxl::lib::fabrics::ofi
     {
         switch (provider)
         {
+            case Provider::ANY:   return MXL_FABRICS_PROVIDER_ANY;
             case Provider::TCP:   return MXL_FABRICS_PROVIDER_TCP;
             case Provider::VERBS: return MXL_FABRICS_PROVIDER_VERBS;
             case Provider::EFA:   return MXL_FABRICS_PROVIDER_EFA;
@@ -34,7 +36,7 @@ namespace mxl::lib::fabrics::ofi
     {
         switch (api)
         {
-            case MXL_FABRICS_PROVIDER_ANY:   [[fallthrough]];
+            case MXL_FABRICS_PROVIDER_ANY:   return Provider::ANY;
             case MXL_FABRICS_PROVIDER_TCP:   return Provider::TCP;
             case MXL_FABRICS_PROVIDER_VERBS: return Provider::VERBS;
             case MXL_FABRICS_PROVIDER_EFA:   return Provider::EFA;

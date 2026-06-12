@@ -170,7 +170,7 @@ namespace mxl::lib::fabrics::ofi
          * \return A newly setup RCInitiator object.
          */
         [[nodiscard]]
-        static std::unique_ptr<RCInitiator> setup(mxlFabricsInitiatorConfig const& config);
+        static std::unique_ptr<RCInitiator> setup(mxlFabricsInitiatorConfig const& config, FabricInfoView info);
 
         /** \copydoc Initiator::addTarget()
          */

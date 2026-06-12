@@ -110,7 +110,7 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Set up a new RDMInitiator.
          */
         [[nodiscard]]
-        static std::unique_ptr<RDMInitiator> setup(mxlFabricsInitiatorConfig const& config);
+        static std::unique_ptr<RDMInitiator> setup(mxlFabricsInitiatorConfig const& config, FabricInfoView info);
 
         /** \copydoc Initiator::addTarget()
          */

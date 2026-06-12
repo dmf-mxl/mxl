@@ -51,8 +51,9 @@ namespace mxl::lib::fabrics::ofi
         bool operator==(TargetInfo const& other) const noexcept;
 
     public:
-        Endpoint::Id id;             /**< A unique identifier of the target's endpoint */
-        FabricAddress fabricAddress; /**< Target's endpoint libfabric address */
+        Endpoint::Id id;                /**< A unique identifier of the target's endpoint */
+        RawFabricAddress fabricAddress; /**< Target's endpoint libfabric address */
+        Provider provider;              /**< Remote targets provider */
         std::vector<RemoteRegion>
             remoteRegions; /**< Target's memory regions (and keys) which an initiator can operate on. This is used only for RMA operations */
         std::optional<TargetInfoBounceBufferInfo> bounceBufferInfo; /**< Information about the bounce buffer on the target, if the target uses one.*/
