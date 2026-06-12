@@ -65,27 +65,37 @@ extern "C"
         char const* service;
     } mxlFabricsEndpointAddress;
 
+    /** Capability flags describing what an interface supports.
+     *
+     * When returned by mxlFabricsGetInterfaces(), these flags are informational: they describe the capabilities
+     * of each discovered interface. The caller reads them to decide which interface to use.
+     *
+     * When passed to mxlFabricsTargetSetup() or mxlFabricsInitiatorSetup() (via mxlFabricsInterfaceConfig), these
+     * flags express requirements. At least one transfer capability (REMOTE_WRITE or SEND_RECEIVE) must be set.
+     * If no transfer capability is set, REMOTE_WRITE is assumed.
+     */
     typedef enum mxlFabricsInterfaceCapFlags_t
     {
-        MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS = MXL_FABRICS_FLAG(0), /**< The interface supports blocking operations */
-        MXL_FABRICS_IFACE_CAP_REMOTE_WRITE = MXL_FABRICS_FLAG(1),        /**< The interface supports remote-write operations */
-        MXL_FABRICS_IFACE_CAP_SEND_RECEIVE = MXL_FABRICS_FLAG(2),        /**< The interface supports send/receive type operations */
+        MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS = MXL_FABRICS_FLAG(0), /**< The interface supports blocking operations. */
+        MXL_FABRICS_IFACE_CAP_REMOTE_WRITE = MXL_FABRICS_FLAG(1),        /**< The interface supports remote-write (RDMA) operations. */
+        MXL_FABRICS_IFACE_CAP_SEND_RECEIVE = MXL_FABRICS_FLAG(2),        /**< The interface supports send/receive message operations. */
     } mxlFabricsInterfaceCapFlags;
 
-    /** Capabilities of an interface */
+    /** Capabilities of an interface. */
     typedef struct mxlFabricsInterfaceCaps_t
     {
         int version;             /**< Struct version, must be set to MXL_FABRICS_API_VERSION by the caller. */
-        uint64_t flags;          /**< Capabilities expressed as binary flags. Value can be a bitset of any of mxlFabricsInterfaceCapFlags */
+        uint64_t flags;          /**< Bitwise OR of mxlFabricsInterfaceCapFlags values. */
         uint64_t maxMessageSize; /**< Maximum message size supported on this interface. */
     } mxlFabricsInterfaceCaps;
 
     typedef struct mxlFabricsInterfaceConfig_t
     {
         int version;                       /**< Struct version, must be set to MXL_FABRICS_API_VERSION by the caller. */
-        mxlFabricsProvider provider;       /**< The provider that the interface can be used with */
-        mxlFabricsInterfaceCaps caps;      /**< Interface capabilities */
-        mxlFabricsEndpointAddress address; /**< Address (node/service) of this interface */
+        mxlFabricsProvider provider;       /**< The provider that the interface can be used with. */
+        mxlFabricsInterfaceCaps caps;      /**< Interface capabilities. Output-only for mxlFabricsGetInterfaces(); requirements for setup functions.
+                                                See mxlFabricsInterfaceCapFlags for details. */
+        mxlFabricsEndpointAddress address; /**< Address (node/service) of this interface. */
 
         /**
          * Extra information about the interface in a json document. Provided on a best-effort basis. Not all fields are available on certain
@@ -147,11 +157,10 @@ extern "C"
     /**
      * Query a list of available providers, interfaces and their capabilities on this system.
      * \param[in] in_instance A valid mxlFabricsInstance.
-     * \param[in] query (Optional) Can be used to filter the items returned by this function. Only interfaces matching the provider, address and
-     * capabilities passed in this parameter are returned in the list. NULL or 0 values will be ignored, and the MXL_FABRICS_PROVIDER_ANY value can be
-     * used to list interfaces for all providers.
-     * \param[out] list A list of interfaces available on the system. The whole list should be freed with mxlFabricsFreeInterfaceList(). This will
-     * also free the character arrays returned from this function.
+     * \param[in] query (Optional) Can be used to filter the items returned by this function. Only the provider and address fields are used for
+     * filtering; capability flags in the query are ignored. Use MXL_FABRICS_PROVIDER_ANY or NULL to list interfaces for all providers.
+     * \param[out] list A list of interfaces available on the system. Each entry includes the detected capability flags for that interface.
+     * The whole list should be freed with mxlFabricsFreeInterfaceList(). This will also free the character arrays returned from this function.
      */
     MXL_EXPORT
     mxlStatus mxlFabricsGetInterfaces(mxlInstance in_instance, mxlFabricsInterfaceConfig const* query, mxlFabricsInterfaceList** list);

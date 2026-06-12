@@ -1,11 +1,9 @@
 #include "FabricInterfaceProbe.hpp"
-#include <algorithm>
 #include <functional>
 #include <optional>
-#include <ranges>
 #include <unistd.h>
-#include <fmt/format.h>
 #include <rdma/fabric.h>
+#include "mxl-internal/Logging.hpp"
 #include "Exception.hpp"
 #include "FabricAddress.hpp"
 #include "FabricInfo.hpp"
@@ -85,7 +83,6 @@ namespace mxl::lib::fabrics::ofi
                         query ? optStringFromCStr(query.value().get().address.node) : std::nullopt,
                         query ? optStringFromCStr(query.value().get().address.service) : std::nullopt));
 
-                MXL_INFO("inserted fabric address, provider: {} address: {}", provider, emplaced->second->toString());
                 return emplaced->second;
             }
             catch (Exception const&)
@@ -94,7 +91,6 @@ namespace mxl::lib::fabrics::ofi
             }
         };
 
-        // Requested provider is ANY if no query is available.
         auto const requestedProvider = query ? providerFromAPI(query.value().get().provider) : Provider::ANY;
         if (!requestedProvider)
         {
@@ -153,7 +149,17 @@ namespace mxl::lib::fabrics::ofi
             throw Exception::invalidArgument("invalid provider");
         }
 
+        constexpr auto transferCaps = std::uint64_t{MXL_FABRICS_IFACE_CAP_REMOTE_WRITE | MXL_FABRICS_IFACE_CAP_SEND_RECEIVE};
         auto caps = ProviderCapabilities::fromAPI(interfaceConfig.caps);
+        if ((caps.interfaceCaps & transferCaps) == 0)
+        {
+            MXL_WARN("No transfer capabilities requested, defaulting to REMOTE_WRITE");
+            caps.interfaceCaps |= MXL_FABRICS_IFACE_CAP_REMOTE_WRITE;
+        }
+        else if ((caps.interfaceCaps & MXL_FABRICS_IFACE_CAP_REMOTE_WRITE) == 0)
+        {
+            throw Exception::noFabric("Unsupported provider constraints. Only REMOTE_WRITE supported at this time.");
+        }
         auto providerConfig = ProviderConfig::create(*provider, isTarget, caps);
         auto fabricAddress = FabricAddress::parse(
             *provider, optStringFromCStr(interfaceConfig.address.node), optStringFromCStr(interfaceConfig.address.service));
