@@ -81,12 +81,18 @@ extern "C"
         MXL_FABRICS_IFACE_CAP_SEND_RECEIVE = MXL_FABRICS_FLAG(2),        /**< The interface supports send/receive message operations. */
     } mxlFabricsInterfaceCapFlags;
 
-    /** Capabilities of an interface. */
+    /** Capabilities of an interface. Returned as informational output by mxlFabricsGetInterfaces().
+     *  When used inside mxlFabricsInterfaceConfig for setup functions, only the \c flags field is
+     *  evaluated as requirements; \c maxMessageSize is ignored.
+     */
     typedef struct mxlFabricsInterfaceCaps_t
     {
         int version;             /**< Struct version, must be set to MXL_FABRICS_API_VERSION by the caller. */
-        uint64_t flags;          /**< Bitwise OR of mxlFabricsInterfaceCapFlags values. */
-        uint64_t maxMessageSize; /**< Maximum message size supported on this interface. */
+        uint64_t flags;          /**< Bitwise OR of mxlFabricsInterfaceCapFlags values.
+                                      See mxlFabricsInterfaceCapFlags for the dual semantics (informational vs. requirements). */
+        uint64_t maxMessageSize; /**< Maximum message size supported on this interface. Reported by mxlFabricsGetInterfaces().
+                                      Currently not enforced by setup functions, but callers should initialize this field to a
+                                      valid value as it will be required in a future version. */
     } mxlFabricsInterfaceCaps;
 
     typedef struct mxlFabricsInterfaceConfig_t
@@ -113,8 +119,8 @@ extern "C"
     /** \copydoc mxlFabricsFreeInterfaceList */
     struct mxlFabricsInterfaceList_t
     {
-        mxlFabricsInterfaceList* next;       /** Next entry in the list. NULL for at the last entry */
-        mxlFabricsInterfaceConfig interface; /** A single interface available on this host */
+        mxlFabricsInterfaceList* next;       /**< Next entry in the list. NULL at the last entry. */
+        mxlFabricsInterfaceConfig interface; /**< A single interface available on this host. */
     };
 
     /** Configuration object required to set up a new target.
