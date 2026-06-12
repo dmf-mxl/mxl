@@ -9,24 +9,25 @@
 #include <vector>
 #include <rdma/fabric.h>
 #include <rdma/fi_domain.h>
+#include "FabricAddress.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
     /**
      * \brief Wrapper around a libfabric endpoint address.
      */
-    class FabricAddress final
+    class RawFabricAddress final
     {
     public:
         /**
          * \brief Default is an empty fabric address
          */
-        FabricAddress() = default;
+        RawFabricAddress() = default;
 
         /**
          * \brief Retrieve the fabric address of an endpoint by passing its fid.
          */
-        static FabricAddress fromFid(::fid_t fid);
+        static RawFabricAddress fromFid(::fid_t fid, std::uint32_t addressFormat);
 
         /**
          * \brief Convert the raw fabric address into a base64 encoded string.
@@ -37,7 +38,7 @@ namespace mxl::lib::fabrics::ofi
         /**
          * \brief Parse a fabric address from a base64 encoded string
          */
-        static FabricAddress fromBase64(std::string_view data);
+        static RawFabricAddress fromBase64(std::string_view data, std::uint32_t addressFormat);
 
         /**
          * \brief Pointer to the raw address data.
@@ -56,17 +57,30 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         std::size_t size() const noexcept;
 
-        bool operator==(FabricAddress const& other) const noexcept;
+        /**
+         * \brief Return the fabric specific address format, or FI_FORMAT_UNSPEC if empty.
+         */
+        [[nodiscard]]
+        std::uint32_t format() const noexcept;
+
+        /**
+         * \brief Decode into a strongly typed FabricAddress.
+         */
+        [[nodiscard]]
+        FabricAddress decode() const;
+
+        bool operator==(RawFabricAddress const& other) const noexcept;
 
     private:
-        explicit FabricAddress(std::vector<std::uint8_t> addr);
+        explicit RawFabricAddress(std::vector<std::uint8_t> addr, std::uint32_t addressFormat);
 
         /** \brief Retrieve the fabric address of an endpoint by using its fid.
          */
-        static FabricAddress retrieveFabricAddress(::fid_t);
+        static RawFabricAddress retrieveFabricAddress(::fid_t, std::uint32_t);
 
     private:
-        std::vector<std::uint8_t> _inner; /**< libfabric address represented as a buffer of bytes */
+        std::vector<std::uint8_t> _inner = {}; /**< libfabric address represented as a buffer of bytes */
+        std::uint32_t _addressFormat = FI_FORMAT_UNSPEC;
     };
 
 }

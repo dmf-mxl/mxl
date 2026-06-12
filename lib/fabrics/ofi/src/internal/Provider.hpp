@@ -15,6 +15,7 @@ namespace mxl::lib::fabrics::ofi
      */
     enum class Provider
     {
+        ANY,
         TCP,
         VERBS,
         EFA,

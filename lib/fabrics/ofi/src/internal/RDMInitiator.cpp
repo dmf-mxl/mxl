@@ -20,7 +20,7 @@
 #include "Endpoint.hpp"
 #include "Exception.hpp"
 #include "Fabric.hpp"
-#include "Provider.hpp"
+#include "FabricInfoHelpers.hpp"
 #include "Region.hpp"
 #include "TargetInfo.hpp"
 #include "VariantUtils.hpp"
@@ -117,40 +117,27 @@ namespace mxl::lib::fabrics::ofi
             _state);
     }
 
-    std::unique_ptr<RDMInitiator> RDMInitiator::setup(mxlFabricsInitiatorConfig const& config)
+    std::unique_ptr<RDMInitiator> RDMInitiator::setup(mxlFabricsInitiatorConfig const& config, FabricInfoView info)
     {
-        auto provider = providerFromAPI(config.interface.provider);
-        if (!provider)
-        {
-            throw Exception::make(MXL_ERR_NO_FABRIC, "No provider available.");
-        }
-
-        auto caps = FI_RMA | FI_WRITE;
-        // To enable device memory support:
-        // caps |=  FI_HMEM;
-        auto fabricInfoList = FabricInfoList::get(config.interface.address.node, config.interface.address.service, provider.value(), caps, FI_EP_RDM);
-        if (fabricInfoList.begin() == fabricInfoList.end())
-        {
-            throw Exception::make(MXL_ERR_NO_FABRIC, "No suitable fabric available");
-        }
-
-        auto info = *fabricInfoList.begin();
-        MXL_DEBUG("{}", fi_tostr(info.raw(), FI_TYPE_INFO));
-
-        auto fabric = Fabric::open(info);
-        auto domain = Domain::open(fabric);
-
-        auto endpoint = Endpoint::create(domain);
+        requireCapability(info, FI_WRITE, "Interface is missing required remote write capability");
 
         auto cqAttr = CompletionQueue::Attributes::defaults();
-        if (provider == Provider::EFA)
+        if (config.interface.provider == MXL_FABRICS_PROVIDER_EFA)
         {
             if (!CompletionQueue::isWaitObjectSupportedForEFA())
             {
-                MXL_WARN("Wait objects not supported in EFA provider for this libfabric version. Only non-blocking API available.");
+                if (config.interface.caps.flags & MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS)
+                {
+                    throw Exception::make(MXL_ERR_NO_FABRIC, "Blocking API support requested, but not available for this fabric/version");
+                }
+
                 cqAttr.waitObject = FI_WAIT_NONE;
             }
         }
+
+        auto fabric = Fabric::open(info);
+        auto domain = Domain::open(fabric);
+        auto endpoint = Endpoint::create(domain);
         auto cq = CompletionQueue::open(endpoint.domain(), cqAttr);
         endpoint.bind(cq, FI_TRANSMIT | FI_RECV);
 
