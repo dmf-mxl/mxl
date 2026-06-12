@@ -160,6 +160,10 @@ namespace mxl::lib::fabrics::ofi
         {
             throw Exception::noFabric("Unsupported provider constraints. Only REMOTE_WRITE supported at this time.");
         }
+        if (caps.maxMessageSize == 0)
+        {
+            MXL_WARN("maxMessageSize is not set. This field will be required in a future version.");
+        }
         auto providerConfig = ProviderConfig::create(*provider, isTarget, caps);
         auto fabricAddress = FabricAddress::parse(
             *provider, optStringFromCStr(interfaceConfig.address.node), optStringFromCStr(interfaceConfig.address.service));
