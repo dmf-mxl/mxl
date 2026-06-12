@@ -109,11 +109,11 @@ namespace mxl::lib::fabrics::ofi
             .providerName = "efa",
             .memoryRegistrationModes = FI_MR_VIRT_ADDR | FI_MR_LOCAL | FI_MR_ALLOCATED | FI_MR_PROV_KEY,
             .endpointType = FI_EP_RDM,
-            .caps = libfabricCaps(capabilities, isTarget),
+            .caps = libfabricCaps(capabilities, isTarget) | FI_RMA,
             .supportedAddressFormats = {FI_ADDR_EFA},
             .supportedProtocols = {FI_PROTO_EFA},
             .requiredCaps = libfabricRequiredCaps(capabilities),
-            .filteredCaps = FI_HMEM,
+            .filteredCaps = FI_HMEM | FI_TAGGED,
         };
         return ProviderConfig{std::move(values), capabilities};
     }
