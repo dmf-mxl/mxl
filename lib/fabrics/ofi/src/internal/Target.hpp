@@ -150,6 +150,13 @@ namespace mxl::lib::fabrics::ofi
         std::unique_ptr<TargetInfo> setup(mxlFabricsTargetConfig const& config, TargetSetupOptions const& options = {});
 
     private:
+        /** \brief Set up the correct concrete target type internally and returns the target info
+         * \param config Target configuration passed by the user.
+         * \param info Fabric info already resolved from the interface config.
+         */
+        template<typename TargetT>
+        std::unique_ptr<TargetInfo> setup(mxlFabricsTargetConfig const& config, FabricInfoView info, TargetSetupOptions const& options = {});
+
         std::unique_ptr<Target> _inner; /**< The underlying target implementation. */
     };
 }

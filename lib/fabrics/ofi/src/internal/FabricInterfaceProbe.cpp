@@ -1,0 +1,143 @@
+#include "FabricInterfaceProbe.hpp"
+#include <algorithm>
+#include <functional>
+#include <optional>
+#include <ranges>
+#include <fmt/format.h>
+#include <rdma/fabric.h>
+#include "Exception.hpp"
+#include "FabricAddress.hpp"
+#include "FabricInfo.hpp"
+#include "FabricInterfaceList.hpp"
+#include "Format.hpp" // IWYU pragma: keep; used in fmt::to_string()
+#include "Provider.hpp"
+#include "ProviderConfig.hpp"
+
+namespace mxl::lib::fabrics::ofi
+{
+    namespace
+    {
+        std::optional<std::string> optStringFromCStr(char const* source)
+        {
+            return source == nullptr ? std::nullopt : std::make_optional<std::string>(source);
+        }
+
+        bool matchesRequestedAddress(FabricAddress const& requested, FabricInfoView info)
+        {
+            auto provider = providerFromString(info->fabric_attr->prov_name);
+            if (!provider)
+            {
+                return false;
+            }
+
+            if (requested.empty() || (provider == Provider::SHM))
+            {
+                return true;
+            }
+
+            auto addr = FabricAddress::decode(info->addr_format, info->src_addr, info->src_addrlen);
+            return addr.node() == requested.node();
+        }
+    }
+
+    FabricInterfaceList probeInterfaces(std::optional<std::reference_wrapper<::mxlFabricsInterfaceConfig const>> query)
+    {
+        // Maps of provider specific configurations and addresses. They are lazily created when they appear on the fabric list.
+        auto providerConfigs = std::map<Provider, ProviderConfig>{};
+        auto fabricAddresses = std::map<Provider, FabricAddress>{};
+        auto getProviderConfig = [&](Provider provider) -> ProviderConfig const&
+        {
+            auto found = providerConfigs.find(provider);
+            if (found != providerConfigs.end())
+            {
+                return found->second;
+            }
+
+            auto [emplaced, _] = providerConfigs.emplace(provider, ProviderConfig::create(provider, false, std::nullopt));
+            return emplaced->second;
+        };
+
+        auto getFabricAddress = [&](Provider provider) -> FabricAddress const&
+        {
+            auto found = fabricAddresses.find(provider);
+            if (found != fabricAddresses.end())
+            {
+                return found->second;
+            }
+
+            auto [emplaced, _] = fabricAddresses.emplace(provider,
+                FabricAddress::parse(provider,
+                    query ? optStringFromCStr(query.value().get().address.node) : std::nullopt,
+                    query ? optStringFromCStr(query.value().get().address.service) : std::nullopt));
+
+            MXL_INFO("inserted fabric address, provider: {} address: {}", provider, emplaced->second.toString());
+            return emplaced->second;
+        };
+
+        // Requested provider is ANY if no query is available.
+        auto const requestedProvider = query ? providerFromAPI(query.value().get().provider) : Provider::ANY;
+        if (!requestedProvider)
+        {
+            throw Exception::invalidArgument("Invalid provider");
+        }
+
+        auto list = FabricInterfaceList{};
+        for (auto info : FabricInfoList::get())
+        {
+            // Ignore if the provider of this fabric info is not known.
+            auto provider = providerFromString(info->fabric_attr->prov_name);
+            if (!provider)
+            {
+                continue;
+            }
+
+            // Ignore if a specific provider is requested, and this one does not match.
+            if ((requestedProvider != Provider::ANY) && (provider != requestedProvider))
+            {
+                continue;
+            }
+
+            // Ignore if the info does not match the requested address
+            auto const& address = getFabricAddress(*provider);
+            if (!matchesRequestedAddress(address, info))
+            {
+                continue;
+            }
+
+            // Ignore if no supported.
+            auto const& config = getProviderConfig(*provider);
+            if (config.isSupportedFabricInfo(info))
+            {
+                auto description = FabricInterfaceDescription::create(info);
+                if (description)
+                {
+                    list.push(*description);
+                }
+            }
+        }
+
+        return list;
+    }
+
+    std::pair<FabricInfo, ProviderConfig> selectSourceInterface(::mxlFabricsInterfaceConfig const& interfaceConfig, bool isTarget)
+    {
+        auto provider = providerFromAPI(interfaceConfig.provider);
+        if (!provider)
+        {
+            throw Exception::invalidArgument("invalid provider");
+        }
+
+        auto caps = ProviderCapabilities::fromAPI(interfaceConfig.caps);
+        auto providerConfig = ProviderConfig::create(*provider, isTarget, caps);
+        auto fabricAddress = FabricAddress::parse(
+            *provider, optStringFromCStr(interfaceConfig.address.node), optStringFromCStr(interfaceConfig.address.service));
+
+        auto sourceInterfaces = FabricInfoList::getSourceInterfaces(providerConfig, fabricAddress);
+        if (std::ranges::distance(sourceInterfaces) == 0)
+        {
+            throw Exception::noFabric("no supported interfaces found");
+        }
+
+        return {*sourceInterfaces.begin(), std::move(providerConfig)};
+    }
+}

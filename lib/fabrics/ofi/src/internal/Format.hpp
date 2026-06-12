@@ -6,6 +6,7 @@
 
 #include <fmt/base.h>
 #include <fmt/format.h>
+#include <rdma/fabric.h>
 #include <mxl/fabrics.h>
 #include "Provider.hpp"
 
@@ -55,3 +56,9 @@ struct fmt::formatter<ofi::Provider>
         }
     }
 };
+
+namespace mxl::lib::fabrics::ofi
+{
+    std::string interfaceCapsString(std::uint64_t caps);
+    std::string fiToString(void* any, ::fi_type type);
+}
