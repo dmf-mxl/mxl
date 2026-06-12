@@ -37,7 +37,7 @@ namespace mxl::lib::fabrics::ofi
             }
             catch (ofi::Exception& e)
             {
-                // if (e.status() == MXL_ERR_UNKNOWN)
+                if (e.status() == MXL_ERR_UNKNOWN)
                 {
                     MXL_ERROR("{}: {}", errMsg, e.what());
                 }

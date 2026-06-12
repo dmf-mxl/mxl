@@ -12,7 +12,6 @@
 #include "Exception.hpp"
 #include "FabricInterfaceProbe.hpp"
 #include "LocalRegion.hpp"
-#include "ProviderConfig.hpp"
 #include "RCTarget.hpp"
 #include "RDMTarget.hpp"
 
@@ -97,7 +96,7 @@ namespace mxl::lib::fabrics::ofi
         {
             case FI_EP_MSG: return setup<RCTarget>(config, info.view());
             case FI_EP_RDM: return setup<RDMTarget>(config, info.view());
-            default:        throw;
+            default:        throw Exception::invalidState("unsupported endpoint type");
         }
     }
 }

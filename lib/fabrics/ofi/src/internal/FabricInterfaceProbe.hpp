@@ -3,6 +3,7 @@
 #include <functional>
 #include <optional>
 #include "FabricInterfaceList.hpp"
+#include "ProviderConfig.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {

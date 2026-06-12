@@ -227,10 +227,6 @@ namespace mxl::lib::fabrics::ofi
         static FabricInfoList get();
 
         [[nodiscard]]
-        static FabricInfoList getSources(Provider provider, std::optional<std::string> node, std::optional<std::string> service,
-            ::fi_ep_type endpointType, std::uint64_t caps, std::uint32_t addressFormatHint);
-
-        [[nodiscard]]
         static FabricInfoList getSourceInterfaces(ProviderConfig const& providerConfig, std::optional<FabricAddress> const& sourceAddress);
 
         /** \brief Take ownership over a fi_info raw pointer.

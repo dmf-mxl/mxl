@@ -6,7 +6,7 @@ namespace mxl::lib::fabrics::ofi
 {
     namespace
     {
-        void capabilitiesDummyCheck(std::optional<ProviderCapabilities> const& capabilities)
+        void validateCapabilities(std::optional<ProviderCapabilities> const& capabilities)
         {
             if (!capabilities || capabilities->interfaceCaps == 0)
             {
@@ -41,7 +41,7 @@ namespace mxl::lib::fabrics::ofi
 
     ProviderConfig ProviderConfig::tcp(bool isTarget, std::optional<ProviderCapabilities> capabilities)
     {
-        capabilitiesDummyCheck(capabilities);
+        validateCapabilities(capabilities);
         auto values = ProviderConfigValues{
             .providerName = "tcp",
             .memoryRegistrationModes = FI_MR_VIRT_ADDR | FI_MR_LOCAL | FI_MR_ALLOCATED | FI_MR_PROV_KEY,
@@ -57,7 +57,7 @@ namespace mxl::lib::fabrics::ofi
 
     ProviderConfig ProviderConfig::verbs(bool isTarget, std::optional<ProviderCapabilities> capabilities)
     {
-        capabilitiesDummyCheck(capabilities);
+        validateCapabilities(capabilities);
         auto values = ProviderConfigValues{
             .providerName = "verbs",
             .memoryRegistrationModes = FI_MR_VIRT_ADDR | FI_MR_LOCAL | FI_MR_ALLOCATED | FI_MR_PROV_KEY,
@@ -73,7 +73,7 @@ namespace mxl::lib::fabrics::ofi
 
     ProviderConfig ProviderConfig::shm(bool isTarget, std::optional<ProviderCapabilities> capabilities)
     {
-        capabilitiesDummyCheck(capabilities);
+        validateCapabilities(capabilities);
         auto values = ProviderConfigValues{
             .providerName = "shm",
             .memoryRegistrationModes = FI_MR_VIRT_ADDR | FI_MR_LOCAL | FI_MR_ALLOCATED | FI_MR_PROV_KEY,
@@ -89,7 +89,7 @@ namespace mxl::lib::fabrics::ofi
 
     ProviderConfig ProviderConfig::efa(bool isTarget, std::optional<ProviderCapabilities> capabilities)
     {
-        capabilitiesDummyCheck(capabilities);
+        validateCapabilities(capabilities);
         auto values = ProviderConfigValues{
             .providerName = "efa",
             .memoryRegistrationModes = FI_MR_VIRT_ADDR | FI_MR_LOCAL | FI_MR_ALLOCATED | FI_MR_PROV_KEY,
