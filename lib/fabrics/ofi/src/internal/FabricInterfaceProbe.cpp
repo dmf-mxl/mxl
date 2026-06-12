@@ -3,6 +3,7 @@
 #include <functional>
 #include <optional>
 #include <ranges>
+#include <unistd.h>
 #include <fmt/format.h>
 #include <rdma/fabric.h>
 #include "Exception.hpp"
@@ -22,6 +23,13 @@ namespace mxl::lib::fabrics::ofi
             return source == nullptr ? std::nullopt : std::make_optional<std::string>(source);
         }
 
+        std::string getHostname()
+        {
+            char buf[256] = {};
+            ::gethostname(buf, sizeof(buf));
+            return buf;
+        }
+
         bool matchesRequestedAddress(FabricAddress const& requested, FabricInfoView info)
         {
             auto provider = providerFromString(info->fabric_attr->prov_name);
@@ -30,9 +38,14 @@ namespace mxl::lib::fabrics::ofi
                 return false;
             }
 
-            if (requested.empty() || (provider == Provider::SHM))
+            if (requested.empty())
             {
                 return true;
+            }
+
+            if (*provider == Provider::SHM)
+            {
+                return requested.node() == getHostname();
             }
 
             auto addr = FabricAddress::decode(info->addr_format, info->src_addr, info->src_addrlen);
@@ -44,7 +57,7 @@ namespace mxl::lib::fabrics::ofi
     {
         // Maps of provider specific configurations and addresses. They are lazily created when they appear on the fabric list.
         auto providerConfigs = std::map<Provider, ProviderConfig>{};
-        auto fabricAddresses = std::map<Provider, FabricAddress>{};
+        auto fabricAddresses = std::map<Provider, std::optional<FabricAddress>>{};
         auto getProviderConfig = [&](Provider provider) -> ProviderConfig const&
         {
             auto found = providerConfigs.find(provider);
@@ -57,7 +70,7 @@ namespace mxl::lib::fabrics::ofi
             return emplaced->second;
         };
 
-        auto getFabricAddress = [&](Provider provider) -> FabricAddress const&
+        auto getFabricAddress = [&](Provider provider) -> std::optional<FabricAddress> const&
         {
             auto found = fabricAddresses.find(provider);
             if (found != fabricAddresses.end())
@@ -65,13 +78,20 @@ namespace mxl::lib::fabrics::ofi
                 return found->second;
             }
 
-            auto [emplaced, _] = fabricAddresses.emplace(provider,
-                FabricAddress::parse(provider,
-                    query ? optStringFromCStr(query.value().get().address.node) : std::nullopt,
-                    query ? optStringFromCStr(query.value().get().address.service) : std::nullopt));
+            try
+            {
+                auto [emplaced, _] = fabricAddresses.emplace(provider,
+                    FabricAddress::parse(provider,
+                        query ? optStringFromCStr(query.value().get().address.node) : std::nullopt,
+                        query ? optStringFromCStr(query.value().get().address.service) : std::nullopt));
 
-            MXL_INFO("inserted fabric address, provider: {} address: {}", provider, emplaced->second.toString());
-            return emplaced->second;
+                MXL_INFO("inserted fabric address, provider: {} address: {}", provider, emplaced->second->toString());
+                return emplaced->second;
+            }
+            catch (Exception const&)
+            {
+                return fabricAddresses.emplace(provider, std::nullopt).first->second;
+            }
         };
 
         // Requested provider is ANY if no query is available.
@@ -97,9 +117,15 @@ namespace mxl::lib::fabrics::ofi
                 continue;
             }
 
-            // Ignore if the info does not match the requested address
+            // Ignore if the query address could not be parsed for this provider
             auto const& address = getFabricAddress(*provider);
-            if (!matchesRequestedAddress(address, info))
+            if (!address)
+            {
+                continue;
+            }
+
+            // Ignore if the info does not match the requested address
+            if (!matchesRequestedAddress(*address, info))
             {
                 continue;
             }
