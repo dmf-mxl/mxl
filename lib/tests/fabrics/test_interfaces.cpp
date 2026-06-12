@@ -161,8 +161,7 @@ TEST_CASE("Fabrics: GetInterfaces returns non-zero maxMessageSize", "[fabrics][i
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
 }
 
-TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Setup with explicit REMOTE_WRITE succeeds",
-    "[fabrics][interfaces][setup]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Setup with explicit REMOTE_WRITE succeeds", "[fabrics][interfaces][setup]")
 {
     auto* instance = mxlCreateInstance(domain.c_str(), "");
     REQUIRE(instance != nullptr);
@@ -333,8 +332,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Setup with 
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
 }
 
-TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Setup with empty caps defaults to REMOTE_WRITE",
-    "[fabrics][interfaces][setup]")
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Setup with empty caps defaults to REMOTE_WRITE", "[fabrics][interfaces][setup]")
 {
     auto* instance = mxlCreateInstance(domain.c_str(), "");
     REQUIRE(instance != nullptr);
