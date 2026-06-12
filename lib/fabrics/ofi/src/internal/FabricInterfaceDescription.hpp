@@ -7,13 +7,32 @@
 
 namespace mxl::lib::fabrics::ofi
 {
+    /**
+     * Describes a discovered fabric interface. Created from a libfabric fi_info entry, translating
+     * provider-level details into MXL-level capability flags, address information, and device attributes.
+     * Instances are used to build the linked list returned by the public mxlFabricsGetInterfaces API.
+     */
     class FabricInterfaceDescription
     {
     public:
+        /**
+         * Create a description from a libfabric fi_info entry. Translates libfabric capabilities
+         * (FI_SEND, FI_WRITE, FI_RMA, etc.) into MXL capability flags and extracts NIC, domain,
+         * and endpoint attributes. Returns nullopt if the provider is not recognized.
+         */
         static std::optional<FabricInterfaceDescription> create(FabricInfoView info);
+
+        /**
+         * Allocate a heap-allocated mxlFabricsInterfaceList node from this description.
+         * String fields (node, service, attr) are strdup'd and owned by the node.
+         * \param next optional pointer to the next node in the linked list.
+         */
         ::mxlFabricsInterfaceList* toRawLinkedListNode(::mxlFabricsInterfaceList* next = nullptr);
+
+        /** Free a single linked list node and its strdup'd strings. Returns the next pointer. */
         static ::mxlFabricsInterfaceList* freeRawLinkedListNode(::mxlFabricsInterfaceList*);
 
+        /** \brief Return the raw MXL_FABRICS_IFACE_CAP_* flags for this interface. */
         [[nodiscard]]
         std::uint64_t caps() const noexcept
         {
