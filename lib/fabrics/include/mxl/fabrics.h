@@ -80,7 +80,6 @@ extern "C"
         uint64_t maxMessageSize; /**< Maximum message size supported on this interface. */
     } mxlFabricsInterfaceCaps;
 
-    /** Fabric interface configuration */
     typedef struct mxlFabricsInterfaceConfig_t
     {
         int version;                       /**< Struct version, must be set to MXL_FABRICS_API_VERSION by the caller. */
@@ -95,6 +94,18 @@ extern "C"
          */
         char const* attr;
     } mxlFabricsInterfaceConfig;
+
+    /**
+     * A list of interfaces returned by mxlFabricsGetInterfaces. Should be freed with mxlFabricsFreeInterfaceList
+     */
+    typedef struct mxlFabricsInterfaceList_t mxlFabricsInterfaceList;
+
+    /** \copydoc mxlFabricsFreeInterfaceList */
+    struct mxlFabricsInterfaceList_t
+    {
+        mxlFabricsInterfaceList* next;       /** Next entry in the list. NULL for at the last entry */
+        mxlFabricsInterfaceConfig interface; /** A single interface available on this host */
+    };
 
     /** Configuration object required to set up a new target.
      */
@@ -132,6 +143,26 @@ extern "C"
      */
     MXL_EXPORT
     mxlStatus mxlFabricsDestroyInstance(mxlFabricsInstance in_instance);
+
+    /**
+     * Query a list of available providers, interfaces and their capabilities on this system.
+     * \param[in] in_instance A valid mxlFabricsInstance.
+     * \param[in] query (Optional) Can be used to filter the items returned by this function. Only interfaces matching the provider, address and
+     * capabilities passed in this parameter are returned in the list. NULL or 0 values will be ignored, and the MXL_FABRICS_PROVIDER_ANY value can be
+     * used to list interfaces for all providers.
+     * \param[out] list A list of interfaces available on the system. The whole list should be freed with mxlFabricsFreeInterfaceList(). This will
+     * also free the character arrays returned from this function.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFabricsGetInterfaces(mxlInstance in_instance, mxlFabricsInterfaceConfig const* query, mxlFabricsInterfaceList** list);
+
+    /**
+     * Free an interface list previously allocated by mxlFabricsGetInterfaces. This function will also free the character strings in each interface
+     * endpoint address struct that is part of the list.
+     * \param interfaceList The list of interfaces to free.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFabricsFreeInterfaceList(mxlFabricsInterfaceList* interfaceList);
 
     /**
      * Create a fabrics target. The target is the receiver of write operations from an initiator.

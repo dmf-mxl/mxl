@@ -91,6 +91,12 @@ namespace mxl::lib::fabrics::ofi
             return make(MXL_ERR_UNSUPPORTED_OPERATION, fmt, std::forward<T>(args)...);
         }
 
+        template<typename... T>
+        static Exception noFabric(fmt::format_string<T...> fmt, T&&... args)
+        {
+            return make(MXL_ERR_NO_FABRIC, fmt, std::forward<T>(args)...);
+        }
+
         /** \brief Return the mxlStatus status code that describes the condition
          * that led to the exception being thrown.
          */

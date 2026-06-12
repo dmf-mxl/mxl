@@ -15,6 +15,7 @@
 #include "Domain.hpp"
 #include "Exception.hpp"
 #include "FabricInfo.hpp"
+#include "FabricInfoHelpers.hpp"
 #include "GrainSlices.hpp"
 #include "Protocol.hpp"
 #include "Region.hpp"
@@ -120,6 +121,8 @@ namespace mxl::lib::fabrics::ofi
                     state.ep.bind(cq, FI_TRANSMIT);
 
                     // Transition into the connecting state
+                    auto faddr = _info.fabricAddress.decode();
+                    MXL_INFO("Connecting to {}", faddr.toString());
                     state.ep.connect(_info.fabricAddress);
                     return Connecting{.ep = std::move(state.ep)};
                 },
@@ -268,25 +271,9 @@ namespace mxl::lib::fabrics::ofi
         return Idle{.ep = Endpoint::create(old.domain(), old.id(), old.info()), .idleSince = std::chrono::steady_clock::now()};
     }
 
-    std::unique_ptr<RCInitiator> RCInitiator::setup(mxlFabricsInitiatorConfig const& config)
+    std::unique_ptr<RCInitiator> RCInitiator::setup(mxlFabricsInitiatorConfig const& config, FabricInfoView info)
     {
-        auto provider = providerFromAPI(config.interface.provider);
-        if (!provider)
-        {
-            throw Exception::make(MXL_ERR_NO_FABRIC, "No provider available");
-        }
-
-        uint64_t caps = FI_RMA | FI_WRITE | FI_REMOTE_WRITE;
-        // To enable device memory support:
-        // caps |=  FI_HMEM;
-        auto fabricInfoList = FabricInfoList::get(config.interface.address.node, config.interface.address.service, provider.value(), caps, FI_EP_MSG);
-
-        if (fabricInfoList.begin() == fabricInfoList.end())
-        {
-            throw Exception::make(MXL_ERR_NO_FABRIC, "No suitable fabric available");
-        }
-
-        auto info = *fabricInfoList.begin();
+        requireCapability(info, FI_WRITE, "Interface is missing required write capability");
         MXL_DEBUG("{}", fi_tostr(info.raw(), FI_TYPE_INFO));
 
         auto fabric = Fabric::open(info);

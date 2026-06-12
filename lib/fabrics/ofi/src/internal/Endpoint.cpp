@@ -175,7 +175,7 @@ namespace mxl::lib::fabrics::ofi
         fiCall(::fi_accept, "Failed to accept connection", _raw, &dummy, sizeof(dummy));
     }
 
-    void Endpoint::connect(FabricAddress const& addr)
+    void Endpoint::connect(RawFabricAddress const& addr)
     {
         fiCall(::fi_connect, "Failed to connect endpoint", _raw, addr.raw(), nullptr, 0);
     }
@@ -185,9 +185,9 @@ namespace mxl::lib::fabrics::ofi
         fiCall(::fi_shutdown, "Failed to shutdown endpoint", _raw, 0);
     }
 
-    FabricAddress Endpoint::localAddress() const
+    RawFabricAddress Endpoint::localAddress() const
     {
-        return FabricAddress::fromFid(&_raw->fid);
+        return RawFabricAddress::fromFid(&_raw->fid, _info->addr_format);
     }
 
     std::shared_ptr<CompletionQueue> Endpoint::completionQueue() const

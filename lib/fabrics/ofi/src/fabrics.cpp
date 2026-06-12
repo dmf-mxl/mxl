@@ -17,12 +17,11 @@
 #include <mxl/mxl.h>
 #include "internal/Exception.hpp"
 #include "internal/FabricInstance.hpp"
+#include "internal/FabricInterfaceProbe.hpp"
 #include "internal/Initiator.hpp"
 #include "internal/Provider.hpp"
-#include "internal/Region.hpp"
 #include "internal/Target.hpp"
 #include "internal/TargetInfo.hpp"
-#include "mxl/flow.h"
 #include "mxl/platform.h"
 
 namespace ofi = mxl::lib::fabrics::ofi;
@@ -76,7 +75,7 @@ namespace mxl::lib::fabrics::ofi
             }
             catch (ofi::Exception& e)
             {
-                if (e.status() == MXL_ERR_UNKNOWN)
+                // if (e.status() == MXL_ERR_UNKNOWN)
                 {
                     MXL_ERROR("{}: {}", errMsg, e.what());
                 }
@@ -135,6 +134,37 @@ mxlStatus mxlFabricsDestroyInstance(mxlFabricsInstance in_instance)
             return MXL_STATUS_OK;
         },
         "Failed to destroy fabrics instance");
+}
+
+extern "C" MXL_EXPORT
+mxlStatus mxlFabricsGetInterfaces(mxlInstance in_instance, mxlFabricsInterfaceConfig const* query, mxlFabricsInterfaceList** list)
+{
+    if ((in_instance == nullptr) || (list == nullptr))
+    {
+        return MXL_ERR_INVALID_ARG;
+    }
+
+    return ofi::try_run(
+        [&]()
+        {
+            auto optQuery =
+                (query == nullptr) ? std::nullopt : std::make_optional<std::reference_wrapper<::mxlFabricsInterfaceConfig const>>(std::cref(*query));
+            *list = ofi::probeInterfaces(optQuery).toRawLinkedList();
+            return MXL_STATUS_OK;
+        },
+        "Failed to get a list of interfaces");
+}
+
+extern "C" MXL_EXPORT
+mxlStatus mxlFabricsFreeInterfaceList(mxlFabricsInterfaceList* interfaceList)
+{
+    if (interfaceList == nullptr)
+    {
+        return MXL_STATUS_OK;
+    }
+
+    ofi::FabricInterfaceList::freeRawLinkedList(interfaceList);
+    return MXL_STATUS_OK;
 }
 
 extern "C" MXL_EXPORT
@@ -351,7 +381,7 @@ mxlStatus mxlFabricsInitiatorSetup(mxlFabricsInitiator in_initiator, mxlFabricsI
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsInitiatorAddTarget(mxlFabricsInitiator in_initiator, mxlFabricsTargetInfo const in_targetInfo)
+mxlStatus mxlFabricsInitiatorAddTarget(mxlFabricsInitiator in_initiator, mxlFabricsTargetInfo in_targetInfo)
 {
     if ((in_initiator == nullptr) || (in_targetInfo == nullptr))
     {
@@ -370,7 +400,7 @@ mxlStatus mxlFabricsInitiatorAddTarget(mxlFabricsInitiator in_initiator, mxlFabr
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsInitiatorRemoveTarget(mxlFabricsInitiator in_initiator, mxlFabricsTargetInfo const in_targetInfo)
+mxlStatus mxlFabricsInitiatorRemoveTarget(mxlFabricsInitiator in_initiator, mxlFabricsTargetInfo in_targetInfo)
 {
     if ((in_initiator == nullptr) || (in_targetInfo == nullptr))
     {
@@ -550,7 +580,7 @@ mxlStatus mxlFabricsTargetInfoFromString(char const* in_string, mxlFabricsTarget
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsTargetInfoToString(mxlFabricsTargetInfo const in_targetInfo, char* out_string, size_t* in_stringSize)
+mxlStatus mxlFabricsTargetInfoToString(mxlFabricsTargetInfo in_targetInfo, char* out_string, size_t* in_stringSize)
 {
     if ((in_targetInfo == nullptr) || (in_stringSize == nullptr))
     {

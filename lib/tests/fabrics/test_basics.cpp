@@ -227,7 +227,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connection o
             .interface = {.version = MXL_FABRICS_API_VERSION,
                           .provider = MXL_FABRICS_PROVIDER_TCP,
                           .caps = {},
-                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .address = {.node = "127.0.0.1", .service = nullptr},
                           .attr = nullptr},
             .writer = writer,
         };
@@ -239,7 +239,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connection o
             .interface = {.version = MXL_FABRICS_API_VERSION,
                           .provider = MXL_FABRICS_PROVIDER_TCP,
                           .caps = {},
-                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .address = {.node = "127.0.0.1", .service = nullptr},
                           .attr = nullptr},
             .reader = reader,
         };
@@ -383,7 +383,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             .interface = {.version = MXL_FABRICS_API_VERSION,
                           .provider = MXL_FABRICS_PROVIDER_TCP,
                           .caps = {},
-                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .address = {.node = "127.0.0.1", .service = nullptr},
                           .attr = nullptr},
             .writer = writer,
         };
@@ -395,7 +395,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             .interface = {.version = MXL_FABRICS_API_VERSION,
                           .provider = MXL_FABRICS_PROVIDER_TCP,
                           .caps = {},
-                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .address = {.node = "127.0.0.1", .service = nullptr},
                           .attr = nullptr},
             .reader = reader,
         };
@@ -526,7 +526,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             .interface = {.version = MXL_FABRICS_API_VERSION,
                           .provider = MXL_FABRICS_PROVIDER_TCP,
                           .caps = {},
-                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .address = {.node = "127.0.0.1", .service = nullptr},
                           .attr = nullptr},
             .writer = writer,
         };
@@ -538,7 +538,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             .interface = {.version = MXL_FABRICS_API_VERSION,
                           .provider = MXL_FABRICS_PROVIDER_TCP,
                           .caps = {},
-                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .address = {.node = "127.0.0.1", .service = nullptr},
                           .attr = nullptr},
             .reader = reader,
         };
@@ -683,7 +683,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             .interface = {.version = MXL_FABRICS_API_VERSION,
                           .provider = MXL_FABRICS_PROVIDER_TCP,
                           .caps = {},
-                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .address = {.node = "127.0.0.1", .service = nullptr},
                           .attr = nullptr},
             .reader = reader,
         };
@@ -699,7 +699,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
                 .interface = {.version = MXL_FABRICS_API_VERSION,
                               .provider = MXL_FABRICS_PROVIDER_TCP,
                               .caps = {},
-                              .address = {.node = "127.0.0.1", .service = "0"},
+                              .address = {.node = "127.0.0.1", .service = nullptr},
                               .attr = nullptr},
                 .writer = writer[i],
             };
@@ -876,7 +876,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             .interface = {.version = MXL_FABRICS_API_VERSION,
                           .provider = MXL_FABRICS_PROVIDER_TCP,
                           .caps = {},
-                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .address = {.node = "127.0.0.1", .service = nullptr},
                           .attr = nullptr},
             .reader = reader,
         };
@@ -892,7 +892,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
                 .interface = {.version = MXL_FABRICS_API_VERSION,
                               .provider = MXL_FABRICS_PROVIDER_TCP,
                               .caps = {},
-                              .address = {.node = "127.0.0.1", .service = "0"},
+                              .address = {.node = "127.0.0.1", .service = nullptr},
                               .attr = nullptr},
                 .writer = writer[i],
             };
@@ -1053,7 +1053,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: TargetInfo 
         .interface = {.version = MXL_FABRICS_API_VERSION,
                       .provider = MXL_FABRICS_PROVIDER_TCP,
                       .caps = {},
-                      .address = {.node = "127.0.0.1", .service = "0"},
+                      .address = {.node = "127.0.0.1", .service = nullptr},
                       .attr = nullptr},
         .writer = writer,
     };

@@ -30,7 +30,7 @@ namespace mxl::lib::fabrics::ofi
          * \return A pair consisting of the newly setup RCTarget and its associated TargetInfo.
          */
         [[nodiscard]]
-        static std::pair<std::unique_ptr<RCTarget>, std::unique_ptr<TargetInfo>> setup(mxlFabricsTargetConfig const& config,
+        static std::pair<std::unique_ptr<RCTarget>, std::unique_ptr<TargetInfo>> setup(mxlFabricsTargetConfig const& config, FabricInfoView info,
             TargetSetupOptions const& options = {});
 
         /** \copydoc Target::readGrain()
