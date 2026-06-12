@@ -46,14 +46,14 @@ namespace mxl::lib::fabrics::ofi
         };
     }
 
-    ProviderConfig ProviderConfig::create(Provider provider, bool isTarget, std::optional<ProviderCapabilities> caps)
+    ProviderConfig ProviderConfig::create(Provider provider, bool isTarget, std::optional<ProviderCapabilities> capabilities)
     {
         switch (provider)
         {
-            case Provider::TCP:   return ProviderConfig::tcp(isTarget, caps);
-            case Provider::VERBS: return ProviderConfig::verbs(isTarget, caps);
-            case Provider::EFA:   return ProviderConfig::efa(isTarget, caps);
-            case Provider::SHM:   return ProviderConfig::shm(isTarget, caps);
+            case Provider::TCP:   return ProviderConfig::tcp(isTarget, capabilities);
+            case Provider::VERBS: return ProviderConfig::verbs(isTarget, capabilities);
+            case Provider::EFA:   return ProviderConfig::efa(isTarget, capabilities);
+            case Provider::SHM:   return ProviderConfig::shm(isTarget, capabilities);
             default:              throw Exception::invalidState("cannot create provider config for ANY provider");
         }
     }
