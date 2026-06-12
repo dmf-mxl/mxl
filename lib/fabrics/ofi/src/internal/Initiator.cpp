@@ -6,7 +6,6 @@
 #include "mxl/fabrics.h"
 #include "Exception.hpp"
 #include "FabricInterfaceProbe.hpp"
-#include "ProviderConfig.hpp"
 #include "RCInitiator.hpp"
 #include "RDMInitiator.hpp"
 
@@ -35,7 +34,7 @@ namespace mxl::lib::fabrics::ofi
         {
             case FI_EP_MSG: _inner = RCInitiator::setup(config, info.view()); break;
             case FI_EP_RDM: _inner = RDMInitiator::setup(config, info.view()); break;
-            default:        throw;
+            default:        throw Exception::invalidState("unsupported endpoint type");
         }
     }
 
