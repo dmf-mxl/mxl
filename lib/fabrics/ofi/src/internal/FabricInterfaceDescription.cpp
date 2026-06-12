@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
+// SPDX-License-Identifier: Apache-2.0
 #include "FabricInterfaceDescription.hpp"
 #include <cstring> // IWYU pragma: keep; // ::strdup
 #include <optional>
