@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
+// SPDX-License-Identifier: Apache-2.0
 #include "FabricInterfaceProbe.hpp"
 #include <functional>
 #include <optional>
