@@ -159,7 +159,11 @@ public:
             .interface = {
                 .version = MXL_FABRICS_API_VERSION,
                 .provider = _config.provider,
-                .caps = {},
+                .caps = {
+                    .version = MXL_FABRICS_API_VERSION,
+                    .flags = MXL_FABRICS_IFACE_CAP_REMOTE_WRITE | MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS,
+                    .maxMessageSize = 0,
+                },
                 .address = {
                     .node = _config.node ? _config.node.value().c_str() : nullptr,
                     .service = _config.service ? _config.service.value().c_str() : nullptr
@@ -531,7 +535,11 @@ public:
             .interface = {
                 .version = MXL_FABRICS_API_VERSION,
                 .provider = _config.provider,
-                .caps = {},
+                .caps = {
+                    .version = MXL_FABRICS_API_VERSION,
+                    .flags = MXL_FABRICS_IFACE_CAP_REMOTE_WRITE | MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS,
+                    .maxMessageSize = 0,
+                },
                 .address = {
                     .node = _config.node ? _config.node.value().c_str() : nullptr,
                     .service = _config.service ? _config.service.value().c_str() : nullptr

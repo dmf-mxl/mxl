@@ -63,7 +63,7 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Insert an address into the address vector. User of this API are responsible for keeping track of inserted addresses to avoid
          * duplicates.
          */
-        ::fi_addr_t insert(FabricAddress const& addr);
+        ::fi_addr_t insert(RawFabricAddress const& addr);
 
         /** \brief Remove an address of the address vector.
          */
@@ -72,7 +72,7 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Convert a libfabric endpoint address into a human-readable string.
          */
         [[nodiscard]]
-        std::string addrToString(FabricAddress const& addr) const;
+        std::string addrToString(RawFabricAddress const& addr) const;
 
         /** \brief Mutable accessor of the underlying `fi_av` instance.
          */

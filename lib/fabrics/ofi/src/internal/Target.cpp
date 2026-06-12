@@ -10,7 +10,9 @@
 #include <rdma/fi_errno.h>
 #include "mxl/fabrics.h"
 #include "Exception.hpp"
+#include "FabricInterfaceProbe.hpp"
 #include "LocalRegion.hpp"
+#include "ProviderConfig.hpp"
 #include "RCTarget.hpp"
 #include "RDMTarget.hpp"
 
@@ -75,6 +77,14 @@ namespace mxl::lib::fabrics::ofi
         return _inner->readSamplesBlocking(timeout);
     }
 
+    template<typename TargetT>
+    std::unique_ptr<TargetInfo> TargetWrapper::setup(mxlFabricsTargetConfig const& config, FabricInfoView info)
+    {
+        auto [inner, targetInfo] = TargetT::setup(config, info);
+        _inner = std::move(inner);
+        return std::move(targetInfo);
+    }
+
     std::unique_ptr<TargetInfo> TargetWrapper::setup(mxlFabricsTargetConfig const& config)
     {
         if (_inner)
@@ -82,26 +92,12 @@ namespace mxl::lib::fabrics::ofi
             _inner.reset();
         }
 
-        switch (config.interface.provider)
+        auto [info, providerConfig] = selectSourceInterface(config.interface, /* target */ true);
+        switch (info->ep_attr->type)
         {
-            case MXL_FABRICS_PROVIDER_ANY: [[fallthrough]];
-            case MXL_FABRICS_PROVIDER_TCP: [[fallthrough]];
-            case MXL_FABRICS_PROVIDER_VERBS:
-            {
-                auto [target, info] = RCTarget::setup(config);
-                _inner = std::move(target);
-                return std::move(info);
-            }
-
-            case MXL_FABRICS_PROVIDER_SHM: [[fallthrough]];
-            case MXL_FABRICS_PROVIDER_EFA:
-            {
-                auto [target, info] = RDMTarget::setup(config);
-                _inner = std::move(target);
-                return std::move(info);
-            }
+            case FI_EP_MSG: return setup<RCTarget>(config, info.view());
+            case FI_EP_RDM: return setup<RDMTarget>(config, info.view());
+            default:        throw;
         }
-
-        throw Exception::invalidArgument("Invalid provider value");
     }
 }
