@@ -524,13 +524,13 @@ public:
 private:
     mxlStatus makeProgress(std::chrono::steady_clock::duration timeout)
     {
-        if (_config.interface.provider == MXL_FABRICS_PROVIDER_EFA)
+        if (_config.interface.caps.flags & MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS)
         {
-            return mxlFabricsInitiatorMakeProgressNonBlocking(_initiator);
+            return mxlFabricsInitiatorMakeProgressBlocking(_initiator, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
         }
         else
         {
-            return mxlFabricsInitiatorMakeProgressBlocking(_initiator, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
+            return mxlFabricsInitiatorMakeProgressNonBlocking(_initiator);
         }
     }
 
@@ -828,13 +828,13 @@ public:
 private:
     mxlStatus targetReadGrain(std::uint64_t* grainIndex, std::chrono::steady_clock::duration timeout)
     {
-        if (_config.interface.provider == MXL_FABRICS_PROVIDER_EFA)
+        if (_config.interface.caps.flags & MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS)
         {
-            return mxlFabricsTargetReadGrainNonBlocking(_target, grainIndex);
+            return mxlFabricsTargetReadGrain(_target, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count(), grainIndex);
         }
         else
         {
-            return mxlFabricsTargetReadGrain(_target, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count(), grainIndex);
+            return mxlFabricsTargetReadGrainNonBlocking(_target, grainIndex);
         }
     }
 
