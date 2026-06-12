@@ -44,7 +44,7 @@ namespace mxl::lib::fabrics::ofi
         auto const fiVersion = ::fi_version();
 
         // check that library version >= 2.5
-        return (FI_MAJOR(fiVersion) > 2) || ((FI_MAJOR(fiVersion) == 2) && (FI_MINOR(fiVersion) >= 5));
+        return (FI_MAJOR(fiVersion) > 2) || ((FI_MAJOR(fiVersion) == 2) && (FI_MINOR(fiVersion) >= 4));
     }
 
     std::shared_ptr<CompletionQueue> CompletionQueue::open(std::shared_ptr<Domain> domain, CompletionQueue::Attributes const& attr)
