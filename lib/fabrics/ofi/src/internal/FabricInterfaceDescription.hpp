@@ -14,6 +14,12 @@ namespace mxl::lib::fabrics::ofi
         ::mxlFabricsInterfaceList* toRawLinkedListNode(::mxlFabricsInterfaceList* next = nullptr);
         static ::mxlFabricsInterfaceList* freeRawLinkedListNode(::mxlFabricsInterfaceList*);
 
+        [[nodiscard]]
+        std::uint64_t caps() const noexcept
+        {
+            return _rawCaps;
+        }
+
     private:
         explicit FabricInterfaceDescription(Provider, std::string, std::string, std::uint64_t, std::uint64_t, picojson::object);
 
