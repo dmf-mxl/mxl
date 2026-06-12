@@ -29,6 +29,7 @@ target_sources(mxl-fabrics-ofi-tests
             test_AudioBounceBuffer.cpp
             test_Domain.cpp
             test_Provider.cpp
+            test_ProviderConfig.cpp
             test_Region.cpp
     )
 
