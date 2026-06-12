@@ -58,15 +58,12 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         int getSupportedMemoryRegistrationModes() const noexcept;
 
-        /**
-         *
-         */
+        /** \brief Return the endpoint type for this provider (FI_EP_MSG, FI_EP_RDM, etc.). */
         [[nodiscard]]
         ::fi_ep_type getEndpointType() const noexcept;
 
-        /**
-         *
-         */
+        /** \brief Return the libfabric capability flags for this provider configuration. */
+        [[nodiscard]]
         std::uint64_t getCaps() const noexcept;
 
     private:

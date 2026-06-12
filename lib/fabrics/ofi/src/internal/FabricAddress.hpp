@@ -111,17 +111,15 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         std::optional<std::string> node() const;
 
-        /** \brief
-         */
+        /** \brief Return the service/port portion of the address as a string. */
+        [[nodiscard]]
         std::optional<std::string> service() const;
 
-        /** \brief
-         */
+        /** \brief Return the libfabric address format constant (FI_SOCKADDR_IN, etc.). */
         [[nodiscard]]
         std::uint32_t addressFormat() const noexcept;
 
-        /**
-         */
+        /** \brief Parse a node/service pair into a typed address for the given provider. */
         static FabricAddress parse(Provider provider, std::optional<std::string> node, std::optional<std::string> service);
 
     private:
