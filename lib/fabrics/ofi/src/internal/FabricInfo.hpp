@@ -223,9 +223,11 @@ namespace mxl::lib::fabrics::ofi
         using const_iterator = FabricInfoIterator<true>;
 
     public:
+        /** \brief Calls fi_getinfo without any hints and returns the full list of fabric information objects */
         [[nodiscard]]
         static FabricInfoList get();
 
+        /** \brief Calls fi_getinfo with FI_SOURCE to get source interface information. Uses hints derived from the provider config value. */
         [[nodiscard]]
         static FabricInfoList getSourceInterfaces(ProviderConfig const& providerConfig, std::optional<FabricAddress> const& sourceAddress);
 
