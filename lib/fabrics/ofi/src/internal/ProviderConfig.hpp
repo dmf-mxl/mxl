@@ -33,10 +33,10 @@ namespace mxl::lib::fabrics::ofi
     public:
         static ProviderConfig create(Provider provider, bool, std::optional<ProviderCapabilities>);
 
-        static ProviderConfig tcp(bool, std::optional<ProviderCapabilities>);
-        static ProviderConfig verbs(bool, std::optional<ProviderCapabilities>);
-        static ProviderConfig shm(bool, std::optional<ProviderCapabilities>);
-        static ProviderConfig efa(bool, std::optional<ProviderCapabilities>);
+        static ProviderConfig tcp(bool isTarget, std::optional<ProviderCapabilities> capabilities);
+        static ProviderConfig verbs(bool isTarget, std::optional<ProviderCapabilities> capabilities);
+        static ProviderConfig shm(bool isTarget, std::optional<ProviderCapabilities> capabilities);
+        static ProviderConfig efa(bool isTarget, std::optional<ProviderCapabilities> capabilities);
 
     public:
         /**
@@ -67,7 +67,8 @@ namespace mxl::lib::fabrics::ofi
         std::uint64_t getCaps() const noexcept;
 
     private:
-        ProviderConfig(ProviderConfigValues values);
+        ProviderConfig(ProviderConfigValues values, std::optional<ProviderCapabilities> capabilities);
         ProviderConfigValues _values;
+        std::optional<ProviderCapabilities> _capabilities;
     };
 }
