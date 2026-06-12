@@ -3,6 +3,7 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <unistd.h>
 #include <rdma/fabric.h>
 #include "CompletionQueue.hpp"
 #include "FabricAddress.hpp"
@@ -13,6 +14,13 @@ namespace mxl::lib::fabrics::ofi
 {
     namespace
     {
+        std::string getHostname()
+        {
+            char buf[256] = {};
+            ::gethostname(buf, sizeof(buf));
+            return buf;
+        }
+
         void copyStringProperty(picojson::object& destination, char const* value, std::string const& name)
         {
             if ((value != nullptr) && ::strlen(value) > 0)
@@ -64,7 +72,6 @@ namespace mxl::lib::fabrics::ofi
                 }
                 copyStringProperty(destination, link->address, "link_address");
                 copyStringProperty(destination, link->network_type, "link_type");
-                copyStringProperty(destination, link->network_type, "link_type");
             }
             if (nic->bus_attr && (nic->bus_attr->bus_type == FI_BUS_PCI))
             {
@@ -99,13 +106,24 @@ namespace mxl::lib::fabrics::ofi
     std::optional<FabricInterfaceDescription> FabricInterfaceDescription::create(FabricInfoView info)
     {
         auto caps = std::uint64_t{};
-        auto faddr = FabricAddress::fromSource(info);
-        auto node = faddr.node().value();
         auto attr = picojson::object{};
         auto const provider = providerFromString(info->fabric_attr->prov_name);
         if (!provider)
         {
             return std::nullopt;
+        }
+
+        auto faddr = FabricAddress::fromSource(info);
+        auto node = std::string{};
+        auto service = std::string{};
+        if (*provider == Provider::SHM)
+        {
+            node = getHostname();
+            service = faddr.service().value_or("");
+        }
+        else
+        {
+            node = faddr.node().value_or("");
         }
 
         if (info->caps & (FI_SEND | FI_RECV))
@@ -137,7 +155,7 @@ namespace mxl::lib::fabrics::ofi
             copyStringProperty(attr, info->domain_attr->name, "device_name");
         }
 
-        return FabricInterfaceDescription{*provider, std::string{node}, std::string{}, caps, info->ep_attr->max_msg_size, std::move(attr)};
+        return FabricInterfaceDescription{*provider, std::move(node), std::move(service), caps, info->ep_attr->max_msg_size, std::move(attr)};
     }
 
     ::mxlFabricsInterfaceList* FabricInterfaceDescription::toRawLinkedListNode(::mxlFabricsInterfaceList* next)
