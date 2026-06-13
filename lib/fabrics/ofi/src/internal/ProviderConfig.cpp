@@ -22,7 +22,7 @@ namespace mxl::lib::fabrics::ofi
             {
                 result |= FI_SEND | FI_RECV;
             }
-            return result;
+            return result | FI_RMA;
         }
 
         std::uint64_t libfabricRequiredCaps(std::optional<ProviderCapabilities> const& capabilities)
@@ -111,7 +111,7 @@ namespace mxl::lib::fabrics::ofi
             .providerName = "efa",
             .memoryRegistrationModes = FI_MR_VIRT_ADDR | FI_MR_LOCAL | FI_MR_ALLOCATED | FI_MR_PROV_KEY,
             .endpointType = FI_EP_RDM,
-            .caps = libfabricCaps(capabilities, isTarget) | FI_RMA,
+            .caps = libfabricCaps(capabilities, isTarget),
             .supportedAddressFormats = {FI_ADDR_EFA},
             .supportedProtocols = {FI_PROTO_EFA},
             .requiredCaps = libfabricRequiredCaps(capabilities),
