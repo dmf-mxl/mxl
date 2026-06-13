@@ -5,7 +5,7 @@
 set -e
 set -x
 
-git clone -b v2.2.0 https://github.com/ofiwg/libfabric.git
+git clone -b v2.5.1 https://github.com/ofiwg/libfabric.git
 
 cd libfabric
 ./autogen.sh
