@@ -138,7 +138,7 @@ namespace
         }
     }
 
-    int listInterfaces(mxlInstance instance, mxlFabricsInterfaceConfig const* query)
+    int listInterfaces(mxlFabricsInstance instance, mxlFabricsInterfaceConfig const* query)
     {
         auto* list = static_cast<mxlFabricsInterfaceList*>(nullptr);
         if (auto const status = mxlFabricsGetInterfaces(instance, query, &list); status != MXL_STATUS_OK)
@@ -221,9 +221,18 @@ int main(int argc, char** argv)
             query.address.node = node.c_str();
         }
 
-        auto const filtering = (*provider != MXL_FABRICS_PROVIDER_ANY) || !node.empty();
-        rc = listInterfaces(instance, filtering ? &query : nullptr);
+        mxlFabricsInstance fabricsInstance = nullptr;
+        if (auto const s = mxlFabricsCreateInstance(instance, nullptr, &fabricsInstance); s != MXL_STATUS_OK)
+        {
+            fmt::print(stderr, "Failed to create fabrics instance (mxlStatus = {}).\n", static_cast<int>(s));
+            mxlDestroyInstance(instance);
+            return 1;
+        }
 
+        auto const filtering = (*provider != MXL_FABRICS_PROVIDER_ANY) || !node.empty();
+        rc = listInterfaces(fabricsInstance, filtering ? &query : nullptr);
+
+        mxlFabricsDestroyInstance(fabricsInstance);
         mxlDestroyInstance(instance);
     }
     else
