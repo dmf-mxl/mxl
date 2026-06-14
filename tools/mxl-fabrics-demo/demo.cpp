@@ -108,7 +108,7 @@ int providerPriority(mxlFabricsProvider provider)
     }
 }
 
-InterfaceSelection selectInterface(mxlInstance instance, std::optional<std::string> const& node, std::optional<std::string> const& service,
+InterfaceSelection selectInterface(mxlFabricsInstance instance, std::optional<std::string> const& node, std::optional<std::string> const& service,
     std::optional<mxlFabricsProvider> provider = std::nullopt)
 {
     mxlFabricsInterfaceList* list = nullptr;
@@ -914,7 +914,16 @@ int main(int argc, char** argv)
         }
         optProvider = parsed;
     }
-    auto selectedInterface = selectInterface(instance, optNode, optService, optProvider);
+    mxlFabricsInstance fabricsInstance = nullptr;
+    if (auto s = mxlFabricsCreateInstance(instance, nullptr, &fabricsInstance); s != MXL_STATUS_OK)
+    {
+        MXL_ERROR("Failed to create fabrics instance with status '{}'", static_cast<int>(s));
+        mxlDestroyInstance(instance);
+        return s;
+    }
+
+    auto selectedInterface = selectInterface(fabricsInstance, optNode, optService, optProvider);
+    mxlFabricsDestroyInstance(fabricsInstance);
     mxlDestroyInstance(instance);
 
     MXL_INFO("Selected interface:");

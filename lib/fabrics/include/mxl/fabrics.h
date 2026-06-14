@@ -169,7 +169,7 @@ extern "C"
      * The whole list should be freed with mxlFabricsFreeInterfaceList(). This will also free the character arrays returned from this function.
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsGetInterfaces(mxlInstance in_instance, mxlFabricsInterfaceConfig const* query, mxlFabricsInterfaceList** list);
+    mxlStatus mxlFabricsGetInterfaces(mxlFabricsInstance in_instance, mxlFabricsInterfaceConfig const* query, mxlFabricsInterfaceList** list);
 
     /**
      * Free an interface list previously allocated by mxlFabricsGetInterfaces. This function will also free the character strings in each interface
