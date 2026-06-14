@@ -44,7 +44,7 @@ namespace mxl::lib::fabrics::ofi
         struct MakeSharedEnabler : public AddressVector
         {
             MakeSharedEnabler(fid_av* raw, std::shared_ptr<Domain> domain)
-                : AddressVector(raw, domain)
+                : AddressVector(raw, std::move(domain))
             {}
         };
 
@@ -59,7 +59,7 @@ namespace mxl::lib::fabrics::ofi
         {
             throw Exception::internal("Failed to insert address into the address vector. {}", ::fi_strerror(ret));
         }
-        MXL_INFO("Remote endpoint address {} was added to the av", addrToString(addr), fiAddr);
+        MXL_INFO("Remote endpoint address {} was added to the address vector", addrToString(addr));
 
         return fiAddr;
     }
