@@ -163,13 +163,13 @@ extern "C"
     /**
      * Query a list of available providers, interfaces and their capabilities on this system.
      * \param[in] in_instance A valid mxlFabricsInstance.
-     * \param[in] query (Optional) Can be used to filter the items returned by this function. Only the provider and address fields are used for
+     * \param[in] in_query (Optional) Can be used to filter the items returned by this function. Only the provider and address fields are used for
      * filtering; capability flags in the query are ignored. Use MXL_FABRICS_PROVIDER_ANY or NULL to list interfaces for all providers.
-     * \param[out] list A list of interfaces available on the system. Each entry includes the detected capability flags for that interface.
+     * \param[out] out_list A list of interfaces available on the system. Each entry includes the detected capability flags for that interface.
      * The whole list should be freed with mxlFabricsFreeInterfaceList(). This will also free the character arrays returned from this function.
      */
     MXL_EXPORT
-    mxlStatus mxlFabricsGetInterfaces(mxlFabricsInstance in_instance, mxlFabricsInterfaceConfig const* query, mxlFabricsInterfaceList** list);
+    mxlStatus mxlFabricsGetInterfaces(mxlFabricsInstance in_instance, mxlFabricsInterfaceConfig const* in_query, mxlFabricsInterfaceList** out_list);
 
     /**
      * Free an interface list previously allocated by mxlFabricsGetInterfaces. This function will also free the character strings in each interface

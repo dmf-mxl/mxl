@@ -43,7 +43,7 @@ namespace mxl::lib::fabrics::ofi
     {
         auto const fiVersion = ::fi_version();
 
-        // check that library version >= 2.5
+        // check that library version >= 2.4
         return (FI_MAJOR(fiVersion) > 2) || ((FI_MAJOR(fiVersion) == 2) && (FI_MINOR(fiVersion) >= 4));
     }
 
