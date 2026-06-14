@@ -41,8 +41,11 @@ TEST_CASE("Fabrics: GetInterfaces unfiltered returns TCP and SHM", "[fabrics][in
     auto* instance = mxlCreateInstance("/dev/shm/", "");
     REQUIRE(instance != nullptr);
 
+    mxlFabricsInstance fabrics;
+    REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
+
     mxlFabricsInterfaceList* list = nullptr;
-    REQUIRE(mxlFabricsGetInterfaces(instance, nullptr, &list) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsGetInterfaces(fabrics, nullptr, &list) == MXL_STATUS_OK);
     REQUIRE(list != nullptr);
 
     auto stats = countInterfaces(list);
@@ -51,6 +54,7 @@ TEST_CASE("Fabrics: GetInterfaces unfiltered returns TCP and SHM", "[fabrics][in
     CHECK(stats.shm > 0);
 
     REQUIRE(mxlFabricsFreeInterfaceList(list) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsDestroyInstance(fabrics) == MXL_STATUS_OK);
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
 }
 
@@ -59,6 +63,9 @@ TEST_CASE("Fabrics: GetInterfaces filters by provider", "[fabrics][interfaces]")
     auto* instance = mxlCreateInstance("/dev/shm/", "");
     REQUIRE(instance != nullptr);
 
+    mxlFabricsInstance fabrics;
+    REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
+
     SECTION("TCP only")
     {
         auto query = mxlFabricsInterfaceConfig{};
@@ -66,7 +73,7 @@ TEST_CASE("Fabrics: GetInterfaces filters by provider", "[fabrics][interfaces]")
         query.provider = MXL_FABRICS_PROVIDER_TCP;
 
         mxlFabricsInterfaceList* list = nullptr;
-        REQUIRE(mxlFabricsGetInterfaces(instance, &query, &list) == MXL_STATUS_OK);
+        REQUIRE(mxlFabricsGetInterfaces(fabrics, &query, &list) == MXL_STATUS_OK);
         REQUIRE(list != nullptr);
 
         for (auto const* entry = list; entry != nullptr; entry = entry->next)
@@ -84,7 +91,7 @@ TEST_CASE("Fabrics: GetInterfaces filters by provider", "[fabrics][interfaces]")
         query.provider = MXL_FABRICS_PROVIDER_SHM;
 
         mxlFabricsInterfaceList* list = nullptr;
-        REQUIRE(mxlFabricsGetInterfaces(instance, &query, &list) == MXL_STATUS_OK);
+        REQUIRE(mxlFabricsGetInterfaces(fabrics, &query, &list) == MXL_STATUS_OK);
         REQUIRE(list != nullptr);
 
         for (auto const* entry = list; entry != nullptr; entry = entry->next)
@@ -95,6 +102,7 @@ TEST_CASE("Fabrics: GetInterfaces filters by provider", "[fabrics][interfaces]")
         REQUIRE(mxlFabricsFreeInterfaceList(list) == MXL_STATUS_OK);
     }
 
+    REQUIRE(mxlFabricsDestroyInstance(fabrics) == MXL_STATUS_OK);
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
 }
 
@@ -103,8 +111,11 @@ TEST_CASE("Fabrics: GetInterfaces ignores capability flags in query", "[fabrics]
     auto* instance = mxlCreateInstance("/dev/shm/", "");
     REQUIRE(instance != nullptr);
 
+    mxlFabricsInstance fabrics;
+    REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
+
     mxlFabricsInterfaceList* baseline = nullptr;
-    REQUIRE(mxlFabricsGetInterfaces(instance, nullptr, &baseline) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsGetInterfaces(fabrics, nullptr, &baseline) == MXL_STATUS_OK);
     auto baselineStats = countInterfaces(baseline);
 
     auto query = mxlFabricsInterfaceConfig{};
@@ -113,7 +124,7 @@ TEST_CASE("Fabrics: GetInterfaces ignores capability flags in query", "[fabrics]
     query.caps.flags = MXL_FABRICS_IFACE_CAP_REMOTE_WRITE | MXL_FABRICS_IFACE_CAP_SEND_RECEIVE;
 
     mxlFabricsInterfaceList* filtered = nullptr;
-    REQUIRE(mxlFabricsGetInterfaces(instance, &query, &filtered) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsGetInterfaces(fabrics, &query, &filtered) == MXL_STATUS_OK);
     auto filteredStats = countInterfaces(filtered);
 
     CHECK(filteredStats.total == baselineStats.total);
@@ -122,6 +133,7 @@ TEST_CASE("Fabrics: GetInterfaces ignores capability flags in query", "[fabrics]
 
     REQUIRE(mxlFabricsFreeInterfaceList(filtered) == MXL_STATUS_OK);
     REQUIRE(mxlFabricsFreeInterfaceList(baseline) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsDestroyInstance(fabrics) == MXL_STATUS_OK);
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
 }
 
@@ -130,8 +142,11 @@ TEST_CASE("Fabrics: GetInterfaces returns populated capability flags", "[fabrics
     auto* instance = mxlCreateInstance("/dev/shm/", "");
     REQUIRE(instance != nullptr);
 
+    mxlFabricsInstance fabrics;
+    REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
+
     mxlFabricsInterfaceList* list = nullptr;
-    REQUIRE(mxlFabricsGetInterfaces(instance, nullptr, &list) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsGetInterfaces(fabrics, nullptr, &list) == MXL_STATUS_OK);
 
     for (auto const* entry = list; entry != nullptr; entry = entry->next)
     {
@@ -141,6 +156,7 @@ TEST_CASE("Fabrics: GetInterfaces returns populated capability flags", "[fabrics
     }
 
     REQUIRE(mxlFabricsFreeInterfaceList(list) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsDestroyInstance(fabrics) == MXL_STATUS_OK);
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
 }
 
@@ -149,8 +165,11 @@ TEST_CASE("Fabrics: GetInterfaces returns non-zero maxMessageSize", "[fabrics][i
     auto* instance = mxlCreateInstance("/dev/shm/", "");
     REQUIRE(instance != nullptr);
 
+    mxlFabricsInstance fabrics;
+    REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
+
     mxlFabricsInterfaceList* list = nullptr;
-    REQUIRE(mxlFabricsGetInterfaces(instance, nullptr, &list) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsGetInterfaces(fabrics, nullptr, &list) == MXL_STATUS_OK);
 
     for (auto const* entry = list; entry != nullptr; entry = entry->next)
     {
@@ -158,6 +177,7 @@ TEST_CASE("Fabrics: GetInterfaces returns non-zero maxMessageSize", "[fabrics][i
     }
 
     REQUIRE(mxlFabricsFreeInterfaceList(list) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsDestroyInstance(fabrics) == MXL_STATUS_OK);
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
 }
 
