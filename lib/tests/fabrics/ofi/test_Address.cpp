@@ -22,7 +22,7 @@ namespace
     /// Build a native sockaddr_in, exactly as libfabric would hand it to FabricAddress::decode.
     ::sockaddr_in makeSockaddrIn(char const* ip, std::uint16_t port)
     {
-        ::sockaddr_in sin{};
+        auto sin = ::sockaddr_in{};
         sin.sin_family = AF_INET;
         sin.sin_port = htons(port);
         REQUIRE(::inet_pton(AF_INET, ip, &sin.sin_addr) == 1);
@@ -31,7 +31,7 @@ namespace
 
     ::sockaddr_in6 makeSockaddrIn6(char const* ip, std::uint16_t port)
     {
-        ::sockaddr_in6 sin6{};
+        auto sin6 = ::sockaddr_in6{};
         sin6.sin6_family = AF_INET6;
         sin6.sin6_port = htons(port);
         REQUIRE(::inet_pton(AF_INET6, ip, &sin6.sin6_addr) == 1);
@@ -42,7 +42,7 @@ namespace
     /// the port in bits 0..15; the P_Key, scope id and service id are stored in network order.
     OfiSockaddrIb makeSockaddrIb(char const* gid, std::uint16_t pkey, std::uint16_t portSpace, std::uint64_t scopeId, std::uint16_t port)
     {
-        OfiSockaddrIb sib{};
+        auto sib = OfiSockaddrIb{};
         sib.sib_family = AF_IB;
         sib.sib_pkey = htons(pkey);
         REQUIRE(::inet_pton(AF_INET6, gid, sib.sib_addr) == 1);
@@ -55,7 +55,7 @@ namespace
     /// 32-bit QKey at offset 20, both in host byte order.
     std::array<std::uint8_t, 24> makeEfa(char const* gid, std::uint16_t qpn, std::uint32_t qkey)
     {
-        std::array<std::uint8_t, 24> buf{};
+        auto buf = std::array<std::uint8_t, 24>{};
         REQUIRE(::inet_pton(AF_INET6, gid, buf.data()) == 1);
         std::memcpy(buf.data() + 16, &qpn, sizeof(qpn));
         std::memcpy(buf.data() + 20, &qkey, sizeof(qkey));
@@ -207,7 +207,7 @@ TEST_CASE("ofi: FabricAddress::decode returns an empty address for undecodable i
     REQUIRE(FabricAddress::decode(FI_FORMAT_UNSPEC, &sin, sizeof(sin)).empty());
 
     // FI_SOCKADDR dispatches on the embedded family; an unknown family does not decode.
-    ::sockaddr unknown{};
+    auto unknown = ::sockaddr{};
     unknown.sa_family = AF_UNSPEC;
     REQUIRE(FabricAddress::decode(FI_SOCKADDR, &unknown, sizeof(unknown)).empty());
 }
