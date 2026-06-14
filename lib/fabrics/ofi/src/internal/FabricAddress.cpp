@@ -216,7 +216,7 @@ namespace mxl::lib::fabrics::ofi
                 {
                     return FabricAddress{};
                 }
-                ::sockaddr_in sin;
+                auto sin = ::sockaddr_in{};
                 std::memcpy(&sin, addr, sizeof(sin));
                 return FabricAddress{sin};
             }
@@ -226,7 +226,7 @@ namespace mxl::lib::fabrics::ofi
                 {
                     return FabricAddress{};
                 }
-                ::sockaddr_in6 sin6;
+                auto sin6 = ::sockaddr_in6{};
                 std::memcpy(&sin6, addr, sizeof(sin6));
                 return FabricAddress{sin6};
             }
@@ -236,7 +236,7 @@ namespace mxl::lib::fabrics::ofi
                 {
                     return FabricAddress{};
                 }
-                OfiSockaddrIb sib;
+                auto sib = OfiSockaddrIb{};
                 std::memcpy(&sib, addr, sizeof(sib));
                 return FabricAddress{sib};
             }
