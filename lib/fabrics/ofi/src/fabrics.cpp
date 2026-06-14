@@ -137,7 +137,7 @@ mxlStatus mxlFabricsDestroyInstance(mxlFabricsInstance in_instance)
 }
 
 extern "C" MXL_EXPORT
-mxlStatus mxlFabricsGetInterfaces(mxlInstance in_instance, mxlFabricsInterfaceConfig const* query, mxlFabricsInterfaceList** list)
+mxlStatus mxlFabricsGetInterfaces(mxlFabricsInstance in_instance, mxlFabricsInterfaceConfig const* query, mxlFabricsInterfaceList** list)
 {
     if ((in_instance == nullptr) || (list == nullptr))
     {
