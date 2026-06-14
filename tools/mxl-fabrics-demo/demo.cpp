@@ -887,7 +887,7 @@ int main(int argc, char** argv)
     app.add_option("-p,--provider", provider, "Force a specific provider (tcp, verbs, efa, shm). Auto-selected if omitted.");
 
     std::string targetInfo;
-    app.add_option("--target-info",
+    app.add_option("-t,--target-info",
         targetInfo,
         "As target: output file path for raw target info (optional, always logged as base64). "
         "As initiator: base64-encoded target info, or a path prefixed with '@' to read raw target info from a file.");

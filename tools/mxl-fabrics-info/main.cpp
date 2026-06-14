@@ -119,26 +119,39 @@ namespace
         return out;
     }
 
-    void printInterface(mxlFabricsInterfaceConfig const& iface, std::size_t index)
+    void printInterface(mxlFabricsInterfaceConfig const& iface, std::size_t index, bool verbose)
     {
         auto const info = interfaceAttrs(iface.attr);
         auto const prov = providerName(iface.provider);
-        fmt::print("interface {}-{}\n", prov, index);
-        fmt::print("  provider:      {}\n", prov);
-        fmt::print("  node:          {}\n", (iface.address.node != nullptr) ? iface.address.node : "(none)");
-        fmt::print("  max message:   {} bytes\n", iface.caps.maxMessageSize);
-        fmt::print("  capabilities:  {}\n", capabilitiesString(iface.caps.flags));
-        if (!info.empty())
+        if (verbose)
         {
-            fmt::print("  info:\n");
-            for (auto const& [k, v] : info)
+            fmt::print("interface {}-{}\n", prov, index);
+            fmt::print("  provider:      {}\n", prov);
+            fmt::print("  node:          {}\n", (iface.address.node != nullptr) ? iface.address.node : "(none)");
+            fmt::print("  max message:   {} bytes\n", iface.caps.maxMessageSize);
+            fmt::print("  capabilities:  {}\n", capabilitiesString(iface.caps.flags));
+            if (!info.empty())
             {
-                fmt::print("    {}: {}\n", k, v);
+                fmt::print("  info:\n");
+                for (auto const& [k, v] : info)
+                {
+                    fmt::print("    {}: {}\n", k, v);
+                }
             }
+        }
+        else
+        {
+            auto deviceName = std::string{"<none>"};
+            auto it = info.find("device_name");
+            if (it != info.end())
+            {
+                deviceName = it->second;
+            }
+            fmt::print("interface {}-{} node {} dev {}\n", prov, index, iface.address.node, deviceName);
         }
     }
 
-    int listInterfaces(mxlFabricsInstance instance, mxlFabricsInterfaceConfig const* query)
+    int listInterfaces(mxlFabricsInstance instance, mxlFabricsInterfaceConfig const* query, bool verbose)
     {
         auto* list = static_cast<mxlFabricsInterfaceList*>(nullptr);
         if (auto const status = mxlFabricsGetInterfaces(instance, query, &list); status != MXL_STATUS_OK)
@@ -152,7 +165,7 @@ namespace
         {
             auto provider = providerName(node->interface.provider);
             auto count = providerCounts[provider]++;
-            printInterface(node->interface, count);
+            printInterface(node->interface, count, verbose);
         }
 
         mxlFabricsFreeInterfaceList(list);
@@ -161,7 +174,7 @@ namespace
         {
             fmt::print(stderr, "No matching interfaces found.\n");
         }
-        else
+        else if (verbose)
         {
             for (auto const& [provider, count] : providerCounts)
             {
@@ -180,9 +193,11 @@ int main(int argc, char** argv)
     auto domain = std::string{};
     auto providerArg = std::string{"any"};
     auto node = std::string{};
+    auto verbose = false;
     app.add_option("-d,--domain", domain, "MXL domain directory. A temporary one is created and removed if omitted.");
     app.add_option("-p,--provider", providerArg, "Filter by provider: any, tcp, verbs, efa, shm.")->capture_default_str();
     app.add_option("-n,--node", node, "Filter by interface node (e.g. an IP address).");
+    app.add_flag("-v,--verbose", verbose, "Make the output more verbose.");
     CLI11_PARSE(app, argc, argv);
 
     auto const provider = providerFromName(providerArg);
@@ -230,7 +245,7 @@ int main(int argc, char** argv)
         }
 
         auto const filtering = (*provider != MXL_FABRICS_PROVIDER_ANY) || !node.empty();
-        rc = listInterfaces(fabricsInstance, filtering ? &query : nullptr);
+        rc = listInterfaces(fabricsInstance, filtering ? &query : nullptr, verbose);
 
         mxlFabricsDestroyInstance(fabricsInstance);
         mxlDestroyInstance(instance);
