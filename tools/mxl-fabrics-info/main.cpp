@@ -87,7 +87,7 @@ namespace
 
     std::map<std::string, std::string> interfaceAttrs(char const* info)
     {
-        if ((info == nullptr) || ::strlen(info) == 0)
+        if ((info == nullptr) || (::strlen(info) == 0))
         {
             return {};
         }
