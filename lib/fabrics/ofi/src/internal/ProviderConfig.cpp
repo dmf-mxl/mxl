@@ -7,6 +7,11 @@ namespace mxl::lib::fabrics::ofi
 {
     namespace
     {
+        namespace
+        {
+            constexpr std::uint64_t const supportedMemoryRegistrationModes = FI_MR_VIRT_ADDR | FI_MR_LOCAL | FI_MR_ALLOCATED | FI_MR_PROV_KEY;
+        }
+
         std::uint64_t libfabricCaps(std::optional<ProviderCapabilities> const& capabilities, bool isTarget)
         {
             if (!capabilities)
@@ -64,7 +69,7 @@ namespace mxl::lib::fabrics::ofi
     {
         auto values = ProviderConfigValues{
             .providerName = "tcp",
-            .memoryRegistrationModes = FI_MR_VIRT_ADDR | FI_MR_LOCAL | FI_MR_ALLOCATED | FI_MR_PROV_KEY,
+            .memoryRegistrationModes = supportedMemoryRegistrationModes,
             .endpointType = FI_EP_MSG,
             .caps = libfabricCaps(capabilities, isTarget),
             .supportedAddressFormats = {FI_SOCKADDR_IN, FI_SOCKADDR_IN6},
@@ -79,7 +84,7 @@ namespace mxl::lib::fabrics::ofi
     {
         auto values = ProviderConfigValues{
             .providerName = "verbs",
-            .memoryRegistrationModes = FI_MR_VIRT_ADDR | FI_MR_LOCAL | FI_MR_ALLOCATED | FI_MR_PROV_KEY,
+            .memoryRegistrationModes = supportedMemoryRegistrationModes,
             .endpointType = FI_EP_MSG,
             .caps = libfabricCaps(capabilities, isTarget),
             .supportedAddressFormats = {FI_SOCKADDR_IN, FI_SOCKADDR_IN6},
@@ -94,7 +99,7 @@ namespace mxl::lib::fabrics::ofi
     {
         auto values = ProviderConfigValues{
             .providerName = "shm",
-            .memoryRegistrationModes = FI_MR_VIRT_ADDR | FI_MR_LOCAL | FI_MR_ALLOCATED | FI_MR_PROV_KEY,
+            .memoryRegistrationModes = supportedMemoryRegistrationModes,
             .endpointType = FI_EP_RDM,
             .caps = libfabricCaps(capabilities, isTarget),
             .supportedAddressFormats = {FI_ADDR_STR},
@@ -109,7 +114,7 @@ namespace mxl::lib::fabrics::ofi
     {
         auto values = ProviderConfigValues{
             .providerName = "efa",
-            .memoryRegistrationModes = FI_MR_VIRT_ADDR | FI_MR_LOCAL | FI_MR_ALLOCATED | FI_MR_PROV_KEY,
+            .memoryRegistrationModes = supportedMemoryRegistrationModes,
             .endpointType = FI_EP_RDM,
             .caps = libfabricCaps(capabilities, isTarget),
             .supportedAddressFormats = {FI_ADDR_EFA},

@@ -10,7 +10,6 @@
 #include <optional>
 #include <string>
 #include <variant>
-#include <endian.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <fmt/format.h>
