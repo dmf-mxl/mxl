@@ -3,6 +3,7 @@
 #include "FabricInterfaceDescription.hpp"
 #include <cstring> // IWYU pragma: keep; // ::strdup
 #include <optional>
+#include <type_traits>
 #include <string>
 #include <utility>
 #include <unistd.h>
@@ -162,7 +163,7 @@ namespace mxl::lib::fabrics::ofi
 
     ::mxlFabricsInterfaceList* FabricInterfaceDescription::toRawLinkedListNode(::mxlFabricsInterfaceList* next)
     {
-        char const* attr = nullptr;
+        auto attr = std::add_pointer_t<char const>{nullptr};
         if (!_attr.empty())
         {
             attr = ::strdup(picojson::value{_attr}.serialize(false).c_str());

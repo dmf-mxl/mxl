@@ -9,6 +9,7 @@
 #include <fstream>
 #include <optional>
 #include <string>
+#include <type_traits>
 #include <uuid.h>
 #include <sys/types.h>
 #include <CLI/CLI.hpp>
@@ -85,7 +86,7 @@ std::string capabilitiesString(std::uint64_t flags)
 
 std::string providerName(mxlFabricsProvider provider)
 {
-    size_t size = 0;
+    auto size = std::size_t{0};
     mxlFabricsProviderToString(provider, nullptr, &size);
     auto result = std::string(size, '\0');
     mxlFabricsProviderToString(provider, result.data(), &size);
@@ -111,7 +112,7 @@ int providerPriority(mxlFabricsProvider provider)
 InterfaceSelection selectInterface(mxlFabricsInstance instance, std::optional<std::string> const& node, std::optional<std::string> const& service,
     std::optional<mxlFabricsProvider> provider = std::nullopt)
 {
-    mxlFabricsInterfaceList* list = nullptr;
+    auto list = std::add_pointer_t<mxlFabricsInterfaceList>{nullptr};
     auto query = mxlFabricsInterfaceConfig{};
     query.version = MXL_FABRICS_API_VERSION;
     if (node)
@@ -131,7 +132,7 @@ InterfaceSelection selectInterface(mxlFabricsInstance instance, std::optional<st
         std::exit(status);
     }
 
-    mxlFabricsInterfaceConfig const* best = nullptr;
+    auto best = std::add_pointer_t<mxlFabricsInterfaceConfig const>{nullptr};
     for (auto* entry = list; entry != nullptr; entry = entry->next)
     {
         if (!best || providerPriority(entry->interface.provider) > providerPriority(best->provider))
@@ -909,7 +910,7 @@ int main(int argc, char** argv)
     auto optProvider = std::optional<mxlFabricsProvider>{};
     if (!provider.empty())
     {
-        mxlFabricsProvider parsed;
+        auto parsed = mxlFabricsProvider{};
         if (mxlFabricsProviderFromString(provider.c_str(), &parsed) != MXL_STATUS_OK)
         {
             MXL_ERROR("Unknown provider '{}'", provider);
@@ -918,7 +919,7 @@ int main(int argc, char** argv)
         }
         optProvider = parsed;
     }
-    mxlFabricsInstance fabricsInstance = nullptr;
+    auto fabricsInstance = mxlFabricsInstance{nullptr};
     if (auto s = mxlFabricsCreateInstance(instance, nullptr, &fabricsInstance); s != MXL_STATUS_OK)
     {
         MXL_ERROR("Failed to create fabrics instance with status '{}'", static_cast<int>(s));
@@ -937,7 +938,7 @@ int main(int argc, char** argv)
     MXL_INFO("  capabilities: {}", capabilitiesString(selectedInterface.caps.flags));
     MXL_INFO("  max message:  {} bytes", selectedInterface.caps.maxMessageSize);
 
-    mxlStatus status;
+    auto status = mxlStatus{};
     if (runAsInitiator)
     {
         MXL_INFO("Running as initiator");
