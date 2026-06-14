@@ -3,8 +3,8 @@
 #include "FabricInterfaceDescription.hpp"
 #include <cstring> // IWYU pragma: keep; // ::strdup
 #include <optional>
-#include <type_traits>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <unistd.h>
 #include <rdma/fabric.h>
@@ -26,7 +26,7 @@ namespace mxl::lib::fabrics::ofi
 
         void copyStringProperty(picojson::object& destination, char const* value, std::string const& name)
         {
-            if ((value != nullptr) && ::strlen(value) > 0)
+            if ((value != nullptr) && (::strlen(value) > 0))
             {
                 destination[name] = picojson::value{std::string{value}};
             }
@@ -76,7 +76,7 @@ namespace mxl::lib::fabrics::ofi
                 copyStringProperty(destination, link->address, "link_address");
                 copyStringProperty(destination, link->network_type, "link_type");
             }
-            if (nic->bus_attr && (nic->bus_attr->bus_type == FI_BUS_PCI))
+            if ((nic->bus_attr) && (nic->bus_attr->bus_type == FI_BUS_PCI))
             {
                 auto const pci = nic->bus_attr->attr.pci;
                 copyNumberProperty(destination, pci.domain_id, "pci_domain_id");
@@ -137,7 +137,7 @@ namespace mxl::lib::fabrics::ofi
         {
             caps |= MXL_FABRICS_IFACE_CAP_REMOTE_WRITE;
         }
-        if ((*provider != Provider::EFA) || CompletionQueue::isWaitObjectSupportedForEFA())
+        if ((*provider != Provider::EFA) || (CompletionQueue::isWaitObjectSupportedForEFA()))
         {
             caps |= MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS;
         }
