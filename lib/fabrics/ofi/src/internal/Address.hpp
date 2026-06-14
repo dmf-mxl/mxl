@@ -26,6 +26,8 @@ namespace mxl::lib::fabrics::ofi
 
         /**
          * \brief Retrieve the fabric address of an endpoint by passing its fid.
+         * \param fid libfabric address object
+         * \param addressFormat A libfabric address format like FI_SOCKADDR_IN, FI_ADDR_EFA, etc..
          */
         static RawFabricAddress fromFid(::fid_t fid, std::uint32_t addressFormat);
 
@@ -37,6 +39,8 @@ namespace mxl::lib::fabrics::ofi
 
         /**
          * \brief Parse a fabric address from a base64 encoded string
+         * \param data Base64 encoded raw binary address
+         * \param addressFormat A libfabric address format like FI_SOCKADDR_IN, FI_ADDR_EFA, etc..
          */
         static RawFabricAddress fromBase64(std::string_view data, std::uint32_t addressFormat);
 
@@ -58,7 +62,7 @@ namespace mxl::lib::fabrics::ofi
         std::size_t size() const noexcept;
 
         /**
-         * \brief Return the fabric specific address format, or FI_FORMAT_UNSPEC if empty.
+         * \brief Return the fabric specific libfaric address format, or FI_FORMAT_UNSPEC if empty.
          */
         [[nodiscard]]
         std::uint32_t format() const noexcept;

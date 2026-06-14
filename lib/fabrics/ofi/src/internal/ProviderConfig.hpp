@@ -11,9 +11,8 @@ namespace mxl::lib::fabrics::ofi
      * Libfabric-level configuration values for a specific provider. These are derived from MXL capability flags
      * and control how fi_getinfo results are matched and filtered.
      */
-    class ProviderConfigValues
+    struct ProviderConfigValues
     {
-    public:
         /** Provider name as expected by libfabric (e.g. "tcp", "verbs", "shm", "efa"). */
         std::string providerName;
         /** Bitmask of supported memory registration modes (FI_MR_*). */
