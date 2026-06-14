@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <type_traits>
 #include <catch2/catch_test_macros.hpp>
 #include <mxl/fabrics.h>
 #include <mxl/flow.h>
@@ -41,10 +42,10 @@ TEST_CASE("Fabrics: GetInterfaces unfiltered returns TCP and SHM", "[fabrics][in
     auto* instance = mxlCreateInstance("/dev/shm/", "");
     REQUIRE(instance != nullptr);
 
-    mxlFabricsInstance fabrics;
+    auto fabrics = mxlFabricsInstance{};
     REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
 
-    mxlFabricsInterfaceList* list = nullptr;
+    auto list = std::add_pointer_t<mxlFabricsInterfaceList>{nullptr};
     REQUIRE(mxlFabricsGetInterfaces(fabrics, nullptr, &list) == MXL_STATUS_OK);
     REQUIRE(list != nullptr);
 
@@ -63,7 +64,7 @@ TEST_CASE("Fabrics: GetInterfaces filters by provider", "[fabrics][interfaces]")
     auto* instance = mxlCreateInstance("/dev/shm/", "");
     REQUIRE(instance != nullptr);
 
-    mxlFabricsInstance fabrics;
+    auto fabrics = mxlFabricsInstance{};
     REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
 
     SECTION("TCP only")
@@ -72,7 +73,7 @@ TEST_CASE("Fabrics: GetInterfaces filters by provider", "[fabrics][interfaces]")
         query.version = MXL_FABRICS_API_VERSION;
         query.provider = MXL_FABRICS_PROVIDER_TCP;
 
-        mxlFabricsInterfaceList* list = nullptr;
+        auto list = std::add_pointer_t<mxlFabricsInterfaceList>{nullptr};
         REQUIRE(mxlFabricsGetInterfaces(fabrics, &query, &list) == MXL_STATUS_OK);
         REQUIRE(list != nullptr);
 
@@ -90,7 +91,7 @@ TEST_CASE("Fabrics: GetInterfaces filters by provider", "[fabrics][interfaces]")
         query.version = MXL_FABRICS_API_VERSION;
         query.provider = MXL_FABRICS_PROVIDER_SHM;
 
-        mxlFabricsInterfaceList* list = nullptr;
+        auto list = std::add_pointer_t<mxlFabricsInterfaceList>{nullptr};
         REQUIRE(mxlFabricsGetInterfaces(fabrics, &query, &list) == MXL_STATUS_OK);
         REQUIRE(list != nullptr);
 
@@ -111,10 +112,10 @@ TEST_CASE("Fabrics: GetInterfaces ignores capability flags in query", "[fabrics]
     auto* instance = mxlCreateInstance("/dev/shm/", "");
     REQUIRE(instance != nullptr);
 
-    mxlFabricsInstance fabrics;
+    auto fabrics = mxlFabricsInstance{};
     REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
 
-    mxlFabricsInterfaceList* baseline = nullptr;
+    auto baseline = std::add_pointer_t<mxlFabricsInterfaceList>{nullptr};
     REQUIRE(mxlFabricsGetInterfaces(fabrics, nullptr, &baseline) == MXL_STATUS_OK);
     auto baselineStats = countInterfaces(baseline);
 
@@ -123,7 +124,7 @@ TEST_CASE("Fabrics: GetInterfaces ignores capability flags in query", "[fabrics]
     query.caps.version = MXL_FABRICS_API_VERSION;
     query.caps.flags = MXL_FABRICS_IFACE_CAP_REMOTE_WRITE | MXL_FABRICS_IFACE_CAP_SEND_RECEIVE;
 
-    mxlFabricsInterfaceList* filtered = nullptr;
+    auto filtered = std::add_pointer_t<mxlFabricsInterfaceList>{nullptr};
     REQUIRE(mxlFabricsGetInterfaces(fabrics, &query, &filtered) == MXL_STATUS_OK);
     auto filteredStats = countInterfaces(filtered);
 
@@ -142,10 +143,10 @@ TEST_CASE("Fabrics: GetInterfaces returns populated capability flags", "[fabrics
     auto* instance = mxlCreateInstance("/dev/shm/", "");
     REQUIRE(instance != nullptr);
 
-    mxlFabricsInstance fabrics;
+    auto fabrics = mxlFabricsInstance{};
     REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
 
-    mxlFabricsInterfaceList* list = nullptr;
+    auto list = std::add_pointer_t<mxlFabricsInterfaceList>{nullptr};
     REQUIRE(mxlFabricsGetInterfaces(fabrics, nullptr, &list) == MXL_STATUS_OK);
 
     for (auto const* entry = list; entry != nullptr; entry = entry->next)
@@ -165,10 +166,10 @@ TEST_CASE("Fabrics: GetInterfaces returns non-zero maxMessageSize", "[fabrics][i
     auto* instance = mxlCreateInstance("/dev/shm/", "");
     REQUIRE(instance != nullptr);
 
-    mxlFabricsInstance fabrics;
+    auto fabrics = mxlFabricsInstance{};
     REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
 
-    mxlFabricsInterfaceList* list = nullptr;
+    auto list = std::add_pointer_t<mxlFabricsInterfaceList>{nullptr};
     REQUIRE(mxlFabricsGetInterfaces(fabrics, nullptr, &list) == MXL_STATUS_OK);
 
     for (auto const* entry = list; entry != nullptr; entry = entry->next)
@@ -189,12 +190,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Setup with 
     auto flowDef = mxl::tests::readFile("../data/v210_flow.json");
     auto const flowId = "5fbec3b1-1b0f-417d-9059-8b94a47197ed";
 
-    mxlFlowWriter writer;
+    auto writer = mxlFlowWriter{};
     REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), nullptr, &writer, nullptr, nullptr) == MXL_STATUS_OK);
-    mxlFlowReader reader;
+    auto reader = mxlFlowReader{};
     REQUIRE(mxlCreateFlowReader(instance, flowId, "", &reader) == MXL_STATUS_OK);
 
-    mxlFabricsInstance fabrics;
+    auto fabrics = mxlFabricsInstance{};
     REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
 
     auto const caps = mxlFabricsInterfaceCaps{
@@ -205,7 +206,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Setup with 
 
     SECTION("TCP")
     {
-        mxlFabricsTarget target;
+        auto target = mxlFabricsTarget{};
         REQUIRE(mxlFabricsCreateTarget(fabrics, &target) == MXL_STATUS_OK);
 
         auto targetConfig = mxlFabricsTargetConfig{
@@ -217,10 +218,10 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Setup with 
                           .attr = nullptr},
             .writer = writer,
         };
-        mxlFabricsTargetInfo targetInfo;
+        auto targetInfo = mxlFabricsTargetInfo{};
         REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, nullptr, &targetInfo) == MXL_STATUS_OK);
 
-        mxlFabricsInitiator initiator;
+        auto initiator = mxlFabricsInitiator{};
         REQUIRE(mxlFabricsCreateInitiator(fabrics, &initiator) == MXL_STATUS_OK);
 
         auto initiatorConfig = mxlFabricsInitiatorConfig{
@@ -241,7 +242,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Setup with 
 
     SECTION("SHM")
     {
-        mxlFabricsTarget target;
+        auto target = mxlFabricsTarget{};
         REQUIRE(mxlFabricsCreateTarget(fabrics, &target) == MXL_STATUS_OK);
 
         auto targetConfig = mxlFabricsTargetConfig{
@@ -253,10 +254,10 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Setup with 
                           .attr = nullptr},
             .writer = writer,
         };
-        mxlFabricsTargetInfo targetInfo;
+        auto targetInfo = mxlFabricsTargetInfo{};
         REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, nullptr, &targetInfo) == MXL_STATUS_OK);
 
-        mxlFabricsInitiator initiator;
+        auto initiator = mxlFabricsInitiator{};
         REQUIRE(mxlFabricsCreateInitiator(fabrics, &initiator) == MXL_STATUS_OK);
 
         auto initiatorConfig = mxlFabricsInitiatorConfig{
@@ -290,12 +291,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Setup with 
     auto flowDef = mxl::tests::readFile("../data/v210_flow.json");
     auto const flowId = "5fbec3b1-1b0f-417d-9059-8b94a47197ed";
 
-    mxlFlowWriter writer;
+    auto writer = mxlFlowWriter{};
     REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), nullptr, &writer, nullptr, nullptr) == MXL_STATUS_OK);
-    mxlFlowReader reader;
+    auto reader = mxlFlowReader{};
     REQUIRE(mxlCreateFlowReader(instance, flowId, "", &reader) == MXL_STATUS_OK);
 
-    mxlFabricsInstance fabrics;
+    auto fabrics = mxlFabricsInstance{};
     REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
 
     auto const caps = mxlFabricsInterfaceCaps{
@@ -306,7 +307,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Setup with 
 
     SECTION("TCP")
     {
-        mxlFabricsTarget target;
+        auto target = mxlFabricsTarget{};
         REQUIRE(mxlFabricsCreateTarget(fabrics, &target) == MXL_STATUS_OK);
 
         auto targetConfig = mxlFabricsTargetConfig{
@@ -318,7 +319,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Setup with 
                           .attr = nullptr},
             .writer = writer,
         };
-        mxlFabricsTargetInfo targetInfo;
+        auto targetInfo = mxlFabricsTargetInfo{};
         REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, nullptr, &targetInfo) == MXL_STATUS_OK);
 
         REQUIRE(mxlFabricsFreeTargetInfo(targetInfo) == MXL_STATUS_OK);
@@ -327,7 +328,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Setup with 
 
     SECTION("SHM")
     {
-        mxlFabricsTarget target;
+        auto target = mxlFabricsTarget{};
         REQUIRE(mxlFabricsCreateTarget(fabrics, &target) == MXL_STATUS_OK);
 
         auto targetConfig = mxlFabricsTargetConfig{
@@ -339,7 +340,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Setup with 
                           .attr = nullptr},
             .writer = writer,
         };
-        mxlFabricsTargetInfo targetInfo;
+        auto targetInfo = mxlFabricsTargetInfo{};
         REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, nullptr, &targetInfo) == MXL_STATUS_OK);
 
         REQUIRE(mxlFabricsFreeTargetInfo(targetInfo) == MXL_STATUS_OK);
@@ -360,17 +361,17 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Setup with 
     auto flowDef = mxl::tests::readFile("../data/v210_flow.json");
     auto const flowId = "5fbec3b1-1b0f-417d-9059-8b94a47197ed";
 
-    mxlFlowWriter writer;
+    auto writer = mxlFlowWriter{};
     REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), nullptr, &writer, nullptr, nullptr) == MXL_STATUS_OK);
-    mxlFlowReader reader;
+    auto reader = mxlFlowReader{};
     REQUIRE(mxlCreateFlowReader(instance, flowId, "", &reader) == MXL_STATUS_OK);
 
-    mxlFabricsInstance fabrics;
+    auto fabrics = mxlFabricsInstance{};
     REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
 
     SECTION("TCP")
     {
-        mxlFabricsTarget target;
+        auto target = mxlFabricsTarget{};
         REQUIRE(mxlFabricsCreateTarget(fabrics, &target) == MXL_STATUS_OK);
 
         auto targetConfig = mxlFabricsTargetConfig{
@@ -382,7 +383,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Setup with 
                           .attr = nullptr},
             .writer = writer,
         };
-        mxlFabricsTargetInfo targetInfo;
+        auto targetInfo = mxlFabricsTargetInfo{};
         REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, nullptr, &targetInfo) == MXL_STATUS_OK);
 
         REQUIRE(mxlFabricsFreeTargetInfo(targetInfo) == MXL_STATUS_OK);
@@ -391,7 +392,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Setup with 
 
     SECTION("SHM")
     {
-        mxlFabricsTarget target;
+        auto target = mxlFabricsTarget{};
         REQUIRE(mxlFabricsCreateTarget(fabrics, &target) == MXL_STATUS_OK);
 
         auto targetConfig = mxlFabricsTargetConfig{
@@ -403,7 +404,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Setup with 
                           .attr = nullptr},
             .writer = writer,
         };
-        mxlFabricsTargetInfo targetInfo;
+        auto targetInfo = mxlFabricsTargetInfo{};
         REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, nullptr, &targetInfo) == MXL_STATUS_OK);
 
         REQUIRE(mxlFabricsFreeTargetInfo(targetInfo) == MXL_STATUS_OK);

@@ -103,7 +103,7 @@ namespace
             return {};
         }
 
-        auto out = std::map<std::string, std::string>();
+        auto out = std::map<std::string, std::string>{};
         for (auto const& [k, v] : v.get<picojson::object>())
         {
             if (k == "link_speed")
@@ -147,7 +147,7 @@ namespace
             return 1;
         }
 
-        std::map<std::string, std::size_t> providerCounts = {};
+        auto providerCounts = std::map<std::string, std::size_t>{};
         for (auto* node = list; node != nullptr; node = node->next)
         {
             auto provider = providerName(node->interface.provider);
@@ -221,7 +221,7 @@ int main(int argc, char** argv)
             query.address.node = node.c_str();
         }
 
-        mxlFabricsInstance fabricsInstance = nullptr;
+        auto fabricsInstance = mxlFabricsInstance{nullptr};
         if (auto const s = mxlFabricsCreateInstance(instance, nullptr, &fabricsInstance); s != MXL_STATUS_OK)
         {
             fmt::print(stderr, "Failed to create fabrics instance (mxlStatus = {}).\n", static_cast<int>(s));
