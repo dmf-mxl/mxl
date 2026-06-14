@@ -90,7 +90,7 @@ std::string providerName(mxlFabricsProvider provider)
     mxlFabricsProviderToString(provider, nullptr, &size);
     auto result = std::string(size, '\0');
     mxlFabricsProviderToString(provider, result.data(), &size);
-    if (!result.empty() && result.back() == '\0')
+    if (!result.empty() && (result.back() == '\0'))
     {
         result.pop_back();
     }
@@ -126,7 +126,7 @@ InterfaceSelection selectInterface(mxlFabricsInstance instance, std::optional<st
 
     auto filtering = node || provider;
     auto status = mxlFabricsGetInterfaces(instance, filtering ? &query : nullptr, &list);
-    if (status != MXL_STATUS_OK || list == nullptr)
+    if ((status != MXL_STATUS_OK) || (list == nullptr))
     {
         MXL_ERROR("Failed to query interfaces (mxlStatus = {})", static_cast<int>(status));
         std::exit(status);
@@ -135,7 +135,7 @@ InterfaceSelection selectInterface(mxlFabricsInstance instance, std::optional<st
     auto best = std::add_pointer_t<mxlFabricsInterfaceConfig const>{nullptr};
     for (auto* entry = list; entry != nullptr; entry = entry->next)
     {
-        if (!best || providerPriority(entry->interface.provider) > providerPriority(best->provider))
+        if (!best || (providerPriority(entry->interface.provider) > providerPriority(best->provider)))
         {
             best = &entry->interface;
         }

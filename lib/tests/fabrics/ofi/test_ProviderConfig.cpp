@@ -44,7 +44,7 @@ TEST_CASE("ofi: ProviderConfig with nullopt caps accepts SHM fi_info entries", "
     for (auto info : FabricInfoList::get())
     {
         auto provider = providerFromString(info->fabric_attr->prov_name);
-        if (provider && *provider == Provider::SHM)
+        if (provider && (*provider == Provider::SHM))
         {
             if (config.isSupportedFabricInfo(info))
             {
@@ -64,7 +64,7 @@ TEST_CASE("ofi: ProviderConfig with nullopt caps accepts TCP fi_info entries", "
     for (auto info : FabricInfoList::get())
     {
         auto provider = providerFromString(info->fabric_attr->prov_name);
-        if (provider && *provider == Provider::TCP)
+        if (provider && (*provider == Provider::TCP))
         {
             if (config.isSupportedFabricInfo(info))
             {
@@ -88,7 +88,7 @@ TEST_CASE("ofi: ProviderConfig with REMOTE_WRITE accepts matching fi_info entrie
         for (auto info : FabricInfoList::get())
         {
             auto provider = providerFromString(info->fabric_attr->prov_name);
-            if (provider && *provider == Provider::TCP && config.isSupportedFabricInfo(info))
+            if (provider && (*provider == Provider::TCP) && config.isSupportedFabricInfo(info))
             {
                 accepted = true;
                 break;
@@ -104,7 +104,7 @@ TEST_CASE("ofi: ProviderConfig with REMOTE_WRITE accepts matching fi_info entrie
         for (auto info : FabricInfoList::get())
         {
             auto provider = providerFromString(info->fabric_attr->prov_name);
-            if (provider && *provider == Provider::SHM && config.isSupportedFabricInfo(info))
+            if (provider && (*provider == Provider::SHM) && config.isSupportedFabricInfo(info))
             {
                 accepted = true;
                 break;
