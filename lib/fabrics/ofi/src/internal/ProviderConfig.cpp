@@ -88,7 +88,7 @@ namespace mxl::lib::fabrics::ofi
             .endpointType = FI_EP_MSG,
             .caps = libfabricCaps(capabilities, isTarget),
             .supportedAddressFormats = {FI_SOCKADDR_IN, FI_SOCKADDR_IN6},
-            .supportedProtocols = {FI_PROTO_RDMA_CM_IB_XRC},
+            .supportedProtocols = {FI_PROTO_RDMA_CM_IB_RC},
             .requiredCaps = libfabricRequiredCaps(capabilities) | FI_MSG,
             .filteredCaps = FI_HMEM,
         };
