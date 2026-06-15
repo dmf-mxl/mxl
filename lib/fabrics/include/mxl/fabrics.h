@@ -45,8 +45,7 @@ extern "C"
 
     typedef enum mxlFabricsProvider_t
     {
-        MXL_FABRICS_PROVIDER_ANY = 0,   /**< Auto select the best provider. ** This might not be supported by all implementations. Currently this
-                                           allways falls back to the TCP provider. */
+        MXL_FABRICS_PROVIDER_ANY = 0,   /**< Any provider. Currently useful as an input value to mxlFabricsGetInterfaces. */
         MXL_FABRICS_PROVIDER_TCP = 1,   /**< Provider that uses linux tcp sockets. */
         MXL_FABRICS_PROVIDER_VERBS = 2, /**< Provider for userspace verbs (libibverbs) and librdmcm for connection management. */
         MXL_FABRICS_PROVIDER_EFA = 3,   /**< Provider for AWS Elastic Fabric Adapter. */
