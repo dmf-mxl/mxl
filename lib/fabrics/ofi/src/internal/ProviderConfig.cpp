@@ -130,7 +130,7 @@ namespace mxl::lib::fabrics::ofi
         auto const protocolNotSupported = std::ranges::find(_values.supportedProtocols, view->ep_attr->protocol) == _values.supportedProtocols.end();
         auto const addressFormatNotSupported =
             std::ranges::find(_values.supportedAddressFormats, view->addr_format) == _values.supportedAddressFormats.end();
-        auto const containsFilteredCaps = ((view->caps & _values.filteredCaps) != 0);
+        auto const containsFilteredCaps = ((view->caps & _values.filteredCaps) > 0);
         auto const missingRequiredCaps = (_values.requiredCaps != 0) && ((view->caps & _values.requiredCaps) == 0);
         auto const unsupportedEndpointType = (view->ep_attr->type != _values.endpointType);
 
