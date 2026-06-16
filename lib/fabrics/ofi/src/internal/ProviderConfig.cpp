@@ -127,11 +127,20 @@ namespace mxl::lib::fabrics::ofi
 
     bool ProviderConfig::isSupportedFabricInfo(FabricInfoView view) const noexcept
     {
+        // Filters out all protocol types that are not supported for this provider.
         auto const protocolNotSupported = std::ranges::find(_values.supportedProtocols, view->ep_attr->protocol) == _values.supportedProtocols.end();
+
+        // Filters out all address formats that are not supported for this provider.
         auto const addressFormatNotSupported =
             std::ranges::find(_values.supportedAddressFormats, view->addr_format) == _values.supportedAddressFormats.end();
+
+        // Filters out all info objects that have caps set that we can't support.
         auto const containsFilteredCaps = ((view->caps & _values.filteredCaps) > 0);
+
+        // Filters out all info objects that are missing caps that we always need.
         auto const missingRequiredCaps = (_values.requiredCaps != 0) && ((view->caps & _values.requiredCaps) != _values.requiredCaps);
+
+        // Filters out all objects that are not the endpoint type that we are looking for with this provider.
         auto const unsupportedEndpointType = (view->ep_attr->type != _values.endpointType);
 
         return !(protocolNotSupported || addressFormatNotSupported || containsFilteredCaps || missingRequiredCaps || unsupportedEndpointType);

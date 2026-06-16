@@ -39,6 +39,7 @@ namespace mxl::lib::fabrics::ofi
         {
             case -FI_EINTR:  return MXL_ERR_INTERRUPTED;
             case -FI_EAGAIN: return MXL_ERR_NOT_READY;
+            case -FI_ENOSYS: return MXL_ERR_UNSUPPORTED_OPERATION;
             default:         return MXL_ERR_UNKNOWN;
         }
     }
