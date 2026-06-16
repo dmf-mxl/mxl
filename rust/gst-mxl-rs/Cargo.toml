@@ -10,8 +10,18 @@ publish.workspace = true
 version.workspace = true
 license.workspace = true
 
+[package.metadata]
+install-subcommands = "cargo install cargo-deb"
+
 [package.metadata.cargo-machete]
 ignored = ["regex"]
+
+[package.metadata.deb]
+depends = "$auto, dmfmxl-dev"
+assets = [
+    ["target/release/libgstmxl.so", "/usr/lib/x86_64-linux-gnu/gstreamer-1.0/", "755"],
+]
+
 
 [dependencies]
 bitstream-io = "4"
