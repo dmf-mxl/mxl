@@ -41,7 +41,7 @@ fn get_bindgen_specs() -> BindgenSpecs {
         let lib_root = repo_root.join("lib");
         println!("cargo:rerun-if-changed={}", lib_root.display());
 
-        let dst = cmake::Config::new(repo_root)
+        cmake::Config::new(repo_root)
             .generator("Ninja")
             .configure_arg("--preset")
             .configure_arg(BUILD_VARIANT)
@@ -51,9 +51,6 @@ fn get_bindgen_specs() -> BindgenSpecs {
             .define("BUILD_TESTS", "OFF")
             .define("BUILD_TOOLS", "OFF")
             .build();
-
-        println!("cargo:rustc-link-search={}", dst.join("lib").display());
-        println!("cargo:rustc-link-lib=mxl");
     }
 
     BindgenSpecs {
