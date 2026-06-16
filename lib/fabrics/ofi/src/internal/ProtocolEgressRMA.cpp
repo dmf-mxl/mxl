@@ -204,12 +204,12 @@ namespace mxl::lib::fabrics::ofi
         // additional one per channel if 2 fragments are present (wrap-around). When a fragment is not present its size will be 0.
         auto sgList = std::vector<LocalRegion>{};
         sgList.reserve(sgListLen);
-        for (auto& fragment : slice.base.fragments)
+        for (auto chan = std::size_t{0}; chan < slice.count; chan++)
         {
-            // check if the fragment present
-            if (fragment.size > 0)
+            for (auto const& fragment : slice.base.fragments)
             {
-                for (auto chan = std::size_t{0}; chan < slice.count; chan++)
+                // check if the fragment present
+                if (fragment.size > 0)
                 {
                     auto const srcAddr = reinterpret_cast<std::uintptr_t>(fragment.pointer) + (slice.stride * chan);
 

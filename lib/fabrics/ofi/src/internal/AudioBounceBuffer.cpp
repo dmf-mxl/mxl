@@ -106,12 +106,12 @@ namespace mxl::lib::fabrics::ofi
             slices);
 
         auto srcAddr = entry.samples();
-        for (auto& fragment : slices.base.fragments)
+        for (auto chan = std::size_t{0}; chan < slices.count; chan++)
         {
-            // check if the fragment present
-            if (fragment.size > 0)
+            for (auto const& fragment : slices.base.fragments)
             {
-                for (auto chan = std::size_t{0}; chan < slices.count; chan++)
+                // check if the fragment present
+                if (fragment.size > 0)
                 {
                     auto const dstAddr = reinterpret_cast<std::uint8_t*>(fragment.pointer) + (slices.stride * chan);
                     std::memcpy(dstAddr, srcAddr, fragment.size);
