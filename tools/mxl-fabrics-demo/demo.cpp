@@ -538,11 +538,11 @@ private:
 private:
     Config _config;
 
-    mxlInstance _instance;
-    mxlFabricsInstance _fabricsInstance;
-    mxlFlowReader _reader;
-    mxlFabricsInitiator _initiator;
-    mxlFabricsTargetInfo _targetInfo;
+    mxlInstance _instance = nullptr;
+    mxlFabricsInstance _fabricsInstance = nullptr;
+    mxlFlowReader _reader = nullptr;
+    mxlFabricsInitiator _initiator = nullptr;
+    mxlFabricsTargetInfo _targetInfo = nullptr;
     bool _targetAdded = false;
 };
 
@@ -842,12 +842,12 @@ private:
 private:
     Config _config;
 
-    mxlInstance _instance;
-    mxlFabricsInstance _fabricsInstance;
-    mxlFlowWriter _writer;
-    mxlFabricsTarget _target;
-    mxlFabricsTargetInfo _targetInfo;
-    mxlFlowConfigInfo _configInfo;
+    mxlInstance _instance = nullptr;
+    mxlFabricsInstance _fabricsInstance = nullptr;
+    mxlFlowWriter _writer = nullptr;
+    mxlFabricsTarget _target = nullptr;
+    mxlFabricsTargetInfo _targetInfo = nullptr;
+    mxlFlowConfigInfo _configInfo{};
 };
 
 int main(int argc, char** argv)
