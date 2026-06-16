@@ -11,7 +11,6 @@
 #include <unistd.h>
 #include <CLI/CLI.hpp>
 #include <fmt/format.h>
-#include <picojson/picojson.h>
 #include <picojson/wrapper.h>
 #include <mxl/fabrics.h>
 #include <mxl/mxl.h>
