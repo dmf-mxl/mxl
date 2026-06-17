@@ -204,6 +204,10 @@ namespace mxl::lib::fabrics::ofi
         // additional one per channel if 2 fragments are present (wrap-around). When a fragment is not present its size will be 0.
         auto sgList = std::vector<LocalRegion>{};
         sgList.reserve(sgListLen);
+        // Write all fragments for one channel before moving to the next channel.
+        // Doing otherwise (fragment first) only works when source and target wrapped slices split at the same fragment sizes.
+        // If source and target have different ring positions, the target consumes the bytes with different fragment sizes and "stitches" the channel
+        // data back together incorrectly.
         for (auto chan = std::size_t{0}; chan < slice.count; chan++)
         {
             for (auto const& fragment : slice.base.fragments)
