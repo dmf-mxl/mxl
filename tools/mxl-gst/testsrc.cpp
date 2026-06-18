@@ -628,12 +628,15 @@ namespace
             gstPipeline.start();
 
             auto const samplesPerBatch = gstPipeline.config().samplesPerBatch;
+            auto const batchPeriodNs = static_cast<std::uint64_t>(samplesPerBatch) *
+                                       1'000'000'000ULL * gstPipeline.config().sampleRate.denominator /
+                                       gstPipeline.config().sampleRate.numerator;
 
             auto sampleIndex = std::uint64_t{MXL_UNDEFINED_INDEX};
             while (!g_exit_requested)
             {
                 auto const timeoutNs = (sampleIndex != MXL_UNDEFINED_INDEX)
-                                         ? mxlGetNsUntilIndex(sampleIndex + samplesPerBatch, &gstPipeline.config().sampleRate)
+                                         ? std::max<std::uint64_t>(mxlGetNsUntilIndex(sampleIndex + samplesPerBatch, &gstPipeline.config().sampleRate), batchPeriodNs)
                                          : 100'000'000ULL; // arbitrary high timeout for the first sample
 
                 if (auto const pipelineSample = gstPipeline.pull(timeoutNs); pipelineSample)
