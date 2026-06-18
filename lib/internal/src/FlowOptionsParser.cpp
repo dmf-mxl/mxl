@@ -67,6 +67,16 @@ namespace mxl::lib
                 throw std::invalid_argument{"maxSyncBatchSizeHint must be a multiple of maxCommitBatchSizeHint."};
             }
         }
+
+        auto grainPoolIt = _root.find("grainPool");
+        if (grainPoolIt != _root.end())
+        {
+            if (!grainPoolIt->second.is<bool>())
+            {
+                throw std::invalid_argument{"grainPool must be a boolean."};
+            }
+            _useGrainPool = grainPoolIt->second.get<bool>();
+        }
     }
 
     std::optional<std::uint32_t> FlowOptionsParser::getMaxCommitBatchSizeHint() const
@@ -77,5 +87,10 @@ namespace mxl::lib
     std::optional<std::uint32_t> FlowOptionsParser::getMaxSyncBatchSizeHint() const
     {
         return _maxSyncBatchSizeHint;
+    }
+
+    bool FlowOptionsParser::getUseGrainPool() const
+    {
+        return _useGrainPool;
     }
 } // namespace mxl::lib

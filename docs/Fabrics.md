@@ -345,3 +345,133 @@ The currently implemented feature set covers the optimal paths for both discrete
 - **Continuous flow (samples):** Transferred using Remote Write (RMA) with scatter-gather on the source side, landing data into a bouncing buffer on the target. Upon completion, the target unpacks the bouncing buffer back into the non-contiguous per-channel buffers of the MXL audio flow.
 
 Send/Recv and tag-matching fallback paths are not yet implemented. Send/Recv without tag matching requires a bouncing buffer and an extra copy, while tag matching requires explicit synchronization between initiator and target and may not benefit from hardware acceleration depending on the NIC. Given these trade-offs and that Remote Write covers the primary use cases, the fallback paths have been deferred.
+
+## 11. DMA Mapping for Multi-Grain Flows
+
+The Fabrics implementation registers a flow's grain memory with libfabric
+(`fi_mr_regattr`) so the NIC can read from or write into it directly. The same
+grain memory can also be the target of a *zero-copy* integration with another
+DMA-capable framework — for example, a media transport library that DMAs
+received network payloads straight into MXL grains, avoiding an intermediate
+copy. This section documents the grain memory layout that such integrations
+depend on, and the recommended approach for mapping that memory for DMA at
+scale.
+
+### 11.1 Grain memory layout
+
+A discrete flow's grains are each backed by an independent shared-memory
+mapping. `DiscreteFlowData` stores one `SharedMemoryInstance<Grain>` per grain
+(`_grains[i]`), and each instance is an individually `mmap`-ed segment created
+from its own backing file. Each grain spans a fixed-size `GrainHeader`
+(8192 bytes) immediately followed by the grain payload:
+
+```
+grain i:  [ GrainHeader (8192 B) ][ payload (grainSize B) ]
+```
+
+`mxlFabricsRegionsFromFlow()` reflects this layout by producing **one `Region`
+per grain**, each covering `sizeof(GrainHeader) + grainSize` bytes. The egress
+RMA protocol indexes these regions by ring-buffer slot
+(`localRegions[grainIndex % grainCount]`), so the per-grain granularity is an
+intrinsic part of the transfer model and is preserved regardless of how the
+memory is mapped for DMA.
+
+Because each grain is a separate mapping, **grains are not guaranteed to be
+contiguous in virtual address space**. An integration that wants to DMA-map a
+flow's grains must account for this.
+
+### 11.2 The problem: per-grain DMA mappings do not scale
+
+DMA frameworks built on VFIO/IOMMU (such as DPDK) maintain a bounded list of
+memory segments (`memseg`) that can be registered for device DMA. Mapping every
+grain of every flow individually consumes one entry per grain:
+
+```
+mappings = flows × grainsPerFlow
+```
+
+A realistic multi-stream deployment — for example 14 concurrent flows of 8
+grains each — needs 112 mappings, which can exhaust the available memseg
+entries and cause subsequent DMA-map calls to fail. The failure surfaces only
+under scale, making it an easy pitfall for integrations that work fine with a
+single flow during development.
+
+### 11.3 Recommended approach: coalesced DMA mapping
+
+When the grains of a flow are adjacent in virtual memory, an integration should
+**map them as a single contiguous region** and derive each grain's device
+address by offset, instead of issuing one DMA-map call per grain. This reduces
+the mapping count from `grainsPerFlow` to `1` per flow:
+
+1. Enumerate the flow's grain payload pointers (via the Flow API, e.g.
+   `mxlFlowReaderGetGrain` / `mxlFlowWriterOpenGrain`, or via the per-grain
+   `Region` base addresses obtained from the Fabrics regions).
+2. Compute the bounding range across all grains:
+   - `base = floor_to_page(min(grainAddr[i]))`
+   - `end  = ceil_to_page (max(grainAddr[i] + grainSize))`
+3. Issue a **single** DMA-map for `[base, end)`.
+4. For each grain, compute its device (IOVA) address as
+   `mappedIova + (grainAddr[i] - base)`.
+
+With the default per-grain file layout the grains are independent mappings and
+may be dispersed, so a caller using this technique must verify that the grains
+actually fall within a single, reasonably sized contiguous span before
+coalescing, and fall back to per-grain mapping otherwise. The per-grain
+`Region` list returned by the Fabrics layer provides the base address and size
+of every grain and is the authoritative source for this check. The contiguous
+grain pool layout described in section 11.4 makes this check succeed
+deterministically.
+
+### 11.4 Guaranteeing contiguity: the contiguous grain pool
+
+A discrete flow can opt in to a **contiguous grain pool**: a single
+shared-memory segment that holds every grain of the flow back to back at a
+fixed stride (`sizeof(GrainHeader) + grainSize`). The grains are then
+guaranteed to be adjacent in virtual memory, so the coalesced mapping in
+section 11.3 always collapses to exactly one DMA mapping per flow.
+
+The pool is enabled per flow through the flow-creation options, by setting the
+`grainPool` boolean to `true`:
+
+```json
+{ "grainPool": true }
+```
+
+When enabled:
+
+- The writer stores all grains in a single backing file (`grains/pool.data`)
+  instead of one file per grain (`grains/data.{i}`).
+- Readers opening the flow detect the pool layout automatically (no option is
+  required on the reader side).
+- The per-grain `Region` list exposed to the Fabrics layer is unchanged: it
+  still contains one region per grain, so the RMA ring-slot indexing
+  (`localRegions[grainIndex % grainCount]`) behaves identically. The regions
+  simply now point into successive offsets of the single pool mapping.
+
+The pool is a backward-compatible, opt-in addition. Flows created without the
+`grainPool` option keep the per-grain file layout, and existing integrations
+continue to work unchanged. Integrations that DMA-map grain memory can request
+the pool to obtain a deterministic single-span layout for the whole flow.
+
+> **Note:** GPU/device payload memory is not yet covered by the pool path; the
+> contiguous pool currently applies to host-memory discrete flows.
+
+### 11.5 Single memory registration for contiguous grains
+
+The Fabrics implementation itself benefits from contiguous grains. When the
+regions handed to `Domain::registerRegions` are contiguous in host memory —
+which the grain pool guarantees — they are registered with libfabric as a
+**single** memory region (`fi_mr_regattr`) instead of one registration per
+grain. Each grain's `LocalRegion` / `RemoteRegion` then references that shared
+registration at its own offset, so:
+
+- the RMA ring-slot indexing (`localRegions[grainIndex % grainCount]`) and the
+  per-grain `addr` / `len` are unchanged;
+- all grains of the flow share one `desc` / `rkey`;
+- the number of NIC memory registrations for a flow drops from `grainCount` to
+  one, which matters on adapters that expose a bounded number of memory
+  regions and reduces connection-setup cost.
+
+This optimization is automatic and requires no API change: contiguous regions
+(pool layout) are coalesced, while non-contiguous regions (the per-grain file
+layout) continue to be registered individually.

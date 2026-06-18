@@ -16,6 +16,38 @@
 
 namespace mxl::lib::fabrics::ofi
 {
+    namespace
+    {
+        /// Return true if every region resides in host memory and the regions are
+        /// laid out back to back (region[i] ends exactly where region[i+1] begins),
+        /// in which case they can be covered by a single memory registration.
+        bool regionsAreContiguousHost(std::vector<Region> const& regions) noexcept
+        {
+            if (regions.size() < 2)
+            {
+                return false;
+            }
+
+            if (!regions.front().loc.isHost())
+            {
+                return false;
+            }
+
+            for (auto i = std::size_t{1}; i < regions.size(); ++i)
+            {
+                if (!regions[i].loc.isHost())
+                {
+                    return false;
+                }
+                if (regions[i].base != (regions[i - 1].base + regions[i - 1].size))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
     Domain::Domain(::fid_domain* raw, std::shared_ptr<Fabric> fabric, std::vector<RegisteredRegion> registeredRegions)
         : _raw(raw)
         , _fabric(std::move(fabric))
@@ -45,6 +77,27 @@ namespace mxl::lib::fabrics::ofi
 
     void Domain::registerRegions(std::vector<Region> const& regions, std::uint64_t access)
     {
+        // When the regions are contiguous in host memory, register them as a single
+        // memory region and let each registered region reference it at its own offset.
+        // This collapses N registrations (one per grain) into one, which matters for
+        // NICs/providers that support only a bounded number of memory regions and for
+        // integrations that DMA-map the same memory. The per-region path is used when
+        // the regions are not contiguous (e.g. the per-grain file layout).
+        if (regionsAreContiguousHost(regions))
+        {
+            auto const base = regions.front().base;
+            auto const total = (regions.back().base + regions.back().size) - base;
+
+            auto const spanning = Region{base, total, nullptr, nullptr, regions.front().loc};
+            auto mr = std::make_shared<MemoryRegion>(MemoryRegion::reg(*this, spanning, access));
+
+            for (auto const& region : regions)
+            {
+                _registeredRegions.emplace_back(mr, region, region.base - base);
+            }
+            return;
+        }
+
         std::ranges::transform(
             regions, std::back_inserter(_registeredRegions), [&](auto const& region) { return registerRegionImpl(region, access); });
     }
@@ -81,7 +134,7 @@ namespace mxl::lib::fabrics::ofi
 
     RegisteredRegion Domain::registerRegionImpl(Region const& region, std::uint64_t access)
     {
-        return RegisteredRegion{MemoryRegion::reg(*this, region, access), region};
+        return RegisteredRegion{std::make_shared<MemoryRegion>(MemoryRegion::reg(*this, region, access)), region};
     }
 
     void Domain::close()
