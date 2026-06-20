@@ -6,7 +6,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <optional>
+#include <random>
 #include <utility>
 #include <uuid.h>
 #include <sys/uio.h>
@@ -29,11 +31,31 @@ namespace mxl::lib::fabrics::ofi
 {
     Endpoint::Id Endpoint::randomId() noexcept
     {
-        std::uniform_int_distribution<Endpoint::Id> dist;
-        std::random_device rd;
-        std::mt19937 eng{rd()};
-
-        return dist(eng);
+        // Endpoint::Id is a process-local dispatch key: an initiator routes
+        // connection and completion events to the correct target by this id
+        // (see RCInitiator's id-keyed _targets map). It must be unique across
+        // every endpoint a single initiator talks to; it is not a wire value.
+        //
+        // The previous implementation reseeded a fresh std::mt19937 from ONE
+        // 32-bit, time-correlated std::random_device draw on every call. Targets
+        // set up in the same tight window (e.g. a gateway bringing up many
+        // mirrors at once) could draw the same 32-bit seed -> the same id; the
+        // initiator's id-keyed map then collapsed two endpoints and one mirror
+        // never connected -- an intermittent wedge that scaled with the number
+        // of concurrent setups.
+        //
+        // Seed one 64-bit engine ONCE from full-width entropy and serialize the
+        // draws. randomId() runs only at setup/reconnect, never on the hot path,
+        // so the lock is uncontended in steady state.
+        static std::mutex mu;
+        static std::mt19937_64 engine = []
+        {
+            std::random_device rd;
+            std::seed_seq seq{rd(), rd(), rd(), rd(), rd(), rd(), rd(), rd()};
+            return std::mt19937_64{seq};
+        }();
+        std::scoped_lock const lock{mu};
+        return std::uniform_int_distribution<Endpoint::Id>{}(engine);
     }
 
     Endpoint::Id Endpoint::idFromFID(::fid_t fid) noexcept
