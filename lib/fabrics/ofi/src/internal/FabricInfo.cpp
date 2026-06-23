@@ -174,13 +174,10 @@ namespace mxl::lib::fabrics::ofi
 
         // hints: add condition to append FI_HMEM capability if needed!
 
-        // libfabric performs lazy, process-global provider initialization on the
-        // first fi_getinfo. Concurrent first calls from several target/initiator
-        // setups can race that init and intermittently fail (or hand back a
-        // malformed fi_info) for one caller. fi_getinfo only runs at setup, so
-        // serialize it -- the steady-state hot path never touches this.
-        static std::mutex getInfoMutex;
-        std::scoped_lock const getInfoLock{getInfoMutex};
+        // Serialize ::fi_getinfo: its per-provider getinfo callbacks run unlocked
+        // (only fi_ini itself is mutex-protected upstream). Defensive, setup-only.
+        static auto getInfoMutex = std::mutex{};
+        auto const getInfoLock = std::scoped_lock{getInfoMutex};
 
         fiCall(::fi_getinfo, "Failed to get provider information", fiVersion(), node, service, FI_SOURCE, hints.raw(), &info);
 
