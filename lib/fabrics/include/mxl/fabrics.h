@@ -188,6 +188,27 @@ extern "C"
     mxlStatus mxlFabricsTargetReadGrain(mxlFabricsTarget in_target, uint16_t in_timeoutMs, uint64_t* out_entryIndex);
 
     /**
+     * Non-blocking accessor that drains several flow grains in a single call.
+     *
+     * Drains up to \p in_maxCount of the grains that are currently available on the target's completion queue, writing their indices into
+     * \p out_grainIndices and the number drained into \p out_count. This is the recommended primitive for the "drain" phase of a two-phase
+     * receive loop: it empties the completion queue promptly (avoiding overflow) while leaving the potentially expensive per-grain processing
+     * to the caller. See the "Receiving grains" section of docs/Fabrics.md.
+     *
+     * Like mxlFabricsTargetReadGrainNonBlocking(), this also drives the connection forward, so it must be invoked continuously for connection
+     * establishment and ongoing progress.
+     *
+     * \param in_target A valid fabrics target.
+     * \param out_grainIndices A caller-owned array of at least \p in_maxCount elements that receives the drained grain indices.
+     * \param in_maxCount The capacity of \p out_grainIndices; must be greater than zero.
+     * \param out_count Set to the number of grain indices written (0 to \p in_maxCount).
+     * \return MXL_STATUS_OK if at least one grain was drained, MXL_ERR_NOT_READY if none were available at the time of the call (and the call
+     * should be retried), or MXL_ERR_INVALID_ARG if any pointer is null or \p in_maxCount is zero. \see mxlStatus
+     */
+    MXL_EXPORT
+    mxlStatus mxlFabricsTargetReadGrainsNonBlocking(mxlFabricsTarget in_target, uint64_t* out_grainIndices, size_t in_maxCount, size_t* out_count);
+
+    /**
      * Non-blocking accessor for a flow sample.
      * \param in_target A valid fabrics target
      * \param out_headIndex The head index of the samples that were written, if any.
