@@ -11,6 +11,7 @@
 #include <mxl-internal/FlowReader.hpp>
 #include <mxl-internal/Instance.hpp>
 #include <mxl-internal/Logging.hpp>
+#include <picojson/picojson.h>
 #include <rdma/fabric.h>
 #include <mxl/mxl.h>
 #include "internal/Exception.hpp"
@@ -22,7 +23,6 @@
 #include "internal/TargetInfo.hpp"
 #include "mxl/flow.h"
 #include "mxl/platform.h"
-#include <picojson/picojson.h>
 
 namespace
 {
