@@ -21,7 +21,7 @@ namespace mxl::lib::fabrics::ofi
     CompletionQueue::Attributes CompletionQueue::Attributes::defaults()
     {
         CompletionQueue::Attributes attr{};
-        attr.size = 8;                    // default size, this should be parameterized
+        attr.size = DEFAULT_SIZE;
         attr.waitObject = FI_WAIT_UNSPEC; // TODO: EFA will require no wait object
         return attr;
     }

@@ -24,7 +24,7 @@ namespace mxl::lib::fabrics::ofi
          * \return A pair consisting of the newly setup RDMTarget and its associated TargetInfo.
          */
         [[nodiscard]]
-        static std::pair<std::unique_ptr<RDMTarget>, std::unique_ptr<TargetInfo>> setup(mxlFabricsTargetConfig const& config);
+        static std::pair<std::unique_ptr<RDMTarget>, std::unique_ptr<TargetInfo>> setup(mxlFabricsTargetConfig const& config, std::size_t cqDepth = 0);
 
         /** \copydoc Target::read()
          */
