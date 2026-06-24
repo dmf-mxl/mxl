@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "FabricInfo.hpp"
-#include <mutex>
 #include <rdma/fabric.h>
 #include <rdma/fi_errno.h>
 #include "Exception.hpp"
@@ -173,11 +172,6 @@ namespace mxl::lib::fabrics::ofi
         hints->fabric_attr->prov_name = strdup(fmt::to_string(provider).c_str());
 
         // hints: add condition to append FI_HMEM capability if needed!
-
-        // Serialize ::fi_getinfo: its per-provider getinfo callbacks run unlocked
-        // (only fi_ini itself is mutex-protected upstream). Defensive, setup-only.
-        static auto getInfoMutex = std::mutex{};
-        auto const getInfoLock = std::scoped_lock{getInfoMutex};
 
         fiCall(::fi_getinfo, "Failed to get provider information", fiVersion(), node, service, FI_SOURCE, hints.raw(), &info);
 

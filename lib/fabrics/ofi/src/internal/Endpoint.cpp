@@ -33,12 +33,7 @@ namespace mxl::lib::fabrics::ofi
     {
         // Use a global static random engine to prevent endpoint id collisions.
         static auto mu = std::mutex{};
-        static auto engine = []
-        {
-            std::random_device rd;
-            std::seed_seq seq{rd(), rd(), rd(), rd(), rd(), rd(), rd(), rd()};
-            return std::mt19937_64{seq};
-        }();
+        static auto engine = std::mt19937_64{std::random_device{}()};
         auto const lock = std::scoped_lock{mu};
         return std::uniform_int_distribution<Endpoint::Id>{}(engine);
     }
