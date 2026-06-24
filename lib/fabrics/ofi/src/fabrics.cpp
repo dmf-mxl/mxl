@@ -251,6 +251,37 @@ mxlStatus mxlFabricsTargetReadGrain(mxlFabricsTarget in_target, uint16_t in_time
 }
 
 extern "C" MXL_EXPORT
+mxlStatus mxlFabricsTargetReadGrainsNonBlocking(mxlFabricsTarget in_target, uint64_t* out_grainIndices, size_t in_maxCount, size_t* out_count)
+{
+    if ((in_target == nullptr) || (out_grainIndices == nullptr) || (out_count == nullptr) || (in_maxCount == 0))
+    {
+        return MXL_ERR_INVALID_ARG;
+    }
+
+    return ofi::try_run(
+        [&]()
+        {
+            auto* target = ofi::TargetWrapper::fromAPI(in_target);
+
+            size_t drained = 0;
+            while (drained < in_maxCount)
+            {
+                auto res = target->readGrain();
+                if (!res)
+                {
+                    // Completion queue is empty for now; stop draining.
+                    break;
+                }
+                out_grainIndices[drained++] = res->grainIndex;
+            }
+
+            *out_count = drained;
+            return (drained == 0) ? MXL_ERR_NOT_READY : MXL_STATUS_OK;
+        },
+        "Failed to drain new grains");
+}
+
+extern "C" MXL_EXPORT
 mxlStatus mxlFabricsTargetReadSamplesNonBlocking(mxlFabricsTarget in_target, uint64_t* out_headIndex, size_t* out_count)
 {
     if ((in_target == nullptr) || (out_headIndex == nullptr) || (out_count == nullptr))
