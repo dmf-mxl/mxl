@@ -107,6 +107,6 @@ namespace mxl::lib::fabrics::ofi
         std::unique_ptr<IngressProtocol> _proto;
         std::shared_ptr<Domain> _domain;
         std::size_t _cqDepth; /**< Completion queue depth for accepted connections. */
-        State _state; /**< The current state of the RCTarget. */
+        State _state;         /**< The current state of the RCTarget. */
     };
 }
