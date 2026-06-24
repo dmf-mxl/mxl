@@ -29,7 +29,7 @@ namespace mxl::lib::fabrics::ofi
          * \return A pair consisting of the newly setup RCTarget and its associated TargetInfo.
          */
         [[nodiscard]]
-        static std::pair<std::unique_ptr<RCTarget>, std::unique_ptr<TargetInfo>> setup(mxlFabricsTargetConfig const& config);
+        static std::pair<std::unique_ptr<RCTarget>, std::unique_ptr<TargetInfo>> setup(mxlFabricsTargetConfig const& config, std::size_t cqDepth = 0);
 
         /** \copydoc Target::readGrain()
          */
@@ -88,8 +88,9 @@ namespace mxl::lib::fabrics::ofi
          *
          * \param domain The domain to create the RCTarget on.
          * \param pep The passive endpoint to use for listening for incoming connection requests.
+         * \param cqDepth The depth of the completion queue created for the accepted connection.
          */
-        RCTarget(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain);
+        RCTarget(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain, std::size_t cqDepth);
 
         /** \brief Internal method to drive progress based on the current state.
          *
@@ -105,6 +106,7 @@ namespace mxl::lib::fabrics::ofi
     private:
         std::unique_ptr<IngressProtocol> _proto;
         std::shared_ptr<Domain> _domain;
+        std::size_t _cqDepth; /**< Completion queue depth for accepted connections. */
         State _state; /**< The current state of the RCTarget. */
     };
 }

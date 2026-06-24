@@ -129,8 +129,9 @@ namespace mxl::lib::fabrics::ofi
          * based on the provided configuration.
          *
          * \param config The configuration to use for setting up the target.
+         * \param cqDepth The completion queue depth to use, or 0 for the implementation default.
          */
-        std::unique_ptr<TargetInfo> setup(mxlFabricsTargetConfig const& config);
+        std::unique_ptr<TargetInfo> setup(mxlFabricsTargetConfig const& config, std::size_t cqDepth = 0);
 
     private:
         std::unique_ptr<Target> _inner; /**< The underlying target implementation. */
