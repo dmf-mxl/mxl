@@ -388,16 +388,21 @@ in all cases completions are lost.
 Decouple **draining** the CQ from **processing** the grains. Each loop iteration
 first drains every currently-available completion (cheap, bounded by the burst
 size), enqueuing just the grain indices, and then performs at most a bounded
-amount of the expensive per-grain work:
+amount of the expensive per-grain work.
+
+`mxlFabricsTargetReadGrainsNonBlocking()` performs the whole drain in a single
+call: it writes up to `cap` of the currently-available grain indices into a
+caller-owned array and reports how many it produced, returning `MXL_ERR_NOT_READY`
+only when the CQ was empty:
 
 ```c
-// Phase 1 (hot): drain ALL currently-available completions. Cheap per item.
-for (;;) {
-    uint64_t index;
-    mxlStatus s = mxlFabricsTargetReadGrainNonBlocking(target, &index);
-    if (s == MXL_ERR_NOT_READY) break;     // CQ is empty for now
-    if (s != MXL_STATUS_OK) { handle_error(s); break; }
-    queue_push(&work, index);              // enqueue, do not process here
+// Phase 1 (hot): drain ALL currently-available completions in ONE call.
+uint64_t indices[64];
+size_t   count = 0;
+mxlStatus s = mxlFabricsTargetReadGrainsNonBlocking(target, indices, 64, &count);
+if (s != MXL_STATUS_OK && s != MXL_ERR_NOT_READY) { handle_error(s); }
+for (size_t i = 0; i < count; ++i) {
+    queue_push(&work, indices[i]);         // enqueue, do not process here
 }
 
 // Phase 2 (warm): process a bounded number of queued grains.
@@ -408,8 +413,11 @@ for (int n = 0; n < MAX_PER_ITER && queue_pop(&work, &index); ++n) {
 
 Because Phase 1 never blocks on the heavy work, the CQ is emptied promptly even
 when processing temporarily falls behind; the backlog lives in the application's
-own queue, which is not size-constrained by the NIC. The same structure works
-for samples with `mxlFabricsTargetReadSamplesNonBlocking()`.
+own queue, which is not size-constrained by the NIC. If `cap` is smaller than the
+number of queued completions, the next iteration simply drains the remainder. The
+single-grain `mxlFabricsTargetReadGrainNonBlocking()` can still be used to build
+the same loop by hand, and the same structure works for samples with
+`mxlFabricsTargetReadSamplesNonBlocking()`.
 
 ### 11.3 Sizing the completion queue
 
