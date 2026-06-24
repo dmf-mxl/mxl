@@ -26,7 +26,7 @@ namespace mxl::lib::fabrics::ofi
         {
         public:
             /** \brief The completion-queue depth used when no explicit depth is requested. */
-            static constexpr std::size_t DEFAULT_SIZE = 8;
+            constexpr static std::size_t DEFAULT_SIZE = 8;
 
             /** \brief Returns the a CompletionQueueAttr with all of its attributes
              * set to reasonable defaults.
