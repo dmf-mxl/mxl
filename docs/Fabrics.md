@@ -345,3 +345,96 @@ The currently implemented feature set covers the optimal paths for both discrete
 - **Continuous flow (samples):** Transferred using Remote Write (RMA) with scatter-gather on the source side, landing data into a bouncing buffer on the target. Upon completion, the target unpacks the bouncing buffer back into the non-contiguous per-channel buffers of the MXL audio flow.
 
 Send/Recv and tag-matching fallback paths are not yet implemented. Send/Recv without tag matching requires a bouncing buffer and an extra copy, while tag matching requires explicit synchronization between initiator and target and may not benefit from hardware acceleration depending on the NIC. Given these trade-offs and that Remote Write covers the primary use cases, the fallback paths have been deferred.
+
+## 11. Receiving grains: draining the completion queue
+
+A target receives grains by repeatedly calling `mxlFabricsTargetReadGrainNonBlocking()`
+(or its blocking variant). Each call reads **one** completion from the target's
+completion queue (CQ), performs the small amount of bookkeeping needed to make
+the grain visible to local `FlowReader`s, and returns the grain index.
+
+### 11.1 The problem: the CQ can overflow
+
+The CQ has a bounded depth. Every grain written by an initiator produces one
+completion, which stays in the CQ until the application consumes it with a
+`Read…` call. If completions are produced faster than the application consumes
+them, the CQ fills up.
+
+This is easy to hit on a high-frame-rate or many-stream receiver where the
+per-grain application work (decoding, writing to disk, updating statistics) takes
+longer than the grain inter-arrival time. A naive loop that does the expensive
+work inline, one grain per iteration, lets completions accumulate:
+
+```c
+// Anti-pattern: heavy work inline, one completion per iteration.
+while (running) {
+    uint64_t index;
+    mxlStatus s = mxlFabricsTargetReadGrain(target, 200 /*ms*/, &index);
+    if (s == MXL_ERR_NOT_READY || s == MXL_ERR_TIMEOUT) continue;
+    if (s != MXL_STATUS_OK) break;
+
+    process_grain(index); // decode + disk + stats: slower than 1/fps
+}
+```
+
+When the CQ overflows, the underlying provider reports an error completion. On
+connection-oriented providers (e.g. `verbs`) this surfaces as a fatal error on
+the queue pair, which tears the connection down — the transfer stops and the
+target must be re-established. On other providers the exact symptom differs, but
+in all cases completions are lost.
+
+### 11.2 The pattern: two-phase drain
+
+Decouple **draining** the CQ from **processing** the grains. Each loop iteration
+first drains every currently-available completion (cheap, bounded by the burst
+size), enqueuing just the grain indices, and then performs at most a bounded
+amount of the expensive per-grain work:
+
+```c
+// Phase 1 (hot): drain ALL currently-available completions. Cheap per item.
+for (;;) {
+    uint64_t index;
+    mxlStatus s = mxlFabricsTargetReadGrainNonBlocking(target, &index);
+    if (s == MXL_ERR_NOT_READY) break;     // CQ is empty for now
+    if (s != MXL_STATUS_OK) { handle_error(s); break; }
+    queue_push(&work, index);              // enqueue, do not process here
+}
+
+// Phase 2 (warm): process a bounded number of queued grains.
+for (int n = 0; n < MAX_PER_ITER && queue_pop(&work, &index); ++n) {
+    process_grain(index);                  // decode + disk + stats
+}
+```
+
+Because Phase 1 never blocks on the heavy work, the CQ is emptied promptly even
+when processing temporarily falls behind; the backlog lives in the application's
+own queue, which is not size-constrained by the NIC. The same structure works
+for samples with `mxlFabricsTargetReadSamplesNonBlocking()`.
+
+### 11.3 Sizing the completion queue
+
+The two-phase loop tolerates bursts, but the CQ must still be deep enough to hold
+the completions that can arrive between two Phase-1 drains. As a rule of thumb:
+
+```
+cqDepth  >=  peak completions per drain interval
+         ~=  streams_on_this_target  x  ceil(drain_interval / grain_interval)
+```
+
+where `grain_interval = 1 / fps`. Add headroom for jitter. For example, a single
+1080p60 stream drained every few milliseconds needs only a small depth, while a
+target aggregating many streams, or one whose loop occasionally stalls for tens
+of milliseconds, needs a correspondingly deeper queue.
+
+The depth is configured per target through the `options` argument of
+`mxlFabricsTargetSetup()`:
+
+```c
+// Size the target completion queue explicitly.
+mxlFabricsTargetSetup(target, &config, "{\"cqDepth\": 256}", &targetInfo);
+```
+
+When the option is omitted, a small implementation default is used, which is
+adequate for low-rate, promptly-drained receivers but should be raised for the
+high-rate / many-stream / slow-processing cases described above. `cqDepth`
+applies to target endpoints; it is ignored for initiators.

@@ -18,7 +18,7 @@
 namespace mxl::lib::fabrics::ofi
 {
 
-    std::pair<std::unique_ptr<RCTarget>, std::unique_ptr<TargetInfo>> RCTarget::setup(mxlFabricsTargetConfig const& config)
+    std::pair<std::unique_ptr<RCTarget>, std::unique_ptr<TargetInfo>> RCTarget::setup(mxlFabricsTargetConfig const& config, std::size_t cqDepth)
     {
         // Both fields may arrive as null at this call site — libfabric's FI_SOURCE path
         // accepts that and treats it as "bind to any local address". fmt's `{}` formatter
@@ -63,21 +63,24 @@ namespace mxl::lib::fabrics::ofi
         auto proto = selectIngressProtocol(mxlRegions.dataLayout(), mxlRegions.regions(), mxlRegions.maxSyncBatchSize());
         auto targetInfo = std::make_unique<TargetInfo>(pep.id(), pep.localAddress(), proto->registerMemory(domain), proto->bounceBufferInfo());
 
+        auto const cqSize = (cqDepth != 0) ? cqDepth : CompletionQueue::Attributes::DEFAULT_SIZE;
+
         // Helper struct to enable the std::make_unique function to access the private constructor of this class.
         struct MakeUniqueEnabler : RCTarget
         {
-            MakeUniqueEnabler(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain)
-                : RCTarget(std::move(pep), std::move(proto), std::move(domain))
+            MakeUniqueEnabler(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain, std::size_t cqDepth)
+                : RCTarget(std::move(pep), std::move(proto), std::move(domain), cqDepth)
             {}
         };
 
         // Return the constructed RCTarget and associated TargetInfo for remote peers to connect.
-        return {std::make_unique<MakeUniqueEnabler>(std::move(pep), std::move(proto), std::move(domain)), std::move(targetInfo)};
+        return {std::make_unique<MakeUniqueEnabler>(std::move(pep), std::move(proto), std::move(domain), cqSize), std::move(targetInfo)};
     }
 
-    RCTarget::RCTarget(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain)
+    RCTarget::RCTarget(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain, std::size_t cqDepth)
         : _proto(std::move(proto))
         , _domain(std::move(domain))
+        , _cqDepth(cqDepth)
         , _state(WaitForConnectionRequest{std::move(pep)})
     {}
 
@@ -157,7 +160,9 @@ namespace mxl::lib::fabrics::ofi
                         MXL_DEBUG("Connection request received, creating endpoint for remote address: {}", event->connReq().info().raw()->dest_addr);
                         auto endpoint = Endpoint::create(_domain, state.pep.id(), event->connReq().info());
 
-                        auto cq = CompletionQueue::open(_domain, CompletionQueue::Attributes::defaults());
+                        auto cqAttr = CompletionQueue::Attributes::defaults();
+                        cqAttr.size = _cqDepth;
+                        auto cq = CompletionQueue::open(_domain, cqAttr);
                         endpoint.bind(cq, FI_RECV);
 
                         auto eq = EventQueue::open(_domain->fabric(), EventQueue::Attributes::defaults());
