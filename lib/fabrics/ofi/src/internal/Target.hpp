@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -12,6 +13,21 @@
 
 namespace mxl::lib::fabrics::ofi
 {
+
+    /** \brief Provider-independent tuning options for target setup.
+     *
+     * Groups the optional knobs that influence how a target is created so that
+     * new tunables can be added without changing the setup() signatures.
+     */
+    struct TargetSetupOptions
+    {
+        /** \brief Desired completion-queue depth.
+         *
+         * When left empty the implementation default
+         * (CompletionQueue::Attributes::DEFAULT_SIZE) is used.
+         */
+        std::optional<std::size_t> cqDepth;
+    };
 
     /** \brief Abstract base class for Target implementations.
      */
@@ -129,9 +145,9 @@ namespace mxl::lib::fabrics::ofi
          * based on the provided configuration.
          *
          * \param config The configuration to use for setting up the target.
-         * \param cqDepth The completion queue depth to use, or 0 for the implementation default.
+         * \param options Optional tuning parameters (e.g. completion queue depth).
          */
-        std::unique_ptr<TargetInfo> setup(mxlFabricsTargetConfig const& config, std::size_t cqDepth = 0);
+        std::unique_ptr<TargetInfo> setup(mxlFabricsTargetConfig const& config, TargetSetupOptions const& options = {});
 
     private:
         std::unique_ptr<Target> _inner; /**< The underlying target implementation. */

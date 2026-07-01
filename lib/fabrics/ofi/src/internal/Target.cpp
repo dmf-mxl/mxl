@@ -75,7 +75,7 @@ namespace mxl::lib::fabrics::ofi
         return _inner->readSamplesBlocking(timeout);
     }
 
-    std::unique_ptr<TargetInfo> TargetWrapper::setup(mxlFabricsTargetConfig const& config, std::size_t cqDepth)
+    std::unique_ptr<TargetInfo> TargetWrapper::setup(mxlFabricsTargetConfig const& config, TargetSetupOptions const& options)
     {
         if (_inner)
         {
@@ -88,7 +88,7 @@ namespace mxl::lib::fabrics::ofi
             case MXL_FABRICS_PROVIDER_TCP: [[fallthrough]];
             case MXL_FABRICS_PROVIDER_VERBS:
             {
-                auto [target, info] = RCTarget::setup(config, cqDepth);
+                auto [target, info] = RCTarget::setup(config, options);
                 _inner = std::move(target);
                 return std::move(info);
             }
@@ -96,7 +96,7 @@ namespace mxl::lib::fabrics::ofi
             case MXL_FABRICS_PROVIDER_SHM: [[fallthrough]];
             case MXL_FABRICS_PROVIDER_EFA:
             {
-                auto [target, info] = RDMTarget::setup(config, cqDepth);
+                auto [target, info] = RDMTarget::setup(config, options);
                 _inner = std::move(target);
                 return std::move(info);
             }

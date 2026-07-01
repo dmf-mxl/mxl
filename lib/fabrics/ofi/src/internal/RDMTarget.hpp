@@ -25,7 +25,7 @@ namespace mxl::lib::fabrics::ofi
          */
         [[nodiscard]]
         static std::pair<std::unique_ptr<RDMTarget>, std::unique_ptr<TargetInfo>> setup(mxlFabricsTargetConfig const& config,
-            std::size_t cqDepth = 0);
+            TargetSetupOptions const& options = {});
 
         /** \copydoc Target::read()
          */

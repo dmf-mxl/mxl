@@ -26,10 +26,12 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Set up a fresh RCTarget and its associated TargetInfo based on the given configuration.
          *
          * \param config The configuration to use for setting up the target.
+         * \param options Optional tuning parameters (e.g. completion queue depth).
          * \return A pair consisting of the newly setup RCTarget and its associated TargetInfo.
          */
         [[nodiscard]]
-        static std::pair<std::unique_ptr<RCTarget>, std::unique_ptr<TargetInfo>> setup(mxlFabricsTargetConfig const& config, std::size_t cqDepth = 0);
+        static std::pair<std::unique_ptr<RCTarget>, std::unique_ptr<TargetInfo>> setup(mxlFabricsTargetConfig const& config,
+            TargetSetupOptions const& options = {});
 
         /** \copydoc Target::readGrain()
          */
