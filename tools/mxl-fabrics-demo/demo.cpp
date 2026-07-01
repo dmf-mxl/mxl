@@ -612,85 +612,58 @@ public:
     mxlStatus runDiscrete()
     {
         mxlGrainInfo grainInfo;
+        std::uint64_t grainIndex = 0;
         std::uint8_t* dummyPayload;
+        mxlStatus status;
 
-        // Phase 1 drains up to this many completions per iteration before doing the (potentially slower) per-grain commit work in Phase 2.
-        // The drained indices are buffered here so the completion queue is emptied promptly even when Phase 2 temporarily falls behind.
-        constexpr std::size_t maxDrainPerIteration = 64;
-        std::uint64_t grainIndices[maxDrainPerIteration];
-
+        // This demo is a pure proxy: it only commits each grain and does no heavy per-grain processing, so draining and committing one grain
+        // per iteration keeps the completion queue empty and is all that is required here. Applications that do slower per-grain work (decoding,
+        // writing to disk, updating statistics) should instead size the target completion queue via the "cqDepth" setup option and adopt the
+        // two-phase drain pattern. See the "Receiving grains" section of docs/Fabrics.md.
         while (!g_exit_requested)
         {
-            // Phase 1 (hot): drain every currently-available completion in a single call, recording just the grain indices. This is cheap and
-            // bounded by the burst size, so the completion queue never overflows while the heavier Phase 2 work proceeds.
-            std::size_t count = 0;
-            auto status = mxlFabricsTargetReadGrainsNonBlocking(_target, grainIndices, maxDrainPerIteration, &count);
-
-            if (status == MXL_ERR_INTERRUPTED)
+            status = targetReadGrain(&grainIndex, std::chrono::milliseconds(200));
+            if (status == MXL_ERR_TIMEOUT)
             {
-                return MXL_STATUS_OK;
+                // No completion before a timeout was triggered, most likely a problem upstream.
+                MXL_WARN("wait for new grain timeout, most likely there is a problem upstream.");
+                continue;
             }
             else if (status == MXL_ERR_NOT_READY)
             {
-                // Nothing is queued right now. Park briefly until the next completion (or a timeout) instead of busy-spinning, then handle it.
-                std::uint64_t grainIndex = 0;
-                auto waitStatus = targetReadGrain(&grainIndex, std::chrono::milliseconds(200));
-                if (waitStatus == MXL_ERR_TIMEOUT)
-                {
-                    // No completion before a timeout was triggered, most likely a problem upstream.
-                    MXL_WARN("wait for new grain timeout, most likely there is a problem upstream.");
-                    continue;
-                }
-                else if (waitStatus == MXL_ERR_NOT_READY)
-                {
-                    continue;
-                }
-                else if (waitStatus == MXL_ERR_INTERRUPTED)
-                {
-                    return MXL_STATUS_OK;
-                }
-                else if (waitStatus != MXL_STATUS_OK)
-                {
-                    MXL_ERROR("Failed to wait for grain with status '{}'", static_cast<int>(waitStatus));
-                    return waitStatus;
-                }
-
-                grainIndices[0] = grainIndex;
-                count = 1;
+                continue;
+            }
+            else if (status == MXL_ERR_INTERRUPTED)
+            {
+                return MXL_STATUS_OK;
             }
             else if (status != MXL_STATUS_OK)
             {
-                MXL_ERROR("Failed to drain grains with status '{}'", static_cast<int>(status));
+                MXL_ERROR("Failed to wait for grain with status '{}'", static_cast<int>(status));
                 return status;
             }
 
-            // Phase 2 (warm): process the drained grains. The backlog lives in our own array, not in the NIC's completion queue.
-            for (std::size_t i = 0; i < count; ++i)
+            // Here we open so that we can commit, we are not going to modify the grain as it was already modified by the initiator.
+            status = mxlFlowWriterOpenGrain(_writer, grainIndex, &grainInfo, &dummyPayload);
+            if (status != MXL_STATUS_OK)
             {
-                auto const grainIndex = grainIndices[i];
-
-                // Here we open so that we can commit, we are not going to modify the grain as it was already modified by the initiator.
-                status = mxlFlowWriterOpenGrain(_writer, grainIndex, &grainInfo, &dummyPayload);
-                if (status != MXL_STATUS_OK)
-                {
-                    MXL_ERROR("Failed to open grain with status '{}'", static_cast<int>(status));
-                    return status;
-                }
-
-                // GrainInfo and media payload was already written by the remote endpoint, we simply commit!.
-                status = mxlFlowWriterCommitGrain(_writer, &grainInfo);
-                if (status != MXL_STATUS_OK)
-                {
-                    MXL_ERROR("Failed to commit grain with status '{}'", static_cast<int>(status));
-                    return status;
-                }
-
-                MXL_DEBUG("Committed grain with index={} current index={} validSlices={} flags={}",
-                    grainIndex,
-                    mxlGetCurrentIndex(&_configInfo.common.grainRate),
-                    grainInfo.validSlices,
-                    grainInfo.flags);
+                MXL_ERROR("Failed to open grain with status '{}'", static_cast<int>(status));
+                return status;
             }
+
+            // GrainInfo and media payload was already written by the remote endpoint, we simply commit!.
+            status = mxlFlowWriterCommitGrain(_writer, &grainInfo);
+            if (status != MXL_STATUS_OK)
+            {
+                MXL_ERROR("Failed to commit grain with status '{}'", static_cast<int>(status));
+                return status;
+            }
+
+            MXL_DEBUG("Committed grain with index={} current index={} validSlices={} flags={}",
+                grainIndex,
+                mxlGetCurrentIndex(&_configInfo.common.grainRate),
+                grainInfo.validSlices,
+                grainInfo.flags);
         }
 
         return MXL_STATUS_OK;

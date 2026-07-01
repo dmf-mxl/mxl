@@ -18,7 +18,8 @@
 namespace mxl::lib::fabrics::ofi
 {
 
-    std::pair<std::unique_ptr<RCTarget>, std::unique_ptr<TargetInfo>> RCTarget::setup(mxlFabricsTargetConfig const& config, std::size_t cqDepth)
+    std::pair<std::unique_ptr<RCTarget>, std::unique_ptr<TargetInfo>> RCTarget::setup(mxlFabricsTargetConfig const& config,
+        TargetSetupOptions const& options)
     {
         // Both fields may arrive as null at this call site — libfabric's FI_SOURCE path
         // accepts that and treats it as "bind to any local address". fmt's `{}` formatter
@@ -63,7 +64,7 @@ namespace mxl::lib::fabrics::ofi
         auto proto = selectIngressProtocol(mxlRegions.dataLayout(), mxlRegions.regions(), mxlRegions.maxSyncBatchSize());
         auto targetInfo = std::make_unique<TargetInfo>(pep.id(), pep.localAddress(), proto->registerMemory(domain), proto->bounceBufferInfo());
 
-        auto const cqSize = (cqDepth != 0) ? cqDepth : CompletionQueue::Attributes::DEFAULT_SIZE;
+        auto const cqSize = options.cqDepth.value_or(CompletionQueue::Attributes::DEFAULT_SIZE);
 
         // Helper struct to enable the std::make_unique function to access the private constructor of this class.
         struct MakeUniqueEnabler : RCTarget
