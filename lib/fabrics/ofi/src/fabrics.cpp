@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <memory>
+#include <optional>
 #include <mxl-internal/FlowReader.hpp>
 #include <mxl-internal/Instance.hpp>
 #include <mxl-internal/Logging.hpp>
@@ -27,16 +28,16 @@
 namespace
 {
     /// Parse the optional target setup options JSON and return the requested completion
-    /// queue depth, or 0 (use the implementation default) when not specified.
+    /// queue depth, or std::nullopt (use the implementation default) when not specified.
     ///
     /// Recognized form: {"cqDepth": <positive integer>}
-    std::size_t parseCqDepthOption(char const* options)
+    std::optional<std::size_t> parseCqDepthOption(char const* options)
     {
         using mxl::lib::fabrics::ofi::Exception;
 
         if ((options == nullptr) || (options[0] == '\0'))
         {
-            return 0;
+            return std::nullopt;
         }
 
         auto value = picojson::value{};
@@ -50,7 +51,7 @@ namespace
         auto const it = root.find("cqDepth");
         if (it == root.end())
         {
-            return 0;
+            return std::nullopt;
         }
         if (!it->second.is<double>())
         {
@@ -193,11 +194,11 @@ mxlStatus mxlFabricsTargetSetup(mxlFabricsTarget in_target, mxlFabricsTargetConf
     return ofi::try_run(
         [&]()
         {
-            auto const cqDepth = parseCqDepthOption(options);
+            auto const setupOptions = ofi::TargetSetupOptions{.cqDepth = parseCqDepthOption(options)};
 
             // Set up the target, release the returned unique_ptr, convert to external API type, assign the the pointer location
             // passed by the user.
-            *out_info = ofi::TargetWrapper::fromAPI(in_target)->setup(*in_config, cqDepth).release()->toAPI();
+            *out_info = ofi::TargetWrapper::fromAPI(in_target)->setup(*in_config, setupOptions).release()->toAPI();
 
             return MXL_STATUS_OK;
         },
@@ -248,37 +249,6 @@ mxlStatus mxlFabricsTargetReadGrain(mxlFabricsTarget in_target, uint16_t in_time
             return MXL_STATUS_OK;
         },
         "Failed to wait for new grain");
-}
-
-extern "C" MXL_EXPORT
-mxlStatus mxlFabricsTargetReadGrainsNonBlocking(mxlFabricsTarget in_target, uint64_t* out_grainIndices, size_t in_maxCount, size_t* out_count)
-{
-    if ((in_target == nullptr) || (out_grainIndices == nullptr) || (out_count == nullptr) || (in_maxCount == 0))
-    {
-        return MXL_ERR_INVALID_ARG;
-    }
-
-    return ofi::try_run(
-        [&]()
-        {
-            auto* target = ofi::TargetWrapper::fromAPI(in_target);
-
-            size_t drained = 0;
-            while (drained < in_maxCount)
-            {
-                auto res = target->readGrain();
-                if (!res)
-                {
-                    // Completion queue is empty for now; stop draining.
-                    break;
-                }
-                out_grainIndices[drained++] = res->grainIndex;
-            }
-
-            *out_count = drained;
-            return (drained == 0) ? MXL_ERR_NOT_READY : MXL_STATUS_OK;
-        },
-        "Failed to drain new grains");
 }
 
 extern "C" MXL_EXPORT
