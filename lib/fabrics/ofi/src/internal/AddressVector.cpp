@@ -44,14 +44,14 @@ namespace mxl::lib::fabrics::ofi
         struct MakeSharedEnabler : public AddressVector
         {
             MakeSharedEnabler(fid_av* raw, std::shared_ptr<Domain> domain)
-                : AddressVector(raw, domain)
+                : AddressVector(raw, std::move(domain))
             {}
         };
 
         return std::make_shared<MakeSharedEnabler>(raw, domain);
     }
 
-    fi_addr_t AddressVector::insert(FabricAddress const& addr)
+    fi_addr_t AddressVector::insert(RawFabricAddress const& addr)
     {
         ::fi_addr_t fiAddr{FI_ADDR_UNSPEC};
 
@@ -59,7 +59,7 @@ namespace mxl::lib::fabrics::ofi
         {
             throw Exception::internal("Failed to insert address into the address vector. {}", ::fi_strerror(ret));
         }
-        MXL_INFO("Remote endpoint address \"{}\" was added to the Address Vector with fi_addr \"{}\"", addrToString(addr), fiAddr);
+        MXL_INFO("Remote endpoint address {} was added to the address vector", addrToString(addr));
 
         return fiAddr;
     }
@@ -69,7 +69,7 @@ namespace mxl::lib::fabrics::ofi
         fiCall(::fi_av_remove, "Failed to remove address from address vector", _raw, &addr, 1, 0);
     }
 
-    std::string AddressVector::addrToString(FabricAddress const& addr) const
+    std::string AddressVector::addrToString(RawFabricAddress const& addr) const
     {
         std::string s;
         std::size_t len = 0;

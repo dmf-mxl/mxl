@@ -6,9 +6,11 @@
 #include <rdma/fabric.h>
 #include <rdma/fi_errno.h>
 #include "Exception.hpp"
+#include "FabricAddress.hpp"
 #include "FabricVersion.hpp"
 #include "Format.hpp" // IWYU pragma: keep; Includes template specializations of fmt::formatter for our types
 #include "Provider.hpp"
+#include "ProviderConfig.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
@@ -158,23 +160,65 @@ namespace mxl::lib::fabrics::ofi
         return _raw->tx_attr->iov_limit;
     }
 
-    FabricInfoList FabricInfoList::get(char const* node, char const* service, Provider provider, std::uint64_t caps, ::fi_ep_type epType)
+    ::fi_ep_type FabricInfoView::endpointType() const noexcept
     {
-        ::fi_info* info;
+        return _raw->ep_attr->type;
+    }
+
+    FabricInfoList FabricInfoList::get()
+    {
+        auto info = std::add_pointer_t<::fi_info>{nullptr};
+        fiCall(::fi_getinfo, "Failed to get provider information", fiVersion(), nullptr, nullptr, 0, nullptr, &info);
+        return FabricInfoList{info};
+    }
+
+    FabricInfoList FabricInfoList::getSourceInterfaces(ProviderConfig const& providerConfig, std::optional<FabricAddress> const& sourceAddress)
+    {
+        auto info = std::add_pointer_t<::fi_info>{nullptr};
         auto hints = FabricInfo::empty();
 
-        /// These are the memory registration modes we currently support
-        hints->domain_attr->mr_mode = FI_MR_LOCAL | FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_HMEM;
+        auto node = std::string{};
+        auto service = std::string{};
+        auto nodeStringBuffer = std::add_pointer_t<char const>{nullptr};
+        auto serviceStringBuffer = std::add_pointer_t<char const>{nullptr};
 
-        hints->mode = 0;
-        hints->caps = caps;
-        hints->ep_attr->type = epType;
-        hints->fabric_attr->prov_name = strdup(fmt::to_string(provider).c_str());
+        // Provider name is owned by the fi_info object and must be ::strdupe'd here.
+        hints->fabric_attr->prov_name = ::strdup(providerConfig.getProviderName().c_str());
 
-        // hints: add condition to append FI_HMEM capability if needed!
+        // Set hints defined in the provider config
+        hints->domain_attr->mr_mode = providerConfig.getSupportedMemoryRegistrationModes();
+        hints->ep_attr->type = providerConfig.getEndpointType();
+        hints->caps = providerConfig.getCaps();
 
-        fiCall(::fi_getinfo, "Failed to get provider information", fiVersion(), node, service, FI_SOURCE, hints.raw(), &info);
+        if (sourceAddress)
+        {
+            // If a service name/port exists, create a std::string, and get the c_str()
+            // the std::strings need to live through the call to fi_getinfo, so they are assigned to lvalues
+            // in the parent scope too.
+            if (auto nodeValue = sourceAddress->node(); nodeValue)
+            {
+                node = *nodeValue;
+                nodeStringBuffer = node.c_str();
+            }
 
+            if (auto serviceValue = sourceAddress->service(); serviceValue)
+            {
+                service = *serviceValue;
+                serviceStringBuffer = service.c_str();
+            }
+
+            // The verbs provider need the addr_format hint set for ipv6 to work correctly
+            hints->addr_format = sourceAddress->addressFormat();
+        }
+
+        fiCall(::fi_getinfo,
+            "Failed to get source interface information",
+            fiVersion(),
+            nodeStringBuffer,
+            serviceStringBuffer,
+            FI_SOURCE,
+            hints.raw(),
+            &info);
         return FabricInfoList{info};
     }
 

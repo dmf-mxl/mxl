@@ -63,7 +63,7 @@ namespace mxl::lib::fabrics::ofi
 
     PassiveEndpoint& PassiveEndpoint::operator=(PassiveEndpoint&& other)
     {
-        close();
+        catchAndLogFabricError([this]() { close(); }, "Failed to close passive endpoint");
 
         _raw = other._raw;
         _id = other._id;

@@ -13,51 +13,62 @@
 
 namespace mxl::lib::fabrics::ofi
 {
-    FabricAddress::FabricAddress(std::vector<std::uint8_t> addr)
+    RawFabricAddress::RawFabricAddress(std::vector<std::uint8_t> addr, std::uint32_t addressFormat)
         : _inner(std::move(addr))
+        , _addressFormat(addressFormat)
     {}
 
-    FabricAddress FabricAddress::fromFid(::fid_t fid)
+    RawFabricAddress RawFabricAddress::fromFid(::fid_t fid, std::uint32_t addressFormat)
     {
-        return retrieveFabricAddress(fid);
+        return retrieveFabricAddress(fid, addressFormat);
     }
 
-    std::string FabricAddress::toBase64() const
+    std::string RawFabricAddress::toBase64() const
     {
         return base64::encode_into<std::string>(_inner.cbegin(), _inner.cend());
     }
 
-    void* FabricAddress::raw() noexcept
+    void* RawFabricAddress::raw() noexcept
     {
         return _inner.data();
     }
 
-    void const* FabricAddress::raw() const noexcept
+    void const* RawFabricAddress::raw() const noexcept
     {
         return _inner.data();
     }
 
-    std::size_t FabricAddress::size() const noexcept
+    std::size_t RawFabricAddress::size() const noexcept
     {
         return _inner.size();
     }
 
-    bool FabricAddress::operator==(FabricAddress const& other) const noexcept
+    std::uint32_t RawFabricAddress::format() const noexcept
     {
-        return _inner == other._inner;
+        return _addressFormat;
     }
 
-    FabricAddress FabricAddress::fromBase64(std::string_view data)
+    bool RawFabricAddress::operator==(RawFabricAddress const& other) const noexcept
+    {
+        return (_inner == other._inner) && (_addressFormat == other._addressFormat);
+    }
+
+    FabricAddress RawFabricAddress::decode() const
+    {
+        return FabricAddress::decode(_addressFormat, _inner.data(), _inner.size());
+    }
+
+    RawFabricAddress RawFabricAddress::fromBase64(std::string_view data, std::uint32_t addressFormat)
     {
         auto decoded = base64::decode_into<std::vector<std::uint8_t>>(data);
         if (decoded.empty())
         {
             throw std::runtime_error("Failed to decode base64 data into FabricAddress.");
         }
-        return FabricAddress{std::move(decoded)};
+        return RawFabricAddress{std::move(decoded), addressFormat};
     }
 
-    FabricAddress FabricAddress::retrieveFabricAddress(::fid_t fid)
+    RawFabricAddress RawFabricAddress::retrieveFabricAddress(::fid_t fid, std::uint32_t addressFormat)
     {
         // First obtain the address length
         std::size_t addrlen = 0;
@@ -71,7 +82,7 @@ namespace mxl::lib::fabrics::ofi
         std::vector<std::uint8_t> addr(addrlen);
         fiCall(fi_getname, "Failed to retrieve endpoint's local address.", fid, addr.data(), &addrlen);
 
-        return FabricAddress{addr};
+        return RawFabricAddress{addr, addressFormat};
     }
 
 }

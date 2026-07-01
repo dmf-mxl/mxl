@@ -9,6 +9,7 @@
 #include <fstream>
 #include <optional>
 #include <string>
+#include <type_traits>
 #include <uuid.h>
 #include <sys/types.h>
 #include <CLI/CLI.hpp>
@@ -25,30 +26,137 @@
 /*
     Example how to use:
 
-        1- Start a target: ./mxl-fabrics-demo -d <tmpfs folder> -f <NMOS JSON File> --node 2.2.2.2 --service 1234 --provider verbs
+        1- Start a target: ./mxl-fabrics-demo -d <tmpfs folder> -f <NMOS JSON File> --service 1234
         2- Paste the target info that gets printed in stdout to the --target-info argument of the initiator.
-        3- Start a sender: ./mxl-fabrics-demo -i -d <tmpfs folder> -f <test source flow uuid> --node 1.1.1.1 --service 1234 --provider verbs
-   --target-info <targetInfo>
+        3- Start a sender: ./mxl-fabrics-demo -i -d <tmpfs folder> -f <test source flow uuid> --service 1234 --target-info <targetInfo>
+
+    The best available interface is selected automatically (EFA > VERBS > TCP > SHM).
+    Use --node to bind to a specific address.
 */
 
 std::sig_atomic_t volatile g_exit_requested = 0;
 
+struct InterfaceSelection
+{
+    mxlFabricsProvider provider;
+    mxlFabricsInterfaceCaps caps;
+    std::optional<std::string> node;
+    std::optional<std::string> service;
+};
+
 struct Config
 {
     std::string domain;
-
-    // flow configuration
     mxl::lib::FlowParser const& flowParser;
-
-    // endpoint configuration
-    std::optional<std::string> node;
-    std::optional<std::string> service;
-    mxlFabricsProvider provider;
+    InterfaceSelection interface;
 };
 
 void signal_handler(int)
 {
     g_exit_requested = 1;
+}
+
+std::string capabilitiesString(std::uint64_t flags)
+{
+    auto parts = std::vector<std::string>{};
+    if (flags & MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS)
+    {
+        parts.emplace_back("BLOCKING_OPERATIONS");
+    }
+    if (flags & MXL_FABRICS_IFACE_CAP_REMOTE_WRITE)
+    {
+        parts.emplace_back("REMOTE_WRITE");
+    }
+    if (flags & MXL_FABRICS_IFACE_CAP_SEND_RECEIVE)
+    {
+        parts.emplace_back("SEND_RECEIVE");
+    }
+    if (parts.empty())
+    {
+        return "(none)";
+    }
+    auto result = parts.front();
+    for (auto it = parts.begin() + 1; it != parts.end(); ++it)
+    {
+        result += " | ";
+        result += *it;
+    }
+    return result;
+}
+
+std::string providerName(mxlFabricsProvider provider)
+{
+    auto size = std::size_t{0};
+    mxlFabricsProviderToString(provider, nullptr, &size);
+    auto result = std::string(size, '\0');
+    mxlFabricsProviderToString(provider, result.data(), &size);
+    if (!result.empty() && (result.back() == '\0'))
+    {
+        result.pop_back();
+    }
+    return result;
+}
+
+int providerPriority(mxlFabricsProvider provider)
+{
+    switch (provider)
+    {
+        case MXL_FABRICS_PROVIDER_EFA:   return 4;
+        case MXL_FABRICS_PROVIDER_VERBS: return 3;
+        case MXL_FABRICS_PROVIDER_TCP:   return 2;
+        case MXL_FABRICS_PROVIDER_SHM:   return 1;
+        default:                         return 0;
+    }
+}
+
+InterfaceSelection selectInterface(mxlFabricsInstance instance, std::optional<std::string> const& node, std::optional<std::string> const& service,
+    std::optional<mxlFabricsProvider> provider = std::nullopt)
+{
+    auto list = std::add_pointer_t<mxlFabricsInterfaceList>{nullptr};
+    auto query = mxlFabricsInterfaceConfig{};
+    query.version = MXL_FABRICS_API_VERSION;
+    if (node)
+    {
+        query.address.node = node->c_str();
+    }
+    if (provider)
+    {
+        query.provider = *provider;
+    }
+
+    auto filtering = node || provider;
+    auto status = mxlFabricsGetInterfaces(instance, filtering ? &query : nullptr, &list);
+    if ((status != MXL_STATUS_OK) || (list == nullptr))
+    {
+        MXL_ERROR("Failed to query interfaces (mxlStatus = {})", static_cast<int>(status));
+        std::exit(status);
+    }
+
+    auto best = std::add_pointer_t<mxlFabricsInterfaceConfig const>{nullptr};
+    for (auto* entry = list; entry != nullptr; entry = entry->next)
+    {
+        if (!best || (providerPriority(entry->interface.provider) > providerPriority(best->provider)))
+        {
+            best = &entry->interface;
+        }
+    }
+
+    if (!best)
+    {
+        MXL_ERROR("No matching interfaces found");
+        mxlFabricsFreeInterfaceList(list);
+        std::exit(MXL_ERR_NO_FABRIC);
+    }
+
+    auto result = InterfaceSelection{
+        .provider = best->provider,
+        .caps = best->caps,
+        .node = node ? node : (best->address.node ? std::optional<std::string>(best->address.node) : std::nullopt),
+        .service = service,
+    };
+
+    mxlFabricsFreeInterfaceList(list);
+    return result;
 }
 
 class AppInitator
@@ -158,11 +266,11 @@ public:
             .version = MXL_FABRICS_API_VERSION,
             .interface = {
                 .version = MXL_FABRICS_API_VERSION,
-                .provider = _config.provider,
-                .caps = {},
+                .provider = _config.interface.provider,
+                .caps = _config.interface.caps,
                 .address = {
-                    .node = _config.node ? _config.node.value().c_str() : nullptr,
-                    .service = _config.service ? _config.service.value().c_str() : nullptr
+                    .node = _config.interface.node ? _config.interface.node->c_str() : nullptr,
+                    .service = _config.interface.service ? _config.interface.service->c_str() : nullptr,
                 },
                 .attr = nullptr,
             },
@@ -417,24 +525,24 @@ public:
 private:
     mxlStatus makeProgress(std::chrono::steady_clock::duration timeout)
     {
-        if (_config.provider == MXL_FABRICS_PROVIDER_EFA)
+        if (_config.interface.caps.flags & MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS)
         {
-            return mxlFabricsInitiatorMakeProgressNonBlocking(_initiator);
+            return mxlFabricsInitiatorMakeProgressBlocking(_initiator, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
         }
         else
         {
-            return mxlFabricsInitiatorMakeProgressBlocking(_initiator, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
+            return mxlFabricsInitiatorMakeProgressNonBlocking(_initiator);
         }
     }
 
 private:
     Config _config;
 
-    mxlInstance _instance;
-    mxlFabricsInstance _fabricsInstance;
-    mxlFlowReader _reader;
-    mxlFabricsInitiator _initiator;
-    mxlFabricsTargetInfo _targetInfo;
+    mxlInstance _instance = nullptr;
+    mxlFabricsInstance _fabricsInstance = nullptr;
+    mxlFlowReader _reader = nullptr;
+    mxlFabricsInitiator _initiator = nullptr;
+    mxlFabricsTargetInfo _targetInfo = nullptr;
     bool _targetAdded = false;
 };
 
@@ -530,11 +638,11 @@ public:
             .version = MXL_FABRICS_API_VERSION,
             .interface = {
                 .version = MXL_FABRICS_API_VERSION,
-                .provider = _config.provider,
-                .caps = {},
+                .provider = _config.interface.provider,
+                .caps = _config.interface.caps,
                 .address = {
-                    .node = _config.node ? _config.node.value().c_str() : nullptr,
-                    .service = _config.service ? _config.service.value().c_str() : nullptr
+                    .node = _config.interface.node ? _config.interface.node->c_str() : nullptr,
+                    .service = _config.interface.service ? _config.interface.service->c_str() : nullptr,
                 },
                 .attr = nullptr,
             },
@@ -721,25 +829,25 @@ public:
 private:
     mxlStatus targetReadGrain(std::uint64_t* grainIndex, std::chrono::steady_clock::duration timeout)
     {
-        if (_config.provider == MXL_FABRICS_PROVIDER_EFA)
+        if (_config.interface.caps.flags & MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS)
         {
-            return mxlFabricsTargetReadGrainNonBlocking(_target, grainIndex);
+            return mxlFabricsTargetReadGrain(_target, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count(), grainIndex);
         }
         else
         {
-            return mxlFabricsTargetReadGrain(_target, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count(), grainIndex);
+            return mxlFabricsTargetReadGrainNonBlocking(_target, grainIndex);
         }
     }
 
 private:
     Config _config;
 
-    mxlInstance _instance;
-    mxlFabricsInstance _fabricsInstance;
-    mxlFlowWriter _writer;
-    mxlFabricsTarget _target;
-    mxlFabricsTargetInfo _targetInfo;
-    mxlFlowConfigInfo _configInfo;
+    mxlInstance _instance = nullptr;
+    mxlFabricsInstance _fabricsInstance = nullptr;
+    mxlFlowWriter _writer = nullptr;
+    mxlFabricsTarget _target = nullptr;
+    mxlFabricsTargetInfo _targetInfo = nullptr;
+    mxlFlowConfigInfo _configInfo{};
 };
 
 int main(int argc, char** argv)
@@ -769,38 +877,64 @@ int main(int argc, char** argv)
     runAsInitiatorOpt->default_val(false);
 
     std::string node;
-    auto nodeOpt = app.add_option("-n,--node",
-        node,
-        "This corresponds to the interface identifier of the fabrics endpoint, it can also be a logical address. This can be seen as the bind "
-        "address when using sockets.");
-    nodeOpt->default_val("");
+    app.add_option(
+        "-n,--node", node, "Filter interface selection by node address. If not set, the best available interface is chosen automatically.");
 
     std::string service;
-    auto serviceOpt = app.add_option("--service",
-        service,
-        "This corresponds to a service identifier for the fabrics endpoint. This can be seen as the bind port when using sockets.");
-    serviceOpt->default_val("");
+    app.add_option("-s,--service", service, "Service identifier for the fabrics endpoint (e.g. a port number).");
 
     std::string provider;
-    auto providerOpt = app.add_option("-p,--provider", provider, "The fabrics provider. One of (tcp, verbs or efa). Default is 'tcp'.");
-    providerOpt->default_val("tcp");
+    app.add_option("-p,--provider", provider, "Force a specific provider (tcp, verbs, efa, shm). Auto-selected if omitted.");
 
     std::string targetInfo;
-    app.add_option("--target-info",
+    app.add_option("-t,--target-info",
         targetInfo,
         "As target: output file path for raw target info (optional, always logged as base64). "
         "As initiator: base64-encoded target info, or a path prefixed with '@' to read raw target info from a file.");
 
     CLI11_PARSE(app, argc, argv);
 
-    mxlFabricsProvider mxlProvider;
-    auto status = mxlFabricsProviderFromString(provider.c_str(), &mxlProvider);
-    if (status != MXL_STATUS_OK)
+    auto* instance = mxlCreateInstance(domain.c_str(), "");
+    if (instance == nullptr)
     {
-        MXL_ERROR("Failed to parse provider '{}'", provider);
-        return status;
+        MXL_ERROR("Failed to create MXL instance");
+        return MXL_ERR_INVALID_ARG;
     }
 
+    auto optNode = node.empty() ? std::nullopt : std::optional<std::string>(node);
+    auto optService = service.empty() ? std::nullopt : std::optional<std::string>(service);
+    auto optProvider = std::optional<mxlFabricsProvider>{};
+    if (!provider.empty())
+    {
+        auto parsed = mxlFabricsProvider{};
+        if (mxlFabricsProviderFromString(provider.c_str(), &parsed) != MXL_STATUS_OK)
+        {
+            MXL_ERROR("Unknown provider '{}'", provider);
+            mxlDestroyInstance(instance);
+            return MXL_ERR_INVALID_ARG;
+        }
+        optProvider = parsed;
+    }
+    auto fabricsInstance = mxlFabricsInstance{nullptr};
+    if (auto s = mxlFabricsCreateInstance(instance, nullptr, &fabricsInstance); s != MXL_STATUS_OK)
+    {
+        MXL_ERROR("Failed to create fabrics instance with status '{}'", static_cast<int>(s));
+        mxlDestroyInstance(instance);
+        return s;
+    }
+
+    auto selectedInterface = selectInterface(fabricsInstance, optNode, optService, optProvider);
+    mxlFabricsDestroyInstance(fabricsInstance);
+    mxlDestroyInstance(instance);
+
+    MXL_INFO("Selected interface:");
+    MXL_INFO("  provider:     {}", providerName(selectedInterface.provider));
+    MXL_INFO("  node:         {}", selectedInterface.node.value_or("(auto)"));
+    MXL_INFO("  service:      {}", selectedInterface.service.value_or("(none)"));
+    MXL_INFO("  capabilities: {}", capabilitiesString(selectedInterface.caps.flags));
+    MXL_INFO("  max message:  {} bytes", selectedInterface.caps.maxMessageSize);
+
+    auto status = mxlStatus{};
     if (runAsInitiator)
     {
         MXL_INFO("Running as initiator");
@@ -836,9 +970,7 @@ int main(int argc, char** argv)
             Config{
                    .domain = domain,
                    .flowParser = descriptorParser,
-                   .node = node.empty() ? std::nullopt : std::optional<std::string>(node),
-                   .service = service.empty() ? std::nullopt : std::optional<std::string>(service),
-                   .provider = mxlProvider,
+                   .interface = selectedInterface,
                    },
         };
 
@@ -885,9 +1017,7 @@ int main(int argc, char** argv)
             Config{
                    .domain = domain,
                    .flowParser = descriptorParser,
-                   .node = node.empty() ? std::nullopt : std::optional<std::string>(node),
-                   .service = service.empty() ? std::nullopt : std::optional<std::string>(service),
-                   .provider = mxlProvider,
+                   .interface = selectedInterface,
                    },
         };
 

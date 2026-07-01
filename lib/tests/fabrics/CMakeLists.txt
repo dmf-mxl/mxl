@@ -25,6 +25,7 @@ set_target_properties(mxl-fabrics-tests
 target_sources(mxl-fabrics-tests
         PRIVATE
             test_basics.cpp
+            test_interfaces.cpp
     )
 
 target_link_libraries(mxl-fabrics-tests
