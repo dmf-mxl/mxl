@@ -25,53 +25,48 @@
 #include "mxl/flow.h"
 #include "mxl/platform.h"
 
-namespace
-{
-    /// Parse the optional target setup options JSON and return the requested completion
-    /// queue depth, or std::nullopt (use the implementation default) when not specified.
-    ///
-    /// Recognized form: {"cqDepth": <positive integer>}
-    std::optional<std::size_t> parseCqDepthOption(char const* options)
-    {
-        using mxl::lib::fabrics::ofi::Exception;
-
-        if ((options == nullptr) || (options[0] == '\0'))
-        {
-            return std::nullopt;
-        }
-
-        auto value = picojson::value{};
-        auto const err = picojson::parse(value, options);
-        if (!err.empty() || !value.is<picojson::object>())
-        {
-            throw Exception::invalidArgument("Invalid JSON target options: {}", err.empty() ? std::string{"expected an object"} : err);
-        }
-
-        auto const& root = value.get<picojson::object>();
-        auto const it = root.find("cqDepth");
-        if (it == root.end())
-        {
-            return std::nullopt;
-        }
-        if (!it->second.is<double>())
-        {
-            throw Exception::invalidArgument("cqDepth must be a number.");
-        }
-        auto const depth = it->second.get<double>();
-        if (depth < 1.0)
-        {
-            throw Exception::invalidArgument("cqDepth must be greater or equal to 1.");
-        }
-        return static_cast<std::size_t>(depth);
-    }
-}
-
 namespace ofi = mxl::lib::fabrics::ofi;
 
 namespace mxl::lib::fabrics::ofi
 {
     namespace
     {
+        /// Parse the optional target setup options JSON and return the requested completion
+        /// queue depth, or std::nullopt (use the implementation default) when not specified.
+        ///
+        /// Recognized form: {"cqDepth": <positive integer>}
+        std::optional<std::size_t> parseCqDepthOption(char const* options)
+        {
+            if ((options == nullptr) || (options[0] == '\0'))
+            {
+                return std::nullopt;
+            }
+
+            auto value = picojson::value{};
+            auto const err = picojson::parse(value, options);
+            if (!err.empty() || !value.is<picojson::object>())
+            {
+                throw Exception::invalidArgument("Invalid JSON target options: {}", err.empty() ? std::string{"expected an object"} : err);
+            }
+
+            auto const& root = value.get<picojson::object>();
+            auto const it = root.find("cqDepth");
+            if (it == root.end())
+            {
+                return std::nullopt;
+            }
+            if (!it->second.is<double>())
+            {
+                throw Exception::invalidArgument("cqDepth must be a number.");
+            }
+            auto const depth = it->second.get<double>();
+            if (depth < 1.0)
+            {
+                throw Exception::invalidArgument("cqDepth must be greater or equal to 1.");
+            }
+            return static_cast<std::size_t>(depth);
+        }
+
         template<typename F>
         mxlStatus try_run(F&& func, std::string_view errMsg)
         {
@@ -194,7 +189,7 @@ mxlStatus mxlFabricsTargetSetup(mxlFabricsTarget in_target, mxlFabricsTargetConf
     return ofi::try_run(
         [&]()
         {
-            auto const setupOptions = ofi::TargetSetupOptions{.cqDepth = parseCqDepthOption(options)};
+            auto const setupOptions = ofi::TargetSetupOptions{.cqDepth = ofi::parseCqDepthOption(options)};
 
             // Set up the target, release the returned unique_ptr, convert to external API type, assign the the pointer location
             // passed by the user.
