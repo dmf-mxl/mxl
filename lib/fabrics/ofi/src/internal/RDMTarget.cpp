@@ -17,7 +17,8 @@
 
 namespace mxl::lib::fabrics::ofi
 {
-    std::pair<std::unique_ptr<RDMTarget>, std::unique_ptr<TargetInfo>> RDMTarget::setup(mxlFabricsTargetConfig const& config)
+    std::pair<std::unique_ptr<RDMTarget>, std::unique_ptr<TargetInfo>> RDMTarget::setup(mxlFabricsTargetConfig const& config,
+        TargetSetupOptions const& options)
     {
         // Both fields may arrive as null at this call site — libfabric's FI_SOURCE path
         // accepts that as "bind to any local address". fmt's `{}` formatter for char const*
@@ -53,6 +54,10 @@ namespace mxl::lib::fabrics::ofi
         auto endpoint = Endpoint::create(domain);
 
         auto cqAttr = CompletionQueue::Attributes::defaults();
+        if (options.cqDepth)
+        {
+            cqAttr.size = *options.cqDepth;
+        }
         if (provider == Provider::EFA)
         {
             if (!CompletionQueue::isWaitObjectSupportedForEFA())

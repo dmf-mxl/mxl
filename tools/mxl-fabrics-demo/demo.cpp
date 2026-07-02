@@ -616,6 +616,10 @@ public:
         std::uint8_t* dummyPayload;
         mxlStatus status;
 
+        // This demo is a pure proxy: it only commits each grain and does no heavy per-grain processing, so draining and committing one grain
+        // per iteration keeps the completion queue empty and is all that is required here. Applications that do slower per-grain work (decoding,
+        // writing to disk, updating statistics) should instead size the target completion queue via the "cqDepth" setup option and adopt the
+        // two-phase drain pattern. See the "Receiving grains" section of docs/Fabrics.md.
         while (!g_exit_requested)
         {
             status = targetReadGrain(&grainIndex, std::chrono::milliseconds(200));

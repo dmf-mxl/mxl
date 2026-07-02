@@ -8,9 +8,11 @@
 #include <cstdlib>
 #include <cstring>
 #include <memory>
+#include <optional>
 #include <mxl-internal/FlowReader.hpp>
 #include <mxl-internal/Instance.hpp>
 #include <mxl-internal/Logging.hpp>
+#include <picojson/picojson.h>
 #include <rdma/fabric.h>
 #include <mxl/mxl.h>
 #include "internal/Exception.hpp"
@@ -22,6 +24,47 @@
 #include "internal/TargetInfo.hpp"
 #include "mxl/flow.h"
 #include "mxl/platform.h"
+
+namespace
+{
+    /// Parse the optional target setup options JSON and return the requested completion
+    /// queue depth, or std::nullopt (use the implementation default) when not specified.
+    ///
+    /// Recognized form: {"cqDepth": <positive integer>}
+    std::optional<std::size_t> parseCqDepthOption(char const* options)
+    {
+        using mxl::lib::fabrics::ofi::Exception;
+
+        if ((options == nullptr) || (options[0] == '\0'))
+        {
+            return std::nullopt;
+        }
+
+        auto value = picojson::value{};
+        auto const err = picojson::parse(value, options);
+        if (!err.empty() || !value.is<picojson::object>())
+        {
+            throw Exception::invalidArgument("Invalid JSON target options: {}", err.empty() ? std::string{"expected an object"} : err);
+        }
+
+        auto const& root = value.get<picojson::object>();
+        auto const it = root.find("cqDepth");
+        if (it == root.end())
+        {
+            return std::nullopt;
+        }
+        if (!it->second.is<double>())
+        {
+            throw Exception::invalidArgument("cqDepth must be a number.");
+        }
+        auto const depth = it->second.get<double>();
+        if (depth < 1.0)
+        {
+            throw Exception::invalidArgument("cqDepth must be greater or equal to 1.");
+        }
+        return static_cast<std::size_t>(depth);
+    }
+}
 
 namespace ofi = mxl::lib::fabrics::ofi;
 
@@ -143,7 +186,6 @@ extern "C" MXL_EXPORT
 mxlStatus mxlFabricsTargetSetup(mxlFabricsTarget in_target, mxlFabricsTargetConfig const* in_config, char const* options,
     mxlFabricsTargetInfo* out_info)
 {
-    (void)options;
     if ((in_target == nullptr) || (in_config == nullptr) || (out_info == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
@@ -152,9 +194,11 @@ mxlStatus mxlFabricsTargetSetup(mxlFabricsTarget in_target, mxlFabricsTargetConf
     return ofi::try_run(
         [&]()
         {
+            auto const setupOptions = ofi::TargetSetupOptions{.cqDepth = parseCqDepthOption(options)};
+
             // Set up the target, release the returned unique_ptr, convert to external API type, assign the the pointer location
             // passed by the user.
-            *out_info = ofi::TargetWrapper::fromAPI(in_target)->setup(*in_config).release()->toAPI();
+            *out_info = ofi::TargetWrapper::fromAPI(in_target)->setup(*in_config, setupOptions).release()->toAPI();
 
             return MXL_STATUS_OK;
         },
