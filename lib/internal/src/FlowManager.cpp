@@ -165,7 +165,7 @@ namespace mxl::lib
     std::pair<bool, std::unique_ptr<DiscreteFlowData>> FlowManager::createOrOpenDiscreteFlow(uuids::uuid const& flowId, std::string const& flowDef,
         mxlDataFormat flowFormat, std::size_t grainCount, mxlRational const& grainRate, std::size_t grainPayloadSize, std::size_t grainNumOfSlices,
         std::array<uint32_t, MXL_MAX_PLANES_PER_GRAIN> grainSliceLengths, std::uint32_t maxSyncBatchSizeHintOpt,
-        std::uint32_t maxCommitBatchSizeHintOpt)
+        std::uint32_t maxCommitBatchSizeHintOpt, bool useGrainPool)
     {
         auto const uuidString = uuids::to_string(flowId);
         MXL_DEBUG("Create discrete flow. id: {}, grainCount: {}, grain payload size: {}", uuidString, grainCount, grainPayloadSize);
@@ -221,19 +221,40 @@ namespace mxl::lib
             throw std::filesystem::filesystem_error{"Could not create grain directory.", grainDir, std::make_error_code(std::errc::io_error)};
         }
 
-        for (auto i = std::size_t{0}; i < grainCount; ++i)
+        auto const initGrainHeader = [&](Grain* grain)
         {
-            auto const grainPath = makeGrainDataFilePath(grainDir, i);
-            MXL_TRACE("Creating grain: {}", grainPath.string());
-
-            // \todo Handle payload stored device memory
-            auto const grain = flowData->emplaceGrain(grainPath.string().c_str(), grainPayloadSize);
             auto& gInfo = grain->header.info;
             gInfo.grainSize = grainPayloadSize;
             gInfo.totalSlices = grainNumOfSlices;
             gInfo.validSlices = 0;
             gInfo.version = GRAIN_HEADER_VERSION;
             gInfo.size = sizeof gInfo;
+        };
+
+        if (useGrainPool)
+        {
+            // Contiguous pool layout: all grains live in a single mapping.
+            auto const poolPath = makeGrainPoolFilePath(grainDir);
+            MXL_TRACE("Creating grain pool: {}", poolPath.string());
+
+            flowData->openGrainPool(poolPath.string().c_str(), grainCount, grainPayloadSize);
+            for (auto i = std::size_t{0}; i < grainCount; ++i)
+            {
+                // \todo Handle payload stored device memory
+                initGrainHeader(flowData->grainAt(i));
+            }
+        }
+        else
+        {
+            // Per-grain file layout (default).
+            for (auto i = std::size_t{0}; i < grainCount; ++i)
+            {
+                auto const grainPath = makeGrainDataFilePath(grainDir, i);
+                MXL_TRACE("Creating grain: {}", grainPath.string());
+
+                // \todo Handle payload stored device memory
+                initGrainHeader(flowData->emplaceGrain(grainPath.string().c_str(), grainPayloadSize));
+            }
         }
 
         auto const finalDir = makeFlowDirectoryName(_mxlDomain, uuidString);
@@ -369,13 +390,23 @@ namespace mxl::lib
             auto const grainDir = makeGrainDirectoryName(flowDir);
             if (exists(grainDir) && is_directory(grainDir))
             {
-                // Open each grain with per-item error handling
-                for (auto i = 0U; i < grainCount; ++i)
+                auto const poolPath = makeGrainPoolFilePath(grainDir);
+                if (exists(poolPath))
                 {
-                    auto const grainPath = makeGrainDataFilePath(grainDir, i).string();
-                    MXL_TRACE("Opening grain: {}", grainPath);
+                    // Contiguous pool layout: a single mapping holds every grain.
+                    MXL_TRACE("Opening grain pool: {}", poolPath.string());
+                    flowData->openGrainPool(poolPath.string().c_str(), grainCount, /*grainPayloadSize=*/0U);
+                }
+                else
+                {
+                    // Per-grain file layout (default). Open each grain with per-item error handling.
+                    for (auto i = 0U; i < grainCount; ++i)
+                    {
+                        auto const grainPath = makeGrainDataFilePath(grainDir, i).string();
+                        MXL_TRACE("Opening grain: {}", grainPath);
 
-                    flowData->emplaceGrain(grainPath.c_str(), /*payloadSize=*/0U);
+                        flowData->emplaceGrain(grainPath.c_str(), /*payloadSize=*/0U);
+                    }
                 }
             }
             else

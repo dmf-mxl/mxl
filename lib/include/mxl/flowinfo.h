@@ -104,8 +104,9 @@ extern "C"
         uint32_t sliceSizes[MXL_MAX_PLANES_PER_GRAIN];
 
         /**
-         * How many grains in the ring buffer. This should be identical to the number of entries in the {mxlDomain}/{flowId}/grains/ folder.
-         * Accessing the shared memory section for that specific grain should be predictable.
+         * How many grains in the ring buffer. With the default per-grain layout this is identical to the number of {mxlDomain}/{flowId}/grains/
+         * data files. With the contiguous grain pool layout (the "grainPool" flow option) all grains share a single {mxlDomain}/{flowId}/grains/
+         * pool file instead. Accessing the shared memory section for that specific grain should be predictable.
          */
         uint32_t grainCount;
 

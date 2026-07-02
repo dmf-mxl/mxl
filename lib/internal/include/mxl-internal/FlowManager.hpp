@@ -68,7 +68,7 @@ namespace mxl::lib
         std::pair<bool, std::unique_ptr<DiscreteFlowData>> createOrOpenDiscreteFlow(uuids::uuid const& flowId, std::string const& flowDef,
             mxlDataFormat flowFormat, std::size_t grainCount, mxlRational const& grainRate, std::size_t grainPayloadSize,
             std::size_t grainNumOfSlices, std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN> grainSliceLengths,
-            std::uint32_t maxSyncBatchSizeHintOpt = 1, std::uint32_t maxCommitBatchSizeHintOpt = 1);
+            std::uint32_t maxSyncBatchSizeHintOpt = 1, std::uint32_t maxCommitBatchSizeHintOpt = 1, bool useGrainPool = false);
 
         ///
         /// Create a new continuous flow together with its associated channel store and open it in read-write mode.
