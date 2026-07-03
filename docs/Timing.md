@@ -1,4 +1,4 @@
-<!-- SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project. -->
+<!-- SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project. -->
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 
 # Timing Model
@@ -19,7 +19,7 @@ Any NTP locked source that can be traced back to a Stratum 0 time source (atomic
 
 Grains are organized as ring buffers. The grain count is a function of the flow grain_rate and desired history length. For example if a flow grain_rate is 50/1, each grain will be worth 20'000'000 ns (1/50 \* 1'000'000) of data. A ring buffer with 100ms of history will have 5 grains (5 \* 20ms/grain = 100ms). Time starts at the SMPTE 2059-1 epoch and is expressed a nanoseconds since that epoch.
 
-Ring buffer indices encode timing information — **the ring buffer cannot be treated as a simple queue of grains.** A writer media function must carefully compute the grain index at which it writes based on the frequency domain of the incoming grains. If the writer cannot guarantee that the external source shares a common frequency domain with the MXL host, it must implement a re-synchronization strategy (grain drop, grain repeat, dynamic audio resampling, etc.) to maintain alignment with the host's timing.
+Ring buffer indices encode timing information — **the ring buffer cannot be treated as a simple queue of grains.** A writer media function must carefully compute the grain index at which it writes the incoming grains. If the writer cannot guarantee that the external source shares a common clock frequency with the MXL host, it must implement a re-synchronization strategy (grain drop, grain repeat, dynamic audio resampling, etc.) to maintain alignment with the host's timing.
 
 ### Example indexing
 
@@ -86,7 +86,7 @@ MXL Flow replication between hosts will preserve the indexing of the grains. In 
 
 - A 2110-20 receiver media function can unroll the RTP timestamp of the first RTP packet of the frame and use it to compute the grain index write to. This index may be slightly in the past.
 - A media function that generates grains locally (CG, Test Pattern Generator, etc) can simply use the current TAI time as a timestamp and convert it to a grain index.
-- A well behaved writer media function should try to 'pace itself' according to the MXL host clock.  It should write to the ring buffer at a mostly constant rate and avoid writing chunks of media representing large amounts of time (i.e. multiple frames for video, multiple seconds of audio, etc)."
+- A well behaved writer media function should try to 'pace itself' according to the MXL host clock.  It should write to the ring buffer at a mostly constant rate and avoid writing chunks of media representing large amounts of time (i.e. multiple frames for video, multiple seconds of audio, etc)".  As a rule of thumb, it should not write more than 50% of the ring buffer duration in a burst.
 - A well behaved writer media function will not create flows whose latency drift over time. An implementer can monitor a flow latency using the 'mxl-info' tool part of the SDK.  The flow latency should be low and mostly constant (minimal variation) over a long period of time (hours).
 
 ### Example Flow Readers behaviors
