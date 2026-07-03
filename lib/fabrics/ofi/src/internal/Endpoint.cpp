@@ -6,7 +6,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <optional>
+#include <random>
 #include <utility>
 #include <uuid.h>
 #include <sys/uio.h>
@@ -29,11 +31,11 @@ namespace mxl::lib::fabrics::ofi
 {
     Endpoint::Id Endpoint::randomId() noexcept
     {
-        std::uniform_int_distribution<Endpoint::Id> dist;
-        std::random_device rd;
-        std::mt19937 eng{rd()};
-
-        return dist(eng);
+        // Use a global static random engine to prevent endpoint id collisions.
+        static auto mu = std::mutex{};
+        static auto engine = std::mt19937_64{std::random_device{}()};
+        auto const lock = std::scoped_lock{mu};
+        return std::uniform_int_distribution<Endpoint::Id>{}(engine);
     }
 
     Endpoint::Id Endpoint::idFromFID(::fid_t fid) noexcept

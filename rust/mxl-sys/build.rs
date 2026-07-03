@@ -50,6 +50,7 @@ fn get_bindgen_specs() -> BindgenSpecs {
             .define("BUILD_DOCS", "OFF")
             .define("BUILD_TESTS", "OFF")
             .define("BUILD_TOOLS", "OFF")
+            .define("CMAKE_INSTALL_LIBDIR", "lib")
             .build();
 
         println!("cargo:rustc-link-search={}", dst.join("lib").display());
