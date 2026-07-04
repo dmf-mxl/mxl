@@ -29,6 +29,33 @@ namespace mxl::lib
         constexpr auto MAX_WIDTH = 7680u;  // 8K UHD
         constexpr auto MAX_HEIGHT = 4320u; // 8K UHD
 
+        // Coded/compressed "data" flows (e.g. video/H264 access units) carry a whole
+        // access unit per grain. Unlike ANC (1-byte slices, capped at
+        // MXL_DATA_FORMAT_GRAIN_SIZE), a coded grain must hold a full keyframe (100s of
+        // KB), so:
+        //   - the slice length is a VFS page (4096 B), not a single byte, so a large
+        //     grain stays well within the uint16 validSlices count, and
+        //   - the grain payload size is taken from the flow descriptor's optional
+        //     "grain_size" field (bytes) set by the producer from its resolution /
+        //     bitrate, defaulting to 1 MiB. Nothing is hardcoded per stream.
+        constexpr auto CODED_DATA_SLICE_SIZE = 4096u;
+        constexpr auto CODED_DATA_DEFAULT_GRAIN_SIZE = std::size_t{1} << 20; // 1 MiB
+
+        // Coded-data grain payload size (bytes), rounded up to a whole number of
+        // slices. Reads the descriptor's optional "grain_size"; defaults otherwise.
+        inline std::size_t codedDataGrainSize(picojson::object const& root)
+        {
+            auto grainBytes = CODED_DATA_DEFAULT_GRAIN_SIZE;
+            if (auto const it = root.find("grain_size"); it != root.end() && it->second.is<double>())
+            {
+                if (auto const v = it->second.get<double>(); v > 0.0)
+                {
+                    grainBytes = static_cast<std::size_t>(v);
+                }
+            }
+            return ((grainBytes + CODED_DATA_SLICE_SIZE - 1u) / CODED_DATA_SLICE_SIZE) * CODED_DATA_SLICE_SIZE;
+        }
+
         /**
          * Translate a NMOS IS-04 data format to a an mxlDataFormat enum.
          * "mux" format is not supported by MXL.
@@ -382,6 +409,11 @@ namespace mxl::lib
             {
                 payloadSize = MXL_DATA_FORMAT_GRAIN_SIZE;
             }
+            else if (mediaType == "video/H264")
+            {
+                // Coded video: one H.264 access unit per grain (see codedDataGrainSize).
+                payloadSize = codedDataGrainSize(_root);
+            }
             else
             {
                 auto msg = std::string{"Unsupported data media_type: "} + mediaType;
@@ -418,8 +450,17 @@ namespace mxl::lib
         {
             case MXL_DATA_FORMAT_DATA:
             {
-                // For "data" flows, the slice length is 1 byte
-                sliceLengths[0] = 1;
+                if (auto const mediaType = fetchAs<std::string>(_root, "media_type"); mediaType == "video/H264")
+                {
+                    // Coded video: page-sized slices so a large access-unit grain
+                    // stays within the uint16 validSlices count.
+                    sliceLengths[0] = CODED_DATA_SLICE_SIZE;
+                }
+                else
+                {
+                    // For ANC ("data") flows, the slice length is 1 byte.
+                    sliceLengths[0] = 1;
+                }
                 return sliceLengths;
             }
 
@@ -462,8 +503,12 @@ namespace mxl::lib
         {
             case MXL_DATA_FORMAT_DATA:
             {
-                // Since the slice length for data flows is 1 byte, the number of slices must be the
-                // grain size.
+                if (auto const mediaType = fetchAs<std::string>(_root, "media_type"); mediaType == "video/H264")
+                {
+                    // Coded video: page-sized slices, so slice count = grain / slice.
+                    return codedDataGrainSize(_root) / CODED_DATA_SLICE_SIZE;
+                }
+                // For ANC the slice length is 1 byte, so the number of slices == grain size.
                 return MXL_DATA_FORMAT_GRAIN_SIZE;
             }
 
