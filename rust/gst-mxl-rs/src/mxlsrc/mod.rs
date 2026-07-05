@@ -23,6 +23,7 @@ mod imp;
 mod mxl_helper;
 mod src_tests;
 mod state;
+mod timing;
 
 glib::wrapper! {
     pub struct MxlSrc(ObjectSubclass<imp::MxlSrc>) @extends gst_base::PushSrc, gst_base::BaseSrc, gst::Element, gst::Object;
