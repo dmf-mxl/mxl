@@ -1,18 +1,12 @@
 // SPDX-FileCopyrightText: 2025-2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use gstreamer as gst;
-
 use mxl::{FlowReader, GrainReader, MxlInstance, Rational, SamplesReader};
+
+use crate::clock::SharedClockOffset;
 
 pub(crate) const DEFAULT_FLOW_ID: &str = "";
 pub(crate) const DEFAULT_DOMAIN: &str = "";
-
-#[derive(Debug, Default, Clone)]
-pub struct InitialTime {
-    pub mxl_index: u64,
-    pub gst_time: gst::ClockTime,
-}
 
 #[derive(Debug, Clone)]
 pub struct Settings {
@@ -52,7 +46,6 @@ impl Settings {
 
 pub struct State {
     pub instance: MxlInstance,
-    pub initial_info: InitialTime,
     pub video: Option<VideoState>,
     pub audio: Option<AudioState>,
     pub data: Option<DataState>,
@@ -60,15 +53,16 @@ pub struct State {
 
 pub struct VideoState {
     pub grain_rate: Rational,
-    pub frame_counter: u64,
+    /// Next absolute MXL grain index to read.
+    pub index: u64,
     pub is_initialized: bool,
+    pub next_discont: bool,
     pub grain_reader: GrainReader,
 }
 
 pub struct AudioState {
     pub reader: FlowReader,
     pub samples_reader: SamplesReader,
-    pub batch_counter: u64,
     pub is_initialized: bool,
     pub index: u64,
     pub next_discont: bool,
@@ -76,12 +70,21 @@ pub struct AudioState {
 
 pub struct DataState {
     pub grain_rate: Rational,
-    pub frame_counter: u64,
+    /// Next absolute MXL grain index to read.
+    pub index: u64,
     pub is_initialized: bool,
+    pub next_discont: bool,
     pub grain_reader: GrainReader,
 }
 
 #[derive(Default)]
 pub struct Context {
+    /// MXL instance, created in `start()` so the reader and the timestamp
+    /// conversions can share it. Cheap to clone (`Arc`-backed).
+    pub instance: Option<MxlInstance>,
+    /// Pipeline-wide MXL-time → clock offset `D`, shared with the pipeline's
+    /// other MXL elements so a given absolute grain index exposes an identical
+    /// PTS on every flow — what `st2038combiner` needs to re-pair flows.
+    pub(crate) shared_offset: Option<SharedClockOffset>,
     pub state: Option<State>,
 }
