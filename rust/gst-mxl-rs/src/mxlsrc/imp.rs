@@ -24,6 +24,7 @@ use tracing::trace;
 
 use std::sync::LazyLock;
 use std::sync::Mutex;
+use std::time::Duration;
 
 use crate::mxlsrc;
 use crate::mxlsrc::create_audio::create_audio;
@@ -34,6 +35,7 @@ use crate::mxlsrc::state::Context;
 use crate::mxlsrc::state::DEFAULT_DOMAIN;
 use crate::mxlsrc::state::DEFAULT_FLOW_ID;
 use crate::mxlsrc::state::Settings;
+use crate::mxlsrc::timing;
 
 pub(crate) static CAT: LazyLock<gst::DebugCategory> = LazyLock::new(|| {
     gst::DebugCategory::new("mxlsrc", gst::DebugColorFlags::empty(), Some("MXL Source"))
@@ -262,6 +264,44 @@ impl ElementImpl for MxlSrc {
     ) -> Result<gst::StateChangeSuccess, gst::StateChangeError> {
         self.parent_change_state(transition)
     }
+
+    fn set_clock(&self, clock: Option<&gst::Clock>) -> bool {
+        // Re-sample `D` against the newly selected clock.
+        crate::clock::ClockOffsetExt::invalidate_clock_offset(self);
+        self.parent_set_clock(clock)
+    }
+
+    fn set_context(&self, context: &gst::Context) {
+        if let Some(cell) = crate::clock::clock_offset_from_context(context) {
+            crate::clock::ClockOffsetExt::store_clock_offset(self, cell);
+        }
+        self.parent_set_context(context);
+    }
+}
+
+impl crate::clock::ClockOffsetExt for MxlSrc {
+    fn element(&self) -> gst::Element {
+        self.obj().clone().upcast()
+    }
+
+    fn mxl_now(&self) -> Option<u64> {
+        let context = self.context.lock().ok()?;
+        let instance = context
+            .instance
+            .as_ref()
+            .or(context.state.as_ref().map(|s| &s.instance))?;
+        Some(instance.get_time())
+    }
+
+    fn cached_clock_offset(&self) -> Option<crate::clock::SharedClockOffset> {
+        self.context.lock().ok()?.shared_offset.clone()
+    }
+
+    fn store_clock_offset(&self, cell: crate::clock::SharedClockOffset) {
+        if let Ok(mut context) = self.context.lock() {
+            context.shared_offset = Some(cell);
+        }
+    }
 }
 
 impl BaseSrcImpl for MxlSrc {
@@ -314,6 +354,11 @@ impl BaseSrcImpl for MxlSrc {
         if need_init {
             mxl_helper::init(self)
                 .map_err(|e| gst::loggable_error!(CAT, "Failed to attach flow: {}", e))?;
+            // The flow's grain rate (hence our live latency) is only known after
+            // attach; ask the pipeline to recompute latency with the real value.
+            let _ = self
+                .obj()
+                .post_message(gst::message::Latency::builder().src(&*self.obj()).build());
         }
 
         let settings = self
@@ -429,9 +474,30 @@ impl BaseSrcImpl for MxlSrc {
     }
 
     fn start(&self) -> Result<(), gst::ErrorMessage> {
-        // Do not attach here: `start()` runs on the state-change thread; blocking
-        // on `FlowNotFound` would freeze the transition. Flow attach runs from
-        // `negotiate()` instead.
+        // Create the domain instance and clock now so the clock is available
+        // when the pipeline selects one. This is non-blocking — unlike the
+        // reader attach (which can wait for `FlowNotFound`), creating the
+        // instance never waits for the flow, so it is safe on the state-change
+        // thread. The reader attach still runs from `negotiate()`. If the domain
+        // was unset here, `negotiate()` → `init()` calls `ensure_instance()` once
+        // domain and flow-id are ready. No race: `ensure_instance` caches under
+        // `context` lock and concurrent callers reuse the winner.
+        let have_domain = {
+            let settings = self.settings.lock().map_err(|e| {
+                gst::error_msg!(gst::CoreError::Failed, ["Failed to lock settings: {}", e])
+            })?;
+            !settings.domain.is_empty()
+        };
+        if have_domain {
+            mxl_helper::ensure_instance(self)?;
+        }
+
+        // Adopt the pipeline-shared offset cell now, during the sequential
+        // READY->PAUSED state change, so both mxlsrcs deterministically share
+        // one `D` (see clock.rs) and expose an identical PTS for a given
+        // absolute index. Establishing it lazily on the first buffer races.
+        let _ = crate::clock::ClockOffsetExt::ensure_clock_offset(self);
+
         self.unlock_stop()?;
         gst::info!(CAT, imp = self, "Started");
 
@@ -456,6 +522,12 @@ impl BaseSrcImpl for MxlSrc {
     }
 
     fn query(&self, query: &mut gst::QueryRef) -> bool {
+        if let gst::QueryViewMut::Latency(q) = query.view_mut()
+            && let Some(latency) = self.live_latency()
+        {
+            q.set(true, latency, gst::ClockTime::NONE);
+            return true;
+        }
         BaseSrcImplExt::parent_query(self, query)
     }
 
@@ -493,19 +565,36 @@ impl PushSrcImpl for MxlSrc {
         _buffer: Option<&mut gst::BufferRef>,
     ) -> Result<CreateSuccess, gst::FlowError> {
         loop {
-            match self.try_create() {
+            // Establish the pipeline-shared `D` before `try_create` takes the
+            // context lock (the handshake re-enters `set_context`, which also
+            // locks it). `None` means no clock yet: wait like NoDataCreated.
+            let offset = match crate::clock::ClockOffsetExt::resolve_clock_offset(self) {
+                Some(offset) => offset,
+                None => {
+                    if mxl_helper::is_flushing(self) {
+                        return Err(gst::FlowError::Flushing);
+                    }
+                    std::thread::sleep(Duration::from_millis(1));
+                    continue;
+                }
+            };
+            match self.try_create(offset) {
                 Ok(r) => match r {
                     CreateState::DataCreated(buffer) => {
                         return Ok(CreateSuccess::NewBuffer(buffer));
                     }
                     CreateState::NoDataCreated => {
-                        if self.obj().current_state() == gst::State::Paused
-                            || self.obj().current_state() == gst::State::Null
-                        {
-                            return Err(gst::FlowError::Eos);
-                        };
-                        //Flow is stale and reader needs to be rebuilt
-                        let _ = mxl_helper::init(self);
+                        // The producer has not committed the next grain yet. Only
+                        // bail when the pipeline is tearing us down (basesrc calls
+                        // unlock(), which sets is_flushing); otherwise keep waiting.
+                        // Do not key this on current_state(): during PAUSED→PLAYING
+                        // the streaming task can observe Paused before the producer
+                        // commits its first grain, which would wrongly emit EOS and
+                        // preroll the consumer empty.
+                        if mxl_helper::is_flushing(self) {
+                            return Err(gst::FlowError::Flushing);
+                        }
+                        std::thread::sleep(Duration::from_millis(1));
                     }
                 },
                 Err(e) => return Err(e),
@@ -515,15 +604,33 @@ impl PushSrcImpl for MxlSrc {
 }
 
 impl MxlSrc {
-    fn try_create(&self) -> Result<CreateState, gst::FlowError> {
+    /// Live latency to advertise: one grain period of the attached discrete flow.
+    ///
+    /// A grain becomes readable only once the producer has committed it, and this
+    /// source delivers the most recently committed grain, so at any instant the
+    /// reader may sit up to one grain period behind the live edge. One period is
+    /// therefore the source latency downstream should budget. Returns `None` before
+    /// the flow is attached (or for audio), leaving the BaseSrc default in place.
+    fn live_latency(&self) -> Option<gst::ClockTime> {
+        let context = self.context.lock().ok()?;
+        let state = context.state.as_ref()?;
+        let rate = match (&state.video, &state.data) {
+            (Some(v), _) => v.grain_rate,
+            (_, Some(d)) => d.grain_rate,
+            _ => return None,
+        };
+        Some(timing::index_period(&rate))
+    }
+
+    fn try_create(&self, offset: u64) -> Result<CreateState, gst::FlowError> {
         let mut context = self.context.lock().map_err(|_| gst::FlowError::Error)?;
         let state = context.state.as_mut().ok_or(gst::FlowError::Error)?;
         if state.video.is_some() {
-            create_video(self, state)
+            create_video(self, state, offset)
         } else if state.audio.is_some() {
-            create_audio(self, state)
+            create_audio(self, state, offset)
         } else if state.data.is_some() {
-            create_data(self, state)
+            create_data(self, state, offset)
         } else {
             Err(gst::FlowError::Error)
         }
