@@ -43,25 +43,10 @@ pub(crate) static CAT: LazyLock<gst::DebugCategory> = LazyLock::new(|| {
     gst::DebugCategory::new("mxlsink", gst::DebugColorFlags::empty(), Some("MXL Sink"))
 });
 
-struct ClockWait {
-    clock_id: Option<gst::SingleShotClockId>,
-    flushing: bool,
-}
-
-impl Default for ClockWait {
-    fn default() -> ClockWait {
-        ClockWait {
-            clock_id: None,
-            flushing: true,
-        }
-    }
-}
-
 #[derive(Default)]
 pub struct MxlSink {
     settings: Mutex<Settings>,
     context: Mutex<Context>,
-    clock_wait: Mutex<ClockWait>,
 }
 
 #[glib::object_subclass]
@@ -243,14 +228,55 @@ impl ElementImpl for MxlSink {
     ) -> Result<gst::StateChangeSuccess, gst::StateChangeError> {
         self.parent_change_state(transition)
     }
+
+    fn set_clock(&self, clock: Option<&gst::Clock>) -> bool {
+        // Re-sample `D` against the newly selected clock.
+        crate::clock::ClockOffsetExt::invalidate_clock_offset(self);
+        self.parent_set_clock(clock)
+    }
+
+    fn set_context(&self, context: &gst::Context) {
+        if let Some(cell) = crate::clock::clock_offset_from_context(context) {
+            crate::clock::ClockOffsetExt::store_clock_offset(self, cell);
+        }
+        self.parent_set_context(context);
+    }
+}
+
+impl crate::clock::ClockOffsetExt for MxlSink {
+    fn element(&self) -> gst::Element {
+        self.obj().clone().upcast()
+    }
+
+    fn mxl_now(&self) -> Option<u64> {
+        let context = self.context.lock().ok()?;
+        Some(context.state.as_ref()?.instance.get_time())
+    }
+
+    fn cached_clock_offset(&self) -> Option<crate::clock::SharedClockOffset> {
+        self.context.lock().ok()?.shared_offset.clone()
+    }
+
+    fn store_clock_offset(&self, cell: crate::clock::SharedClockOffset) {
+        if let Ok(mut context) = self.context.lock() {
+            context.shared_offset = Some(cell);
+        }
+    }
 }
 
 impl BaseSinkImpl for MxlSink {
     fn start(&self) -> Result<(), gst::ErrorMessage> {
+        // Adopt the pipeline-shared offset cell now, during the sequential
+        // READY->PAUSED state change, so sibling MXL elements deterministically
+        // share one `D` (see clock.rs). Establishing it lazily at first render
+        // races: two sinks can each publish their own cell and sample `D`
+        // microseconds apart, rounding the same PTS to indices one grain apart
+        // and mispairing flows in st2038combiner.
+        let _ = crate::clock::ClockOffsetExt::ensure_clock_offset(self);
+
         let mut context = self.context.lock().map_err(|e| {
             gst::error_msg!(gst::CoreError::Failed, ["Failed to get state mutex: {}", e])
         })?;
-        self.unlock_stop()?;
         let settings = self.settings.lock().map_err(|e| {
             gst::error_msg!(
                 gst::CoreError::Failed,
@@ -276,43 +302,34 @@ impl BaseSinkImpl for MxlSink {
                 ["Failed to get context mutex: {}", e]
             )
         })?;
-        self.unlock()?;
-        let state = context.state.as_mut().ok_or(gst::error_msg!(
-            gst::CoreError::Failed,
-            ["Failed to get state"]
-        ))?;
 
-        if let Some(video) = state.video.take() {
-            let (lock, cvar) = &*video.sleep_flag;
-
-            let mut flag = lock.lock().map_err(|_| {
-                gst::error_msg!(gst::CoreError::Failed, ["Failed to get video sleep lock"])
-            })?;
-            *flag = true;
-            cvar.notify_all();
-            drop(video.tx);
-        }
-
-        if let Some(audio) = state.audio.take() {
-            let (lock, cvar) = &*audio.sleep_flag;
-
-            let mut flag = lock.lock().map_err(|_| {
-                gst::error_msg!(gst::CoreError::Failed, ["Failed to get audio sleep lock"])
-            })?;
-            *flag = true;
-            cvar.notify_all();
-            drop(audio.tx);
-        }
-
-        if let Some(data) = state.data.take() {
-            let (lock, cvar) = &*data.sleep_flag;
-
-            let mut flag = lock.lock().map_err(|_| {
-                gst::error_msg!(gst::CoreError::Failed, ["Failed to get data sleep lock"])
-            })?;
-            *flag = true;
-            cvar.notify_all();
-            drop(data.tx);
+        // Destroy the flow writers before dropping the MXL instance they belong
+        // to, then release the instance and clock.
+        if let Some(mut state) = context.state.take() {
+            if let Some(video) = state.video.take() {
+                video.writer.destroy().map_err(|e| {
+                    gst::error_msg!(
+                        gst::CoreError::Failed,
+                        ["Failed to destroy video writer: {}", e]
+                    )
+                })?;
+            }
+            if let Some(audio) = state.audio.take() {
+                audio.writer.destroy().map_err(|e| {
+                    gst::error_msg!(
+                        gst::CoreError::Failed,
+                        ["Failed to destroy audio writer: {}", e]
+                    )
+                })?;
+            }
+            if let Some(data) = state.data.take() {
+                data.writer.destroy().map_err(|e| {
+                    gst::error_msg!(
+                        gst::CoreError::Failed,
+                        ["Failed to destroy data writer: {}", e]
+                    )
+                })?;
+            }
         }
 
         gst::info!(CAT, imp = self, "Stopped");
@@ -322,20 +339,26 @@ impl BaseSinkImpl for MxlSink {
     fn render(&self, buffer: &gst::Buffer) -> Result<gst::FlowSuccess, gst::FlowError> {
         trace!("START RENDER");
 
+        // Establish the pipeline-shared `D` before taking the context lock: the
+        // handshake posts context messages that re-enter `set_context`, which
+        // also locks the context.
+        let offset = crate::clock::ClockOffsetExt::resolve_clock_offset(self)
+            .ok_or(gst::FlowError::Error)?;
+
         let mut context = self.context.lock().map_err(|_| gst::FlowError::Error)?;
         let state = context.state.as_mut().ok_or(gst::FlowError::Error)?;
         // Borrow the element for the duration of this render call so
-        // the format-specific paths can read its propagated pipeline
-        // clock via `Element::clock()` without `State` having to
-        // cache a strong ref (which would form a refcount cycle).
+        // the format-specific paths can read its base time via
+        // `Element::base_time()` without `State` having to cache a
+        // strong ref (which would form a refcount cycle).
         let element = self.obj();
         let element: &gst::Element = element.upcast_ref();
         if state.video.is_some() {
-            render_video::video(state, element, buffer)
+            render_video::video(state, element, buffer, offset)
         } else if state.audio.is_some() {
-            render_audio::audio(state, element, buffer)
+            render_audio::audio(state, element, buffer, offset)
         } else if state.data.is_some() {
-            render_data::data(state, element, buffer)
+            render_data::data(state, element, buffer, offset)
         } else {
             Err(gst::FlowError::Error)
         }
@@ -403,29 +426,6 @@ impl BaseSinkImpl for MxlSink {
 
     fn fixate(&self, caps: gst::Caps) -> gst::Caps {
         self.parent_fixate(caps)
-    }
-
-    fn unlock(&self) -> Result<(), gst::ErrorMessage> {
-        gst::debug!(CAT, imp = self, "Unlocking");
-        let mut clock_wait = self.clock_wait.lock().map_err(|e| {
-            gst::error_msg!(gst::CoreError::Failed, ["Failed to lock clock: {}", e])
-        })?;
-        if let Some(clock_id) = clock_wait.clock_id.take() {
-            clock_id.unschedule();
-        }
-        clock_wait.flushing = true;
-
-        Ok(())
-    }
-
-    fn unlock_stop(&self) -> Result<(), gst::ErrorMessage> {
-        gst::debug!(CAT, imp = self, "Unlock stop");
-        let mut clock_wait = self.clock_wait.lock().map_err(|e| {
-            gst::error_msg!(gst::CoreError::Failed, ["Failed to lock clock: {}", e])
-        })?;
-        clock_wait.flushing = false;
-
-        Ok(())
     }
 
     fn propose_allocation(
