@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2025-2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
 pub struct GrainData<'a> {
@@ -10,6 +10,12 @@ pub struct GrainData<'a> {
     pub total_size: usize,
 
     pub flags: u32,
+
+    /// Absolute epoch grain index actually occupying the ring slot that was read.
+    /// A reader that requested index `R` may find a different grain here: an older
+    /// index means `R` has not been produced yet, a newer one means the writer
+    /// lapped the reader and `R` was evicted.
+    pub index: u64,
 }
 
 impl<'a> GrainData<'a> {
