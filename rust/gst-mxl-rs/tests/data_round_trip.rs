@@ -12,11 +12,13 @@
 //!    an SRT file, encoded to ST 2038, sent over MXL, decoded back to
 //!    plain text.
 //!
-//! `TestDomainGuard` mirrors `rust/mxl/tests/basic_tests.rs::TestDomainGuard`.
+//! The per-test domain (`common::TestDomainGuard`) mirrors
+//! `rust/mxl/tests/basic_tests.rs::TestDomainGuard`.
 
-use std::path::PathBuf;
-use std::sync::Once;
+#[macro_use]
+mod common;
 
+use common::{init, skip_reason};
 use gst::prelude::*;
 use gstreamer as gst;
 use gstreamer_app as gst_app;
@@ -46,28 +48,6 @@ const ST2038_TEST_PACKETS: &[&[u8]] = &[
     ],
 ];
 
-static REGISTER: Once = Once::new();
-
-fn init() {
-    REGISTER.call_once(|| {
-        gst::init().expect("gst::init");
-        gst::Element::register(
-            None,
-            "mxlsrc",
-            gst::Rank::NONE,
-            gstmxl::mxlsrc::MxlSrc::static_type(),
-        )
-        .expect("register mxlsrc");
-        gst::Element::register(
-            None,
-            "mxlsink",
-            gst::Rank::NONE,
-            gstmxl::mxlsink::MxlSink::static_type(),
-        )
-        .expect("register mxlsink");
-    });
-}
-
 fn make_buffer(bytes: &[u8], pts: gst::ClockTime) -> gst::Buffer {
     let mut buf = gst::Buffer::with_size(bytes.len()).expect("alloc buffer");
     {
@@ -78,37 +58,6 @@ fn make_buffer(bytes: &[u8], pts: gst::ClockTime) -> gst::Buffer {
     buf
 }
 
-/// Per-test MXL domain under `/dev/shm`, removed on drop.
-///
-/// Mirrors `rust/mxl/tests/basic_tests.rs::TestDomainGuard`. Linux-only, like
-/// the existing GStreamer in-process tests in this crate.
-struct TestDomainGuard {
-    dir: PathBuf,
-}
-
-impl TestDomainGuard {
-    fn new(test: &str) -> Self {
-        let dir = PathBuf::from(format!(
-            "/dev/shm/mxl_gst_test_domain_{test}_{}",
-            uuid::Uuid::new_v4()
-        ));
-        std::fs::create_dir_all(&dir)
-            .unwrap_or_else(|e| panic!("create test domain {}: {e}", dir.display()));
-        Self { dir }
-    }
-
-    fn domain(&self) -> String {
-        self.dir.to_string_lossy().into_owned()
-    }
-}
-
-impl Drop for TestDomainGuard {
-    fn drop(&mut self) {
-        // Best-effort cleanup; don't mask test failures by panicking here.
-        let _ = std::fs::remove_dir_all(&self.dir);
-    }
-}
-
 /// Synthetic ST 2038 round-trip via `appsrc` → `mxlsink` → MXL → `mxlsrc` →
 /// `appsink`.
 ///
@@ -117,12 +66,22 @@ impl Drop for TestDomainGuard {
 /// consumer receives exact-byte matches that themselves alternate in the
 /// same order once steady state is reached.
 #[test]
-#[ignore = "MXL + GStreamer integration; opt-in with cargo test -- --ignored"]
 fn st2038_round_trip_via_mxl() {
     init();
+    #[rustfmt::skip]
+    const FACTORIES: &[&str] = &[
+        "appsink",
+        "appsrc",
+        "mxlsink",
+        "mxlsrc",
+        "queue",
+    ];
+    if let Some(reason) = skip_reason(FACTORIES) {
+        skip!(reason);
+    }
 
     let flow_id = uuid::Uuid::new_v4().to_string();
-    let domain_guard = TestDomainGuard::new("st2038_round_trip");
+    let domain_guard = common::TestDomainGuard::new("st2038_round_trip");
     let domain = domain_guard.domain();
 
     // appsrc `format=time` is required because we set per-buffer PTS and
@@ -172,8 +131,11 @@ fn st2038_round_trip_via_mxl() {
     // explicit PTS at integer multiples of the grain period, so each push
     // deterministically maps to a distinct MXL index. This makes the
     // alternation property a function of the data path, not of wall-clock
-    // jitter on `appsrc`'s synthesised live timestamps. The `mxlsink` writer
-    // paces commits against the MXL clock internally, so we don't sleep here.
+    // jitter on `appsrc`'s synthesised live timestamps. Pace the pushes at grain
+    // cadence, modelling a real-time source: mxlsink can only hold a not-yet-due
+    // grain, not un-burst a backlog of already-due ones, so feeding everything at
+    // once would (under load) commit past-due grains back-to-back and lap the
+    // ring before the reader attaches.
 
     // Matches the framerate pinned on both pipelines above (30000/1001).
     const GRAIN_PERIOD_NS: u64 = gst::ClockTime::SECOND.nseconds() * 1_001 / 30_000;
@@ -183,10 +145,18 @@ fn st2038_round_trip_via_mxl() {
     // consumer's first MXL read index can be a grain or two after the
     // producer's first MXL write index depending on scheduler ordering.
     const PUSH_COUNT: usize = PULL_COUNT + 2;
+    let grain_period = std::time::Duration::from_nanos(GRAIN_PERIOD_NS);
+    let start = std::time::Instant::now();
     for i in 0..PUSH_COUNT {
         let pts = gst::ClockTime::from_nseconds(i as u64 * GRAIN_PERIOD_NS);
         let bytes = ST2038_TEST_PACKETS[i % ST2038_TEST_PACKETS.len()];
         appsrc.push_buffer(make_buffer(bytes, pts)).expect("push");
+        if i + 1 < PUSH_COUNT
+            && let Some(remaining) = (start + grain_period * (i as u32 + 1))
+                .checked_duration_since(std::time::Instant::now())
+        {
+            std::thread::sleep(remaining);
+        }
     }
 
     // Pull samples and assert each is one of the two known packets.
@@ -231,16 +201,6 @@ fn st2038_round_trip_via_mxl() {
     consumer.set_state(gst::State::Null).expect("consumer Null");
 }
 
-/// Asserts that all named GStreamer element factories are registered.
-fn require_factories(names: &[&str]) {
-    let missing: Vec<&str> = names
-        .iter()
-        .filter(|n| gst::ElementFactory::find(n).is_none())
-        .copied()
-        .collect();
-    assert!(missing.is_empty(), "missing element factories: {missing:?}");
-}
-
 /// SRT → text → CEA-608 → ST 2038 → MXL → ST 2038 → CEA-608 → text round-trip.
 ///
 /// Captions in `tests/data/example.srt` are encoded to CEA-608, wrapped in
@@ -256,19 +216,24 @@ fn require_factories(names: &[&str]) {
 #[test]
 fn cea608_round_trip_via_mxl() {
     init();
-    require_factories(&[
-        "filesrc",
-        "subparse",
-        "tttocea608",
+    const FACTORIES: &[&str] = &[
+        "appsink",
         "ccconverter",
         "cctost2038anc",
-        "st2038anctocc",
         "cea608tott",
-        "appsink",
-    ]);
+        "filesrc",
+        "mxlsink",
+        "mxlsrc",
+        "st2038anctocc",
+        "subparse",
+        "tttocea608",
+    ];
+    if let Some(reason) = skip_reason(FACTORIES) {
+        skip!(reason);
+    }
 
     let flow_id = uuid::Uuid::new_v4().to_string();
-    let domain_guard = TestDomainGuard::new("cea608_round_trip");
+    let domain_guard = common::TestDomainGuard::new("cea608_round_trip");
     let domain = domain_guard.domain();
     let srt_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/data/example.srt");
 

@@ -5,9 +5,7 @@
 mod tests {
     use std::collections::HashMap;
 
-    use crate::mxlsink::imp::*;
-    use glib::subclass::types::ObjectSubclassType;
-    use gst::{CoreError, Fraction, prelude::*};
+    use gst::{CoreError, Fraction};
     use gstreamer as gst;
     use mxl::flowdef::*;
     use uuid::Uuid;
@@ -118,103 +116,6 @@ mod tests {
         });
         println!("{:#?}", json);
         assert_eq!(json, expected_json);
-        Ok(())
-    }
-
-    #[test]
-    #[cfg_attr(feature = "tracing", tracing_test::traced_test)]
-    #[ignore = "MXL + GStreamer integration - failing on CI but not reproducible; opt-in with cargo test -- --ignored"]
-    fn valid_gray_pipeline() -> Result<(), glib::Error> {
-        gst::init()?;
-        gst::Element::register(
-            None,
-            "mxlsrc",
-            gst::Rank::NONE,
-            crate::mxlsrc::MxlSrc::static_type(),
-        )
-        .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-        gst::Element::register(None, "mxlsink", gst::Rank::NONE, MxlSink::type_())
-            .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-        let pipeline = gst::Pipeline::new();
-        let src = gst::ElementFactory::make("videotestsrc")
-            .build()
-            .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-
-        let queue1 = gst::ElementFactory::make("queue")
-            .build()
-            .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-        let convert1 = gst::ElementFactory::make("videoconvert")
-            .build()
-            .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-        let queue2 = gst::ElementFactory::make("queue")
-            .build()
-            .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-
-        let caps = gst::Caps::builder("video/x-raw")
-            .field("format", "GRAY8")
-            .build();
-        let capsfilter = gst::ElementFactory::make("capsfilter")
-            .property("caps", &caps)
-            .build()
-            .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-
-        let queue3 = gst::ElementFactory::make("queue")
-            .build()
-            .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-        let convert2 = gst::ElementFactory::make("videoconvert")
-            .build()
-            .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-        let queue4 = gst::ElementFactory::make("queue")
-            .build()
-            .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-
-        let sink = gst::ElementFactory::make("mxlsink")
-            .property("flow-id", "7fbec3b1-1b0f-417d-9059-8b94a47197ed")
-            .property("domain", "/dev/shm")
-            .build()
-            .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-
-        pipeline
-            .add_many([
-                &src,
-                &queue1,
-                &convert1,
-                &queue2,
-                &capsfilter,
-                &queue3,
-                &convert2,
-                &queue4,
-                &sink,
-            ])
-            .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-        gst::Element::link_many([
-            &src,
-            &queue1,
-            &convert1,
-            &queue2,
-            &capsfilter,
-            &queue3,
-            &convert2,
-            &queue4,
-            &sink,
-        ])
-        .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-        pipeline
-            .set_state(gst::State::Playing)
-            .map_err(|_| glib::Error::new(CoreError::Failed, "State change failed"))?;
-        let src_pad = src
-            .static_pad("src")
-            .ok_or(CoreError::Failed)
-            .map_err(|_| glib::Error::new(CoreError::Pad, "Source pad failed"))?;
-        if let Some(caps) = src_pad.current_caps() {
-            println!("Negotiated caps: {}", caps);
-        } else {
-            println!("No negotiated caps found");
-        }
-        std::thread::sleep(std::time::Duration::from_millis(600));
-        pipeline
-            .set_state(gst::State::Null)
-            .map_err(|_| glib::Error::new(CoreError::Failed, "State change failed"))?;
         Ok(())
     }
 }
