@@ -1,14 +1,15 @@
 // SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-//! Integration tests for GStreamer video with ancillary metadata being written
-//! to a video MXL flow and a data MXL flow and reading these flows back.
+//! Integration tests for GStreamer video with ancillary metadata written to a
+//! video MXL flow and a companion data MXL flow, then read back.
 //!
-//! Both tests are `#[ignore]` so `cargo test` skips them by default; run with
-//! `cargo test -p gst-mxl-rs --test video_data_sync -- --ignored`.
+//! Requires Linux `/dev/shm` (tmpfs) and the `gst-plugin-closedcaption`
+//! elements (`st2038extractor`, `st2038combiner`). CI installs these from
+//! [gst-plugins-rs](https://gitlab.freedesktop.org/gstreamer/gst-plugins-rs).
 //!
-//! Both tests use the same producer pipeline. The `appsrc` writes a frame index
-//! into the v210 payload and every ancillary payload.
+//! The shared producer writes a frame index into the v210 payload and into
+//! every ancillary payload:
 //!
 //! ```text
 //! appsrc (v210 + GstAncillaryMeta)
@@ -17,209 +18,83 @@
 //! ext.st2038  ! queue ! mxlsink (data flow)
 //! ```
 //!
-//! 1. [`v210_with_meta_to_v210_and_st2038_via_mxl`]: reads the flows with a
-//!    disjoint consumer pipeline with two `appsink`s, which record the timestamps
-//!    of and the frame index read out of every sample, and compares video vs data
-//!    for shared frame index.
+//! `mxlsink` commits each frame at the absolute MXL grain index derived from
+//! its PTS, so the same source frame lands at the *same* index on both flows.
+//! `mxlsrc` derives PTS purely from that absolute index, so two independent
+//! readers expose identical timestamps for the same frame — which is what these
+//! tests assert, directly (disjoint `appsink`s) and via `st2038combiner`.
 //!
-//!    ```text
-//!    mxlsrc (video flow) ! queue ! appsink (v210)
-//!    mxlsrc (data flow)  ! queue ! appsink (meta/x-st-2038)
-//!    ```
+//! Disjoint consumer (`v210_with_meta_to_v210_and_st2038_via_mxl`):
 //!
-//! 2. [`v210_with_meta_to_v210_with_meta_via_mxl`]: reads the flows with a
-//!    single-`appsink` consumer pipeline, joining both flows back together
-//!    via `st2038combiner`, which re-attaches the ancillary metadata on the
-//!    matching video buffers.
+//! ```text
+//! mxlsrc (video flow) ! queue ! appsink video_sink (sync=false)
+//! mxlsrc (data flow)  ! queue ! appsink data_sink  (sync=false)
+//! ```
 //!
-//!    ```text
-//!    mxlsrc (video flow) ! queue min-threshold-buffers=2 ! comb.sink
-//!    mxlsrc (data flow)  ! queue                         ! comb.st2038
-//!    st2038combiner name=comb ! queue
-//!      ! appsink (v210 + GstAncillaryMeta)
-//!    ```
+//! Combiner consumer (`v210_with_meta_to_v210_with_meta_via_mxl`):
+//!
+//! ```text
+//! mxlsrc (video flow) ! queue ! comb.sink
+//! mxlsrc (data flow)  ! queue ! comb.st2038
+//! st2038combiner name=comb drop-late-st2038=true ! queue ! appsink (sync=true)
+//! ```
 
-use std::path::PathBuf;
-use std::sync::Once;
+#[macro_use]
+mod common;
 
+use std::collections::{BTreeMap, BTreeSet};
+
+use common::{
+    FRAME_PERIOD_NS, FRAMERATE_DEN, FRAMERATE_NUM, add_ancillary_meta, assert_bus_no_errors,
+    build_producer, collect_bus_errors, init, skip_reason, st2038_first_packet_data0,
+};
 use gst::prelude::*;
-use gstmxl::format::data::ancillary_meta_from_st2038_anc_packet;
 use gstreamer as gst;
 use gstreamer_app as gst_app;
 use gstreamer_video as gst_video;
 
-const FRAMERATE_NUM: i32 = 30_000;
-const FRAMERATE_DEN: i32 = 1_001;
-const FRAME_PERIOD_NS: u64 =
-    gst::ClockTime::SECOND.nseconds() * FRAMERATE_DEN as u64 / FRAMERATE_NUM as u64;
-// v210 pads lines to a multiple of 128 bytes; width >= 2 is valid.
-const VIDEO_WIDTH: u32 = 2;
-const VIDEO_HEIGHT: u32 = 2;
+/// Frames pushed per test — the stream length, not a ring figure (the ring holds
+/// only a few grains). A reader that keeps pace stays within the ring's history
+/// window and never sees eviction.
+const PUSH_COUNT: usize = 150;
+/// Frames a reader may miss while attaching after the producer starts. A live
+/// reader anchors at the producer's current head, so the first few committed
+/// frames can be gone before both readers attach.
+const ATTACH_SLACK: usize = 5;
 
-static REGISTER: Once = Once::new();
-
-fn init() {
-    REGISTER.call_once(|| {
-        gst::init().expect("gst::init");
-        gst::Element::register(
-            None,
-            "mxlsrc",
-            gst::Rank::NONE,
-            gstmxl::mxlsrc::MxlSrc::static_type(),
-        )
-        .expect("register mxlsrc");
-        gst::Element::register(
-            None,
-            "mxlsink",
-            gst::Rank::NONE,
-            gstmxl::mxlsink::MxlSink::static_type(),
-        )
-        .expect("register mxlsink");
-    });
+/// Owns the producer and consumer pipelines and, on drop (including on panic),
+/// stops the writers before the readers so no MXL worker thread outlives the
+/// domain dir the `TestDomainGuard` removes (mirrors `data_round_trip`).
+struct RoundTrip {
+    producer: gst::Pipeline,
+    consumer: gst::Pipeline,
 }
 
-fn require_factories(names: &[&str]) {
-    let missing: Vec<&str> = names
-        .iter()
-        .filter(|n| gst::ElementFactory::find(n).is_none())
-        .copied()
-        .collect();
-    assert!(missing.is_empty(), "missing element factories: {missing:?}");
-}
-
-fn extend_with_even_odd_parity(v: u8) -> u16 {
-    if v.count_ones() & 1 == 0 {
-        0x1_00 | (v as u16)
-    } else {
-        0x2_00 | (v as u16)
-    }
-}
-
-fn compute_checksum(did_10bit: u16, sdid_10bit: u16, dc_10bit: u16, data: &[u16]) -> u16 {
-    let mut checksum = 0u16;
-    checksum = checksum.wrapping_add(did_10bit & 0x1ff);
-    checksum = checksum.wrapping_add(sdid_10bit & 0x1ff);
-    checksum = checksum.wrapping_add(dc_10bit & 0x1ff);
-    for &w in data {
-        checksum = checksum.wrapping_add(w & 0x1ff);
-    }
-    checksum &= 0x1ff;
-    checksum |= ((!(checksum >> 8)) & 0x01) << 9;
-    checksum
-}
-
-fn add_ancillary_meta(
-    buffer: &mut gst::BufferRef,
-    line: u16,
-    offset: u16,
-    did: u8,
-    sdid: u8,
-    payload: &[u8],
-) {
-    let mut meta = gst_video::video_meta::AncillaryMeta::add(buffer);
-    meta.set_c_not_y_channel(false);
-    meta.set_line(line);
-    meta.set_offset(offset);
-
-    let did_10bit = extend_with_even_odd_parity(did);
-    let sdid_10bit = extend_with_even_odd_parity(sdid);
-    let dc_10bit = extend_with_even_odd_parity(payload.len() as u8);
-
-    meta.set_did(did_10bit);
-    meta.set_sdid_block_number(sdid_10bit);
-
-    let data: Vec<u16> = payload
-        .iter()
-        .copied()
-        .map(extend_with_even_odd_parity)
-        .collect();
-    meta.set_checksum(compute_checksum(did_10bit, sdid_10bit, dc_10bit, &data));
-    meta.set_data(glib::Slice::from(data));
-}
-
-/// Per-test MXL domain under `/dev/shm`, removed on drop.
-///
-/// Mirrors `tests/data_round_trip.rs::TestDomainGuard`. Linux-only, like the
-/// existing GStreamer in-process tests in this crate.
-struct TestDomainGuard {
-    dir: PathBuf,
-}
-
-impl TestDomainGuard {
-    fn new(test: &str) -> Self {
-        let dir = PathBuf::from(format!(
-            "/dev/shm/mxl_gst_test_domain_{test}_{}",
-            uuid::Uuid::new_v4()
-        ));
-        std::fs::create_dir_all(&dir)
-            .unwrap_or_else(|e| panic!("create test domain {}: {e}", dir.display()));
-        Self { dir }
-    }
-
-    fn domain(&self) -> String {
-        self.dir.to_string_lossy().into_owned()
-    }
-}
-
-impl Drop for TestDomainGuard {
+impl Drop for RoundTrip {
     fn drop(&mut self) {
-        let _ = std::fs::remove_dir_all(&self.dir);
+        let _ = self.producer.set_state(gst::State::Null);
+        let _ = self.consumer.set_state(gst::State::Null);
     }
-}
-
-/// `parse::launch` the shared producer (appsrc → extractor → two mxlsinks)
-/// and return the pipeline, its appsrc, and the v210 frame size in bytes.
-fn build_producer(
-    video_flow_id: &str,
-    data_flow_id: &str,
-    domain: &str,
-) -> (gst::Pipeline, gst_app::AppSrc, usize) {
-    let video_info =
-        gst_video::VideoInfo::builder(gst_video::VideoFormat::V210, VIDEO_WIDTH, VIDEO_HEIGHT)
-            .fps(gst::Fraction::new(FRAMERATE_NUM, FRAMERATE_DEN))
-            .build()
-            .expect("v210 VideoInfo");
-    let frame_bytes = video_info.size();
-
-    // `ext.st2038` references the extractor's *sometimes* pad by name;
-    // gst-launch defers that link until the pad appears so the whole
-    // producer fits in one parse string with no `pad-added` glue.
-    let producer_desc = format!(
-        "appsrc name=src format=time \
-           caps=video/x-raw,format=v210,\
-                width={VIDEO_WIDTH},\
-                height={VIDEO_HEIGHT},\
-                framerate={FRAMERATE_NUM}/{FRAMERATE_DEN} \
-           ! st2038extractor name=ext remove-ancillary-meta=true \
-         ext.src \
-           ! queue \
-           ! mxlsink flow-id={video_flow_id} domain={domain} \
-         ext.st2038 \
-           ! queue \
-           ! mxlsink flow-id={data_flow_id} domain={domain}"
-    );
-    let producer = gst::parse::launch(&producer_desc)
-        .expect("parse producer")
-        .downcast::<gst::Pipeline>()
-        .expect("producer pipeline");
-    let appsrc = producer
-        .by_name("src")
-        .expect("appsrc")
-        .downcast::<gst_app::AppSrc>()
-        .expect("AppSrc downcast");
-    (producer, appsrc, frame_bytes)
 }
 
 /// Push `count` v210 buffers. Each buffer stamps its frame index into byte 0
 /// of the v210 payload **and** into byte 0 of every ancillary payload, so the
-/// combiner consumer can verify that the re-attached `GstAncillaryMeta`s came
-/// from the *same* producer frame as the carrying video buffer.
+/// consumer can verify a sample's video and ancillary data came from the same
+/// producer frame.
 fn push_test_frames(appsrc: &gst_app::AppSrc, frame_bytes: usize, count: usize) {
+    let frame_period = std::time::Duration::from_nanos(FRAME_PERIOD_NS);
+    let start = std::time::Instant::now();
     for i in 0..count {
-        // Explicit PTS at integer multiples of the frame period maps each
-        // push deterministically to a distinct MXL grain index on both flows
-        // (mxlsink paces commits against the MXL clock internally based on
-        // PTS), so we don't sleep here.
+        // Hand each frame to mxlsink at its frame time, modelling a self-paced
+        // real-time (live) source. mxlsink is a plain sync=true GstBaseSink: it
+        // waits for each buffer's running time before committing, so it *holds* a
+        // not-yet-due frame — but it cannot un-burst frames that are already past
+        // due. If the producer burst everything at once and the run started late
+        // (first render after base_time), the past-due early frames would commit
+        // back-to-back and lap the small ring before a reader drains it (reader
+        // jumps forward -> DISCONT -> gaps). Spacing production at frame cadence
+        // makes frames arrive one-per-period, so commits stay paced regardless of
+        // start latency.
         let pts = gst::ClockTime::from_nseconds(i as u64 * FRAME_PERIOD_NS);
         let mut buf = gst::Buffer::with_size(frame_bytes).expect("v210 buffer");
         let frame_idx = i as u8;
@@ -234,8 +109,47 @@ fn push_test_frames(appsrc: &gst_app::AppSrc, frame_bytes: usize, count: usize) 
             add_ancillary_meta(b, 9, 0, 0x44, 0x01, &[frame_idx, 0xa, 0xaa, 0x55]);
             add_ancillary_meta(b, 9, 32, 0x44, 0x02, &[frame_idx, 0xb, 0xaa, 0x55]);
         }
-        appsrc.push_buffer(buf).expect("push v210 buffer");
+        // Stop quietly if the pipeline is being torn down (push returns Flushing)
+        // rather than panicking on a side thread.
+        if appsrc.push_buffer(buf).is_err() {
+            break;
+        }
+        // Sleep to this frame's slot on an absolute schedule (avoids the drift a
+        // per-iteration sleep would accumulate); skip after the last frame.
+        if i + 1 < count
+            && let Some(remaining) = (start + frame_period * (i as u32 + 1))
+                .checked_duration_since(std::time::Instant::now())
+        {
+            std::thread::sleep(remaining);
+        }
     }
+}
+
+/// Bring both pipelines to `Playing` and stream the frames live.
+///
+/// The consumer can only reach `Playing` once its `appsink` prerolls, which
+/// needs the producer to commit the first frame; but each `mxlsink` creates its
+/// flow from the first buffer's caps, so nothing is committed until we push.
+/// Gating the push on the consumer reaching `Playing` therefore deadlocks until
+/// the `state()` timeout expires. Instead push on a side thread, concurrently
+/// with waiting for the consumer to come up: both `mxlsrc` readers attach at the
+/// producer's head as the flows appear, within `ATTACH_SLACK` frames.
+fn start_and_stream(rt: &RoundTrip, appsrc: &gst_app::AppSrc, frame_bytes: usize) {
+    rt.producer
+        .set_state(gst::State::Playing)
+        .expect("producer Playing");
+    rt.consumer
+        .set_state(gst::State::Playing)
+        .expect("consumer Playing");
+
+    let push_src = appsrc.clone();
+    let pusher = std::thread::spawn(move || push_test_frames(&push_src, frame_bytes, PUSH_COUNT));
+
+    let (res, _, _) = rt.consumer.state(gst::ClockTime::from_seconds(10));
+    res.expect("consumer reached Playing");
+    assert_bus_no_errors("consumer", &collect_bus_errors(&rt.consumer));
+
+    pusher.join().expect("push thread");
 }
 
 /// Recover the original byte from a 10-bit-with-even/odd-parity ANC word.
@@ -244,21 +158,15 @@ fn ancillary_byte(word_10bit: u16) -> u8 {
     (word_10bit & 0xff) as u8
 }
 
-/// Last `GstAncillaryMeta` on a v210 buffer: producer frame stamp in user-data word 0 low byte.
-fn last_ancillary_meta_data0(buffer: &gst::BufferRef) -> Option<u8> {
-    let meta = buffer
+/// Distinct producer frame stamps across all `GstAncillaryMeta` on a v210 buffer.
+/// The producer attaches two ancillary metas per frame, both stamped with the
+/// same frame index, so a correctly paired frame yields a single stamp; a frame
+/// that also swept up a late neighbour's ancillary yields more than one.
+fn ancillary_meta_frame_stamps(buffer: &gst::BufferRef) -> BTreeSet<u8> {
+    buffer
         .iter_meta::<gst_video::video_meta::AncillaryMeta>()
-        .last()?;
-    Some(ancillary_byte(
-        *meta.data().first().expect("ancillary meta had empty data"),
-    ))
-}
-
-/// First ST 2038 ANC packet in a `meta/x-st-2038` buffer: producer stamp in byte 0 of user data.
-fn st2038_first_packet_data0(st2038: &[u8]) -> u8 {
-    let mut rem = st2038;
-    let meta = ancillary_meta_from_st2038_anc_packet(&mut rem).expect("parse first ST 2038 ANC");
-    ancillary_byte(*meta.data.first().expect("ST 2038 data_count was zero"))
+        .map(|meta| ancillary_byte(*meta.data().first().expect("ancillary meta had empty data")))
+        .collect()
 }
 
 /// PTS and running time from a `gst::Sample`.
@@ -285,67 +193,106 @@ struct SampleTiming {
     frame_idx: u8,
 }
 
+/// Collect samples from a live `appsink` until the final frame
+/// (`PUSH_COUNT - 1`) arrives, the stream ends, or an overall deadline passes.
+///
+/// The readers are live, so pulling races the real-time stream and a per-pull
+/// timeout alone cannot tell "no frame yet" from end-of-stream. The stream is
+/// bounded and the last frame index is known, so stop once it is seen; also stop
+/// promptly on EOS (`try_pull_sample` returns `None` immediately once the sink is
+/// EOS, so poll `is_eos` rather than spinning), with the deadline as a backstop.
 fn pull_all_samples(
     sink: &gst_app::AppSink,
     pull_timeout: gst::ClockTime,
     mut frame_from_buffer: impl FnMut(&gst::BufferRef) -> u8,
 ) -> Vec<SampleTiming> {
+    let last_frame = (PUSH_COUNT - 1) as u8;
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
     let mut out = Vec::new();
-    while let Some(sample) = sink.try_pull_sample(pull_timeout) {
+    let mut seen_last = false;
+    while !seen_last && std::time::Instant::now() < deadline {
+        let Some(sample) = sink.try_pull_sample(pull_timeout) else {
+            if sink.is_eos() {
+                break;
+            }
+            continue;
+        };
         let buffer = sample.buffer().expect("sample buffer");
         let (pts, running_time) = timing_from_sample(&sample);
+        let frame_idx = frame_from_buffer(buffer);
+        seen_last = frame_idx == last_frame;
         out.push(SampleTiming {
             pts,
             running_time,
-            frame_idx: frame_from_buffer(buffer),
+            frame_idx,
         });
     }
     out
 }
 
-fn compare_disjoint_video_data(video: &[SampleTiming], data: &[SampleTiming], push_count: usize) {
-    use std::collections::{BTreeMap, BTreeSet};
-
-    let mut video_by_frame = BTreeMap::new();
-    for s in video {
+/// Index samples by frame, asserting no frame arrives twice.
+fn by_frame(label: &str, samples: &[SampleTiming]) -> BTreeMap<u8, SampleTiming> {
+    let mut map = BTreeMap::new();
+    for s in samples {
         assert!(
-            video_by_frame.insert(s.frame_idx, *s).is_none(),
-            "duplicate video sample for frame_idx {}",
+            map.insert(s.frame_idx, *s).is_none(),
+            "duplicate {label} sample for frame_idx {}",
             s.frame_idx,
         );
     }
-    let mut data_by_frame = BTreeMap::new();
-    for s in data {
-        assert!(
-            data_by_frame.insert(s.frame_idx, *s).is_none(),
-            "duplicate data sample for frame_idx {}",
-            s.frame_idx,
-        );
-    }
+    map
+}
 
-    let video_keys: BTreeSet<_> = video_by_frame.keys().copied().collect();
-    let data_keys: BTreeSet<_> = data_by_frame.keys().copied().collect();
-    let expected: BTreeSet<u8> = (0..push_count).map(|i| i as u8).collect();
+/// A live reader misses at most the first few frames (attach latency) and then
+/// reads contiguously to the last frame pushed.
+fn assert_contiguous_live_capture(label: &str, frames: &BTreeSet<u8>) {
+    assert!(
+        !frames.is_empty(),
+        "expected {label} samples from mxlsrc, got 0 (pushed {PUSH_COUNT} frames)"
+    );
+    let first = *frames.iter().next().unwrap() as usize;
+    let last = *frames.iter().next_back().unwrap() as usize;
+    assert_eq!(
+        last,
+        PUSH_COUNT - 1,
+        "{label} should read through the last frame {}, got {last}",
+        PUSH_COUNT - 1
+    );
+    assert!(
+        first <= ATTACH_SLACK,
+        "{label} missed too many frames at attach: first read frame_idx {first}"
+    );
+    assert_eq!(
+        frames.len(),
+        last - first + 1,
+        "{label} capture has gaps: {} frames over range {first}..={last}",
+        frames.len(),
+    );
+}
 
-    let only_video: Vec<_> = video_keys.difference(&data_keys).copied().collect();
-    let only_data: Vec<_> = data_keys.difference(&video_keys).copied().collect();
+fn compare_disjoint_video_data(video: &[SampleTiming], data: &[SampleTiming]) {
+    let video_by_frame = by_frame("video", video);
+    let data_by_frame = by_frame("data", data);
+    let video_keys: BTreeSet<u8> = video_by_frame.keys().copied().collect();
+    let data_keys: BTreeSet<u8> = data_by_frame.keys().copied().collect();
+
     eprintln!(
-        "disjoint flow: video {} sample(s), data {} sample(s); \
-         only-video frame_idx {only_video:?}, only-data frame_idx {only_data:?}",
+        "disjoint flow: video {} sample(s), data {} sample(s)",
         video.len(),
         data.len(),
     );
+    assert_contiguous_live_capture("video", &video_keys);
+    assert_contiguous_live_capture("data", &data_keys);
 
-    let missing_video: Vec<_> = expected.difference(&video_keys).copied().collect();
-    let missing_data: Vec<_> = expected.difference(&data_keys).copied().collect();
-    if !missing_video.is_empty() || !missing_data.is_empty() {
-        eprintln!(
-            "expected 0..{}: missing video frame_idx {missing_video:?}, missing data frame_idx {missing_data:?}",
-            push_count,
-        );
-    }
-
-    for &f in video_keys.intersection(&data_keys) {
+    let shared: Vec<u8> = video_keys.intersection(&data_keys).copied().collect();
+    assert!(
+        shared.len() >= PUSH_COUNT - 2 * ATTACH_SLACK,
+        "video and data barely overlap ({} shared frames)",
+        shared.len()
+    );
+    // The core invariant: the same source frame carries identical timing on both
+    // flows, because both readers derive PTS from the same absolute grain index.
+    for f in shared {
         let v = video_by_frame[&f];
         let d = data_by_frame[&f];
         assert_eq!(
@@ -361,34 +308,30 @@ fn compare_disjoint_video_data(video: &[SampleTiming], data: &[SampleTiming], pu
     }
 }
 
-/// Reads the flows with a disjoint consumer pipeline with two `appsink`s.
-/// Records PTS, running time, and producer frame index on every sample, then
-/// compares video vs data for each frame index present on both sides.
+/// Reads the flows with a disjoint consumer pipeline with two `appsink`s and
+/// compares video vs data timing for every frame present on both sides.
 #[test]
-#[ignore = "MXL + GStreamer integration; opt-in with cargo test -- --ignored"]
 fn v210_with_meta_to_v210_and_st2038_via_mxl() {
     init();
-    require_factories(&[
-        "appsrc",
+    const FACTORIES: &[&str] = &[
         "appsink",
-        "queue",
-        "st2038extractor",
+        "appsrc",
         "mxlsink",
         "mxlsrc",
-    ]);
+        "queue",
+        "st2038extractor",
+    ];
+    if let Some(reason) = skip_reason(FACTORIES) {
+        skip!(reason);
+    }
 
     let video_flow_id = uuid::Uuid::new_v4().to_string();
     let data_flow_id = uuid::Uuid::new_v4().to_string();
-    let domain_guard = TestDomainGuard::new("v210_with_meta");
+    let domain_guard = common::TestDomainGuard::new("v210_disjoint");
     let domain = domain_guard.domain();
 
     let (producer, appsrc, frame_bytes) = build_producer(&video_flow_id, &data_flow_id, &domain);
 
-    // Consumer: one pipeline with two disjoint chains, one `mxlsrc` per flow.
-    // Both `mxlsrc`s wait for their flow to be created by the producer
-    // (`FlowNotFound` poll loop is internal to `mxlsrc`), so the consumer can
-    // be started before any buffers are pushed. `gst::parse::launch` accepts
-    // multiple disjoint sub-pipelines in one description.
     let consumer_desc = format!(
         "mxlsrc video-flow-id={video_flow_id} domain={domain} \
            ! queue \
@@ -416,17 +359,8 @@ fn v210_with_meta_to_v210_and_st2038_via_mxl() {
         .downcast::<gst_app::AppSink>()
         .expect("data AppSink downcast");
 
-    // Producer first so both flows exist by the time the consumer `mxlsrc`s'
-    // readers attach.
-    producer
-        .set_state(gst::State::Playing)
-        .expect("producer Playing");
-    consumer
-        .set_state(gst::State::Playing)
-        .expect("consumer Playing");
-
-    const PUSH_COUNT: usize = 150;
-    push_test_frames(&appsrc, frame_bytes, PUSH_COUNT);
+    let rt = RoundTrip { producer, consumer };
+    start_and_stream(&rt, &appsrc, frame_bytes);
 
     let pull_timeout = gst::ClockTime::from_seconds(2);
     let video_samples = pull_all_samples(&video_appsink, pull_timeout, |buf| {
@@ -435,62 +369,59 @@ fn v210_with_meta_to_v210_and_st2038_via_mxl() {
             frame_bytes,
             "v210 round-trip should preserve frame size"
         );
-        let map = buf.map_readable().expect("video buffer readable");
-        map.as_slice()[0]
+        buf.map_readable()
+            .expect("video buffer readable")
+            .as_slice()[0]
     });
     let data_samples = pull_all_samples(&data_appsink, pull_timeout, |buf| {
         assert!(
             buf.size() > 0,
             "ST 2038 round-trip buffer should be non-empty"
         );
-        let map = buf.map_readable().expect("data buffer readable");
-        st2038_first_packet_data0(map.as_slice())
+        st2038_first_packet_data0(buf.map_readable().expect("data buffer readable").as_slice())
     });
 
-    compare_disjoint_video_data(&video_samples, &data_samples, PUSH_COUNT);
-
-    producer.set_state(gst::State::Null).expect("producer Null");
-    consumer.set_state(gst::State::Null).expect("consumer Null");
+    compare_disjoint_video_data(&video_samples, &data_samples);
+    drop(rt);
 }
 
-/// Reads the flows with a single-`appsink` consumer pipeline, joining both
-/// flows back together via `st2038combiner`, which re-attaches the ancillary
-/// metadata on the matching video buffers.
+/// Reads the flows with a single-`appsink` consumer that joins both flows via
+/// `st2038combiner`, which re-attaches the ancillary metadata onto the matching
+/// video buffers. The combiner can only pair them because both flows expose the
+/// same PTS per frame.
 #[test]
-#[ignore = "MXL + GStreamer integration; opt-in with cargo test -- --ignored"]
 fn v210_with_meta_to_v210_with_meta_via_mxl() {
     init();
-    require_factories(&[
-        "appsrc",
+    const FACTORIES: &[&str] = &[
         "appsink",
-        "queue",
-        "st2038extractor",
-        "st2038combiner",
+        "appsrc",
         "mxlsink",
         "mxlsrc",
-    ]);
+        "queue",
+        "st2038combiner",
+        "st2038extractor",
+    ];
+    if let Some(reason) = skip_reason(FACTORIES) {
+        skip!(reason);
+    }
 
     let video_flow_id = uuid::Uuid::new_v4().to_string();
     let data_flow_id = uuid::Uuid::new_v4().to_string();
-    let domain_guard = TestDomainGuard::new("v210_with_meta");
+    let domain_guard = common::TestDomainGuard::new("v210_combiner");
     let domain = domain_guard.domain();
 
     let (producer, appsrc, frame_bytes) = build_producer(&video_flow_id, &data_flow_id, &domain);
 
-    // The video queue holds back by one buffer (one frame), which is the
-    // worst-case arrival skew the combiner needs to absorb: the data grain
-    // for index X must have arrived before video grain X+1 is read by
-    // `mxlsrc`, so one frame of slack is sufficient.
     let consumer_desc = format!(
         "mxlsrc video-flow-id={video_flow_id} domain={domain} \
-           ! queue min-threshold-buffers=2 \
+           ! queue \
            ! comb.sink \
          mxlsrc data-flow-id={data_flow_id} domain={domain} \
            ! queue \
            ! comb.st2038 \
-         st2038combiner name=comb \
+         st2038combiner name=comb drop-late-st2038=true \
            ! queue \
-           ! appsink name=sink sync=false caps=video/x-raw,format=v210"
+           ! appsink name=sink sync=true caps=video/x-raw,format=v210"
     );
     let consumer = gst::parse::launch(&consumer_desc)
         .expect("parse combiner consumer")
@@ -502,44 +433,78 @@ fn v210_with_meta_to_v210_with_meta_via_mxl() {
         .downcast::<gst_app::AppSink>()
         .expect("AppSink downcast");
 
-    producer
-        .set_state(gst::State::Playing)
-        .expect("producer Playing");
-    consumer
-        .set_state(gst::State::Playing)
-        .expect("consumer Playing");
-
-    const PUSH_COUNT: usize = 150;
-    push_test_frames(&appsrc, frame_bytes, PUSH_COUNT);
+    let rt = RoundTrip { producer, consumer };
+    start_and_stream(&rt, &appsrc, frame_bytes);
 
     let pull_timeout = gst::ClockTime::from_seconds(2);
-    let mut pulled = 0usize;
-    while let Some(sample) = appsink.try_pull_sample(pull_timeout) {
+    // With `drop-late-st2038=true` the combiner drops ancillary that misses its
+    // video frame's window instead of smearing it onto a later frame, so each
+    // video frame N carries exactly its own ancillary N or nothing. `bare` is
+    // then a clean count of frames whose ancillary did not arrive in time;
+    // `wrong` (frame carries someone else's ancillary) must stay empty.
+    let mut total = 0usize;
+    let mut correct = 0usize;
+    let mut bare: Vec<u8> = Vec::new();
+    let mut wrong: Vec<(usize, u8, Vec<u8>)> = Vec::new();
+    let mut smear: Vec<(u8, Vec<u8>)> = Vec::new();
+    // Pull until the final frame arrives, the sink signals EOS, or the deadline
+    // passes (see `pull_all_samples`): a live pull races the real-time stream, so
+    // a pull timeout alone cannot be read as end-of-stream.
+    let last_frame = (PUSH_COUNT - 1) as u8;
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
+    let mut seen_last = false;
+    while !seen_last && std::time::Instant::now() < deadline {
+        let Some(sample) = appsink.try_pull_sample(pull_timeout) else {
+            if appsink.is_eos() {
+                break;
+            }
+            continue;
+        };
         let buffer = sample.buffer().expect("sample buffer");
         assert_eq!(
             buffer.size(),
             frame_bytes,
             "v210 round-trip should preserve frame size"
         );
-        let Some(anc_frame_idx) = last_ancillary_meta_data0(buffer) else {
-            // Combiner may output v210 before ancillary is re-attached for that frame.
-            continue;
-        };
-        let video_frame_idx = {
-            let map = buffer.map_readable().expect("video buffer readable");
-            map.as_slice()[0]
-        };
-        assert_eq!(
-            video_frame_idx, anc_frame_idx,
-            "v210 byte 0 should match last ANC packet user-data byte 0",
-        );
-        pulled += 1;
+        let pos = total;
+        total += 1;
+        let video_frame_idx = buffer
+            .map_readable()
+            .expect("video buffer readable")
+            .as_slice()[0];
+        seen_last = video_frame_idx == last_frame;
+        let stamps = ancillary_meta_frame_stamps(buffer);
+        if stamps.len() > 1 {
+            smear.push((video_frame_idx, stamps.iter().copied().collect()));
+        }
+        if stamps.contains(&video_frame_idx) {
+            correct += 1;
+        } else if stamps.is_empty() {
+            bare.push(video_frame_idx);
+        } else {
+            wrong.push((pos, video_frame_idx, stamps.iter().copied().collect()));
+        }
     }
+    let paired = correct;
+    assert_bus_no_errors("consumer", &collect_bus_errors(&rt.consumer));
+    // Every emitted frame carries its own ancillary or none: with the absolute
+    // grain-index PTS the combiner must never attach another frame's ancillary
+    // (`wrong`) or two frames' worth (`smear`).
     assert!(
-        pulled > 0,
-        "expected at least one combined v210 buffer with GstAncillaryMeta from appsink"
+        wrong.is_empty(),
+        "combiner attached mismatched ancillary: {wrong:?}"
     );
-
-    producer.set_state(gst::State::Null).expect("producer Null");
-    consumer.set_state(gst::State::Null).expect("consumer Null");
+    assert!(
+        smear.is_empty(),
+        "combiner attached multiple frames' ancillary: {smear:?}"
+    );
+    assert!(
+        total >= PUSH_COUNT - 2 * ATTACH_SLACK,
+        "combiner output too few frames: {total}"
+    );
+    assert!(
+        paired >= PUSH_COUNT - 2 * ATTACH_SLACK,
+        "combiner paired ancillary on too few frames: {paired}/{total} (bare {bare:?})"
+    );
+    drop(rt);
 }

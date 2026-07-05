@@ -319,10 +319,36 @@ jobs:
             "
 
       - name: Test the Rust bindings
+        shell: bash
+        # The integration tests self-gate at runtime instead of #[ignore]:
+        # skip! (see rust/gst-mxl-rs/tests/common) prints a libtest-style
+        # "test <name> ... skipped, <reason>" line when /dev/shm or the
+        # gst-plugins-rs closed-caption elements are missing. Run with
+        # --show-output so those lines reach the log, then aggregate them into
+        # a GitHub notice and job summary so self-skips are visible instead of
+        # passing silently.
         run: |
+          set +e
           docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
+            --shm-size=1g \
             -i mxl_build_container_with_source \
             bash -c "
               cd /workspace/mxl/rust && \
-              cargo nextest run --release --locked
-            "
+              cargo test --release --all-targets --locked -- --test-threads=1 --show-output
+            " 2>&1 | tee test.log
+          status=${PIPESTATUS[0]}
+          set -e
+          skipped=$(grep -E '^test .* \.\.\. skipped,' test.log || true)
+          count=$(grep -cE '^test .* \.\.\. skipped,' test.log || true)
+          echo "test result: ${count} skipped"
+          if [ "${count}" -gt 0 ]; then
+            echo "::notice title=Runtime tests skipped::${count} test(s) self-skipped; see job summary"
+            {
+              echo "### Runtime tests skipped (${count})"
+              echo
+              echo '```text'
+              printf '%s\n' "${skipped}"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "${status}"

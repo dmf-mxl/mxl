@@ -107,16 +107,13 @@ ENV VCPKG_ROOT="/home/${USERNAME}/vcpkg"
 COPY ./scripts/ /tmp/scripts/
 RUN /tmp/scripts/common/rust/install-rust.sh
 
-# Build gst-plugin-rsclosedcaption from gst-plugins-rs. The closed-caption
-# and ST 2038 elements (cctost2038anc, st2038anctocc, tttocea608, cea608tott)
-# come from this plugin and aren't packaged on Ubuntu 24.04.
+# Build gst-plugin-closedcaption from gst-plugins-rs. The closed-caption
+# and ST 2038 elements (cctost2038extractor, st2038combiner, …) come from
+# this plugin and aren't packaged on Ubuntu 24.04.
 #
-# Tag 0.14.5 is the latest release in the gst-plugins-rs 0.14 series.
-# 0.14 is the first release with cctost2038anc / st2038anctocc /
-# st2038ancdemux / st2038ancmux (added in 0.14.0) and targets gstreamer-rs
-# 0.24, matching gst-mxl-rs and the system GStreamer 1.24 ABI from apt.
-# 0.13.x doesn't ship the ST 2038 elements; main / 0.15.x targets
-# gstreamer-rs 0.26.
+# Tag 0.14.5 matches gst-mxl-rs (gstreamer-rs 0.24 / GStreamer 1.24 from apt).
+# Combiner round-trip tests need a st2038combiner build that includes the pad
+# FIFO skew fix; until that is in a release, use GST_PLUGIN_PATH locally.
 RUN git clone --depth 1 --branch 0.14.5 \
       https://gitlab.freedesktop.org/gstreamer/gst-plugins-rs.git \
       /tmp/gst-plugins-rs \
