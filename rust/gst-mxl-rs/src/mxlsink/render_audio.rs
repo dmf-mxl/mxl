@@ -95,9 +95,12 @@ fn commit_chunk(
     bytes_per_sample: usize,
     num_channels: usize,
 ) -> Result<(), gst::FlowError> {
+    // `open_samples(end, count)` writes the `count` samples at absolute indices
+    // `[end - count, end)` (last written is `end - 1`). `index` is this chunk's
+    // first sample, so pass `index + chunk_samples` as the end.
     let mut access = audio_state
         .writer
-        .open_samples(index, chunk_samples)
+        .open_samples(index + chunk_samples as u64, chunk_samples)
         .map_err(|_| gst::FlowError::Error)?;
     write_samples_per_channel(
         bytes_per_sample,

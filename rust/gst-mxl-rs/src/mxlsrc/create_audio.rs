@@ -55,10 +55,14 @@ pub(crate) fn create_audio(
         resync_state(audio_state);
     }
 
+    // `get_samples(end, count)` returns the `count` samples at absolute indices
+    // `[end - count, end)` (last is `end - 1`). `audio_state.index` is the first
+    // sample we want, so pass `index + batch` as the end; `pts_for_index(index)`
+    // then stamps that first returned sample.
     let read_once = |idx: u64| {
         audio_state
             .samples_reader
-            .get_samples(idx, batch as usize, GET_SAMPLE_TIMEOUT)
+            .get_samples(idx + batch, batch as usize, GET_SAMPLE_TIMEOUT)
     };
 
     let samples = match read_once(audio_state.index) {
