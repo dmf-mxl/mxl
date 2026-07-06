@@ -424,12 +424,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "gst-avsynctest-rs"
+version = "0.1.0"
+dependencies = [
+ "glib",
+ "gst-plugin-version-helper",
+ "gstreamer",
+ "gstreamer-app",
+ "gstreamer-audio",
+ "gstreamer-base",
+ "gstreamer-video",
+]
+
+[[package]]
 name = "gst-mxl-rs"
 version = "0.1.0"
 dependencies = [
  "bitstream-io",
  "crossbeam",
  "glib",
+ "gst-avsynctest-rs",
  "gst-plugin-version-helper",
  "gstreamer",
  "gstreamer-app",
