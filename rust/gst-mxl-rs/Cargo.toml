@@ -33,7 +33,9 @@ regex = { version = "1", features = ["unicode-case"] }
 
 [dev-dependencies]
 gstreamer-app = "0.24.4"
+gstreamer-audio = "0.24.4"
 gstreamer-video = { version = "0.24.5", features = ["v1_24"] }
+gst-avsynctest-rs = { path = "../gst-avsynctest-rs" }
 
 [features]
 tracing = []
