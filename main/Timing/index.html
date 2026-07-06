@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.46">
+      <meta name="generator" content="zensical-0.0.47">
     
     
       
@@ -34,7 +34,7 @@
       
         
       
-      <link rel="stylesheet" href="../assets/stylesheets/modern/main.19d3147f.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/modern/main.5e19f6ca.min.css">
       
         
           
@@ -779,17 +779,19 @@
                 
                   
 
-<!-- SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project. -->
+<!-- SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project. -->
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 
 <h1 id="timing-model">Timing Model</h1>
 <p>As described in the <a href=".././Architecture/">architecture</a> page, the grains of an MXL flow are organized in a ring buffer. Each index of the ring buffer correspond to a timestamp relative to the PTP epoch as defined by SMPTE 2059-1. MXL does NOT require a PTP/SMPTE 2059 time source : it only <em>leverages</em> the epoch and clock definitions (TAI time) as defined in SMPTE 2059-1.</p>
+<p>A comprehensive definition of the DMF and MXL timing model is being developed by the <a href="https://www.amwa.tv/jtdmf">JT-DMF End-to-End Synchronisation Working Group</a>.</p>
 <h2 id="requirements">Requirements</h2>
 <p>For single host MXL environments, any stable time sources such as NTP or SMPTE ST 2059 is adequate.</p>
 <p>For multiple hosts MXL environments, MXL requires that the time source of these hosts does not slip against each other over time (the timing source frequency over time shall be the same). Jitter is acceptable and expected - the time stamping model in MXL will describe it properly.</p>
 <p>Any NTP locked source that can be traced back to a Stratum 0 time source (atomic clocks/gps fleet) and SMPTE 2059 PTP time source that is properly locked to GPS will provide this guarantee. All cloud providers provide very accurate time sync services (sub millisecond accuracy).</p>
 <h2 id="ring-buffers">Ring buffers</h2>
 <p>Grains are organized as ring buffers. The grain count is a function of the flow grain_rate and desired history length. For example if a flow grain_rate is 50/1, each grain will be worth 20'000'000 ns (1/50 * 1'000'000) of data. A ring buffer with 100ms of history will have 5 grains (5 * 20ms/grain = 100ms). Time starts at the SMPTE 2059-1 epoch and is expressed a nanoseconds since that epoch.</p>
+<p>Ring buffer indices encode timing information — <strong>the ring buffer cannot be treated as a simple queue of grains.</strong> A writer media function must carefully compute the grain index at which it writes the incoming grains. If the writer cannot guarantee that the external source shares a common clock frequency with the MXL host, it must implement a re-synchronization strategy (grain drop, grain repeat, dynamic audio resampling, etc.) to maintain alignment with the host's timing.</p>
 <h3 id="example-indexing">Example indexing</h3>
 <p>The following table demonstrates the indexing logic for a 50/1 fps video flow stored in a ring buffer of 5 grains.</p>
 <table>
@@ -886,6 +888,8 @@ RingBufferIndex = GrainIndex \bmod RingBufferLength
 <ul>
 <li>A 2110-20 receiver media function can unroll the RTP timestamp of the first RTP packet of the frame and use it to compute the grain index write to. This index may be slightly in the past.</li>
 <li>A media function that generates grains locally (CG, Test Pattern Generator, etc) can simply use the current TAI time as a timestamp and convert it to a grain index.</li>
+<li>A well behaved writer media function should try to 'pace itself' according to the MXL host clock.  It should write to the ring buffer at a mostly constant rate and avoid writing chunks of media representing large amounts of time (i.e. multiple frames for video, multiple seconds of audio, etc)".  As a rule of thumb, it should not write more than 50% of the ring buffer duration in a burst.</li>
+<li>A well behaved writer media function will not create flows whose latency drift over time. An implementer can monitor a flow latency using the 'mxl-info' tool part of the SDK.  The flow latency should be low and mostly constant (minimal variation) over a long period of time (hours).</li>
 </ul>
 <h3 id="example-flow-readers-behaviors">Example Flow Readers behaviors</h3>
 <p>A media function consuming one or many flows may use multiple alignment strategies.</p>
@@ -1006,7 +1010,7 @@ helpers when scheduling wake-ups or calculating how far to advance <code>headInd
       <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["announce.dismiss","content.code.annotate","content.code.copy","content.code.select","content.footnote.tooltips","content.tabs.link","content.tooltips","navigation.expand","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.prefetch","navigation.path","navigation.sections","navigation.top","navigation.tracking","search.highlight"],"search":"../assets/javascripts/workers/search.b6b7e04f.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":{"provider":"mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.ee611ef6.min.js"></script>
+      <script src="../assets/javascripts/bundle.0df4f2d0.min.js"></script>
       
         <script src="../javascripts/mermaid.js"></script>
       
