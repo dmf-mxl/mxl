@@ -1,0 +1,29 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+[package]
+name = "gst-avsynctest-rs"
+description = "Aligned audio/video test sources for sync testing"
+repository.workspace = true
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+license.workspace = true
+
+[dependencies]
+glib = "0.21.5"
+gstreamer = "0.24.4"
+gstreamer-audio = "0.24.4"
+gstreamer-base = "0.24.4"
+gstreamer-video = { version = "0.24.5", features = ["v1_24"] }
+
+[dev-dependencies]
+gstreamer-app = "0.24.4"
+
+[lib]
+name = "gstavsynctest"
+crate-type = ["cdylib", "rlib"]
+path = "src/lib.rs"
+
+[build-dependencies]
+gst-plugin-version-helper = { version = "0.8.3" }
