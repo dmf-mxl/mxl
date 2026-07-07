@@ -12,7 +12,8 @@
 //! - [`avsyncvideotestsrc`](videosrc): a white vertical bar on black that is at
 //!   screen centre exactly at every pip instant (`running_time` a multiple of
 //!   `P`) and sweeps across in one `P`. Emits `video/x-raw` (v210 or UYVP) with a
-//!   `GstAncillaryMeta` carrying the frame index.
+//!   `GstAncillaryMeta` carrying the frame index and a second one carrying a
+//!   phase-locked CEA-708 caption (alternating "TICK"/"TOCK" on each pip frame).
 //! - [`avsyncaudiotestsrc`](audiosrc): silence except a short tone pip centred on
 //!   each pip instant. Emits `audio/x-raw` (F32LE, S24BE or S16BE).
 //!
@@ -28,6 +29,7 @@ use gst::glib;
 use gstreamer as gst;
 
 pub mod audiosrc;
+pub mod captions;
 pub mod signal;
 pub mod videosrc;
 
