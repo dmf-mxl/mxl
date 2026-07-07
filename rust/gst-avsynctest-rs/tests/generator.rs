@@ -217,6 +217,78 @@ fn video_bar_sweeps_and_centres_on_pip() {
     }
 }
 
+/// The CEA-708 CDP the video source attaches (DID 0x61 / SDID 0x01), as raw
+/// bytes recovered from the ancillary meta's 10-bit words.
+fn caption_cdp_bytes(buffer: &gst::BufferRef) -> Option<Vec<u8>> {
+    buffer
+        .iter_meta::<gst_video::video_meta::AncillaryMeta>()
+        .find(|m| (m.did() & 0xFF) as u8 == gstavsynctest::captions::CC_DID)
+        .map(|m| m.data().iter().map(|&w| (w & 0xFF) as u8).collect())
+}
+
+/// The caption text carried by one frame's CDP (service `CC_SERVICE_NO`), or
+/// `None` for a null CDP.
+fn decode_caption(parser: &mut cdp_types::CDPParser, cdp: &[u8]) -> Option<String> {
+    parser.parse(cdp).expect("valid CDP");
+    let packet = parser.pop_packet()?;
+    let mut text = String::new();
+    for service in packet.services() {
+        if service.number() == gstavsynctest::captions::CC_SERVICE_NO {
+            text.extend(service.codes().iter().filter_map(|code| code.char()));
+        }
+    }
+    (!text.is_empty()).then_some(text)
+}
+
+/// The video source attaches a phase-locked CEA-708 caption: TICK/TOCK on each
+/// pip frame (alternating), a null CDP on every other frame. Round-tripped
+/// through `cdp-types`/`cea708-types` straight off the ancillary meta (before any
+/// `videoconvert`, which would drop it). 25 fps puts an exact frame on each pip.
+#[test]
+fn captions_tick_tock_on_pip_frames() {
+    init();
+    let desc = format!(
+        "avsyncvideotestsrc num-buffers={VIDEO_FRAMES} pip-interval={PIP_INTERVAL_NS} is-live=false \
+           ! video/x-raw,format=v210,width={WIDTH},height={HEIGHT},framerate={FPS}/1 \
+           ! appsink name=sink sync=false"
+    );
+    let samples = run(&desc);
+    assert_eq!(samples.len(), VIDEO_FRAMES as usize);
+    let frame_period = gst::ClockTime::SECOND.nseconds() / FPS as u64;
+
+    let mut parser = cdp_types::CDPParser::new();
+    let (mut ticks, mut tocks) = (0, 0);
+    for s in &samples {
+        let buffer = s.buffer().unwrap();
+        let pts = buffer.pts().unwrap().nseconds();
+        let n = pts / frame_period;
+        let cdp = caption_cdp_bytes(buffer).expect("caption ancillary present");
+        let text = decode_caption(&mut parser, &cdp);
+        let on_pip = pts != 0 && pts.is_multiple_of(PIP_INTERVAL_NS);
+        match text {
+            Some(t) if on_pip => {
+                let want = if (pts / PIP_INTERVAL_NS) % 2 == 1 {
+                    "TICK"
+                } else {
+                    "TOCK"
+                };
+                assert_eq!(t, want, "frame {n} (pts {pts}): wrong caption");
+                if want == "TICK" {
+                    ticks += 1;
+                } else {
+                    tocks += 1;
+                }
+            }
+            Some(t) => panic!("frame {n} (pts {pts}): caption {t:?} off a pip frame"),
+            None => assert!(!on_pip, "frame {n} (pts {pts}): pip frame with no caption"),
+        }
+    }
+    assert!(
+        ticks >= 2 && tocks >= 2,
+        "too few captions: {ticks} ticks, {tocks} tocks"
+    );
+}
+
 /// Every native audio format decodes to a pip whose energy is centred on each
 /// pip instant.
 #[test]

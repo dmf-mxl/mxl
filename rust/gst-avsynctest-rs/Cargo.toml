@@ -11,6 +11,8 @@ version.workspace = true
 license.workspace = true
 
 [dependencies]
+cdp-types = "0.3"
+cea708-types = "0.4.1"
 glib = "0.21.5"
 gstreamer = "0.24.4"
 gstreamer-audio = "0.24.4"
