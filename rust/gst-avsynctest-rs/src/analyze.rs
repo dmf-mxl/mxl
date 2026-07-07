@@ -1,4 +1,5 @@
 // SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
 //! Recovery-side analysis for the aligned A/V test signal: locate the video
