@@ -5,7 +5,8 @@
 //! exactly at each pip instant (`running_time` a multiple of the pip interval)
 //! and sweeps across in one interval. The frame index is written into payload
 //! byte 0 and into a `GstAncillaryMeta` (DID/SDID in the user space), so an
-//! `st2038extractor` can split off a matching data flow.
+//! `st2038extractor` can split off a matching data flow. A second ancillary
+//! carries a phase-locked CEA-708 CDP caption (see [`captions`](crate::captions)).
 //!
 //! Emits v210 or UYVP. Modelled on the gst-plugins-rs `sinesrc` tutorial
 //! element; `num-buffers` is handled by `GstBaseSrc`.
@@ -23,7 +24,7 @@ use gstreamer as gst;
 use gstreamer_base as gst_base;
 use gstreamer_video as gst_video;
 
-use crate::signal;
+use crate::{captions, signal};
 
 static CAT: LazyLock<gst::DebugCategory> = LazyLock::new(|| {
     gst::DebugCategory::new(
@@ -62,6 +63,8 @@ struct State {
     info: Option<gst_video::VideoInfo>,
     n_frames: u64,
     bar_width: u32,
+    cdp_framerate: Option<cdp_types::Framerate>,
+    caption_writer: captions::CaptionWriter,
 }
 
 struct ClockWait {
@@ -166,16 +169,15 @@ fn compute_checksum(did_10bit: u16, sdid_10bit: u16, dc_10bit: u16, data: &[u16]
     checksum
 }
 
-/// Attach one `GstAncillaryMeta` carrying `frame_idx`, as `st2038extractor`
-/// expects (10-bit even/odd-parity words plus checksum).
-fn add_frame_index_ancillary(buffer: &mut gst::BufferRef, frame_idx: u8) {
-    let payload = [frame_idx];
+/// Attach one `GstAncillaryMeta` carrying `payload` under `did`/`sdid` on `line`,
+/// as `st2038extractor` expects (10-bit even/odd-parity words plus checksum).
+fn add_ancillary(buffer: &mut gst::BufferRef, did: u8, sdid: u8, line: u16, payload: &[u8]) {
     let mut meta = gst_video::video_meta::AncillaryMeta::add(buffer);
     meta.set_c_not_y_channel(false);
-    meta.set_line(signal::ANC_LINE);
+    meta.set_line(line);
     meta.set_offset(signal::ANC_OFFSET);
-    let did_10bit = extend_with_even_odd_parity(signal::ANC_DID);
-    let sdid_10bit = extend_with_even_odd_parity(signal::ANC_SDID);
+    let did_10bit = extend_with_even_odd_parity(did);
+    let sdid_10bit = extend_with_even_odd_parity(sdid);
     let dc_10bit = extend_with_even_odd_parity(payload.len() as u8);
     meta.set_did(did_10bit);
     meta.set_sdid_block_number(sdid_10bit);
@@ -295,8 +297,21 @@ impl ElementImpl for AvSyncVideoTestSrc {
 
     fn pad_templates() -> &'static [gst::PadTemplate] {
         static PAD_TEMPLATES: LazyLock<Vec<gst::PadTemplate>> = LazyLock::new(|| {
+            // Only CDP-representable frame rates: every frame carries a CEA-708
+            // CDP whose header encodes one of these eight broadcast rates.
+            let framerates = [
+                gst::Fraction::new(24000, 1001),
+                gst::Fraction::new(24, 1),
+                gst::Fraction::new(25, 1),
+                gst::Fraction::new(30000, 1001),
+                gst::Fraction::new(30, 1),
+                gst::Fraction::new(50, 1),
+                gst::Fraction::new(60000, 1001),
+                gst::Fraction::new(60, 1),
+            ];
             let caps = gst_video::VideoCapsBuilder::new()
                 .format_list([gst_video::VideoFormat::V210, gst_video::VideoFormat::Uyvp])
+                .framerate_list(framerates)
                 .build();
             let src_pad_template = gst::PadTemplate::new(
                 "src",
@@ -349,6 +364,7 @@ impl BaseSrcImpl for AvSyncVideoTestSrc {
 
         let mut state = self.state.lock().unwrap();
         state.bar_width = bar_width;
+        state.cdp_framerate = captions::cdp_framerate(info.fps());
         state.info = Some(info);
         drop(state);
 
@@ -447,6 +463,13 @@ impl PushSrcImpl for AvSyncVideoTestSrc {
             signal::bar_centre_column(signal::phase(pts, settings.pip_interval), info.width());
         let frame_idx = n as u8;
 
+        // Phase-locked CEA-708 CDP: a TICK/TOCK caption on each pip frame, a null
+        // CDP otherwise (only when the frame rate is CDP-representable).
+        let cdp = state.cdp_framerate.map(|framerate| {
+            let text = captions::caption_for(pts, next_pts, settings.pip_interval);
+            state.caption_writer.next_cdp(framerate, n as u16, text)
+        });
+
         let mut buffer = gst::Buffer::with_size(info.size()).unwrap();
         {
             let buffer = buffer.get_mut().unwrap();
@@ -462,7 +485,22 @@ impl PushSrcImpl for AvSyncVideoTestSrc {
                 }
                 data[0] = frame_idx;
             }
-            add_frame_index_ancillary(buffer, frame_idx);
+            add_ancillary(
+                buffer,
+                signal::ANC_DID,
+                signal::ANC_SDID,
+                signal::ANC_LINE,
+                &[frame_idx],
+            );
+            if let Some(cdp) = &cdp {
+                add_ancillary(
+                    buffer,
+                    captions::CC_DID,
+                    captions::CC_SDID,
+                    captions::CC_LINE,
+                    cdp,
+                );
+            }
         }
         state.n_frames += 1;
         drop(state);

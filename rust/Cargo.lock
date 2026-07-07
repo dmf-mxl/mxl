@@ -101,6 +101,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "cdp-types"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "332ca05a88e143d80a245f9aa6c65b6e6383ee3e332017005647c27c6a62f902"
+dependencies = [
+ "cea708-types",
+ "log",
+ "thiserror",
+]
+
+[[package]]
+name = "cea708-types"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "de28b1d549e7f8f53a746fb36ae4c10c776a8e004950b527be1669a58667ae0b"
+dependencies = [
+ "log",
+ "muldiv",
+ "thiserror",
+]
+
+[[package]]
 name = "cexpr"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -427,6 +449,8 @@ dependencies = [
 name = "gst-avsynctest-rs"
 version = "0.1.0"
 dependencies = [
+ "cdp-types",
+ "cea708-types",
  "glib",
  "gst-plugin-version-helper",
  "gstreamer",
