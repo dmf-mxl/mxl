@@ -404,6 +404,18 @@ fn v210_with_meta_to_v210_with_meta_via_mxl() {
     if let Some(reason) = skip_reason(FACTORIES) {
         skip!(reason);
     }
+    // The `wrong`/`smear` assertions below only hold when the combiner drops
+    // ancillary that misses its video frame's window. Builds without the
+    // `drop-late-st2038` property instead collect late ancillary onto the next
+    // picture, so skip rather than assert against behaviour the element lacks.
+    if gst::ElementFactory::make("st2038combiner")
+        .build()
+        .ok()
+        .and_then(|comb| comb.find_property("drop-late-st2038"))
+        .is_none()
+    {
+        skip!("st2038combiner has no drop-late-st2038 property");
+    }
 
     let video_flow_id = uuid::Uuid::new_v4().to_string();
     let data_flow_id = uuid::Uuid::new_v4().to_string();
