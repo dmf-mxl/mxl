@@ -20,9 +20,9 @@ unsafe impl Send for Provider {}
 unsafe impl Sync for Provider {}
 
 /// The available transports
-#[derive(Clone)]
-enum ProviderType {
-    Auto,
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum ProviderType {
+    Any,
     Tcp,
     Verbs,
     Efa,
@@ -32,7 +32,7 @@ enum ProviderType {
 impl From<mxl_sys::fabrics::FabricsProvider> for ProviderType {
     fn from(value: mxl_sys::fabrics::FabricsProvider) -> Self {
         match value {
-            mxl_sys::fabrics::MXL_FABRICS_PROVIDER_AUTO => ProviderType::Auto,
+            mxl_sys::fabrics::MXL_FABRICS_PROVIDER_ANY => ProviderType::Any,
             mxl_sys::fabrics::MXL_FABRICS_PROVIDER_TCP => ProviderType::Tcp,
             mxl_sys::fabrics::MXL_FABRICS_PROVIDER_VERBS => ProviderType::Verbs,
             mxl_sys::fabrics::MXL_FABRICS_PROVIDER_EFA => ProviderType::Efa,
@@ -45,7 +45,7 @@ impl From<mxl_sys::fabrics::FabricsProvider> for ProviderType {
 impl From<&ProviderType> for mxl_sys::fabrics::FabricsProvider {
     fn from(value: &ProviderType) -> Self {
         match value {
-            ProviderType::Auto => mxl_sys::fabrics::MXL_FABRICS_PROVIDER_AUTO,
+            ProviderType::Any => mxl_sys::fabrics::MXL_FABRICS_PROVIDER_ANY,
             ProviderType::Tcp => mxl_sys::fabrics::MXL_FABRICS_PROVIDER_TCP,
             ProviderType::Verbs => mxl_sys::fabrics::MXL_FABRICS_PROVIDER_VERBS,
             ProviderType::Efa => mxl_sys::fabrics::MXL_FABRICS_PROVIDER_EFA,
@@ -66,6 +66,10 @@ impl Provider {
             inner: inner.into(),
             ctx,
         }
+    }
+
+    pub fn prov_type(&self) -> &ProviderType {
+        &self.inner
     }
 
     /// Convert a string to a fabrics provider enum value.

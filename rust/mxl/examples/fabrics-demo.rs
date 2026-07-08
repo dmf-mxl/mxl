@@ -16,11 +16,11 @@ use clap::{Parser, Subcommand};
 use base64::{Engine as _, prelude::BASE64_STANDARD};
 
 use mxl::{
-    Error, FlowConfigInfo, FlowInfo, FlowReader, FlowWriter, GrainReader, GrainWriter,
-    MxlFabricsApi, MxlInstance, SamplesReader, SamplesWriter,
+    Error, FlowConfigInfo, FlowInfo, FlowReader, FlowWriter, GrainReader, GrainWriter, MxlInstance,
+    SamplesReader, SamplesWriter,
     config::{get_mxl_fabrics_ofi_so_path, get_mxl_so_path},
     fabrics::{
-        EndpointAddress, FabricsInstance, TargetInfo,
+        Capabilities, EndpointAddress, FabricsInstance, InterfaceConfig, ProviderType, TargetInfo,
         initiator::{self, Initiator},
         target::{self, Target},
     },
@@ -40,24 +40,23 @@ pub struct Cli {
     #[arg(
         short,
         long,
-        default_value = "tcp",
-        help = "The fabrics provider. One of (tcp, verbs or efa)."
+        help = "Force a specific provider (tcp, verbs, efa or shm). Auto-selected if not specified."
     )]
-    pub provider: String,
+    pub provider: Option<String>,
 
     #[arg(
         short,
         long,
-        help = "This corresponds to the interface identifier of the fabrics endpoint, it can also be a logical address. This can be seen as the bind address when using sockets."
+        help = "Filter interface selection by node address. If not set, the best available interface is chosen automatically."
     )]
-    pub node: String,
+    pub node: Option<String>,
 
     #[arg(
         short,
         long,
-        help = "This corresponds to a service identifier for the fabrics endpoint. This can be seen as the bind port when using sockets."
+        help = "Service identifier for the fabrics endpoint (e.g. a port number)."
     )]
-    pub service: String,
+    pub service: Option<String>,
 
     #[command(subcommand)]
     pub command: Command,
@@ -72,6 +71,12 @@ pub enum Command {
             help = "The JSON file which contains the NMOS Flow configuration."
         )]
         flow_file: String,
+        #[arg(
+            long,
+            help = "Output file path for raw target info (optional, always logged as base64)."
+        )]
+        target_info_path: Option<String>,
+        //TODO: flow options?
     },
     /// Run as an initiator (flow reader + fabrics initiator).
     Initiator {
@@ -79,7 +84,7 @@ pub enum Command {
         flow_id: String,
         #[arg(
             long,
-            help = "The target information to send to. Start the target first and paste the printed target info here."
+            help = "Base64-encoded target info, or a path prefixed with '@' to read raw target info from a file."
         )]
         target_info: String,
     },
@@ -95,26 +100,15 @@ struct TargetEndpoint<'a> {
 impl<'a> TargetEndpoint<'a> {
     pub fn new(
         instance: &'a MxlInstance,
-        fabrics_api: &Arc<MxlFabricsApi>,
+        fabrics_instance: &FabricsInstance,
+        interface: InterfaceConfig,
         flow_file: &str,
-        cli: &Cli,
     ) -> Result<(Self, TargetInfo), mxl::Error> {
         let flow_config_str = std::fs::read_to_string(flow_file).expect("Failed to read flow file");
 
         let (flow_writer, flow_config, _) = instance.create_flow_writer(&flow_config_str, None)?;
 
-        let fabrics_instance = instance.create_fabrics_instance(fabrics_api)?;
-
-        let provider = fabrics_instance.provider_from_str(&cli.provider)?;
-
-        let target_config = target::Config::new(
-            EndpointAddress {
-                node: Some(&cli.node),
-                service: Some(&cli.service),
-            },
-            provider,
-            &flow_writer,
-        );
+        let target_config = target::Config::new(interface, &flow_writer);
 
         let target = fabrics_instance.create_target()?;
         let (target, target_info) = target.setup(&target_config)?;
@@ -218,26 +212,15 @@ struct InitiatorEndpoint<'a> {
 impl<'a> InitiatorEndpoint<'a> {
     pub fn new(
         instance: &'a MxlInstance,
-        fabrics_api: &Arc<MxlFabricsApi>,
+        fabrics_instance: FabricsInstance,
+        interface: InterfaceConfig,
         flow_id: &str,
-        cli: &Cli,
     ) -> Result<Self, mxl::Error> {
         let flow_reader = instance.create_flow_reader(flow_id)?;
 
-        let fabrics_instance = instance.create_fabrics_instance(fabrics_api)?;
-
         let initiator = fabrics_instance.create_initiator()?;
 
-        let provider = fabrics_instance.provider_from_str(&cli.provider)?;
-
-        let initiator_config = initiator::Config::new(
-            EndpointAddress {
-                node: Some(&cli.node),
-                service: Some(&cli.service),
-            },
-            provider,
-            &flow_reader,
-        );
+        let initiator_config = initiator::Config::new(interface, &flow_reader);
 
         let initiator = initiator.setup(&initiator_config)?;
 
@@ -430,10 +413,36 @@ impl<'a> InitiatorEndpoint<'a> {
     }
 }
 
-fn main() -> Result<(), mxl::Error> {
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ProviderPrio(ProviderType);
+impl ProviderPrio {
+    fn priority(&self) -> u32 {
+        match self {
+            ProviderPrio(ProviderType::Efa) => 4,
+            ProviderPrio(ProviderType::Verbs) => 3,
+            ProviderPrio(ProviderType::Tcp) => 2,
+            ProviderPrio(ProviderType::Shm) => 1,
+            _ => 0,
+        }
+    }
+}
+impl Ord for ProviderPrio {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.priority().cmp(&other.priority())
+    }
+}
+impl PartialOrd for ProviderPrio {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+fn main() -> Result<(), anyhow::Error> {
     common::setup_logging();
 
     let cli = Cli::parse();
+
+    tracing::info!(domain = %cli.domain, provider = ?cli.provider, node = ?cli.node, service = ?cli.service, command = ?cli.command, "Starting fabrics demo");
 
     let running = Arc::new(AtomicBool::new(true));
     let running2 = running.clone();
@@ -448,17 +457,69 @@ fn main() -> Result<(), mxl::Error> {
 
     let instance = mxl::MxlInstance::new(api, &cli.domain, "")?;
 
+    let fabrics_instance = instance.create_fabrics_instance(&fabrics_api)?;
+
+    let endpoint_address = EndpointAddress {
+        node: cli.node.as_deref(),
+        service: cli.service.as_deref(),
+    };
+
+    let provider =
+        fabrics_instance.provider_from_str(&cli.provider.unwrap_or("any".to_string()))?;
+
+    let interface_config = mxl::fabrics::InterfaceConfig::builder(endpoint_address)
+        .provider(provider.prov_type().clone())
+        .caps(Capabilities::builder().supports_remote_write().build())
+        .build()?;
+
+    let interfaces = fabrics_instance
+        .get_interfaces(Some(interface_config))
+        .expect("Failed to get interfaces");
+
+    let mut interface = interfaces
+        .iter()
+        .max_by_key(|k| ProviderPrio(k.provider.clone()))
+        .ok_or(Error::Other("No suitable interface found".to_string()))?;
+    interface.set_endpoint_address(EndpointAddress {
+        node: cli.node.as_deref(),
+        service: cli.service.as_deref(),
+    });
+
+    tracing::info!(
+        provider = ?interface.provider,
+        node = ?interface.endpoint_address.node,
+        service = ?interface.endpoint_address.service,
+        caps = ?interface.caps,
+        "Selected interface");
+
     match &cli.command {
         Command::Initiator {
             flow_id,
             target_info,
         } => {
-            let initiator = InitiatorEndpoint::new(&instance, &fabrics_api, flow_id, &cli)?;
+            let initiator =
+                InitiatorEndpoint::new(&instance, fabrics_instance, interface, flow_id)?;
             initiator.run(target_info, running)?;
         }
-        Command::Target { flow_file } => {
+        Command::Target {
+            flow_file,
+            target_info_path,
+        } => {
             let (target, target_info) =
-                TargetEndpoint::new(&instance, &fabrics_api, flow_file, &cli)?;
+                TargetEndpoint::new(&instance, &fabrics_instance, interface, flow_file)?;
+
+            if let Some(target_info_file) = target_info_path
+                && target_info_file.starts_with('@')
+            {
+                let file = if target_info_file.starts_with("@") {
+                    target_info_file
+                        .strip_prefix('@')
+                        .expect("impossible to fail.") //SAFETY: we already checked that the string starts with '@';
+                } else {
+                    target_info_file.as_str()
+                };
+                std::fs::write(file, target_info.to_string()?.as_bytes())?;
+            }
             tracing::info!(
                 "Target Info: {}",
                 BASE64_STANDARD.encode(target_info.to_string()?)

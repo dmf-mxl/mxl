@@ -22,7 +22,7 @@ const POLL_TIMEOUT: Duration = Duration::from_secs(5);
 const BLOCKING_WAIT: Duration = Duration::from_millis(20);
 const AUDIO_SAMPLE_COUNT: usize = 42;
 
-fn tcp_endpoint() -> EndpointAddress<'static> {
+fn tcp_endpoint() -> EndpointAddress {
     EndpointAddress {
         node: Some("127.0.0.1"),
         service: Some("0"),
@@ -51,7 +51,9 @@ fn wait_for_grain_connection(
         || {
             match target.read_non_blocking() {
                 Ok(_) | Err(Error::NotReady) => {}
-                Err(error) => panic!("unexpected target status while waiting for connection: {error}"),
+                Err(error) => {
+                    panic!("unexpected target status while waiting for connection: {error}")
+                }
             }
 
             match initiator.make_progress(BLOCKING_WAIT) {
@@ -106,9 +108,7 @@ fn wait_for_grain_transfer_start(
 
             match initiator.make_progress(BLOCKING_WAIT) {
                 Ok(()) | Err(Error::NotReady) => {}
-                Err(error) => panic!(
-                    "unexpected initiator status before grain transfer: {error}"
-                ),
+                Err(error) => panic!("unexpected initiator status before grain transfer: {error}"),
             }
 
             match initiator.transfer(grain_index, 0, end_slice) {
@@ -136,9 +136,7 @@ fn wait_for_samples_transfer_start(
 
             match initiator.make_progress(BLOCKING_WAIT) {
                 Ok(()) | Err(Error::NotReady) => {}
-                Err(error) => panic!(
-                    "unexpected initiator status before sample transfer: {error}"
-                ),
+                Err(error) => panic!("unexpected initiator status before sample transfer: {error}"),
             }
 
             match initiator.transfer(head_index, count) {
@@ -161,9 +159,9 @@ fn wait_for_grain_transfer_completion(
         || {
             match initiator.make_progress(BLOCKING_WAIT) {
                 Ok(()) | Err(Error::NotReady) => {}
-                Err(error) => panic!(
-                    "unexpected initiator status while completing grain transfer: {error}"
-                ),
+                Err(error) => {
+                    panic!("unexpected initiator status while completing grain transfer: {error}")
+                }
             }
 
             match target.read(BLOCKING_WAIT) {
@@ -173,7 +171,9 @@ fn wait_for_grain_transfer_completion(
                     true
                 }
                 Err(Error::NotReady) => false,
-                Err(Error::Interrupted) => panic!("grain target disconnected before transfer completed"),
+                Err(Error::Interrupted) => {
+                    panic!("grain target disconnected before transfer completed")
+                }
                 Err(error) => panic!("unexpected grain completion status: {error}"),
             }
         },
@@ -193,9 +193,9 @@ fn wait_for_samples_transfer_completion(
         || {
             match initiator.make_progress(BLOCKING_WAIT) {
                 Ok(()) | Err(Error::NotReady) => {}
-                Err(error) => panic!(
-                    "unexpected initiator status while completing samples transfer: {error}"
-                ),
+                Err(error) => {
+                    panic!("unexpected initiator status while completing samples transfer: {error}")
+                }
             }
 
             match target.read(BLOCKING_WAIT) {
@@ -217,10 +217,7 @@ fn wait_for_samples_transfer_completion(
     completed.unwrap()
 }
 
-fn wait_for_target_grain(
-    reader: &GrainReader,
-    grain_index: u64,
-) -> OwnedGrainData {
+fn wait_for_target_grain(reader: &GrainReader, grain_index: u64) -> OwnedGrainData {
     let mut result = None;
     poll_until_success(
         || match reader.get_grain_non_blocking(grain_index) {
@@ -256,7 +253,9 @@ fn wait_for_target_samples(
     result.unwrap()
 }
 
-fn create_video_flow(mxl_instance: &mxl::MxlInstance) -> (FlowWriter, FlowReader, mxl::FlowConfigInfo) {
+fn create_video_flow(
+    mxl_instance: &mxl::MxlInstance,
+) -> (FlowWriter, FlowReader, mxl::FlowConfigInfo) {
     create_flow_with_def(mxl_instance, read_flow_def("lib/tests/data/v210_flow.json"))
 }
 
@@ -269,8 +268,13 @@ fn create_video_flow_with_unique_id(
     )
 }
 
-fn create_audio_flow(mxl_instance: &mxl::MxlInstance) -> (FlowWriter, FlowReader, mxl::FlowConfigInfo) {
-    create_flow_with_def(mxl_instance, read_flow_def("lib/tests/data/audio_flow.json"))
+fn create_audio_flow(
+    mxl_instance: &mxl::MxlInstance,
+) -> (FlowWriter, FlowReader, mxl::FlowConfigInfo) {
+    create_flow_with_def(
+        mxl_instance,
+        read_flow_def("lib/tests/data/audio_flow.json"),
+    )
 }
 
 fn create_audio_flow_with_unique_id(
@@ -398,11 +402,8 @@ fn tcp_grain_transfer_delivers_payload_to_target_flow() {
         let initiator = {
             let initiator_provider = fabrics_instance.provider_from_str("tcp").unwrap();
             let initiator = fabrics_instance.create_initiator().unwrap();
-            let initiator_config = initiator::Config::new(
-                tcp_endpoint(),
-                initiator_provider,
-                &initiator_flow_reader,
-            );
+            let initiator_config =
+                initiator::Config::new(tcp_endpoint(), initiator_provider, &initiator_flow_reader);
             initiator.setup(&initiator_config).unwrap()
         };
         let initiator = match initiator.specialize(&source_flow_config) {
@@ -515,7 +516,8 @@ fn tcp_samples_transfer_delivers_payload_to_target_flow() {
             .unwrap();
         committed_samples.commit().unwrap();
 
-        let actual = wait_for_target_samples(&target_samples_reader, head_index, AUDIO_SAMPLE_COUNT);
+        let actual =
+            wait_for_target_samples(&target_samples_reader, head_index, AUDIO_SAMPLE_COUNT);
         assert_eq!(actual.payload, expected.payload);
 
         initiator.remove_target(&target_info).unwrap();

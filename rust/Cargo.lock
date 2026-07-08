@@ -818,6 +818,7 @@ checksum = "956787520e75e9bd233246045d19f42fb73242759cc57fba9611d940ae96d4b0"
 name = "mxl"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "base64",
  "clap",
  "ctrlc",

@@ -1,29 +1,20 @@
 // SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    Error, FlowReader,
-    fabrics::{config::EndpointAddress, provider::Provider},
-};
+use crate::{Error, FlowReader, fabrics::InterfaceConfig};
 
 /// Configuration object required to set up an initiator.
 pub struct Config<'a> {
     version: i32,
-    endpoint_addr: EndpointAddress<'a>,
-    provider: Provider,
+    interface: InterfaceConfig<'a>,
     flow_reader: &'a FlowReader,
 }
 
 impl<'a> Config<'a> {
-    pub fn new(
-        endpoint_addr: EndpointAddress<'a>,
-        provider: Provider,
-        flow_reader: &'a FlowReader,
-    ) -> Self {
+    pub fn new(interface: InterfaceConfig<'a>, flow_reader: &'a FlowReader) -> Self {
         Self {
             version: 0,
-            endpoint_addr,
-            provider,
+            interface,
             flow_reader,
         }
     }
@@ -35,8 +26,7 @@ impl<'a> TryFrom<&Config<'a>> for mxl_sys::fabrics::FabricsInitiatorConfig {
     fn try_from(value: &Config) -> Result<Self, Self::Error> {
         Ok(Self {
             version: value.version,
-            endpointAddress: (&value.endpoint_addr).try_into()?,
-            provider: (&value.provider).into(),
+            interface: (&value.interface).try_into()?,
             // SAFETY: The type cast is necessary, because this FlowReader is scoped in mxl_sys::fabrics::*, not mxl_sys::*, but this is the same type.
             reader: unsafe {
                 std::mem::transmute::<mxl_sys::FlowReader, mxl_sys::fabrics::FlowReader>(

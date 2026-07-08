@@ -7,7 +7,9 @@ use crate::{
     api::MxlFabricsAPiHandle,
     error::{Error, Result},
     fabrics::{
+        InterfaceConfig,
         initiator::{self, Initiator, create_initiator},
+        interface::Interfaces,
         provider::Provider,
         target::{self, Target, create_target},
         target_info::TargetInfo,
@@ -100,5 +102,9 @@ impl FabricsInstance {
 
     pub fn target_info_from_str(&self, target_info: &str) -> Result<TargetInfo> {
         TargetInfo::from_str(self.ctx.clone(), target_info)
+    }
+
+    pub fn get_interfaces(&self, query: Option<InterfaceConfig>) -> Result<Interfaces> {
+        Interfaces::get(self.ctx.clone(), query)
     }
 }

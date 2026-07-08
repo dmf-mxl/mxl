@@ -18,16 +18,20 @@
 //! let target = fabrics_instance.create_target().unwrap();
 //! let initiator = fabrics_instance.create_initiator().unwrap();
 //! ````
-mod config;
+mod capabilities;
+mod endpoint_address;
 pub mod initiator;
 mod instance;
+mod interface;
 mod provider;
 pub mod target;
 mod target_info;
 
-pub use config::EndpointAddress;
+pub use capabilities::Capabilities;
+pub use endpoint_address::EndpointAddress;
 pub use instance::FabricsInstance;
-pub use provider::Provider;
+pub use interface::config::InterfaceConfig;
+pub use provider::{Provider, ProviderType};
 pub use target_info::TargetInfo;
 
 pub(crate) use instance::create_instance;
