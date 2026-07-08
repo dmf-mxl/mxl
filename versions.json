@@ -1,10 +1,5 @@
 [
   {
-    "version": "test-doc-build",
-    "title": "test-doc-build",
-    "aliases": []
-  },
-  {
     "version": "main",
     "title": "main",
     "aliases": [
