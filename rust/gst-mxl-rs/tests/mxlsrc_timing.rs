@@ -68,19 +68,25 @@ fn pull_video_samples(
     out
 }
 
-/// Correct: when PTS advances one frame period, content index must advance exactly one.
+/// Correct: PTS only ever advances by whole grain periods, and whenever it does
+/// the content index must advance by the same number of frames. This includes
+/// the multi-frame jump when the reader catches up after the stall — the very
+/// transition the stall sets up — not just single-frame steps once it is back in
+/// lockstep. (All frame indices here stay below 256, so the `u8` add is
+/// unambiguous.)
 fn assert_pts_tracks_content(samples: &[VideoSample]) {
     for w in samples.windows(2) {
         let prev = w[0];
         let next = w[1];
         let pts_delta = next.pts.nseconds().saturating_sub(prev.pts.nseconds());
-        if pts_delta != FRAME_PERIOD_NS {
+        if pts_delta == 0 || pts_delta % FRAME_PERIOD_NS != 0 {
             continue;
         }
+        let steps = (pts_delta / FRAME_PERIOD_NS) as u8;
         assert_eq!(
             next.frame_idx,
-            prev.frame_idx.wrapping_add(1),
-            "PTS stepped one frame ({:?} -> {:?}) so content must advance 1 \
+            prev.frame_idx.wrapping_add(steps),
+            "PTS stepped {steps} frame(s) ({:?} -> {:?}) so content must advance {steps} \
              ({} -> {}), not repeat or skip",
             prev.pts,
             next.pts,

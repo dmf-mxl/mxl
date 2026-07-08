@@ -43,8 +43,10 @@ const HEIGHT: i32 = 4;
 const NUM_FRAMES: i32 = 120; // < 256 so the byte-0 frame index is unambiguous
 const RATE: i32 = 48_000;
 const NUM_AUDIO_BUFFERS: i32 = 130; // covers the video run with margin
-/// Frames a live reader may miss while attaching at the producer's head.
-const ATTACH_SLACK: usize = 8;
+/// Frames a live reader may miss while attaching at the producer's head. Applied
+/// once per reader: after attach the reader stays in the ring's history window
+/// and drops nothing (in practice the miss is at most one or two frames).
+const ATTACH_SLACK: usize = 5;
 
 fn init() {
     common::init();
@@ -208,10 +210,32 @@ fn build(video_flow: &str, audio_flow: &str, domain: &str, is_live: bool) -> Rou
 /// *missing* pip (nearest is an adjacent pip ~one interval away) means the audio
 /// round-trip dropped samples. Neither is tolerated.
 fn assert_av_aligned(video: &[(u8, u64)], pips: &[u64]) {
+    // The video reader attaches within ATTACH_SLACK of the head and then reads
+    // contiguously through to the last frame: no duplicates, no mid-stream gaps
+    // (a steady-state drop), and no early stop.
+    let frames: std::collections::BTreeSet<u8> = video.iter().map(|(i, _)| *i).collect();
+    assert_eq!(
+        frames.len(),
+        video.len(),
+        "duplicate video frames in capture: {video:?}"
+    );
+    let first = *frames.iter().next().expect("no video frames") as usize;
+    let last = *frames.iter().next_back().unwrap() as usize;
+    assert_eq!(
+        last,
+        NUM_FRAMES as usize - 1,
+        "video did not read through the last frame {}, got {last}",
+        NUM_FRAMES - 1
+    );
     assert!(
-        video.len() >= NUM_FRAMES as usize - ATTACH_SLACK,
-        "video capture too short: {} frames",
-        video.len()
+        first <= ATTACH_SLACK,
+        "video missed too many frames at attach: first read frame_idx {first}"
+    );
+    assert_eq!(
+        frames.len(),
+        last - first + 1,
+        "video capture has gaps: {} frames over range {first}..={last}",
+        frames.len()
     );
     assert!(!pips.is_empty(), "no audio pips detected");
     let (first_pip, last_pip) = (*pips.first().unwrap(), *pips.last().unwrap());
