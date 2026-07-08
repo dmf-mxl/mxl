@@ -869,6 +869,56 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#11-receiving-grains-draining-the-completion-queue" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        11. Receiving grains: draining the completion queue
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. Receiving grains: draining the completion queue">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#111-the-problem-the-cq-can-overflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        11.1 The problem: the CQ can overflow
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#112-the-pattern-two-phase-drain" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        11.2 The pattern: two-phase drain
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#113-sizing-the-completion-queue" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        11.3 Sizing the completion queue
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1456,6 +1506,56 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#11-receiving-grains-draining-the-completion-queue" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        11. Receiving grains: draining the completion queue
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. Receiving grains: draining the completion queue">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#111-the-problem-the-cq-can-overflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        11.1 The problem: the CQ can overflow
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#112-the-pattern-two-phase-drain" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        11.2 The pattern: two-phase drain
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#113-sizing-the-completion-queue" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        11.3 Sizing the completion queue
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1926,6 +2026,80 @@ With untagged Send/Recv, the receiver cannot direct an incoming message to a spe
 <li><strong>Continuous flow (samples):</strong> Transferred using Remote Write (RMA) with scatter-gather on the source side, landing data into a bouncing buffer on the target. Upon completion, the target unpacks the bouncing buffer back into the non-contiguous per-channel buffers of the MXL audio flow.</li>
 </ul>
 <p>Send/Recv and tag-matching fallback paths are not yet implemented. Send/Recv without tag matching requires a bouncing buffer and an extra copy, while tag matching requires explicit synchronization between initiator and target and may not benefit from hardware acceleration depending on the NIC. Given these trade-offs and that Remote Write covers the primary use cases, the fallback paths have been deferred.</p>
+<h2 id="11-receiving-grains-draining-the-completion-queue">11. Receiving grains: draining the completion queue</h2>
+<p>A target receives grains by repeatedly calling <code>mxlFabricsTargetReadGrainNonBlocking()</code>
+(or its blocking variant). Each call reads <strong>one</strong> completion from the target's
+completion queue (CQ), performs the small amount of bookkeeping needed to make
+the grain visible to local <code>FlowReader</code>s, and returns the grain index.</p>
+<h3 id="111-the-problem-the-cq-can-overflow">11.1 The problem: the CQ can overflow</h3>
+<p>The CQ has a bounded depth. Every grain written by an initiator produces one
+completion, which stays in the CQ until the application consumes it with a
+<code>Read…</code> call. If completions are produced faster than the application consumes
+them, the CQ fills up.</p>
+<p>This is easy to hit on a high-frame-rate or many-stream receiver where the
+per-grain application work (decoding, writing to disk, updating statistics) takes
+longer than the grain inter-arrival time. A naive loop that does the expensive
+work inline, one grain per iteration, lets completions accumulate:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Anti-pattern: heavy work inline, one completion per iteration.</span>
+<span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">running</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">index</span><span class="p">;</span>
+<span class="w">    </span><span class="n">mxlStatus</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mxlFabricsTargetReadGrain</span><span class="p">(</span><span class="n">target</span><span class="p">,</span><span class="w"> </span><span class="mi">200</span><span class="w"> </span><span class="cm">/*ms*/</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">index</span><span class="p">);</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">s</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MXL_ERR_NOT_READY</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MXL_ERR_TIMEOUT</span><span class="p">)</span><span class="w"> </span><span class="k">continue</span><span class="p">;</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">s</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">MXL_STATUS_OK</span><span class="p">)</span><span class="w"> </span><span class="k">break</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">process_grain</span><span class="p">(</span><span class="n">index</span><span class="p">);</span><span class="w"> </span><span class="c1">// decode + disk + stats: slower than 1/fps</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>When the CQ overflows, the underlying provider reports an error completion. On
+connection-oriented providers (e.g. <code>verbs</code>) this surfaces as a fatal error on
+the queue pair, which tears the connection down — the transfer stops and the
+target must be re-established. On other providers the exact symptom differs, but
+in all cases completions are lost.</p>
+<h3 id="112-the-pattern-two-phase-drain">11.2 The pattern: two-phase drain</h3>
+<p>Decouple <strong>draining</strong> the CQ from <strong>processing</strong> the grains. Each loop iteration
+first drains every currently-available completion (cheap, bounded by the burst
+size), enqueuing just the grain indices, and then performs at most a bounded
+amount of the expensive per-grain work.</p>
+<p><code>mxlFabricsTargetReadGrainNonBlocking()</code> reads a single completion and returns
+<code>MXL_ERR_NOT_READY</code> once the CQ is empty, so a tight inner loop over it drains
+every currently-available grain without ever blocking on the heavy work:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Phase 1 (hot): drain ALL currently-available completions, enqueuing indices.</span>
+<span class="k">for</span><span class="w"> </span><span class="p">(;;)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">uint64_t</span><span class="w"> </span><span class="n">index</span><span class="p">;</span>
+<span class="w">    </span><span class="n">mxlStatus</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mxlFabricsTargetReadGrainNonBlocking</span><span class="p">(</span><span class="n">target</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">index</span><span class="p">);</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">s</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MXL_ERR_NOT_READY</span><span class="p">)</span><span class="w"> </span><span class="k">break</span><span class="p">;</span><span class="w">     </span><span class="c1">// CQ drained for now</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">s</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">MXL_STATUS_OK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">handle_error</span><span class="p">(</span><span class="n">s</span><span class="p">);</span><span class="w"> </span><span class="k">break</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="n">queue_push</span><span class="p">(</span><span class="o">&amp;</span><span class="n">work</span><span class="p">,</span><span class="w"> </span><span class="n">index</span><span class="p">);</span><span class="w">              </span><span class="c1">// enqueue, do not process here</span>
+<span class="p">}</span>
+
+<span class="c1">// Phase 2 (warm): process a bounded number of queued grains.</span>
+<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">MAX_PER_ITER</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">queue_pop</span><span class="p">(</span><span class="o">&amp;</span><span class="n">work</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">index</span><span class="p">);</span><span class="w"> </span><span class="o">++</span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">process_grain</span><span class="p">(</span><span class="n">index</span><span class="p">);</span><span class="w">                  </span><span class="c1">// decode + disk + stats</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Because Phase 1 never blocks on the heavy work, the CQ is emptied promptly even
+when processing temporarily falls behind; the backlog lives in the application's
+own queue, which is not size-constrained by the NIC. The same structure works for
+samples with <code>mxlFabricsTargetReadSamplesNonBlocking()</code>.</p>
+<h3 id="113-sizing-the-completion-queue">11.3 Sizing the completion queue</h3>
+<p>The two-phase loop tolerates bursts, but the CQ must still be deep enough to hold
+the completions that can arrive between two Phase-1 drains. As a rule of thumb:</p>
+<div class="highlight"><pre><span></span><code>cqDepth  &gt;=  peak completions per drain interval
+         ~=  streams_on_this_target  x  ceil(drain_interval / grain_interval)
+</code></pre></div>
+<p>where <code>grain_interval = 1 / fps</code>. Add headroom for jitter. For example, a single
+1080p60 stream drained every few milliseconds needs only a small depth, while a
+target aggregating many streams, or one whose loop occasionally stalls for tens
+of milliseconds, needs a correspondingly deeper queue.</p>
+<p>The depth is configured per target through the <code>options</code> argument of
+<code>mxlFabricsTargetSetup()</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Size the target completion queue explicitly.</span>
+<span class="n">mxlFabricsTargetSetup</span><span class="p">(</span><span class="n">target</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">config</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;{</span><span class="se">\&quot;</span><span class="s">cqDepth</span><span class="se">\&quot;</span><span class="s">: 256}&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">targetInfo</span><span class="p">);</span>
+</code></pre></div>
+<p>When the option is omitted, a small implementation default is used, which is
+adequate for low-rate, promptly-drained receivers but should be raised for the
+high-rate / many-stream / slow-processing cases described above. <code>cqDepth</code>
+applies to target endpoints; it is ignored for initiators.</p>
 
 
 
