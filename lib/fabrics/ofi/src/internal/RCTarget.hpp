@@ -90,9 +90,9 @@ namespace mxl::lib::fabrics::ofi
          *
          * \param domain The domain to create the RCTarget on.
          * \param pep The passive endpoint to use for listening for incoming connection requests.
-         * \param cqDepth The depth of the completion queue created for the accepted connection.
+         * \param options The setup options applied when the completion queue is created for the accepted connection.
          */
-        RCTarget(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain, std::size_t cqDepth);
+        RCTarget(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain, TargetSetupOptions options);
 
         /** \brief Internal method to drive progress based on the current state.
          *
@@ -108,7 +108,7 @@ namespace mxl::lib::fabrics::ofi
     private:
         std::unique_ptr<IngressProtocol> _proto;
         std::shared_ptr<Domain> _domain;
-        std::size_t _cqDepth; /**< Completion queue depth for accepted connections. */
-        State _state;         /**< The current state of the RCTarget. */
+        TargetSetupOptions _setupOptions; /**< Setup options applied when accepting connections. */
+        State _state;                     /**< The current state of the RCTarget. */
     };
 }
