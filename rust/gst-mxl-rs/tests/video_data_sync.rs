@@ -57,9 +57,11 @@ use gstreamer_video as gst_video;
 /// only a few grains). A reader that keeps pace stays within the ring's history
 /// window and never sees eviction.
 const PUSH_COUNT: usize = 150;
-/// Frames a reader may miss while attaching after the producer starts. A live
-/// reader anchors at the producer's current head, so the first few committed
-/// frames can be gone before both readers attach.
+/// Maximum inter-flow attach offset, in frames. The video and data `mxlsrc`
+/// readers each anchor at their flow's current head as it appears; they can
+/// anchor up to this many frames apart, so only that many head frames may be
+/// bare before both are attached. After attach there are no drops (in practice
+/// the offset is at most one frame).
 const ATTACH_SLACK: usize = 5;
 
 /// Owns the producer and consumer pipelines and, on drop (including on panic),
@@ -284,9 +286,12 @@ fn compare_disjoint_video_data(video: &[SampleTiming], data: &[SampleTiming]) {
     assert_contiguous_live_capture("video", &video_keys);
     assert_contiguous_live_capture("data", &data_keys);
 
+    // Both readers read contiguously to the last frame (checked above), each
+    // attaching within ATTACH_SLACK of the head, so their overlap is short by at
+    // most the inter-flow attach offset.
     let shared: Vec<u8> = video_keys.intersection(&data_keys).copied().collect();
     assert!(
-        shared.len() >= PUSH_COUNT - 2 * ATTACH_SLACK,
+        shared.len() >= PUSH_COUNT - ATTACH_SLACK,
         "video and data barely overlap ({} shared frames)",
         shared.len()
     );
@@ -456,7 +461,16 @@ fn v210_with_meta_to_v210_with_meta_via_mxl() {
     // `wrong` (frame carries someone else's ancillary) must stay empty.
     let mut total = 0usize;
     let mut correct = 0usize;
-    let mut bare: Vec<u8> = Vec::new();
+    // A bare frame (drop-late dropped its ancillary) is only acceptable during
+    // the initial attach, before both readers have anchored on the flows. Once
+    // the first frame pairs its ancillary, both readers are attached and every
+    // subsequent frame must carry its own ancillary — a bare frame after that is
+    // a steady-state drop, which we do not tolerate.
+    let mut attached = false;
+    let mut first_idx: Option<u8> = None;
+    let mut first_paired_idx: Option<u8> = None;
+    let mut initial_bare: Vec<u8> = Vec::new();
+    let mut steady_bare: Vec<u8> = Vec::new();
     let mut wrong: Vec<(usize, u8, Vec<u8>)> = Vec::new();
     let mut smear: Vec<(u8, Vec<u8>)> = Vec::new();
     // Pull until the final frame arrives, the sink signals EOS, or the deadline
@@ -484,6 +498,7 @@ fn v210_with_meta_to_v210_with_meta_via_mxl() {
             .map_readable()
             .expect("video buffer readable")
             .as_slice()[0];
+        first_idx.get_or_insert(video_frame_idx);
         seen_last = video_frame_idx == last_frame;
         let stamps = ancillary_meta_frame_stamps(buffer);
         if stamps.len() > 1 {
@@ -491,13 +506,28 @@ fn v210_with_meta_to_v210_with_meta_via_mxl() {
         }
         if stamps.contains(&video_frame_idx) {
             correct += 1;
+            attached = true;
+            first_paired_idx.get_or_insert(video_frame_idx);
         } else if stamps.is_empty() {
-            bare.push(video_frame_idx);
+            if attached {
+                steady_bare.push(video_frame_idx);
+            } else {
+                initial_bare.push(video_frame_idx);
+            }
         } else {
             wrong.push((pos, video_frame_idx, stamps.iter().copied().collect()));
         }
     }
     let paired = correct;
+    // One machine-greppable line per run for the soak harness to classify drops.
+    eprintln!(
+        "COMBINER_SUMMARY total={total} paired={paired} first_idx={first_idx:?} \
+         first_paired={first_paired_idx:?} initial_bare={} steady_bare={:?} wrong={} smear={}",
+        initial_bare.len(),
+        steady_bare,
+        wrong.len(),
+        smear.len(),
+    );
     assert_bus_no_errors("consumer", &collect_bus_errors(&rt.consumer));
     // Every emitted frame carries its own ancillary or none: with the absolute
     // grain-index PTS the combiner must never attach another frame's ancillary
@@ -510,13 +540,26 @@ fn v210_with_meta_to_v210_with_meta_via_mxl() {
         smear.is_empty(),
         "combiner attached multiple frames' ancillary: {smear:?}"
     );
+    // No drops once both readers are attached.
     assert!(
-        total >= PUSH_COUNT - 2 * ATTACH_SLACK,
+        steady_bare.is_empty(),
+        "combiner dropped ancillary in steady state (frames {steady_bare:?}); \
+         initial_bare={initial_bare:?} first_paired={first_paired_idx:?}"
+    );
+    // Initial attach misses are bounded by the inter-flow attach offset: the two
+    // readers anchor on the same flow head up to ATTACH_SLACK frames apart, so
+    // only the first few head frames may be bare (in practice at most one).
+    assert!(
+        initial_bare.len() <= ATTACH_SLACK,
+        "too many initial attach misses: {initial_bare:?}"
+    );
+    assert!(
+        total >= PUSH_COUNT - ATTACH_SLACK,
         "combiner output too few frames: {total}"
     );
     assert!(
-        paired >= PUSH_COUNT - 2 * ATTACH_SLACK,
-        "combiner paired ancillary on too few frames: {paired}/{total} (bare {bare:?})"
+        paired >= PUSH_COUNT - ATTACH_SLACK,
+        "combiner paired ancillary on too few frames: {paired}/{total}"
     );
     drop(rt);
 }
