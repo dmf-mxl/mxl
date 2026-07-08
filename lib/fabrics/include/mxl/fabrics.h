@@ -156,7 +156,7 @@ extern "C"
      * \param in_target A valid fabrics target
      * \param in_config The target configuration. This will be used to create an endpoint and register a memory region. The memory region
      * corresponds to the one that will be written to by the initiator.
-     * \param options An optional json-formatted string with options. May be NULL or empty. Recognized fields:
+     * \param in_options An optional json-formatted string with options. May be NULL or empty. Recognized fields:
      *  - "cqDepth" (number >= 1): the depth of the target's completion queue. Increase this for high-frame-rate or many-stream
      *    receivers, or when per-completion processing is slow, to avoid completion queue overflow. See the "Receiving grains" section
      *    of docs/Fabrics.md. When omitted, an implementation default is used.
