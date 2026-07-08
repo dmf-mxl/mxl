@@ -76,27 +76,6 @@ fn run(desc: &str) -> Vec<gst::Sample> {
     samples
 }
 
-/// Brightest-column centroid of the top row, decoded to GRAY8. `None` if the row
-/// has no bright pixels (should not happen for our always-present bar).
-fn bar_centroid(sample: &gst::Sample) -> Option<f64> {
-    let caps = sample.caps().unwrap();
-    let info = gst_video::VideoInfo::from_caps(caps).unwrap();
-    let buffer = sample.buffer().unwrap();
-    let frame = gst_video::VideoFrameRef::from_buffer_ref_readable(buffer, &info).unwrap();
-    let stride = frame.plane_stride()[0] as usize;
-    let row = &frame.plane_data(0).unwrap()[..stride];
-    let width = info.width() as usize;
-    let mut sum = 0.0f64;
-    let mut count = 0.0f64;
-    for (x, &v) in row.iter().take(width).enumerate() {
-        if v > 128 {
-            sum += x as f64;
-            count += 1.0;
-        }
-    }
-    (count > 0.0).then(|| sum / count)
-}
-
 fn argmax_column(sample: &gst::Sample) -> usize {
     let caps = sample.caps().unwrap();
     let info = gst_video::VideoInfo::from_caps(caps).unwrap();
@@ -122,24 +101,13 @@ fn audio_envelope(samples: &[gst::Sample]) -> Vec<(u64, f64)> {
         let buffer = sample.buffer().unwrap();
         let pts = buffer.pts().unwrap().nseconds();
         let map = buffer.map_readable().unwrap();
-        let samples_f32: &[f32] = f32le_samples(map.as_slice());
+        let samples_f32: &[f32] = gstavsynctest::analyze::f32le_samples(map.as_slice());
         for (i, &v) in samples_f32.iter().enumerate() {
             let t = pts + i as u64 * gst::ClockTime::SECOND.nseconds() / rate;
             out.push((t, v as f64));
         }
     }
     out
-}
-
-/// Reinterpret an F32LE audio buffer's bytes as native `f32` samples (the host
-/// is little-endian).
-fn f32le_samples(bytes: &[u8]) -> &[f32] {
-    let (head, body, tail) = unsafe { bytes.align_to::<f32>() };
-    assert!(
-        head.is_empty() && tail.is_empty(),
-        "misaligned F32LE buffer"
-    );
-    body
 }
 
 /// Number of full pips in an audio run of `duration_ns` (the pip at t=0 is
@@ -193,7 +161,10 @@ fn video_bar_sweeps_and_centres_on_pip() {
             .iter()
             .map(|s| {
                 let pts = s.buffer().unwrap().pts().unwrap().nseconds();
-                (pts, bar_centroid(s).expect("bar present"))
+                (
+                    pts,
+                    gstavsynctest::analyze::bar_centroid(s).expect("bar present"),
+                )
             })
             .collect();
 
@@ -215,29 +186,6 @@ fn video_bar_sweeps_and_centres_on_pip() {
             "{format}: bar barely moved (spread {spread}px over width {WIDTH})"
         );
     }
-}
-
-/// The CEA-708 CDP the video source attaches (DID 0x61 / SDID 0x01), as raw
-/// bytes recovered from the ancillary meta's 10-bit words.
-fn caption_cdp_bytes(buffer: &gst::BufferRef) -> Option<Vec<u8>> {
-    buffer
-        .iter_meta::<gst_video::video_meta::AncillaryMeta>()
-        .find(|m| (m.did() & 0xFF) as u8 == gstavsynctest::captions::CC_DID)
-        .map(|m| m.data().iter().map(|&w| (w & 0xFF) as u8).collect())
-}
-
-/// The caption text carried by one frame's CDP (service `CC_SERVICE_NO`), or
-/// `None` for a null CDP.
-fn decode_caption(parser: &mut cdp_types::CDPParser, cdp: &[u8]) -> Option<String> {
-    parser.parse(cdp).expect("valid CDP");
-    let packet = parser.pop_packet()?;
-    let mut text = String::new();
-    for service in packet.services() {
-        if service.number() == gstavsynctest::captions::CC_SERVICE_NO {
-            text.extend(service.codes().iter().filter_map(|code| code.char()));
-        }
-    }
-    (!text.is_empty()).then_some(text)
 }
 
 /// The video source attaches a phase-locked CEA-708 caption: TICK/TOCK on each
@@ -262,8 +210,9 @@ fn captions_tick_tock_on_pip_frames() {
         let buffer = s.buffer().unwrap();
         let pts = buffer.pts().unwrap().nseconds();
         let n = pts / frame_period;
-        let cdp = caption_cdp_bytes(buffer).expect("caption ancillary present");
-        let text = decode_caption(&mut parser, &cdp);
+        let cdp =
+            gstavsynctest::analyze::caption_cdp_bytes(buffer).expect("caption ancillary present");
+        let text = gstavsynctest::analyze::decode_caption(&mut parser, &cdp);
         let on_pip = pts != 0 && pts.is_multiple_of(PIP_INTERVAL_NS);
         match text {
             Some(t) if on_pip => {

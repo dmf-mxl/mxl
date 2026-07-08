@@ -28,6 +28,7 @@
 use gst::glib;
 use gstreamer as gst;
 
+pub mod analyze;
 pub mod audiosrc;
 pub mod captions;
 pub mod signal;
