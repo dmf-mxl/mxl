@@ -64,24 +64,22 @@ namespace mxl::lib::fabrics::ofi
         auto proto = selectIngressProtocol(mxlRegions.dataLayout(), mxlRegions.regions(), mxlRegions.maxSyncBatchSize());
         auto targetInfo = std::make_unique<TargetInfo>(pep.id(), pep.localAddress(), proto->registerMemory(domain), proto->bounceBufferInfo());
 
-        auto const cqSize = options.cqDepth.value_or(CompletionQueue::Attributes::DEFAULT_SIZE);
-
         // Helper struct to enable the std::make_unique function to access the private constructor of this class.
         struct MakeUniqueEnabler : RCTarget
         {
-            MakeUniqueEnabler(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain, std::size_t cqDepth)
-                : RCTarget(std::move(pep), std::move(proto), std::move(domain), cqDepth)
+            MakeUniqueEnabler(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain, TargetSetupOptions options)
+                : RCTarget(std::move(pep), std::move(proto), std::move(domain), std::move(options))
             {}
         };
 
         // Return the constructed RCTarget and associated TargetInfo for remote peers to connect.
-        return {std::make_unique<MakeUniqueEnabler>(std::move(pep), std::move(proto), std::move(domain), cqSize), std::move(targetInfo)};
+        return {std::make_unique<MakeUniqueEnabler>(std::move(pep), std::move(proto), std::move(domain), options), std::move(targetInfo)};
     }
 
-    RCTarget::RCTarget(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain, std::size_t cqDepth)
+    RCTarget::RCTarget(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain, TargetSetupOptions options)
         : _proto(std::move(proto))
         , _domain(std::move(domain))
-        , _cqDepth(cqDepth)
+        , _setupOptions(std::move(options))
         , _state(WaitForConnectionRequest{std::move(pep)})
     {}
 
@@ -162,7 +160,7 @@ namespace mxl::lib::fabrics::ofi
                         auto endpoint = Endpoint::create(_domain, state.pep.id(), event->connReq().info());
 
                         auto cqAttr = CompletionQueue::Attributes::defaults();
-                        cqAttr.size = _cqDepth;
+                        cqAttr.size = _setupOptions.cqDepth.value_or(CompletionQueue::Attributes::DEFAULT_SIZE);
                         auto cq = CompletionQueue::open(_domain, cqAttr);
                         endpoint.bind(cq, FI_RECV);
 
