@@ -144,55 +144,13 @@ fn drain_audio(sink: &gst_app::AppSink, done: &std::sync::atomic::AtomicBool) ->
         let base = rt.nseconds();
         let buffer = sample.buffer().expect("audio buffer");
         let map = buffer.map_readable().expect("audio readable");
-        let (head, body, tail) = unsafe { map.as_slice().align_to::<f32>() };
-        assert!(
-            head.is_empty() && tail.is_empty(),
-            "misaligned F32LE buffer"
-        );
+        let body = gstavsynctest::analyze::f32le_samples(map.as_slice());
         for (i, &v) in body.iter().enumerate() {
             let t = base + i as u64 * gst::ClockTime::SECOND.nseconds() / RATE as u64;
             out.push((t, v));
         }
     }
     out
-}
-
-/// Running-time centre of each tone pip. The envelope is binned (5 ms bins, so a
-/// 1 kHz tone's zero-crossings never split a pip) and contiguous bins whose
-/// energy clears a fraction of the peak are grouped; each pip's time is the
-/// *midpoint* of its group. A midpoint is unbiased for the symmetric burst
-/// `avsyncaudiotestsrc` emits, whereas an energy-weighted centroid is skewed by
-/// how the burst's samples fall across the bin edges.
-fn detect_pips(audio: &[(u64, f32)]) -> Vec<u64> {
-    if audio.is_empty() {
-        return Vec::new();
-    }
-    const BIN_NS: u64 = 5_000_000;
-    let t0 = audio.first().unwrap().0;
-    let tn = audio.last().unwrap().0;
-    let nbins = ((tn - t0) / BIN_NS + 1) as usize;
-    let mut energy = vec![0.0f64; nbins];
-    for &(t, a) in audio {
-        let b = ((t - t0) / BIN_NS) as usize;
-        energy[b] += (a as f64) * (a as f64);
-    }
-    let peak = energy.iter().copied().fold(0.0, f64::max);
-    let threshold = peak * 0.1;
-    let bin_centre = |b: usize| t0 + b as u64 * BIN_NS + BIN_NS / 2;
-    let mut pips = Vec::new();
-    let mut i = 0;
-    while i < nbins {
-        if energy[i] > threshold {
-            let first = i;
-            while i < nbins && energy[i] > threshold {
-                i += 1;
-            }
-            pips.push((bin_centre(first) + bin_centre(i - 1)) / 2);
-        } else {
-            i += 1;
-        }
-    }
-    pips
 }
 
 fn build(video_flow: &str, audio_flow: &str, domain: &str, is_live: bool) -> RoundTrip {
@@ -337,7 +295,7 @@ fn run_case(test: &str, is_live: bool) {
     });
     assert_bus_no_errors("consumer", &collect_bus_errors(&rt.consumer));
 
-    let pips = detect_pips(&audio);
+    let pips = gstavsynctest::analyze::detect_pips(&audio);
     assert_av_aligned(&video, &pips);
     drop(rt);
 }
