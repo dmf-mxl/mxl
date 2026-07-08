@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <memory>
 #include <mutex>
 #include <stdexcept>
 #include <string>
@@ -1135,6 +1136,15 @@ namespace
         auto* appSource = ::gst_bin_get_by_name(GST_BIN(parent), sourceName.c_str());
         ::gst_object_unref(parent);
 
+        auto appSourceRef = std::unique_ptr<GstObject, void (*)(GstObject*)>{GST_OBJECT(appSource),
+            [](GstObject* obj)
+            {
+                if (obj != nullptr)
+                {
+                    ::gst_object_unref(obj);
+                }
+            }};
+
         if (appSource == nullptr)
         {
             throw std::runtime_error{fmt::format("Could not find appsource {} in multiviewer pipeline", sourceIndex)};
@@ -1263,7 +1273,6 @@ namespace
                         if (auto const ret = mxlFlowReaderGetConfigInfo(_reader, &_configInfo); ret != MXL_STATUS_OK)
                         {
                             MXL_ERROR("Flow {}: Failed to get flow config info with status code {}. Exiting.", sourceIndex, static_cast<int>(ret));
-                            ::gst_object_unref(appSource);
                             return;
                         }
                     }
@@ -1279,13 +1288,10 @@ namespace
                         sourceIndex,
                         cursor.requestedIndex(),
                         static_cast<int>(ret));
-                    ::gst_object_unref(appSource);
                     return;
                 }
             }
         }
-
-        ::gst_object_unref(appSource);
     }
 
     std::string readFlowDescriptor(std::string const& domain, std::string const& flowID)
@@ -1303,10 +1309,13 @@ namespace
 
         if (mxlGetFlowDef(instance, flowID.c_str(), fourKBuffer, &requiredBufferSize) != MXL_STATUS_OK)
         {
+            ::mxlDestroyInstance(instance);
             throw std::runtime_error{"Failed to get flow definition for flow id " + flowID};
         }
 
-        return std::string{fourKBuffer, requiredBufferSize - 1};
+        auto const flowDescriptor = std::string{fourKBuffer, requiredBufferSize - 1};
+        ::mxlDestroyInstance(instance);
+        return flowDescriptor;
     }
 
     int real_main(int argc, char** argv, void*)
