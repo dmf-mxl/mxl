@@ -415,10 +415,12 @@ namespace
             if (_reader)
             {
                 ::mxlReleaseFlowReader(_instance, _reader);
+                _reader = nullptr;
             }
             if (_instance)
             {
                 ::mxlDestroyInstance(_instance);
+                _instance = nullptr;
             }
         }
 
