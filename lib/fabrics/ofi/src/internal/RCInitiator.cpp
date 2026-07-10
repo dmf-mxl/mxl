@@ -121,7 +121,7 @@ namespace mxl::lib::fabrics::ofi
                     state.ep.bind(cq, FI_TRANSMIT);
 
                     // Transition into the connecting state
-                    auto faddr = _info.fabricAddress.decode();
+                    auto const faddr = _info.fabricAddress.decode();
                     MXL_INFO("Connecting to {}", faddr.toString());
                     state.ep.connect(_info.fabricAddress);
                     return Connecting{.ep = std::move(state.ep)};

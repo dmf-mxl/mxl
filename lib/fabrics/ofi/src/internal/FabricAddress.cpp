@@ -21,6 +21,7 @@ namespace mxl::lib::fabrics::ofi
 {
     namespace
     {
+        [[nodiscard]]
         FabricAddress::Native parseInternetAddress(std::string const& ipString, std::uint16_t port = 0)
         {
             if (std::ranges::find(ipString, ':') != ipString.end())
@@ -48,6 +49,7 @@ namespace mxl::lib::fabrics::ofi
         }
 
         /** \brief Wrap `inet_ntop`, returning std::nullopt on failure (mirrors `ofi_straddr`'s `return NULL`). */
+        [[nodiscard]]
         std::optional<std::string> ipToString(int family, void const* addr)
         {
             char str[INET6_ADDRSTRLEN] = {};
@@ -59,6 +61,7 @@ namespace mxl::lib::fabrics::ofi
         }
 
         /// fi_sockaddr_in://%s:%u
+        [[nodiscard]]
         std::optional<std::string> toString(::sockaddr_in const& sin)
         {
             auto const ip = ipToString(sin.sin_family, &sin.sin_addr);
@@ -70,6 +73,7 @@ namespace mxl::lib::fabrics::ofi
         }
 
         /// fi_sockaddr_in6://[%s]:%u
+        [[nodiscard]]
         std::optional<std::string> toString(::sockaddr_in6 const& sin6)
         {
             auto const ip = ipToString(sin6.sin6_family, &sin6.sin6_addr);
@@ -81,6 +85,7 @@ namespace mxl::lib::fabrics::ofi
         }
 
         /// fi_sockaddr_ib://[%s]:0x%x:0x%x:0x%x  (GID : P_Key : port space : Scope ID)
+        [[nodiscard]]
         std::optional<std::string> toString(OfiSockaddrIb const& sib)
         {
             auto const gid = ipToString(AF_INET6, sib.sib_addr);
@@ -96,6 +101,7 @@ namespace mxl::lib::fabrics::ofi
         }
 
         /// fi_addr_efa://[%s]:%u:%u  (GID : QPN : QKey)
+        [[nodiscard]]
         std::optional<std::string> toString(EfaAddress const& efa)
         {
             auto const gid = ipToString(AF_INET6, efa.gid);
@@ -107,57 +113,68 @@ namespace mxl::lib::fabrics::ofi
         }
 
         /// The address is itself a null-terminated string.
+        [[nodiscard]]
         std::optional<std::string> toString(std::string const& str)
         {
             return str;
         }
 
         /// Host portion of each address type: the textual IP for sockets, the GID for IB / EFA.
+        [[nodiscard]]
         std::optional<std::string> hostString(::sockaddr_in const& sin)
         {
             return ipToString(sin.sin_family, &sin.sin_addr);
         }
 
+        [[nodiscard]]
         std::optional<std::string> hostString(::sockaddr_in6 const& sin6)
         {
             return ipToString(sin6.sin6_family, &sin6.sin6_addr);
         }
 
+        [[nodiscard]]
         std::optional<std::string> hostString(OfiSockaddrIb const& sib)
         {
             return ipToString(AF_INET6, sib.sib_addr);
         }
 
+        [[nodiscard]]
         std::optional<std::string> hostString(EfaAddress const& efa)
         {
             return ipToString(AF_INET6, efa.gid);
         }
 
+        [[nodiscard]]
         std::optional<std::string> hostString(std::string const& str)
         {
             return str.substr(0, str.find(':'));
         }
 
+        [[nodiscard]]
         std::optional<std::string> serviceString(::sockaddr_in const& sin)
         {
             return sin.sin_port == 0 ? std::nullopt : std::make_optional(std::to_string(sin.sin_port));
         }
 
+        [[nodiscard]]
         std::optional<std::string> serviceString(::sockaddr_in6 const& sin)
         {
             return sin.sin6_port == 0 ? std::nullopt : std::make_optional(std::to_string(sin.sin6_port));
         }
 
+        [[nodiscard]]
         std::optional<std::string> serviceString(OfiSockaddrIb)
         {
             return std::nullopt;
         }
 
+        [[nodiscard]]
         std::optional<std::string> serviceString(EfaAddress)
         {
             return std::nullopt;
         }
 
+        [[nodiscard]]
         std::optional<std::string> serviceString(std::string const& addr)
         {
             auto const pos = addr.find(':');
@@ -202,6 +219,14 @@ namespace mxl::lib::fabrics::ofi
 
         return val;
     }
+
+    FabricAddress::FabricAddress() noexcept
+        : _native{std::monostate{}}
+    {}
+
+    FabricAddress::FabricAddress(FabricAddress::Native native) noexcept
+        : _native{std::move(native)}
+    {}
 
     FabricAddress FabricAddress::fromSource(FabricInfoView info) noexcept
     {

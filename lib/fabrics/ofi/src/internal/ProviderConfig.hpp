@@ -81,7 +81,7 @@ namespace mxl::lib::fabrics::ofi
 
         /** \brief Get the provider name (as expected by libfabric in prov_name) as a string. */
         [[nodiscard]]
-        std::string getProviderName() const noexcept;
+        std::string getProviderName() const;
 
         /** \brief Return a value that represents all supported memory registration modes (mr_mode). */
         [[nodiscard]]
@@ -97,6 +97,8 @@ namespace mxl::lib::fabrics::ofi
 
     private:
         ProviderConfig(ProviderConfigValues values, std::optional<ProviderCapabilities> capabilities);
+
+    private:
         ProviderConfigValues _values;
         std::optional<ProviderCapabilities> _capabilities;
     };

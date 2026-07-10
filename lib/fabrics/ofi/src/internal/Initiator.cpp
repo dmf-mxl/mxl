@@ -29,7 +29,7 @@ namespace mxl::lib::fabrics::ofi
             _inner.reset();
         }
 
-        auto [info, provierConfig] = selectSourceInterface(config.interface, /* target */ false);
+        auto const [info, provierConfig] = selectSourceInterface(config.interface, /* target */ false);
         switch (info.view().endpointType())
         {
             case FI_EP_MSG: _inner = RCInitiator::setup(config, info.view()); break;

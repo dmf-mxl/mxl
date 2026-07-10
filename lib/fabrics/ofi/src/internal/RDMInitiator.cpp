@@ -126,7 +126,7 @@ namespace mxl::lib::fabrics::ofi
         {
             if (!CompletionQueue::isWaitObjectSupportedForEFA())
             {
-                if (config.interface.caps.flags & MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS)
+                if ((config.interface.caps.flags & MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS) != 0)
                 {
                     throw Exception::make(MXL_ERR_NO_FABRIC, "Blocking API support requested, but not available for this fabric/version");
                 }
