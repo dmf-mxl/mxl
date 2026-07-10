@@ -60,15 +60,15 @@ std::string capabilitiesString(std::uint64_t caps)
 {
     auto resultLength = std::size_t{0};
     auto capStrings = std::vector<std::string>{};
-    if (caps & MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS)
+    if ((caps & MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS) != 0)
     {
         resultLength += capStrings.emplace_back("BLOCKING_OPERATIONS").size();
     }
-    if (caps & MXL_FABRICS_IFACE_CAP_REMOTE_WRITE)
+    if ((caps & MXL_FABRICS_IFACE_CAP_REMOTE_WRITE) != 0)
     {
         resultLength += capStrings.emplace_back("REMOTE_WRITE").size();
     }
-    if (caps & MXL_FABRICS_IFACE_CAP_SEND_RECEIVE)
+    if ((caps & MXL_FABRICS_IFACE_CAP_SEND_RECEIVE) != 0)
     {
         resultLength += capStrings.emplace_back("SEND_RECEIVE").size();
     }
@@ -169,7 +169,13 @@ class AppInitator
 {
 public:
     AppInitator(Config config)
-        : _config(std::move(config))
+        : _config{std::move(config)}
+        , _instance{nullptr}
+        , _fabricsInstance{nullptr}
+        , _reader{nullptr}
+        , _initiator{nullptr}
+        , _targetInfo{nullptr}
+        , _targetAdded{false}
     {}
 
     ~AppInitator()
@@ -531,7 +537,7 @@ public:
 private:
     mxlStatus makeProgress(std::chrono::steady_clock::duration timeout)
     {
-        if (_config.interface.caps.flags & MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS)
+        if ((_config.interface.caps.flags & MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS) != 0)
         {
             return mxlFabricsInitiatorMakeProgressBlocking(_initiator, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
         }
@@ -544,19 +550,25 @@ private:
 private:
     Config _config;
 
-    mxlInstance _instance = nullptr;
-    mxlFabricsInstance _fabricsInstance = nullptr;
-    mxlFlowReader _reader = nullptr;
-    mxlFabricsInitiator _initiator = nullptr;
-    mxlFabricsTargetInfo _targetInfo = nullptr;
-    bool _targetAdded = false;
+    mxlInstance _instance;
+    mxlFabricsInstance _fabricsInstance;
+    mxlFlowReader _reader;
+    mxlFabricsInitiator _initiator;
+    mxlFabricsTargetInfo _targetInfo;
+    bool _targetAdded;
 };
 
 class AppTarget
 {
 public:
     AppTarget(Config config)
-        : _config(std::move(config))
+        : _config{std::move(config)}
+        , _instance{nullptr}
+        , _fabricsInstance{nullptr}
+        , _writer{nullptr}
+        , _target{nullptr}
+        , _targetInfo{nullptr}
+        , _configInfo{}
     {}
 
     ~AppTarget()
@@ -839,7 +851,7 @@ public:
 private:
     mxlStatus targetReadGrain(std::uint64_t* grainIndex, std::chrono::steady_clock::duration timeout)
     {
-        if (_config.interface.caps.flags & MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS)
+        if ((_config.interface.caps.flags & MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS) != 0)
         {
             return mxlFabricsTargetReadGrain(_target, std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count(), grainIndex);
         }
@@ -852,12 +864,12 @@ private:
 private:
     Config _config;
 
-    mxlInstance _instance = nullptr;
-    mxlFabricsInstance _fabricsInstance = nullptr;
-    mxlFlowWriter _writer = nullptr;
-    mxlFabricsTarget _target = nullptr;
-    mxlFabricsTargetInfo _targetInfo = nullptr;
-    mxlFlowConfigInfo _configInfo{};
+    mxlInstance _instance;
+    mxlFabricsInstance _fabricsInstance;
+    mxlFlowWriter _writer;
+    mxlFabricsTarget _target;
+    mxlFabricsTargetInfo _targetInfo;
+    mxlFlowConfigInfo _configInfo;
 };
 
 int main(int argc, char** argv)

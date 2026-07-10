@@ -12,15 +12,15 @@ namespace mxl::lib::fabrics::ofi
     {
         auto resultLength = std::size_t{0};
         auto capStrings = std::vector<std::string>{};
-        if (caps & MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS)
+        if ((caps & MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS) != 0)
         {
             resultLength += capStrings.emplace_back("BLOCKING_OPERATIONS").size();
         }
-        if (caps & MXL_FABRICS_IFACE_CAP_REMOTE_WRITE)
+        if ((caps & MXL_FABRICS_IFACE_CAP_REMOTE_WRITE) != 0)
         {
             resultLength += capStrings.emplace_back("REMOTE_WRITE").size();
         }
-        if (caps & MXL_FABRICS_IFACE_CAP_SEND_RECEIVE)
+        if ((caps & MXL_FABRICS_IFACE_CAP_SEND_RECEIVE) != 0)
         {
             resultLength += capStrings.emplace_back("SEND_RECEIVE").size();
         }

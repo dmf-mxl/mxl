@@ -87,8 +87,8 @@ namespace mxl::lib::fabrics::ofi
     }
 
     AddressVector::AddressVector(::fid_av* raw, std::shared_ptr<Domain> domain)
-        : _raw(raw)
-        , _domain(std::move(domain))
+        : _raw{raw}
+        , _domain{std::move(domain)}
     {}
 
     AddressVector::~AddressVector()
