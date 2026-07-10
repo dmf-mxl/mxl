@@ -13,6 +13,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <fmt/format.h>
+#include <Format.hpp>
 #include "Exception.hpp"
 #include "VariantUtils.hpp"
 
@@ -168,17 +169,51 @@ namespace mxl::lib::fabrics::ofi
         }
     }
 
+    FabricAddressFormat convertAddressFormat(std::uint32_t fiAddrFormat)
+    {
+        // clang-format off
+        constexpr static auto const valid = std::array<FabricAddressFormat, 8>{
+            FabricAddressFormat::Unspec,
+            FabricAddressFormat::Sockaddr,
+            FabricAddressFormat::SockaddrIp,
+            FabricAddressFormat::SockaddrIn,
+            FabricAddressFormat::SockaddrIn6,
+            FabricAddressFormat::SockaddrIb,
+            FabricAddressFormat::Efa,
+            FabricAddressFormat::String};
+        // clang-format on
+
+        auto val = static_cast<FabricAddressFormat>(fiAddrFormat);
+        if (std::ranges::find(valid, val) == valid.end())
+        {
+            return FabricAddressFormat::Unspec;
+        }
+
+        return val;
+    }
+
+    FabricAddressFormat mustConvertAddressFormat(std::uint32_t fiAddrFormat)
+    {
+        auto val = convertAddressFormat(fiAddrFormat);
+        if (val == FabricAddressFormat::Unspec)
+        {
+            throw Exception::invalidArgument("Invalid or unsupported address format value: {}", fiToString(&fiAddrFormat, FI_TYPE_ADDR_FORMAT));
+        }
+
+        return val;
+    }
+
     FabricAddress FabricAddress::fromSource(FabricInfoView info) noexcept
     {
-        return decode(info->addr_format, info->src_addr, info->src_addrlen);
+        return decode(mustConvertAddressFormat(info->addr_format), info->src_addr, info->src_addrlen);
     }
 
     FabricAddress FabricAddress::fromDestination(FabricInfoView info) noexcept
     {
-        return decode(info->addr_format, info->dest_addr, info->dest_addrlen);
+        return decode(mustConvertAddressFormat(info->addr_format), info->dest_addr, info->dest_addrlen);
     }
 
-    FabricAddress FabricAddress::decode(std::uint32_t addrFormat, void const* addr, std::size_t len) noexcept
+    FabricAddress FabricAddress::decode(FabricAddressFormat format, void const* addr, std::size_t len)
     {
         // Mirror ofi_straddr: nothing to decode without an address.
         if (!addr)
@@ -191,26 +226,26 @@ namespace mxl::lib::fabrics::ofi
             return static_cast<::sockaddr const*>(addr)->sa_family;
         };
 
-        switch (addrFormat)
+        switch (format)
         {
-            case FI_SOCKADDR:
+            case FabricAddressFormat::Sockaddr:
                 // Dispatch on the embedded address family (IPv4, IPv6 or IB).
                 switch (sockAddrFamily())
                 {
-                    case AF_INET:  return decode(FI_SOCKADDR_IN, addr, len);
-                    case AF_INET6: return decode(FI_SOCKADDR_IN6, addr, len);
-                    case AF_IB:    return decode(FI_SOCKADDR_IB, addr, len);
+                    case AF_INET:  return decode(FabricAddressFormat::SockaddrIn, addr, len);
+                    case AF_INET6: return decode(FabricAddressFormat::SockaddrIn6, addr, len);
+                    case AF_IB:    return decode(FabricAddressFormat::SockaddrIb, addr, len);
                     default:       return FabricAddress{};
                 }
-            case FI_SOCKADDR_IP:
+            case FabricAddressFormat::SockaddrIp:
                 // Like FI_SOCKADDR, but IB is not a valid family here.
                 switch (sockAddrFamily())
                 {
-                    case AF_INET:  return decode(FI_SOCKADDR_IN, addr, len);
-                    case AF_INET6: return decode(FI_SOCKADDR_IN6, addr, len);
+                    case AF_INET:  return decode(FabricAddressFormat::SockaddrIn, addr, len);
+                    case AF_INET6: return decode(FabricAddressFormat::SockaddrIn6, addr, len);
                     default:       return FabricAddress{};
                 }
-            case FI_SOCKADDR_IN:
+            case FabricAddressFormat::SockaddrIn:
             {
                 if (len < sizeof(::sockaddr_in))
                 {
@@ -220,7 +255,7 @@ namespace mxl::lib::fabrics::ofi
                 std::memcpy(&sin, addr, sizeof(sin));
                 return FabricAddress{sin};
             }
-            case FI_SOCKADDR_IN6:
+            case FabricAddressFormat::SockaddrIn6:
             {
                 if (len < sizeof(::sockaddr_in6))
                 {
@@ -230,7 +265,7 @@ namespace mxl::lib::fabrics::ofi
                 std::memcpy(&sin6, addr, sizeof(sin6));
                 return FabricAddress{sin6};
             }
-            case FI_SOCKADDR_IB:
+            case FabricAddressFormat::SockaddrIb:
             {
                 if (len < sizeof(OfiSockaddrIb))
                 {
@@ -240,7 +275,7 @@ namespace mxl::lib::fabrics::ofi
                 std::memcpy(&sib, addr, sizeof(sib));
                 return FabricAddress{sib};
             }
-            case FI_ADDR_EFA:
+            case FabricAddressFormat::Efa:
             {
                 // 16-byte IPv6 GID, 16-bit QPN at offset 16, 32-bit QKey at offset 20.
                 constexpr auto efaAddrLen = std::size_t{24};
@@ -255,8 +290,8 @@ namespace mxl::lib::fabrics::ofi
                 std::memcpy(&efa.qkey, bytes + 20, sizeof(efa.qkey));
                 return FabricAddress{efa};
             }
-            case FI_ADDR_STR: return FabricAddress{std::string{static_cast<char const*>(addr)}};
-            default:          return FabricAddress{};
+            case FabricAddressFormat::String: return FabricAddress{std::string{static_cast<char const*>(addr)}};
+            default:                          return FabricAddress{};
         }
     }
 
@@ -314,16 +349,16 @@ namespace mxl::lib::fabrics::ofi
             _native);
     }
 
-    std::uint32_t FabricAddress::addressFormat() const noexcept
+    FabricAddressFormat FabricAddress::addressFormat() const noexcept
     {
         return std::visit(
             overloaded{
-                [](std::monostate const&) { return FI_FORMAT_UNSPEC; },
-                [](::sockaddr_in const&) { return FI_SOCKADDR_IN; },
-                [](::sockaddr_in6 const&) { return FI_SOCKADDR_IN6; },
-                [](OfiSockaddrIb const&) { return FI_SOCKADDR_IB; },
-                [](EfaAddress const&) { return FI_ADDR_EFA; },
-                [](std::string const&) { return FI_ADDR_STR; },
+                [](std::monostate const&) { return FabricAddressFormat::Unspec; },
+                [](::sockaddr_in const&) { return FabricAddressFormat::SockaddrIn; },
+                [](::sockaddr_in6 const&) { return FabricAddressFormat::SockaddrIn6; },
+                [](OfiSockaddrIb const&) { return FabricAddressFormat::SockaddrIb; },
+                [](EfaAddress const&) { return FabricAddressFormat::Efa; },
+                [](std::string const&) { return FabricAddressFormat::String; },
             },
             _native);
     }
