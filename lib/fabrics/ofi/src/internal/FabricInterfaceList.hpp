@@ -27,6 +27,7 @@ namespace mxl::lib::fabrics::ofi
          * Convert the collected descriptions into a heap-allocated mxlFabricsInterfaceList linked list.
          * Ownership of the returned list transfers to the caller; free with freeRawLinkedList().
          */
+        [[nodiscard]]
         ::mxlFabricsInterfaceList* toRawLinkedList() noexcept;
 
         /** Free an entire linked list previously created by toRawLinkedList(). */

@@ -61,47 +61,49 @@ namespace mxl::lib::fabrics::ofi
         auto fabricAddresses = std::map<Provider, std::optional<FabricAddress>>{};
         auto getProviderConfig = [&](Provider provider) -> ProviderConfig const&
         {
-            auto found = providerConfigs.find(provider);
-            if (found != providerConfigs.end())
+            auto it = providerConfigs.lower_bound(provider);
+            if ((it == providerConfigs.end()) || (it->first != provider))
             {
-                return found->second;
+                it = providerConfigs.emplace_hint(it, provider, ProviderConfig::create(provider, false, std::nullopt));
             }
 
-            auto [emplaced, _] = providerConfigs.emplace(provider, ProviderConfig::create(provider, false, std::nullopt));
-            return emplaced->second;
+            return it->second;
         };
 
         auto getFabricAddress = [&](Provider provider) -> std::optional<FabricAddress> const&
         {
-            auto found = fabricAddresses.find(provider);
-            if (found != fabricAddresses.end())
+            auto it = fabricAddresses.lower_bound(provider);
+            if ((it == fabricAddresses.end()) || (it->first != provider))
             {
-                return found->second;
+                try
+                {
+                    it = fabricAddresses.emplace_hint(it,
+                        provider,
+                        FabricAddress::parse(provider,
+                            query ? optStringFromCStr(query.value().get().address.node) : std::nullopt,
+                            query ? optStringFromCStr(query.value().get().address.service) : std::nullopt));
+                }
+                catch (Exception const&)
+                {
+                    it = fabricAddresses.emplace_hint(it, provider, std::nullopt);
+                }
             }
 
-            try
-            {
-                auto [emplaced, _] = fabricAddresses.emplace(provider,
-                    FabricAddress::parse(provider,
-                        query ? optStringFromCStr(query.value().get().address.node) : std::nullopt,
-                        query ? optStringFromCStr(query.value().get().address.service) : std::nullopt));
-
-                return emplaced->second;
-            }
-            catch (Exception const&)
-            {
-                return fabricAddresses.emplace(provider, std::nullopt).first->second;
-            }
+            return it->second;
         };
 
-        auto const requestedProvider = query ? providerFromAPI(query.value().get().provider) : Provider::ANY;
+        // clang-format off
+        auto const requestedProvider = query 
+            ? providerFromAPI(query.value().get().provider) 
+            : Provider::ANY;
+        // clang-format on
         if (!requestedProvider)
         {
             throw Exception::invalidArgument("Invalid provider");
         }
 
         auto list = FabricInterfaceList{};
-        for (auto info : FabricInfoList::get())
+        for (auto&& info : FabricInfoList::get())
         {
             // Ignore if the provider of this fabric info is not known.
             auto provider = providerFromString(info->fabric_attr->prov_name);
