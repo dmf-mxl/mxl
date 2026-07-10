@@ -55,32 +55,37 @@ namespace
         return std::nullopt;
     }
 
-    std::string capabilitiesString(std::uint64_t flags)
+    std::string capabilitiesString(std::uint64_t caps)
     {
-        auto parts = std::vector<std::string>{};
-        if ((flags & MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS) != 0)
+        auto resultLength = std::size_t{0};
+        auto capStrings = std::vector<std::string>{};
+        if (caps & MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS)
         {
-            parts.emplace_back("BLOCKING_OPERATIONS");
+            resultLength += capStrings.emplace_back("BLOCKING_OPERATIONS").size();
         }
-        if ((flags & MXL_FABRICS_IFACE_CAP_REMOTE_WRITE) != 0)
+        if (caps & MXL_FABRICS_IFACE_CAP_REMOTE_WRITE)
         {
-            parts.emplace_back("REMOTE_WRITE");
+            resultLength += capStrings.emplace_back("REMOTE_WRITE").size();
         }
-        if ((flags & MXL_FABRICS_IFACE_CAP_SEND_RECEIVE) != 0)
+        if (caps & MXL_FABRICS_IFACE_CAP_SEND_RECEIVE)
         {
-            parts.emplace_back("SEND_RECEIVE");
+            resultLength += capStrings.emplace_back("SEND_RECEIVE").size();
         }
-        if (parts.empty())
+        if (capStrings.empty())
         {
-            return "(none)";
+            resultLength += capStrings.emplace_back("<none>").size();
         }
 
-        auto result = parts.front();
-        for (auto it = parts.begin() + 1; it != parts.end(); ++it)
+        resultLength += (capStrings.size() - 1); // separating '|' chars
+
+        auto result = capStrings.front();
+        result.reserve(resultLength + (capStrings.size() - 1));
+        for (auto it = capStrings.begin() + 1; it != capStrings.end(); ++it)
         {
-            result += " | ";
-            result += *it;
+            result.push_back('|');
+            result.append(*it);
         }
+
         return result;
     }
 
