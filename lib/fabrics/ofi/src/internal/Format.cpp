@@ -10,28 +10,32 @@ namespace mxl::lib::fabrics::ofi
 {
     std::string interfaceCapsString(std::uint64_t caps)
     {
+        auto resultLength = std::size_t{0};
         auto capStrings = std::vector<std::string>{};
         if (caps & MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS)
         {
-            capStrings.emplace_back("BLOCKING_OPERATIONS");
+            resultLength += capStrings.emplace_back("BLOCKING_OPERATIONS").size();
         }
         if (caps & MXL_FABRICS_IFACE_CAP_REMOTE_WRITE)
         {
-            capStrings.emplace_back("REMOTE_WRITE");
+            resultLength += capStrings.emplace_back("REMOTE_WRITE").size();
         }
         if (caps & MXL_FABRICS_IFACE_CAP_SEND_RECEIVE)
         {
-            capStrings.emplace_back("SEND_RECEIVE");
+            resultLength += capStrings.emplace_back("SEND_RECEIVE").size();
         }
         if (capStrings.empty())
         {
-            capStrings.emplace_back("<none>");
+            resultLength += capStrings.emplace_back("<none>").size();
         }
 
+        resultLength += (capStrings.size() - 1); // separating '|' chars
+
         auto result = capStrings.front();
+        result.reserve(resultLength + (capStrings.size() - 1));
         for (auto it = capStrings.begin() + 1; it != capStrings.end(); ++it)
         {
-            result.append("|");
+            result.push_back('|');
             result.append(*it);
         }
 
