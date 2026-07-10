@@ -157,14 +157,14 @@ namespace mxl::lib::fabrics::ofi
             return std::nullopt;
         }
 
-        std::optional<std::string> serviceString(std::string const& str)
+        std::optional<std::string> serviceString(std::string const& addr)
         {
-            auto const pos = str.find(':') + 1;
-            if (pos >= str.size())
+            auto const pos = addr.find(':');
+            if (pos == std::string::npos)
             {
                 return std::nullopt;
             }
-            return str.substr(pos);
+            return addr.substr(pos + 1);
         }
     }
 
