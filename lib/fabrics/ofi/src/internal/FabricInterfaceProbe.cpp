@@ -166,16 +166,16 @@ namespace mxl::lib::fabrics::ofi
             throw Exception::invalidArgument("invalid provider");
         }
 
-        constexpr auto transferCaps = std::uint64_t{MXL_FABRICS_IFACE_CAP_REMOTE_WRITE | MXL_FABRICS_IFACE_CAP_SEND_RECEIVE};
+        constexpr auto transferCapsMask = std::uint64_t{MXL_FABRICS_IFACE_CAP_REMOTE_WRITE | MXL_FABRICS_IFACE_CAP_SEND_RECEIVE};
         auto caps = ProviderCapabilities::fromAPI(interfaceConfig.caps);
-        if ((caps.interfaceCaps & transferCaps) == 0)
+        if ((caps.interfaceCaps & transferCapsMask) == 0)
         {
-            MXL_WARN("No transfer capabilities requested, defaulting to REMOTE_WRITE");
-            caps.interfaceCaps |= MXL_FABRICS_IFACE_CAP_REMOTE_WRITE;
+            throw Exception::invalidArgument(
+                "Unsupported provider constraints: Missing transfer capability. Need either SEND_RECEIVE or REMOTE_WRITE");
         }
         else if ((caps.interfaceCaps & MXL_FABRICS_IFACE_CAP_REMOTE_WRITE) == 0)
         {
-            throw Exception::noFabric("Unsupported provider constraints. Only REMOTE_WRITE supported at this time.");
+            throw Exception::noFabric("Unsupported provider constraints: Only REMOTE_WRITE supported at this time.");
         }
         if (caps.maxMessageSize == 0)
         {
