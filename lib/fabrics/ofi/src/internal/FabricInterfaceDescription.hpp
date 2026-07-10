@@ -22,6 +22,7 @@ namespace mxl::lib::fabrics::ofi
          * (FI_SEND, FI_WRITE, FI_RMA, etc.) into MXL capability flags and extracts NIC, domain,
          * and endpoint attributes. Returns nullopt if the provider is not recognized.
          */
+        [[nodiscard]]
         static std::optional<FabricInterfaceDescription> create(FabricInfoView info);
 
         /**
@@ -29,9 +30,11 @@ namespace mxl::lib::fabrics::ofi
          * String fields (node, service, attr) are strdup'd and owned by the node.
          * \param next optional pointer to the next node in the linked list.
          */
+        [[nodiscard]]
         ::mxlFabricsInterfaceList* toRawLinkedListNode(::mxlFabricsInterfaceList* next = nullptr);
 
         /** Free a single linked list node and its strdup'd strings. Returns the next pointer. */
+        [[nodiscard]]
         static ::mxlFabricsInterfaceList* freeRawLinkedListNode(::mxlFabricsInterfaceList*);
 
         /** \brief Return the raw MXL_FABRICS_IFACE_CAP_* flags for this interface. */
@@ -44,6 +47,7 @@ namespace mxl::lib::fabrics::ofi
     private:
         explicit FabricInterfaceDescription(Provider, std::string, std::string, std::uint64_t, std::uint64_t, picojson::object);
 
+    private:
         Provider _provider;
         std::string _node;
         std::string _service;

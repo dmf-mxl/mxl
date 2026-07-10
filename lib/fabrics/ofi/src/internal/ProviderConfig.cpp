@@ -9,7 +9,7 @@ namespace mxl::lib::fabrics::ofi
     {
         namespace
         {
-            constexpr std::uint64_t const supportedMemoryRegistrationModes = FI_MR_VIRT_ADDR | FI_MR_LOCAL | FI_MR_ALLOCATED | FI_MR_PROV_KEY;
+            constexpr auto const supportedMemoryRegistrationModes = std::uint64_t{FI_MR_VIRT_ADDR | FI_MR_LOCAL | FI_MR_ALLOCATED | FI_MR_PROV_KEY};
         }
 
         std::uint64_t libfabricCaps(std::optional<ProviderCapabilities> const& capabilities, bool isTarget)
@@ -19,15 +19,15 @@ namespace mxl::lib::fabrics::ofi
                 return 0;
             }
             auto result = std::uint64_t{0};
-            if (capabilities->interfaceCaps & MXL_FABRICS_IFACE_CAP_REMOTE_WRITE)
+            if ((capabilities->interfaceCaps & MXL_FABRICS_IFACE_CAP_REMOTE_WRITE) != 0)
             {
-                result |= isTarget ? FI_REMOTE_WRITE : FI_WRITE;
+                result |= (isTarget ? FI_REMOTE_WRITE : FI_WRITE) | FI_RMA;
             }
-            if (capabilities->interfaceCaps & MXL_FABRICS_IFACE_CAP_SEND_RECEIVE)
+            if ((capabilities->interfaceCaps & MXL_FABRICS_IFACE_CAP_SEND_RECEIVE) != 0)
             {
                 result |= FI_SEND | FI_RECV;
             }
-            return result | FI_RMA;
+            return result;
         }
 
         std::uint64_t libfabricRequiredCaps(std::optional<ProviderCapabilities> const& capabilities)
@@ -37,7 +37,7 @@ namespace mxl::lib::fabrics::ofi
                 return 0;
             }
             auto result = std::uint64_t{0};
-            if (capabilities->interfaceCaps & MXL_FABRICS_IFACE_CAP_REMOTE_WRITE)
+            if ((capabilities->interfaceCaps & MXL_FABRICS_IFACE_CAP_REMOTE_WRITE) != 0)
             {
                 result |= FI_RMA;
             }
@@ -146,7 +146,7 @@ namespace mxl::lib::fabrics::ofi
         return !(protocolNotSupported || addressFormatNotSupported || containsFilteredCaps || missingRequiredCaps || unsupportedEndpointType);
     }
 
-    std::string ProviderConfig::getProviderName() const noexcept
+    std::string ProviderConfig::getProviderName() const
     {
         return _values.providerName;
     }
@@ -167,7 +167,7 @@ namespace mxl::lib::fabrics::ofi
     }
 
     ProviderConfig::ProviderConfig(ProviderConfigValues values, std::optional<ProviderCapabilities> capabilities)
-        : _values(std::move(values))
-        , _capabilities(capabilities)
+        : _values{std::move(values)}
+        , _capabilities{capabilities}
     {}
 }

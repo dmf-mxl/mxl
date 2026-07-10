@@ -100,7 +100,7 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         static FabricAddress decode(FabricAddressFormat addrFormat, void const* addr, std::size_t len);
 
-        FabricAddress() noexcept = default;
+        FabricAddress() noexcept;
 
         /** \brief Access the underlying variant. */
         [[nodiscard]]
@@ -146,9 +146,7 @@ namespace mxl::lib::fabrics::ofi
         static FabricAddress parse(Provider provider, std::optional<std::string> node, std::optional<std::string> service);
 
     private:
-        explicit FabricAddress(Native native) noexcept
-            : _native(std::move(native))
-        {}
+        explicit FabricAddress(Native native) noexcept;
 
     private:
         Native _native;

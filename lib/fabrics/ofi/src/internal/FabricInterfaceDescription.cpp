@@ -26,7 +26,7 @@ namespace mxl::lib::fabrics::ofi
 
         void copyStringProperty(picojson::object& destination, char const* value, std::string const& name)
         {
-            if ((value != nullptr) && (::strlen(value) > 0))
+            if ((value != nullptr) && (value[0] != '\0'))
             {
                 destination[name] = picojson::value{std::string{value}};
             }
@@ -98,12 +98,12 @@ namespace mxl::lib::fabrics::ofi
 
     FabricInterfaceDescription::FabricInterfaceDescription(Provider provider, std::string node, std::string service, std::uint64_t rawCaps,
         std::uint64_t maxMessageSize, picojson::object extraInfo)
-        : _provider(provider)
-        , _node(std::move(node))
-        , _service(std::move(service))
-        , _maxMessageSize(maxMessageSize)
-        , _rawCaps(rawCaps)
-        , _attr(std::move(extraInfo))
+        : _provider{provider}
+        , _node{std::move(node)}
+        , _service{std::move(service)}
+        , _maxMessageSize{maxMessageSize}
+        , _rawCaps{rawCaps}
+        , _attr{std::move(extraInfo)}
     {}
 
     std::optional<FabricInterfaceDescription> FabricInterfaceDescription::create(FabricInfoView info)
@@ -129,11 +129,11 @@ namespace mxl::lib::fabrics::ofi
             node = faddr.node().value_or("");
         }
 
-        if (info->caps & (FI_SEND | FI_RECV))
+        if ((info->caps & (FI_SEND | FI_RECV)) != 0)
         {
             caps |= MXL_FABRICS_IFACE_CAP_SEND_RECEIVE;
         }
-        if (info->caps & (FI_REMOTE_WRITE | FI_WRITE | FI_RMA))
+        if ((info->caps & (FI_REMOTE_WRITE | FI_WRITE | FI_RMA)) != 0)
         {
             caps |= MXL_FABRICS_IFACE_CAP_REMOTE_WRITE;
         }
