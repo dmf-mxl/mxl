@@ -22,7 +22,7 @@ namespace mxl::lib::fabrics::ofi
         /**
          * \brief Default is an empty fabric address
          */
-        RawFabricAddress() = default;
+        RawFabricAddress();
 
         /**
          * \brief Retrieve the fabric address of an endpoint by passing its fid.
@@ -84,11 +84,11 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Retrieve the fabric address of an endpoint by using its fid.
          */
         [[nodiscard]]
-        static RawFabricAddress retrieveFabricAddress(::fid_t, FabricInfoView info);
+        static RawFabricAddress retrieveFabricAddress(::fid_t fid, FabricInfoView info);
 
     private:
-        std::vector<std::uint8_t> _inner = {}; /**< libfabric address represented as a buffer of bytes */
-        FabricAddressFormat _addressFormat = FabricAddressFormat::Unspec;
+        std::vector<std::uint8_t> _inner; /**< libfabric address represented as a buffer of bytes */
+        FabricAddressFormat _addressFormat;
     };
 
 }
