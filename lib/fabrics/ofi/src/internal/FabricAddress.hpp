@@ -27,11 +27,13 @@ namespace mxl::lib::fabrics::ofi
 
     /** \brief Convert from libfabric address format value to FabricAddressFormat
      */
+    [[nodiscard]]
     FabricAddressFormat convertAddressFormat(std::uint32_t fiAddrFormat);
 
     /** \brief Convert from libfabric address format value to FabricAddressFormat
      * Never returns FabricAddressFormat::Unspec, and throws InvalidArgument instead.
      */
+    [[nodiscard]]
     FabricAddressFormat mustConvertAddressFormat(std::uint32_t fiAddrFormat);
 
     /** \brief Local declaration of libfabric's internal `struct ofi_sockaddr_ib`.
@@ -140,6 +142,7 @@ namespace mxl::lib::fabrics::ofi
         FabricAddressFormat addressFormat() const noexcept;
 
         /** \brief Parse a node/service pair into a typed address for the given provider. */
+        [[nodiscard]]
         static FabricAddress parse(Provider provider, std::optional<std::string> node, std::optional<std::string> service);
 
     private:
