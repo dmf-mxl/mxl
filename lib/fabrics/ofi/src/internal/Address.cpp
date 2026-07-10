@@ -14,9 +14,14 @@
 
 namespace mxl::lib::fabrics::ofi
 {
+    RawFabricAddress::RawFabricAddress()
+        : _inner{}
+        , _addressFormat{FabricAddressFormat::Unspec}
+    {}
+
     RawFabricAddress::RawFabricAddress(std::vector<std::uint8_t> addr, FabricAddressFormat addressFormat)
-        : _inner(std::move(addr))
-        , _addressFormat(addressFormat)
+        : _inner{std::move(addr)}
+        , _addressFormat{addressFormat}
     {}
 
     RawFabricAddress RawFabricAddress::fromFid(::fid_t fid, FabricInfoView info)
@@ -82,10 +87,10 @@ namespace mxl::lib::fabrics::ofi
         }
 
         // Now that we have the address length, allocate a receiving buffer and call fi_getname again to retrieve the actual address
-        std::vector<std::uint8_t> addr(addrlen);
+        auto addr = std::vector<std::uint8_t>(addrlen);
         fiCall(fi_getname, "Failed to retrieve endpoint's local address.", fid, addr.data(), &addrlen);
 
-        return RawFabricAddress{addr, format};
+        return RawFabricAddress{std::move(addr), format};
     }
 
 }
