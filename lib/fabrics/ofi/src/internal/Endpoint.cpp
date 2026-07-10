@@ -187,7 +187,7 @@ namespace mxl::lib::fabrics::ofi
 
     RawFabricAddress Endpoint::localAddress() const
     {
-        return RawFabricAddress::fromFid(&_raw->fid, _info->addr_format);
+        return RawFabricAddress::fromFid(&_raw->fid, _info.view());
     }
 
     std::shared_ptr<CompletionQueue> Endpoint::completionQueue() const
