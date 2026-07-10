@@ -48,9 +48,21 @@ namespace mxl::lib::fabrics::ofi
                 return requested.node() == getHostname();
             }
 
-            auto const addressFormat = mustConvertAddressFormat(info->addr_format);
-            auto addr = FabricAddress::decode(addressFormat, info->src_addr, info->src_addrlen);
-            return addr.node() == requested.node();
+            try
+            {
+                auto const addressFormat = mustConvertAddressFormat(info->addr_format);
+                auto addr = FabricAddress::decode(addressFormat, info->src_addr, info->src_addrlen);
+                return addr.node() == requested.node();
+            }
+            catch (Exception const& ex)
+            {
+                if (ex.status() != MXL_ERR_INVALID_ARG)
+                {
+                    throw;
+                }
+
+                return false;
+            }
         }
     }
 
