@@ -6,7 +6,6 @@
 
 #include <cstdint>
 #include <string>
-#include <string_view>
 #include <variant>
 #include <netinet/in.h>
 #include "FabricInfo.hpp"
@@ -14,6 +13,27 @@
 
 namespace mxl::lib::fabrics::ofi
 {
+    enum class FabricAddressFormat : std::uint32_t
+    {
+        Unspec = static_cast<std::uint32_t>(FI_ADDR_UNSPEC), // Unspecified
+        Sockaddr = FI_SOCKADDR,                              // Any socket address, including infiniband
+        SockaddrIp = FI_SOCKADDR_IP,                         // Any socket address, but infiniband is not valid
+        SockaddrIn = FI_SOCKADDR_IN,                         // AF_INET socket address
+        SockaddrIn6 = FI_SOCKADDR_IN6,                       // AF_INET6 socket address
+        SockaddrIb = FI_SOCKADDR_IB,                         // AF_IB socket address
+        Efa = FI_ADDR_EFA,                                   // EFA specific proprietary address format
+        String = FI_ADDR_STR,                                // String address in the form of scheme://addr, example: fi_ns://<node>:<service>
+    };
+
+    /** \brief Convert from libfabric address format value to FabricAddressFormat
+     */
+    FabricAddressFormat convertAddressFormat(std::uint32_t fiAddrFormat);
+
+    /** \brief Convert from libfabric address format value to FabricAddressFormat
+     * Never returns FabricAddressFormat::Unspec, and throws InvalidArgument instead.
+     */
+    FabricAddressFormat mustConvertAddressFormat(std::uint32_t fiAddrFormat);
+
     /** \brief Local declaration of libfabric's internal `struct ofi_sockaddr_ib`.
      *
      * The public libfabric headers do not expose this type, so we mirror its layout
@@ -76,7 +96,7 @@ namespace mxl::lib::fabrics::ofi
          * \param len        Length of the address buffer in bytes.
          */
         [[nodiscard]]
-        static FabricAddress decode(std::uint32_t addrFormat, void const* addr, std::size_t len) noexcept;
+        static FabricAddress decode(FabricAddressFormat addrFormat, void const* addr, std::size_t len);
 
         FabricAddress() noexcept = default;
 
@@ -117,7 +137,7 @@ namespace mxl::lib::fabrics::ofi
 
         /** \brief Return the libfabric address format constant (FI_SOCKADDR_IN, etc.). */
         [[nodiscard]]
-        std::uint32_t addressFormat() const noexcept;
+        FabricAddressFormat addressFormat() const noexcept;
 
         /** \brief Parse a node/service pair into a typed address for the given provider. */
         static FabricAddress parse(Provider provider, std::optional<std::string> node, std::optional<std::string> service);

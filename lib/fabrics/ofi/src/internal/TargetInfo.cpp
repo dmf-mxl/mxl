@@ -9,6 +9,7 @@
 #include <uuid/uuid.h>
 #include "Address.hpp"
 #include "Exception.hpp"
+#include "FabricAddress.hpp"
 #include "Format.hpp" // IWYU pragma: keep; for fmt::format
 #include "Provider.hpp"
 #include "RemoteRegion.hpp"
@@ -74,7 +75,7 @@ namespace mxl::lib::fabrics::ofi
 
         auto root = parsed.get<picojson::object>();
 
-        auto const addressFormat = static_cast<std::uint32_t>(root.at("addressFormat").get<double>());
+        auto const addressFormat = mustConvertAddressFormat(static_cast<std::uint32_t>(root.at("addressFormat").get<double>()));
         auto const fabricAddress = RawFabricAddress::fromBase64(root.at("fabricAddress").get<std::string>(), addressFormat);
 
         auto regions = std::vector<RemoteRegion>{};
