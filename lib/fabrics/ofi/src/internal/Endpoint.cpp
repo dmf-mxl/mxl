@@ -99,18 +99,20 @@ namespace mxl::lib::fabrics::ofi
         , _eq(std::move(eq))
         , _av(std::move(av))
     {
-        MXL_INFO("Endpoint {} created", Endpoint::idFromFID(raw));
+        MXL_DEBUG("Endpoint {} created", Endpoint::idFromFID(raw));
     }
 
     void Endpoint::close()
     {
         if (_raw)
         {
+#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_DEBUG
             auto id = this->id();
+#endif
 
             fiCall(::fi_close, "Failed to close endpoint", &_raw->fid);
 
-            MXL_INFO("Endoint {} closed", id);
+            MXL_DEBUG("Endoint {} closed", id);
 
             _raw = nullptr;
         }
