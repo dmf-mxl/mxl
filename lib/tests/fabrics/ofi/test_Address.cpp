@@ -74,7 +74,7 @@ TEST_CASE("ofi: FabricAddress default construction", "[ofi][FabricAddress]")
 
 TEST_CASE("ofi: FabricAddress base64 decode", "[ofi][FabricAddress]")
 {
-    RawFabricAddress addr = RawFabricAddress::fromBase64("AQIDBAU=", FI_FORMAT_UNSPEC); // base64 for {1,2,3,4,5}
+    RawFabricAddress addr = RawFabricAddress::fromBase64("AQIDBAU=", FabricAddressFormat::Unspec); // base64 for {1,2,3,4,5}
     auto* addrInner = static_cast<uint8_t const*>(addr.raw());
 
     REQUIRE(addr.size() == 5);
@@ -94,7 +94,7 @@ TEST_CASE("ofi: FabricAddress base64 decode", "[ofi][FabricAddress]")
 TEST_CASE("ofi: FabricAddress::decode FI_SOCKADDR_IN", "[ofi][FabricAddress]")
 {
     auto const native = makeSockaddrIn("10.130.40.13", 9000);
-    auto const addr = FabricAddress::decode(FI_SOCKADDR_IN, &native, sizeof(native));
+    auto const addr = FabricAddress::decode(FabricAddressFormat::SockaddrIn, &native, sizeof(native));
 
     REQUIRE_FALSE(addr.empty());
     REQUIRE(std::holds_alternative<::sockaddr_in>(addr.native()));
@@ -114,7 +114,7 @@ TEST_CASE("ofi: FabricAddress::decode FI_SOCKADDR_IN", "[ofi][FabricAddress]")
 TEST_CASE("ofi: FabricAddress::decode FI_SOCKADDR_IN without a port", "[ofi][FabricAddress]")
 {
     auto const native = makeSockaddrIn("10.130.40.13", 0);
-    auto const addr = FabricAddress::decode(FI_SOCKADDR_IN, &native, sizeof(native));
+    auto const addr = FabricAddress::decode(FabricAddressFormat::SockaddrIn, &native, sizeof(native));
 
     REQUIRE(std::holds_alternative<::sockaddr_in>(addr.native()));
     auto const& sin = std::get<::sockaddr_in>(addr.native());
@@ -128,7 +128,7 @@ TEST_CASE("ofi: FabricAddress::decode FI_SOCKADDR_IN without a port", "[ofi][Fab
 TEST_CASE("ofi: FabricAddress::decode FI_SOCKADDR_IN6", "[ofi][FabricAddress]")
 {
     auto const native = makeSockaddrIn6("2001:db8::1", 443);
-    auto const addr = FabricAddress::decode(FI_SOCKADDR_IN6, &native, sizeof(native));
+    auto const addr = FabricAddress::decode(FabricAddressFormat::SockaddrIn6, &native, sizeof(native));
 
     REQUIRE(std::holds_alternative<::sockaddr_in6>(addr.native()));
     auto const& sin6 = std::get<::sockaddr_in6>(addr.native());
@@ -141,7 +141,7 @@ TEST_CASE("ofi: FabricAddress::decode FI_SOCKADDR_IN6", "[ofi][FabricAddress]")
 TEST_CASE("ofi: FabricAddress::decode FI_ADDR_EFA", "[ofi][FabricAddress]")
 {
     auto const native = makeEfa("fe80::1", 12, 34);
-    auto const addr = FabricAddress::decode(FI_ADDR_EFA, native.data(), native.size());
+    auto const addr = FabricAddress::decode(FabricAddressFormat::Efa, native.data(), native.size());
 
     REQUIRE(std::holds_alternative<EfaAddress>(addr.native()));
     auto const& efa = std::get<EfaAddress>(addr.native());
@@ -156,7 +156,7 @@ TEST_CASE("ofi: FabricAddress::decode FI_SOCKADDR_IB", "[ofi][FabricAddress]")
     // P_Key, port space and scope id are hexadecimal; the lower 16 bits of the service id carry
     // the port.
     auto const native = makeSockaddrIb("fe80::1", /*pkey=*/0x1234, /*portSpace=*/0x10b, /*scopeId=*/0xff, /*port=*/0x1f90);
-    auto const addr = FabricAddress::decode(FI_SOCKADDR_IB, &native, sizeof(native));
+    auto const addr = FabricAddress::decode(FabricAddressFormat::SockaddrIb, &native, sizeof(native));
 
     REQUIRE(std::holds_alternative<OfiSockaddrIb>(addr.native()));
     auto const& sib = std::get<OfiSockaddrIb>(addr.native());
@@ -175,16 +175,16 @@ TEST_CASE("ofi: FabricAddress::decode FI_SOCKADDR_IB", "[ofi][FabricAddress]")
 TEST_CASE("ofi: FabricAddress::host returns the address portion of each type", "[ofi][FabricAddress]")
 {
     auto const sin = makeSockaddrIn("10.130.40.13", 9000);
-    REQUIRE(FabricAddress::decode(FI_SOCKADDR_IN, &sin, sizeof(sin)).node() == "10.130.40.13");
+    REQUIRE(FabricAddress::decode(FabricAddressFormat::SockaddrIn, &sin, sizeof(sin)).node() == "10.130.40.13");
 
     auto const sin6 = makeSockaddrIn6("2001:db8::1", 443);
-    REQUIRE(FabricAddress::decode(FI_SOCKADDR_IN6, &sin6, sizeof(sin6)).node() == "2001:db8::1");
+    REQUIRE(FabricAddress::decode(FabricAddressFormat::SockaddrIn6, &sin6, sizeof(sin6)).node() == "2001:db8::1");
 
     auto const efa = makeEfa("fe80::1", 12, 34);
-    REQUIRE(FabricAddress::decode(FI_ADDR_EFA, efa.data(), efa.size()).node() == "fe80::1");
+    REQUIRE(FabricAddress::decode(FabricAddressFormat::Efa, efa.data(), efa.size()).node() == "fe80::1");
 
     auto const sib = makeSockaddrIb("fe80::1", 0x1234, 0x10b, 0xff, 0x1f90);
-    REQUIRE(FabricAddress::decode(FI_SOCKADDR_IB, &sib, sizeof(sib)).node() == "fe80::1");
+    REQUIRE(FabricAddress::decode(FabricAddressFormat::SockaddrIb, &sib, sizeof(sib)).node() == "fe80::1");
 
     // An empty / undecoded address has no host.
     REQUIRE_FALSE(FabricAddress{}.node().has_value());
@@ -195,19 +195,19 @@ TEST_CASE("ofi: FabricAddress::decode returns an empty address for undecodable i
     auto const sin = makeSockaddrIn("10.0.0.1", 9000);
 
     // A null address buffer.
-    REQUIRE(FabricAddress::decode(FI_SOCKADDR_IN, nullptr, sizeof(sin)).empty());
+    REQUIRE(FabricAddress::decode(FabricAddressFormat::SockaddrIn, nullptr, sizeof(sin)).empty());
 
     // A buffer that is too small for the declared format.
-    REQUIRE(FabricAddress::decode(FI_SOCKADDR_IN, &sin, sizeof(sin) - 1).empty());
+    REQUIRE(FabricAddress::decode(FabricAddressFormat::SockaddrIn, &sin, sizeof(sin) - 1).empty());
 
     auto const efa = makeEfa("fe80::1", 12, 34);
-    REQUIRE(FabricAddress::decode(FI_ADDR_EFA, efa.data(), efa.size() - 1).empty());
+    REQUIRE(FabricAddress::decode(FabricAddressFormat::SockaddrIn6, efa.data(), efa.size() - 1).empty());
 
     // An unsupported / unrecognised address format.
-    REQUIRE(FabricAddress::decode(FI_FORMAT_UNSPEC, &sin, sizeof(sin)).empty());
+    REQUIRE(FabricAddress::decode(FabricAddressFormat::Unspec, &sin, sizeof(sin)).empty());
 
     // FI_SOCKADDR dispatches on the embedded family; an unknown family does not decode.
     auto unknown = ::sockaddr{};
     unknown.sa_family = AF_UNSPEC;
-    REQUIRE(FabricAddress::decode(FI_SOCKADDR, &unknown, sizeof(unknown)).empty());
+    REQUIRE(FabricAddress::decode(FabricAddressFormat::Sockaddr, &unknown, sizeof(unknown)).empty());
 }

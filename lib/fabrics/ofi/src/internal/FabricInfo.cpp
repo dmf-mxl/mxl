@@ -208,7 +208,7 @@ namespace mxl::lib::fabrics::ofi
             }
 
             // The verbs provider need the addr_format hint set for ipv6 to work correctly
-            hints->addr_format = sourceAddress->addressFormat();
+            hints->addr_format = static_cast<std::uint32_t>(sourceAddress->addressFormat());
         }
 
         fiCall(::fi_getinfo,

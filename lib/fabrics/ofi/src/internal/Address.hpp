@@ -29,7 +29,7 @@ namespace mxl::lib::fabrics::ofi
          * \param fid libfabric address object
          * \param addressFormat A libfabric address format like FI_SOCKADDR_IN, FI_ADDR_EFA, etc..
          */
-        static RawFabricAddress fromFid(::fid_t fid, std::uint32_t addressFormat);
+        static RawFabricAddress fromFid(::fid_t fid, FabricInfoView info);
 
         /**
          * \brief Convert the raw fabric address into a base64 encoded string.
@@ -42,7 +42,7 @@ namespace mxl::lib::fabrics::ofi
          * \param data Base64 encoded raw binary address
          * \param addressFormat A libfabric address format like FI_SOCKADDR_IN, FI_ADDR_EFA, etc..
          */
-        static RawFabricAddress fromBase64(std::string_view data, std::uint32_t addressFormat);
+        static RawFabricAddress fromBase64(std::string_view data, FabricAddressFormat addressFormat);
 
         /**
          * \brief Pointer to the raw address data.
@@ -65,7 +65,7 @@ namespace mxl::lib::fabrics::ofi
          * \brief Return the fabric specific libfaric address format, or FI_FORMAT_UNSPEC if empty.
          */
         [[nodiscard]]
-        std::uint32_t format() const noexcept;
+        FabricAddressFormat format() const noexcept;
 
         /**
          * \brief Decode into a strongly typed FabricAddress.
@@ -76,15 +76,15 @@ namespace mxl::lib::fabrics::ofi
         bool operator==(RawFabricAddress const& other) const noexcept;
 
     private:
-        explicit RawFabricAddress(std::vector<std::uint8_t> addr, std::uint32_t addressFormat);
+        explicit RawFabricAddress(std::vector<std::uint8_t> addr, FabricAddressFormat addressFormat);
 
         /** \brief Retrieve the fabric address of an endpoint by using its fid.
          */
-        static RawFabricAddress retrieveFabricAddress(::fid_t, std::uint32_t);
+        static RawFabricAddress retrieveFabricAddress(::fid_t, FabricInfoView info);
 
     private:
         std::vector<std::uint8_t> _inner = {}; /**< libfabric address represented as a buffer of bytes */
-        std::uint32_t _addressFormat = FI_FORMAT_UNSPEC;
+        FabricAddressFormat _addressFormat = FabricAddressFormat::Unspec;
     };
 
 }

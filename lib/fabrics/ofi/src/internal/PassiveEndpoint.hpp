@@ -83,7 +83,7 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         RawFabricAddress localAddress()
         {
-            return RawFabricAddress::fromFid(&_raw->fid, _fabric->info()->addr_format);
+            return RawFabricAddress::fromFid(&_raw->fid, _fabric->info());
         }
 
         /** \brief Access the underlying raw `fid_pep` pointer.

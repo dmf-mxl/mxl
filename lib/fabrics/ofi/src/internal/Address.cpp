@@ -10,17 +10,18 @@
 #include "mxl/mxl.h"
 #include "Base64.hpp"
 #include "Exception.hpp"
+#include "FabricAddress.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
-    RawFabricAddress::RawFabricAddress(std::vector<std::uint8_t> addr, std::uint32_t addressFormat)
+    RawFabricAddress::RawFabricAddress(std::vector<std::uint8_t> addr, FabricAddressFormat addressFormat)
         : _inner(std::move(addr))
         , _addressFormat(addressFormat)
     {}
 
-    RawFabricAddress RawFabricAddress::fromFid(::fid_t fid, std::uint32_t addressFormat)
+    RawFabricAddress RawFabricAddress::fromFid(::fid_t fid, FabricInfoView info)
     {
-        return retrieveFabricAddress(fid, addressFormat);
+        return retrieveFabricAddress(fid, info);
     }
 
     std::string RawFabricAddress::toBase64() const
@@ -43,7 +44,7 @@ namespace mxl::lib::fabrics::ofi
         return _inner.size();
     }
 
-    std::uint32_t RawFabricAddress::format() const noexcept
+    FabricAddressFormat RawFabricAddress::format() const noexcept
     {
         return _addressFormat;
     }
@@ -58,7 +59,7 @@ namespace mxl::lib::fabrics::ofi
         return FabricAddress::decode(_addressFormat, _inner.data(), _inner.size());
     }
 
-    RawFabricAddress RawFabricAddress::fromBase64(std::string_view data, std::uint32_t addressFormat)
+    RawFabricAddress RawFabricAddress::fromBase64(std::string_view data, FabricAddressFormat addressFormat)
     {
         auto decoded = base64::decode_into<std::vector<std::uint8_t>>(data);
         if (decoded.empty())
@@ -68,8 +69,10 @@ namespace mxl::lib::fabrics::ofi
         return RawFabricAddress{std::move(decoded), addressFormat};
     }
 
-    RawFabricAddress RawFabricAddress::retrieveFabricAddress(::fid_t fid, std::uint32_t addressFormat)
+    RawFabricAddress RawFabricAddress::retrieveFabricAddress(::fid_t fid, FabricInfoView info)
     {
+        auto const format = mustConvertAddressFormat(info->addr_format);
+
         // First obtain the address length
         std::size_t addrlen = 0;
         auto ret = fi_getname(fid, nullptr, &addrlen);
@@ -82,7 +85,7 @@ namespace mxl::lib::fabrics::ofi
         std::vector<std::uint8_t> addr(addrlen);
         fiCall(fi_getname, "Failed to retrieve endpoint's local address.", fid, addr.data(), &addrlen);
 
-        return RawFabricAddress{addr, addressFormat};
+        return RawFabricAddress{addr, format};
     }
 
 }
