@@ -19,6 +19,21 @@ use gstreamer as gst;
 use std::sync::Arc;
 use std::sync::Mutex;
 
+/// Internal clock-offset failure (mutex poison, context setup, etc.). Distinct
+/// from `Ok(None)` in [`ClockOffsetExt::resolve_clock_offset`], which means the
+/// pipeline clock or MXL instance is not ready yet.
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub(crate) enum ClockOffsetError {
+    Failed,
+}
+
+impl ClockOffsetError {
+    pub(crate) fn into_error_message(self) -> gst::ErrorMessage {
+        let _ = self;
+        gst::error_msg!(gst::CoreError::Failed, ["Internal clock offset error"])
+    }
+}
+
 /// MXL-time → pipeline-clock offset `D = mxl_now - pipeline_clock_now`.
 ///
 /// The constant offset between MXL (TAI) time and the pipeline clock, sampled
@@ -60,20 +75,27 @@ impl SharedClockOffset {
     /// The shared `D`, sampling it once against `clock`/`mxl_now` if unset. The
     /// mutex serialises the first sample so concurrent elements reuse one value.
     /// `None` only when the element has no clock yet and nothing was sampled.
-    pub(crate) fn get_or_sample(&self, clock: Option<gst::Clock>, mxl_now: u64) -> Option<u64> {
-        let mut slot = self.0.lock().unwrap();
+    pub(crate) fn get_or_sample(
+        &self,
+        clock: Option<gst::Clock>,
+        mxl_now: u64,
+    ) -> Result<Option<u64>, ClockOffsetError> {
+        let mut slot = self.0.lock().map_err(|_| ClockOffsetError::Failed)?;
         if let Some(offset) = *slot {
-            return Some(offset);
+            return Ok(Some(offset));
         }
-        let offset = clock_offset(clock, mxl_now)?;
+        let Some(offset) = clock_offset(clock, mxl_now) else {
+            return Ok(None);
+        };
         *slot = Some(offset);
-        Some(offset)
+        Ok(Some(offset))
     }
 
     /// Drop the sampled value so the next [`get_or_sample`](Self::get_or_sample)
     /// re-samples, e.g. after the pipeline clock changes.
-    pub(crate) fn invalidate(&self) {
-        *self.0.lock().unwrap() = None;
+    pub(crate) fn invalidate(&self) -> Result<(), ClockOffsetError> {
+        *self.0.lock().map_err(|_| ClockOffsetError::Failed)? = None;
+        Ok(())
     }
 }
 
@@ -104,9 +126,9 @@ pub(crate) trait ClockOffsetExt {
 
     /// Return this pipeline's shared offset cell, adopting a sibling's via the
     /// context handshake or, failing that, creating and publishing our own.
-    fn ensure_clock_offset(&self) -> SharedClockOffset {
+    fn ensure_clock_offset(&self) -> Result<SharedClockOffset, ClockOffsetError> {
         if let Some(cell) = self.cached_clock_offset() {
-            return cell;
+            return Ok(cell);
         }
         let element = self.element();
 
@@ -118,7 +140,7 @@ pub(crate) trait ClockOffsetExt {
                 && let Some(cell) = clock_offset_from_context(&context)
             {
                 self.store_clock_offset(cell.clone());
-                return cell;
+                return Ok(cell);
             }
         }
 
@@ -129,38 +151,41 @@ pub(crate) trait ClockOffsetExt {
                 .build(),
         );
         if let Some(cell) = self.cached_clock_offset() {
-            return cell;
+            return Ok(cell);
         }
 
         // Nobody has one yet: create ours and share it with the pipeline.
         let cell = SharedClockOffset::default();
         self.store_clock_offset(cell.clone());
         let mut context = gst::Context::new(CLOCK_OFFSET_CONTEXT, true);
-        context
-            .get_mut()
-            .unwrap()
-            .structure_mut()
-            .set("offset", &cell);
+        let Some(s) = context.get_mut() else {
+            return Err(ClockOffsetError::Failed);
+        };
+        s.structure_mut().set("offset", &cell);
         element.set_context(&context);
         let _ = element.post_message(
             gst::message::HaveContext::builder(context)
                 .src(&element)
                 .build(),
         );
-        cell
+        Ok(cell)
     }
 
-    /// The pipeline's shared `D`, sampling it once if needed. `None` before a
-    /// clock or instance is available.
-    fn resolve_clock_offset(&self) -> Option<u64> {
-        let cell = self.ensure_clock_offset();
-        cell.get_or_sample(self.element().clock(), self.mxl_now()?)
+    /// The pipeline's shared `D`, sampling it once if needed. `Ok(None)` before
+    /// a clock or instance is available.
+    fn resolve_clock_offset(&self) -> Result<Option<u64>, ClockOffsetError> {
+        let Some(mxl_now) = self.mxl_now() else {
+            return Ok(None);
+        };
+        let cell = self.ensure_clock_offset()?;
+        cell.get_or_sample(self.element().clock(), mxl_now)
     }
 
     /// Drop the shared sample so it is re-taken against the current clock.
-    fn invalidate_clock_offset(&self) {
+    fn invalidate_clock_offset(&self) -> Result<(), ClockOffsetError> {
         if let Some(cell) = self.cached_clock_offset() {
-            cell.invalidate();
+            cell.invalidate()?;
         }
+        Ok(())
     }
 }

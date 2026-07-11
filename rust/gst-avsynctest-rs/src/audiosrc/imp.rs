@@ -25,6 +25,13 @@ use gstreamer_audio as gst_audio;
 use gstreamer_base as gst_base;
 
 use crate::signal;
+use crate::{
+    imp_error::{
+        self, BUFFER_NOT_WRITABLE, CALC_LATENCY, CAPS_NO_STRUCTURE, GET_TIME_SEGMENT,
+        LOCK_CLOCK_WAIT, LOCK_SETTINGS, LOCK_STATE,
+    },
+    imp_failed,
+};
 
 static CAT: LazyLock<gst::DebugCategory> = LazyLock::new(|| {
     gst::DebugCategory::new(
@@ -199,24 +206,70 @@ impl ObjectImpl for AvSyncAudioTestSrc {
     }
 
     fn set_property(&self, _id: usize, value: &glib::Value, pspec: &glib::ParamSpec) {
-        let mut settings = self.settings.lock().unwrap();
+        let Ok(mut settings) = self.settings.lock() else {
+            imp_failed!(self, LOCK_SETTINGS);
+            return;
+        };
+
         match pspec.name() {
             "pip-interval" => {
-                settings.pip_interval = gst::ClockTime::from_nseconds(value.get().unwrap());
+                if let Ok(ns) = value.get::<u64>() {
+                    settings.pip_interval = gst::ClockTime::from_nseconds(ns);
+                } else {
+                    gst::error!(CAT, imp = self, "Invalid type for pip-interval property");
+                }
             }
             "pip-duration" => {
-                settings.pip_duration = gst::ClockTime::from_nseconds(value.get().unwrap());
+                if let Ok(ns) = value.get::<u64>() {
+                    settings.pip_duration = gst::ClockTime::from_nseconds(ns);
+                } else {
+                    gst::error!(CAT, imp = self, "Invalid type for pip-duration property");
+                }
             }
-            "pip-freq" => settings.pip_freq = value.get().unwrap(),
-            "pip-volume" => settings.pip_volume = value.get().unwrap(),
-            "samples-per-buffer" => settings.samples_per_buffer = value.get().unwrap(),
-            "is-live" => settings.is_live = value.get().unwrap(),
-            _ => unimplemented!(),
+            "pip-freq" => {
+                if let Ok(freq) = value.get::<f64>() {
+                    settings.pip_freq = freq;
+                } else {
+                    gst::error!(CAT, imp = self, "Invalid type for pip-freq property");
+                }
+            }
+            "pip-volume" => {
+                if let Ok(volume) = value.get::<f64>() {
+                    settings.pip_volume = volume;
+                } else {
+                    gst::error!(CAT, imp = self, "Invalid type for pip-volume property");
+                }
+            }
+            "samples-per-buffer" => {
+                if let Ok(n) = value.get::<u32>() {
+                    settings.samples_per_buffer = n;
+                } else {
+                    gst::error!(
+                        CAT,
+                        imp = self,
+                        "Invalid type for samples-per-buffer property"
+                    );
+                }
+            }
+            "is-live" => {
+                if let Ok(is_live) = value.get::<bool>() {
+                    settings.is_live = is_live;
+                } else {
+                    gst::error!(CAT, imp = self, "Invalid type for is-live property");
+                }
+            }
+            other => {
+                gst::error!(CAT, imp = self, "Unknown property '{}'", other);
+            }
         }
     }
 
     fn property(&self, _id: usize, pspec: &glib::ParamSpec) -> glib::Value {
-        let settings = self.settings.lock().unwrap();
+        let Ok(settings) = self.settings.lock() else {
+            imp_failed!(self, LOCK_SETTINGS);
+            return glib::Value::from(&"");
+        };
+
         match pspec.name() {
             "pip-interval" => settings.pip_interval.nseconds().to_value(),
             "pip-duration" => settings.pip_duration.nseconds().to_value(),
@@ -224,7 +277,10 @@ impl ObjectImpl for AvSyncAudioTestSrc {
             "pip-volume" => settings.pip_volume.to_value(),
             "samples-per-buffer" => settings.samples_per_buffer.to_value(),
             "is-live" => settings.is_live.to_value(),
-            _ => unimplemented!(),
+            _ => {
+                gst::error!(CAT, imp = self, "Unknown property {}", pspec.name());
+                glib::Value::from(&"")
+            }
         }
     }
 }
@@ -246,26 +302,32 @@ impl ElementImpl for AvSyncAudioTestSrc {
     }
 
     fn pad_templates() -> &'static [gst::PadTemplate] {
-        static PAD_TEMPLATES: LazyLock<Vec<gst::PadTemplate>> = LazyLock::new(|| {
-            let caps = gst_audio::AudioCapsBuilder::new_interleaved()
-                .format_list([
-                    gst_audio::AudioFormat::F32le,
-                    gst_audio::AudioFormat::S24be,
-                    gst_audio::AudioFormat::S16be,
-                ])
-                .build();
-            let src_pad_template = gst::PadTemplate::new(
-                "src",
-                gst::PadDirection::Src,
-                gst::PadPresence::Always,
-                &caps,
-            )
-            .unwrap();
+        static PAD_TEMPLATES: LazyLock<Result<Vec<gst::PadTemplate>, glib::BoolError>> =
+            LazyLock::new(|| {
+                let caps = gst_audio::AudioCapsBuilder::new_interleaved()
+                    .format_list([
+                        gst_audio::AudioFormat::F32le,
+                        gst_audio::AudioFormat::S24be,
+                        gst_audio::AudioFormat::S16be,
+                    ])
+                    .build();
+                let src_pad_template = gst::PadTemplate::new(
+                    "src",
+                    gst::PadDirection::Src,
+                    gst::PadPresence::Always,
+                    &caps,
+                )?;
 
-            vec![src_pad_template]
-        });
+                Ok(vec![src_pad_template])
+            });
 
-        PAD_TEMPLATES.as_ref()
+        match PAD_TEMPLATES.as_ref() {
+            Ok(templates) => templates,
+            Err(err) => {
+                gst::trace!(CAT, "Failed to create src pad template: {:?}", err);
+                &[]
+            }
+        }
     }
 
     fn change_state(
@@ -273,7 +335,11 @@ impl ElementImpl for AvSyncAudioTestSrc {
         transition: gst::StateChange,
     ) -> Result<gst::StateChangeSuccess, gst::StateChangeError> {
         if let gst::StateChange::ReadyToPaused = transition {
-            self.obj().set_live(self.settings.lock().unwrap().is_live);
+            let settings = self.settings.lock().map_err(|_| {
+                imp_failed!(self, LOCK_SETTINGS);
+                gst::StateChangeError
+            })?;
+            self.obj().set_live(settings.is_live);
         }
         self.parent_change_state(transition)
     }
@@ -285,10 +351,18 @@ impl BaseSrcImpl for AvSyncAudioTestSrc {
             gst::loggable_error!(CAT, "Failed to build `AudioInfo` from caps {}", caps)
         })?;
 
+        let settings = self
+            .settings
+            .lock()
+            .map_err(|_| gst::loggable_error!(CAT, "{}", LOCK_SETTINGS))?;
         self.obj()
-            .set_blocksize(info.bpf() * self.settings.lock().unwrap().samples_per_buffer);
+            .set_blocksize(info.bpf() * settings.samples_per_buffer);
+        drop(settings);
 
-        self.state.lock().unwrap().info = Some(info);
+        self.state
+            .lock()
+            .map_err(|_| gst::loggable_error!(CAT, "{}", LOCK_STATE))?
+            .info = Some(info);
 
         let _ = self
             .obj()
@@ -298,25 +372,40 @@ impl BaseSrcImpl for AvSyncAudioTestSrc {
     }
 
     fn start(&self) -> Result<(), gst::ErrorMessage> {
-        *self.state.lock().unwrap() = Default::default();
+        *self
+            .state
+            .lock()
+            .map_err(|_| imp_error::failed_msg(LOCK_STATE))? = Default::default();
         self.unlock_stop()?;
         Ok(())
     }
 
     fn stop(&self) -> Result<(), gst::ErrorMessage> {
-        *self.state.lock().unwrap() = Default::default();
+        *self
+            .state
+            .lock()
+            .map_err(|_| imp_error::failed_msg(LOCK_STATE))? = Default::default();
         self.unlock()?;
         Ok(())
     }
 
     fn query(&self, query: &mut gst::QueryRef) -> bool {
         if let gst::QueryViewMut::Latency(q) = query.view_mut() {
-            let settings = *self.settings.lock().unwrap();
-            let state = self.state.lock().unwrap();
+            let Ok(settings) = self.settings.lock() else {
+                imp_failed!(self, LOCK_SETTINGS);
+                return false;
+            };
+            let Ok(state) = self.state.lock() else {
+                imp_failed!(self, LOCK_STATE);
+                return false;
+            };
             if let Some(ref info) = state.info {
-                let latency = gst::ClockTime::SECOND
+                let Some(latency) = gst::ClockTime::SECOND
                     .mul_div_floor(settings.samples_per_buffer as u64, info.rate() as u64)
-                    .unwrap();
+                else {
+                    imp_failed!(self, CALC_LATENCY);
+                    return false;
+                };
                 q.set(settings.is_live, latency, gst::ClockTime::NONE);
                 return true;
             }
@@ -329,9 +418,12 @@ impl BaseSrcImpl for AvSyncAudioTestSrc {
         caps.truncate();
         {
             let caps = caps.make_mut();
-            let s = caps.structure_mut(0).unwrap();
-            s.fixate_field_nearest_int("rate", signal::DEFAULT_RATE);
-            s.fixate_field_nearest_int("channels", signal::DEFAULT_CHANNELS);
+            if let Some(s) = caps.structure_mut(0) {
+                s.fixate_field_nearest_int("rate", signal::DEFAULT_RATE);
+                s.fixate_field_nearest_int("channels", signal::DEFAULT_CHANNELS);
+            } else {
+                imp_failed!(self, CAPS_NO_STRUCTURE);
+            }
         }
         self.parent_fixate(caps)
     }
@@ -341,7 +433,10 @@ impl BaseSrcImpl for AvSyncAudioTestSrc {
     }
 
     fn unlock(&self) -> Result<(), gst::ErrorMessage> {
-        let mut clock_wait = self.clock_wait.lock().unwrap();
+        let mut clock_wait = self
+            .clock_wait
+            .lock()
+            .map_err(|_| imp_error::failed_msg(LOCK_CLOCK_WAIT))?;
         if let Some(clock_id) = clock_wait.clock_id.take() {
             clock_id.unschedule();
         }
@@ -350,7 +445,10 @@ impl BaseSrcImpl for AvSyncAudioTestSrc {
     }
 
     fn unlock_stop(&self) -> Result<(), gst::ErrorMessage> {
-        self.clock_wait.lock().unwrap().flushing = false;
+        self.clock_wait
+            .lock()
+            .map_err(|_| imp_error::failed_msg(LOCK_CLOCK_WAIT))?
+            .flushing = false;
         Ok(())
     }
 }
@@ -360,9 +458,19 @@ impl PushSrcImpl for AvSyncAudioTestSrc {
         &self,
         _buffer: Option<&mut gst::BufferRef>,
     ) -> Result<CreateSuccess, gst::FlowError> {
-        let settings = *self.settings.lock().unwrap();
+        let settings = self
+            .settings
+            .lock()
+            .map_err(|_| {
+                imp_failed!(self, LOCK_SETTINGS);
+                gst::FlowError::Error
+            })
+            .map(|s| *s)?;
 
-        let mut state = self.state.lock().unwrap();
+        let mut state = self.state.lock().map_err(|_| {
+            imp_failed!(self, LOCK_STATE);
+            gst::FlowError::Error
+        })?;
         let info = match state.info {
             None => {
                 gst::element_imp_error!(self, gst::CoreError::Negotiation, ["Have no caps yet"]);
@@ -372,22 +480,38 @@ impl PushSrcImpl for AvSyncAudioTestSrc {
         };
 
         let n_samples = settings.samples_per_buffer as u64;
-        let mut buffer = gst::Buffer::with_size(n_samples as usize * info.bpf() as usize).unwrap();
+        let mut buffer =
+            gst::Buffer::with_size(n_samples as usize * info.bpf() as usize).map_err(|_| {
+                imp_failed!(self, "Failed to allocate audio buffer");
+                gst::FlowError::Error
+            })?;
         {
-            let buffer = buffer.get_mut().unwrap();
+            let buffer = buffer.get_mut().ok_or_else(|| {
+                imp_failed!(self, BUFFER_NOT_WRITABLE);
+                gst::FlowError::Error
+            })?;
             let pts = state
                 .sample_offset
                 .mul_div_floor(gst::ClockTime::SECOND.nseconds(), info.rate() as u64)
                 .map(gst::ClockTime::from_nseconds)
-                .unwrap();
+                .ok_or_else(|| {
+                    imp_failed!(self, "Failed to calculate audio PTS");
+                    gst::FlowError::Error
+                })?;
             let next_pts = (state.sample_offset + n_samples)
                 .mul_div_floor(gst::ClockTime::SECOND.nseconds(), info.rate() as u64)
                 .map(gst::ClockTime::from_nseconds)
-                .unwrap();
+                .ok_or_else(|| {
+                    imp_failed!(self, "Failed to calculate next audio PTS");
+                    gst::FlowError::Error
+                })?;
             buffer.set_pts(pts);
             buffer.set_duration(next_pts - pts);
 
-            let mut map = buffer.map_writable().unwrap();
+            let mut map = buffer.map_writable().map_err(|_| {
+                imp_failed!(self, "Failed to map audio buffer writable");
+                gst::FlowError::Error
+            })?;
             Self::fill(map.as_mut_slice(), &info, state.sample_offset, &settings);
         }
         state.sample_offset += n_samples;
@@ -414,13 +538,19 @@ impl AvSyncAudioTestSrc {
             .obj()
             .segment()
             .downcast::<gst::format::Time>()
-            .unwrap();
+            .map_err(|_| {
+                imp_failed!(self, GET_TIME_SEGMENT);
+                gst::FlowError::Error
+            })?;
         let running_time = segment.to_running_time(buffer.pts().opt_add(buffer.duration()));
         let Some(wait_until) = running_time.opt_add(base_time) else {
             return Ok(());
         };
 
-        let mut clock_wait = self.clock_wait.lock().unwrap();
+        let mut clock_wait = self.clock_wait.lock().map_err(|_| {
+            imp_failed!(self, LOCK_CLOCK_WAIT);
+            gst::FlowError::Error
+        })?;
         if clock_wait.flushing {
             return Err(gst::FlowError::Flushing);
         }
@@ -429,7 +559,14 @@ impl AvSyncAudioTestSrc {
         drop(clock_wait);
 
         let (res, _) = id.wait();
-        self.clock_wait.lock().unwrap().clock_id.take();
+        self.clock_wait
+            .lock()
+            .map_err(|_| {
+                imp_failed!(self, LOCK_CLOCK_WAIT);
+                gst::FlowError::Error
+            })?
+            .clock_id
+            .take();
         if res == Err(gst::ClockError::Unscheduled) {
             return Err(gst::FlowError::Flushing);
         }
