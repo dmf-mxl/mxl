@@ -59,12 +59,13 @@ pub fn f32le_samples(bytes: &[u8]) -> &[f32] {
 /// energy-weighted centroid is skewed by how the burst's samples fall across the
 /// bin edges.
 pub fn detect_pips(audio: &[(u64, f32)]) -> Vec<u64> {
-    if audio.is_empty() {
+    let Some(&(t0, _)) = audio.first() else {
         return Vec::new();
-    }
+    };
+    let Some(&(tn, _)) = audio.last() else {
+        return Vec::new();
+    };
     const BIN_NS: u64 = 5_000_000;
-    let t0 = audio.first().unwrap().0;
-    let tn = audio.last().unwrap().0;
     let nbins = ((tn - t0) / BIN_NS + 1) as usize;
     let mut energy = vec![0.0f64; nbins];
     for &(t, a) in audio {
@@ -90,6 +91,34 @@ pub fn detect_pips(audio: &[(u64, f32)]) -> Vec<u64> {
     pips
 }
 
+/// Low byte of the first user-data word of every ancillary packet with DID `did`
+/// (matched on its low 8 bits) carried by the frame, in attachment order. Reads
+/// back the per-frame index [`avsyncvideotestsrc`](crate::videosrc) stamps in the
+/// data flow (DID [`ANC_DID`](crate::signal::ANC_DID)). Usually one entry per
+/// frame; a lossy live round-trip whose flows aren't co-timed can land two
+/// packets on one frame (and none on a neighbour) — never more than two — so the
+/// caller can verify every packet was received and placed within one frame of its
+/// home index.
+pub fn ancillary_indices(buffer: &gst::BufferRef, did: u8) -> Vec<u8> {
+    buffer
+        .iter_meta::<gst_video::video_meta::AncillaryMeta>()
+        .filter(|m| (m.did() & 0xFF) as u8 == did)
+        .filter_map(|m| m.data().iter().next().map(|&w| (w & 0xFF) as u8))
+        .collect()
+}
+
+/// Raw CDP bytes of every CEA-708 caption ancillary carried by the frame (DID
+/// [`CC_DID`](captions::CC_DID)), in attachment order — the caption companion to
+/// [`ancillary_indices`], so a frame that collected two ST-2038 packets exposes
+/// both captions. Decode each with [`decode_caption`].
+pub fn caption_cdps(buffer: &gst::BufferRef) -> Vec<Vec<u8>> {
+    buffer
+        .iter_meta::<gst_video::video_meta::AncillaryMeta>()
+        .filter(|m| (m.did() & 0xFF) as u8 == captions::CC_DID)
+        .map(|m| m.data().iter().map(|&w| (w & 0xFF) as u8).collect())
+        .collect()
+}
+
 /// The CEA-708 CDP the video source attaches (DID [`CC_DID`](captions::CC_DID) /
 /// SDID [`CC_SDID`](captions::CC_SDID)), as raw bytes recovered from the
 /// ancillary meta's 10-bit words. `None` if the frame carries no caption
@@ -102,15 +131,21 @@ pub fn caption_cdp_bytes(buffer: &gst::BufferRef) -> Option<Vec<u8>> {
 }
 
 /// The caption text carried by one frame's CDP (service
-/// [`CC_SERVICE_NO`](captions::CC_SERVICE_NO)), or `None` for a null CDP.
-pub fn decode_caption(parser: &mut CDPParser, cdp: &[u8]) -> Option<String> {
-    parser.parse(cdp).expect("valid CDP");
-    let packet = parser.pop_packet()?;
+/// [`CC_SERVICE_NO`](captions::CC_SERVICE_NO)), or `Ok(None)` for a null CDP
+/// (a valid CDP that carries no caption). `Err` if the CDP fails to parse.
+pub fn decode_caption(
+    parser: &mut CDPParser,
+    cdp: &[u8],
+) -> Result<Option<String>, cdp_types::ParserError> {
+    parser.parse(cdp)?;
+    let Some(packet) = parser.pop_packet() else {
+        return Ok(None);
+    };
     let mut text = String::new();
     for service in packet.services() {
         if service.number() == captions::CC_SERVICE_NO {
             text.extend(service.codes().iter().filter_map(|code| code.char()));
         }
     }
-    (!text.is_empty()).then_some(text)
+    Ok((!text.is_empty()).then_some(text))
 }

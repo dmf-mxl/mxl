@@ -213,7 +213,7 @@ fn captions_tick_tock_on_pip_frames() {
         let n = pts / frame_period;
         let cdp =
             gstavsynctest::analyze::caption_cdp_bytes(buffer).expect("caption ancillary present");
-        let text = gstavsynctest::analyze::decode_caption(&mut parser, &cdp);
+        let text = gstavsynctest::analyze::decode_caption(&mut parser, &cdp).expect("valid CDP");
         let on_pip = pts != 0 && pts.is_multiple_of(PIP_INTERVAL_NS);
         match text {
             Some(t) if on_pip => {
