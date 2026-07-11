@@ -231,7 +231,14 @@ impl ElementImpl for MxlSink {
 
     fn set_clock(&self, clock: Option<&gst::Clock>) -> bool {
         // Re-sample `D` against the newly selected clock.
-        crate::clock::ClockOffsetExt::invalidate_clock_offset(self);
+        if crate::clock::ClockOffsetExt::invalidate_clock_offset(self).is_err() {
+            gst::element_imp_error!(
+                self,
+                gst::CoreError::Failed,
+                ["Internal clock offset error"]
+            );
+            return false;
+        }
         self.parent_set_clock(clock)
     }
 
@@ -272,7 +279,8 @@ impl BaseSinkImpl for MxlSink {
         // races: two sinks can each publish their own cell and sample `D`
         // microseconds apart, rounding the same PTS to indices one grain apart
         // and mispairing flows in st2038combiner.
-        let _ = crate::clock::ClockOffsetExt::ensure_clock_offset(self);
+        crate::clock::ClockOffsetExt::ensure_clock_offset(self)
+            .map_err(|_| crate::clock::ClockOffsetError::Failed.into_error_message())?;
 
         let mut context = self.context.lock().map_err(|e| {
             gst::error_msg!(gst::CoreError::Failed, ["Failed to get state mutex: {}", e])
@@ -342,8 +350,25 @@ impl BaseSinkImpl for MxlSink {
         // Establish the pipeline-shared `D` before taking the context lock: the
         // handshake posts context messages that re-enter `set_context`, which
         // also locks the context.
-        let offset = crate::clock::ClockOffsetExt::resolve_clock_offset(self)
-            .ok_or(gst::FlowError::Error)?;
+        let offset = match crate::clock::ClockOffsetExt::resolve_clock_offset(self) {
+            Ok(Some(offset)) => offset,
+            Ok(None) => {
+                gst::element_imp_error!(
+                    self,
+                    gst::CoreError::Failed,
+                    ["Pipeline clock not available for clock offset"]
+                );
+                return Err(gst::FlowError::Error);
+            }
+            Err(_) => {
+                gst::element_imp_error!(
+                    self,
+                    gst::CoreError::Failed,
+                    ["Internal clock offset error"]
+                );
+                return Err(gst::FlowError::Error);
+            }
+        };
 
         let mut context = self.context.lock().map_err(|_| gst::FlowError::Error)?;
         let state = context.state.as_mut().ok_or(gst::FlowError::Error)?;

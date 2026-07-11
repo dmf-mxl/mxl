@@ -25,7 +25,14 @@ use gstreamer as gst;
 use gstreamer_base as gst_base;
 use gstreamer_video as gst_video;
 
-use crate::{captions, signal};
+use crate::{
+    captions,
+    imp_error::{
+        self, BUFFER_NOT_WRITABLE, CALC_LATENCY, CAPS_NO_STRUCTURE, GET_TIME_SEGMENT,
+        LOCK_CLOCK_WAIT, LOCK_SETTINGS, LOCK_STATE,
+    },
+    imp_failed, signal,
+};
 
 static CAT: LazyLock<gst::DebugCategory> = LazyLock::new(|| {
     gst::DebugCategory::new(
@@ -254,28 +261,69 @@ impl ObjectImpl for AvSyncVideoTestSrc {
     }
 
     fn set_property(&self, _id: usize, value: &glib::Value, pspec: &glib::ParamSpec) {
-        let mut settings = self.settings.lock().unwrap();
+        let Ok(mut settings) = self.settings.lock() else {
+            imp_failed!(self, LOCK_SETTINGS);
+            return;
+        };
+
         match pspec.name() {
             "pip-interval" => {
-                settings.pip_interval = gst::ClockTime::from_nseconds(value.get().unwrap());
+                if let Ok(ns) = value.get::<u64>() {
+                    settings.pip_interval = gst::ClockTime::from_nseconds(ns);
+                } else {
+                    gst::error!(CAT, imp = self, "Invalid type for pip-interval property");
+                }
             }
-            "width" => settings.width = value.get().unwrap(),
-            "height" => settings.height = value.get().unwrap(),
-            "framerate" => settings.framerate = value.get().unwrap(),
-            "is-live" => settings.is_live = value.get().unwrap(),
-            _ => unimplemented!(),
+            "width" => {
+                if let Ok(width) = value.get::<i32>() {
+                    settings.width = width;
+                } else {
+                    gst::error!(CAT, imp = self, "Invalid type for width property");
+                }
+            }
+            "height" => {
+                if let Ok(height) = value.get::<i32>() {
+                    settings.height = height;
+                } else {
+                    gst::error!(CAT, imp = self, "Invalid type for height property");
+                }
+            }
+            "framerate" => {
+                if let Ok(framerate) = value.get::<gst::Fraction>() {
+                    settings.framerate = framerate;
+                } else {
+                    gst::error!(CAT, imp = self, "Invalid type for framerate property");
+                }
+            }
+            "is-live" => {
+                if let Ok(is_live) = value.get::<bool>() {
+                    settings.is_live = is_live;
+                } else {
+                    gst::error!(CAT, imp = self, "Invalid type for is-live property");
+                }
+            }
+            other => {
+                gst::error!(CAT, imp = self, "Unknown property '{}'", other);
+            }
         }
     }
 
     fn property(&self, _id: usize, pspec: &glib::ParamSpec) -> glib::Value {
-        let settings = self.settings.lock().unwrap();
+        let Ok(settings) = self.settings.lock() else {
+            imp_failed!(self, LOCK_SETTINGS);
+            return glib::Value::from(&"");
+        };
+
         match pspec.name() {
             "pip-interval" => settings.pip_interval.nseconds().to_value(),
             "width" => settings.width.to_value(),
             "height" => settings.height.to_value(),
             "framerate" => settings.framerate.to_value(),
             "is-live" => settings.is_live.to_value(),
-            _ => unimplemented!(),
+            _ => {
+                gst::error!(CAT, imp = self, "Unknown property {}", pspec.name());
+                glib::Value::from(&"")
+            }
         }
     }
 }
@@ -297,35 +345,41 @@ impl ElementImpl for AvSyncVideoTestSrc {
     }
 
     fn pad_templates() -> &'static [gst::PadTemplate] {
-        static PAD_TEMPLATES: LazyLock<Vec<gst::PadTemplate>> = LazyLock::new(|| {
-            // Only CDP-representable frame rates: every frame carries a CEA-708
-            // CDP whose header encodes one of these eight broadcast rates.
-            let framerates = [
-                gst::Fraction::new(24000, 1001),
-                gst::Fraction::new(24, 1),
-                gst::Fraction::new(25, 1),
-                gst::Fraction::new(30000, 1001),
-                gst::Fraction::new(30, 1),
-                gst::Fraction::new(50, 1),
-                gst::Fraction::new(60000, 1001),
-                gst::Fraction::new(60, 1),
-            ];
-            let caps = gst_video::VideoCapsBuilder::new()
-                .format_list([gst_video::VideoFormat::V210, gst_video::VideoFormat::Uyvp])
-                .framerate_list(framerates)
-                .build();
-            let src_pad_template = gst::PadTemplate::new(
-                "src",
-                gst::PadDirection::Src,
-                gst::PadPresence::Always,
-                &caps,
-            )
-            .unwrap();
+        static PAD_TEMPLATES: LazyLock<Result<Vec<gst::PadTemplate>, glib::BoolError>> =
+            LazyLock::new(|| {
+                // Only CDP-representable frame rates: every frame carries a CEA-708
+                // CDP whose header encodes one of these eight broadcast rates.
+                let framerates = [
+                    gst::Fraction::new(24000, 1001),
+                    gst::Fraction::new(24, 1),
+                    gst::Fraction::new(25, 1),
+                    gst::Fraction::new(30000, 1001),
+                    gst::Fraction::new(30, 1),
+                    gst::Fraction::new(50, 1),
+                    gst::Fraction::new(60000, 1001),
+                    gst::Fraction::new(60, 1),
+                ];
+                let caps = gst_video::VideoCapsBuilder::new()
+                    .format_list([gst_video::VideoFormat::V210, gst_video::VideoFormat::Uyvp])
+                    .framerate_list(framerates)
+                    .build();
+                let src_pad_template = gst::PadTemplate::new(
+                    "src",
+                    gst::PadDirection::Src,
+                    gst::PadPresence::Always,
+                    &caps,
+                )?;
 
-            vec![src_pad_template]
-        });
+                Ok(vec![src_pad_template])
+            });
 
-        PAD_TEMPLATES.as_ref()
+        match PAD_TEMPLATES.as_ref() {
+            Ok(templates) => templates,
+            Err(err) => {
+                gst::trace!(CAT, "Failed to create src pad template: {:?}", err);
+                &[]
+            }
+        }
     }
 
     fn change_state(
@@ -333,7 +387,11 @@ impl ElementImpl for AvSyncVideoTestSrc {
         transition: gst::StateChange,
     ) -> Result<gst::StateChangeSuccess, gst::StateChangeError> {
         if let gst::StateChange::ReadyToPaused = transition {
-            self.obj().set_live(self.settings.lock().unwrap().is_live);
+            let settings = self.settings.lock().map_err(|_| {
+                imp_failed!(self, LOCK_SETTINGS);
+                gst::StateChangeError
+            })?;
+            self.obj().set_live(settings.is_live);
         }
         self.parent_change_state(transition)
     }
@@ -355,7 +413,11 @@ impl BaseSrcImpl for AvSyncVideoTestSrc {
             ));
         }
 
-        let pip_interval = self.settings.lock().unwrap().pip_interval;
+        let pip_interval = self
+            .settings
+            .lock()
+            .map_err(|_| gst::loggable_error!(CAT, "{}", LOCK_SETTINGS))?
+            .pip_interval;
         // Bar width is one frame's horizontal step, so the sweep tiles gap-free
         // and the bar thins as the frame rate rises.
         let fps = info.fps().numer() as f64 / info.fps().denom() as f64;
@@ -363,7 +425,10 @@ impl BaseSrcImpl for AvSyncVideoTestSrc {
             (pip_interval.nseconds() as f64 / gst::ClockTime::SECOND.nseconds() as f64) * fps;
         let bar_width = (info.width() as f64 / frames_per_interval).round().max(1.0) as u32;
 
-        let mut state = self.state.lock().unwrap();
+        let mut state = self
+            .state
+            .lock()
+            .map_err(|_| gst::loggable_error!(CAT, "{}", LOCK_STATE))?;
         state.bar_width = bar_width;
         state.cdp_framerate = captions::cdp_framerate(info.fps());
         state.info = Some(info);
@@ -377,26 +442,41 @@ impl BaseSrcImpl for AvSyncVideoTestSrc {
     }
 
     fn start(&self) -> Result<(), gst::ErrorMessage> {
-        *self.state.lock().unwrap() = Default::default();
+        *self
+            .state
+            .lock()
+            .map_err(|_| imp_error::failed_msg(LOCK_STATE))? = Default::default();
         self.unlock_stop()?;
         Ok(())
     }
 
     fn stop(&self) -> Result<(), gst::ErrorMessage> {
-        *self.state.lock().unwrap() = Default::default();
+        *self
+            .state
+            .lock()
+            .map_err(|_| imp_error::failed_msg(LOCK_STATE))? = Default::default();
         self.unlock()?;
         Ok(())
     }
 
     fn query(&self, query: &mut gst::QueryRef) -> bool {
         if let gst::QueryViewMut::Latency(q) = query.view_mut() {
-            let is_live = self.settings.lock().unwrap().is_live;
-            let state = self.state.lock().unwrap();
+            let Ok(settings) = self.settings.lock() else {
+                imp_failed!(self, LOCK_SETTINGS);
+                return false;
+            };
+            let Ok(state) = self.state.lock() else {
+                imp_failed!(self, LOCK_STATE);
+                return false;
+            };
             if let Some(ref info) = state.info {
-                let latency = gst::ClockTime::SECOND
+                let Some(latency) = gst::ClockTime::SECOND
                     .mul_div_floor(info.fps().denom() as u64, info.fps().numer() as u64)
-                    .unwrap();
-                q.set(is_live, latency, gst::ClockTime::NONE);
+                else {
+                    imp_failed!(self, CALC_LATENCY);
+                    return false;
+                };
+                q.set(settings.is_live, latency, gst::ClockTime::NONE);
                 return true;
             }
             return false;
@@ -405,14 +485,23 @@ impl BaseSrcImpl for AvSyncVideoTestSrc {
     }
 
     fn fixate(&self, mut caps: gst::Caps) -> gst::Caps {
-        let settings = *self.settings.lock().unwrap();
+        let settings = match self.settings.lock() {
+            Ok(settings) => *settings,
+            Err(_) => {
+                imp_failed!(self, LOCK_SETTINGS);
+                Settings::default()
+            }
+        };
         caps.truncate();
         {
             let caps = caps.make_mut();
-            let s = caps.structure_mut(0).unwrap();
-            s.fixate_field_nearest_int("width", settings.width);
-            s.fixate_field_nearest_int("height", settings.height);
-            s.fixate_field_nearest_fraction("framerate", settings.framerate);
+            if let Some(s) = caps.structure_mut(0) {
+                s.fixate_field_nearest_int("width", settings.width);
+                s.fixate_field_nearest_int("height", settings.height);
+                s.fixate_field_nearest_fraction("framerate", settings.framerate);
+            } else {
+                imp_failed!(self, CAPS_NO_STRUCTURE);
+            }
         }
         self.parent_fixate(caps)
     }
@@ -422,7 +511,10 @@ impl BaseSrcImpl for AvSyncVideoTestSrc {
     }
 
     fn unlock(&self) -> Result<(), gst::ErrorMessage> {
-        let mut clock_wait = self.clock_wait.lock().unwrap();
+        let mut clock_wait = self
+            .clock_wait
+            .lock()
+            .map_err(|_| imp_error::failed_msg(LOCK_CLOCK_WAIT))?;
         if let Some(clock_id) = clock_wait.clock_id.take() {
             clock_id.unschedule();
         }
@@ -431,7 +523,10 @@ impl BaseSrcImpl for AvSyncVideoTestSrc {
     }
 
     fn unlock_stop(&self) -> Result<(), gst::ErrorMessage> {
-        self.clock_wait.lock().unwrap().flushing = false;
+        self.clock_wait
+            .lock()
+            .map_err(|_| imp_error::failed_msg(LOCK_CLOCK_WAIT))?
+            .flushing = false;
         Ok(())
     }
 }
@@ -441,9 +536,19 @@ impl PushSrcImpl for AvSyncVideoTestSrc {
         &self,
         _buffer: Option<&mut gst::BufferRef>,
     ) -> Result<CreateSuccess, gst::FlowError> {
-        let settings = *self.settings.lock().unwrap();
+        let settings = self
+            .settings
+            .lock()
+            .map_err(|_| {
+                imp_failed!(self, LOCK_SETTINGS);
+                gst::FlowError::Error
+            })
+            .map(|s| *s)?;
 
-        let mut state = self.state.lock().unwrap();
+        let mut state = self.state.lock().map_err(|_| {
+            imp_failed!(self, LOCK_STATE);
+            gst::FlowError::Error
+        })?;
         let info = match state.info {
             None => {
                 gst::element_imp_error!(self, gst::CoreError::Negotiation, ["Have no caps yet"]);
@@ -456,10 +561,18 @@ impl PushSrcImpl for AvSyncVideoTestSrc {
 
         let num = info.fps().numer() as u64;
         let den = info.fps().denom() as u64;
-        let pts = gst::ClockTime::SECOND.mul_div_floor(n * den, num).unwrap();
+        let pts = gst::ClockTime::SECOND
+            .mul_div_floor(n * den, num)
+            .ok_or_else(|| {
+                imp_failed!(self, "Failed to calculate video PTS");
+                gst::FlowError::Error
+            })?;
         let next_pts = gst::ClockTime::SECOND
             .mul_div_floor((n + 1) * den, num)
-            .unwrap();
+            .ok_or_else(|| {
+                imp_failed!(self, "Failed to calculate next video PTS");
+                gst::FlowError::Error
+            })?;
         let bar_centre =
             signal::bar_centre_column(signal::phase(pts, settings.pip_interval), info.width());
         let frame_idx = n as u8;
@@ -471,18 +584,30 @@ impl PushSrcImpl for AvSyncVideoTestSrc {
             state.caption_writer.next_cdp(framerate, n as u16, text)
         });
 
-        let mut buffer = gst::Buffer::with_size(info.size()).unwrap();
+        let mut buffer = gst::Buffer::with_size(info.size()).map_err(|_| {
+            imp_failed!(self, "Failed to allocate video buffer");
+            gst::FlowError::Error
+        })?;
         {
-            let buffer = buffer.get_mut().unwrap();
+            let buffer = buffer.get_mut().ok_or_else(|| {
+                imp_failed!(self, BUFFER_NOT_WRITABLE);
+                gst::FlowError::Error
+            })?;
             buffer.set_pts(pts);
             buffer.set_duration(next_pts - pts);
             {
-                let mut map = buffer.map_writable().unwrap();
+                let mut map = buffer.map_writable().map_err(|_| {
+                    imp_failed!(self, "Failed to map video buffer writable");
+                    gst::FlowError::Error
+                })?;
                 let data = map.as_mut_slice();
                 match info.format() {
                     gst_video::VideoFormat::V210 => fill_v210(data, &info, bar_centre, bar_width),
                     gst_video::VideoFormat::Uyvp => fill_uyvp(data, &info, bar_centre, bar_width),
-                    _ => unreachable!("format validated in set_caps"),
+                    _ => {
+                        imp_failed!(self, "Unsupported video format after caps validation");
+                        return Err(gst::FlowError::Error);
+                    }
                 }
                 data[0] = frame_idx;
             }
@@ -527,13 +652,19 @@ impl AvSyncVideoTestSrc {
             .obj()
             .segment()
             .downcast::<gst::format::Time>()
-            .unwrap();
+            .map_err(|_| {
+                imp_failed!(self, GET_TIME_SEGMENT);
+                gst::FlowError::Error
+            })?;
         let running_time = segment.to_running_time(buffer.pts().opt_add(buffer.duration()));
         let Some(wait_until) = running_time.opt_add(base_time) else {
             return Ok(());
         };
 
-        let mut clock_wait = self.clock_wait.lock().unwrap();
+        let mut clock_wait = self.clock_wait.lock().map_err(|_| {
+            imp_failed!(self, LOCK_CLOCK_WAIT);
+            gst::FlowError::Error
+        })?;
         if clock_wait.flushing {
             return Err(gst::FlowError::Flushing);
         }
@@ -542,7 +673,14 @@ impl AvSyncVideoTestSrc {
         drop(clock_wait);
 
         let (res, _) = id.wait();
-        self.clock_wait.lock().unwrap().clock_id.take();
+        self.clock_wait
+            .lock()
+            .map_err(|_| {
+                imp_failed!(self, LOCK_CLOCK_WAIT);
+                gst::FlowError::Error
+            })?
+            .clock_id
+            .take();
         if res == Err(gst::ClockError::Unscheduled) {
             return Err(gst::FlowError::Flushing);
         }
