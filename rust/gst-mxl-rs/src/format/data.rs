@@ -40,16 +40,28 @@ pub struct AncillaryMeta {
     pub checksum: u16,
 }
 
-/// RFC 8331 ANC from `start_pos` occupies a multiple of 4 bytes. `w` must already be byte-aligned
-/// or `expect` will panic.
-fn writer_word_aligned(w: &mut BitWriter<Cursor<&mut Vec<u8>>, BigEndian>, start_pos: u64) -> bool {
-    (w.writer().expect("byte_aligned").position() - start_pos).is_multiple_of(4)
+/// RFC 8331 ANC from `start_pos` occupies a multiple of 4 bytes. `w` must already be byte-aligned.
+fn writer_word_aligned(
+    w: &mut BitWriter<Cursor<&mut Vec<u8>>, BigEndian>,
+    start_pos: u64,
+) -> Result<bool, AncillaryMapError> {
+    let pos = w
+        .writer()
+        .ok_or(AncillaryMapError::Invalid("bitstream not byte-aligned"))?
+        .position();
+    Ok((pos - start_pos).is_multiple_of(4))
 }
 
-/// RFC 8331 ANC from `start_pos` occupies a multiple of 4 bytes. `r` must already be byte-aligned
-/// or `expect` will panic.
-fn reader_word_aligned(r: &mut BitReader<Cursor<&[u8]>, BigEndian>, start_pos: u64) -> bool {
-    (r.reader().expect("byte_aligned").position() - start_pos).is_multiple_of(4)
+/// RFC 8331 ANC from `start_pos` occupies a multiple of 4 bytes. `r` must already be byte-aligned.
+fn reader_word_aligned(
+    r: &mut BitReader<Cursor<&[u8]>, BigEndian>,
+    start_pos: u64,
+) -> Result<bool, AncillaryMapError> {
+    let pos = r
+        .reader()
+        .ok_or(AncillaryMapError::Invalid("bitstream not byte-aligned"))?
+        .position();
+    Ok((pos - start_pos).is_multiple_of(4))
 }
 
 /// Read one GStreamer ST 2038 ANC packet (including ST 2038 end padding) from
@@ -169,7 +181,7 @@ pub fn smpte291_anc_packet_from_ancillary_meta(
     // Byte-align and then pad with zero bits to a 4-byte boundary.
     w.byte_align()
         .map_err(|_| AncillaryMapError::Invalid("write word_align (bits)"))?;
-    while !writer_word_aligned(&mut w, w_start_pos) {
+    while !writer_word_aligned(&mut w, w_start_pos)? {
         w.write::<8, u8>(0u8)
             .map_err(|_| AncillaryMapError::Invalid("write word_align (bytes)"))?;
     }
@@ -226,7 +238,7 @@ pub fn ancillary_meta_from_smpte291_anc_packet(
             ));
         }
     }
-    while !reader_word_aligned(&mut r, r_start_pos) {
+    while !reader_word_aligned(&mut r, r_start_pos)? {
         let zero = r.read::<8, u8>()?;
         if zero != 0 {
             return Err(AncillaryMapError::Invalid(

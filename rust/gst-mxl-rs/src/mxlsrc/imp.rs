@@ -267,7 +267,14 @@ impl ElementImpl for MxlSrc {
 
     fn set_clock(&self, clock: Option<&gst::Clock>) -> bool {
         // Re-sample `D` against the newly selected clock.
-        crate::clock::ClockOffsetExt::invalidate_clock_offset(self);
+        if crate::clock::ClockOffsetExt::invalidate_clock_offset(self).is_err() {
+            gst::element_imp_error!(
+                self,
+                gst::CoreError::Failed,
+                ["Internal clock offset error"]
+            );
+            return false;
+        }
         self.parent_set_clock(clock)
     }
 
@@ -496,7 +503,8 @@ impl BaseSrcImpl for MxlSrc {
         // READY->PAUSED state change, so both mxlsrcs deterministically share
         // one `D` (see clock.rs) and expose an identical PTS for a given
         // absolute index. Establishing it lazily on the first buffer races.
-        let _ = crate::clock::ClockOffsetExt::ensure_clock_offset(self);
+        crate::clock::ClockOffsetExt::ensure_clock_offset(self)
+            .map_err(|_| crate::clock::ClockOffsetError::Failed.into_error_message())?;
 
         self.unlock_stop()?;
         gst::info!(CAT, imp = self, "Started");
@@ -569,13 +577,21 @@ impl PushSrcImpl for MxlSrc {
             // context lock (the handshake re-enters `set_context`, which also
             // locks it). `None` means no clock yet: wait like NoDataCreated.
             let offset = match crate::clock::ClockOffsetExt::resolve_clock_offset(self) {
-                Some(offset) => offset,
-                None => {
+                Ok(Some(offset)) => offset,
+                Ok(None) => {
                     if mxl_helper::is_flushing(self) {
                         return Err(gst::FlowError::Flushing);
                     }
                     std::thread::sleep(Duration::from_millis(1));
                     continue;
+                }
+                Err(_) => {
+                    gst::element_imp_error!(
+                        self,
+                        gst::CoreError::Failed,
+                        ["Internal clock offset error"]
+                    );
+                    return Err(gst::FlowError::Error);
                 }
             };
             match self.try_create(offset) {
