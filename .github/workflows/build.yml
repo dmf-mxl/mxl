@@ -57,8 +57,9 @@ jobs:
           HASH_INPUT=$(cat -- .devcontainer/Dockerfile $(find .devcontainer/scripts/ -type f) vcpkg.json)
           HASH_INPUT="${HASH_INPUT}${{ matrix.version }}${{ matrix.architecture }}${{ matrix.compiler }}"
           DOCKER_HASH=$(echo -n "$HASH_INPUT" | sha256sum | cut -d' ' -f1)
+          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           echo "hash=$DOCKER_HASH" >> $GITHUB_OUTPUT
-          echo "image-tag=ghcr.io/${{ github.repository_owner }}/mxl-build:$DOCKER_HASH" >> $GITHUB_OUTPUT
+          echo "image-tag=ghcr.io/${OWNER_LC}/mxl-build:$DOCKER_HASH" >> $GITHUB_OUTPUT
 
       - name: Check if Docker image exists
         id: check-image
@@ -218,8 +219,9 @@ jobs:
           HASH_INPUT=$(cat -- .devcontainer/Dockerfile $(find .devcontainer/scripts/ -type f) vcpkg.json)
           HASH_INPUT="${HASH_INPUT}${{ matrix.version }}${{ matrix.architecture }}${{ matrix.compiler }}"
           DOCKER_HASH=$(echo -n "$HASH_INPUT" | sha256sum | cut -d' ' -f1)
+          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           echo "hash=$DOCKER_HASH" >> $GITHUB_OUTPUT
-          echo "image-tag=ghcr.io/${{ github.repository_owner }}/mxl-build:$DOCKER_HASH" >> $GITHUB_OUTPUT
+          echo "image-tag=ghcr.io/${OWNER_LC}/mxl-build:$DOCKER_HASH" >> $GITHUB_OUTPUT
 
       - name: Check if Docker image exists
         id: check-image
