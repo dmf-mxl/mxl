@@ -219,7 +219,7 @@ public:
         }
     }
 
-    bool open(std::string const& in_uri)
+    bool open(std::string const& in_uri, std::optional<uuids::uuid> const& in_videoId, std::optional<uuids::uuid> const& in_audioId)
     {
         uri = in_uri;
         MXL_DEBUG("Opening URI: {}", uri);
@@ -371,9 +371,12 @@ public:
 
             gst_object_unref(pad);
 
+            // make sure the videoFlowId is set
+            videoFlowId = in_videoId.value_or(uuids::uuid_system_generator{}());
+
             std::string flowDef;
             videoGrainRate = mxlRational{fps_n, fps_d};
-            videoFlowId = createVideoFlowJson(uri, width, height, videoGrainRate, true, colorimetry, flowDef);
+            createVideoFlowJson(videoFlowId, uri, width, height, videoGrainRate, true, colorimetry, flowDef);
 
             mxlFlowConfigInfo configInfo;
             bool flowCreated = false;
@@ -455,10 +458,13 @@ public:
 
             gst_object_unref(pad);
 
+            // make sure the audioFlowId is set
+            audioFlowId = in_audioId.value_or(uuids::uuid_system_generator{}());
+
             std::string flowDef;
             audioGrainRate = mxlRational{rate, 1};
             audioChannels = channels;
-            audioFlowId = createAudioFlowJson(uri, audioGrainRate, channels, depth, format, flowDef);
+            createAudioFlowJson(audioFlowId, uri, audioGrainRate, channels, depth, format, flowDef);
 
             // The pipeline is PAUSED and the appSinkAudio should have received its preroll buffer.
             // We can try to pull this preroll sample to inspect the first decoded audio buffer
@@ -531,15 +537,14 @@ public:
     }
 
 private:
-    static uuids::uuid createVideoFlowJson(std::string const& in_uri, int in_width, int in_height, mxlRational in_rate, bool in_progressive,
-        std::string const& in_colorspace, std::string& out_flowDef)
+    static void createVideoFlowJson(uuids::uuid const& in_id, std::string const& in_uri, int in_width, int in_height, mxlRational in_rate,
+        bool in_progressive, std::string const& in_colorspace, std::string& out_flowDef)
     {
         auto root = picojson::object{};
         auto label = std::string{"Video flow for "} + in_uri;
         root["description"] = picojson::value(label);
 
-        auto id = uuids::uuid_system_generator{}();
-        root["id"] = picojson::value(uuids::to_string(id));
+        root["id"] = picojson::value(uuids::to_string(in_id));
         root["tags"] = picojson::value(picojson::object());
         root["format"] = picojson::value("urn:x-nmos:format:video");
         root["label"] = picojson::value(label);
@@ -580,18 +585,16 @@ private:
         root["components"] = picojson::value(components);
 
         out_flowDef = picojson::value(root).serialize(true);
-        return id;
     }
 
-    static uuids::uuid createAudioFlowJson(std::string const& in_uri, mxlRational in_rate, int ch_count, int depth, std::string const& format,
-        std::string& out_flowDef)
+    static void createAudioFlowJson(uuids::uuid const& in_id, std::string const& in_uri, mxlRational in_rate, int ch_count, int depth,
+        std::string const& format, std::string& out_flowDef)
     {
         auto root = picojson::object{};
         auto label = std::string{"Audio flow for "} + in_uri;
         root["description"] = picojson::value(label);
 
-        auto id = uuids::uuid_system_generator{}();
-        root["id"] = picojson::value(uuids::to_string(id));
+        root["id"] = picojson::value(uuids::to_string(in_id));
         root["tags"] = picojson::value(picojson::object());
         root["format"] = picojson::value("urn:x-nmos:format:audio");
         root["label"] = picojson::value(label);
@@ -612,7 +615,6 @@ private:
         root["bit_depth"] = picojson::value(static_cast<double>(depth));
 
         out_flowDef = picojson::value(root).serialize(true);
-        return id;
     }
 
     static std::string getFlowOptions(std::uint32_t maxCommitBatchSizeHint, std::uint32_t maxSyncBatchSizeHint)
@@ -977,7 +979,7 @@ int main(int argc, char* argv[])
     //
     // Command line argument parsing
     //
-    std::string inputFile, domain;
+    std::string inputFile, domain, audioId, videoId;
 
     CLI::App cli{"mxl-gst-looping-filesrc"};
     auto domainOpt = cli.add_option("-d,--domain", domain, "The MXL domain directory")->required();
@@ -986,6 +988,18 @@ int main(int argc, char* argv[])
     auto inputOpt = cli.add_option("-i,--input", inputFile, "MPEGTS media file location")->required();
     inputOpt->required(true);
     inputOpt->check(CLI::ExistingFile);
+
+    auto const uuidValidator = CLI::Validator([](std::string const& value) -> std::string
+        { return uuids::uuid::from_string(value).has_value() ? std::string{} : std::string{"Value is not a valid UUID"}; },
+        "UUID");
+
+    auto videoIdOpt = cli.add_option("--video-id", videoId, "The MXL video flow id");
+    videoIdOpt->required(false);
+    videoIdOpt->check(uuidValidator);
+
+    auto audioIdOpt = cli.add_option("--audio-id", audioId, "The MXL audio flow id");
+    audioIdOpt->required(false);
+    audioIdOpt->check(uuidValidator);
 
     CLI11_PARSE(cli, argc, argv);
 
@@ -1002,7 +1016,12 @@ int main(int argc, char* argv[])
     // Create the Player and open the input uri
     //
     auto player = std::make_unique<LoopingFilePlayer>(domain);
-    if (!player->open(inputFile))
+
+    // The CLI validator above guarantees these parse successfully when provided.
+    auto const videoFlowId = videoId.empty() ? std::optional<uuids::uuid>{} : uuids::uuid::from_string(videoId);
+    auto const audioFlowId = audioId.empty() ? std::optional<uuids::uuid>{} : uuids::uuid::from_string(audioId);
+
+    if (!player->open(inputFile, videoFlowId, audioFlowId))
     {
         MXL_ERROR("Failed to open input file: {}", inputFile);
         return -1;
