@@ -5,7 +5,8 @@
 - it has a suitably descriptive title
 - it mentions any issue(s) that it addresses
 - you have considered whether it should be backported (specify how far back below)
-- all commits are signed
+- any required regression tests have run successfully
+- all commits are signed-off: see [here](https://github.com/dmf-mxl/mxl/blob/main/CONTRIBUTING.md#commit-sign-off) for more information
 -->
 
 # Details
