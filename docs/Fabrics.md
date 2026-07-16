@@ -27,7 +27,7 @@ From a user perspective, here’s the workflow to follow when using the Fabrics 
 
 The target has “media buffers” that it exposes to an initiator. That initiator also has “media buffers” that it will copy to the target. The user sets up the target, which will generate a `TargetInfo`. That `TargetInfo` is shared with the initiator through any out-of-band mechanism. The user sets up the initiator and adds the target using the `TargetInfo`. The initiator can start transferring grains or samples to the target. When transfers are completed, the target receives a notification with the required information to retrieve which part of the ring buffer was modified. It can use that information to commit to the media buffers.
 
-![alt](https://github.com/dmf-mxl/mxl/blob/main/docs/fabrics/img/mxl-fabrics-overview.png)
+![alt](./fabrics/img/mxl-fabrics-overview.png)
 
 ## 3. Transfers
 
@@ -249,11 +249,11 @@ For discrete flow transfers in the optimal case, Remote Write is used without a 
 
 #### 6.1.1 Moving a discrete flow with RMA
 Below is the workflow when Remote Write is used.
-![rma](https://github.com/dmf-mxl/mxl/blob/main/docs/fabrics/img/mxl-fabrics-rma.png)
+![rma](./fabrics/img/mxl-fabrics-rma.png)
 
 #### 6.1.2 Moving a discrete flow with Send/Receive
 Below is the workflow for send/recv.
-![sndrcv](https://github.com/dmf-mxl/mxl/blob/main/docs/fabrics/img/mxl-fabrics-bouncebuffer.png)
+![sndrcv](./fabrics/img/mxl-fabrics-bouncebuffer.png)
 
 #### 6.1.3 TX/RX Maximum Message Size 
 
@@ -261,16 +261,16 @@ Hardware may impose constraints on maximum message size, which can be smaller th
 
 #### 6.1.4 Optional Alpha plane 
 The alpha plane represents a special case requiring distinct handling. Within the grain data layout, the alpha plane follows the color plane.
-![alpha-grain-layout](https://github.com/dmf-mxl/mxl/blob/main/docs/fabrics/img/mxl-fabrics-grain-layout.png)
+![alpha-grain-layout](./fabrics/img/mxl-fabrics-grain-layout.png)
 
 When transferring a complete grain, a single Remote Write suffices. However, when transferring grain slices, two Remote Writes are required: the first for the color plane and the second for the alpha plane.
 
-![rma-with-alpha](https://github.com/dmf-mxl/mxl/blob/main/docs/fabrics/img/mxl-fabrics-rma-with-alpha.png)
+![rma-with-alpha](./fabrics/img/mxl-fabrics-rma-with-alpha.png)
 
 ## 7. Continuous Flow Support
 The MXL audio flow is called a “ContinuousFlow”. Information about the audio flow such as sample rate, channel count, the number of samples per channel can be found in the structure mxlContinuousFlowInfo. The underlying data structure is a single tmpfs file where each sample takes 32 bits. Samples follow a “planar” format, where the buffer is constructed as follow: all samples of channel 0 followed by all samples of channel 1 follow by all samples of channel 2, etc.
 
-![cont-flow](https://github.com/dmf-mxl/mxl/blob/main/docs/fabrics/img/mxl-fabrics-cont-flow-layout.png)
+![cont-flow](./fabrics/img/mxl-fabrics-cont-flow-layout.png)
 
 ### 7.1 Remote Write, Send/Recv with bouncing buffer vs Tag matching
 
@@ -312,7 +312,7 @@ Considering the trade-offs, Remote Write is chosen as the primary protocol, but 
 ### 7.3 - Bouncing Buffer Unpacking
 The transfer will now use the scatter-gather feature on the source buffer to target a ring bouncing buffer on the target side. Upon completion, the target side will copy the entry of the bouncing buffer back to the MXL Audio Flow.
 
-![cont-flow-rma](https://github.com/dmf-mxl/mxl/blob/main/docs/fabrics/img/mxl-fabrics-cont-flow-rma.png)
+![cont-flow-rma](./fabrics/img/mxl-fabrics-cont-flow-rma.png)
 
 To be able to unpack the bouncing buffer entry back to the mxl audio flow, we require some static information found in the ContinuousFlowData type.
 - Channel count
