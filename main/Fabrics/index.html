@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.47">
+      <meta name="generator" content="zensical-0.0.50">
     
     
       
@@ -34,7 +34,7 @@
       
         
       
-      <link rel="stylesheet" href="../assets/stylesheets/modern/main.5e19f6ca.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/modern/main.62c9b9cc.min.css">
       
         
           
@@ -1605,7 +1605,7 @@
 <h2 id="2-workflow">2. Workflow</h2>
 <p>From a user perspective, here’s the workflow to follow when using the Fabrics API:</p>
 <p>The target has “media buffers” that it exposes to an initiator. That initiator also has “media buffers” that it will copy to the target. The user sets up the target, which will generate a <code>TargetInfo</code>. That <code>TargetInfo</code> is shared with the initiator through any out-of-band mechanism. The user sets up the initiator and adds the target using the <code>TargetInfo</code>. The initiator can start transferring grains or samples to the target. When transfers are completed, the target receives a notification with the required information to retrieve which part of the ring buffer was modified. It can use that information to commit to the media buffers.</p>
-<p><img alt="alt" src="https://github.com/dmf-mxl/mxl/blob/main/docs/fabrics/img/mxl-fabrics-overview.png" /></p>
+<p><img alt="alt" src=".././fabrics/img/mxl-fabrics-overview.png" /></p>
 <h2 id="3-transfers">3. Transfers</h2>
 <p>To cover all the cases, there are two types of transfers we intend to use: </p>
 <h3 id="31-remote-write">3.1 Remote Write</h3>
@@ -1885,20 +1885,20 @@ With untagged Send/Recv, the receiver cannot direct an incoming message to a spe
 <p>For discrete flow transfers in the optimal case, Remote Write is used without a bouncing buffer. When Remote Write is unavailable, the system falls back to Send/Recv with a bouncing buffer.</p>
 <h4 id="611-moving-a-discrete-flow-with-rma">6.1.1 Moving a discrete flow with RMA</h4>
 <p>Below is the workflow when Remote Write is used.
-<img alt="rma" src="https://github.com/dmf-mxl/mxl/blob/main/docs/fabrics/img/mxl-fabrics-rma.png" /></p>
+<img alt="rma" src=".././fabrics/img/mxl-fabrics-rma.png" /></p>
 <h4 id="612-moving-a-discrete-flow-with-sendreceive">6.1.2 Moving a discrete flow with Send/Receive</h4>
 <p>Below is the workflow for send/recv.
-<img alt="sndrcv" src="https://github.com/dmf-mxl/mxl/blob/main/docs/fabrics/img/mxl-fabrics-bouncebuffer.png" /></p>
+<img alt="sndrcv" src=".././fabrics/img/mxl-fabrics-bouncebuffer.png" /></p>
 <h4 id="613-txrx-maximum-message-size">6.1.3 TX/RX Maximum Message Size</h4>
 <p>Hardware may impose constraints on maximum message size, which can be smaller than a grain size. When this occurs, the Initiator divides the message into N write requests. Immediate data is posted only with the final write request, ensuring completion is signaled exclusively on the last partial message.</p>
 <h4 id="614-optional-alpha-plane">6.1.4 Optional Alpha plane</h4>
 <p>The alpha plane represents a special case requiring distinct handling. Within the grain data layout, the alpha plane follows the color plane.
-<img alt="alpha-grain-layout" src="https://github.com/dmf-mxl/mxl/blob/main/docs/fabrics/img/mxl-fabrics-grain-layout.png" /></p>
+<img alt="alpha-grain-layout" src=".././fabrics/img/mxl-fabrics-grain-layout.png" /></p>
 <p>When transferring a complete grain, a single Remote Write suffices. However, when transferring grain slices, two Remote Writes are required: the first for the color plane and the second for the alpha plane.</p>
-<p><img alt="rma-with-alpha" src="https://github.com/dmf-mxl/mxl/blob/main/docs/fabrics/img/mxl-fabrics-rma-with-alpha.png" /></p>
+<p><img alt="rma-with-alpha" src=".././fabrics/img/mxl-fabrics-rma-with-alpha.png" /></p>
 <h2 id="7-continuous-flow-support">7. Continuous Flow Support</h2>
 <p>The MXL audio flow is called a “ContinuousFlow”. Information about the audio flow such as sample rate, channel count, the number of samples per channel can be found in the structure mxlContinuousFlowInfo. The underlying data structure is a single tmpfs file where each sample takes 32 bits. Samples follow a “planar” format, where the buffer is constructed as follow: all samples of channel 0 followed by all samples of channel 1 follow by all samples of channel 2, etc.</p>
-<p><img alt="cont-flow" src="https://github.com/dmf-mxl/mxl/blob/main/docs/fabrics/img/mxl-fabrics-cont-flow-layout.png" /></p>
+<p><img alt="cont-flow" src=".././fabrics/img/mxl-fabrics-cont-flow-layout.png" /></p>
 <h3 id="71-remote-write-sendrecv-with-bouncing-buffer-vs-tag-matching">7.1 Remote Write, Send/Recv with bouncing buffer vs Tag matching</h3>
 <p>The design for the Discrete flow uses Remote Write to transfer grains. This was chosen over Send/Recv operations because it does not require synchronization between the initiator and the target. If we decide to use Send/Recv, because Remote Write is not supported, we have 2 choices:</p>
 <ul>
@@ -1965,7 +1965,7 @@ With untagged Send/Recv, the receiver cannot direct an incoming message to a spe
 <p>Considering the trade-offs, Remote Write is chosen as the primary protocol, but falls back to Send/Recv if Remote Write is not available.</p>
 <h3 id="73-bouncing-buffer-unpacking">7.3 - Bouncing Buffer Unpacking</h3>
 <p>The transfer will now use the scatter-gather feature on the source buffer to target a ring bouncing buffer on the target side. Upon completion, the target side will copy the entry of the bouncing buffer back to the MXL Audio Flow.</p>
-<p><img alt="cont-flow-rma" src="https://github.com/dmf-mxl/mxl/blob/main/docs/fabrics/img/mxl-fabrics-cont-flow-rma.png" /></p>
+<p><img alt="cont-flow-rma" src=".././fabrics/img/mxl-fabrics-cont-flow-rma.png" /></p>
 <p>To be able to unpack the bouncing buffer entry back to the mxl audio flow, we require some static information found in the ContinuousFlowData type.
 - Channel count
 - Number of samples per channel
@@ -2207,7 +2207,7 @@ applies to target endpoints; it is ignored for initiators.</p>
       <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["announce.dismiss","content.code.annotate","content.code.copy","content.code.select","content.footnote.tooltips","content.tabs.link","content.tooltips","navigation.expand","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.prefetch","navigation.path","navigation.sections","navigation.top","navigation.tracking","search.highlight"],"search":"../assets/javascripts/workers/search.b6b7e04f.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":{"provider":"mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.0df4f2d0.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7f30b55.min.js"></script>
       
         <script src="../javascripts/mermaid.js"></script>
       
