@@ -247,11 +247,6 @@ if (s == MXL_ERR_OUT_OF_RANGE_TOO_LATE) {
 if (s == MXL_ERR_OUT_OF_RANGE_TOO_EARLY) {
     // The grain has not been written yet. Retry the same index later.
 }
-
-if (s == MXL_ERR_TIMEOUT) {
-    // The grain did not become available before the timeout expired.
-    // This usually indicates a problem upstream (the writer stopped producing).
-}
 ```
 
 When the grain is available, check whether it is marked as invalid. Invalid grains signal that the upstream writer had no valid data (e.g. it timed out waiting for input). Transfer only the grain header to avoid wasting bandwidth:
