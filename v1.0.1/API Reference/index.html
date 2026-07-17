@@ -13,8 +13,10 @@
       
       
       
-        <link rel="prev" href="../Tools/">
+        <link rel="prev" href="./..">
       
+      
+        <link rel="next" href="../Addressability/">
       
       
         
@@ -25,7 +27,7 @@
     
     
       
-        <title>MXL</title>
+        <title>API Reference - MXL</title>
       
     
     
@@ -81,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#_1" class="md-skip">
+        <a href="#api-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -121,7 +123,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              
+              API Reference
             
           </span>
         </div>
@@ -263,10 +265,19 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../API%20Reference/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
         
   
   
@@ -281,6 +292,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -471,19 +483,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      
-      
-      
-        
-      
-      
-      <a href="././" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../Usage/" class="md-nav__link">
         
   
   
@@ -498,7 +501,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -556,62 +558,26 @@
   
 
 
-<h1 id="_1"><!-- SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project. --></h1>
-<h1 id="_2"><!-- SPDX-License-Identifier: CC-BY-4.0 --></h1>
-<h1 id="_3"></h1>
-<h1 id="using-the-mxl-c-public-api">Using the MXL C Public API</h1>
-<p>Below is a minimal example of how to use the MXL SDK C API in your application:</p>
-<ol>
-<li><strong>Create an MXL instance</strong></li>
-</ol>
-<div class="highlight"><pre><span></span><code><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;mxl/mxl.h&gt;</span>
+<!--
+SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+SPDX-License-Identifier: CC-BY-4.0
+-->
 
-<span class="n">mxlInstance</span><span class="w"> </span><span class="n">instance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mxlCreateInstance</span><span class="p">(</span><span class="s">&quot;/dev/shm/mxl&quot;</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">);</span>
-<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">instance</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="c1">// handle error</span>
-<span class="p">}</span>
-</code></pre></div>
-<ol>
-<li><strong>Create a Flow Writer</strong></li>
-</ol>
-<div class="highlight"><pre><span></span><code><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;mxl/flow.h&gt;</span>
-
-<span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">flowDef</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;{...}&quot;</span><span class="p">;</span><span class="w"> </span><span class="c1">// NMOS Flow Resource JSON describing the flow desired</span>
-<span class="n">mxlFlowWriter</span><span class="w"> </span><span class="n">writer</span><span class="p">;</span>
-<span class="kt">bool</span><span class="w"> </span><span class="n">wasCreated</span><span class="p">;</span>
-<span class="n">mxlStatus</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mxlCreateFlowWriter</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span><span class="w"> </span><span class="n">flowDef</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">writer</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">wasCreated</span><span class="p">);</span>
-<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">status</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">MXL_STATUS_OK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="c1">// handle error</span>
-<span class="p">}</span>
-</code></pre></div>
-<ol>
-<li><strong>Create a Flow Reader</strong></li>
-</ol>
-<div class="highlight"><pre><span></span><code><span class="n">mxlFlowReader</span><span class="w"> </span><span class="n">reader</span><span class="p">;</span>
-<span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mxlCreateFlowReader</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;&lt;flow-id&gt;&quot;</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">reader</span><span class="p">);</span>
-<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">status</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">MXL_STATUS_OK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="c1">// handle error</span>
-<span class="p">}</span>
-</code></pre></div>
-<ol>
-<li>
-<p><strong>Read/Write Data</strong></p>
-</li>
-<li>
-<p>For discrete flows, use <code>mxlFlowReaderGetGrain</code> and <code>mxlFlowWriterOpenGrain</code>/<code>mxlFlowWriterCommitGrain</code>.</p>
-</li>
-<li>
-<p>For continuous flows, use <code>mxlFlowReaderGetSamples</code> and <code>mxlFlowWriterOpenSamples</code>/<code>mxlFlowWriterCommitSamples</code>.</p>
-</li>
-<li>
-<p><strong>Release Resources</strong></p>
-</li>
-</ol>
-<div class="highlight"><pre><span></span><code><span class="n">mxlReleaseFlowWriter</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span><span class="w"> </span><span class="n">writer</span><span class="p">);</span>
-<span class="n">mxlReleaseFlowReader</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span><span class="w"> </span><span class="n">reader</span><span class="p">);</span>
-<span class="n">mxlDestroyInstance</span><span class="p">(</span><span class="n">instance</span><span class="p">);</span>
-</code></pre></div>
-<p>See the header files in <code>lib/include/mxl/</code> for full API details and additional options.</p>
+<h1 id="api-reference">API Reference</h1>
+<p>The C/C++ API reference is generated separately with <a href="https://www.doxygen.nl/">Doxygen</a> and published
+alongside this site.</p>
+<ul>
+<li><strong><a href="https://dmf-mxl.github.io/mxl/api/v1.0.1/">API reference for this version (<code>v1.0.1</code>)</a></strong>
+  — matches the version of the docs you are currently reading.</li>
+<li><strong><a href="https://dmf-mxl.github.io/mxl/api/latest/">Latest API reference</a></strong> — tracks the tip of the
+  default branch.</li>
+<li><strong><a href="https://dmf-mxl.github.io/mxl/api/">Browse all published versions</a></strong> — index of every
+  published tag and branch build.</li>
+</ul>
+<p>The Doxygen build is driven by <a href="https://github.com/dmf-mxl/mxl/blob/main/Doxyfile.in"><code>Doxyfile.in</code></a>
+and published by the
+<a href="https://github.com/dmf-mxl/mxl/blob/main/.github/workflows/doxy-docs.yml"><code>Build Doxygen Documentation</code></a>
+workflow.</p>
 
 
 
@@ -651,7 +617,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../Tools/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Tools">
+          <a href="./.." class="md-footer__link md-footer__link--prev" aria-label="Previous: MXL : Media eXchange Layer">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
@@ -661,11 +627,27 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Tools
+                MXL : Media eXchange Layer
               </div>
             </div>
           </a>
         
+        
+          
+          <a href="../Addressability/" class="md-footer__link md-footer__link--next" aria-label="Next: MXL Addressability">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                MXL Addressability
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
         
       </nav>
     
