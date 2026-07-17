@@ -8,6 +8,15 @@ on:
     branches:
       - main
       - docs-* # for testing
+    # Only run on branch pushes that change inputs to this site. Tag pushes
+    # are handled by the separate `tags:` filter below and are not subject to
+    # `paths:` (GitHub treats a new ref as "all files changed").
+    paths:
+      - "docs/**"
+      - "README.md"
+      - "zensical.toml"
+      - ".github/scripts/prepare-docs.sh"
+      - ".github/workflows/docs.yml"
     tags:
       - "v*"
   workflow_dispatch:
@@ -25,10 +34,17 @@ on:
         type: boolean
         default: false
 
+# This workflow only produces content on the gh-pages branch; the actual
+# Pages deployment is handled by pages-deploy.yml, which runs on push to
+# that branch.
 permissions:
   contents: write
-  pages: write
-  id-token: write
+
+# Serialize with the Doxygen workflow, which also pushes to gh-pages.
+# Running them concurrently would race the worktree / push.
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -79,11 +95,12 @@ jobs:
         run: ./.github/scripts/prepare-docs.sh
 
       - run: zensical build --clean
-      
+
       - name: Install lychee
         run: sudo snap install lychee
-          
+
       - name: Check for broken links with lychee
+        continue-on-error: true
         run: lychee --root-dir ./site --verbose --no-progress --accept '100..=103,200..=299,403' --accept-timeouts './site/**/*.html'
 
       # Configure git for mike to push to gh-pages

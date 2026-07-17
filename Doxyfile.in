@@ -11,10 +11,12 @@ OUTPUT_DIRECTORY       = docs
 OUTPUT_LANGUAGE        = English
 
 # Input settings
-INPUT                  = @CMAKE_CURRENT_SOURCE_DIR@/README.md @CMAKE_CURRENT_SOURCE_DIR@/lib
+# The project README is intentionally excluded: the zensical site already
+# renders it as its landing page, so including it here would just duplicate
+# that content on the API reference site.
+INPUT                  = @CMAKE_CURRENT_SOURCE_DIR@/lib
 FILE_PATTERNS          = *.c *.cpp *.h *.hpp *.md
 RECURSIVE              = YES
-USE_MDFILE_AS_MAINPAGE = README.md
 
 # Build settings
 EXTRACT_ALL            = YES
@@ -49,9 +51,9 @@ SORT_MEMBER_DOCS       = YES
 SORT_BRIEF_DOCS        = YES
 SORT_BY_SCOPE_NAME     = YES
 
-GENERATE_TREEVIEW      = YES 
+GENERATE_TREEVIEW      = YES
 DISABLE_INDEX          = NO
 FULL_SIDEBAR           = NO
 HTML_EXTRA_STYLESHEET  = @AWESOME_CSS_DIR@/doxygen-awesome.css
-HTML_COLORSTYLE        = LIGHT 
+HTML_COLORSTYLE        = LIGHT
 GENERATE_TODOLIST      = YES

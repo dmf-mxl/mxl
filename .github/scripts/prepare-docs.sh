@@ -21,7 +21,14 @@
 
 set -euo pipefail
 
-REPO_SLUG="dmf-mxl/mxl"
+# Derive the repo slug from the GitHub Actions context so the script works
+# unchanged on forks (e.g. peterbrightwell/mxl during testing). Fall back to
+# the upstream slug for ad-hoc local runs.
+REPO_SLUG="${GITHUB_REPOSITORY:-dmf-mxl/mxl}"
+OWNER="${REPO_SLUG%%/*}"
+REPO="${REPO_SLUG##*/}"
+# Project Pages base URL for this repo, e.g. https://peterbrightwell.github.io/mxl
+SITE_BASE="https://${OWNER}.github.io/${REPO}"
 # Use BUILD_REF if the workflow set one (covers dispatch with an input ref),
 # else the ref the run was triggered on, else fall back to main.
 REF="${BUILD_REF:-${GITHUB_REF_NAME:-main}}"
@@ -44,7 +51,7 @@ sed -E \
     -e "s#\]\(CODE_OF_CONDUCT\.md\)#](${REPO_URL}/CODE_OF_CONDUCT.md)#g" \
     -e "s#\]\(GOVERNANCE/([^)]+)\)#](${REPO_URL}/GOVERNANCE/\1)#g" \
     -e "s#\]\(examples/([^)]+)\)#](${REPO_URL}/examples/\1)#g" \
-    -e "s#https://github.com/dmf-mxl/mxl/blob/[0-9a-f]+/docs/([^)\" ]+)#\1#g" \
+    -e "s#https://github.com/${REPO_SLUG}/blob/[0-9a-f]+/docs/([^)\" ]+)#\1#g" \
     README.md > docs/index.md
 
 echo "Generated docs/index.md from README.md"
@@ -63,3 +70,30 @@ for f in docs/*.md; do
 done
 
 echo "Rewrote ../ links in docs/*.md to ${REPO_URL}/..."
+
+# ---------------------------------------------------------------------------
+# 3. Template the API Reference page so its links point at the matching
+#    Doxygen build (e.g. /mxl/api/v1.1.0/) on the current Pages site, and at
+#    the current repo on github.com.
+# ---------------------------------------------------------------------------
+API_REF_PAGE="docs/API Reference.md"
+if [[ -f "${API_REF_PAGE}" ]]; then
+    sed -i.bak \
+        -e "s#__BUILD_REF__#${REF}#g" \
+        -e "s#__SITE_BASE__#${SITE_BASE}#g" \
+        -e "s#__REPO_SLUG__#${REPO_SLUG}#g" \
+        "${API_REF_PAGE}"
+    rm -f "${API_REF_PAGE}.bak"
+    echo "Templated ${API_REF_PAGE} for ref=${REF}, site=${SITE_BASE}"
+fi
+
+# ---------------------------------------------------------------------------
+# 4. Template zensical.toml so the header repo link (repo_url / repo_name)
+#    points at the fork or upstream that produced this build. The same
+#    __REPO_SLUG__ placeholder is used elsewhere (see step 3).
+# ---------------------------------------------------------------------------
+if [[ -f zensical.toml ]]; then
+    sed -i.bak -e "s#__REPO_SLUG__#${REPO_SLUG}#g" zensical.toml
+    rm -f zensical.toml.bak
+    echo "Templated zensical.toml for repo=${REPO_SLUG}"
+fi

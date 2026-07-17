@@ -1,0 +1,80 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: CC-BY-4.0
+
+# Deploy the gh-pages branch to GitHub Pages using the modern Pages actions.
+#
+# Both docs.yml (mike / zensical site) and doxy-docs.yml (Doxygen API refs)
+# publish their output by pushing to the gh-pages branch. Historically, with
+# the Pages "Source" set to "Deploy from a branch", GitHub then auto-ran its
+# built-in "pages build and deployment" workflow to serve that branch --- but
+# that workflow emits Node.js deprecation warnings and its steps can't be
+# modified from this repo.
+#
+# Switching Settings -> Pages -> Build and deployment -> Source to
+# "GitHub Actions" disables the built-in workflow. This file replaces it,
+# serving the branch contents verbatim via the current
+# actions/upload-pages-artifact + actions/deploy-pages combo.
+#
+# Trigger notes:
+#   We use `workflow_run` rather than `push: branches: [gh-pages]` because
+#   push-triggered workflows must have their definition present on the ref
+#   that received the push --- and gh-pages only ever contains the built
+#   site (mike + doxygen output), never .github/workflows/. workflow_run
+#   instead reads this file from the default branch, so it fires correctly
+#   after either producer workflow completes on main / docs-* / a tag.
+
+name: Deploy gh-pages to GitHub Pages
+
+on:
+  workflow_run:
+    workflows:
+      - Documentation
+      - Build Doxygen Documentation
+    types:
+      - completed
+  # Allow re-deploying the current gh-pages tip on demand (e.g. after
+  # rotating the Pages configuration in repo settings, or if a deploy was
+  # skipped because the producer run failed after already pushing).
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never cancel an in-progress deployment: leaving Pages in a half-updated
+# state is worse than deploying a slightly older revision. Concurrent
+# producer runs are already serialized by their own `gh-pages` concurrency
+# group, so runs of this workflow arrive in order.
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Only deploy when the upstream producer succeeded. workflow_run fires
+    # on every completion regardless of conclusion, so filter here to avoid
+    # publishing a partially-built site. Manual dispatch is always allowed.
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: gh-pages
+
+      - uses: actions/configure-pages@v6
+
+      # Upload the entire gh-pages tree as-is. mike (zensical site) and the
+      # Doxygen workflow have already arranged the branch layout; we just
+      # publish what's there.
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: .
+
+      - id: deployment
+        uses: actions/deploy-pages@v5
