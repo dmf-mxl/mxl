@@ -1,0 +1,11 @@
+<map id="mxl::lib::FlowReader" name="mxl::lib::FlowReader">
+<area shape="rect" id="Node000001" title=" " alt="" coords="131,5,287,31"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1ContinuousFlowReader.html" title=" " alt="" coords="7,79,190,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="183,41,127,81,124,76,180,36"/>
+<area shape="rect" id="Node000004" href="$classmxl_1_1lib_1_1DiscreteFlowReader.html" title=" " alt="" coords="215,86,425,111"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="239,37,305,84,302,88,236,41"/>
+<area shape="rect" id="Node000003" href="$classmxl_1_1lib_1_1PosixContinuousFlowReader.html" title=" " alt="" coords="5,167,192,207"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="101,133,101,166,96,166,96,133"/>
+<area shape="rect" id="Node000005" href="$classmxl_1_1lib_1_1PosixDiscreteFlowReader.html" title=" " alt="" coords="221,167,419,207"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="323,125,323,166,317,166,317,125"/>
+</map>

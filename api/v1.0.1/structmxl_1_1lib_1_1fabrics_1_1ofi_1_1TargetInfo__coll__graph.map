@@ -1,0 +1,5 @@
+<map id="mxl::lib::fabrics::ofi::TargetInfo" name="mxl::lib::fabrics::ofi::TargetInfo">
+<area shape="rect" id="Node000001" title="TargetInfo contains all the information required by an initiator to operate transfers to the given ta..." alt="" coords="8,108,139,148"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html" title="Wrapper around a libfabric endpoint address." alt="" coords="5,5,141,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="76,59,76,108,71,108,71,59"/>
+</map>
