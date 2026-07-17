@@ -1,0 +1,7 @@
+<map id="mxl::lib::fabrics::ofi::FabricException" name="mxl::lib::fabrics::ofi::FabricException">
+<area shape="rect" id="Node000001" title="An internal exception type that extends." alt="" coords="5,167,153,207"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html" title="Custom exception type used in the fabrics library." alt="" coords="14,79,145,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="82,133,82,166,77,166,77,133"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="22,5,137,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="82,44,82,79,77,79,77,44"/>
+</map>

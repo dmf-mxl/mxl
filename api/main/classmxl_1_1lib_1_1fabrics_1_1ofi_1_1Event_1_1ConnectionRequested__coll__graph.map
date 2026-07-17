@@ -1,0 +1,5 @@
+<map id="mxl::lib::fabrics::ofi::Event::ConnectionRequested" name="mxl::lib::fabrics::ofi::Event::ConnectionRequested">
+<area shape="rect" id="Node000001" title="A type that wraps a &quot;FI_CONNREQ&quot; event type." alt="" coords="5,108,239,148"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html" title="RAII wrapper around a libfabric fi_info` structure." alt="" coords="57,5,187,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,59,125,108,119,108,119,59"/>
+</map>

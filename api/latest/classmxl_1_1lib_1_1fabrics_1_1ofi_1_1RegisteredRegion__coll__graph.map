@@ -1,0 +1,9 @@
+<map id="mxl::lib::fabrics::ofi::RegisteredRegion" name="mxl::lib::fabrics::ofi::RegisteredRegion">
+<area shape="rect" id="Node000001" title="Represent a registered memory region." alt="" coords="27,211,188,251"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1MemoryRegion.html" title="RAII wrapper around a libfabric memory region (fid_mr)" alt="" coords="5,108,151,148"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="90,160,104,210,99,211,85,162"/>
+<area shape="rect" id="Node000003" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Region.html" title="Represent a memory region (unregistered)." alt="" coords="175,108,306,148"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="206,158,134,213,131,208,203,154"/>
+<area shape="rect" id="Node000004" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Region_1_1Location.html" title="Represent the location of a memory region." alt="" coords="163,5,318,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="243,59,243,108,238,108,238,59"/>
+</map>

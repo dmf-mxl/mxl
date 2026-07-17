@@ -1,0 +1,7 @@
+<map id="mxl::lib::fabrics::ofi::RCTarget::Connected" name="mxl::lib::fabrics::ofi::RCTarget::Connected">
+<area shape="rect" id="Node000001" title="The connected state." alt="" coords="5,211,187,251"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html" title="RAII Wrapper around a libfabric endpoint (fi_ep)." alt="" coords="31,108,161,148"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="99,162,99,211,93,211,93,162"/>
+<area shape="rect" id="Node000003" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html" title="RAII wrapper around a libfabric fi_info` structure." alt="" coords="31,5,161,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="99,59,99,108,93,108,93,59"/>
+</map>
