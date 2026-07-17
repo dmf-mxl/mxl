@@ -1,0 +1,7 @@
+<map id="mxl::lib::fabrics::ofi::RDMInitiatorTarget" name="mxl::lib::fabrics::ofi::RDMInitiatorTarget">
+<area shape="rect" id="Node000001" title="A single endpoint within an RDMInitiator." alt="" coords="5,211,173,251"/>
+<area shape="rect" id="Node000002" href="$structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html" title="TargetInfo contains all the information required by an initiator to operate transfers to the given ta..." alt="" coords="24,108,155,148"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="92,162,92,211,87,211,87,162"/>
+<area shape="rect" id="Node000003" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html" title="Wrapper around a libfabric endpoint address." alt="" coords="21,5,157,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="92,59,92,108,87,108,87,59"/>
+</map>

@@ -1,0 +1,15 @@
+<map id="lib/fabrics/ofi/src/internal/RemoteRegion.cpp" name="lib/fabrics/ofi/src/internal/RemoteRegion.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="146,5,349,45"/>
+<area shape="rect" id="Node000002" href="$RemoteRegion_8hpp.html" title=" " alt="" coords="105,93,251,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="233,47,200,84,196,81,229,44"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="275,93,361,119"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="266,44,300,81,296,85,262,47"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="5,167,76,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="157,121,76,163,74,158,155,116"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="101,167,167,192"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="173,120,151,156,146,154,168,118"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="192,167,255,192"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="188,118,211,154,206,157,183,120"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="279,167,392,192"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="204,116,298,159,296,163,202,121"/>
+</map>

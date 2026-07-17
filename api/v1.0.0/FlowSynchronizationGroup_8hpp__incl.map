@@ -1,0 +1,21 @@
+<map id="lib/internal/include/mxl&#45;internal/FlowSynchronizationGroup.hpp" name="lib/internal/include/mxl&#45;internal/FlowSynchronizationGroup.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="71,5,316,60"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="14,181,80,207"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="73,62,39,82,13,109,8,124,11,139,28,169,24,172,6,141,3,123,9,107,36,78,70,58"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="23,108,122,133"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="158,62,102,102,99,98,155,58"/>
+<area shape="rect" id="Node000004" href="$mxl_8h.html" title=" " alt="" coords="403,108,491,133"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="272,58,401,101,399,106,270,63"/>
+<area shape="rect" id="Node000007" href="$rational_8h.html" title=" " alt="" coords="265,108,378,133"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="234,58,294,98,292,103,231,62"/>
+<area shape="rect" id="Node000008" href="$Timing_8hpp.html" title=" " alt="" coords="146,108,241,133"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="196,60,196,94,191,94,191,60"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="289,181,360,207"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="428,136,357,177,355,172,426,131"/>
+<area shape="rect" id="Node000006" href="$platform_8h.html" title=" " alt="" coords="388,181,506,207"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="450,134,450,168,444,168,444,134"/>
+<area shape="poly" id="edge7_Node000007_Node000005" title=" " alt="" coords="325,134,326,168,321,168,319,134"/>
+<area shape="poly" id="edge9_Node000008_Node000002" title=" " alt="" coords="171,136,84,178,82,173,169,131"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="164,181,223,207"/>
+<area shape="poly" id="edge10_Node000008_Node000009" title=" " alt="" coords="196,134,196,168,191,168,191,134"/>
+</map>

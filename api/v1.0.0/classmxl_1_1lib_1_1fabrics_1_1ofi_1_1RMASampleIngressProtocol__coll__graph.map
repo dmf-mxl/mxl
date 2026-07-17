@@ -1,0 +1,13 @@
+<map id="mxl::lib::fabrics::ofi::RMASampleIngressProtocol" name="mxl::lib::fabrics::ofi::RMASampleIngressProtocol">
+<area shape="rect" id="Node000001" title="Ingress protocol for RMA writer endpoint for audio samples." alt="" coords="625,69,851,109"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1IngressProtocol.html" title="Interface for post&#45;processing on transfer reception." alt="" coords="321,5,468,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="482,39,630,67,629,72,481,44"/>
+<area shape="rect" id="Node000003" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html" title="A bounce buffer for audio samples." alt="" coords="309,69,480,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="494,87,625,87,625,92,494,92"/>
+<area shape="rect" id="Node000004" href="$structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Continuous.html" title="Continuous layout variant of DataLayout." alt="" coords="5,69,208,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="222,87,309,87,309,92,222,92"/>
+<area shape="rect" id="Node000005" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Region.html" title="Represent a memory region (unregistered)." alt="" coords="329,133,460,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="473,136,630,107,631,112,474,141"/>
+<area shape="rect" id="Node000006" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Region_1_1Location.html" title="Represent the location of a memory region." alt="" coords="29,133,184,173"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="198,151,329,151,329,156,198,156"/>
+</map>

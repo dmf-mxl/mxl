@@ -1,0 +1,5 @@
+<map id="mxl::lib::fabrics::ofi::RMASampleEgressProtocolTemplate" name="mxl::lib::fabrics::ofi::RMASampleEgressProtocolTemplate">
+<area shape="rect" id="Node000001" title="Template for creating an Egress protocol for RMA writer endpoint to handles transferring audio data t..." alt="" coords="5,93,227,148"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocolTemplate.html" title=" " alt="" coords="15,5,217,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,59,119,93,113,93,113,59"/>
+</map>

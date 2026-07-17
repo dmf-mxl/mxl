@@ -1,0 +1,7 @@
+<map id="mxl::lib::fabrics::ofi::RCTarget" name="mxl::lib::fabrics::ofi::RCTarget">
+<area shape="rect" id="Node000001" title="Reliable Connected (RC) Target implementation." alt="" coords="93,108,224,148"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html" title="Abstract base class for Target implementations." alt="" coords="5,5,136,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="98,54,144,106,140,110,94,58"/>
+<area shape="rect" id="Node000003" href="$structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetSetupOptions.html" title="Provider&#45;independent tuning options for target setup." alt="" coords="160,5,333,45"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="223,58,177,110,173,106,219,54"/>
+</map>
