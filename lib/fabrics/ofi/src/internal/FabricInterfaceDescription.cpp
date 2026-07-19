@@ -17,6 +17,7 @@ namespace mxl::lib::fabrics::ofi
 {
     namespace
     {
+        [[nodiscard]]
         std::string getHostname()
         {
             char buf[256] = {};
