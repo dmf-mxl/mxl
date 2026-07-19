@@ -70,8 +70,8 @@ extern "C"
      * of each discovered interface. The caller reads them to decide which interface to use.
      *
      * When passed to mxlFabricsTargetSetup() or mxlFabricsInitiatorSetup() (via mxlFabricsInterfaceConfig), these
-     * flags express requirements. At least one transfer capability (REMOTE_WRITE or SEND_RECEIVE) must be set.
-     * If no transfer capability is set, REMOTE_WRITE is assumed.
+     * flags express requirements. At least one transfer capability (REMOTE_WRITE or SEND_RECEIVE) must be set. Currently only REMOTE_WRITE is
+     * implemented but this could change in the future if an implementation for SEND_RECEIVE was added.
      */
     typedef enum mxlFabricsInterfaceCapFlags_t
     {
