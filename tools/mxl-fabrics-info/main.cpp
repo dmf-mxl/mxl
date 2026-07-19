@@ -81,7 +81,7 @@ namespace
         resultLength += (capStrings.size() - 1); // separating '|' chars
 
         auto result = capStrings.front();
-        result.reserve(resultLength + (capStrings.size() - 1));
+        result.reserve(resultLength);
         for (auto it = capStrings.begin() + 1; it != capStrings.end(); ++it)
         {
             result.push_back('|');

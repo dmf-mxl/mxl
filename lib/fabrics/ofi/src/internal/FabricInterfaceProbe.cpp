@@ -18,11 +18,13 @@ namespace mxl::lib::fabrics::ofi
 {
     namespace
     {
+        [[nodiscard]]
         std::optional<std::string> optStringFromCStr(char const* source)
         {
             return source == nullptr ? std::nullopt : std::make_optional<std::string>(source);
         }
 
+        [[nodiscard]]
         std::string getHostname()
         {
             char buf[256] = {};
@@ -30,6 +32,7 @@ namespace mxl::lib::fabrics::ofi
             return buf;
         }
 
+        [[nodiscard]]
         bool matchesRequestedAddress(FabricAddress const& requested, FabricInfoView info)
         {
             auto provider = providerFromString(info->fabric_attr->prov_name);

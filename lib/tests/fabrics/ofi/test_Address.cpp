@@ -20,6 +20,7 @@ using namespace mxl::lib::fabrics::ofi;
 namespace
 {
     /// Build a native sockaddr_in, exactly as libfabric would hand it to FabricAddress::decode.
+    [[nodiscard]]
     ::sockaddr_in makeSockaddrIn(char const* ip, std::uint16_t port)
     {
         auto sin = ::sockaddr_in{};
@@ -29,6 +30,7 @@ namespace
         return sin;
     }
 
+    [[nodiscard]]
     ::sockaddr_in6 makeSockaddrIn6(char const* ip, std::uint16_t port)
     {
         auto sin6 = ::sockaddr_in6{};
@@ -40,6 +42,7 @@ namespace
 
     /// Build a native ofi_sockaddr_ib. The service id packs the port space in bits 16..31 and
     /// the port in bits 0..15; the P_Key, scope id and service id are stored in network order.
+    [[nodiscard]]
     OfiSockaddrIb makeSockaddrIb(char const* gid, std::uint16_t pkey, std::uint16_t portSpace, std::uint64_t scopeId, std::uint16_t port)
     {
         auto sib = OfiSockaddrIb{};
@@ -53,6 +56,7 @@ namespace
 
     /// Build the 24-byte FI_ADDR_EFA blob: a 16-byte IPv6 GID, a 16-bit QPN at offset 16 and a
     /// 32-bit QKey at offset 20, both in host byte order.
+    [[nodiscard]]
     std::array<std::uint8_t, 24> makeEfa(char const* gid, std::uint16_t qpn, std::uint32_t qkey)
     {
         auto buf = std::array<std::uint8_t, 24>{};
@@ -65,7 +69,7 @@ namespace
 
 TEST_CASE("ofi: FabricAddress default construction", "[ofi][FabricAddress]")
 {
-    RawFabricAddress empty;
+    auto const empty = RawFabricAddress{};
     REQUIRE(empty.size() == 0);
     REQUIRE(empty.raw() == nullptr);
     REQUIRE(empty.raw() == static_cast<void*>(nullptr));
@@ -74,7 +78,7 @@ TEST_CASE("ofi: FabricAddress default construction", "[ofi][FabricAddress]")
 
 TEST_CASE("ofi: FabricAddress base64 decode", "[ofi][FabricAddress]")
 {
-    RawFabricAddress addr = RawFabricAddress::fromBase64("AQIDBAU=", FabricAddressFormat::Unspec); // base64 for {1,2,3,4,5}
+    auto const addr = RawFabricAddress::fromBase64("AQIDBAU=", FabricAddressFormat::Unspec); // base64 for {1,2,3,4,5}
     auto* addrInner = static_cast<uint8_t const*>(addr.raw());
 
     REQUIRE(addr.size() == 5);
