@@ -18,6 +18,7 @@ namespace
         int shm = 0;
     };
 
+    [[nodiscard]]
     InterfaceListStats countInterfaces(mxlFabricsInterfaceList const* list)
     {
         auto stats = InterfaceListStats{};
