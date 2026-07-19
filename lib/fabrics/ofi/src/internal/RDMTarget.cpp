@@ -12,6 +12,7 @@
 #include "Exception.hpp"
 #include "FabricAddress.hpp"
 #include "FabricInfo.hpp"
+#include "FabricInfoHelpers.hpp"
 #include "Format.hpp" // IWYU pragma: keep; Includes template specializations of fmt::formatter for our types
 #include "Protocol.hpp"
 #include "Provider.hpp"
@@ -22,6 +23,7 @@ namespace mxl::lib::fabrics::ofi
     std::pair<std::unique_ptr<RDMTarget>, std::unique_ptr<TargetInfo>> RDMTarget::setup(mxlFabricsTargetConfig const& config, FabricInfoView info,
         TargetSetupOptions const& options)
     {
+        requireCapability(info, FI_REMOTE_WRITE, "Interface is missing required remote write capability");
         auto const provider = providerFromString(info->fabric_attr->prov_name);
         if (!provider)
         {
