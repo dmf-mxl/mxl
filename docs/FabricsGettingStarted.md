@@ -193,7 +193,7 @@ In the commands below, `<interface>` is the Linux network interface (e.g. `ens16
 Set the default traffic class for RDMA-CM based RoCE connections (tclass = DSCP * 4):
 
 ```bash
-cma_roce_tos -d <ib-interface> -t 106
+cma_roce_tos -d <ib-interface> -t 104
 ```
 
 Enable DSCP-based QoS trust on the interface:
