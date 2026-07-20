@@ -15,7 +15,7 @@ Build the CMake project with `MXL_ENABLE_FABRICS_OFI=ON`:
 cmake --preset Linux-GCC-Debug -DMXL_ENABLE_FABRICS_OFI=ON .
 ```
 
-This builds `libmxl-fabrics.so` and adds the CMake target `mxl::mxl-fabrics`.
+This builds `libmxl-fabrics.so` and the installed CMake configuration will export and additional target: `mxl::mxl-fabrics`.
 
 ## Linking
 
@@ -87,7 +87,7 @@ The `caps.flags` field is a bitmask of `mxlFabricsInterfaceCapFlags` values:
 
 | Flag | Description |
 | --- | --- |
-| `MXL_FABRICS_IFACE_CAP_REMOTE_WRITE` | The interface supports remote write (RDMA) operations. This is the preferred transfer mode: the initiator writes directly into the target's memory without involvement from the target side. |
+| `MXL_FABRICS_IFACE_CAP_REMOTE_WRITE` | The interface supports remote write (RDMA) operations. This is the preferred transfer mode: the initiator writes directly into the target's memory without involvement from the target side. (For continuous flows, on the target side there is still a copy operation from a temporary buffer into the correct memory locations in the ring buffer. |
 | `MXL_FABRICS_IFACE_CAP_SEND_RECEIVE` | The interface supports send/receive message operations. Used as a fallback when remote write is unavailable. Requires a bounce buffer and an extra memory copy on the target side. |
 | `MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS` | The interface supports blocking wait operations (`mxlFabricsTargetReadGrain()`, `mxlFabricsInitiatorMakeProgressBlocking()`). |
 
@@ -160,7 +160,7 @@ mxlFabricsTargetInfoFromString(receivedString, &remoteTargetInfo);
 
 The serialization format is JSON. The format may change between library versions, but forward compatibility is maintained: an initiator built from an earlier version of `libmxl-fabrics` will understand a target info produced by a later version.
 
-The target info contains memory region addresses and an access key (the RDMA remote key). This key exists to prevent accidental writes to the wrong memory region; it is not a security mechanism. Any process that can reach the target's network endpoint and knows the key can write to the registered memory. Do not rely on the target info for access protection. Media transfers are unencrypted. Restrict access to the fabric network itself using network ACLs, firewalls or similar infrastructure-level controls.
+The target info contains memory region addresses and an access key (the RDMA remote key). This key exists to prevent accidental writes to the wrong memory region and is not a security mechanism. Any process that can reach the target's network endpoint and knows the key can write to the registered memory. Do not rely on the target info for access protection. Media transfers are unencrypted. Restrict access to the fabric network itself using network ACLs, firewalls or similar infrastructure-level controls.
 
 ## Setting up an initiator
 
