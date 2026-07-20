@@ -419,51 +419,62 @@ actually fall within a single, reasonably sized contiguous span before
 coalescing, and fall back to per-grain mapping otherwise. The per-grain
 `Region` list returned by the Fabrics layer provides the base address and size
 of every grain and is the authoritative source for this check. The contiguous
-grain pool layout described in section 11.4 makes this check succeed
+grain layout described in section 11.4 makes this check succeed
 deterministically.
 
-### 11.4 Guaranteeing contiguity: the contiguous grain pool
+### 11.4 Guaranteeing contiguity: contiguous per-grain files
 
-A discrete flow can opt in to a **contiguous grain pool**: a single
-shared-memory segment that holds every grain of the flow back to back at a
-fixed stride (`sizeof(GrainHeader) + grainSize`). The grains are then
-guaranteed to be adjacent in virtual memory, so the coalesced mapping in
-section 11.3 always collapses to exactly one DMA mapping per flow.
+A discrete flow can opt in to a **contiguous grain layout**: each grain keeps
+its own backing file (`grains/data.{i}`), exactly like the default layout, but
+every grain is mapped at a fixed address inside a single reserved address window
+so the grains are adjacent in virtual memory at a fixed, page-aligned stride.
+When the local mapping succeeds, the coalesced mapping in section 11.3
+collapses to exactly one DMA mapping per flow, while the per-grain files remain
+individually accessible on disk.
 
-The pool is enabled per flow through the flow-creation options, by setting the
-`grainPool` boolean to `true`:
+The layout is enabled per flow through the flow-creation options, by setting the
+`contiguousGrains` boolean to `true`:
 
 ```json
-{ "grainPool": true }
+{ "contiguousGrains": true }
 ```
 
 When enabled:
 
-- The writer stores all grains in a single backing file (`grains/pool.data`)
-  instead of one file per grain (`grains/data.{i}`).
-- Readers opening the flow detect the pool layout automatically (no option is
-  required on the reader side).
+- The writer maps each grain file into a per-flow reserved virtual-address
+  window (see `ContiguousWindow`). After every fixed mapping succeeds, it
+  records the requested layout in the flow metadata via the
+  `MXL_FLOW_FLAG_CONTIGUOUS_GRAINS` flag.
+- Readers opening the flow read that flag and reconstruct the same contiguous
+  mapping (no option is required on the reader side). If stride calculation,
+  reservation, or a fixed-address mapping fails, MXL releases any partial
+  window and retries every grain with an independent mapping. Access remains
+  correct, but the single-registration optimization is lost in that process.
 - The per-grain `Region` list exposed to the Fabrics layer is unchanged: it
   still contains one region per grain, so the RMA ring-slot indexing
   (`localRegions[grainIndex % grainCount]`) behaves identically. The regions
-  simply now point into successive offsets of the single pool mapping.
+  point into successive slots only when the local contiguous mapping succeeds.
 
-The pool is a backward-compatible, opt-in addition. Flows created without the
-`grainPool` option keep the per-grain file layout, and existing integrations
-continue to work unchanged. Integrations that DMA-map grain memory can request
-the pool to obtain a deterministic single-span layout for the whole flow.
+The metadata flag records that contiguous mapping was requested; it is not a
+guarantee about a reader's process-local address layout. Fabrics checks the
+actual mapped addresses and registration spans before coalescing regions.
 
-> **Note:** GPU/device payload memory is not yet covered by the pool path; the
-> contiguous pool currently applies to host-memory discrete flows.
+The layout is a backward-compatible, opt-in addition. Flows created without the
+`contiguousGrains` option keep the independent per-grain mappings, and existing
+integrations continue to work unchanged. See `docs/ContiguousGrainMapping.md`
+for the full design.
+
+> **Note:** GPU/device payload memory is not yet covered by this path; the
+> contiguous grain layout currently applies to host-memory discrete flows.
 
 ### 11.5 Single memory registration for contiguous grains
 
 The Fabrics implementation itself benefits from contiguous grains. When the
 regions handed to `Domain::registerRegions` are contiguous in host memory —
-which the grain pool guarantees — they are registered with libfabric as a
-**single** memory region (`fi_mr_regattr`) instead of one registration per
-grain. Each grain's `LocalRegion` / `RemoteRegion` then references that shared
-registration at its own offset, so:
+as they are after the process-local contiguous mapping succeeds — they are
+registered with libfabric as a **single** memory region (`fi_mr_regattr`)
+instead of one registration per grain. Each grain's `LocalRegion` /
+`RemoteRegion` then references that shared registration at its own offset, so:
 
 - the RMA ring-slot indexing (`localRegions[grainIndex % grainCount]`) and the
   per-grain `addr` / `len` are unchanged;
@@ -473,5 +484,5 @@ registration at its own offset, so:
   regions and reduces connection-setup cost.
 
 This optimization is automatic and requires no API change: contiguous regions
-(pool layout) are coalesced, while non-contiguous regions (the per-grain file
-layout) continue to be registered individually.
+(the contiguous grain layout) are coalesced, while non-contiguous regions (the
+default per-grain layout) continue to be registered individually.

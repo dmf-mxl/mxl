@@ -23,6 +23,17 @@
  */
 #define MXL_MAX_PLANES_PER_GRAIN 4
 
+/**
+ * Flow flags stored in mxlCommonFlowConfigInfo::flags.
+ *
+ * MXL_FLOW_FLAG_CONTIGUOUS_GRAINS indicates that a discrete flow's per-grain
+ * files (`grains/data.{i}`) are mapped contiguously in virtual memory. The
+ * on-disk artifacts are identical to the default layout; this flag tells
+ * readers to reconstruct the contiguous mapping so they too benefit from a
+ * single device/RDMA memory registration.
+ */
+#define MXL_FLOW_FLAG_CONTIGUOUS_GRAINS (1u << 0)
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -51,7 +62,7 @@ extern "C"
          */
         uint32_t format;
 
-        /** No flags defined yet. */
+        /** Flow flags. \see MXL_FLOW_FLAG_CONTIGUOUS_GRAINS */
         uint32_t flags;
 
         /**
@@ -104,9 +115,9 @@ extern "C"
         uint32_t sliceSizes[MXL_MAX_PLANES_PER_GRAIN];
 
         /**
-         * How many grains in the ring buffer. With the default per-grain layout this is identical to the number of {mxlDomain}/{flowId}/grains/
-         * data files. With the contiguous grain pool layout (the "grainPool" flow option) all grains share a single {mxlDomain}/{flowId}/grains/
-         * pool file instead. Accessing the shared memory section for that specific grain should be predictable.
+         * How many grains in the ring buffer. This is identical to the number of {mxlDomain}/{flowId}/grains/data.{i} files. With the contiguous
+         * grain layout (the "contiguousGrains" flow option, indicated by MXL_FLOW_FLAG_CONTIGUOUS_GRAINS) those per-grain files are additionally
+         * mapped contiguously in virtual memory.
          */
         uint32_t grainCount;
 

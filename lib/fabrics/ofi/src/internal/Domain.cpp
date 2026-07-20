@@ -4,6 +4,7 @@
 
 #include "Domain.hpp"
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -18,9 +19,22 @@ namespace mxl::lib::fabrics::ofi
 {
     namespace
     {
-        /// Return true if every region resides in host memory and the regions are
-        /// laid out back to back (region[i] ends exactly where region[i+1] begins),
-        /// in which case they can be covered by a single memory registration.
+        void validateRegion(Region const& region)
+        {
+            if (region.registrationSize < region.size)
+            {
+                throw Exception::invalidArgument(
+                    "Region registration size {} is smaller than its logical size {}.", region.registrationSize, region.size);
+            }
+            if (region.registrationSize > (std::numeric_limits<std::uintptr_t>::max() - region.base))
+            {
+                throw Exception::invalidArgument(
+                    "Region at address {} with registration size {} exceeds the address space.", region.base, region.registrationSize);
+            }
+        }
+
+        /// Return true if every region resides in host memory and its mapped
+        /// registration span ends exactly where the next region begins.
         bool regionsAreContiguousHost(std::vector<Region> const& regions) noexcept
         {
             if (regions.size() < 2)
@@ -39,7 +53,7 @@ namespace mxl::lib::fabrics::ofi
                 {
                     return false;
                 }
-                if (regions[i].base != (regions[i - 1].base + regions[i - 1].size))
+                if ((regions[i].base < regions[i - 1].base) || ((regions[i].base - regions[i - 1].base) != regions[i - 1].registrationSize))
                 {
                     return false;
                 }
@@ -77,6 +91,11 @@ namespace mxl::lib::fabrics::ofi
 
     void Domain::registerRegions(std::vector<Region> const& regions, std::uint64_t access)
     {
+        for (auto const& region : regions)
+        {
+            validateRegion(region);
+        }
+
         // When the regions are contiguous in host memory, register them as a single
         // memory region and let each registered region reference it at its own offset.
         // This collapses N registrations (one per grain) into one, which matters for
@@ -86,7 +105,12 @@ namespace mxl::lib::fabrics::ofi
         if (regionsAreContiguousHost(regions))
         {
             auto const base = regions.front().base;
-            auto const total = (regions.back().base + regions.back().size) - base;
+            auto const finalOffset = regions.back().base - base;
+            if (regions.back().registrationSize > (std::numeric_limits<std::size_t>::max() - finalOffset))
+            {
+                throw Exception::invalidArgument("Contiguous region registration span exceeds the supported size.");
+            }
+            auto const total = finalOffset + regions.back().registrationSize;
 
             auto const spanning = Region{base, total, nullptr, nullptr, regions.front().loc};
             auto mr = std::make_shared<MemoryRegion>(MemoryRegion::reg(*this, spanning, access));
@@ -134,6 +158,7 @@ namespace mxl::lib::fabrics::ofi
 
     RegisteredRegion Domain::registerRegionImpl(Region const& region, std::uint64_t access)
     {
+        validateRegion(region);
         return RegisteredRegion{std::make_shared<MemoryRegion>(MemoryRegion::reg(*this, region, access)), region};
     }
 

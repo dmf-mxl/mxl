@@ -250,7 +250,7 @@ namespace mxl::lib
             parser.getPayloadSliceLengths(),
             optionsParser.getMaxSyncBatchSizeHint().value_or(batchSizeDefault),
             optionsParser.getMaxCommitBatchSizeHint().value_or(batchSizeDefault),
-            optionsParser.getUseGrainPool());
+            optionsParser.getUseContiguousGrains());
 
         return {std::move(flowData), created};
     }

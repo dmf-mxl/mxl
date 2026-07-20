@@ -44,12 +44,6 @@ namespace mxl::lib
     }
 
     MXL_EXPORT
-    std::filesystem::path makeGrainPoolFilePath(std::filesystem::path const& grainDirectory)
-    {
-        return grainDirectory / GRAIN_POOL_FILE_NAME;
-    }
-
-    MXL_EXPORT
     std::filesystem::path makeChannelDataFilePath(std::filesystem::path const& flowDirectory)
     {
         return flowDirectory / CHANNEL_DATA_FILE_NAME;

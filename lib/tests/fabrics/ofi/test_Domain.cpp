@@ -4,9 +4,11 @@
 
 #include <cstdint>
 #include <array>
+#include <limits>
 #include <vector>
 #include <catch2/catch_test_macros.hpp>
 #include <rdma/fabric.h>
+#include "Exception.hpp"
 #include "Util.hpp"
 
 using namespace mxl::lib::fabrics::ofi;
@@ -161,5 +163,61 @@ TEST_CASE("ofi: Domain - contiguous regions are coalesced into a single registra
         REQUIRE(local[1].addr == regions[1].base);
         REQUIRE(local[2].addr == regions[2].base);
         REQUIRE(local[3].addr == regions[3].base);
+    }
+}
+
+TEST_CASE("ofi: Domain - padded contiguous regions use one registration", "[ofi][Domain][Coalesce]")
+{
+    constexpr auto logicalSize = std::size_t{9216};
+    constexpr auto registrationSize = std::size_t{12288};
+    constexpr auto regionCount = std::size_t{3};
+    auto buffer = std::vector<std::uint8_t>(registrationSize * regionCount);
+    auto const base = reinterpret_cast<std::uintptr_t>(buffer.data());
+
+    auto regions = std::vector<Region>{};
+    for (auto i = std::size_t{0}; i < regionCount; ++i)
+    {
+        regions.emplace_back(base + (i * registrationSize), logicalSize, nullptr, nullptr, Region::Location::host(), registrationSize);
+    }
+
+    auto domain = getDomain(false);
+    domain->registerRegions(regions, FI_WRITE);
+
+    auto const remote = domain->remoteRegions();
+    REQUIRE(remote.size() == regionCount);
+    REQUIRE(remote[0].addr == 0U);
+    REQUIRE(remote[1].addr == registrationSize);
+    REQUIRE(remote[2].addr == 2U * registrationSize);
+    REQUIRE(remote[0].len == logicalSize);
+    REQUIRE(remote[1].len == logicalSize);
+    REQUIRE(remote[2].len == logicalSize);
+    REQUIRE(remote[1].rkey == remote[0].rkey);
+    REQUIRE(remote[2].rkey == remote[0].rkey);
+}
+
+TEST_CASE("ofi: Domain - invalid registration spans are rejected", "[ofi][Domain]")
+{
+    auto domain = getDomain();
+
+    SECTION("registration span is smaller than the logical region")
+    {
+        auto const region = Region{0x1000U, 128U, nullptr, nullptr, Region::Location::host(), 64U};
+        REQUIRE_THROWS_AS(domain->registerRegion(region, FI_WRITE), Exception);
+    }
+
+    SECTION("registration span exceeds the address space")
+    {
+        auto const base = std::numeric_limits<std::uintptr_t>::max() - 31U;
+        auto const region = Region{base, 64U, nullptr, nullptr};
+        REQUIRE_THROWS_AS(domain->registerRegion(region, FI_WRITE), Exception);
+    }
+
+    SECTION("coalesced input is validated before registration")
+    {
+        auto const regions = std::vector<Region>{
+            Region{0x1000U, 128U, nullptr, nullptr, Region::Location::host(), 64U},
+            Region{0x1040U, 64U, nullptr, nullptr},
+        };
+        REQUIRE_THROWS_AS(domain->registerRegions(regions, FI_WRITE), Exception);
     }
 }

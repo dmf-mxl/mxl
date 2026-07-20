@@ -68,14 +68,14 @@ namespace mxl::lib
             }
         }
 
-        auto grainPoolIt = _root.find("grainPool");
-        if (grainPoolIt != _root.end())
+        auto contiguousGrainsIt = _root.find("contiguousGrains");
+        if (contiguousGrainsIt != _root.end())
         {
-            if (!grainPoolIt->second.is<bool>())
+            if (!contiguousGrainsIt->second.is<bool>())
             {
-                throw std::invalid_argument{"grainPool must be a boolean."};
+                throw std::invalid_argument{"contiguousGrains must be a boolean."};
             }
-            _useGrainPool = grainPoolIt->second.get<bool>();
+            _useContiguousGrains = contiguousGrainsIt->second.get<bool>();
         }
     }
 
@@ -89,8 +89,8 @@ namespace mxl::lib
         return _maxSyncBatchSizeHint;
     }
 
-    bool FlowOptionsParser::getUseGrainPool() const
+    bool FlowOptionsParser::getUseContiguousGrains() const
     {
-        return _useGrainPool;
+        return _useContiguousGrains;
     }
 } // namespace mxl::lib

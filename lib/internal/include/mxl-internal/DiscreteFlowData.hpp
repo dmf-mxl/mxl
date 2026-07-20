@@ -3,8 +3,10 @@
 
 #pragma once
 
+#include <limits>
 #include <vector>
 #include <fmt/format.h>
+#include "ContiguousWindow.hpp"
 #include "Flow.hpp"
 #include "FlowData.hpp"
 #include "SharedMemory.hpp"
@@ -14,19 +16,23 @@ namespace mxl::lib
     ///
     /// Simple structure holding the shared memory resources of discrete flows.
     ///
-    /// Grains can be stored in one of two layouts:
-    ///  - **Per-grain files** (default): each grain is backed by its own mmap'd
-    ///    file (`grains/data.{i}`). The grains are independent mappings and are
-    ///    not guaranteed to be contiguous in virtual address space.
-    ///  - **Contiguous pool** (opt-in): every grain of the flow lives in a
-    ///    single mmap'd file (`grains/pool.data`) at a fixed stride. The grains
-    ///    are therefore contiguous in virtual memory, which lets an integration
-    ///    register the whole flow for device DMA with a single mapping instead
-    ///    of one mapping per grain. See `docs/Fabrics.md` section 11.
+    /// Grains are always backed by one mmap'd file per grain (`grains/data.{i}`)
+    /// and can be stored in one of two layouts:
+    ///  - **Per-grain files** (default): each grain is an independent mapping
+    ///    placed at a kernel-chosen address, so the grains are not guaranteed to
+    ///    be contiguous in virtual address space.
+    ///  - **Contiguous per-grain files** (opt-in): each grain keeps its own
+    ///    file, but every grain is mapped at a fixed address inside a single
+    ///    reserved address window (see `ContiguousWindow`). The grains are
+    ///    therefore contiguous in virtual memory, which lets an integration
+    ///    register the whole flow for device DMA / RDMA with a single mapping
+    ///    instead of one mapping per grain, while keeping the per-grain files on
+    ///    disk. See `docs/ContiguousGrainMapping.md`.
     ///
-    /// The pool layout is opt-in per flow via the `"grainPool": true` flow
-    /// option. Both layouts expose the same `grainAt()` / `grainCount()`
-    /// interface, so the rest of the library is agnostic to the storage mode.
+    /// The contiguous layout is opt-in per flow via the `"contiguousGrains":
+    /// true` flow option. Both layouts expose the same `grainAt()` /
+    /// `grainCount()` interface, so the rest of the library is agnostic to the
+    /// storage mode.
     ///
     class DiscreteFlowData : public FlowData
     {
@@ -39,18 +45,35 @@ namespace mxl::lib
         /// Add a grain backed by its own file (per-grain file layout).
         Grain* emplaceGrain(char const* grainFilePath, std::size_t grainPayloadSize);
 
-        /// Create or open the single backing file that holds every grain of the
-        /// flow at a fixed stride (contiguous pool layout).
+        /// Reserve a contiguous address window for `count` grains, each of
+        /// `grainStride` bytes (which must be page-aligned, see
+        /// `grainStride()`). Grains added afterwards with `emplaceGrainAt()` are
+        /// mapped into this window so they are contiguous in virtual memory
+        /// while remaining backed by individual per-grain files.
         ///
-        /// \param poolFilePath     Path to the pool file.
-        /// \param count            Number of grains in the flow.
-        /// \param grainPayloadSize Payload size per grain. Ignored when opening
-        ///                         an existing pool (the stride is recovered from
-        ///                         the mapped file size).
-        void openGrainPool(char const* poolFilePath, std::size_t count, std::size_t grainPayloadSize);
+        /// \return true if the window was reserved. On failure the caller
+        ///         should fall back to `emplaceGrain()` (non-contiguous).
+        bool openContiguousWindow(std::size_t count, std::size_t grainStride) noexcept;
 
-        /// \return true if the grains are stored in the contiguous pool layout.
-        bool isPoolMode() const noexcept;
+        /// Add a grain backed by its own file, mapped at slot `i` of the
+        /// contiguous window previously reserved with `openContiguousWindow()`.
+        Grain* emplaceGrainAt(std::size_t i, char const* grainFilePath, std::size_t grainPayloadSize);
+
+        /// Close all grains and release the contiguous address window.
+        void resetContiguousWindow() noexcept;
+
+        /// \return true if the grains are stored as contiguous per-grain files.
+        bool isWindowMode() const noexcept;
+
+        /// \return the mapped size of grain `i`, or zero for an invalid index.
+        std::size_t grainMappedSize(std::size_t i) const noexcept;
+
+        /// \return the actual slot stride of the contiguous window, or zero.
+        std::size_t contiguousWindowStride() const noexcept;
+
+        /// The page-aligned stride of a grain slot for the given payload size,
+        /// i.e. the size a single grain occupies inside a contiguous window.
+        static std::size_t grainStride(std::size_t grainPayloadSize) noexcept;
 
         Grain* grainAt(std::size_t i) noexcept;
         Grain const* grainAt(std::size_t i) const noexcept;
@@ -59,13 +82,12 @@ namespace mxl::lib
         mxlGrainInfo const* grainInfoAt(std::size_t i) const noexcept;
 
     private:
-        // Per-grain file layout (default).
+        // Per-grain file layout (default and contiguous-window layouts).
         std::vector<SharedMemoryInstance<Grain>> _grains;
 
-        // Contiguous pool layout (opt-in). Active when _poolGrainCount > 0.
-        SharedMemorySegment _pool;
-        std::size_t _poolGrainCount{0};
-        std::size_t _poolGrainStride{0}; // sizeof(Grain) + grainPayloadSize
+        // Contiguous per-grain-file layout (opt-in). When valid, the grains in
+        // `_grains` are mapped at fixed addresses inside this reservation.
+        ContiguousWindow _window;
     };
 
     /**************************************************************************/
@@ -88,7 +110,7 @@ namespace mxl::lib
 
     inline std::size_t DiscreteFlowData::grainCount() const noexcept
     {
-        return isPoolMode() ? _poolGrainCount : _grains.size();
+        return _grains.size();
     }
 
     inline Grain* DiscreteFlowData::emplaceGrain(char const* grainFilePath, std::size_t grainPayloadSize)
@@ -109,36 +131,37 @@ namespace mxl::lib
         return _grains.emplace_back(std::move(grain)).get();
     }
 
-    inline bool DiscreteFlowData::isPoolMode() const noexcept
+    inline bool DiscreteFlowData::isWindowMode() const noexcept
     {
-        return _poolGrainCount > 0;
+        return _window.valid();
+    }
+
+    inline std::size_t DiscreteFlowData::grainMappedSize(std::size_t i) const noexcept
+    {
+        return (i < _grains.size()) ? _grains[i].mappedSize() : 0U;
+    }
+
+    inline std::size_t DiscreteFlowData::contiguousWindowStride() const noexcept
+    {
+        return _window.stride();
+    }
+
+    inline std::size_t DiscreteFlowData::grainStride(std::size_t grainPayloadSize) noexcept
+    {
+        if (grainPayloadSize > (std::numeric_limits<std::size_t>::max() - sizeof(Grain)))
+        {
+            return 0U;
+        }
+        return ContiguousWindow::alignToPage(sizeof(Grain) + grainPayloadSize);
     }
 
     inline Grain* DiscreteFlowData::grainAt(std::size_t i) noexcept
     {
-        if (isPoolMode())
-        {
-            if ((i < _poolGrainCount) && (_pool.data() != nullptr))
-            {
-                auto* base = static_cast<std::uint8_t*>(_pool.data());
-                return reinterpret_cast<Grain*>(base + i * _poolGrainStride);
-            }
-            return nullptr;
-        }
         return (i < _grains.size()) ? _grains[i].get() : nullptr;
     }
 
     inline Grain const* DiscreteFlowData::grainAt(std::size_t i) const noexcept
     {
-        if (isPoolMode())
-        {
-            if ((i < _poolGrainCount) && (_pool.cdata() != nullptr))
-            {
-                auto const* base = static_cast<std::uint8_t const*>(_pool.cdata());
-                return reinterpret_cast<Grain const*>(base + i * _poolGrainStride);
-            }
-            return nullptr;
-        }
         return (i < _grains.size()) ? _grains[i].get() : nullptr;
     }
 

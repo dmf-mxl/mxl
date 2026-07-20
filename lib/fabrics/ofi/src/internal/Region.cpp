@@ -169,13 +169,26 @@ namespace mxl::lib::fabrics::ofi
             regions.reserve(discreteFlow.grainCount());
             for (auto i = std::size_t{0}; i < discreteFlow.grainCount(); ++i)
             {
-                auto grain = discreteFlow.grainAt(i);
+                auto const grain = discreteFlow.grainAt(i);
+                if (grain == nullptr)
+                {
+                    throw Exception::invalidState("Missing grain at index {}", i);
+                }
 
-                auto grainInfoBaseAddr = reinterpret_cast<std::uintptr_t>(discreteFlow.grainAt(i));
-                auto grainInfoSize = sizeof(GrainHeader);
-                auto grainPayloadSize = grain->header.info.grainSize;
+                auto const grainInfoBaseAddr = reinterpret_cast<std::uintptr_t>(grain);
+                auto const grainInfoSize = sizeof(GrainHeader);
+                auto const grainPayloadSize = static_cast<std::size_t>(grain->header.info.grainSize);
+                auto const mappedSize = discreteFlow.grainMappedSize(i);
+                if ((mappedSize < grainInfoSize) || (grainPayloadSize > (mappedSize - grainInfoSize)))
+                {
+                    throw Exception::invalidState(
+                        "Grain {} declares a payload of {} bytes, but its mapping is only {} bytes.", i, grainPayloadSize, mappedSize);
+                }
 
-                regions.emplace_back(grainInfoBaseAddr, grainInfoSize + grainPayloadSize, nullptr, nullptr, Region::Location::host());
+                auto const logicalSize = grainInfoSize + grainPayloadSize;
+                auto const registrationSize = discreteFlow.isWindowMode() ? discreteFlow.contiguousWindowStride() : logicalSize;
+
+                regions.emplace_back(grainInfoBaseAddr, logicalSize, nullptr, nullptr, Region::Location::host(), registrationSize);
             }
 
             return {std::move(regions),

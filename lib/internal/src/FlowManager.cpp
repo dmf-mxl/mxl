@@ -165,7 +165,7 @@ namespace mxl::lib
     std::pair<bool, std::unique_ptr<DiscreteFlowData>> FlowManager::createOrOpenDiscreteFlow(uuids::uuid const& flowId, std::string const& flowDef,
         mxlDataFormat flowFormat, std::size_t grainCount, mxlRational const& grainRate, std::size_t grainPayloadSize, std::size_t grainNumOfSlices,
         std::array<uint32_t, MXL_MAX_PLANES_PER_GRAIN> grainSliceLengths, std::uint32_t maxSyncBatchSizeHintOpt,
-        std::uint32_t maxCommitBatchSizeHintOpt, bool useGrainPool)
+        std::uint32_t maxCommitBatchSizeHintOpt, bool useContiguousGrains)
     {
         auto const uuidString = uuids::to_string(flowId);
         MXL_DEBUG("Create discrete flow. id: {}, grainCount: {}, grain payload size: {}", uuidString, grainCount, grainPayloadSize);
@@ -231,17 +231,36 @@ namespace mxl::lib
             gInfo.size = sizeof gInfo;
         };
 
-        if (useGrainPool)
+        if (useContiguousGrains && flowData->openContiguousWindow(grainCount, DiscreteFlowData::grainStride(grainPayloadSize)))
         {
-            // Contiguous pool layout: all grains live in a single mapping.
-            auto const poolPath = makeGrainPoolFilePath(grainDir);
-            MXL_TRACE("Creating grain pool: {}", poolPath.string());
+            // Contiguous per-grain-file layout: one file per grain, but every
+            // grain mapped at a fixed address inside a single reserved window so
+            // the flow is contiguous in virtual memory.
+            MXL_TRACE("Creating contiguous grain window for {} grains", grainCount);
 
-            flowData->openGrainPool(poolPath.string().c_str(), grainCount, grainPayloadSize);
-            for (auto i = std::size_t{0}; i < grainCount; ++i)
+            try
             {
-                // \todo Handle payload stored device memory
-                initGrainHeader(flowData->grainAt(i));
+                for (auto i = std::size_t{0}; i < grainCount; ++i)
+                {
+                    auto const grainPath = makeGrainDataFilePath(grainDir, i);
+                    MXL_TRACE("Creating grain: {}", grainPath.string());
+
+                    // TODO: Handle payload stored device memory
+                    initGrainHeader(flowData->emplaceGrainAt(i, grainPath.string().c_str(), grainPayloadSize));
+                }
+
+                // Record the layout so readers reconstruct the contiguous mapping.
+                info.config.common.flags |= MXL_FLOW_FLAG_CONTIGUOUS_GRAINS;
+            }
+            catch (std::system_error const& e)
+            {
+                MXL_WARN("Could not create grains contiguously ({}); falling back to per-grain mappings.", e.what());
+                flowData->resetContiguousWindow();
+                for (auto i = std::size_t{0}; i < grainCount; ++i)
+                {
+                    auto const grainPath = makeGrainDataFilePath(grainDir, i);
+                    initGrainHeader(flowData->emplaceGrain(grainPath.string().c_str(), grainPayloadSize));
+                }
             }
         }
         else
@@ -390,12 +409,63 @@ namespace mxl::lib
             auto const grainDir = makeGrainDirectoryName(flowDir);
             if (exists(grainDir) && is_directory(grainDir))
             {
-                auto const poolPath = makeGrainPoolFilePath(grainDir);
-                if (exists(poolPath))
+                if (auto const contiguous = (flowData->flowInfo()->config.common.flags & MXL_FLOW_FLAG_CONTIGUOUS_GRAINS) != 0U; contiguous)
                 {
-                    // Contiguous pool layout: a single mapping holds every grain.
-                    MXL_TRACE("Opening grain pool: {}", poolPath.string());
-                    flowData->openGrainPool(poolPath.string().c_str(), grainCount, /*grainPayloadSize=*/0U);
+                    // Contiguous per-grain-file layout: one file per grain, mapped
+                    // contiguously in virtual memory. Recover the slot stride from
+                    // the size of the first grain file.
+                    auto const firstGrainPath = makeGrainDataFilePath(grainDir, 0U);
+                    auto ec = std::error_code{};
+                    auto const grainFileSize = static_cast<std::size_t>(file_size(firstGrainPath, ec));
+
+                    auto const stride = (!ec && grainFileSize >= sizeof(Grain)) ? DiscreteFlowData::grainStride(grainFileSize - sizeof(Grain)) : 0U;
+
+                    if (stride > 0U && flowData->openContiguousWindow(grainCount, stride))
+                    {
+                        auto grainPaths = std::vector<std::string>{};
+                        grainPaths.reserve(grainCount);
+                        for (auto i = 0U; i < grainCount; ++i)
+                        {
+                            auto const grainPath = makeGrainDataFilePath(grainDir, i).string();
+                            auto grainEc = std::error_code{};
+                            auto const currentGrainFileSize = static_cast<std::size_t>(std::filesystem::file_size(grainPath, grainEc));
+                            if (grainEc || currentGrainFileSize != grainFileSize)
+                            {
+                                throw std::invalid_argument{fmt::format(
+                                    "Contiguous grain file {} has size {}, expected {}.", grainPath, currentGrainFileSize, grainFileSize)};
+                            }
+                            grainPaths.push_back(grainPath);
+                        }
+
+                        try
+                        {
+                            for (auto i = 0U; i < grainCount; ++i)
+                            {
+                                MXL_TRACE("Opening contiguous grain: {}", grainPaths[i]);
+                                flowData->emplaceGrainAt(i, grainPaths[i].c_str(), /*payloadSize=*/0U);
+                            }
+                        }
+                        catch (std::system_error const& e)
+                        {
+                            MXL_WARN("Could not map grains contiguously ({}); falling back to per-grain mappings.", e.what());
+                            flowData->resetContiguousWindow();
+                            for (auto const& grainPath : grainPaths)
+                            {
+                                flowData->emplaceGrain(grainPath.c_str(), /*payloadSize=*/0U);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Fall back to independent per-grain mappings. The single
+                        // registration optimization is lost, but access is correct.
+                        MXL_WARN("Could not map grains contiguously; falling back to per-grain mappings.");
+                        for (auto i = 0U; i < grainCount; ++i)
+                        {
+                            auto const grainPath = makeGrainDataFilePath(grainDir, i).string();
+                            flowData->emplaceGrain(grainPath.c_str(), /*payloadSize=*/0U);
+                        }
+                    }
                 }
                 else
                 {
