@@ -13,10 +13,10 @@
       
       
       
-        <link rel="prev" href="../FabricsGettingStarted/">
+        <link rel="prev" href="../Fabrics/">
       
       
-        <link rel="next" href="../Tools/">
+        <link rel="next" href="../Timing/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Timing Model - MXL</title>
+        <title>MXL Fabrics — Getting Started - MXL</title>
       
     
     
@@ -83,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#timing-model" class="md-skip">
+        <a href="#mxl-fabrics-getting-started" class="md-skip">
           Skip to content
         </a>
       
@@ -123,7 +123,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Timing Model
+              MXL Fabrics — Getting Started
             
           </span>
         </div>
@@ -421,32 +421,6 @@
       
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../FabricsGettingStarted/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  MXL Fabrics — Getting Started
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
     
   
   
@@ -466,7 +440,7 @@
   <span class="md-ellipsis">
     
   
-  Timing Model
+  MXL Fabrics — Getting Started
 
     
   </span>
@@ -483,7 +457,7 @@
   <span class="md-ellipsis">
     
   
-  Timing Model
+  MXL Fabrics — Getting Started
 
     
   </span>
@@ -509,10 +483,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
+  <a href="#what-is-mxl-fabrics" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Requirements
+        What is MXL Fabrics?
       </span>
     </span>
   </a>
@@ -520,44 +494,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#ring-buffers" class="md-nav__link">
+  <a href="#1-building-the-demo-applications" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Ring buffers
+        1. Building the demo applications
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Ring buffers">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-discovering-interfaces-with-mxl-fabrics-info" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. Discovering interfaces with <code>mxl-fabrics-info</code>
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Discovering interfaces with mxl-fabrics-info">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#example-indexing" class="md-nav__link">
+  <a href="#filtering" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Example indexing
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#converting-a-timestamp-ns-since-smpte-st-2059-epoch-to-a-grain-index" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Converting a timestamp (ns since SMPTE ST 2059 epoch) to a grain index
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#converting-a-grain-index-to-a-ring-buffer-index" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Converting a grain index to a ring buffer index
+        Filtering
       </span>
     </span>
   </a>
@@ -570,22 +533,44 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#origin-timestamps-ots" class="md-nav__link">
+  <a href="#3-providers" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Origin timestamps (OTS)
+        3. Providers
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Origin timestamps (OTS)">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-node-and-service-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. Node and service values
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-using-the-demo-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. Using the demo application
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Using the demo application">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#example-flow-writer-behaviors" class="md-nav__link">
+  <a href="#51-command-line-options" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Example Flow Writer behaviors
+        5.1 Command line options
       </span>
     </span>
   </a>
@@ -593,10 +578,43 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#example-flow-readers-behaviors" class="md-nav__link">
+  <a href="#52-target-info-exchange" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Example Flow Readers behaviors
+        5.2 Target info exchange
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-target-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.3 Target setup
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-initiator-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.4 Initiator setup
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-interface-auto-selection-in-the-demo-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.5 Interface auto-selection in the demo tool
       </span>
     </span>
   </a>
@@ -609,10 +627,60 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#time-functions" class="md-nav__link">
+  <a href="#6-examples" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Time functions
+        6. Examples
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-local-tcp-transfer" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.1 Local TCP transfer
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-rdma-verbs-transfer" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.2 RDMA Verbs transfer
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-efa-transfer" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.3 EFA transfer
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-rocev2-qos-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. RoCEv2 QoS configuration
       </span>
     </span>
   </a>
@@ -623,6 +691,32 @@
   
 </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Timing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Timing Model
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -720,10 +814,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
+  <a href="#what-is-mxl-fabrics" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Requirements
+        What is MXL Fabrics?
       </span>
     </span>
   </a>
@@ -731,44 +825,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#ring-buffers" class="md-nav__link">
+  <a href="#1-building-the-demo-applications" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Ring buffers
+        1. Building the demo applications
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Ring buffers">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-discovering-interfaces-with-mxl-fabrics-info" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. Discovering interfaces with <code>mxl-fabrics-info</code>
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Discovering interfaces with mxl-fabrics-info">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#example-indexing" class="md-nav__link">
+  <a href="#filtering" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Example indexing
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#converting-a-timestamp-ns-since-smpte-st-2059-epoch-to-a-grain-index" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Converting a timestamp (ns since SMPTE ST 2059 epoch) to a grain index
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#converting-a-grain-index-to-a-ring-buffer-index" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Converting a grain index to a ring buffer index
+        Filtering
       </span>
     </span>
   </a>
@@ -781,22 +864,44 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#origin-timestamps-ots" class="md-nav__link">
+  <a href="#3-providers" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Origin timestamps (OTS)
+        3. Providers
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Origin timestamps (OTS)">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-node-and-service-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. Node and service values
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-using-the-demo-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. Using the demo application
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Using the demo application">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#example-flow-writer-behaviors" class="md-nav__link">
+  <a href="#51-command-line-options" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Example Flow Writer behaviors
+        5.1 Command line options
       </span>
     </span>
   </a>
@@ -804,10 +909,43 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#example-flow-readers-behaviors" class="md-nav__link">
+  <a href="#52-target-info-exchange" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Example Flow Readers behaviors
+        5.2 Target info exchange
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-target-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.3 Target setup
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-initiator-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.4 Initiator setup
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-interface-auto-selection-in-the-demo-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.5 Interface auto-selection in the demo tool
       </span>
     </span>
   </a>
@@ -820,10 +958,60 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#time-functions" class="md-nav__link">
+  <a href="#6-examples" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Time functions
+        6. Examples
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-local-tcp-transfer" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.1 Local TCP transfer
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-rdma-verbs-transfer" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.2 RDMA Verbs transfer
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-efa-transfer" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.3 EFA transfer
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-rocev2-qos-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. RoCEv2 QoS configuration
       </span>
     </span>
   </a>
@@ -859,127 +1047,234 @@
 <!-- SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project. -->
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 
-<h1 id="timing-model">Timing Model</h1>
-<p>As described in the <a href=".././Architecture/">architecture</a> page, the grains of an MXL flow are organized in a ring buffer. Each index of the ring buffer correspond to a timestamp relative to the PTP epoch as defined by SMPTE 2059-1. MXL does NOT require a PTP/SMPTE 2059 time source : it only <em>leverages</em> the epoch and clock definitions (TAI time) as defined in SMPTE 2059-1.</p>
-<p>A comprehensive definition of the DMF and MXL timing model is being developed by the <a href="https://www.amwa.tv/jtdmf">JT-DMF End-to-End Synchronisation Working Group</a>.</p>
-<h2 id="requirements">Requirements</h2>
-<p>For single host MXL environments, any stable time sources such as NTP or SMPTE ST 2059 is adequate.</p>
-<p>For multiple hosts MXL environments, MXL requires that the time source of these hosts does not slip against each other over time (the timing source frequency over time shall be the same). Jitter is acceptable and expected - the time stamping model in MXL will describe it properly.</p>
-<p>Any NTP locked source that can be traced back to a Stratum 0 time source (atomic clocks/gps fleet) and SMPTE 2059 PTP time source that is properly locked to GPS will provide this guarantee. All cloud providers provide very accurate time sync services (sub millisecond accuracy).</p>
-<h2 id="ring-buffers">Ring buffers</h2>
-<p>Grains are organized as ring buffers. The grain count is a function of the flow grain_rate and desired history length. For example if a flow grain_rate is 50/1, each grain will be worth 20'000'000 ns (1/50 * 1'000'000) of data. A ring buffer with 100ms of history will have 5 grains (5 * 20ms/grain = 100ms). Time starts at the SMPTE 2059-1 epoch and is expressed a nanoseconds since that epoch.</p>
-<p>Ring buffer indices encode timing information — <strong>the ring buffer cannot be treated as a simple queue of grains.</strong> A writer media function must carefully compute the grain index at which it writes the incoming grains. If the writer cannot guarantee that the external source shares a common clock frequency with the MXL host, it must implement a re-synchronization strategy (grain drop, grain repeat, dynamic audio resampling, etc.) to maintain alignment with the host's timing.</p>
-<h3 id="example-indexing">Example indexing</h3>
-<p>The following table demonstrates the indexing logic for a 50/1 fps video flow stored in a ring buffer of 5 grains.</p>
+<h1 id="mxl-fabrics-getting-started">MXL Fabrics — Getting Started</h1>
+<h2 id="what-is-mxl-fabrics">What is MXL Fabrics?</h2>
+<p>MXL Fabrics is a library for transferring MXL media flows between hosts over a network. It is built on <a href="https://ofiwg.github.io/libfabric/">libfabric</a> and supports multiple transport providers, including RDMA Verbs, AWS EFA, TCP, and shared memory.</p>
+<p>A transfer involves two sides: a target that exposes its media buffers to the network, and an initiator that writes flow data into those buffers. The target generates a <code>TargetInfo</code> object containing its fabric address and memory region keys. This object is shared with the initiator through any out-of-band mechanism (a file, a signaling protocol, etc.). Once the initiator has the target info, it can connect and begin transferring grains (for discrete/video flows) or samples (for continuous/audio flows).</p>
+<p>The library uses Remote Write (RDMA) to place data directly into the target's memory without involving the target CPU. The selected provider must support Remote Write.</p>
+<p>This guide walks through building the demo tools, discovering network interfaces, and running your first transfer. It assumes familiarity with the MXL Flow API. For the full design rationale and transfer protocol details, see <a href="../Fabrics/">Fabrics.md</a>.</p>
+<h2 id="1-building-the-demo-applications">1. Building the demo applications</h2>
+<p>Enable the libfabric-based Fabrics implementation and build:</p>
+<div class="highlight"><pre><span></span><code>cmake<span class="w"> </span>--preset<span class="w"> </span>Linux-GCC-Release<span class="w"> </span>-DMXL_ENABLE_FABRICS_OFI<span class="o">=</span>ON<span class="w"> </span>.
+cmake<span class="w"> </span>--build<span class="w"> </span>build/Linux-GCC-Release
+</code></pre></div>
+<p>This produces two binaries:</p>
 <table>
 <thead>
 <tr>
-<th>Grain Index</th>
-<th>TAI Timestamp (ns since SMPTE ST 2059 epoch)</th>
-<th>Ring buffer Index</th>
+<th>Binary</th>
+<th>Path</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>0</td>
-<td>0</td>
-<td>0</td>
+<td><code>mxl-fabrics-demo</code></td>
+<td><code>build/Linux-GCC-Release/tools/mxl-fabrics-demo/mxl-fabrics-demo</code></td>
 </tr>
 <tr>
-<td>1</td>
-<td>20'000'000</td>
-<td>1</td>
-</tr>
-<tr>
-<td>2</td>
-<td>40'000'000</td>
-<td>2</td>
-</tr>
-<tr>
-<td>3</td>
-<td>60'000'000</td>
-<td>3</td>
-</tr>
-<tr>
-<td>4</td>
-<td>80'000'000</td>
-<td>4</td>
-</tr>
-<tr>
-<td>5</td>
-<td>100'000'000</td>
-<td>0</td>
-</tr>
-<tr>
-<td>6</td>
-<td>120'000'000</td>
-<td>1</td>
-</tr>
-<tr>
-<td>7</td>
-<td>140'000'000</td>
-<td>2</td>
-</tr>
-<tr>
-<td>8</td>
-<td>160'000'000</td>
-<td>3</td>
-</tr>
-<tr>
-<td>9</td>
-<td>180'000'000</td>
-<td>4</td>
+<td><code>mxl-fabrics-info</code></td>
+<td><code>build/Linux-GCC-Release/tools/mxl-fabrics-info/mxl-fabrics-info</code></td>
 </tr>
 </tbody>
 </table>
-<p>The following graph demonstrates a ring buffer where the head has wrapped around and is now at ring buffer index 2 (the time span between grain 3 and 7 in the table above).</p>
-<pre class="mermaid"><code>flowchart LR
-
-    A0["ring buffer index=0&lt;br/&gt;grain index=5&lt;br/&gt;ts=100'000'000ns"] --&gt; A1[1]
-    A1["ring buffer index=1&lt;br/&gt;gi=6&lt;br/&gt;ts=120'000'000ns"] --&gt; A2[2]
-    A2["HEAD&lt;br/&gt;ring buffer index=2&lt;br/&gt;gi=7&lt;br/&gt;ts=140'000'000ns"] --&gt; A3[3]
-    A3["ring buffer index=3&lt;br/&gt;gi=3&lt;br/&gt;ts=60'000'000ns"] --&gt; A4[4]
-    A4["ring buffer index=4&lt;br/&gt;gi=4&lt;br/&gt;ts=80'000'000ns"] --&gt; A0
-
-    %% head
-    style A2 fill:#030,color:#eee,stroke:#333,stroke-width:2px
-</code></pre>
-<h3 id="converting-a-timestamp-ns-since-smpte-st-2059-epoch-to-a-grain-index">Converting a timestamp (ns since SMPTE ST 2059 epoch) to a grain index</h3>
-<p>This conversion is a simple division:</p>
-<div class="arithmatex">\[
-GrainDurationNs = GrainRateDenominator * 1'000'000'000 / GrainRateNumerator
-\]</div>
-<div class="arithmatex">\[
-GrainIndex = Timestamp / GrainDurationNs
-\]</div>
-<h3 id="converting-a-grain-index-to-a-ring-buffer-index">Converting a grain index to a ring buffer index</h3>
-<p>The conversion is the remainder of the integer division of the grain index by the ring buffer length. :</p>
-<div class="arithmatex">\[
-RingBufferIndex = GrainIndex \bmod RingBufferLength
-\]</div>
-<h2 id="origin-timestamps-ots">Origin timestamps (OTS)</h2>
-<p>MXL does not try to hide or compensate for jitter and latency automatically: it relies instead on the origin timestamps of the media grains for accurate indexing. If origin timestamps are not available explicitly through RTP header extensions they can be inferred at capture time by 'unrolling' the RTP timestamps of 2110 and AES67 packets or through other transport-specific mechanisms.</p>
-<p>In absence of origin timestamps a receiver media function may need to re-timestamp incoming media and write at <span class="arithmatex">\(grainIndex(T{now})\)</span>.</p>
-<p>MXL Flow replication between hosts will preserve the indexing of the grains. In other words, the flow IDs, grain indexes and ring buffer size and indexes.</p>
-<h3 id="example-flow-writer-behaviors">Example Flow Writer behaviors</h3>
+<h2 id="2-discovering-interfaces-with-mxl-fabrics-info">2. Discovering interfaces with <code>mxl-fabrics-info</code></h2>
+<p><code>mxl-fabrics-info</code> lists the interface configurations available on the current host. Each entry is one combination of a provider and a node address.</p>
+<div class="highlight"><pre><span></span><code>mxl-fabrics-info
+</code></pre></div>
+<p>On a machine with an RDMA-capable NIC (<code>mlx5_0</code>) and a second non-RDMA NIC (<code>ens18</code>), the output might look like this:</p>
+<div class="highlight"><pre><span></span><code>interface verbs-0 node 10.130.40.12 dev mlx5_0
+interface verbs-1 node fe80::8ae9:a4ff:fe48:d514 dev mlx5_0
+interface shm-0 node dev03 dev &lt;none&gt;
+interface tcp-0 node 10.130.40.12 dev ens16np0
+interface tcp-1 node fe80::8ae9:a4ff:fe48:d514 dev ens16np0
+interface tcp-2 node 10.130.100.100 dev ens18
+interface tcp-3 node fe80::be24:11ff:fe05:3c1d dev ens18
+interface tcp-4 node 127.0.0.1 dev lo
+interface tcp-5 node ::1 dev lo
+</code></pre></div>
+<p>The same physical interface can appear under multiple providers. Verbs and TCP entries for <code>10.130.40.12</code> both refer to the same NIC; the difference is the transport.</p>
+<h3 id="filtering">Filtering</h3>
+<p>Narrow the output by provider (<code>-p</code>) and/or node address (<code>-n</code>):</p>
+<div class="highlight"><pre><span></span><code>mxl-fabrics-info<span class="w"> </span>-p<span class="w"> </span>tcp<span class="w"> </span>-n<span class="w"> </span>::1
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>interface tcp-0 node ::1 dev lo
+</code></pre></div>
+<p>Use <code>-v</code> for additional detail about each interface.</p>
+<h2 id="3-providers">3. Providers</h2>
+<p>The library supports several providers. Each provider targets different hardware and connection characteristics:</p>
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>Typical hardware</th>
+<th>Endpoint type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EFA</td>
+<td>AWS Elastic Fabric Adapter</td>
+<td>RDM (connectionless)</td>
+</tr>
+<tr>
+<td>Verbs</td>
+<td>RDMA NICs (ConnectX, etc.)</td>
+<td>MSG (connected)</td>
+</tr>
+<tr>
+<td>TCP</td>
+<td>Any network interface</td>
+<td>MSG (connected)</td>
+</tr>
+<tr>
+<td>SHM</td>
+<td>Local (same host)</td>
+<td>RDM (connectionless)</td>
+</tr>
+</tbody>
+</table>
+<p>All transfers use Remote Write, which lets the initiator write directly into the target's memory without involving the target CPU. The selected provider must support Remote Write (the <code>MXL_FABRICS_IFACE_CAP_REMOTE_WRITE</code> capability flag).</p>
+<p>The difference between connected (MSG) and connectionless (RDM) endpoints is abstracted by the library. The API and workflow are the same regardless of the underlying endpoint type, though there can be slight differences in behavior (for example, error reporting on a failed connection-oriented endpoint may differ from a connectionless one).</p>
+<p>The library itself does not select a provider or interface automatically. The caller queries the available interfaces with <code>mxlFabricsGetInterfaces()</code> and chooses which provider and node address to pass to the setup functions. The demo application (<code>mxl-fabrics-demo</code>) implements its own auto-selection heuristic on top of this query; see <a href="#55-interface-auto-selection-in-the-demo-tool">section 5.5</a> for details.</p>
+<h2 id="4-node-and-service-values">4. Node and service values</h2>
+<p>The terminology follows libfabric and the Linux Verbs API:</p>
 <ul>
-<li>A 2110-20 receiver media function can unroll the RTP timestamp of the first RTP packet of the frame and use it to compute the grain index write to. This index may be slightly in the past.</li>
-<li>A media function that generates grains locally (CG, Test Pattern Generator, etc) can simply use the current TAI time as a timestamp and convert it to a grain index.</li>
-<li>A well behaved writer media function should try to 'pace itself' according to the MXL host clock.  It should write to the ring buffer at a mostly constant rate and avoid writing chunks of media representing large amounts of time (i.e. multiple frames for video, multiple seconds of audio, etc)".  As a rule of thumb, it should not write more than 50% of the ring buffer duration in a burst.</li>
-<li>A well behaved writer media function will not create flows whose latency drift over time. An implementer can monitor a flow latency using the 'mxl-info' tool part of the SDK.  The flow latency should be low and mostly constant (minimal variation) over a long period of time (hours).</li>
+<li><strong>node</strong> — typically an IP address assigned to an interface. Use <code>mxl-fabrics-info</code> or <code>fi_info</code> (from libfabric) to discover available node addresses.</li>
+<li><strong>service</strong> — for TCP and RoCEv2 this is the port number. Some providers (like EFA) ignore it. The SHM provider concatenates node and service into a filename.</li>
 </ul>
-<h3 id="example-flow-readers-behaviors">Example Flow Readers behaviors</h3>
-<p>A media function consuming one or many flows may use multiple alignment strategies.</p>
-<ul>
-<li>If inter-flow alignment is not required it can simply consume the flows at their respective 'head' position.</li>
-<li>If alignment is required then a reading strategy could be to start reading at the lower grain index :</li>
-</ul>
-<div class="arithmatex">\[
-ReadIndex = min(F1_{head} ... FN_{head})
-\]</div>
-<h2 id="time-functions">Time functions</h2>
-<p>All time helpers operate on nanoseconds and rational time bases. Continuous flows typically pass the sample rate (<code>grainRate</code>) directly to these
-helpers when scheduling wake-ups or calculating how far to advance <code>headIndex</code>. Refer to <code>mxl/time.h</code> for the canonical API surface.</p>
+<p>In most cases, let the library choose a random service automatically. Only set it explicitly when you need a fixed, known port.</p>
+<h2 id="5-using-the-demo-application">5. Using the demo application</h2>
+<p><code>mxl-fabrics-demo</code> transfers video (discrete flow) or audio (continuous flow) data between two endpoints. Both target and initiator roles are in the same binary. By default it runs as a target; pass <code>-i</code> to run as an initiator.</p>
+<h3 id="51-command-line-options">5.1 Command line options</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-d &lt;path&gt;</code></td>
+<td>MXL domain directory (required).</td>
+</tr>
+<tr>
+<td><code>-f &lt;flow&gt;</code></td>
+<td>As target: path to a flow definition JSON file. As initiator: the source flow UUID.</td>
+</tr>
+<tr>
+<td><code>--flow-options &lt;path&gt;</code></td>
+<td>Optional flow options file (target only).</td>
+</tr>
+<tr>
+<td><code>-i</code></td>
+<td>Run as initiator. Without this flag, the tool runs as target.</td>
+</tr>
+<tr>
+<td><code>-p &lt;provider&gt;</code></td>
+<td>Use a specific provider (<code>tcp</code>, <code>verbs</code>, <code>efa</code>, <code>shm</code>). If omitted, the demo picks one automatically.</td>
+</tr>
+<tr>
+<td><code>-n &lt;address&gt;</code></td>
+<td>Bind to a specific node address. If omitted, the demo picks one automatically.</td>
+</tr>
+<tr>
+<td><code>-s &lt;service&gt;</code></td>
+<td>Service identifier (e.g. a port number).</td>
+</tr>
+<tr>
+<td><code>-t &lt;target-info&gt;</code></td>
+<td>Target info exchange (see below).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="52-target-info-exchange">5.2 Target info exchange</h3>
+<p>The target and initiator must exchange a <code>TargetInfo</code> object out of band. This object contains the target's fabric address, remote memory keys, and buffer addresses. The demo tool supports two exchange methods:</p>
+<p><strong>File-based</strong> (recommended for local testing): use the <code>@</code> prefix to read/write raw JSON.
+- Target side: <code>-t @/tmp/target.json</code> writes the target info to a file.
+- Initiator side: <code>-t @/tmp/target.json</code> reads the target info from that file.</p>
+<p><strong>Base64 string</strong>: without the <code>@</code> prefix, the target prints a base64-encoded string to stdout, and the initiator accepts the same string via <code>-t &lt;base64&gt;</code>.</p>
+<h3 id="53-target-setup">5.3 Target setup</h3>
+<ol>
+<li>Start the target with a flow definition, a domain directory, and optionally a specific provider and node address.</li>
+<li>The target prints or writes a <code>TargetInfo</code>. Share this with the initiator.</li>
+<li>The target waits for an initiator to connect and then receives grains or samples as they arrive.</li>
+</ol>
+<h3 id="54-initiator-setup">5.4 Initiator setup</h3>
+<ol>
+<li>Start the initiator with the source flow UUID, the same domain directory, and the target info obtained from the target.</li>
+<li>The initiator connects and begins transferring grains or samples.</li>
+</ol>
+<h3 id="55-interface-auto-selection-in-the-demo-tool">5.5 Interface auto-selection in the demo tool</h3>
+<p>When <code>-p</code> and <code>-n</code> are omitted, the demo application queries all available interfaces with <code>mxlFabricsGetInterfaces()</code> and picks the one whose provider has the highest priority:</p>
+<table>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Provider</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4 (highest)</td>
+<td>EFA</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Verbs</td>
+</tr>
+<tr>
+<td>2</td>
+<td>TCP</td>
+</tr>
+<tr>
+<td>1 (lowest)</td>
+<td>SHM</td>
+</tr>
+</tbody>
+</table>
+<p>This is a convenience built into the demo tool. The Fabrics library itself has no built-in provider preference; your application is responsible for choosing a provider and interface from the list returned by <code>mxlFabricsGetInterfaces()</code>.</p>
+<h2 id="6-examples">6. Examples</h2>
+<h3 id="61-local-tcp-transfer">6.1 Local TCP transfer</h3>
+<p>The simplest setup: both endpoints on the same machine using the TCP provider over loopback.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Terminal 1 — Target</span>
+mxl-fabrics-demo<span class="w"> </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span>-p<span class="w"> </span>tcp<span class="w"> </span>-n<span class="w"> </span>::1<span class="w"> </span>-s<span class="w"> </span><span class="m">1312</span><span class="w"> </span>-f<span class="w"> </span>flow.json<span class="w"> </span>-t<span class="w"> </span>@/tmp/target.json
+
+<span class="c1"># Terminal 2 — Initiator</span>
+mxl-fabrics-demo<span class="w"> </span>-i<span class="w"> </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span>-p<span class="w"> </span>tcp<span class="w"> </span>-n<span class="w"> </span>::1<span class="w"> </span>-f<span class="w"> </span>5fbec3b1-1b0f-417d-9059-8b94a47197ed<span class="w"> </span>-t<span class="w"> </span>@/tmp/target.json
+</code></pre></div>
+<h3 id="62-rdma-verbs-transfer">6.2 RDMA Verbs transfer</h3>
+<p>If there is only one Verbs interface on the system, the demo's auto-selection picks it up without any additional flags:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Terminal 1 — Target</span>
+mxl-fabrics-demo<span class="w"> </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span>-s<span class="w"> </span><span class="m">1312</span><span class="w"> </span>-f<span class="w"> </span>flow.json<span class="w"> </span>-t<span class="w"> </span>@/tmp/target.json
+
+<span class="c1"># Terminal 2 — Initiator</span>
+mxl-fabrics-demo<span class="w"> </span>-i<span class="w"> </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span>-f<span class="w"> </span>5fbec3b1-1b0f-417d-9059-8b94a47197ed<span class="w"> </span>-t<span class="w"> </span>@/tmp/target.json
+</code></pre></div>
+<p>On a host with multiple Verbs interfaces, use <code>-n &lt;address&gt;</code> to select the right one.</p>
+<h3 id="63-efa-transfer">6.3 EFA transfer</h3>
+<p>EFA has the highest priority in the demo's auto-selection and will be chosen when available. The service value is ignored by the EFA provider.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Terminal 1 — Target</span>
+mxl-fabrics-demo<span class="w"> </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span>-f<span class="w"> </span>flow.json<span class="w"> </span>-t<span class="w"> </span>@/tmp/target.json
+
+<span class="c1"># Terminal 2 — Initiator</span>
+mxl-fabrics-demo<span class="w"> </span>-i<span class="w"> </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span>-f<span class="w"> </span>5fbec3b1-1b0f-417d-9059-8b94a47197ed<span class="w"> </span>-t<span class="w"> </span>@/tmp/target.json
+</code></pre></div>
+<h2 id="7-rocev2-qos-configuration">7. RoCEv2 QoS configuration</h2>
+<p>When using RDMA over Converged Ethernet (RoCEv2) with Mellanox/NVIDIA NICs and the MLNX_OFED driver, you may want to configure DSCP-based priority and enable Priority Flow Control (PFC). The examples below set DSCP 26, map it to priority 3, and enable PFC for that priority.</p>
+<p>In the commands below, <code>&lt;interface&gt;</code> is the Linux network interface (e.g. <code>ens16np0</code>) and <code>&lt;ib-interface&gt;</code> is the InfiniBand device (e.g. <code>mlx5_0</code>).</p>
+<p>Set the default traffic class for RDMA-CM based RoCE connections (tclass = DSCP * 4):</p>
+<div class="highlight"><pre><span></span><code>cma_roce_tos<span class="w"> </span>-d<span class="w"> </span>&lt;ib-interface&gt;<span class="w"> </span>-t<span class="w"> </span><span class="m">104</span>
+</code></pre></div>
+<p>Enable DSCP-based QoS trust on the interface:</p>
+<div class="highlight"><pre><span></span><code>mlnx_qos<span class="w"> </span>-i<span class="w"> </span>&lt;interface&gt;<span class="w"> </span>--trust-dscp
+</code></pre></div>
+<p>Map DSCP 26 to priority 3:</p>
+<div class="highlight"><pre><span></span><code>mlnx_qos<span class="w"> </span>-i<span class="w"> </span>&lt;interface&gt;<span class="w"> </span>--dscp2prio<span class="w"> </span>set,26,3
+</code></pre></div>
+<p>Enable PFC on priority 3 only:</p>
+<div class="highlight"><pre><span></span><code>mlnx_qos<span class="w"> </span>-i<span class="w"> </span>&lt;interface&gt;<span class="w"> </span>--pfc<span class="w"> </span><span class="m">0</span>,0,0,1,0,0,0,0
+</code></pre></div>
 
 
 
@@ -1019,7 +1314,7 @@ helpers when scheduling wake-ups or calculating how far to advance <code>headInd
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../FabricsGettingStarted/" class="md-footer__link md-footer__link--prev" aria-label="Previous: MXL Fabrics — Getting Started">
+          <a href="../Fabrics/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Fabrics">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
@@ -1029,20 +1324,20 @@ helpers when scheduling wake-ups or calculating how far to advance <code>headInd
                 Previous
               </span>
               <div class="md-ellipsis">
-                MXL Fabrics — Getting Started
+                Fabrics
               </div>
             </div>
           </a>
         
         
           
-          <a href="../Tools/" class="md-footer__link md-footer__link--next" aria-label="Next: Tools">
+          <a href="../Timing/" class="md-footer__link md-footer__link--next" aria-label="Next: Timing Model">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Tools
+                Timing Model
               </div>
             </div>
             <div class="md-footer__button md-icon">
