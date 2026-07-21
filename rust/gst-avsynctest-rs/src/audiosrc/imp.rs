@@ -364,9 +364,9 @@ impl BaseSrcImpl for AvSyncAudioTestSrc {
             .map_err(|_| gst::loggable_error!(CAT, "{}", LOCK_STATE))?
             .info = Some(info);
 
-        let _ = self
-            .obj()
-            .post_message(gst::message::Latency::builder().src(&*self.obj()).build());
+        self.obj()
+            .post_message(gst::message::Latency::builder().src(&*self.obj()).build())
+            .map_err(|_| gst::loggable_error!(CAT, "Failed to post latency message"))?;
 
         Ok(())
     }
