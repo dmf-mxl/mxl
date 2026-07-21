@@ -39,23 +39,31 @@ impl Default for Settings {
 
 pub(crate) struct State {
     pub instance: MxlInstance,
-    pub flow: Option<FlowConfigInfo>,
-    pub video: Option<VideoState>,
-    pub audio: Option<AudioState>,
-    pub data: Option<DataState>,
+    pub flow_config: Option<FlowConfigInfo>,
+    /// Writer state after `set_caps`; `None` between `start` and caps.
+    pub flow_state: Option<FlowState>,
 }
 
-pub(crate) struct VideoState {
+/// Mutually exclusive writer kinds for a single MXL flow.
+pub(crate) enum FlowState {
+    Discrete(DiscreteState),
+    Continuous(ContinuousState),
+}
+
+#[derive(Clone, Copy)]
+pub(crate) enum DiscreteFormat {
+    Video,
+    Data,
+}
+
+pub(crate) struct DiscreteState {
+    pub format: DiscreteFormat,
     pub writer: GrainWriter,
 }
 
-pub(crate) struct AudioState {
+pub(crate) struct ContinuousState {
     pub writer: SamplesWriter,
     pub flow_def: FlowDefAudio,
-}
-
-pub(crate) struct DataState {
-    pub writer: GrainWriter,
 }
 
 #[derive(Default)]
@@ -158,8 +166,11 @@ pub(crate) fn init_state_with_video(
     let writer = flow_writer
         .to_grain_writer()
         .map_err(|e| gst::loggable_error!(CAT, "Failed to create grain writer: {}", e))?;
-    state.video = Some(VideoState { writer });
-    state.flow = Some(flow);
+    state.flow_state = Some(FlowState::Discrete(DiscreteState {
+        format: DiscreteFormat::Video,
+        writer,
+    }));
+    state.flow_config = Some(flow);
 
     Ok(())
 }
@@ -219,11 +230,11 @@ pub(crate) fn init_state_with_audio(
     let writer = flow_writer
         .to_samples_writer()
         .map_err(|e| gst::loggable_error!(CAT, "Failed to create grain writer: {}", e))?;
-    state.audio = Some(AudioState {
+    state.flow_state = Some(FlowState::Continuous(ContinuousState {
         writer,
         flow_def: flow_def_details,
-    });
-    state.flow = Some(flow);
+    }));
+    state.flow_config = Some(flow);
 
     trace!(
         "Made it to the end of set_caps with format {}, channel_count {}, sample_rate {}, bit_depth {}",
@@ -282,8 +293,11 @@ pub(crate) fn init_state_with_data(
     let writer = flow_writer
         .to_grain_writer()
         .map_err(|e| gst::loggable_error!(CAT, "Failed to create grain writer: {}", e))?;
-    state.data = Some(DataState { writer });
-    state.flow = Some(flow);
+    state.flow_state = Some(FlowState::Discrete(DiscreteState {
+        format: DiscreteFormat::Data,
+        writer,
+    }));
+    state.flow_config = Some(flow);
 
     Ok(())
 }
