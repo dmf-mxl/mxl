@@ -24,8 +24,9 @@ pub(crate) fn data(
 
     let mxl_ts = gst_pts
         .nseconds()
-        .saturating_add(base_time.nseconds())
-        .saturating_add(offset);
+        .checked_add(base_time.nseconds())
+        .and_then(|timestamp| timestamp.checked_add(offset))
+        .ok_or(gst::FlowError::Error)?;
     trace!("DATA gst PTS: {:#?}", gst_pts);
     trace!("DATA mapped mxl timestamp: {:#?}", mxl_ts);
     let mxl_index = state
