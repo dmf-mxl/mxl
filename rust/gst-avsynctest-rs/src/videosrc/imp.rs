@@ -309,9 +309,12 @@ impl ObjectImpl for AvSyncVideoTestSrc {
     }
 
     fn property(&self, _id: usize, pspec: &glib::ParamSpec) -> glib::Value {
-        let Ok(settings) = self.settings.lock() else {
-            imp_failed!(self, LOCK_SETTINGS);
-            return glib::Value::from(&"");
+        let settings = match self.settings.lock() {
+            Ok(settings) => *settings,
+            Err(_) => {
+                imp_failed!(self, LOCK_SETTINGS);
+                Settings::default()
+            }
         };
 
         match pspec.name() {
@@ -322,7 +325,7 @@ impl ObjectImpl for AvSyncVideoTestSrc {
             "is-live" => settings.is_live.to_value(),
             _ => {
                 gst::error!(CAT, imp = self, "Unknown property {}", pspec.name());
-                glib::Value::from(&"")
+                pspec.default_value().clone()
             }
         }
     }
