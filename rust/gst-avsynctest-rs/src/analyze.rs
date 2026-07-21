@@ -38,17 +38,29 @@ pub fn bar_centroid(sample: &gst::Sample) -> Option<f64> {
     (count > 0.0).then_some(sum / count)
 }
 
+/// Buffer bytes that are not `f32`-aligned (wrong length or pointer alignment).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct MisalignedF32leBytes;
+
+impl std::fmt::Display for MisalignedF32leBytes {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("misaligned F32LE buffer")
+    }
+}
+
+impl std::error::Error for MisalignedF32leBytes {}
+
 /// Reinterpret an F32LE audio buffer's bytes as native `f32` samples (the host
-/// is little-endian). Panics if the buffer is not `f32`-aligned. Typically used
-/// to turn a recovered audio buffer into the `(time_ns, amplitude)` pairs
-/// [`detect_pips`] consumes.
-pub fn f32le_samples(bytes: &[u8]) -> &[f32] {
+/// is little-endian). Returns [`MisalignedF32leBytes`] if the buffer is not
+/// `f32`-aligned. Typically used to turn a recovered audio buffer into the
+/// `(time_ns, amplitude)` pairs [`detect_pips`] consumes.
+pub fn f32le_samples(bytes: &[u8]) -> Result<&[f32], MisalignedF32leBytes> {
     let (head, body, tail) = unsafe { bytes.align_to::<f32>() };
-    assert!(
-        head.is_empty() && tail.is_empty(),
-        "misaligned F32LE buffer"
-    );
-    body
+    if head.is_empty() && tail.is_empty() {
+        Ok(body)
+    } else {
+        Err(MisalignedF32leBytes)
+    }
 }
 
 /// Running-time centre of each tone pip from `(time_ns, amplitude)` samples. The

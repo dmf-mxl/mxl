@@ -102,7 +102,8 @@ fn audio_envelope(samples: &[gst::Sample]) -> Vec<(u64, f64)> {
         let buffer = sample.buffer().unwrap();
         let pts = buffer.pts().unwrap().nseconds();
         let map = buffer.map_readable().unwrap();
-        let samples_f32: &[f32] = gstavsynctest::analyze::f32le_samples(map.as_slice());
+        let samples_f32: &[f32] =
+            gstavsynctest::analyze::f32le_samples(map.as_slice()).expect("F32LE buffer aligned");
         for (i, &v) in samples_f32.iter().enumerate() {
             let t = pts + i as u64 * gst::ClockTime::SECOND.nseconds() / rate;
             out.push((t, v as f64));
