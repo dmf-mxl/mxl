@@ -434,9 +434,9 @@ impl BaseSrcImpl for AvSyncVideoTestSrc {
         state.info = Some(info);
         drop(state);
 
-        let _ = self
-            .obj()
-            .post_message(gst::message::Latency::builder().src(&*self.obj()).build());
+        self.obj()
+            .post_message(gst::message::Latency::builder().src(&*self.obj()).build())
+            .map_err(|_| gst::loggable_error!(CAT, "Failed to post latency message"))?;
 
         Ok(())
     }
@@ -579,10 +579,17 @@ impl PushSrcImpl for AvSyncVideoTestSrc {
 
         // Phase-locked CEA-708 CDP: a TICK/TOCK caption on each pip frame, a null
         // CDP otherwise (only when the frame rate is CDP-representable).
-        let cdp = state.cdp_framerate.map(|framerate| {
-            let text = captions::caption_for(pts, next_pts, settings.pip_interval);
-            state.caption_writer.next_cdp(framerate, n as u16, text)
-        });
+        let cdp = state
+            .cdp_framerate
+            .map(|framerate| {
+                let text = captions::caption_for(pts, next_pts, settings.pip_interval);
+                state.caption_writer.next_cdp(framerate, n as u16, text)
+            })
+            .transpose()
+            .map_err(|e| {
+                imp_failed!(self, e);
+                gst::FlowError::Error
+            })?;
 
         let mut buffer = gst::Buffer::with_size(info.size()).map_err(|_| {
             imp_failed!(self, "Failed to allocate video buffer");
