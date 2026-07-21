@@ -61,10 +61,6 @@ pub(crate) struct DataState {
 #[derive(Default)]
 pub(crate) struct Context {
     pub state: Option<State>,
-    /// Pipeline-wide clock offset `D`, shared with the pipeline's other MXL
-    /// elements so two sinks fed the same frame commit it at the same absolute
-    /// index (see [`crate::clock::SharedClockOffset`]).
-    pub shared_offset: Option<crate::clock::SharedClockOffset>,
 }
 
 pub(crate) fn init_state_with_video(
