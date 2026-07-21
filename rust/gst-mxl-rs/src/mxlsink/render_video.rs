@@ -23,8 +23,9 @@ pub(crate) fn video(
 
     let mxl_ts = gst_pts
         .nseconds()
-        .saturating_add(base_time.nseconds())
-        .saturating_add(offset);
+        .checked_add(base_time.nseconds())
+        .and_then(|timestamp| timestamp.checked_add(offset))
+        .ok_or(gst::FlowError::Error)?;
     trace!("VIDEO gst PTS: {:#?}", gst_pts);
     trace!("VIDEO mapped mxl timestamp: {:#?}", mxl_ts);
     let mxl_index = state

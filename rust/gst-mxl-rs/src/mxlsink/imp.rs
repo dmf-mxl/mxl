@@ -28,6 +28,7 @@ use std::sync::LazyLock;
 use std::sync::Mutex;
 use std::sync::MutexGuard;
 
+use crate::clock::ClockOffsetExt;
 use crate::mxlsink;
 use crate::mxlsink::state::Context;
 use crate::mxlsink::state::DEFAULT_DOMAIN;
@@ -231,7 +232,7 @@ impl ElementImpl for MxlSink {
 
     fn set_clock(&self, clock: Option<&gst::Clock>) -> bool {
         // Re-sample `D` against the newly selected clock.
-        if crate::clock::ClockOffsetExt::invalidate_clock_offset(self).is_err() {
+        if self.invalidate_clock_offset().is_err() {
             gst::element_imp_error!(
                 self,
                 gst::CoreError::Failed,
@@ -243,8 +244,14 @@ impl ElementImpl for MxlSink {
     }
 
     fn set_context(&self, context: &gst::Context) {
-        if let Some(cell) = crate::clock::clock_offset_from_context(context) {
-            crate::clock::ClockOffsetExt::store_clock_offset(self, cell);
+        if let Some(cell) = crate::clock::clock_offset_from_context(context)
+            && self.store_clock_offset(cell).is_err()
+        {
+            gst::element_imp_error!(
+                self,
+                gst::CoreError::Failed,
+                ["Internal clock offset error"]
+            );
         }
         self.parent_set_context(context);
     }
@@ -255,19 +262,37 @@ impl crate::clock::ClockOffsetExt for MxlSink {
         self.obj().clone().upcast()
     }
 
-    fn mxl_now(&self) -> Option<u64> {
-        let context = self.context.lock().ok()?;
-        Some(context.state.as_ref()?.instance.get_time())
+    fn mxl_now(&self) -> Result<Option<u64>, crate::clock::ClockOffsetError> {
+        let context = self
+            .context
+            .lock()
+            .map_err(|_| crate::clock::ClockOffsetError::Failed)?;
+        Ok(context
+            .state
+            .as_ref()
+            .map(|state| state.instance.get_time()))
     }
 
-    fn cached_clock_offset(&self) -> Option<crate::clock::SharedClockOffset> {
-        self.context.lock().ok()?.shared_offset.clone()
+    fn cached_clock_offset(
+        &self,
+    ) -> Result<Option<crate::clock::SharedClockOffset>, crate::clock::ClockOffsetError> {
+        let context = self
+            .context
+            .lock()
+            .map_err(|_| crate::clock::ClockOffsetError::Failed)?;
+        Ok(context.shared_offset.clone())
     }
 
-    fn store_clock_offset(&self, cell: crate::clock::SharedClockOffset) {
-        if let Ok(mut context) = self.context.lock() {
-            context.shared_offset = Some(cell);
-        }
+    fn store_clock_offset(
+        &self,
+        cell: crate::clock::SharedClockOffset,
+    ) -> Result<(), crate::clock::ClockOffsetError> {
+        let mut context = self
+            .context
+            .lock()
+            .map_err(|_| crate::clock::ClockOffsetError::Failed)?;
+        context.shared_offset = Some(cell);
+        Ok(())
     }
 }
 
@@ -279,7 +304,7 @@ impl BaseSinkImpl for MxlSink {
         // races: two sinks can each publish their own cell and sample `D`
         // microseconds apart, rounding the same PTS to indices one grain apart
         // and mispairing flows in st2038combiner.
-        crate::clock::ClockOffsetExt::ensure_clock_offset(self)
+        self.ensure_clock_offset()
             .map_err(|_| crate::clock::ClockOffsetError::Failed.into_error_message())?;
 
         let mut context = self.context.lock().map_err(|e| {
@@ -350,7 +375,7 @@ impl BaseSinkImpl for MxlSink {
         // Establish the pipeline-shared `D` before taking the context lock: the
         // handshake posts context messages that re-enter `set_context`, which
         // also locks the context.
-        let offset = match crate::clock::ClockOffsetExt::resolve_clock_offset(self) {
+        let offset = match self.resolve_clock_offset() {
             Ok(Some(offset)) => offset,
             Ok(None) => {
                 gst::element_imp_error!(

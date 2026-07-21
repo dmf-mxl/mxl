@@ -87,7 +87,8 @@ pub(crate) fn create_data(
         data_state.index = read_index + 1;
         return Ok(CreateState::NoDataCreated);
     };
-    let is_discont = jumped || slot_discont || std::mem::take(&mut data_state.next_discont);
+    let deferred_discont = std::mem::take(&mut data_state.next_discont);
+    let is_discont = jumped || slot_discont || deferred_discont;
 
     let st2038 = format::data::gst_st2038_from_mxl_smpte291_grain(grain_data.payload)
         .map_err(|_| gst::FlowError::Error)?;
