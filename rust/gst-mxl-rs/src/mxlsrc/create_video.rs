@@ -86,7 +86,8 @@ pub(crate) fn create_video(
         video_state.index = read_index + 1;
         return Ok(CreateState::NoDataCreated);
     };
-    let is_discont = jumped || slot_discont || std::mem::take(&mut video_state.next_discont);
+    let deferred_discont = std::mem::take(&mut video_state.next_discont);
+    let is_discont = jumped || slot_discont || deferred_discont;
 
     let mut buffer =
         gst::Buffer::with_size(grain_data.payload.len()).map_err(|_| gst::FlowError::Error)?;

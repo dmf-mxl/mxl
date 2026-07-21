@@ -26,6 +26,7 @@ use std::sync::LazyLock;
 use std::sync::Mutex;
 use std::time::Duration;
 
+use crate::clock::ClockOffsetExt;
 use crate::mxlsrc;
 use crate::mxlsrc::create_audio::create_audio;
 use crate::mxlsrc::create_data::create_data;
@@ -267,7 +268,7 @@ impl ElementImpl for MxlSrc {
 
     fn set_clock(&self, clock: Option<&gst::Clock>) -> bool {
         // Re-sample `D` against the newly selected clock.
-        if crate::clock::ClockOffsetExt::invalidate_clock_offset(self).is_err() {
+        if self.invalidate_clock_offset().is_err() {
             gst::element_imp_error!(
                 self,
                 gst::CoreError::Failed,
@@ -279,8 +280,14 @@ impl ElementImpl for MxlSrc {
     }
 
     fn set_context(&self, context: &gst::Context) {
-        if let Some(cell) = crate::clock::clock_offset_from_context(context) {
-            crate::clock::ClockOffsetExt::store_clock_offset(self, cell);
+        if let Some(cell) = crate::clock::clock_offset_from_context(context)
+            && self.store_clock_offset(cell).is_err()
+        {
+            gst::element_imp_error!(
+                self,
+                gst::CoreError::Failed,
+                ["Internal clock offset error"]
+            );
         }
         self.parent_set_context(context);
     }
@@ -291,23 +298,38 @@ impl crate::clock::ClockOffsetExt for MxlSrc {
         self.obj().clone().upcast()
     }
 
-    fn mxl_now(&self) -> Option<u64> {
-        let context = self.context.lock().ok()?;
+    fn mxl_now(&self) -> Result<Option<u64>, crate::clock::ClockOffsetError> {
+        let context = self
+            .context
+            .lock()
+            .map_err(|_| crate::clock::ClockOffsetError::Failed)?;
         let instance = context
             .instance
             .as_ref()
-            .or(context.state.as_ref().map(|s| &s.instance))?;
-        Some(instance.get_time())
+            .or(context.state.as_ref().map(|s| &s.instance));
+        Ok(instance.map(|instance| instance.get_time()))
     }
 
-    fn cached_clock_offset(&self) -> Option<crate::clock::SharedClockOffset> {
-        self.context.lock().ok()?.shared_offset.clone()
+    fn cached_clock_offset(
+        &self,
+    ) -> Result<Option<crate::clock::SharedClockOffset>, crate::clock::ClockOffsetError> {
+        let context = self
+            .context
+            .lock()
+            .map_err(|_| crate::clock::ClockOffsetError::Failed)?;
+        Ok(context.shared_offset.clone())
     }
 
-    fn store_clock_offset(&self, cell: crate::clock::SharedClockOffset) {
-        if let Ok(mut context) = self.context.lock() {
-            context.shared_offset = Some(cell);
-        }
+    fn store_clock_offset(
+        &self,
+        cell: crate::clock::SharedClockOffset,
+    ) -> Result<(), crate::clock::ClockOffsetError> {
+        let mut context = self
+            .context
+            .lock()
+            .map_err(|_| crate::clock::ClockOffsetError::Failed)?;
+        context.shared_offset = Some(cell);
+        Ok(())
     }
 }
 
@@ -503,7 +525,7 @@ impl BaseSrcImpl for MxlSrc {
         // READY->PAUSED state change, so both mxlsrcs deterministically share
         // one `D` (see clock.rs) and expose an identical PTS for a given
         // absolute index. Establishing it lazily on the first buffer races.
-        crate::clock::ClockOffsetExt::ensure_clock_offset(self)
+        self.ensure_clock_offset()
             .map_err(|_| crate::clock::ClockOffsetError::Failed.into_error_message())?;
 
         self.unlock_stop()?;
@@ -576,7 +598,7 @@ impl PushSrcImpl for MxlSrc {
             // Establish the pipeline-shared `D` before `try_create` takes the
             // context lock (the handshake re-enters `set_context`, which also
             // locks it). `None` means no clock yet: wait like NoDataCreated.
-            let offset = match crate::clock::ClockOffsetExt::resolve_clock_offset(self) {
+            let offset = match self.resolve_clock_offset() {
                 Ok(Some(offset)) => offset,
                 Ok(None) => {
                     if mxl_helper::is_flushing(self) {

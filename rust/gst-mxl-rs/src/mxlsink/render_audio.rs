@@ -42,8 +42,9 @@ pub(crate) fn audio(
     // consecutive chunks map to consecutive sample indices.
     let mut base_mxl_ts = gst_pts
         .nseconds()
-        .saturating_add(base_time.nseconds())
-        .saturating_add(offset);
+        .checked_add(base_time.nseconds())
+        .and_then(|timestamp| timestamp.checked_add(offset))
+        .ok_or(gst::FlowError::Error)?;
 
     while remaining > 0 {
         let chunk_mxl_ts = base_mxl_ts;
@@ -59,7 +60,11 @@ pub(crate) fn audio(
         let chunk_duration_ns =
             (chunk_samples as u128 * sample_rate.denominator as u128 * 1_000_000_000u128)
                 / sample_rate.numerator as u128;
-        base_mxl_ts += chunk_duration_ns as u64;
+        let chunk_duration_ns =
+            u64::try_from(chunk_duration_ns).map_err(|_| gst::FlowError::Error)?;
+        base_mxl_ts = base_mxl_ts
+            .checked_add(chunk_duration_ns)
+            .ok_or(gst::FlowError::Error)?;
         trace!(
             "AUDIO chunk with samples {:#?} with MXL ts: {:#?}",
             chunk_samples, chunk_mxl_ts
@@ -98,9 +103,13 @@ fn commit_chunk(
     // `open_samples(end, count)` writes the `count` samples at absolute indices
     // `[end - count, end)` (last written is `end - 1`). `index` is this chunk's
     // first sample, so pass `index + chunk_samples` as the end.
+    let chunk_samples_u64 = u64::try_from(chunk_samples).map_err(|_| gst::FlowError::Error)?;
+    let end = index
+        .checked_add(chunk_samples_u64)
+        .ok_or(gst::FlowError::Error)?;
     let mut access = audio_state
         .writer
-        .open_samples(index + chunk_samples as u64, chunk_samples)
+        .open_samples(end, chunk_samples)
         .map_err(|_| gst::FlowError::Error)?;
     write_samples_per_channel(
         bytes_per_sample,
