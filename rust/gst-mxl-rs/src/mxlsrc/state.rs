@@ -44,12 +44,24 @@ impl Settings {
 
 pub struct State {
     pub instance: MxlInstance,
-    pub video: Option<VideoState>,
-    pub audio: Option<AudioState>,
-    pub data: Option<DataState>,
+    /// Reader state after attach; `None` until the flow is ready.
+    pub flow_state: Option<FlowState>,
 }
 
-pub struct VideoState {
+/// Mutually exclusive reader kinds for a single MXL flow.
+pub enum FlowState {
+    Discrete(DiscreteState),
+    Continuous(ContinuousState),
+}
+
+#[derive(Clone, Copy)]
+pub enum DiscreteFormat {
+    Video,
+    Data,
+}
+
+pub struct DiscreteState {
+    pub format: DiscreteFormat,
     pub grain_rate: Rational,
     /// Next absolute MXL grain index to read.
     pub index: u64,
@@ -58,21 +70,12 @@ pub struct VideoState {
     pub grain_reader: GrainReader,
 }
 
-pub struct AudioState {
+pub struct ContinuousState {
     pub reader: FlowReader,
     pub samples_reader: SamplesReader,
     pub is_initialized: bool,
     pub index: u64,
     pub next_discont: bool,
-}
-
-pub struct DataState {
-    pub grain_rate: Rational,
-    /// Next absolute MXL grain index to read.
-    pub index: u64,
-    pub is_initialized: bool,
-    pub next_discont: bool,
-    pub grain_reader: GrainReader,
 }
 
 #[derive(Default)]

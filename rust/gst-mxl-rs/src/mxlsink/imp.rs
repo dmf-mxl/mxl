@@ -33,12 +33,13 @@ use crate::mxlsink;
 use crate::mxlsink::state::Context;
 use crate::mxlsink::state::DEFAULT_DOMAIN;
 use crate::mxlsink::state::DEFAULT_FLOW_ID;
+use crate::mxlsink::state::FlowState;
 use crate::mxlsink::state::Settings;
 use crate::mxlsink::state::State;
 use crate::mxlsink::state::init_state_with_audio;
 use crate::mxlsink::state::init_state_with_data;
 use crate::mxlsink::state::init_state_with_video;
-use crate::mxlsink::{render_audio, render_data, render_video};
+use crate::mxlsink::{render_continuous, render_discrete};
 
 pub(crate) static CAT: LazyLock<gst::DebugCategory> = LazyLock::new(|| {
     gst::DebugCategory::new("mxlsink", gst::DebugColorFlags::empty(), Some("MXL Sink"))
@@ -280,10 +281,8 @@ impl BaseSinkImpl for MxlSink {
         let instance = init_mxl_instance(&settings)?;
         context.state = Some(State {
             instance,
-            flow: None,
-            video: None,
-            audio: None,
-            data: None,
+            flow_config: None,
+            flow_state: None,
         });
 
         Ok(())
@@ -300,29 +299,24 @@ impl BaseSinkImpl for MxlSink {
         // Destroy the flow writers before dropping the MXL instance they belong
         // to, then release the instance and clock.
         if let Some(mut state) = context.state.take() {
-            if let Some(video) = state.video.take() {
-                video.writer.destroy().map_err(|e| {
-                    gst::error_msg!(
-                        gst::CoreError::Failed,
-                        ["Failed to destroy video writer: {}", e]
-                    )
-                })?;
-            }
-            if let Some(audio) = state.audio.take() {
-                audio.writer.destroy().map_err(|e| {
-                    gst::error_msg!(
-                        gst::CoreError::Failed,
-                        ["Failed to destroy audio writer: {}", e]
-                    )
-                })?;
-            }
-            if let Some(data) = state.data.take() {
-                data.writer.destroy().map_err(|e| {
-                    gst::error_msg!(
-                        gst::CoreError::Failed,
-                        ["Failed to destroy data writer: {}", e]
-                    )
-                })?;
+            match state.flow_state.take() {
+                Some(FlowState::Discrete(discrete)) => {
+                    discrete.writer.destroy().map_err(|e| {
+                        gst::error_msg!(
+                            gst::CoreError::Failed,
+                            ["Failed to destroy discrete writer: {}", e]
+                        )
+                    })?;
+                }
+                Some(FlowState::Continuous(continuous)) => {
+                    continuous.writer.destroy().map_err(|e| {
+                        gst::error_msg!(
+                            gst::CoreError::Failed,
+                            ["Failed to destroy continuous writer: {}", e]
+                        )
+                    })?;
+                }
+                None => {}
             }
         }
 
@@ -362,14 +356,14 @@ impl BaseSinkImpl for MxlSink {
         // strong ref (which would form a refcount cycle).
         let element = self.obj();
         let element: &gst::Element = element.upcast_ref();
-        if state.video.is_some() {
-            render_video::video(state, element, buffer, offset)
-        } else if state.audio.is_some() {
-            render_audio::audio(state, element, buffer, offset)
-        } else if state.data.is_some() {
-            render_data::data(state, element, buffer, offset)
-        } else {
-            Err(gst::FlowError::Error)
+        match &state.flow_state {
+            Some(FlowState::Discrete(_)) => {
+                render_discrete::discrete(state, element, buffer, offset)
+            }
+            Some(FlowState::Continuous(_)) => {
+                render_continuous::continuous(state, element, buffer, offset)
+            }
+            None => Err(gst::FlowError::Error),
         }
     }
 

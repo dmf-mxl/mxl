@@ -17,9 +17,8 @@ use gstreamer as gst;
 use gstreamer_base as gst_base;
 
 mod imp;
-mod render_audio;
-mod render_data;
-mod render_video;
+mod render_continuous;
+mod render_discrete;
 mod sink_tests;
 mod state;
 

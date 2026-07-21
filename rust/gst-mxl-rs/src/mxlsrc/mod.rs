@@ -16,9 +16,8 @@ use gst::prelude::*;
 use gstreamer as gst;
 use gstreamer_base as gst_base;
 
-mod create_audio;
-mod create_data;
-mod create_video;
+mod create_continuous;
+mod create_discrete;
 mod imp;
 mod mxl_helper;
 mod src_tests;
