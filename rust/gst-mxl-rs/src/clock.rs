@@ -14,6 +14,7 @@
 
 use gst::glib;
 use gst::prelude::*;
+use gst::subclass::prelude::*;
 use gstreamer as gst;
 
 use std::sync::Arc;
@@ -113,15 +114,60 @@ pub(crate) fn clock_offset_from_context(context: &gst::Context) -> Option<Shared
 /// Implemented by `mxlsrc`/`mxlsink` so they share one [`SharedClockOffset`]
 /// through [`CLOCK_OFFSET_CONTEXT`]. Only the small accessors are per-element;
 /// the handshake and sampling are provided here so both sides behave identically.
-pub(crate) trait ClockOffsetExt {
+pub(crate) trait ClockOffsetExt: ElementImpl {
     /// The wrapped element (for its clock and for posting context messages).
-    fn element(&self) -> gst::Element;
+    fn element(&self) -> gst::Element {
+        self.obj().clone().upcast()
+    }
+
     /// Current MXL time, or `None` before the instance exists.
     fn mxl_now(&self) -> Result<Option<u64>, ClockOffsetError>;
+    /// Storage for the shared offset cell adopted by this element.
+    fn shared_clock_offset(&self) -> &Mutex<Option<SharedClockOffset>>;
+
     /// The shared offset cell already adopted by this element, if any.
-    fn cached_clock_offset(&self) -> Result<Option<SharedClockOffset>, ClockOffsetError>;
+    fn cached_clock_offset(&self) -> Result<Option<SharedClockOffset>, ClockOffsetError> {
+        self.shared_clock_offset()
+            .lock()
+            .map(|cell| cell.clone())
+            .map_err(|_| ClockOffsetError::Failed)
+    }
+
     /// Adopt `cell` as this element's shared offset.
-    fn store_clock_offset(&self, cell: SharedClockOffset) -> Result<(), ClockOffsetError>;
+    fn store_clock_offset(&self, cell: SharedClockOffset) -> Result<(), ClockOffsetError> {
+        *self
+            .shared_clock_offset()
+            .lock()
+            .map_err(|_| ClockOffsetError::Failed)? = Some(cell);
+        Ok(())
+    }
+
+    /// Invalidate the sampled offset before delegating a clock change.
+    fn handle_set_clock(&self, clock: Option<&gst::Clock>) -> bool {
+        if self.invalidate_clock_offset().is_err() {
+            gst::element_imp_error!(
+                self,
+                gst::CoreError::Failed,
+                ["Internal clock offset error"]
+            );
+            return false;
+        }
+        self.parent_set_clock(clock)
+    }
+
+    /// Adopt a shared offset from an MXL context, then delegate the context.
+    fn handle_set_context(&self, context: &gst::Context) {
+        if let Some(cell) = clock_offset_from_context(context)
+            && self.store_clock_offset(cell).is_err()
+        {
+            gst::element_imp_error!(
+                self,
+                gst::CoreError::Failed,
+                ["Internal clock offset error"]
+            );
+        }
+        self.parent_set_context(context);
+    }
 
     /// Return this pipeline's shared offset cell, adopting a sibling's via the
     /// context handshake or, failing that, creating and publishing our own.
