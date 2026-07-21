@@ -146,7 +146,8 @@ fn drain_audio(sink: &gst_app::AppSink, done: &std::sync::atomic::AtomicBool) ->
         let base = rt.nseconds();
         let buffer = sample.buffer().expect("audio buffer");
         let map = buffer.map_readable().expect("audio readable");
-        let body = gstavsynctest::analyze::f32le_samples(map.as_slice());
+        let body =
+            gstavsynctest::analyze::f32le_samples(map.as_slice()).expect("F32LE buffer aligned");
         for (i, &v) in body.iter().enumerate() {
             let t = base + i as u64 * gst::ClockTime::SECOND.nseconds() / RATE as u64;
             out.push((t, v));
