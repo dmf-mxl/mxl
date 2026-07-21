@@ -1,0 +1,1641 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Media eXchange Layer">
+      
+      
+        <meta name="author" content="The MXL Project">
+      
+      
+      
+        <link rel="prev" href="../Fabrics/">
+      
+      
+        <link rel="next" href="../FabricsGettingStarted/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.51">
+    
+    
+      
+        <title>Fabrics Developer Guide - MXL</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../assets/stylesheets/modern/main.62c9b9cc.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../assets/stylesheets/modern/palette.dfe2e883.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#fabrics-developer-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="./.." title="MXL" class="md-header__button md-logo" aria-label="MXL" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 7v14M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MXL
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Fabrics Developer Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="none" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="none" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/dmf-mxl/mxl" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dmf-mxl/mxl
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="./.." title="MXL" class="md-nav__button md-logo" aria-label="MXL" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 7v14M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>
+
+    </a>
+    MXL
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dmf-mxl/mxl" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dmf-mxl/mxl
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  MXL : Media eXchange Layer
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API%20Reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API Reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Addressability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  MXL Addressability
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Architecture
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Building/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Building
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Configuration
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Fabrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Fabrics
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Fabrics Developer Guide
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Fabrics Developer Guide
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#building" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Building
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#linking" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Linking
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-an-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Creating an instance
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interfaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Interfaces
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Interfaces">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Providers
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capabilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Capabilities
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maximum-message-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Maximum message size
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Compatibility
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setting-up-a-target" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Setting up a target
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Setting up a target">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#serializing-the-targetinfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Serializing the TargetInfo
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setting-up-an-initiator" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Setting up an initiator
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Progress
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#moving-media" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Moving media
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Moving media">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#transferring-discrete-flows-grains" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Transferring discrete flows (grains)
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Transferring discrete flows (grains)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#initiator-side" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Initiator side
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#target-side" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Target side
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transferring-continuous-flows-samples" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Transferring continuous flows (samples)
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Transferring continuous flows (samples)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#initiator-side_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Initiator side
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#target-side_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Target side
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#demo-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Demo application
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#teardown" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Teardown
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FabricsGettingStarted/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  MXL Fabrics — Getting Started
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Timing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Timing Model
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Tools
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#building" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Building
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#linking" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Linking
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-an-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Creating an instance
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interfaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Interfaces
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Interfaces">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Providers
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capabilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Capabilities
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maximum-message-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Maximum message size
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Compatibility
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setting-up-a-target" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Setting up a target
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Setting up a target">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#serializing-the-targetinfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Serializing the TargetInfo
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setting-up-an-initiator" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Setting up an initiator
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#progress" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Progress
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#moving-media" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Moving media
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Moving media">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#transferring-discrete-flows-grains" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Transferring discrete flows (grains)
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Transferring discrete flows (grains)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#initiator-side" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Initiator side
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#target-side" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Target side
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transferring-continuous-flows-samples" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Transferring continuous flows (samples)
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Transferring continuous flows (samples)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#initiator-side_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Initiator side
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#target-side_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Target side
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#demo-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Demo application
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#teardown" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Teardown
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<!-- SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project. -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
+
+<h1 id="fabrics-developer-guide">Fabrics Developer Guide</h1>
+<p>This guide covers the <code>mxl-fabrics</code> C API for transferring MXL flows between hosts over network fabrics (RDMA, TCP, EFA, shared memory). It assumes familiarity with the MXL Flow API (<code>mxl/flow.h</code>) and basic flow reader/writer usage as described in <a href=".././Usage/">Usage</a>. For the internal design and implementation details see <a href=".././Fabrics/">Fabrics</a>.</p>
+<p>All definitions referenced here are in <code>mxl/fabrics.h</code>.</p>
+<h2 id="building">Building</h2>
+<p>Build the CMake project with <code>MXL_ENABLE_FABRICS_OFI=ON</code>:</p>
+<div class="highlight"><pre><span></span><code>cmake<span class="w"> </span>--preset<span class="w"> </span>Linux-GCC-Debug<span class="w"> </span>-DMXL_ENABLE_FABRICS_OFI<span class="o">=</span>ON<span class="w"> </span>.
+</code></pre></div>
+<p>This builds <code>libmxl-fabrics.so</code> and the installed CMake configuration will export and additional target: <code>mxl::mxl-fabrics</code>.</p>
+<h2 id="linking">Linking</h2>
+<p>With CMake:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">find_package</span><span class="p">(</span><span class="s">mxl</span><span class="w"> </span><span class="s">REQUIRED</span><span class="w"> </span><span class="s">CONFIG</span><span class="p">)</span>
+
+<span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">my-app</span><span class="w"> </span><span class="s">PUBLIC</span><span class="w"> </span><span class="s">mxl::mxl</span><span class="w"> </span><span class="s">mxl::mxl-fabrics</span><span class="p">)</span>
+</code></pre></div>
+<p>With pkg-config:</p>
+<div class="highlight"><pre><span></span><code>pkg-config<span class="w"> </span>--libs<span class="w"> </span>--cflags<span class="w"> </span>libmxl-fabrics
+</code></pre></div>
+<h2 id="creating-an-instance">Creating an instance</h2>
+<p>Wrap an existing <code>mxlInstance</code> for use with <code>mxl-fabrics</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;mxl/mxl.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;mxl/fabrics.h&gt;</span>
+
+<span class="n">mxlInstance</span><span class="w"> </span><span class="n">instance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mxlCreateInstance</span><span class="p">(</span><span class="s">&quot;/dev/shm/mxl&quot;</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">);</span>
+
+<span class="n">mxlFabricsInstance</span><span class="w"> </span><span class="n">fabricsInstance</span><span class="p">;</span>
+<span class="n">mxlStatus</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mxlFabricsCreateInstance</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">fabricsInstance</span><span class="p">);</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">status</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">MXL_STATUS_OK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// handle error</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The <code>mxlFabricsInstance</code> holds resources shared across all targets and initiators. The <code>mxlInstance</code> it wraps must remain valid for the lifetime of the <code>mxlFabricsInstance</code>.</p>
+<h2 id="interfaces">Interfaces</h2>
+<p>Enumerate available network interfaces and their capabilities with <code>mxlFabricsGetInterfaces()</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="n">mxlFabricsInterfaceList</span><span class="o">*</span><span class="w"> </span><span class="n">list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
+<span class="n">mxlFabricsGetInterfaces</span><span class="p">(</span><span class="n">fabricsInstance</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">list</span><span class="p">);</span>
+
+<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">mxlFabricsInterfaceList</span><span class="o">*</span><span class="w"> </span><span class="n">entry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">list</span><span class="p">;</span><span class="w"> </span><span class="n">entry</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span><span class="w"> </span><span class="n">entry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">entry</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">mxlFabricsInterfaceConfig</span><span class="w"> </span><span class="k">const</span><span class="o">*</span><span class="w"> </span><span class="n">iface</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">entry</span><span class="o">-&gt;</span><span class="n">interface</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">// inspect iface-&gt;provider, iface-&gt;address, iface-&gt;caps</span>
+<span class="p">}</span>
+
+<span class="n">mxlFabricsFreeInterfaceList</span><span class="p">(</span><span class="n">list</span><span class="p">);</span>
+</code></pre></div>
+<p>Pass an <code>mxlFabricsInterfaceConfig</code> as the query parameter to filter by provider or address. Setting <code>provider</code> to <code>MXL_FABRICS_PROVIDER_ANY</code> or passing <code>NULL</code> returns all interfaces.</p>
+<p>Each returned entry represents a single combination of physical interface, address and provider. The same physical interface may appear multiple times if it is reachable through multiple providers or has multiple addresses assigned.</p>
+<h3 id="providers">Providers</h3>
+<table>
+<thead>
+<tr>
+<th>Enum value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MXL_FABRICS_PROVIDER_TCP</code></td>
+<td>Linux TCP sockets. Available everywhere, no special hardware required.</td>
+</tr>
+<tr>
+<td><code>MXL_FABRICS_PROVIDER_VERBS</code></td>
+<td>Userspace verbs (libibverbs) with librdmacm for connection management. Requires RDMA-capable hardware (e.g. Mellanox ConnectX).</td>
+</tr>
+<tr>
+<td><code>MXL_FABRICS_PROVIDER_EFA</code></td>
+<td>AWS Elastic Fabric Adapter. Available on supported EC2 instance types.</td>
+</tr>
+<tr>
+<td><code>MXL_FABRICS_PROVIDER_SHM</code></td>
+<td>Shared memory. For transfers between processes on the same host.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="capabilities">Capabilities</h3>
+<p>The <code>caps.flags</code> field is a bitmask of <code>mxlFabricsInterfaceCapFlags</code> values:</p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MXL_FABRICS_IFACE_CAP_REMOTE_WRITE</code></td>
+<td>The interface supports remote write (RDMA) operations. This is the preferred transfer mode: the initiator writes directly into the target's memory without involvement from the target side. (For continuous flows, on the target side there is still a copy operation from a temporary buffer into the correct memory locations in the ring buffer.</td>
+</tr>
+<tr>
+<td><code>MXL_FABRICS_IFACE_CAP_SEND_RECEIVE</code></td>
+<td>The interface supports send/receive message operations. Used as a fallback when remote write is unavailable. Requires a bounce buffer and an extra memory copy on the target side.</td>
+</tr>
+<tr>
+<td><code>MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS</code></td>
+<td>The interface supports blocking wait operations (<code>mxlFabricsTargetReadGrain()</code>, <code>mxlFabricsInitiatorMakeProgressBlocking()</code>).</td>
+</tr>
+</tbody>
+</table>
+<p>When these flags are returned by <code>mxlFabricsGetInterfaces()</code>, they are informational: they describe what the interface supports. When passed to a setup function (through <code>mxlFabricsInterfaceConfig</code>), they express requirements. At least one of <code>REMOTE_WRITE</code> or <code>SEND_RECEIVE</code> must be set; if neither is set, <code>REMOTE_WRITE</code> is assumed.</p>
+<h3 id="maximum-message-size">Maximum message size</h3>
+<p>The <code>caps.maxMessageSize</code> field reports the maximum length of a single data transfer for the interface. For most providers this is large enough to fit a full uncompressed video frame. If it is not, grains must be transferred slice by slice.</p>
+<h3 id="compatibility">Compatibility</h3>
+<p>Both sides (target and initiator) must receive the same capabilities and maximum message size to be compatible. There is no internal negotiation. Typically you would serialize the selected <code>mxlFabricsInterfaceConfig</code> alongside the <code>mxlFabricsTargetInfo</code> and share both with the initiator through your out-of-band signalling channel.</p>
+<h2 id="setting-up-a-target">Setting up a target</h2>
+<p>A target is the logical receiver of media data. It wraps an existing flow writer.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// The flow writer must belong to the mxlInstance wrapped by fabricsInstance.</span>
+<span class="n">mxlFlowWriter</span><span class="w"> </span><span class="n">writer</span><span class="p">;</span>
+<span class="c1">// ... create writer with mxlCreateFlowWriter() ...</span>
+
+<span class="c1">// Pick an interface from the enumerated list.</span>
+<span class="n">mxlFabricsInterfaceConfig</span><span class="w"> </span><span class="n">ifaceConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">list</span><span class="o">-&gt;</span><span class="n">interface</span><span class="p">;</span>
+
+<span class="n">mxlFabricsTarget</span><span class="w"> </span><span class="n">target</span><span class="p">;</span>
+<span class="n">mxlFabricsCreateTarget</span><span class="p">(</span><span class="n">fabricsInstance</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">target</span><span class="p">);</span>
+
+<span class="n">mxlFabricsTargetConfig</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="p">.</span><span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MXL_FABRICS_API_VERSION</span><span class="p">,</span>
+<span class="w">    </span><span class="p">.</span><span class="n">interface</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ifaceConfig</span><span class="p">,</span>
+<span class="w">    </span><span class="p">.</span><span class="n">writer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">writer</span><span class="p">,</span>
+<span class="p">};</span>
+
+<span class="n">mxlFabricsTargetInfo</span><span class="w"> </span><span class="n">targetInfo</span><span class="p">;</span>
+<span class="n">mxlStatus</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mxlFabricsTargetSetup</span><span class="p">(</span><span class="n">target</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">config</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">targetInfo</span><span class="p">);</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">status</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">MXL_STATUS_OK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// handle error</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The <code>mxlFabricsTargetSetup()</code> function returns a <code>mxlFabricsTargetInfo</code> object that contains the target's fabric address, remote memory keys and buffer addresses. This object must be shared with the initiator through an out-of-band mechanism (file, network message, etc.).</p>
+<p>The <code>in_options</code> parameter accepts a JSON string. Currently the following option is recognized:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cqDepth</code></td>
+<td>number &gt;= 1</td>
+<td>Depth of the target's completion queue. Increase this for high-frame-rate or many-stream receivers. See <a href=".././Fabrics/">Fabrics - Receiving grains</a> for sizing guidance.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="serializing-the-targetinfo">Serializing the TargetInfo</h3>
+<p>Serialize to a string for transmission:</p>
+<div class="highlight"><pre><span></span><code><span class="kt">size_t</span><span class="w"> </span><span class="n">len</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="n">mxlFabricsTargetInfoToString</span><span class="p">(</span><span class="n">targetInfo</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">len</span><span class="p">);</span>
+
+<span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">str</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">malloc</span><span class="p">(</span><span class="n">len</span><span class="p">);</span>
+<span class="n">mxlFabricsTargetInfoToString</span><span class="p">(</span><span class="n">targetInfo</span><span class="p">,</span><span class="w"> </span><span class="n">str</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">len</span><span class="p">);</span>
+<span class="c1">// send &#39;str&#39; to the initiator</span>
+<span class="n">free</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+</code></pre></div>
+<p>On the initiator side, deserialize:</p>
+<div class="highlight"><pre><span></span><code><span class="n">mxlFabricsTargetInfo</span><span class="w"> </span><span class="n">remoteTargetInfo</span><span class="p">;</span>
+<span class="n">mxlFabricsTargetInfoFromString</span><span class="p">(</span><span class="n">receivedString</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">remoteTargetInfo</span><span class="p">);</span>
+</code></pre></div>
+<p>The serialization format is JSON. The format may change between library versions, but forward compatibility is maintained: an initiator built from an earlier version of <code>libmxl-fabrics</code> will understand a target info produced by a later version.</p>
+<p>The target info contains memory region addresses and an access key (the RDMA remote key). This key exists to prevent accidental writes to the wrong memory region and is not a security mechanism. Any process that can reach the target's network endpoint and knows the key can write to the registered memory. Do not rely on the target info for access protection. Media transfers are unencrypted. Restrict access to the fabric network itself using network ACLs, firewalls or similar infrastructure-level controls.</p>
+<h2 id="setting-up-an-initiator">Setting up an initiator</h2>
+<p>An initiator is the logical sender of media data. It wraps an existing flow reader.</p>
+<div class="highlight"><pre><span></span><code><span class="n">mxlFlowReader</span><span class="w"> </span><span class="n">reader</span><span class="p">;</span>
+<span class="c1">// ... create reader with mxlCreateFlowReader() ...</span>
+
+<span class="n">mxlFabricsInitiator</span><span class="w"> </span><span class="n">initiator</span><span class="p">;</span>
+<span class="n">mxlFabricsCreateInitiator</span><span class="p">(</span><span class="n">fabricsInstance</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">initiator</span><span class="p">);</span>
+
+<span class="n">mxlFabricsInitiatorConfig</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="p">.</span><span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MXL_FABRICS_API_VERSION</span><span class="p">,</span>
+<span class="w">    </span><span class="p">.</span><span class="n">interface</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ifaceConfig</span><span class="p">,</span>
+<span class="w">    </span><span class="p">.</span><span class="n">reader</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reader</span><span class="p">,</span>
+<span class="p">};</span>
+
+<span class="n">mxlFabricsInitiatorSetup</span><span class="p">(</span><span class="n">initiator</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">config</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">);</span>
+</code></pre></div>
+<p>Select an interface from <code>mxlFabricsGetInterfaces()</code> that is compatible with the target's interface (same provider, matching capabilities).</p>
+<p>After setup, connect to one or more targets by adding them:</p>
+<div class="highlight"><pre><span></span><code><span class="n">mxlFabricsInitiatorAddTarget</span><span class="p">(</span><span class="n">initiator</span><span class="p">,</span><span class="w"> </span><span class="n">remoteTargetInfo</span><span class="p">);</span>
+</code></pre></div>
+<p>This function is non-blocking. If the underlying provider requires additional connection setup, it happens during subsequent calls to <code>mxlFabricsInitiatorMakeProgress*()</code>. Wait for connection establishment to complete before starting transfers:</p>
+<div class="highlight"><pre><span></span><code><span class="n">mxlStatus</span><span class="w"> </span><span class="n">s</span><span class="p">;</span>
+<span class="k">do</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mxlFabricsInitiatorMakeProgressBlocking</span><span class="p">(</span><span class="n">initiator</span><span class="p">,</span><span class="w"> </span><span class="mi">250</span><span class="p">);</span>
+<span class="p">}</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">s</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MXL_ERR_NOT_READY</span><span class="p">);</span>
+
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">s</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">MXL_STATUS_OK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// connection failed</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>An initiator can be connected to multiple targets at the same time. Each call to <code>mxlFabricsInitiatorTransferGrain()</code> or <code>mxlFabricsInitiatorTransferSamples()</code> enqueues the transfer to all currently added targets. This allows one-to-many distribution from a single initiator without additional application logic.</p>
+<p>To disconnect from a target:</p>
+<div class="highlight"><pre><span></span><code><span class="n">mxlFabricsInitiatorRemoveTarget</span><span class="p">(</span><span class="n">initiator</span><span class="p">,</span><span class="w"> </span><span class="n">remoteTargetInfo</span><span class="p">);</span>
+</code></pre></div>
+<p>This is also non-blocking. The disconnection completes when <code>mxlFabricsInitiatorMakeProgress*()</code> stops returning <code>MXL_ERR_NOT_READY</code>. No new transfers will be queued to the removed target, but in-flight transfers may still complete during progress calls.</p>
+<h2 id="progress">Progress</h2>
+<p>Progress on media transfers, connection establishment and teardown is driven by polling:</p>
+<ul>
+<li>On the <strong>initiator</strong> side, call <code>mxlFabricsInitiatorMakeProgressNonBlocking()</code> or <code>mxlFabricsInitiatorMakeProgressBlocking()</code>.</li>
+<li>On the <strong>target</strong> side, call <code>mxlFabricsTargetReadGrainNonBlocking()</code> / <code>mxlFabricsTargetReadGrain()</code> or <code>mxlFabricsTargetReadSamplesNonBlocking()</code> / <code>mxlFabricsTargetReadSamples()</code>.</li>
+</ul>
+<p>These functions return <code>MXL_ERR_NOT_READY</code> when there is pending work that has not completed yet. They must be called regularly, because connection state transitions (connecting, connected, disconnecting) also happen during these calls.</p>
+<h2 id="moving-media">Moving media</h2>
+<p>The fabrics API does not access readers and writers directly. It replicates data between the underlying buffers. The application is still responsible for reading grains/samples on the initiator side and committing them on the target side using the regular flow API. On the target side, the remote initiator writes both the media payload and the grain/sample metadata directly into the local ring buffer, so <code>mxlFlowWriterOpenGrain</code> and <code>mxlFlowWriterOpenSamples</code> return the already-populated data and the application only needs to commit.</p>
+<h3 id="transferring-discrete-flows-grains">Transferring discrete flows (grains)</h3>
+<h4 id="initiator-side">Initiator side</h4>
+<p>Read a grain using the flow API, then enqueue it for transfer:</p>
+<div class="highlight"><pre><span></span><code><span class="n">mxlGrainInfo</span><span class="w"> </span><span class="n">grainInfo</span><span class="p">;</span>
+<span class="kt">uint8_t</span><span class="o">*</span><span class="w"> </span><span class="n">payload</span><span class="p">;</span>
+<span class="n">mxlStatus</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mxlFlowReaderGetGrain</span><span class="p">(</span><span class="n">reader</span><span class="p">,</span><span class="w"> </span><span class="n">grainIndex</span><span class="p">,</span><span class="w"> </span><span class="n">timeout</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">grainInfo</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">payload</span><span class="p">);</span>
+
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">s</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MXL_ERR_OUT_OF_RANGE_TOO_LATE</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// The reader fell behind and the grain was overwritten in the ring buffer.</span>
+<span class="w">    </span><span class="c1">// Skip ahead to the current index.</span>
+<span class="w">    </span><span class="n">grainIndex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mxlGetCurrentIndex</span><span class="p">(</span><span class="o">&amp;</span><span class="n">grainRate</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">// retry with the new index</span>
+<span class="p">}</span>
+
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">s</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MXL_ERR_OUT_OF_RANGE_TOO_EARLY</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// The grain has not been written yet. Retry the same index later.</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>When the grain is available, check whether it is marked as invalid. Invalid grains signal that the upstream writer had no valid data (e.g. it timed out waiting for input). Transfer only the grain header to avoid wasting bandwidth:</p>
+<div class="highlight"><pre><span></span><code><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">grainInfo</span><span class="p">.</span><span class="n">flags</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">MXL_GRAIN_FLAG_INVALID</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">mxlFabricsInitiatorTransferGrain</span><span class="p">(</span><span class="n">initiator</span><span class="p">,</span><span class="w"> </span><span class="n">grainIndex</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Transfer the full grain.</span>
+<span class="w">    </span><span class="n">mxlFabricsInitiatorTransferGrain</span><span class="p">(</span><span class="n">initiator</span><span class="p">,</span><span class="w"> </span><span class="n">grainIndex</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">grainInfo</span><span class="p">.</span><span class="n">totalSlices</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// Or transfer a slice range (startSlice inclusive, endSlice exclusive).</span>
+<span class="w">    </span><span class="n">mxlFabricsInitiatorTransferGrain</span><span class="p">(</span><span class="n">initiator</span><span class="p">,</span><span class="w"> </span><span class="n">grainIndex</span><span class="p">,</span><span class="w"> </span><span class="n">startSlice</span><span class="p">,</span><span class="w"> </span><span class="n">endSlice</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><code>mxlFabricsInitiatorTransferGrain()</code> is non-blocking. The transfer may start immediately, but is only guaranteed to have completed after <code>mxlFabricsInitiatorMakeProgress*()</code> stops returning <code>MXL_ERR_NOT_READY</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">mxlFabricsInitiatorMakeProgressNonBlocking</span><span class="p">(</span><span class="n">initiator</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MXL_ERR_NOT_READY</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// optionally do other work</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Or with the blocking variant:</p>
+<div class="highlight"><pre><span></span><code><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">mxlFabricsInitiatorMakeProgressBlocking</span><span class="p">(</span><span class="n">initiator</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MXL_ERR_NOT_READY</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// waited up to 100ms, still in progress</span>
+<span class="p">}</span>
+</code></pre></div>
+<h4 id="target-side">Target side</h4>
+<p>Poll for completed grain transfers:</p>
+<div class="highlight"><pre><span></span><code><span class="kt">uint64_t</span><span class="w"> </span><span class="n">grainIndex</span><span class="p">;</span>
+<span class="n">mxlStatus</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mxlFabricsTargetReadGrainNonBlocking</span><span class="p">(</span><span class="n">target</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">grainIndex</span><span class="p">);</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">s</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MXL_STATUS_OK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// The grain data and grain info were already written into the local ring buffer</span>
+<span class="w">    </span><span class="c1">// by the remote initiator. Open and commit to make it visible to local readers.</span>
+<span class="w">    </span><span class="n">mxlGrainInfo</span><span class="w"> </span><span class="n">info</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">uint8_t</span><span class="o">*</span><span class="w"> </span><span class="n">buffer</span><span class="p">;</span>
+<span class="w">    </span><span class="n">mxlFlowWriterOpenGrain</span><span class="p">(</span><span class="n">writer</span><span class="p">,</span><span class="w"> </span><span class="n">grainIndex</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">info</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">buffer</span><span class="p">);</span>
+<span class="w">    </span><span class="n">mxlFlowWriterCommitGrain</span><span class="p">(</span><span class="n">writer</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">info</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Or with the blocking variant:</p>
+<div class="highlight"><pre><span></span><code><span class="kt">uint64_t</span><span class="w"> </span><span class="n">grainIndex</span><span class="p">;</span>
+<span class="n">mxlStatus</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mxlFabricsTargetReadGrain</span><span class="p">(</span><span class="n">target</span><span class="p">,</span><span class="w"> </span><span class="mi">200</span><span class="w"> </span><span class="cm">/*ms*/</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">grainIndex</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="transferring-continuous-flows-samples">Transferring continuous flows (samples)</h3>
+<h4 id="initiator-side_1">Initiator side</h4>
+<p>Read samples using the flow API, then enqueue them for transfer:</p>
+<div class="highlight"><pre><span></span><code><span class="n">mxlWrappedMultiBufferSlice</span><span class="w"> </span><span class="n">slices</span><span class="p">;</span>
+<span class="n">mxlStatus</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mxlFlowReaderGetSamplesNonBlocking</span><span class="p">(</span><span class="n">reader</span><span class="p">,</span><span class="w"> </span><span class="n">headIndex</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">slices</span><span class="p">);</span>
+
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">s</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MXL_ERR_OUT_OF_RANGE_TOO_LATE</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// The reader fell behind. Skip ahead to the current head index.</span>
+<span class="w">    </span><span class="n">mxlFlowRuntimeInfo</span><span class="w"> </span><span class="n">runtime</span><span class="p">;</span>
+<span class="w">    </span><span class="n">mxlFlowReaderGetRuntimeInfo</span><span class="p">(</span><span class="n">reader</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">runtime</span><span class="p">);</span>
+<span class="w">    </span><span class="n">headIndex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">runtime</span><span class="p">.</span><span class="n">headIndex</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">// retry with the new index</span>
+<span class="p">}</span>
+
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">s</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MXL_ERR_OUT_OF_RANGE_TOO_EARLY</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// The samples have not been written yet. Retry the same index later.</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>When the samples are available, enqueue the transfer and wait for completion:</p>
+<div class="highlight"><pre><span></span><code><span class="n">mxlFabricsInitiatorTransferSamples</span><span class="p">(</span><span class="n">initiator</span><span class="p">,</span><span class="w"> </span><span class="n">headIndex</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">);</span>
+
+<span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">mxlFabricsInitiatorMakeProgressNonBlocking</span><span class="p">(</span><span class="n">initiator</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MXL_ERR_NOT_READY</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// wait for completion</span>
+<span class="p">}</span>
+
+<span class="n">headIndex</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">count</span><span class="p">;</span>
+</code></pre></div>
+<h4 id="target-side_1">Target side</h4>
+<p>Poll for completed sample transfers:</p>
+<div class="highlight"><pre><span></span><code><span class="kt">uint64_t</span><span class="w"> </span><span class="n">headIndex</span><span class="p">;</span>
+<span class="kt">size_t</span><span class="w"> </span><span class="n">count</span><span class="p">;</span>
+<span class="n">mxlStatus</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mxlFabricsTargetReadSamplesNonBlocking</span><span class="p">(</span><span class="n">target</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">headIndex</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">count</span><span class="p">);</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">s</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MXL_STATUS_OK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Samples are in the local ring buffer. Commit them through the flow API.</span>
+<span class="w">    </span><span class="n">mxlMutableWrappedMultiBufferSlice</span><span class="w"> </span><span class="n">scratch</span><span class="p">;</span>
+<span class="w">    </span><span class="n">mxlFlowWriterOpenSamples</span><span class="p">(</span><span class="n">writer</span><span class="p">,</span><span class="w"> </span><span class="n">headIndex</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">scratch</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">// scratch already contains the transferred data</span>
+<span class="w">    </span><span class="n">mxlFlowWriterCommitSamples</span><span class="p">(</span><span class="n">writer</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Or with the blocking variant:</p>
+<div class="highlight"><pre><span></span><code><span class="kt">uint64_t</span><span class="w"> </span><span class="n">headIndex</span><span class="p">;</span>
+<span class="kt">size_t</span><span class="w"> </span><span class="n">count</span><span class="p">;</span>
+<span class="n">mxlStatus</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mxlFabricsTargetReadSamples</span><span class="p">(</span><span class="n">target</span><span class="p">,</span><span class="w"> </span><span class="mi">200</span><span class="w"> </span><span class="cm">/*ms*/</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">headIndex</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">count</span><span class="p">);</span>
+</code></pre></div>
+<h2 id="demo-application">Demo application</h2>
+<p>The <code>tools/mxl-fabrics-demo/</code> directory contains a working command-line application that implements both a target and an initiator for discrete and continuous flows. It covers interface selection, target info exchange, error handling and graceful shutdown. Run it with <code>--help</code> for usage. A typical session:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Start a target (receiver):</span>
+./mxl-fabrics-demo<span class="w"> </span>-d<span class="w"> </span>/dev/shm/mxl<span class="w"> </span>-f<span class="w"> </span>flow.json<span class="w"> </span>--service<span class="w"> </span><span class="m">1234</span>
+
+<span class="c1"># The target prints a base64-encoded target info string to stdout.</span>
+<span class="c1"># Pass it to the initiator:</span>
+./mxl-fabrics-demo<span class="w"> </span>-i<span class="w"> </span>-d<span class="w"> </span>/dev/shm/mxl<span class="w"> </span>-f<span class="w"> </span>&lt;flow-uuid&gt;<span class="w"> </span>--service<span class="w"> </span><span class="m">1234</span><span class="w"> </span>--target-info<span class="w"> </span>&lt;base64-string&gt;
+</code></pre></div>
+<p>The demo selects the best available provider automatically (EFA &gt; Verbs &gt; TCP &gt; SHM). Use <code>--node</code> to bind to a specific address and <code>--provider</code> to force a specific provider.</p>
+<h2 id="teardown">Teardown</h2>
+<p>Destroy objects in reverse order of creation:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// 1. Disconnect targets from the initiator</span>
+<span class="n">mxlFabricsInitiatorRemoveTarget</span><span class="p">(</span><span class="n">initiator</span><span class="p">,</span><span class="w"> </span><span class="n">remoteTargetInfo</span><span class="p">);</span>
+<span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">mxlFabricsInitiatorMakeProgressNonBlocking</span><span class="p">(</span><span class="n">initiator</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MXL_ERR_NOT_READY</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+
+<span class="c1">// 2. Destroy initiators and targets</span>
+<span class="n">mxlFabricsDestroyInitiator</span><span class="p">(</span><span class="n">fabricsInstance</span><span class="p">,</span><span class="w"> </span><span class="n">initiator</span><span class="p">);</span>
+<span class="n">mxlFabricsDestroyTarget</span><span class="p">(</span><span class="n">fabricsInstance</span><span class="p">,</span><span class="w"> </span><span class="n">target</span><span class="p">);</span>
+
+<span class="c1">// 3. Free target info objects</span>
+<span class="n">mxlFabricsFreeTargetInfo</span><span class="p">(</span><span class="n">targetInfo</span><span class="p">);</span>
+<span class="n">mxlFabricsFreeTargetInfo</span><span class="p">(</span><span class="n">remoteTargetInfo</span><span class="p">);</span>
+
+<span class="c1">// 4. Destroy the fabrics instance</span>
+<span class="n">mxlFabricsDestroyInstance</span><span class="p">(</span><span class="n">fabricsInstance</span><span class="p">);</span>
+
+<span class="c1">// 5. Release flow readers/writers and destroy the mxl instance</span>
+<span class="n">mxlReleaseFlowWriter</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span><span class="w"> </span><span class="n">writer</span><span class="p">);</span>
+<span class="n">mxlReleaseFlowReader</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span><span class="w"> </span><span class="n">reader</span><span class="p">);</span>
+<span class="n">mxlDestroyInstance</span><span class="p">(</span><span class="n">instance</span><span class="p">);</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../Fabrics/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Fabrics">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Fabrics
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../FabricsGettingStarted/" class="md-footer__link md-footer__link--next" aria-label="Next: MXL Fabrics — Getting Started">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                MXL Fabrics — Getting Started
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Contributors to the Media eXchange Layer project.
+
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["announce.dismiss","content.code.annotate","content.code.copy","content.code.select","content.footnote.tooltips","content.tabs.link","content.tooltips","navigation.expand","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.prefetch","navigation.path","navigation.sections","navigation.top","navigation.tracking","search.highlight"],"search":"../assets/javascripts/workers/search.b6b7e04f.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":{"provider":"mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7f30b55.min.js"></script>
+      
+        <script src="../javascripts/mermaid.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
