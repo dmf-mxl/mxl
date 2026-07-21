@@ -58,9 +58,10 @@ impl Default for ClockWait {
 
 #[derive(Default)]
 pub struct MxlSrc {
-    pub settings: Mutex<Settings>,
-    pub context: Mutex<Context>,
+    pub(crate) settings: Mutex<Settings>,
+    pub(crate) context: Mutex<Context>,
     pub(crate) clock_wait: Mutex<ClockWait>,
+    shared_clock_offset: Mutex<Option<crate::clock::SharedClockOffset>>,
 }
 
 pub enum CreateState {
@@ -267,37 +268,15 @@ impl ElementImpl for MxlSrc {
     }
 
     fn set_clock(&self, clock: Option<&gst::Clock>) -> bool {
-        // Re-sample `D` against the newly selected clock.
-        if self.invalidate_clock_offset().is_err() {
-            gst::element_imp_error!(
-                self,
-                gst::CoreError::Failed,
-                ["Internal clock offset error"]
-            );
-            return false;
-        }
-        self.parent_set_clock(clock)
+        self.handle_set_clock(clock)
     }
 
     fn set_context(&self, context: &gst::Context) {
-        if let Some(cell) = crate::clock::clock_offset_from_context(context)
-            && self.store_clock_offset(cell).is_err()
-        {
-            gst::element_imp_error!(
-                self,
-                gst::CoreError::Failed,
-                ["Internal clock offset error"]
-            );
-        }
-        self.parent_set_context(context);
+        self.handle_set_context(context);
     }
 }
 
 impl crate::clock::ClockOffsetExt for MxlSrc {
-    fn element(&self) -> gst::Element {
-        self.obj().clone().upcast()
-    }
-
     fn mxl_now(&self) -> Result<Option<u64>, crate::clock::ClockOffsetError> {
         let context = self
             .context
@@ -310,26 +289,8 @@ impl crate::clock::ClockOffsetExt for MxlSrc {
         Ok(instance.map(|instance| instance.get_time()))
     }
 
-    fn cached_clock_offset(
-        &self,
-    ) -> Result<Option<crate::clock::SharedClockOffset>, crate::clock::ClockOffsetError> {
-        let context = self
-            .context
-            .lock()
-            .map_err(|_| crate::clock::ClockOffsetError::Failed)?;
-        Ok(context.shared_offset.clone())
-    }
-
-    fn store_clock_offset(
-        &self,
-        cell: crate::clock::SharedClockOffset,
-    ) -> Result<(), crate::clock::ClockOffsetError> {
-        let mut context = self
-            .context
-            .lock()
-            .map_err(|_| crate::clock::ClockOffsetError::Failed)?;
-        context.shared_offset = Some(cell);
-        Ok(())
+    fn shared_clock_offset(&self) -> &Mutex<Option<crate::clock::SharedClockOffset>> {
+        &self.shared_clock_offset
     }
 }
 
@@ -596,8 +557,7 @@ impl PushSrcImpl for MxlSrc {
     ) -> Result<CreateSuccess, gst::FlowError> {
         loop {
             // Establish the pipeline-shared `D` before `try_create` takes the
-            // context lock (the handshake re-enters `set_context`, which also
-            // locks it). `None` means no clock yet: wait like NoDataCreated.
+            // context lock. `None` means no clock yet: wait like NoDataCreated.
             let offset = match self.resolve_clock_offset() {
                 Ok(Some(offset)) => offset,
                 Ok(None) => {
