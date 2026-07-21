@@ -195,6 +195,19 @@ namespace
 
     public:
         [[nodiscard]]
+        constexpr GstElement* getPipeline() noexcept
+        {
+            return _pipeline;
+        }
+
+        [[nodiscard]]
+        constexpr GstElement const* getPipeline() const noexcept
+        {
+            return _pipeline;
+        }
+
+    protected:
+        [[nodiscard]]
         constexpr GstElement* getAppSource() noexcept
         {
             return _appSource;
@@ -206,7 +219,6 @@ namespace
             return _appSource;
         }
 
-    protected:
         GstElement* _pipeline;
         GstElement* _appSource;
         std::uint64_t _mxlBaseTime;
@@ -902,10 +914,10 @@ namespace
             launchPipeline(pipelineDesc, "appsource0");
 
             // Configure all appsrc elements to use time format
-            for (std::size_t i = 0; i < _configs.size(); ++i)
+            for (auto i = std::size_t{0}; i < _configs.size(); ++i)
             {
                 auto const sourceName = fmt::format("appsource{}", i);
-                auto* appSrc = ::gst_bin_get_by_name(GST_BIN(_pipeline), sourceName.c_str());
+                auto* appSrc = ::gst_bin_get_by_name(GST_BIN(getPipeline()), sourceName.c_str());
                 if (appSrc)
                 {
                     ::g_object_set(G_OBJECT(appSrc), "format", GST_FORMAT_TIME, nullptr);
@@ -919,7 +931,7 @@ namespace
             }
 
             // Get compositor element and configure sink pad positions
-            auto compositor = ::gst_bin_get_by_name(GST_BIN(_pipeline), "c");
+            auto compositor = ::gst_bin_get_by_name(GST_BIN(getPipeline()), "c");
             if (compositor)
             {
                 MXL_INFO("Retrieved compositor element: {}", GST_ELEMENT_NAME(compositor));
@@ -959,7 +971,7 @@ namespace
             auto pipelineDesc = std::stringstream{};
 
             // Create appsrc for each video flow
-            for (std::size_t i = 0; i < _configs.size(); ++i)
+            for (auto i = std::size_t{0}; i < _configs.size(); ++i)
             {
                 if (i > 0)
                 {
@@ -1025,7 +1037,7 @@ namespace
             ::gst_iterator_free(padIter);
             MXL_INFO("Total sink pads found: {}", padCount);
 
-            for (std::size_t i = 0; i < numFlows; ++i)
+            for (auto i = std::size_t{0}; i < numFlows; ++i)
             {
                 // Try multiple naming schemes
                 auto sinkPadName = fmt::format("sink_{}", i);
@@ -1134,9 +1146,7 @@ namespace
 
         // Get the specific appsource for this reader by index
         auto const sourceName = fmt::format("appsource{}", sourceIndex);
-        auto* parent = ::gst_element_get_parent(gstPipeline.getAppSource());
-        auto* appSource = ::gst_bin_get_by_name(GST_BIN(parent), sourceName.c_str());
-        ::gst_object_unref(parent);
+        auto* appSource = ::gst_bin_get_by_name(GST_BIN(gstPipeline.getPipeline()), sourceName.c_str());
 
         auto appSourceRef = std::unique_ptr<GstObject, void (*)(GstObject*)>{GST_OBJECT(appSource),
             [](GstObject* obj)
@@ -1437,7 +1447,7 @@ namespace
                             auto readers = std::vector<MxlReader>{};
 
                             // Create readers and configs for all video flows
-                            for (std::size_t i = 0; i < videoFlowIDs.size(); ++i)
+                            for (auto i = std::size_t{0}; i < videoFlowIDs.size(); ++i)
                             {
                                 auto const& flowID = videoFlowIDs[i];
 
@@ -1476,7 +1486,7 @@ namespace
 
                             // Print all configs
                             MXL_INFO("Creating MultiviewerPipeline with {} configs:", configs.size());
-                            for (std::size_t i = 0; i < configs.size(); ++i)
+                            for (auto i = std::size_t{0}; i < configs.size(); ++i)
                             {
                                 MXL_INFO("  Config[{}]: {}", i, configs[i].display());
                             }
@@ -1486,7 +1496,7 @@ namespace
                             auto readerThreads = std::vector<std::thread>{};
                             MXL_INFO("Multiviewer pipeline started with {} video flows", videoFlowIDs.size());
                             MXL_INFO("readers.size(): {}", readers.size());
-                            for (std::size_t i = 0; i < readers.size(); ++i)
+                            for (auto i = std::size_t{0}; i < readers.size(); ++i)
                             {
                                 readerThreads.emplace_back([&readers, &pipeline, i, readDelay]() { readers[i].run(pipeline, i, readDelay); });
                             }
@@ -1555,142 +1565,6 @@ namespace
 
         return 0;
     }
-
-    // int real_main(int argc, char** argv, void*)
-    // {
-    //     std::signal(SIGINT, &signal_handler);
-    //     std::signal(SIGTERM, &signal_handler);
-
-    // auto app = CLI::App{"mxl-gst-sink"};
-
-    // auto videoFlowID = std::string{};
-    // app.add_option("-v, --video-flow-id", videoFlowID, "The video flow ID");
-
-    // auto audioFlowID = std::string{};
-    // app.add_option("-a, --audio-flow-id", audioFlowID, "The audio flow ID");
-
-    // auto domain = std::string{};
-    // auto domainOpt = app.add_option("-d,--domain", domain, "The MXL domain directory.");
-    // domainOpt->required(true);
-    // domainOpt->check(CLI::ExistingDirectory);
-
-    // auto listenChannels = std::vector<std::size_t>{};
-    // auto listenChanOpt = app.add_option("-l, --listen-channels", listenChannels, "Audio channels to listen.");
-    // listenChanOpt->default_val(std::vector<std::size_t>{0, 1});
-
-    // auto readDelay = std::int64_t{};
-    // auto readDelayOpt = app.add_option(
-    //     "--read-delay", readDelay, "How far in the past/future to read (in nanoseconds). A positive values means you are delaying the read.");
-    // readDelayOpt->default_val(40'000'000);
-
-    // auto playbackDelay = std::int64_t{};
-    // auto playbackDelayOpt = app.add_option(
-    //     "--playback-delay", playbackDelay, "The time in nanoseconds, by which to delay playback of audio and/or video.");
-    // playbackDelayOpt->default_val(0);
-
-    // auto audioVideoOffset = std::int64_t{};
-    // auto audioVideoOffsetOpt = app.add_option("--av-delay",
-    //     audioVideoOffset,
-    //     "The time in nanoseconds, by which to delay the audio relative to video. A positive value means you are delaying audio, a negative value "
-    //     "means you are delaying video.");
-    // audioVideoOffsetOpt->default_val(0);
-
-    // CLI11_PARSE(app, argc, argv);
-
-    // ::gst_init(nullptr, nullptr);
-
-    // auto threads = std::vector<std::thread>{};
-
-    // if (!videoFlowID.empty())
-    // {
-    //     threads.emplace_back(
-    //         [&]()
-    //         {
-    //             try
-    //             {
-    //                 auto reader = MxlReader{domain, videoFlowID};
-
-    // auto const flowDescriptor = readFlowDescriptor(domain, videoFlowID);
-    // auto const flowNmos = json_utils::parseBuffer(flowDescriptor);
-
-    // if (json_utils::getField<std::string>(flowNmos, "interlace_mode") != "progressive")
-    // {
-    //     throw std::invalid_argument{"This application does not support interlaced flows."};
-    // }
-
-    // auto const grainRate = json_utils::getRational(flowNmos, "grain_rate");
-    // auto const frameWidth = static_cast<std::uint32_t>(json_utils::getField<double>(flowNmos, "frame_width"));
-    // auto const frameHeight = static_cast<std::uint32_t>(json_utils::getField<double>(flowNmos, "frame_height"));
-
-    // auto videoConfig = VideoPipelineConfig{
-    //     .frameRate = grainRate,
-    //     .frameWidth = static_cast<std::uint64_t>(frameWidth),
-    //     .frameHeight = static_cast<std::uint64_t>(frameHeight),
-    //     .offset = playbackDelay + ((audioVideoOffset < 0) ? -audioVideoOffset : 0LL),
-    // };
-
-    // auto pipeline = VideoPipeline{videoConfig};
-    // reader.run(pipeline, readDelay);
-
-    // MXL_INFO("Video pipeline finished");
-    // }
-    // catch (std::exception const& e)
-    // {
-    // MXL_ERROR("Error while processing video pipeline: {}", e.what());
-    // }
-    // catch (...)
-    // {
-    // MXL_ERROR("Encountered unknown error while processing video pipeline.");
-    // }
-    // });
-    // }
-
-    // if (!audioFlowID.empty())
-    // {
-    //     threads.emplace_back(
-    //         [&]()
-    //         {
-    //             try
-    //             {
-    //                 auto reader = MxlReader{domain, audioFlowID};
-    //                 auto const flowDescriptor = readFlowDescriptor(domain, audioFlowID);
-    //                 auto flowNmos = json_utils::parseBuffer(flowDescriptor);
-
-    // auto grainRate = json_utils::getRational(flowNmos, "sample_rate");
-    // auto channelCount = static_cast<std::uint32_t>(json_utils::getField<double>(flowNmos, "channel_count"));
-
-    // auto audioConfig = AudioPipelineConfig{
-    //     .sampleRate = grainRate,
-    //     .channelCount = channelCount,
-    //     .offset = playbackDelay + ((audioVideoOffset > 0) ? audioVideoOffset : 0LL),
-    //     .speakerChannels = listenChannels,
-    // };
-
-    // auto pipeline = AudioPipeline{audioConfig};
-    // reader.run(pipeline, readDelay);
-
-    // MXL_INFO("Audio pipeline finished");
-    // }
-    // catch (std::exception const& e)
-    // {
-    // MXL_ERROR("Error while processing audio pipeline: {}", e.what());
-    // }
-    // catch (...)
-    // {
-    // MXL_ERROR("Encountered unknown error while processing audio pipeline.");
-    // }
-    // });
-    // }
-
-    // for (auto& t : threads)
-    // {
-    //     t.join();
-    // }
-    // ::gst_deinit();
-
-    // return 0;
-    // }
-
 }
 
 int main(int argc, char* argv[])
