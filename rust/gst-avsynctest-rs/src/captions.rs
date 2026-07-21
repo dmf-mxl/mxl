@@ -56,9 +56,14 @@ pub fn caption_for(
     next_pts: gst::ClockTime,
     pip_interval: gst::ClockTime,
 ) -> Option<&'static str> {
-    let p = pip_interval.nseconds();
-    let k = pts.nseconds().div_ceil(p); // smallest k with k*P >= pts
-    (k >= 1 && k * p < next_pts.nseconds()).then_some(if k % 2 == 1 { CC_TICK } else { CC_TOCK })
+    let p = pip_interval.nseconds() as u128;
+    let k = (pts.nseconds() as u128).div_ceil(p); // smallest k with k*P >= pts
+    let kp = k * p;
+    (k >= 1 && kp < next_pts.nseconds() as u128).then_some(if k % 2 == 1 {
+        CC_TICK
+    } else {
+        CC_TOCK
+    })
 }
 
 /// A stateful CDP writer: one CDP per frame, so the CEA-708 sequence numbering

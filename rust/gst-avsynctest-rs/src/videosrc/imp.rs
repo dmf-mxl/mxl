@@ -557,22 +557,26 @@ impl PushSrcImpl for AvSyncVideoTestSrc {
             Some(ref info) => info.clone(),
         };
         let bar_width = state.bar_width;
-        let n = state.n_frames;
+        let n = state.n_frames as u128;
 
-        let num = info.fps().numer() as u64;
-        let den = info.fps().denom() as u64;
-        let pts = gst::ClockTime::SECOND
-            .mul_div_floor(n * den, num)
-            .ok_or_else(|| {
-                imp_failed!(self, "Failed to calculate video PTS");
-                gst::FlowError::Error
-            })?;
-        let next_pts = gst::ClockTime::SECOND
-            .mul_div_floor((n + 1) * den, num)
-            .ok_or_else(|| {
-                imp_failed!(self, "Failed to calculate next video PTS");
-                gst::FlowError::Error
-            })?;
+        // Rational PTS in u128, then narrow once to ClockTime's u64 range.
+        let num = info.fps().numer() as u128;
+        let den = info.fps().denom() as u128;
+        if num == 0 {
+            imp_failed!(self, "Invalid video frame rate");
+            return Err(gst::FlowError::Error);
+        }
+        let second_ns = gst::ClockTime::SECOND.nseconds() as u128;
+        let pts_ns = second_ns * n * den / num;
+        let next_pts_ns = second_ns * (n + 1) * den / num;
+        let pts = gst::ClockTime::from_nseconds(u64::try_from(pts_ns).map_err(|_| {
+            imp_failed!(self, "Video PTS out of range");
+            gst::FlowError::Error
+        })?);
+        let next_pts = gst::ClockTime::from_nseconds(u64::try_from(next_pts_ns).map_err(|_| {
+            imp_failed!(self, "Next video PTS out of range");
+            gst::FlowError::Error
+        })?);
         let bar_centre =
             signal::bar_centre_column(signal::phase(pts, settings.pip_interval), info.width());
         let frame_idx = n as u8;
@@ -635,7 +639,10 @@ impl PushSrcImpl for AvSyncVideoTestSrc {
                 );
             }
         }
-        state.n_frames += 1;
+        state.n_frames = state.n_frames.checked_add(1).ok_or_else(|| {
+            imp_failed!(self, "Video frame counter overflow");
+            gst::FlowError::Error
+        })?;
         drop(state);
 
         self.sync_to_clock(&buffer)?;
