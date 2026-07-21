@@ -1,13 +1,16 @@
 // SPDX-FileCopyrightText: 2025-2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::mxlsink::{self, state::AudioState};
+use crate::mxlsink::{
+    self,
+    state::{ContinuousState, FlowState},
+};
 
 use gstreamer::{self as gst, prelude::ElementExt};
 use mxl::Rational;
 use tracing::trace;
 
-pub(crate) fn audio(
+pub(crate) fn continuous(
     state: &mut mxlsink::state::State,
     element: &gst::Element,
     buffer: &gst::Buffer,
@@ -17,7 +20,7 @@ pub(crate) fn audio(
     let map = buffer.map_readable().map_err(|_| gst::FlowError::Error)?;
     let src = map.as_slice();
     let buffer_length = state
-        .flow
+        .flow_config
         .as_ref()
         .ok_or(gst::FlowError::Error)?
         .continuous()
@@ -27,13 +30,16 @@ pub(crate) fn audio(
     let gst_pts = buffer.pts().ok_or(gst::FlowError::Error)?;
     trace!("AUDIO gst PTS: {:#?}", gst_pts);
 
-    let audio_state = state.audio.as_mut().ok_or(gst::FlowError::Error)?;
-    let bytes_per_sample = (audio_state.flow_def.bit_depth / 8) as usize;
-    let num_channels = audio_state.flow_def.channel_count as usize;
+    let continuous_state = match state.flow_state.as_mut() {
+        Some(FlowState::Continuous(continuous)) => continuous,
+        _ => return Err(gst::FlowError::Error),
+    };
+    let bytes_per_sample = (continuous_state.flow_def.bit_depth / 8) as usize;
+    let num_channels = continuous_state.flow_def.channel_count as usize;
     let samples_per_buffer = src.len() / (num_channels * bytes_per_sample);
     let sample_rate = Rational {
-        numerator: audio_state.flow_def.sample_rate.numerator as i64,
-        denominator: audio_state.flow_def.sample_rate.denominator as i64,
+        numerator: continuous_state.flow_def.sample_rate.numerator as i64,
+        denominator: continuous_state.flow_def.sample_rate.denominator as i64,
     };
 
     let mut remaining = samples_per_buffer;
@@ -79,7 +85,7 @@ pub(crate) fn audio(
         // GstBaseSink (sync=true) has already waited for this buffer's running
         // time, so commit straight to the ring here: no separate pacing.
         commit_chunk(
-            audio_state,
+            continuous_state,
             mxl_index,
             chunk,
             chunk_samples,
@@ -93,7 +99,7 @@ pub(crate) fn audio(
 }
 
 fn commit_chunk(
-    audio_state: &mut AudioState,
+    continuous_state: &mut ContinuousState,
     index: u64,
     chunk: &[u8],
     chunk_samples: usize,
@@ -107,7 +113,7 @@ fn commit_chunk(
     let end = index
         .checked_add(chunk_samples_u64)
         .ok_or(gst::FlowError::Error)?;
-    let mut access = audio_state
+    let mut access = continuous_state
         .writer
         .open_samples(end, chunk_samples)
         .map_err(|_| gst::FlowError::Error)?;

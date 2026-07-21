@@ -28,13 +28,13 @@ use std::time::Duration;
 
 use crate::clock::ClockOffsetExt;
 use crate::mxlsrc;
-use crate::mxlsrc::create_audio::create_audio;
-use crate::mxlsrc::create_data::create_data;
-use crate::mxlsrc::create_video::create_video;
+use crate::mxlsrc::create_continuous::create_continuous;
+use crate::mxlsrc::create_discrete::create_discrete;
 use crate::mxlsrc::mxl_helper;
 use crate::mxlsrc::state::Context;
 use crate::mxlsrc::state::DEFAULT_DOMAIN;
 use crate::mxlsrc::state::DEFAULT_FLOW_ID;
+use crate::mxlsrc::state::FlowState;
 use crate::mxlsrc::state::Settings;
 use crate::mxlsrc::timing;
 
@@ -338,8 +338,7 @@ impl BaseSrcImpl for MxlSrc {
             context
                 .state
                 .as_ref()
-                .map(|s| s.video.is_none() && s.audio.is_none() && s.data.is_none())
-                .unwrap_or(true)
+                .is_none_or(|s| s.flow_state.is_none())
         };
         if need_init {
             mxl_helper::init(self)
@@ -612,25 +611,19 @@ impl MxlSrc {
     fn live_latency(&self) -> Option<gst::ClockTime> {
         let context = self.context.lock().ok()?;
         let state = context.state.as_ref()?;
-        let rate = match (&state.video, &state.data) {
-            (Some(v), _) => v.grain_rate,
-            (_, Some(d)) => d.grain_rate,
-            _ => return None,
-        };
-        Some(timing::index_period(&rate))
+        match state.flow_state.as_ref()? {
+            FlowState::Discrete(discrete) => Some(timing::index_period(&discrete.grain_rate)),
+            FlowState::Continuous(_) => None,
+        }
     }
 
     fn try_create(&self, offset: u64) -> Result<CreateState, gst::FlowError> {
         let mut context = self.context.lock().map_err(|_| gst::FlowError::Error)?;
         let state = context.state.as_mut().ok_or(gst::FlowError::Error)?;
-        if state.video.is_some() {
-            create_video(self, state, offset)
-        } else if state.audio.is_some() {
-            create_audio(self, state, offset)
-        } else if state.data.is_some() {
-            create_data(self, state, offset)
-        } else {
-            Err(gst::FlowError::Error)
+        match &state.flow_state {
+            Some(FlowState::Discrete(_)) => create_discrete(self, state, offset),
+            Some(FlowState::Continuous(_)) => create_continuous(self, state, offset),
+            None => Err(gst::FlowError::Error),
         }
     }
 }

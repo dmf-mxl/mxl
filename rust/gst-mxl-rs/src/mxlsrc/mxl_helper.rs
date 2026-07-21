@@ -14,7 +14,7 @@ use mxl::{FlowReader, MxlInstance, config::get_mxl_so_path, flowdef::*};
 
 use crate::mxlsrc::{
     imp::*,
-    state::{AudioState, DataState, Settings, State, VideoState},
+    state::{ContinuousState, DiscreteFormat, DiscreteState, FlowState, Settings, State},
 };
 
 static CAT: LazyLock<gst::DebugCategory> = LazyLock::new(|| {
@@ -317,15 +317,14 @@ pub(crate) fn init(mxlsrc: &MxlSrc) -> Result<(), gst::ErrorMessage> {
 
             context.state = Some(State {
                 instance,
-                video: Some(VideoState {
+                flow_state: Some(FlowState::Discrete(DiscreteState {
+                    format: DiscreteFormat::Video,
                     grain_rate,
                     index: 0,
                     is_initialized: false,
                     next_discont: false,
                     grain_reader,
-                }),
-                audio: None,
-                data: None,
+                })),
             });
         }
         FlowKind::Audio => {
@@ -338,15 +337,13 @@ pub(crate) fn init(mxlsrc: &MxlSrc) -> Result<(), gst::ErrorMessage> {
             })?;
             context.state = Some(State {
                 instance,
-                video: None,
-                audio: Some(AudioState {
+                flow_state: Some(FlowState::Continuous(ContinuousState {
                     reader,
                     samples_reader,
                     is_initialized: false,
                     index: 0,
                     next_discont: false,
-                }),
-                data: None,
+                })),
             });
         }
         FlowKind::Data => {
@@ -375,15 +372,14 @@ pub(crate) fn init(mxlsrc: &MxlSrc) -> Result<(), gst::ErrorMessage> {
 
             context.state = Some(State {
                 instance,
-                video: None,
-                audio: None,
-                data: Some(DataState {
+                flow_state: Some(FlowState::Discrete(DiscreteState {
+                    format: DiscreteFormat::Data,
                     grain_rate,
                     index: 0,
                     is_initialized: false,
                     next_discont: false,
                     grain_reader,
-                }),
+                })),
             });
         }
     }

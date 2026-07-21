@@ -5,7 +5,7 @@ use std::time::{Duration, Instant};
 
 use crate::mxlsrc::imp::{CreateState, MxlSrc};
 use crate::mxlsrc::mxl_helper::pts_subtrahend;
-use crate::mxlsrc::state::{AudioState, State};
+use crate::mxlsrc::state::{ContinuousState, FlowState, State};
 use crate::mxlsrc::timing::pts_for_index;
 use gst::{Buffer, ClockTime};
 use gstreamer as gst;
@@ -16,15 +16,18 @@ const GET_SAMPLE_TIMEOUT: Duration = Duration::from_secs(2);
 const PRODUCER_TIMEOUT: Duration = Duration::from_millis(100);
 const DEFAULT_BATCH_SIZE: u32 = 48;
 
-pub(crate) fn create_audio(
+pub(crate) fn create_continuous(
     src: &MxlSrc,
     state: &mut State,
     offset: u64,
 ) -> Result<CreateState, gst::FlowError> {
     let subtrahend = pts_subtrahend(src, offset)?;
-    let audio_state = state.audio.as_mut().ok_or(gst::FlowError::Error)?;
+    let continuous_state = match state.flow_state.as_mut() {
+        Some(FlowState::Continuous(continuous)) => continuous,
+        _ => return Err(gst::FlowError::Error),
+    };
 
-    let reader_info = audio_state
+    let reader_info = continuous_state
         .reader
         .get_info()
         .map_err(|_| gst::FlowError::Error)?;
@@ -46,36 +49,41 @@ pub(crate) fn create_audio(
     let ring = continuous_flow_info.bufferLength as u64;
     let batch = batch_size as u64;
 
-    audio_state_init(batch, &reader_info, audio_state);
+    continuous_state_init(batch, &reader_info, continuous_state);
 
     let head = reader_info.runtime.head_index();
-    wait_for_sample(head, batch, audio_state)?;
+    wait_for_sample(head, batch, continuous_state)?;
 
-    if is_reader_late(head, batch, ring, audio_state)? {
-        resync_state(audio_state);
+    if is_reader_late(head, batch, ring, continuous_state)? {
+        resync_state(continuous_state);
     }
 
     // `get_samples(end, count)` returns the `count` samples at absolute indices
-    // `[end - count, end)` (last is `end - 1`). `audio_state.index` is the first
+    // `[end - count, end)` (last is `end - 1`). `continuous_state.index` is the first
     // sample we want, so pass `index + batch` as the end; `pts_for_index(index)`
     // then stamps that first returned sample.
     let read_once = |idx: u64| {
-        audio_state
+        continuous_state
             .samples_reader
             .get_samples(idx + batch, batch as usize, GET_SAMPLE_TIMEOUT)
     };
 
-    let samples = match read_once(audio_state.index) {
+    let samples = match read_once(continuous_state.index) {
         Ok(s) => s,
         Err(_) => {
             return Ok(CreateState::NoDataCreated);
         }
     };
 
-    //Right now audio is being interleaved but in the future audio will be planar.
+    // MXL stores each channel separately; GStreamer expects interleaved audio.
     let interleaved = interleave_audio(&samples)?;
 
-    let Some(pts) = pts_for_index(&state.instance, audio_state.index, &sample_rate, subtrahend)?
+    let Some(pts) = pts_for_index(
+        &state.instance,
+        continuous_state.index,
+        &sample_rate,
+        subtrahend,
+    )?
     else {
         // Samples before the pipeline base time map to a negative running time
         // (before the consumer joined); a live source must not emit them. Skip
@@ -83,49 +91,53 @@ pub(crate) fn create_audio(
         // `subtrahend`, so they skip the same samples and stay index-aligned.
         trace!(
             "Skipping pre-start sample batch {} (running time would be negative)",
-            audio_state.index
+            continuous_state.index
         );
-        audio_state.index += batch;
+        continuous_state.index += batch;
         return Ok(CreateState::NoDataCreated);
     };
 
-    let is_discont = std::mem::take(&mut audio_state.next_discont);
+    let is_discont = std::mem::take(&mut continuous_state.next_discont);
 
     let buffer = build_buffer(pts, samples, is_discont, interleaved)?;
 
-    audio_state.index += batch;
+    continuous_state.index += batch;
 
     trace!(
         "read_index={} buffer PTS: {:?}",
-        audio_state.index.saturating_sub(batch),
+        continuous_state.index.saturating_sub(batch),
         pts,
     );
 
     Ok(CreateState::DataCreated(buffer))
 }
 
-fn audio_state_init(batch: u64, reader_info: &FlowInfo, audio_state: &mut AudioState) {
-    if !audio_state.is_initialized {
-        audio_state.index = reader_info.runtime.head_index().saturating_sub(batch);
-        audio_state.is_initialized = true;
+fn continuous_state_init(
+    batch: u64,
+    reader_info: &FlowInfo,
+    continuous_state: &mut ContinuousState,
+) {
+    if !continuous_state.is_initialized {
+        continuous_state.index = reader_info.runtime.head_index().saturating_sub(batch);
+        continuous_state.is_initialized = true;
     }
 }
 
-fn resync_state(audio_state: &mut AudioState) {
-    audio_state.next_discont = true;
+fn resync_state(continuous_state: &mut ContinuousState) {
+    continuous_state.next_discont = true;
 }
 
 fn wait_for_sample(
     mut head: u64,
     batch: u64,
-    audio_state: &AudioState,
+    continuous_state: &ContinuousState,
 ) -> Result<(), gst::FlowError> {
     let start = Instant::now();
-    while audio_state.index + batch > head {
+    while continuous_state.index + batch > head {
         if start.elapsed() > PRODUCER_TIMEOUT {
             return Ok(());
         }
-        head = wait_for_producer(head, batch, audio_state)?;
+        head = wait_for_producer(head, batch, continuous_state)?;
     }
     Ok(())
 }
@@ -133,13 +145,13 @@ fn wait_for_sample(
 fn wait_for_producer(
     mut head: u64,
     batch: u64,
-    audio_state: &AudioState,
+    continuous_state: &ContinuousState,
 ) -> Result<u64, gst::FlowError> {
     trace!(
         "Reader ahead: index {} + batch {} > head {} (waiting for producer)",
-        audio_state.index, batch, head
+        continuous_state.index, batch, head
     );
-    head = audio_state
+    head = continuous_state
         .reader
         .get_info()
         .map_err(|_| gst::FlowError::Error)?
@@ -152,23 +164,23 @@ fn is_reader_late(
     head: u64,
     batch: u64,
     ring: u64,
-    audio_state: &mut AudioState,
+    continuous_state: &mut ContinuousState,
 ) -> Result<bool, gst::FlowError> {
     let oldest_valid = head.saturating_sub(ring.saturating_sub(batch));
-    if audio_state.index < oldest_valid {
-        catch_up(head, batch, audio_state, oldest_valid);
+    if continuous_state.index < oldest_valid {
+        catch_up(head, batch, continuous_state, oldest_valid);
         Ok(true)
     } else {
         Ok(false)
     }
 }
 
-fn catch_up(head: u64, batch: u64, audio_state: &mut AudioState, oldest_valid: u64) {
+fn catch_up(head: u64, batch: u64, continuous_state: &mut ContinuousState, oldest_valid: u64) {
     let target = define_cushion(head, batch);
-    audio_state.index = target;
+    continuous_state.index = target;
     trace!(
         "CATCH-UP (pre-read): index {} < oldest {}. Jumping -> {}, head={}",
-        audio_state.index, oldest_valid, target, head
+        continuous_state.index, oldest_valid, target, head
     );
 }
 
