@@ -24,9 +24,8 @@ pub(crate) fn create_instance(
     let mut inst = std::ptr::null_mut();
     Error::from_status(unsafe {
         fabrics_api.fabrics_create_instance(
-            std::mem::transmute::<*mut mxl_sys::Instance_t, *mut mxl_sys::fabrics::Instance_t>(
-                ctx.instance,
-            ),
+            //SAFETY: Both types are equivalent opaque handles from different bindgen modules.
+            ctx.instance.cast(),
             std::ptr::null(), // Unused for now
             &mut inst,
         )

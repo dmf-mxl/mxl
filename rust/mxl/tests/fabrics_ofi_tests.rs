@@ -408,10 +408,8 @@ fn tcp_grain_transfer_delivers_payload_to_target_flow() {
         let initiator = {
             let initiator_provider = fabrics_instance.provider_from_str("tcp").unwrap();
             let initiator = fabrics_instance.create_initiator().unwrap();
-            let initiator_config = initiator::Config::new(
-                tcp_interface(&initiator_provider),
-                &initiator_flow_reader,
-            );
+            let initiator_config =
+                initiator::Config::new(tcp_interface(&initiator_provider), &initiator_flow_reader);
             initiator.setup(&initiator_config).unwrap()
         };
         let initiator = match initiator.specialize(&source_flow_config) {
@@ -486,10 +484,8 @@ fn tcp_samples_transfer_delivers_payload_to_target_flow() {
         let initiator = {
             let initiator_provider = fabrics_instance.provider_from_str("tcp").unwrap();
             let initiator = fabrics_instance.create_initiator().unwrap();
-            let initiator_config = initiator::Config::new(
-                tcp_interface(&initiator_provider),
-                &initiator_flow_reader,
-            );
+            let initiator_config =
+                initiator::Config::new(tcp_interface(&initiator_provider), &initiator_flow_reader);
             initiator.setup(&initiator_config).unwrap()
         };
         let initiator = match initiator.specialize(&source_flow_config) {

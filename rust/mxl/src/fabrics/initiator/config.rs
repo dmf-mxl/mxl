@@ -30,12 +30,8 @@ impl<'a> TryFrom<&Config<'a>> for mxl_sys::fabrics::FabricsInitiatorConfig {
         Ok(Self {
             version: value.version,
             interface: *OwnedInterfaceConfig::try_from(&value.interface)?.as_ffi(),
-            // SAFETY: The type cast is necessary, because this FlowReader is scoped in mxl_sys::fabrics::*, not mxl_sys::*, but this is the same type.
-            reader: unsafe {
-                std::mem::transmute::<mxl_sys::FlowReader, mxl_sys::fabrics::FlowReader>(
-                    value.flow_reader.inner(),
-                )
-            },
+            // SAFETY: Both types are equivalent opaque reader handles from different bindgen modules.
+            reader: value.flow_reader.inner().cast(),
         })
     }
 }
