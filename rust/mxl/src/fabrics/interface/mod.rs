@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
+// SPDX-License-Identifier: Apache-2.0
+//
 use std::sync::Arc;
 
 use crate::{
@@ -28,7 +31,7 @@ impl Interfaces {
             .as_ref()
             .map_or(std::ptr::null(), |q| q.as_ffi() as *const _);
 
-        let mut out_list: *mut mxl_sys::fabrics::FabricsInterfaceList = std::ptr::null_mut();
+        let mut out_list = std::ptr::null_mut();
 
         Error::from_status(unsafe {
             ctx.api()
