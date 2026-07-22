@@ -437,7 +437,7 @@ impl PartialOrd for ProviderPrio {
     }
 }
 
-fn main() -> Result<(), anyhow::Error> {
+fn main() -> Result<(), mxl::Error> {
     common::setup_logging();
 
     let cli = Cli::parse();
@@ -518,7 +518,8 @@ fn main() -> Result<(), anyhow::Error> {
                 } else {
                     target_info_file.as_str()
                 };
-                std::fs::write(file, target_info.to_string()?.as_bytes())?;
+                std::fs::write(file, target_info.to_string()?.as_bytes())
+                    .map_err(|e| mxl::Error::Other(format!("fail to write to file: {}", e)))?;
             }
             tracing::info!(
                 "Target Info: {}",
