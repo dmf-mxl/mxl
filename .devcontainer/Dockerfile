@@ -118,8 +118,11 @@ RUN git clone --depth 1 --branch 0.14.5 \
       https://gitlab.freedesktop.org/gstreamer/gst-plugins-rs.git \
       /tmp/gst-plugins-rs \
  && cd /tmp/gst-plugins-rs \
- && cargo build --release -p gst-plugin-closedcaption \
- && sudo install -m 0644 target/release/libgstrsclosedcaption.so \
-      "/usr/lib/$(gcc -dumpmachine)/gstreamer-1.0/" \
- && cd / \
- && rm -rf /tmp/gst-plugins-rs
+ && cargo build --release -p gst-plugin-closedcaption
+
+USER root
+RUN install -m 0644 /tmp/gst-plugins-rs/target/release/libgstrsclosedcaption.so \
+    "/usr/lib/$(gcc -dumpmachine)/gstreamer-1.0/"
+
+USER "${USERNAME}"
+RUN rm -rf /tmp/gst-plugins-rs
