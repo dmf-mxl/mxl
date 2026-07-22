@@ -127,9 +127,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ae2b8a368c655842c137ac7fb28baadcb" id="r_ae2b8a368c655842c137ac7fb28baadcb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1PassiveEndpoint.html#ae2b8a368c655842c137ac7fb28baadcb">listen</a> ()</td></tr>
 <tr class="memdesc:ae2b8a368c655842c137ac7fb28baadcb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Put the passive endpoint into listening mode.  <br /></td></tr>
 <tr class="separator:ae2b8a368c655842c137ac7fb28baadcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1e5af9a44cd3b7c0ddc94df403b44a12" id="r_a1e5af9a44cd3b7c0ddc94df403b44a12"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html">FabricAddress</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1PassiveEndpoint.html#a1e5af9a44cd3b7c0ddc94df403b44a12">localAddress</a> ()</td></tr>
-<tr class="memdesc:a1e5af9a44cd3b7c0ddc94df403b44a12"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtain the local fabric address for this passive endpoint.  <br /></td></tr>
-<tr class="separator:a1e5af9a44cd3b7c0ddc94df403b44a12"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8c9486c32db1164e28a5293cbba3df5c" id="r_a8c9486c32db1164e28a5293cbba3df5c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RawFabricAddress.html">RawFabricAddress</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1PassiveEndpoint.html#a8c9486c32db1164e28a5293cbba3df5c">localAddress</a> ()</td></tr>
+<tr class="memdesc:a8c9486c32db1164e28a5293cbba3df5c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtain the local fabric address for this passive endpoint.  <br /></td></tr>
+<tr class="separator:a8c9486c32db1164e28a5293cbba3df5c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a029234fc8ef56abc20d829addbf3ee6d" id="r_a029234fc8ef56abc20d829addbf3ee6d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1PassiveEndpoint.html">PassiveEndpoint</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1PassiveEndpoint.html#a029234fc8ef56abc20d829addbf3ee6d">operator=</a> (<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1PassiveEndpoint.html">PassiveEndpoint</a> &amp;&amp;)</td></tr>
 <tr class="separator:a029234fc8ef56abc20d829addbf3ee6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abe9095da3de880c668234bc81ad31b2b" id="r_abe9095da3de880c668234bc81ad31b2b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1PassiveEndpoint.html#abe9095da3de880c668234bc81ad31b2b">operator=</a> (<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1PassiveEndpoint.html">PassiveEndpoint</a> const &amp;)=delete</td></tr>
@@ -205,7 +205,7 @@ Private Attributes</h2></td></tr>
 <div class="line"><span class="lineno">   31</span>        <a class="code hl_function" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#ab11c9eb5c2a389377ea24c200018a4d0">catchAndLogFabricError</a>([<span class="keyword">this</span>]() { <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1PassiveEndpoint.html#ae742daaa74b509008b79021133766a7f">close</a>(); }, <span class="stringliteral">&quot;Failed to close passive endpoint&quot;</span>);</div>
 <div class="line"><span class="lineno">   32</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1PassiveEndpoint_html_ae742daaa74b509008b79021133766a7f"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1PassiveEndpoint.html#ae742daaa74b509008b79021133766a7f">mxl::lib::fabrics::ofi::PassiveEndpoint::close</a></div><div class="ttdeci">void close()</div><div class="ttdoc">Releases all underlying resources. This is called from the destructor and the move-assignment operato...</div><div class="ttdef"><b>Definition</b> <a href="PassiveEndpoint_8cpp_source.html#l00046">PassiveEndpoint.cpp:46</a></div></div>
-<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_ab11c9eb5c2a389377ea24c200018a4d0"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#ab11c9eb5c2a389377ea24c200018a4d0">mxl::lib::fabrics::ofi::catchAndLogFabricError</a></div><div class="ttdeci">void catchAndLogFabricError(F &amp;&amp;fun, std::string_view msg)</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00159">Exception.hpp:159</a></div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_ab11c9eb5c2a389377ea24c200018a4d0"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#ab11c9eb5c2a389377ea24c200018a4d0">mxl::lib::fabrics::ofi::catchAndLogFabricError</a></div><div class="ttdeci">void catchAndLogFabricError(F &amp;&amp;fun, std::string_view msg)</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00165">Exception.hpp:165</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -372,7 +372,7 @@ Private Attributes</h2></td></tr>
 <div class="line"><span class="lineno">   85</span> </div>
 <div class="line"><span class="lineno">   86</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1PassiveEndpoint.html#a32005c8abb18eccc8dab3f7d22e0f0a0">_eq</a> = eq;</div>
 <div class="line"><span class="lineno">   87</span>    }</div>
-<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_ac3a4a68b88450dca7e9d46242d0ac652"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#ac3a4a68b88450dca7e9d46242d0ac652">mxl::lib::fabrics::ofi::fiCall</a></div><div class="ttdeci">int fiCall(F &amp;&amp;fun, std::string_view msg, T &amp;&amp;... args)</div><div class="ttdoc">Call a libfabric function and check its return code.</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00146">Exception.hpp:146</a></div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_ac3a4a68b88450dca7e9d46242d0ac652"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#ac3a4a68b88450dca7e9d46242d0ac652">mxl::lib::fabrics::ofi::fiCall</a></div><div class="ttdeci">int fiCall(F &amp;&amp;fun, std::string_view msg, T &amp;&amp;... args)</div><div class="ttdoc">Call a libfabric function and check its return code.</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00152">Exception.hpp:152</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -596,8 +596,8 @@ Private Attributes</h2></td></tr>
 </div><!-- fragment -->
 </div>
 </div>
-<a id="a1e5af9a44cd3b7c0ddc94df403b44a12" name="a1e5af9a44cd3b7c0ddc94df403b44a12"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1e5af9a44cd3b7c0ddc94df403b44a12">&#9670;&#160;</a></span>localAddress()</h2>
+<a id="a8c9486c32db1164e28a5293cbba3df5c" name="a8c9486c32db1164e28a5293cbba3df5c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8c9486c32db1164e28a5293cbba3df5c">&#9670;&#160;</a></span>localAddress()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -606,7 +606,7 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html">FabricAddress</a> mxl::lib::fabrics::ofi::PassiveEndpoint::localAddress </td>
+          <td class="memname"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RawFabricAddress.html">RawFabricAddress</a> mxl::lib::fabrics::ofi::PassiveEndpoint::localAddress </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -623,9 +623,9 @@ Private Attributes</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="PassiveEndpoint_8hpp_source.html#l00084">84</a> of file <a class="el" href="PassiveEndpoint_8hpp_source.html">PassiveEndpoint.hpp</a>.</p>
 <div class="fragment"><div class="line"><span class="lineno">   85</span>        {</div>
-<div class="line"><span class="lineno">   86</span>            <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#aa5a64c2c716cc53758d40c68ddb794cb">FabricAddress::fromFid</a>(&amp;<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1PassiveEndpoint.html#ac3c4ab1d3386ca543432bb8cf1618c6f">_raw</a>-&gt;fid);</div>
+<div class="line"><span class="lineno">   86</span>            <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RawFabricAddress.html#a54fcbca3e45e787992f0b728d4500de8">RawFabricAddress::fromFid</a>(&amp;<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1PassiveEndpoint.html#ac3c4ab1d3386ca543432bb8cf1618c6f">_raw</a>-&gt;fid, <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1PassiveEndpoint.html#a0f74004684f8dbacefe84ef8da03ee6c">_fabric</a>-&gt;info());</div>
 <div class="line"><span class="lineno">   87</span>        }</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress_html_aa5a64c2c716cc53758d40c68ddb794cb"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#aa5a64c2c716cc53758d40c68ddb794cb">mxl::lib::fabrics::ofi::FabricAddress::fromFid</a></div><div class="ttdeci">static FabricAddress fromFid(::fid_t fid)</div><div class="ttdoc">Retrieve the fabric address of an endpoint by passing its fid.</div><div class="ttdef"><b>Definition</b> <a href="Address_8cpp_source.html#l00020">Address.cpp:20</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RawFabricAddress_html_a54fcbca3e45e787992f0b728d4500de8"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RawFabricAddress.html#a54fcbca3e45e787992f0b728d4500de8">mxl::lib::fabrics::ofi::RawFabricAddress::fromFid</a></div><div class="ttdeci">static RawFabricAddress fromFid(::fid_t fid, FabricInfoView info)</div><div class="ttdoc">Retrieve the fabric address of an endpoint by passing its fid.</div><div class="ttdef"><b>Definition</b> <a href="Address_8cpp_source.html#l00027">Address.cpp:27</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -647,7 +647,7 @@ Private Attributes</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="PassiveEndpoint_8cpp_source.html#l00064">64</a> of file <a class="el" href="PassiveEndpoint_8cpp_source.html">PassiveEndpoint.cpp</a>.</p>
 <div class="fragment"><div class="line"><span class="lineno">   65</span>    {</div>
-<div class="line"><span class="lineno">   66</span>        <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1PassiveEndpoint.html#ae742daaa74b509008b79021133766a7f">close</a>();</div>
+<div class="line"><span class="lineno">   66</span>        <a class="code hl_function" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#ab11c9eb5c2a389377ea24c200018a4d0">catchAndLogFabricError</a>([<span class="keyword">this</span>]() { <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1PassiveEndpoint.html#ae742daaa74b509008b79021133766a7f">close</a>(); }, <span class="stringliteral">&quot;Failed to close passive endpoint&quot;</span>);</div>
 <div class="line"><span class="lineno">   67</span> </div>
 <div class="line"><span class="lineno">   68</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1PassiveEndpoint.html#ac3c4ab1d3386ca543432bb8cf1618c6f">_raw</a> = other._raw;</div>
 <div class="line"><span class="lineno">   69</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1PassiveEndpoint.html#a602130a8d9a03c1bc483a5823e57baed">_id</a> = other._id;</div>

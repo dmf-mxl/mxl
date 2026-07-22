@@ -180,7 +180,7 @@ Private Attributes</h2></td></tr>
 <div class="textblock"><p>RAII wrapper around a libfabric <code>fi_info</code>` structure. </p>
 <p>Manages the lifetime of a <code>fi_info</code> object, ensuring that it is properly deallocated when the <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html" title="RAII wrapper around a libfabric fi_info` structure.">FabricInfo</a> object goes out of scope. </p>
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8hpp_source.html#l00027">27</a> of file <a class="el" href="FabricInfo_8hpp_source.html">FabricInfo.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8hpp_source.html#l00029">29</a> of file <a class="el" href="FabricInfo_8hpp_source.html">FabricInfo.hpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a058e3f04f770965cf6d5810f6af866a8" name="a058e3f04f770965cf6d5810f6af866a8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a058e3f04f770965cf6d5810f6af866a8">&#9670;&#160;</a></span>~FabricInfo()</h2>
@@ -205,11 +205,11 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00043">43</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   44</span>    {</div>
-<div class="line"><span class="lineno">   45</span>        <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#aed261422356be78b07789df0854d5cbc">free</a>();</div>
-<div class="line"><span class="lineno">   46</span>    }</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo_html_aed261422356be78b07789df0854d5cbc"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#aed261422356be78b07789df0854d5cbc">mxl::lib::fabrics::ofi::FabricInfo::free</a></div><div class="ttdeci">void free() noexcept</div><div class="ttdoc">Called internally to release the ::fi_info object.</div><div class="ttdef"><b>Definition</b> <a href="FabricInfo_8cpp_source.html#l00108">FabricInfo.cpp:108</a></div></div>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00045">45</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   46</span>    {</div>
+<div class="line"><span class="lineno">   47</span>        <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#aed261422356be78b07789df0854d5cbc">free</a>();</div>
+<div class="line"><span class="lineno">   48</span>    }</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo_html_aed261422356be78b07789df0854d5cbc"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#aed261422356be78b07789df0854d5cbc">mxl::lib::fabrics::ofi::FabricInfo::free</a></div><div class="ttdeci">void free() noexcept</div><div class="ttdoc">Called internally to release the ::fi_info object.</div><div class="ttdef"><b>Definition</b> <a href="FabricInfo_8cpp_source.html#l00110">FabricInfo.cpp:110</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -239,12 +239,12 @@ Private Attributes</h2></td></tr>
 
 <p>Create an owning <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html" title="RAII wrapper around a libfabric fi_info` structure.">FabricInfo</a> object from a non-owning view. </p>
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00021">21</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   22</span>        : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>(::fi_dupinfo(<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#a2e4d257307fae2b1cdf9015e988e6290">view</a>.<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html#a9fed69d48fe7938e5f825a5ee00f762f">raw</a>()))</div>
-<div class="line"><span class="lineno">   23</span>    {}</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView_html_a9fed69d48fe7938e5f825a5ee00f762f"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html#a9fed69d48fe7938e5f825a5ee00f762f">mxl::lib::fabrics::ofi::FabricInfoView::raw</a></div><div class="ttdeci">::fi_info * raw() noexcept</div><div class="ttdoc">Returns the raw ::fi_info object associated with this view.</div><div class="ttdef"><b>Definition</b> <a href="FabricInfo_8cpp_source.html#l00141">FabricInfo.cpp:141</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo_html_a2e4d257307fae2b1cdf9015e988e6290"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#a2e4d257307fae2b1cdf9015e988e6290">mxl::lib::fabrics::ofi::FabricInfo::view</a></div><div class="ttdeci">FabricInfoView view() const noexcept</div><div class="ttdoc">Return a non-owning view of the FabricInfo.</div><div class="ttdef"><b>Definition</b> <a href="FabricInfo_8cpp_source.html#l00103">FabricInfo.cpp:103</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo_html_ab94a24c3527cf78640be824b0199bd1b"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">mxl::lib::fabrics::ofi::FabricInfo::_raw</a></div><div class="ttdeci">::fi_info * _raw</div><div class="ttdef"><b>Definition</b> <a href="FabricInfo_8hpp_source.html#l00098">FabricInfo.hpp:98</a></div></div>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00023">23</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   24</span>        : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>(::fi_dupinfo(<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#a2e4d257307fae2b1cdf9015e988e6290">view</a>.<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html#a9fed69d48fe7938e5f825a5ee00f762f">raw</a>()))</div>
+<div class="line"><span class="lineno">   25</span>    {}</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView_html_a9fed69d48fe7938e5f825a5ee00f762f"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html#a9fed69d48fe7938e5f825a5ee00f762f">mxl::lib::fabrics::ofi::FabricInfoView::raw</a></div><div class="ttdeci">::fi_info * raw() noexcept</div><div class="ttdoc">Returns the raw ::fi_info object associated with this view.</div><div class="ttdef"><b>Definition</b> <a href="FabricInfo_8cpp_source.html#l00143">FabricInfo.cpp:143</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo_html_a2e4d257307fae2b1cdf9015e988e6290"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#a2e4d257307fae2b1cdf9015e988e6290">mxl::lib::fabrics::ofi::FabricInfo::view</a></div><div class="ttdeci">FabricInfoView view() const noexcept</div><div class="ttdoc">Return a non-owning view of the FabricInfo.</div><div class="ttdef"><b>Definition</b> <a href="FabricInfo_8cpp_source.html#l00105">FabricInfo.cpp:105</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo_html_ab94a24c3527cf78640be824b0199bd1b"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">mxl::lib::fabrics::ofi::FabricInfo::_raw</a></div><div class="ttdeci">::fi_info * _raw</div><div class="ttdef"><b>Definition</b> <a href="FabricInfo_8hpp_source.html#l00100">FabricInfo.hpp:100</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -272,9 +272,9 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00048">48</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   49</span>        : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>(::fi_dupinfo(other._raw))</div>
-<div class="line"><span class="lineno">   50</span>    {}</div>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00050">50</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   51</span>        : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>(::fi_dupinfo(other._raw))</div>
+<div class="line"><span class="lineno">   52</span>    {}</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -302,11 +302,11 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00059">59</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   60</span>        : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>(other._raw)</div>
-<div class="line"><span class="lineno">   61</span>    {</div>
-<div class="line"><span class="lineno">   62</span>        other._raw = <span class="keyword">nullptr</span>;</div>
-<div class="line"><span class="lineno">   63</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00061">61</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   62</span>        : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>(other._raw)</div>
+<div class="line"><span class="lineno">   63</span>    {</div>
+<div class="line"><span class="lineno">   64</span>        other._raw = <span class="keyword">nullptr</span>;</div>
+<div class="line"><span class="lineno">   65</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -336,10 +336,10 @@ Private Attributes</h2></td></tr>
 
 <p>Private constructor can only be called by static members. Used to enforce clear ownership semantics. </p>
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00016">16</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   17</span>        : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>(<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ac33edfa3f65bebe99e1c3dcf30130935">raw</a>)</div>
-<div class="line"><span class="lineno">   18</span>    {}</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo_html_ac33edfa3f65bebe99e1c3dcf30130935"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ac33edfa3f65bebe99e1c3dcf30130935">mxl::lib::fabrics::ofi::FabricInfo::raw</a></div><div class="ttdeci">::fi_info * raw() noexcept</div><div class="ttdoc">Returns the raw ::fi_info object managed by this FabricInfo instance.</div><div class="ttdef"><b>Definition</b> <a href="FabricInfo_8cpp_source.html#l00093">FabricInfo.cpp:93</a></div></div>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00018">18</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   19</span>        : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>(<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ac33edfa3f65bebe99e1c3dcf30130935">raw</a>)</div>
+<div class="line"><span class="lineno">   20</span>    {}</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo_html_ac33edfa3f65bebe99e1c3dcf30130935"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ac33edfa3f65bebe99e1c3dcf30130935">mxl::lib::fabrics::ofi::FabricInfo::raw</a></div><div class="ttdeci">::fi_info * raw() noexcept</div><div class="ttdoc">Returns the raw ::fi_info object managed by this FabricInfo instance.</div><div class="ttdef"><b>Definition</b> <a href="FabricInfo_8cpp_source.html#l00095">FabricInfo.cpp:95</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -370,11 +370,11 @@ Private Attributes</h2></td></tr>
 
 <p>Clone an existing ::fi_info structure, take ownership of the cloned object. </p>
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00026">26</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   27</span>    {</div>
-<div class="line"><span class="lineno">   28</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#a5ee2a2d8d8e3fb0dafb3cb4a56af2d1a">FabricInfo</a>{::fi_dupinfo(info)};</div>
-<div class="line"><span class="lineno">   29</span>    }</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo_html_a5ee2a2d8d8e3fb0dafb3cb4a56af2d1a"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#a5ee2a2d8d8e3fb0dafb3cb4a56af2d1a">mxl::lib::fabrics::ofi::FabricInfo::FabricInfo</a></div><div class="ttdeci">FabricInfo(FabricInfoView) noexcept</div><div class="ttdoc">Create an owning FabricInfo object from a non-owning view.</div><div class="ttdef"><b>Definition</b> <a href="FabricInfo_8cpp_source.html#l00021">FabricInfo.cpp:21</a></div></div>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00028">28</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   29</span>    {</div>
+<div class="line"><span class="lineno">   30</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#a5ee2a2d8d8e3fb0dafb3cb4a56af2d1a">FabricInfo</a>{::fi_dupinfo(info)};</div>
+<div class="line"><span class="lineno">   31</span>    }</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo_html_a5ee2a2d8d8e3fb0dafb3cb4a56af2d1a"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#a5ee2a2d8d8e3fb0dafb3cb4a56af2d1a">mxl::lib::fabrics::ofi::FabricInfo::FabricInfo</a></div><div class="ttdeci">FabricInfo(FabricInfoView) noexcept</div><div class="ttdoc">Create an owning FabricInfo object from a non-owning view.</div><div class="ttdef"><b>Definition</b> <a href="FabricInfo_8cpp_source.html#l00023">FabricInfo.cpp:23</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -403,10 +403,10 @@ Private Attributes</h2></td></tr>
 
 <p>Create and empty <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html" title="RAII wrapper around a libfabric fi_info` structure.">FabricInfo</a>. </p>
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00038">38</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   39</span>    {</div>
-<div class="line"><span class="lineno">   40</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#a5ee2a2d8d8e3fb0dafb3cb4a56af2d1a">FabricInfo</a>{::fi_allocinfo()};</div>
-<div class="line"><span class="lineno">   41</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00040">40</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   41</span>    {</div>
+<div class="line"><span class="lineno">   42</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#a5ee2a2d8d8e3fb0dafb3cb4a56af2d1a">FabricInfo</a>{::fi_allocinfo()};</div>
+<div class="line"><span class="lineno">   43</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -435,14 +435,14 @@ Private Attributes</h2></td></tr>
 
 <p>Called internally to release the ::fi_info object. </p>
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00108">108</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  109</span>    {</div>
-<div class="line"><span class="lineno">  110</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a> != <span class="keyword">nullptr</span>)</div>
-<div class="line"><span class="lineno">  111</span>        {</div>
-<div class="line"><span class="lineno">  112</span>            ::fi_freeinfo(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>);</div>
-<div class="line"><span class="lineno">  113</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a> = <span class="keyword">nullptr</span>;</div>
-<div class="line"><span class="lineno">  114</span>        }</div>
-<div class="line"><span class="lineno">  115</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00110">110</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  111</span>    {</div>
+<div class="line"><span class="lineno">  112</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a> != <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">  113</span>        {</div>
+<div class="line"><span class="lineno">  114</span>            ::fi_freeinfo(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>);</div>
+<div class="line"><span class="lineno">  115</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a> = <span class="keyword">nullptr</span>;</div>
+<div class="line"><span class="lineno">  116</span>        }</div>
+<div class="line"><span class="lineno">  117</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -471,10 +471,10 @@ Private Attributes</h2></td></tr>
 
 <p>Dereferencing the <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html" title="RAII wrapper around a libfabric fi_info` structure.">FabricInfo</a> return the raw ::fi_info object managed by this object.   </p>
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00078">78</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   79</span>    {</div>
-<div class="line"><span class="lineno">   80</span>        <span class="keywordflow">return</span> *<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>;</div>
-<div class="line"><span class="lineno">   81</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00080">80</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   81</span>    {</div>
+<div class="line"><span class="lineno">   82</span>        <span class="keywordflow">return</span> *<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>;</div>
+<div class="line"><span class="lineno">   83</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -503,10 +503,10 @@ Private Attributes</h2></td></tr>
 
 <p>Dereferencing the <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html" title="RAII wrapper around a libfabric fi_info` structure.">FabricInfo</a> return the raw ::fi_info object managed by this object. </p>
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00073">73</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   74</span>    {</div>
-<div class="line"><span class="lineno">   75</span>        <span class="keywordflow">return</span> *<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>;</div>
-<div class="line"><span class="lineno">   76</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00075">75</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   76</span>    {</div>
+<div class="line"><span class="lineno">   77</span>        <span class="keywordflow">return</span> *<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>;</div>
+<div class="line"><span class="lineno">   78</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -535,10 +535,10 @@ Private Attributes</h2></td></tr>
 
 <p>Dereferencing the <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html" title="RAII wrapper around a libfabric fi_info` structure.">FabricInfo</a> return the raw ::fi_info object managed by this object.   </p>
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00088">88</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   89</span>    {</div>
-<div class="line"><span class="lineno">   90</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>;</div>
-<div class="line"><span class="lineno">   91</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00090">90</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   91</span>    {</div>
+<div class="line"><span class="lineno">   92</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>;</div>
+<div class="line"><span class="lineno">   93</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -567,10 +567,10 @@ Private Attributes</h2></td></tr>
 
 <p>Dereferencing the <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html" title="RAII wrapper around a libfabric fi_info` structure.">FabricInfo</a> return the raw ::fi_info object managed by this object.   </p>
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00083">83</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   84</span>    {</div>
-<div class="line"><span class="lineno">   85</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>;</div>
-<div class="line"><span class="lineno">   86</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00085">85</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   86</span>    {</div>
+<div class="line"><span class="lineno">   87</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>;</div>
+<div class="line"><span class="lineno">   88</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -598,13 +598,13 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00065">65</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   66</span>    {</div>
-<div class="line"><span class="lineno">   67</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a> = other._raw;</div>
-<div class="line"><span class="lineno">   68</span>        other._raw = <span class="keyword">nullptr</span>;</div>
-<div class="line"><span class="lineno">   69</span> </div>
-<div class="line"><span class="lineno">   70</span>        <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
-<div class="line"><span class="lineno">   71</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00067">67</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   68</span>    {</div>
+<div class="line"><span class="lineno">   69</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a> = other._raw;</div>
+<div class="line"><span class="lineno">   70</span>        other._raw = <span class="keyword">nullptr</span>;</div>
+<div class="line"><span class="lineno">   71</span> </div>
+<div class="line"><span class="lineno">   72</span>        <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
+<div class="line"><span class="lineno">   73</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -632,12 +632,12 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00052">52</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   53</span>    {</div>
-<div class="line"><span class="lineno">   54</span>        <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#aed261422356be78b07789df0854d5cbc">free</a>();</div>
-<div class="line"><span class="lineno">   55</span> </div>
-<div class="line"><span class="lineno">   56</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a> = ::fi_dupinfo(other._raw);</div>
-<div class="line"><span class="lineno">   57</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00054">54</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   55</span>    {</div>
+<div class="line"><span class="lineno">   56</span>        <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#aed261422356be78b07789df0854d5cbc">free</a>();</div>
+<div class="line"><span class="lineno">   57</span> </div>
+<div class="line"><span class="lineno">   58</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a> = ::fi_dupinfo(other._raw);</div>
+<div class="line"><span class="lineno">   59</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -668,10 +668,10 @@ Private Attributes</h2></td></tr>
 <p>Own an existing ::fi_info object. </p>
 <p>The object will be free'd when the <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html" title="RAII wrapper around a libfabric fi_info` structure.">FabricInfo</a> object goes out of scope. </p>
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00032">32</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   33</span>    {</div>
-<div class="line"><span class="lineno">   34</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#a5ee2a2d8d8e3fb0dafb3cb4a56af2d1a">FabricInfo</a>{info};</div>
-<div class="line"><span class="lineno">   35</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00034">34</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   35</span>    {</div>
+<div class="line"><span class="lineno">   36</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#a5ee2a2d8d8e3fb0dafb3cb4a56af2d1a">FabricInfo</a>{info};</div>
+<div class="line"><span class="lineno">   37</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -700,10 +700,10 @@ Private Attributes</h2></td></tr>
 
 <p>Returns the raw ::fi_info object managed by this <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html" title="RAII wrapper around a libfabric fi_info` structure.">FabricInfo</a> instance.   </p>
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00098">98</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   99</span>    {</div>
-<div class="line"><span class="lineno">  100</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>;</div>
-<div class="line"><span class="lineno">  101</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00100">100</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  101</span>    {</div>
+<div class="line"><span class="lineno">  102</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>;</div>
+<div class="line"><span class="lineno">  103</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -732,10 +732,10 @@ Private Attributes</h2></td></tr>
 
 <p>Returns the raw ::fi_info object managed by this <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html" title="RAII wrapper around a libfabric fi_info` structure.">FabricInfo</a> instance. </p>
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00093">93</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   94</span>    {</div>
-<div class="line"><span class="lineno">   95</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>;</div>
-<div class="line"><span class="lineno">   96</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00095">95</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   96</span>    {</div>
+<div class="line"><span class="lineno">   97</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>;</div>
+<div class="line"><span class="lineno">   98</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -764,10 +764,10 @@ Private Attributes</h2></td></tr>
 
 <p>Return a non-owning view of the <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html" title="RAII wrapper around a libfabric fi_info` structure.">FabricInfo</a>. </p>
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00103">103</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  104</span>    {</div>
-<div class="line"><span class="lineno">  105</span>        <span class="keywordflow">return</span> FabricInfoView{<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>};</div>
-<div class="line"><span class="lineno">  106</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00105">105</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  106</span>    {</div>
+<div class="line"><span class="lineno">  107</span>        <span class="keywordflow">return</span> FabricInfoView{<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html#ab94a24c3527cf78640be824b0199bd1b">_raw</a>};</div>
+<div class="line"><span class="lineno">  108</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -792,7 +792,7 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8hpp_source.html#l00098">98</a> of file <a class="el" href="FabricInfo_8hpp_source.html">FabricInfo.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8hpp_source.html#l00100">100</a> of file <a class="el" href="FabricInfo_8hpp_source.html">FabricInfo.hpp</a>.</p>
 
 </div>
 </div>

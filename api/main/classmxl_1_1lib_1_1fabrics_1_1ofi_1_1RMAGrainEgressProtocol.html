@@ -124,15 +124,15 @@ Collaboration diagram for mxl::lib::fabrics::ofi::RMAGrainEgressProtocol:</div>
 <div class="dyncontent">
 <div class="center"><img src="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMAGrainEgressProtocol__coll__graph.png" border="0" usemap="#amxl_1_1lib_1_1fabrics_1_1ofi_1_1RMAGrainEgressProtocol_coll__map" alt="Collaboration graph"/></div>
 <map name="amxl_1_1lib_1_1fabrics_1_1ofi_1_1RMAGrainEgressProtocol_coll__map" id="amxl_1_1lib_1_1fabrics_1_1ofi_1_1RMAGrainEgressProtocol_coll__map">
-<area shape="rect" title=" " alt="" coords="597,69,804,109"/>
-<area shape="rect" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html" title="Interface for transfer operations." alt="" coords="303,5,445,45"/>
-<area shape="poly" title=" " alt="" coords="460,39,598,67,597,72,459,44"/>
-<area shape="rect" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html" title="TargetInfo contains all the information required by an initiator to operate transfers to the given ta..." alt="" coords="309,69,439,109"/>
-<area shape="poly" title=" " alt="" coords="453,87,597,87,597,92,453,92"/>
-<area shape="rect" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html" title="Wrapper around a libfabric endpoint address." alt="" coords="5,69,141,109"/>
-<area shape="poly" title=" " alt="" coords="155,87,309,87,309,92,155,92"/>
-<area shape="rect" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete.html" title="Discrete layout variant of DataLayout." alt="" coords="283,133,465,173"/>
-<area shape="poly" title=" " alt="" coords="478,130,597,107,598,112,479,136"/>
+<area shape="rect" title=" " alt="" coords="625,69,832,109"/>
+<area shape="rect" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html" title="Interface for transfer operations." alt="" coords="331,5,473,45"/>
+<area shape="poly" title=" " alt="" coords="488,39,626,67,625,72,487,44"/>
+<area shape="rect" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html" title="TargetInfo contains all the information required by an initiator to operate transfers to the given ta..." alt="" coords="337,69,467,109"/>
+<area shape="poly" title=" " alt="" coords="481,87,625,87,625,92,481,92"/>
+<area shape="rect" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RawFabricAddress.html" title="Wrapper around a libfabric endpoint address." alt="" coords="5,69,169,109"/>
+<area shape="poly" title=" " alt="" coords="183,87,336,87,336,92,183,92"/>
+<area shape="rect" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete.html" title="Discrete layout variant of DataLayout." alt="" coords="311,133,493,173"/>
+<area shape="poly" title=" " alt="" coords="506,130,625,107,626,112,507,136"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -482,7 +482,7 @@ This is a NOP for this protocol </dd></dl>
 <div class="line"><span class="lineno">   40</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMAGrainEgressProtocol.html#a7389930c2b40ddd639c5f96be8d9702f">_pending</a> += ep.write(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMAGrainEgressProtocol.html#a67b4f253301b3a7722c6a71999da6c70">_token</a>, localRegion, remoteRegion, destAddr, ImmDataGrain{remoteSlot, sliceRange.end()}.data());</div>
 <div class="line"><span class="lineno">   41</span>    }</div>
 <div class="ttc" id="astructmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete_html_aa396d55e083ce6b7b5c678d442a8bc52"><div class="ttname"><a href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete.html#aa396d55e083ce6b7b5c678d442a8bc52">mxl::lib::fabrics::ofi::DataLayout::Discrete::sliceSizes</a></div><div class="ttdeci">std::array&lt; std::uint32_t, MXL_MAX_PLANES_PER_GRAIN &gt; sliceSizes</div><div class="ttdef"><b>Definition</b> <a href="DataLayout_8hpp_source.html#l00025">DataLayout.hpp:25</a></div></div>
-<div class="ttc" id="astructmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo_html_a6686d98aed52659d3870da6e39f1ecd5"><div class="ttname"><a href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html#a6686d98aed52659d3870da6e39f1ecd5">mxl::lib::fabrics::ofi::TargetInfo::remoteRegions</a></div><div class="ttdeci">std::vector&lt; RemoteRegion &gt; remoteRegions</div><div class="ttdef"><b>Definition</b> <a href="TargetInfo_8hpp_source.html#l00057">TargetInfo.hpp:57</a></div></div>
+<div class="ttc" id="astructmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo_html_a6686d98aed52659d3870da6e39f1ecd5"><div class="ttname"><a href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html#a6686d98aed52659d3870da6e39f1ecd5">mxl::lib::fabrics::ofi::TargetInfo::remoteRegions</a></div><div class="ttdeci">std::vector&lt; RemoteRegion &gt; remoteRegions</div><div class="ttdef"><b>Definition</b> <a href="TargetInfo_8hpp_source.html#l00058">TargetInfo.hpp:58</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>

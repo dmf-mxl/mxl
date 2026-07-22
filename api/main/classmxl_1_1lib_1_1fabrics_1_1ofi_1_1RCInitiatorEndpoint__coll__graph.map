@@ -2,6 +2,6 @@
 <area shape="rect" id="Node000001" title="A single endpoint connected to a target that will be created when the user adds a target to an initia..." alt="" coords="5,211,177,251"/>
 <area shape="rect" id="Node000002" href="$structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html" title="TargetInfo contains all the information required by an initiator to operate transfers to the given ta..." alt="" coords="26,108,157,148"/>
 <area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="94,162,94,211,89,211,89,162"/>
-<area shape="rect" id="Node000003" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html" title="Wrapper around a libfabric endpoint address." alt="" coords="23,5,159,45"/>
+<area shape="rect" id="Node000003" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RawFabricAddress.html" title="Wrapper around a libfabric endpoint address." alt="" coords="9,5,173,45"/>
 <area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="94,59,94,108,89,108,89,59"/>
 </map>

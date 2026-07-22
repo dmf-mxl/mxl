@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['variant_0',['Variant',['../classmxl_1_1lib_1_1FlowSynchronizationGroup.html#ad977db98444e5f9e022ff9c60207e8ad',1,'mxl::lib::FlowSynchronizationGroup']]]
+  ['queuereadmode_0',['QueueReadMode',['../namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a188f54b5d1a88b7ea4a3283314184239',1,'mxl::lib::fabrics::ofi']]]
 ];

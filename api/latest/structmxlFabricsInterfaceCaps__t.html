@@ -117,9 +117,9 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a267c306204b583a5056bd1f086ae48a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Capabilities of an interface </p>
+<div class="textblock"><p>Capabilities of an interface. Returned as informational output by <a class="el" href="fabrics_8h.html#ab7cbe55425788c58a00d55dcb25e63a2">mxlFabricsGetInterfaces()</a>. When used inside mxlFabricsInterfaceConfig for setup functions, only the <code>flags</code> field is evaluated as requirements; <code>maxMessageSize</code> is ignored. </p>
 
-<p class="definition">Definition at line <a class="el" href="fabrics_8h_source.html#l00076">76</a> of file <a class="el" href="fabrics_8h_source.html">fabrics.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="fabrics_8h_source.html#l00087">87</a> of file <a class="el" href="fabrics_8h_source.html">fabrics.h</a>.</p>
 </div><h2 class="groupheader">Member Data Documentation</h2>
 <a id="ab32b95ebe931fd19bce81149f597016d" name="ab32b95ebe931fd19bce81149f597016d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab32b95ebe931fd19bce81149f597016d">&#9670;&#160;</a></span>flags</h2>
@@ -132,9 +132,9 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Capabilities expressed as binary flags. Value can be a bitset of any of mxlFabricsInterfaceCapFlags </p>
+<p>Bitwise OR of mxlFabricsInterfaceCapFlags values. See mxlFabricsInterfaceCapFlags for the dual semantics (informational vs. requirements). </p>
 
-<p class="definition">Definition at line <a class="el" href="fabrics_8h_source.html#l00079">79</a> of file <a class="el" href="fabrics_8h_source.html">fabrics.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="fabrics_8h_source.html#l00090">90</a> of file <a class="el" href="fabrics_8h_source.html">fabrics.h</a>.</p>
 
 </div>
 </div>
@@ -149,9 +149,9 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Maximum message size supported on this interface. </p>
+<p>Maximum message size supported on this interface. Reported by <a class="el" href="fabrics_8h.html#ab7cbe55425788c58a00d55dcb25e63a2">mxlFabricsGetInterfaces()</a>. Currently not enforced by setup functions, but callers should initialize this field to a valid value as it will be required in a future version. </p>
 
-<p class="definition">Definition at line <a class="el" href="fabrics_8h_source.html#l00080">80</a> of file <a class="el" href="fabrics_8h_source.html">fabrics.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="fabrics_8h_source.html#l00092">92</a> of file <a class="el" href="fabrics_8h_source.html">fabrics.h</a>.</p>
 
 </div>
 </div>
@@ -168,7 +168,7 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>Struct version, must be set to MXL_FABRICS_API_VERSION by the caller. </p>
 
-<p class="definition">Definition at line <a class="el" href="fabrics_8h_source.html#l00078">78</a> of file <a class="el" href="fabrics_8h_source.html">fabrics.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="fabrics_8h_source.html#l00089">89</a> of file <a class="el" href="fabrics_8h_source.html">fabrics.h</a>.</p>
 
 </div>
 </div>

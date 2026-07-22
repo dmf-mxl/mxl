@@ -1,6 +1,20 @@
 var searchData=
 [
-  ['timedelta_0',['timeDelta',['../test__time_8cpp.html#aee231395682ec7af1453e257322f8f58',1,'test_time.cpp']]],
-  ['timestamp_1',['timestamp',['../test__time_8cpp.html#a17d413211a1348f80e6ad24efaadbf98',1,'test_time.cpp']]],
-  ['totalslices_2',['totalSlices',['../structmxlGrainInfo__t.html#aa016833ae56b59fa5b5b309089b4796a',1,'mxlGrainInfo_t']]]
+  ['samplesize_0',['sampleSize',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Continuous.html#af00a00acdbf0fff0071b8ba4fb6a36a4',1,'mxl::lib::fabrics::ofi::DataLayout::Continuous']]],
+  ['service_1',['service',['../structmxlFabricsEndpointAddress__t.html#ad8b991fdb8de0be26b26e80ededbf086',1,'mxlFabricsEndpointAddress_t']]],
+  ['sib_5faddr_2',['sib_addr',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1OfiSockaddrIb.html#a8bbabefe3c32087910b5fad5b1e86418',1,'mxl::lib::fabrics::ofi::OfiSockaddrIb']]],
+  ['sib_5ffamily_3',['sib_family',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1OfiSockaddrIb.html#a6728980c9b1a11149c99c0bc67372d85',1,'mxl::lib::fabrics::ofi::OfiSockaddrIb']]],
+  ['sib_5fflowinfo_4',['sib_flowinfo',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1OfiSockaddrIb.html#a5b649657ffac454e1ff73c9396b3e103',1,'mxl::lib::fabrics::ofi::OfiSockaddrIb']]],
+  ['sib_5fpkey_5',['sib_pkey',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1OfiSockaddrIb.html#af473a6099312e5982f522e2f6e6be591',1,'mxl::lib::fabrics::ofi::OfiSockaddrIb']]],
+  ['sib_5fscope_5fid_6',['sib_scope_id',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1OfiSockaddrIb.html#ad2ba037b0788a82ca0afc384784f5f34',1,'mxl::lib::fabrics::ofi::OfiSockaddrIb']]],
+  ['sib_5fsid_7',['sib_sid',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1OfiSockaddrIb.html#ac28f0d557d5f91fbd8c3556124a8b7ea',1,'mxl::lib::fabrics::ofi::OfiSockaddrIb']]],
+  ['sib_5fsid_5fmask_8',['sib_sid_mask',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1OfiSockaddrIb.html#a3d0c06e6eb152a21db110ec1b576db7d',1,'mxl::lib::fabrics::ofi::OfiSockaddrIb']]],
+  ['size_9',['size',['../structmxlMutableBufferSlice__t.html#a41c0b8b3189a4f03958bd83e041297b4',1,'mxlMutableBufferSlice_t::size'],['../structBatchIndexAndSize.html#afb960dd2d7bc45baacfd595665a97086',1,'BatchIndexAndSize::size'],['../structmxlFlowInfo__t.html#ab3e7454deadcea0d47aadb28e00dc060',1,'mxlFlowInfo_t::size'],['../structmxlGrainInfo__t.html#ab52bd9ffd48756100c8bb982b0b57639',1,'mxlGrainInfo_t::size'],['../structmxlBufferSlice__t.html#a3bde3327e49c2590417475c409efd960',1,'mxlBufferSlice_t::size'],['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Region.html#a05f452dbae6732b9326a4f74ccf11db9',1,'mxl::lib::fabrics::ofi::Region::size'],['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1EventQueue_1_1Attributes.html#ae1c45ba7ad327936ae152712e27b9010',1,'mxl::lib::fabrics::ofi::EventQueue::Attributes::size'],['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue_1_1Attributes.html#a82c24312a6b59c0345a61765ee814d00',1,'mxl::lib::fabrics::ofi::CompletionQueue::Attributes::size']]],
+  ['sliceindex_10',['sliceIndex',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1ImmDataGrain_1_1Unpacked.html#a6d05861ea61992c975f776ad4df17685',1,'mxl::lib::fabrics::ofi::ImmDataGrain::Unpacked']]],
+  ['slicesizes_11',['slicesizes',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete.html#aa396d55e083ce6b7b5c678d442a8bc52',1,'mxl::lib::fabrics::ofi::DataLayout::Discrete::sliceSizes'],['../structmxlDiscreteFlowConfigInfo__t.html#ab7ed7863fab984166bd340389b2c31f7',1,'mxlDiscreteFlowConfigInfo_t::sliceSizes']]],
+  ['state_12',['state',['../structmxl_1_1lib_1_1Flow.html#abd94fc78c86bdf6128441e5ce0f95f02',1,'mxl::lib::Flow']]],
+  ['stride_13',['stride',['../structmxlWrappedMultiBufferSlice__t.html#ad111dcac53c787b5e66b170fa569e1ad',1,'mxlWrappedMultiBufferSlice_t::stride'],['../structmxlMutableWrappedMultiBufferSlice__t.html#af3be6f0132e22477c7a3fcdec729a4bd',1,'mxlMutableWrappedMultiBufferSlice_t::stride']]],
+  ['supportedaddressformats_14',['supportedAddressFormats',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1ProviderConfigValues.html#ab2035374256a2ba18eea108e175d09c9',1,'mxl::lib::fabrics::ofi::ProviderConfigValues']]],
+  ['supportedprotocols_15',['supportedProtocols',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1ProviderConfigValues.html#ac8e1a7221ee0b50b9a1d989578d00cae',1,'mxl::lib::fabrics::ofi::ProviderConfigValues']]],
+  ['synccounter_16',['syncCounter',['../structmxl_1_1lib_1_1FlowState.html#a29ef741ff5a71b16d5644ff50dbbcbf9',1,'mxl::lib::FlowState']]]
 ];

@@ -7,5 +7,6 @@ var searchData=
   ['inode_4',['inode',['../structmxl_1_1lib_1_1FlowState.html#ac224a5761bfc339b40f0786888dc19f6',1,'mxl::lib::FlowState']]],
   ['instancereader_5',['instanceReader',['../test__flows_8cpp.html#acd063dc838a142ebd96a9020da1ce61f',1,'test_flows.cpp']]],
   ['instancewriter_6',['instanceWriter',['../test__flows_8cpp.html#adfba8ebf7d722b193a02f1c6447c212b',1,'test_flows.cpp']]],
-  ['interface_7',['interface',['../structmxlFabricsTargetConfig__t.html#accf87cbce58fe7dd89078319908e2729',1,'mxlFabricsTargetConfig_t::interface'],['../structmxlFabricsInitiatorConfig__t.html#a96e7bc1e2ecbee9ff36d5a5620de9e70',1,'mxlFabricsInitiatorConfig_t::interface']]]
+  ['interface_7',['interface',['../structmxlFabricsInterfaceList__t.html#a4e73190b208c1b58bce194e05a0a0800',1,'mxlFabricsInterfaceList_t::interface'],['../structmxlFabricsTargetConfig__t.html#accf87cbce58fe7dd89078319908e2729',1,'mxlFabricsTargetConfig_t::interface'],['../structmxlFabricsInitiatorConfig__t.html#a96e7bc1e2ecbee9ff36d5a5620de9e70',1,'mxlFabricsInitiatorConfig_t::interface']]],
+  ['interfacecaps_8',['interfaceCaps',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1ProviderCapabilities.html#a1a4ffc2a206e7033d7e729dafda76fd3',1,'mxl::lib::fabrics::ofi::ProviderCapabilities']]]
 ];

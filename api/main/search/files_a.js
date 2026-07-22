@@ -22,5 +22,7 @@ var searchData=
   ['protocolingressrma_2ecpp_19',['ProtocolIngressRMA.cpp',['../ProtocolIngressRMA_8cpp.html',1,'']]],
   ['protocolingressrma_2ehpp_20',['ProtocolIngressRMA.hpp',['../ProtocolIngressRMA_8hpp.html',1,'']]],
   ['provider_2ecpp_21',['Provider.cpp',['../Provider_8cpp.html',1,'']]],
-  ['provider_2ehpp_22',['Provider.hpp',['../Provider_8hpp.html',1,'']]]
+  ['provider_2ehpp_22',['Provider.hpp',['../Provider_8hpp.html',1,'']]],
+  ['providerconfig_2ecpp_23',['ProviderConfig.cpp',['../ProviderConfig_8cpp.html',1,'']]],
+  ['providerconfig_2ehpp_24',['ProviderConfig.hpp',['../ProviderConfig_8hpp.html',1,'']]]
 ];

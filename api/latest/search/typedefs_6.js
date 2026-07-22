@@ -1,4 +1,6 @@
 var searchData=
 [
-  ['state_0',['state',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81',1,'mxl::lib::fabrics::ofi::RCInitiatorEndpoint::State'],['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCTarget.html#a08e85a501e41043c7e5c376b7156aabd',1,'mxl::lib::fabrics::ofi::RCTarget::State'],['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiatorTarget.html#a38c338bf1fb4be57cc1dc8069cdc9dc0',1,'mxl::lib::fabrics::ofi::RDMInitiatorTarget::State']]]
+  ['raw_5ftype_0',['raw_type',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoIterator.html#a2a6141815a8d9e6b52eebd178f538628',1,'mxl::lib::fabrics::ofi::FabricInfoIterator']]],
+  ['readerlist_1',['ReaderList',['../classmxl_1_1lib_1_1FlowSynchronizationGroup.html#a5f0762bab6a0063c58d2dc5637b91a79',1,'mxl::lib::FlowSynchronizationGroup']]],
+  ['readresult_2',['ReadResult',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#a0134e6ace9c7d107a9d2ec08323e25cb',1,'mxl::lib::fabrics::ofi::Target']]]
 ];

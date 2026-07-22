@@ -1,6 +1,7 @@
 var classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView =
 [
     [ "FabricInfoView", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html#a6d7838342c35ce8639ae03c3086fe7e2", null ],
+    [ "endpointType", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html#a3e4857ff2ac91a619e1da88f41f18b21", null ],
     [ "operator*", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html#abb9af1a4144c4ad9fa1a59613bc690e7", null ],
     [ "operator*", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html#acb8ed3b81bda2dd84843a56099e72f02", null ],
     [ "operator->", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html#abc90f2df64fe383bc9925a0c02fbfbef", null ],

@@ -99,73 +99,100 @@ $(document).ready(function(){initNavTree('classmxl_1_1lib_1_1fabrics_1_1ofi_1_1F
 
 <div class="header">
   <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pri-methods">Private Member Functions</a> &#124;
-<a href="#pri-static-methods">Static Private Member Functions</a> &#124;
 <a href="#pri-attribs">Private Attributes</a> &#124;
 <a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">mxl::lib::fabrics::ofi::FabricAddress Class Reference<span class="mlabels"><span class="mlabel">final</span></span></div></div>
+  <div class="headertitle"><div class="title">mxl::lib::fabrics::ofi::FabricAddress Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Wrapper around a libfabric endpoint address.  
+<p>Owning, type-safe representation of a libfabric address.  
  <a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="Address_8hpp_source.html">Address.hpp</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="FabricAddress_8hpp_source.html">FabricAddress.hpp</a>&gt;</code></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a870fb50c3a01ee94426c0f0046be4bd2" id="r_a870fb50c3a01ee94426c0f0046be4bd2"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a870fb50c3a01ee94426c0f0046be4bd2">Native</a> = std::variant&lt; std::monostate, ::sockaddr_in, ::sockaddr_in6, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1OfiSockaddrIb.html">OfiSockaddrIb</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1EfaAddress.html">EfaAddress</a>, std::string &gt;</td></tr>
+<tr class="separator:a870fb50c3a01ee94426c0f0046be4bd2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a11011edbd657a7cd726b3af8cd945044" id="r_a11011edbd657a7cd726b3af8cd945044"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a11011edbd657a7cd726b3af8cd945044">FabricAddress</a> ()=default</td></tr>
-<tr class="memdesc:a11011edbd657a7cd726b3af8cd945044"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default is an empty fabric address.  <br /></td></tr>
-<tr class="separator:a11011edbd657a7cd726b3af8cd945044"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afd477685bd5968359e94ed08cd0571ee" id="r_afd477685bd5968359e94ed08cd0571ee"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#afd477685bd5968359e94ed08cd0571ee">operator==</a> (<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html">FabricAddress</a> const &amp;other) const noexcept</td></tr>
-<tr class="separator:afd477685bd5968359e94ed08cd0571ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8748394d1b92e769d8391b69d284a634" id="r_a8748394d1b92e769d8391b69d284a634"><td class="memItemLeft" align="right" valign="top">void const *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a8748394d1b92e769d8391b69d284a634">raw</a> () const noexcept</td></tr>
-<tr class="memdesc:a8748394d1b92e769d8391b69d284a634"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pointer to the raw address data.  <br /></td></tr>
-<tr class="separator:a8748394d1b92e769d8391b69d284a634"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4f9532a10ce65bbeced11ecc88997613" id="r_a4f9532a10ce65bbeced11ecc88997613"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a4f9532a10ce65bbeced11ecc88997613">raw</a> () noexcept</td></tr>
-<tr class="memdesc:a4f9532a10ce65bbeced11ecc88997613"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pointer to the raw address data.  <br /></td></tr>
-<tr class="separator:a4f9532a10ce65bbeced11ecc88997613"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adbe618f01059b7663584898f2a49bacc" id="r_adbe618f01059b7663584898f2a49bacc"><td class="memItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#adbe618f01059b7663584898f2a49bacc">size</a> () const noexcept</td></tr>
-<tr class="memdesc:adbe618f01059b7663584898f2a49bacc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Byte-length of the raw address data.  <br /></td></tr>
-<tr class="separator:adbe618f01059b7663584898f2a49bacc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adf627e3e7b33eea24fc11f41a0480d59" id="r_adf627e3e7b33eea24fc11f41a0480d59"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#adf627e3e7b33eea24fc11f41a0480d59">toBase64</a> () const</td></tr>
-<tr class="memdesc:adf627e3e7b33eea24fc11f41a0480d59"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert the raw fabric address into a <a class="el" href="namespacebase64.html">base64</a> encoded string.  <br /></td></tr>
-<tr class="separator:adf627e3e7b33eea24fc11f41a0480d59"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9322367ed01a5485559d156b9c4f8fdd" id="r_a9322367ed01a5485559d156b9c4f8fdd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9e">FabricAddressFormat</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a9322367ed01a5485559d156b9c4f8fdd">addressFormat</a> () const noexcept</td></tr>
+<tr class="memdesc:a9322367ed01a5485559d156b9c4f8fdd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the libfabric address format constant (FI_SOCKADDR_IN, etc.).  <br /></td></tr>
+<tr class="separator:a9322367ed01a5485559d156b9c4f8fdd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6030c667b8ae707a9ec20e4546557220" id="r_a6030c667b8ae707a9ec20e4546557220"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a6030c667b8ae707a9ec20e4546557220">empty</a> () const noexcept</td></tr>
+<tr class="memdesc:a6030c667b8ae707a9ec20e4546557220"><td class="mdescLeft">&#160;</td><td class="mdescRight">True if the address could not be decoded (holds std::monostate).  <br /></td></tr>
+<tr class="separator:a6030c667b8ae707a9ec20e4546557220"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af82f9af1fbc4123396502bffe204d23a" id="r_af82f9af1fbc4123396502bffe204d23a"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#af82f9af1fbc4123396502bffe204d23a">FabricAddress</a> () noexcept</td></tr>
+<tr class="separator:af82f9af1fbc4123396502bffe204d23a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7804ba23662efb1d02f4a1c18bb22e5f" id="r_a7804ba23662efb1d02f4a1c18bb22e5f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a870fb50c3a01ee94426c0f0046be4bd2">Native</a> const &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a7804ba23662efb1d02f4a1c18bb22e5f">native</a> () const noexcept</td></tr>
+<tr class="memdesc:a7804ba23662efb1d02f4a1c18bb22e5f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Access the underlying variant.  <br /></td></tr>
+<tr class="separator:a7804ba23662efb1d02f4a1c18bb22e5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d89e8660690d503d0bc8c233522bb7b" id="r_a8d89e8660690d503d0bc8c233522bb7b"><td class="memItemLeft" align="right" valign="top">std::optional&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a8d89e8660690d503d0bc8c233522bb7b">node</a> () const</td></tr>
+<tr class="memdesc:a8d89e8660690d503d0bc8c233522bb7b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the host portion of the address as a string.  <br /></td></tr>
+<tr class="separator:a8d89e8660690d503d0bc8c233522bb7b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aded53d219239213a8ea1ad8a969d1d58" id="r_aded53d219239213a8ea1ad8a969d1d58"><td class="memItemLeft" align="right" valign="top">std::optional&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#aded53d219239213a8ea1ad8a969d1d58">service</a> () const</td></tr>
+<tr class="memdesc:aded53d219239213a8ea1ad8a969d1d58"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the service/port portion of the address as a string.  <br /></td></tr>
+<tr class="separator:aded53d219239213a8ea1ad8a969d1d58"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af467b20feb89c42170ad7cc62d35220f" id="r_af467b20feb89c42170ad7cc62d35220f"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#af467b20feb89c42170ad7cc62d35220f">toString</a> () const</td></tr>
+<tr class="memdesc:af467b20feb89c42170ad7cc62d35220f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Format the address exactly as libfabric's internal <code>ofi_straddr</code>.  <br /></td></tr>
+<tr class="separator:af467b20feb89c42170ad7cc62d35220f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a294b03c3aed426cd3c619610a0991a6c" id="r_a294b03c3aed426cd3c619610a0991a6c"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html">FabricAddress</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a294b03c3aed426cd3c619610a0991a6c">fromBase64</a> (std::string_view data)</td></tr>
-<tr class="memdesc:a294b03c3aed426cd3c619610a0991a6c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parse a fabric address from a <a class="el" href="namespacebase64.html">base64</a> encoded string.  <br /></td></tr>
-<tr class="separator:a294b03c3aed426cd3c619610a0991a6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa5a64c2c716cc53758d40c68ddb794cb" id="r_aa5a64c2c716cc53758d40c68ddb794cb"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html">FabricAddress</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#aa5a64c2c716cc53758d40c68ddb794cb">fromFid</a> (::fid_t fid)</td></tr>
-<tr class="memdesc:aa5a64c2c716cc53758d40c68ddb794cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve the fabric address of an endpoint by passing its fid.  <br /></td></tr>
-<tr class="separator:aa5a64c2c716cc53758d40c68ddb794cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab8dbb3d961af7a46fb7ff1cf67137bdf" id="r_ab8dbb3d961af7a46fb7ff1cf67137bdf"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html">FabricAddress</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#ab8dbb3d961af7a46fb7ff1cf67137bdf">decode</a> (<a class="el" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9e">FabricAddressFormat</a> addrFormat, void const *addr, std::size_t len)</td></tr>
+<tr class="memdesc:ab8dbb3d961af7a46fb7ff1cf67137bdf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decode a raw libfabric address buffer of the given <code>addr_format</code>.  <br /></td></tr>
+<tr class="separator:ab8dbb3d961af7a46fb7ff1cf67137bdf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abfb65e2074dde08ef8ca5bb7e9c57673" id="r_abfb65e2074dde08ef8ca5bb7e9c57673"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html">FabricAddress</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#abfb65e2074dde08ef8ca5bb7e9c57673">fromDestination</a> (<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html">FabricInfoView</a> info) noexcept</td></tr>
+<tr class="memdesc:abfb65e2074dde08ef8ca5bb7e9c57673"><td class="mdescLeft">&#160;</td><td class="mdescRight">Build a <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html" title="Owning, type-safe representation of a libfabric address.">FabricAddress</a> from the destination address of <code>info</code>.  <br /></td></tr>
+<tr class="separator:abfb65e2074dde08ef8ca5bb7e9c57673"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa356b7392e0bb89509cb208173325d6d" id="r_aa356b7392e0bb89509cb208173325d6d"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html">FabricAddress</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#aa356b7392e0bb89509cb208173325d6d">fromSource</a> (<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html">FabricInfoView</a> info) noexcept</td></tr>
+<tr class="memdesc:aa356b7392e0bb89509cb208173325d6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Build a <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html" title="Owning, type-safe representation of a libfabric address.">FabricAddress</a> from the source address of <code>info</code>.  <br /></td></tr>
+<tr class="separator:aa356b7392e0bb89509cb208173325d6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0400200a271c0b36758e66d726ba1535" id="r_a0400200a271c0b36758e66d726ba1535"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html">FabricAddress</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a0400200a271c0b36758e66d726ba1535">parse</a> (<a class="el" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#af4c65c9e8976cf4c6c059bd14589c579">Provider</a> provider, std::optional&lt; std::string &gt; <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a8d89e8660690d503d0bc8c233522bb7b">node</a>, std::optional&lt; std::string &gt; <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#aded53d219239213a8ea1ad8a969d1d58">service</a>)</td></tr>
+<tr class="memdesc:a0400200a271c0b36758e66d726ba1535"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parse a node/service pair into a typed address for the given provider.  <br /></td></tr>
+<tr class="separator:a0400200a271c0b36758e66d726ba1535"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
-<tr class="memitem:a2f65216e60ed289603bc51e65fc9fde9" id="r_a2f65216e60ed289603bc51e65fc9fde9"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a2f65216e60ed289603bc51e65fc9fde9">FabricAddress</a> (std::vector&lt; std::uint8_t &gt; addr)</td></tr>
-<tr class="separator:a2f65216e60ed289603bc51e65fc9fde9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-static-methods" name="pri-static-methods"></a>
-Static Private Member Functions</h2></td></tr>
-<tr class="memitem:a8ee028644e0cc7822357c35fb1bed948" id="r_a8ee028644e0cc7822357c35fb1bed948"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html">FabricAddress</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a8ee028644e0cc7822357c35fb1bed948">retrieveFabricAddress</a> (::fid_t)</td></tr>
-<tr class="memdesc:a8ee028644e0cc7822357c35fb1bed948"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve the fabric address of an endpoint by using its fid.  <br /></td></tr>
-<tr class="separator:a8ee028644e0cc7822357c35fb1bed948"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad6ce885c0aca155bba4b3e468069aa4f" id="r_ad6ce885c0aca155bba4b3e468069aa4f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#ad6ce885c0aca155bba4b3e468069aa4f">FabricAddress</a> (<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a870fb50c3a01ee94426c0f0046be4bd2">Native</a> <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a7804ba23662efb1d02f4a1c18bb22e5f">native</a>) noexcept</td></tr>
+<tr class="separator:ad6ce885c0aca155bba4b3e468069aa4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
-<tr class="memitem:ac9b79bd286c6e01e02ea0636990c983e" id="r_ac9b79bd286c6e01e02ea0636990c983e"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::uint8_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#ac9b79bd286c6e01e02ea0636990c983e">_inner</a></td></tr>
-<tr class="separator:ac9b79bd286c6e01e02ea0636990c983e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a25b57e10a4120699e80a42170bca1a08" id="r_a25b57e10a4120699e80a42170bca1a08"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a870fb50c3a01ee94426c0f0046be4bd2">Native</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a25b57e10a4120699e80a42170bca1a08">_native</a></td></tr>
+<tr class="separator:a25b57e10a4120699e80a42170bca1a08"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Wrapper around a libfabric endpoint address. </p>
+<div class="textblock"><p>Owning, type-safe representation of a libfabric address. </p>
+<p>Wraps the native address types that the various <code>addr_format</code> values map to. The address bytes are copied out of the source <code>fi_info</code> on construction, so a <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html" title="Owning, type-safe representation of a libfabric address.">FabricAddress</a> remains valid independently of the <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html" title="Non-owning view of a FabricInfo. Returned when iterating over a FabricInfoList.">FabricInfoView</a> it was built from.</p>
+<p>An empty / unsupported / unrecognised address is represented by std::monostate. </p>
 
-<p class="definition">Definition at line <a class="el" href="Address_8hpp_source.html#l00018">18</a> of file <a class="el" href="Address_8hpp_source.html">Address.hpp</a>.</p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a11011edbd657a7cd726b3af8cd945044" name="a11011edbd657a7cd726b3af8cd945044"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a11011edbd657a7cd726b3af8cd945044">&#9670;&#160;</a></span>FabricAddress() <span class="overload">[1/2]</span></h2>
+<p class="definition">Definition at line <a class="el" href="FabricAddress_8hpp_source.html#l00076">76</a> of file <a class="el" href="FabricAddress_8hpp_source.html">FabricAddress.hpp</a>.</p>
+</div><h2 class="groupheader">Member Typedef Documentation</h2>
+<a id="a870fb50c3a01ee94426c0f0046be4bd2" name="a870fb50c3a01ee94426c0f0046be4bd2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a870fb50c3a01ee94426c0f0046be4bd2">&#9670;&#160;</a></span>Native</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a870fb50c3a01ee94426c0f0046be4bd2">mxl::lib::fabrics::ofi::FabricAddress::Native</a> =  std::variant&lt;std::monostate, ::sockaddr_in, ::sockaddr_in6, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1OfiSockaddrIb.html">OfiSockaddrIb</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1EfaAddress.html">EfaAddress</a>, std::string&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="FabricAddress_8hpp_source.html#l00079">79</a> of file <a class="el" href="FabricAddress_8hpp_source.html">FabricAddress.hpp</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="af82f9af1fbc4123396502bffe204d23a" name="af82f9af1fbc4123396502bffe204d23a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af82f9af1fbc4123396502bffe204d23a">&#9670;&#160;</a></span>FabricAddress() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -182,17 +209,20 @@ Private Attributes</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">default</span></span>  </td>
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Default is an empty fabric address. </p>
-
+<p class="definition">Definition at line <a class="el" href="FabricAddress_8cpp_source.html#l00223">223</a> of file <a class="el" href="FabricAddress_8cpp_source.html">FabricAddress.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  224</span>        : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a25b57e10a4120699e80a42170bca1a08">_native</a>{std::monostate{}}</div>
+<div class="line"><span class="lineno">  225</span>    {}</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress_html_a25b57e10a4120699e80a42170bca1a08"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a25b57e10a4120699e80a42170bca1a08">mxl::lib::fabrics::ofi::FabricAddress::_native</a></div><div class="ttdeci">Native _native</div><div class="ttdef"><b>Definition</b> <a href="FabricAddress_8hpp_source.html#l00152">FabricAddress.hpp:152</a></div></div>
+</div><!-- fragment -->
 </div>
 </div>
-<a id="a2f65216e60ed289603bc51e65fc9fde9" name="a2f65216e60ed289603bc51e65fc9fde9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2f65216e60ed289603bc51e65fc9fde9">&#9670;&#160;</a></span>FabricAddress() <span class="overload">[2/2]</span></h2>
+<a id="ad6ce885c0aca155bba4b3e468069aa4f" name="ad6ce885c0aca155bba4b3e468069aa4f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad6ce885c0aca155bba4b3e468069aa4f">&#9670;&#160;</a></span>FabricAddress() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -203,28 +233,28 @@ Private Attributes</h2></td></tr>
         <tr>
           <td class="memname">mxl::lib::fabrics::ofi::FabricAddress::FabricAddress </td>
           <td>(</td>
-          <td class="paramtype">std::vector&lt; std::uint8_t &gt;&#160;</td>
-          <td class="paramname"><em>addr</em></td><td>)</td>
+          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a870fb50c3a01ee94426c0f0046be4bd2">FabricAddress::Native</a>&#160;</td>
+          <td class="paramname"><em>native</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">explicit</span><span class="mlabel">private</span></span>  </td>
+<span class="mlabels"><span class="mlabel">explicit</span><span class="mlabel">private</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="Address_8cpp_source.html#l00016">16</a> of file <a class="el" href="Address_8cpp_source.html">Address.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   17</span>        : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#ac9b79bd286c6e01e02ea0636990c983e">_inner</a>(std::move(addr))</div>
-<div class="line"><span class="lineno">   18</span>    {}</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress_html_ac9b79bd286c6e01e02ea0636990c983e"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#ac9b79bd286c6e01e02ea0636990c983e">mxl::lib::fabrics::ofi::FabricAddress::_inner</a></div><div class="ttdeci">std::vector&lt; std::uint8_t &gt; _inner</div><div class="ttdef"><b>Definition</b> <a href="Address_8hpp_source.html#l00069">Address.hpp:69</a></div></div>
+<p class="definition">Definition at line <a class="el" href="FabricAddress_8cpp_source.html#l00227">227</a> of file <a class="el" href="FabricAddress_8cpp_source.html">FabricAddress.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  228</span>        : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a25b57e10a4120699e80a42170bca1a08">_native</a>{std::move(<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a7804ba23662efb1d02f4a1c18bb22e5f">native</a>)}</div>
+<div class="line"><span class="lineno">  229</span>    {}</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress_html_a7804ba23662efb1d02f4a1c18bb22e5f"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a7804ba23662efb1d02f4a1c18bb22e5f">mxl::lib::fabrics::ofi::FabricAddress::native</a></div><div class="ttdeci">Native const &amp; native() const noexcept</div><div class="ttdoc">Access the underlying variant.</div><div class="ttdef"><b>Definition</b> <a href="FabricAddress_8hpp_source.html#l00107">FabricAddress.hpp:107</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a294b03c3aed426cd3c619610a0991a6c" name="a294b03c3aed426cd3c619610a0991a6c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a294b03c3aed426cd3c619610a0991a6c">&#9670;&#160;</a></span>fromBase64()</h2>
+<a id="a9322367ed01a5485559d156b9c4f8fdd" name="a9322367ed01a5485559d156b9c4f8fdd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9322367ed01a5485559d156b9c4f8fdd">&#9670;&#160;</a></span>addressFormat()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -233,11 +263,74 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html">FabricAddress</a> mxl::lib::fabrics::ofi::FabricAddress::fromBase64 </td>
+          <td class="memname"><a class="el" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9e">FabricAddressFormat</a> mxl::lib::fabrics::ofi::FabricAddress::addressFormat </td>
           <td>(</td>
-          <td class="paramtype">std::string_view&#160;</td>
-          <td class="paramname"><em>data</em></td><td>)</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Return the libfabric address format constant (FI_SOCKADDR_IN, etc.). </p>
+
+<p class="definition">Definition at line <a class="el" href="FabricAddress_8cpp_source.html#l00377">377</a> of file <a class="el" href="FabricAddress_8cpp_source.html">FabricAddress.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  378</span>    {</div>
+<div class="line"><span class="lineno">  379</span>        <span class="keywordflow">return</span> std::visit(</div>
+<div class="line"><span class="lineno">  380</span>            overloaded{</div>
+<div class="line"><span class="lineno">  381</span>                [](std::monostate <span class="keyword">const</span>&amp;) { <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9ea6bce6a0aeb20df3992a0e73d1e28c479">FabricAddressFormat::Unspec</a>; },</div>
+<div class="line"><span class="lineno">  382</span>                [](::sockaddr_in <span class="keyword">const</span>&amp;) { <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9eafe237294d0ec47e0efd5afd1f647a3c6">FabricAddressFormat::SockaddrIn</a>; },</div>
+<div class="line"><span class="lineno">  383</span>                [](::sockaddr_in6 <span class="keyword">const</span>&amp;) { <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9ea77d4fb24ef1e2254d5d302e7806e82ec">FabricAddressFormat::SockaddrIn6</a>; },</div>
+<div class="line"><span class="lineno">  384</span>                [](OfiSockaddrIb <span class="keyword">const</span>&amp;) { <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9eaff3e3759ba9e4137cd7ed8234d0c188b">FabricAddressFormat::SockaddrIb</a>; },</div>
+<div class="line"><span class="lineno">  385</span>                [](EfaAddress <span class="keyword">const</span>&amp;) { <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9eab400f0c5261ea9bf004187e489ab9ff6">FabricAddressFormat::Efa</a>; },</div>
+<div class="line"><span class="lineno">  386</span>                [](std::string <span class="keyword">const</span>&amp;) { <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9ea27118326006d3829667a400ad23d5d98">FabricAddressFormat::String</a>; },</div>
+<div class="line"><span class="lineno">  387</span>            },</div>
+<div class="line"><span class="lineno">  388</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a25b57e10a4120699e80a42170bca1a08">_native</a>);</div>
+<div class="line"><span class="lineno">  389</span>    }</div>
+<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_a392e550a79c8db4726aeebe65da5dc9ea27118326006d3829667a400ad23d5d98"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9ea27118326006d3829667a400ad23d5d98">mxl::lib::fabrics::ofi::FabricAddressFormat::String</a></div><div class="ttdeci">@ String</div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_a392e550a79c8db4726aeebe65da5dc9ea6bce6a0aeb20df3992a0e73d1e28c479"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9ea6bce6a0aeb20df3992a0e73d1e28c479">mxl::lib::fabrics::ofi::FabricAddressFormat::Unspec</a></div><div class="ttdeci">@ Unspec</div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_a392e550a79c8db4726aeebe65da5dc9ea77d4fb24ef1e2254d5d302e7806e82ec"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9ea77d4fb24ef1e2254d5d302e7806e82ec">mxl::lib::fabrics::ofi::FabricAddressFormat::SockaddrIn6</a></div><div class="ttdeci">@ SockaddrIn6</div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_a392e550a79c8db4726aeebe65da5dc9eab400f0c5261ea9bf004187e489ab9ff6"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9eab400f0c5261ea9bf004187e489ab9ff6">mxl::lib::fabrics::ofi::FabricAddressFormat::Efa</a></div><div class="ttdeci">@ Efa</div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_a392e550a79c8db4726aeebe65da5dc9eafe237294d0ec47e0efd5afd1f647a3c6"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9eafe237294d0ec47e0efd5afd1f647a3c6">mxl::lib::fabrics::ofi::FabricAddressFormat::SockaddrIn</a></div><div class="ttdeci">@ SockaddrIn</div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_a392e550a79c8db4726aeebe65da5dc9eaff3e3759ba9e4137cd7ed8234d0c188b"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9eaff3e3759ba9e4137cd7ed8234d0c188b">mxl::lib::fabrics::ofi::FabricAddressFormat::SockaddrIb</a></div><div class="ttdeci">@ SockaddrIb</div></div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="ab8dbb3d961af7a46fb7ff1cf67137bdf" name="ab8dbb3d961af7a46fb7ff1cf67137bdf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab8dbb3d961af7a46fb7ff1cf67137bdf">&#9670;&#160;</a></span>decode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html">FabricAddress</a> mxl::lib::fabrics::ofi::FabricAddress::decode </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9e">FabricAddressFormat</a>&#160;</td>
+          <td class="paramname"><em>addrFormat</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">void const *&#160;</td>
+          <td class="paramname"><em>addr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::size_t&#160;</td>
+          <td class="paramname"><em>len</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
@@ -247,24 +340,106 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Parse a fabric address from a <a class="el" href="namespacebase64.html">base64</a> encoded string. </p>
+<p>Decode a raw libfabric address buffer of the given <code>addr_format</code>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">addrFormat</td><td>One of the libfabric FI_ADDR_* / FI_SOCKADDR* constants. </td></tr>
+    <tr><td class="paramname">addr</td><td>Pointer to the address bytes, or nullptr. </td></tr>
+    <tr><td class="paramname">len</td><td>Length of the address buffer in bytes. </td></tr>
+  </table>
+  </dd>
+</dl>
 
-<p class="definition">Definition at line <a class="el" href="Address_8cpp_source.html#l00050">50</a> of file <a class="el" href="Address_8cpp_source.html">Address.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   51</span>    {</div>
-<div class="line"><span class="lineno">   52</span>        <span class="keyword">auto</span> decoded = <a class="code hl_function" href="namespacebase64.html#a2b71b32d60224f421c0e0755b7c616fe">base64::decode_into&lt;std::vector&lt;std::uint8_t&gt;</a>&gt;(data);</div>
-<div class="line"><span class="lineno">   53</span>        <span class="keywordflow">if</span> (decoded.empty())</div>
-<div class="line"><span class="lineno">   54</span>        {</div>
-<div class="line"><span class="lineno">   55</span>            <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;Failed to decode base64 data into FabricAddress.&quot;</span>);</div>
-<div class="line"><span class="lineno">   56</span>        }</div>
-<div class="line"><span class="lineno">   57</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a11011edbd657a7cd726b3af8cd945044">FabricAddress</a>{std::move(decoded)};</div>
-<div class="line"><span class="lineno">   58</span>    }</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress_html_a11011edbd657a7cd726b3af8cd945044"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a11011edbd657a7cd726b3af8cd945044">mxl::lib::fabrics::ofi::FabricAddress::FabricAddress</a></div><div class="ttdeci">FabricAddress()=default</div><div class="ttdoc">Default is an empty fabric address.</div></div>
-<div class="ttc" id="anamespacebase64_html_a2b71b32d60224f421c0e0755b7c616fe"><div class="ttname"><a href="namespacebase64.html#a2b71b32d60224f421c0e0755b7c616fe">base64::encode_into</a></div><div class="ttdeci">OutputBuffer encode_into(InputIterator begin, InputIterator end)</div><div class="ttdef"><b>Definition</b> <a href="Base64_8hpp_source.html#l02676">Base64.hpp:2676</a></div></div>
+<p class="definition">Definition at line <a class="el" href="FabricAddress_8cpp_source.html#l00241">241</a> of file <a class="el" href="FabricAddress_8cpp_source.html">FabricAddress.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  242</span>    {</div>
+<div class="line"><span class="lineno">  243</span>        <span class="comment">// Mirror ofi_straddr: nothing to decode without an address.</span></div>
+<div class="line"><span class="lineno">  244</span>        <span class="keywordflow">if</span> (!addr)</div>
+<div class="line"><span class="lineno">  245</span>        {</div>
+<div class="line"><span class="lineno">  246</span>            <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#af82f9af1fbc4123396502bffe204d23a">FabricAddress</a>{};</div>
+<div class="line"><span class="lineno">  247</span>        }</div>
+<div class="line"><span class="lineno">  248</span> </div>
+<div class="line"><span class="lineno">  249</span>        <span class="keyword">auto</span> <span class="keyword">const</span> sockAddrFamily = [&amp;]</div>
+<div class="line"><span class="lineno">  250</span>        {</div>
+<div class="line"><span class="lineno">  251</span>            <span class="keywordflow">return</span> <span class="keyword">static_cast&lt;</span>::sockaddr const*<span class="keyword">&gt;</span>(addr)-&gt;sa_family;</div>
+<div class="line"><span class="lineno">  252</span>        };</div>
+<div class="line"><span class="lineno">  253</span> </div>
+<div class="line"><span class="lineno">  254</span>        <span class="keywordflow">switch</span> (format)</div>
+<div class="line"><span class="lineno">  255</span>        {</div>
+<div class="line"><span class="lineno">  256</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9eaa619702afadcd361c4e5f33c632f4dc6">FabricAddressFormat::Sockaddr</a>:</div>
+<div class="line"><span class="lineno">  257</span>                <span class="comment">// Dispatch on the embedded address family (IPv4, IPv6 or IB).</span></div>
+<div class="line"><span class="lineno">  258</span>                <span class="keywordflow">switch</span> (sockAddrFamily())</div>
+<div class="line"><span class="lineno">  259</span>                {</div>
+<div class="line"><span class="lineno">  260</span>                    <span class="keywordflow">case</span> AF_INET:  <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#ab8dbb3d961af7a46fb7ff1cf67137bdf">decode</a>(<a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9eafe237294d0ec47e0efd5afd1f647a3c6">FabricAddressFormat::SockaddrIn</a>, addr, len);</div>
+<div class="line"><span class="lineno">  261</span>                    <span class="keywordflow">case</span> AF_INET6: <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#ab8dbb3d961af7a46fb7ff1cf67137bdf">decode</a>(<a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9ea77d4fb24ef1e2254d5d302e7806e82ec">FabricAddressFormat::SockaddrIn6</a>, addr, len);</div>
+<div class="line"><span class="lineno">  262</span>                    <span class="keywordflow">case</span> AF_IB:    <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#ab8dbb3d961af7a46fb7ff1cf67137bdf">decode</a>(<a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9eaff3e3759ba9e4137cd7ed8234d0c188b">FabricAddressFormat::SockaddrIb</a>, addr, len);</div>
+<div class="line"><span class="lineno">  263</span>                    <span class="keywordflow">default</span>:       <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#af82f9af1fbc4123396502bffe204d23a">FabricAddress</a>{};</div>
+<div class="line"><span class="lineno">  264</span>                }</div>
+<div class="line"><span class="lineno">  265</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9ea56bc6f152ffea2feb13ae1e96d7eed72">FabricAddressFormat::SockaddrIp</a>:</div>
+<div class="line"><span class="lineno">  266</span>                <span class="comment">// Like FI_SOCKADDR, but IB is not a valid family here.</span></div>
+<div class="line"><span class="lineno">  267</span>                <span class="keywordflow">switch</span> (sockAddrFamily())</div>
+<div class="line"><span class="lineno">  268</span>                {</div>
+<div class="line"><span class="lineno">  269</span>                    <span class="keywordflow">case</span> AF_INET:  <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#ab8dbb3d961af7a46fb7ff1cf67137bdf">decode</a>(<a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9eafe237294d0ec47e0efd5afd1f647a3c6">FabricAddressFormat::SockaddrIn</a>, addr, len);</div>
+<div class="line"><span class="lineno">  270</span>                    <span class="keywordflow">case</span> AF_INET6: <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#ab8dbb3d961af7a46fb7ff1cf67137bdf">decode</a>(<a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9ea77d4fb24ef1e2254d5d302e7806e82ec">FabricAddressFormat::SockaddrIn6</a>, addr, len);</div>
+<div class="line"><span class="lineno">  271</span>                    <span class="keywordflow">default</span>:       <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#af82f9af1fbc4123396502bffe204d23a">FabricAddress</a>{};</div>
+<div class="line"><span class="lineno">  272</span>                }</div>
+<div class="line"><span class="lineno">  273</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9eafe237294d0ec47e0efd5afd1f647a3c6">FabricAddressFormat::SockaddrIn</a>:</div>
+<div class="line"><span class="lineno">  274</span>            {</div>
+<div class="line"><span class="lineno">  275</span>                <span class="keywordflow">if</span> (len &lt; <span class="keyword">sizeof</span>(::sockaddr_in))</div>
+<div class="line"><span class="lineno">  276</span>                {</div>
+<div class="line"><span class="lineno">  277</span>                    <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#af82f9af1fbc4123396502bffe204d23a">FabricAddress</a>{};</div>
+<div class="line"><span class="lineno">  278</span>                }</div>
+<div class="line"><span class="lineno">  279</span>                <span class="keyword">auto</span> sin = ::sockaddr_in{};</div>
+<div class="line"><span class="lineno">  280</span>                std::memcpy(&amp;sin, addr, <span class="keyword">sizeof</span>(sin));</div>
+<div class="line"><span class="lineno">  281</span>                <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#af82f9af1fbc4123396502bffe204d23a">FabricAddress</a>{sin};</div>
+<div class="line"><span class="lineno">  282</span>            }</div>
+<div class="line"><span class="lineno">  283</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9ea77d4fb24ef1e2254d5d302e7806e82ec">FabricAddressFormat::SockaddrIn6</a>:</div>
+<div class="line"><span class="lineno">  284</span>            {</div>
+<div class="line"><span class="lineno">  285</span>                <span class="keywordflow">if</span> (len &lt; <span class="keyword">sizeof</span>(::sockaddr_in6))</div>
+<div class="line"><span class="lineno">  286</span>                {</div>
+<div class="line"><span class="lineno">  287</span>                    <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#af82f9af1fbc4123396502bffe204d23a">FabricAddress</a>{};</div>
+<div class="line"><span class="lineno">  288</span>                }</div>
+<div class="line"><span class="lineno">  289</span>                <span class="keyword">auto</span> sin6 = ::sockaddr_in6{};</div>
+<div class="line"><span class="lineno">  290</span>                std::memcpy(&amp;sin6, addr, <span class="keyword">sizeof</span>(sin6));</div>
+<div class="line"><span class="lineno">  291</span>                <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#af82f9af1fbc4123396502bffe204d23a">FabricAddress</a>{sin6};</div>
+<div class="line"><span class="lineno">  292</span>            }</div>
+<div class="line"><span class="lineno">  293</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9eaff3e3759ba9e4137cd7ed8234d0c188b">FabricAddressFormat::SockaddrIb</a>:</div>
+<div class="line"><span class="lineno">  294</span>            {</div>
+<div class="line"><span class="lineno">  295</span>                <span class="keywordflow">if</span> (len &lt; <span class="keyword">sizeof</span>(OfiSockaddrIb))</div>
+<div class="line"><span class="lineno">  296</span>                {</div>
+<div class="line"><span class="lineno">  297</span>                    <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#af82f9af1fbc4123396502bffe204d23a">FabricAddress</a>{};</div>
+<div class="line"><span class="lineno">  298</span>                }</div>
+<div class="line"><span class="lineno">  299</span>                <span class="keyword">auto</span> sib = OfiSockaddrIb{};</div>
+<div class="line"><span class="lineno">  300</span>                std::memcpy(&amp;sib, addr, <span class="keyword">sizeof</span>(sib));</div>
+<div class="line"><span class="lineno">  301</span>                <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#af82f9af1fbc4123396502bffe204d23a">FabricAddress</a>{sib};</div>
+<div class="line"><span class="lineno">  302</span>            }</div>
+<div class="line"><span class="lineno">  303</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9eab400f0c5261ea9bf004187e489ab9ff6">FabricAddressFormat::Efa</a>:</div>
+<div class="line"><span class="lineno">  304</span>            {</div>
+<div class="line"><span class="lineno">  305</span>                <span class="comment">// 16-byte IPv6 GID, 16-bit QPN at offset 16, 32-bit QKey at offset 20.</span></div>
+<div class="line"><span class="lineno">  306</span>                <span class="keyword">constexpr</span> <span class="keyword">auto</span> efaAddrLen = std::size_t{24};</div>
+<div class="line"><span class="lineno">  307</span>                <span class="keywordflow">if</span> (len &lt; efaAddrLen)</div>
+<div class="line"><span class="lineno">  308</span>                {</div>
+<div class="line"><span class="lineno">  309</span>                    <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#af82f9af1fbc4123396502bffe204d23a">FabricAddress</a>{};</div>
+<div class="line"><span class="lineno">  310</span>                }</div>
+<div class="line"><span class="lineno">  311</span>                <span class="keyword">auto</span> <span class="keyword">const</span>* bytes = <span class="keyword">static_cast&lt;</span>std::uint8_t const*<span class="keyword">&gt;</span>(addr);</div>
+<div class="line"><span class="lineno">  312</span>                <span class="keyword">auto</span> efa = EfaAddress{};</div>
+<div class="line"><span class="lineno">  313</span>                std::memcpy(efa.gid, bytes, <span class="keyword">sizeof</span>(efa.gid));</div>
+<div class="line"><span class="lineno">  314</span>                std::memcpy(&amp;efa.qpn, bytes + 16, <span class="keyword">sizeof</span>(efa.qpn));</div>
+<div class="line"><span class="lineno">  315</span>                std::memcpy(&amp;efa.qkey, bytes + 20, <span class="keyword">sizeof</span>(efa.qkey));</div>
+<div class="line"><span class="lineno">  316</span>                <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#af82f9af1fbc4123396502bffe204d23a">FabricAddress</a>{efa};</div>
+<div class="line"><span class="lineno">  317</span>            }</div>
+<div class="line"><span class="lineno">  318</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9ea27118326006d3829667a400ad23d5d98">FabricAddressFormat::String</a>: <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#af82f9af1fbc4123396502bffe204d23a">FabricAddress</a>{std::string{<span class="keyword">static_cast&lt;</span><span class="keywordtype">char</span> const*<span class="keyword">&gt;</span>(addr)}};</div>
+<div class="line"><span class="lineno">  319</span>            <span class="keywordflow">default</span>:                          <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#af82f9af1fbc4123396502bffe204d23a">FabricAddress</a>{};</div>
+<div class="line"><span class="lineno">  320</span>        }</div>
+<div class="line"><span class="lineno">  321</span>    }</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress_html_ab8dbb3d961af7a46fb7ff1cf67137bdf"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#ab8dbb3d961af7a46fb7ff1cf67137bdf">mxl::lib::fabrics::ofi::FabricAddress::decode</a></div><div class="ttdeci">static FabricAddress decode(FabricAddressFormat addrFormat, void const *addr, std::size_t len)</div><div class="ttdoc">Decode a raw libfabric address buffer of the given addr_format.</div><div class="ttdef"><b>Definition</b> <a href="FabricAddress_8cpp_source.html#l00241">FabricAddress.cpp:241</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress_html_af82f9af1fbc4123396502bffe204d23a"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#af82f9af1fbc4123396502bffe204d23a">mxl::lib::fabrics::ofi::FabricAddress::FabricAddress</a></div><div class="ttdeci">FabricAddress() noexcept</div><div class="ttdef"><b>Definition</b> <a href="FabricAddress_8cpp_source.html#l00223">FabricAddress.cpp:223</a></div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_a392e550a79c8db4726aeebe65da5dc9ea56bc6f152ffea2feb13ae1e96d7eed72"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9ea56bc6f152ffea2feb13ae1e96d7eed72">mxl::lib::fabrics::ofi::FabricAddressFormat::SockaddrIp</a></div><div class="ttdeci">@ SockaddrIp</div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_a392e550a79c8db4726aeebe65da5dc9eaa619702afadcd361c4e5f33c632f4dc6"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9eaa619702afadcd361c4e5f33c632f4dc6">mxl::lib::fabrics::ofi::FabricAddressFormat::Sockaddr</a></div><div class="ttdeci">@ Sockaddr</div></div>
 </div><!-- fragment -->
 </div>
 </div>
-<a id="aa5a64c2c716cc53758d40c68ddb794cb" name="aa5a64c2c716cc53758d40c68ddb794cb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa5a64c2c716cc53758d40c68ddb794cb">&#9670;&#160;</a></span>fromFid()</h2>
+<a id="a6030c667b8ae707a9ec20e4546557220" name="a6030c667b8ae707a9ec20e4546557220"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6030c667b8ae707a9ec20e4546557220">&#9670;&#160;</a></span>empty()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -273,11 +448,196 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html">FabricAddress</a> mxl::lib::fabrics::ofi::FabricAddress::fromFid </td>
+          <td class="memname">bool mxl::lib::fabrics::ofi::FabricAddress::empty </td>
           <td>(</td>
-          <td class="paramtype">::fid_t&#160;</td>
-          <td class="paramname"><em>fid</em></td><td>)</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>True if the address could not be decoded (holds std::monostate). </p>
+
+<p class="definition">Definition at line <a class="el" href="FabricAddress_8hpp_source.html#l00114">114</a> of file <a class="el" href="FabricAddress_8hpp_source.html">FabricAddress.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  115</span>        {</div>
+<div class="line"><span class="lineno">  116</span>            <span class="keywordflow">return</span> std::holds_alternative&lt;std::monostate&gt;(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a25b57e10a4120699e80a42170bca1a08">_native</a>);</div>
+<div class="line"><span class="lineno">  117</span>        }</div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="abfb65e2074dde08ef8ca5bb7e9c57673" name="abfb65e2074dde08ef8ca5bb7e9c57673"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abfb65e2074dde08ef8ca5bb7e9c57673">&#9670;&#160;</a></span>fromDestination()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html">FabricAddress</a> mxl::lib::fabrics::ofi::FabricAddress::fromDestination </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html">FabricInfoView</a>&#160;</td>
+          <td class="paramname"><em>info</em></td><td>)</td>
           <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Build a <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html" title="Owning, type-safe representation of a libfabric address.">FabricAddress</a> from the destination address of <code>info</code>. </p>
+
+<p class="definition">Definition at line <a class="el" href="FabricAddress_8cpp_source.html#l00236">236</a> of file <a class="el" href="FabricAddress_8cpp_source.html">FabricAddress.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  237</span>    {</div>
+<div class="line"><span class="lineno">  238</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#ab8dbb3d961af7a46fb7ff1cf67137bdf">decode</a>(<a class="code hl_function" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#afe438651e7e6c34c84ed45220fdadf73">mustConvertAddressFormat</a>(info-&gt;addr_format), info-&gt;dest_addr, info-&gt;dest_addrlen);</div>
+<div class="line"><span class="lineno">  239</span>    }</div>
+<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_afe438651e7e6c34c84ed45220fdadf73"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#afe438651e7e6c34c84ed45220fdadf73">mxl::lib::fabrics::ofi::mustConvertAddressFormat</a></div><div class="ttdeci">FabricAddressFormat mustConvertAddressFormat(std::uint32_t fiAddrFormat)</div><div class="ttdoc">Convert from libfabric address format value to FabricAddressFormat Never returns FabricAddressFormat:...</div><div class="ttdef"><b>Definition</b> <a href="FabricAddress_8cpp_source.html#l00212">FabricAddress.cpp:212</a></div></div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="aa356b7392e0bb89509cb208173325d6d" name="aa356b7392e0bb89509cb208173325d6d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa356b7392e0bb89509cb208173325d6d">&#9670;&#160;</a></span>fromSource()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html">FabricAddress</a> mxl::lib::fabrics::ofi::FabricAddress::fromSource </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html">FabricInfoView</a>&#160;</td>
+          <td class="paramname"><em>info</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Build a <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html" title="Owning, type-safe representation of a libfabric address.">FabricAddress</a> from the source address of <code>info</code>. </p>
+
+<p class="definition">Definition at line <a class="el" href="FabricAddress_8cpp_source.html#l00231">231</a> of file <a class="el" href="FabricAddress_8cpp_source.html">FabricAddress.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  232</span>    {</div>
+<div class="line"><span class="lineno">  233</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#ab8dbb3d961af7a46fb7ff1cf67137bdf">decode</a>(<a class="code hl_function" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#afe438651e7e6c34c84ed45220fdadf73">mustConvertAddressFormat</a>(info-&gt;addr_format), info-&gt;src_addr, info-&gt;src_addrlen);</div>
+<div class="line"><span class="lineno">  234</span>    }</div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="a7804ba23662efb1d02f4a1c18bb22e5f" name="a7804ba23662efb1d02f4a1c18bb22e5f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7804ba23662efb1d02f4a1c18bb22e5f">&#9670;&#160;</a></span>native()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a870fb50c3a01ee94426c0f0046be4bd2">Native</a> const  &amp; mxl::lib::fabrics::ofi::FabricAddress::native </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Access the underlying variant. </p>
+
+<p class="definition">Definition at line <a class="el" href="FabricAddress_8hpp_source.html#l00107">107</a> of file <a class="el" href="FabricAddress_8hpp_source.html">FabricAddress.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  108</span>        {</div>
+<div class="line"><span class="lineno">  109</span>            <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a25b57e10a4120699e80a42170bca1a08">_native</a>;</div>
+<div class="line"><span class="lineno">  110</span>        }</div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="a8d89e8660690d503d0bc8c233522bb7b" name="a8d89e8660690d503d0bc8c233522bb7b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8d89e8660690d503d0bc8c233522bb7b">&#9670;&#160;</a></span>node()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt; std::string &gt; mxl::lib::fabrics::ofi::FabricAddress::node </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Return the host portion of the address as a string. </p>
+<p>For the socket address types this is the textual IP address; for the IB and EFA types it is the GID. For an FI_ADDR_STR address it is the address string itself, and for an empty address it is the empty string. </p>
+
+<p class="definition">Definition at line <a class="el" href="FabricAddress_8cpp_source.html#l00341">341</a> of file <a class="el" href="FabricAddress_8cpp_source.html">FabricAddress.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  342</span>    {</div>
+<div class="line"><span class="lineno">  343</span>        <span class="keywordflow">return</span> std::visit(</div>
+<div class="line"><span class="lineno">  344</span>            [](<span class="keyword">auto</span> <span class="keyword">const</span>&amp; value) -&gt; std::optional&lt;std::string&gt;</div>
+<div class="line"><span class="lineno">  345</span>            {</div>
+<div class="line"><span class="lineno">  346</span>                <span class="keyword">using </span>T = std::decay_t&lt;<span class="keyword">decltype</span>(value)&gt;;</div>
+<div class="line"><span class="lineno">  347</span>                <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same_v&lt;T, std::monostate&gt;)</div>
+<div class="line"><span class="lineno">  348</span>                {</div>
+<div class="line"><span class="lineno">  349</span>                    <span class="keywordflow">return</span> std::nullopt;</div>
+<div class="line"><span class="lineno">  350</span>                }</div>
+<div class="line"><span class="lineno">  351</span>                <span class="keywordflow">else</span></div>
+<div class="line"><span class="lineno">  352</span>                {</div>
+<div class="line"><span class="lineno">  353</span>                    <span class="keywordflow">return</span> ofi::hostString(value);</div>
+<div class="line"><span class="lineno">  354</span>                }</div>
+<div class="line"><span class="lineno">  355</span>            },</div>
+<div class="line"><span class="lineno">  356</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a25b57e10a4120699e80a42170bca1a08">_native</a>);</div>
+<div class="line"><span class="lineno">  357</span>    }</div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="a0400200a271c0b36758e66d726ba1535" name="a0400200a271c0b36758e66d726ba1535"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0400200a271c0b36758e66d726ba1535">&#9670;&#160;</a></span>parse()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html">FabricAddress</a> mxl::lib::fabrics::ofi::FabricAddress::parse </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#af4c65c9e8976cf4c6c059bd14589c579">Provider</a>&#160;</td>
+          <td class="paramname"><em>provider</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::optional&lt; std::string &gt;&#160;</td>
+          <td class="paramname"><em>node</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::optional&lt; std::string &gt;&#160;</td>
+          <td class="paramname"><em>service</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
@@ -287,198 +647,81 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Retrieve the fabric address of an endpoint by passing its fid. </p>
+<p>Parse a node/service pair into a typed address for the given provider. </p>
 
-<p class="definition">Definition at line <a class="el" href="Address_8cpp_source.html#l00020">20</a> of file <a class="el" href="Address_8cpp_source.html">Address.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   21</span>    {</div>
-<div class="line"><span class="lineno">   22</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a8ee028644e0cc7822357c35fb1bed948">retrieveFabricAddress</a>(fid);</div>
-<div class="line"><span class="lineno">   23</span>    }</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress_html_a8ee028644e0cc7822357c35fb1bed948"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a8ee028644e0cc7822357c35fb1bed948">mxl::lib::fabrics::ofi::FabricAddress::retrieveFabricAddress</a></div><div class="ttdeci">static FabricAddress retrieveFabricAddress(::fid_t)</div><div class="ttdoc">Retrieve the fabric address of an endpoint by using its fid.</div><div class="ttdef"><b>Definition</b> <a href="Address_8cpp_source.html#l00060">Address.cpp:60</a></div></div>
+<p class="definition">Definition at line <a class="el" href="FabricAddress_8cpp_source.html#l00391">391</a> of file <a class="el" href="FabricAddress_8cpp_source.html">FabricAddress.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  392</span>    {</div>
+<div class="line"><span class="lineno">  393</span>        <span class="keywordflow">if</span> (!<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a8d89e8660690d503d0bc8c233522bb7b">node</a>)</div>
+<div class="line"><span class="lineno">  394</span>        {</div>
+<div class="line"><span class="lineno">  395</span>            <span class="keywordflow">if</span> (<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#aded53d219239213a8ea1ad8a969d1d58">service</a>)</div>
+<div class="line"><span class="lineno">  396</span>            {</div>
+<div class="line"><span class="lineno">  397</span>                <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a0302e7afea5ec6982664237acc8559f4">Exception::invalidArgument</a>(<span class="stringliteral">&quot;node address is required when service address is specified&quot;</span>);</div>
+<div class="line"><span class="lineno">  398</span>            }</div>
+<div class="line"><span class="lineno">  399</span> </div>
+<div class="line"><span class="lineno">  400</span>            <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#af82f9af1fbc4123396502bffe204d23a">FabricAddress</a>{};</div>
+<div class="line"><span class="lineno">  401</span>        }</div>
+<div class="line"><span class="lineno">  402</span> </div>
+<div class="line"><span class="lineno">  403</span>        <span class="keywordflow">switch</span> (provider)</div>
+<div class="line"><span class="lineno">  404</span>        {</div>
+<div class="line"><span class="lineno">  405</span>            <span class="comment">// SHM provider always expected FI_ADDR_STR</span></div>
+<div class="line"><span class="lineno">  406</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#af4c65c9e8976cf4c6c059bd14589c579a9f9f27e06d7732493ef31c27c65d9dbd">Provider::SHM</a>:</div>
+<div class="line"><span class="lineno">  407</span>            {</div>
+<div class="line"><span class="lineno">  408</span>                <span class="keywordflow">if</span> (<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#aded53d219239213a8ea1ad8a969d1d58">service</a> &amp;&amp; !<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#aded53d219239213a8ea1ad8a969d1d58">service</a>-&gt;empty())</div>
+<div class="line"><span class="lineno">  409</span>                {</div>
+<div class="line"><span class="lineno">  410</span>                    <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#af82f9af1fbc4123396502bffe204d23a">FabricAddress</a>{*<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a8d89e8660690d503d0bc8c233522bb7b">node</a> + <span class="stringliteral">&quot;:&quot;</span> + *<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#aded53d219239213a8ea1ad8a969d1d58">service</a>};</div>
+<div class="line"><span class="lineno">  411</span>                }</div>
+<div class="line"><span class="lineno">  412</span>                <span class="keywordflow">else</span></div>
+<div class="line"><span class="lineno">  413</span>                {</div>
+<div class="line"><span class="lineno">  414</span>                    <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#af82f9af1fbc4123396502bffe204d23a">FabricAddress</a>{*<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a8d89e8660690d503d0bc8c233522bb7b">node</a>};</div>
+<div class="line"><span class="lineno">  415</span>                }</div>
+<div class="line"><span class="lineno">  416</span>            };</div>
+<div class="line"><span class="lineno">  417</span>            <span class="comment">// For TCP and Verbs we only support FI_SOCKADDR_IN and FI_SOCKADDR_IN6</span></div>
+<div class="line"><span class="lineno">  418</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#af4c65c9e8976cf4c6c059bd14589c579ab136ef5f6a01d816991fe3cf7a6ac763">Provider::TCP</a>: [[fallthrough]];</div>
+<div class="line"><span class="lineno">  419</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#af4c65c9e8976cf4c6c059bd14589c579a772420ee0f018530dcdb23299deb9dfd">Provider::VERBS</a>:</div>
+<div class="line"><span class="lineno">  420</span>            {</div>
+<div class="line"><span class="lineno">  421</span>                <span class="keywordflow">if</span> (<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#aded53d219239213a8ea1ad8a969d1d58">service</a> &amp;&amp; !<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#aded53d219239213a8ea1ad8a969d1d58">service</a>-&gt;empty())</div>
+<div class="line"><span class="lineno">  422</span>                {</div>
+<div class="line"><span class="lineno">  423</span>                    <span class="keyword">auto</span> port = std::stoi(*<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#aded53d219239213a8ea1ad8a969d1d58">service</a>);</div>
+<div class="line"><span class="lineno">  424</span>                    <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#af82f9af1fbc4123396502bffe204d23a">FabricAddress</a>{parseInternetAddress(*<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a8d89e8660690d503d0bc8c233522bb7b">node</a>, port)};</div>
+<div class="line"><span class="lineno">  425</span>                }</div>
+<div class="line"><span class="lineno">  426</span>                <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#af82f9af1fbc4123396502bffe204d23a">FabricAddress</a>{parseInternetAddress(*<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a8d89e8660690d503d0bc8c233522bb7b">node</a>)};</div>
+<div class="line"><span class="lineno">  427</span>            }</div>
+<div class="line"><span class="lineno">  428</span>            <span class="comment">// EFA only supports FI_ADDR_EFA</span></div>
+<div class="line"><span class="lineno">  429</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#af4c65c9e8976cf4c6c059bd14589c579a295e051ab46695f1647af082cf335405">Provider::EFA</a>:</div>
+<div class="line"><span class="lineno">  430</span>            {</div>
+<div class="line"><span class="lineno">  431</span>                <span class="keyword">auto</span> parsed = parseInternetAddress(*<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a8d89e8660690d503d0bc8c233522bb7b">node</a>);</div>
+<div class="line"><span class="lineno">  432</span>                <span class="keyword">auto</span> sin6 = std::get_if&lt;::sockaddr_in6&gt;(&amp;parsed);</div>
+<div class="line"><span class="lineno">  433</span>                <span class="keywordflow">if</span> (!sin6)</div>
+<div class="line"><span class="lineno">  434</span>                {</div>
+<div class="line"><span class="lineno">  435</span>                    <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a0302e7afea5ec6982664237acc8559f4">Exception::invalidArgument</a>(<span class="stringliteral">&quot;invalid address format for EFA provider&quot;</span>);</div>
+<div class="line"><span class="lineno">  436</span>                }</div>
+<div class="line"><span class="lineno">  437</span> </div>
+<div class="line"><span class="lineno">  438</span>                <span class="keyword">auto</span> addr = EfaAddress{.gid = {}, .qpn = 0, .qkey = 0};</div>
+<div class="line"><span class="lineno">  439</span>                std::memcpy(addr.gid, &amp;sin6-&gt;sin6_addr, <span class="keyword">sizeof</span>(addr.gid));</div>
+<div class="line"><span class="lineno">  440</span>                <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#af82f9af1fbc4123396502bffe204d23a">FabricAddress</a>{addr};</div>
+<div class="line"><span class="lineno">  441</span>            }</div>
+<div class="line"><span class="lineno">  442</span>            <span class="keywordflow">default</span>: <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;must specify provider&quot;</span>);</div>
+<div class="line"><span class="lineno">  443</span>        }</div>
+<div class="line"><span class="lineno">  444</span>    }</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception_html_a0302e7afea5ec6982664237acc8559f4"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a0302e7afea5ec6982664237acc8559f4">mxl::lib::fabrics::ofi::Exception::invalidArgument</a></div><div class="ttdeci">static Exception invalidArgument(fmt::format_string&lt; T... &gt; fmt, T &amp;&amp;... args)</div><div class="ttdoc">Make an MXL_ERR_INVALID_ARG exception.</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00043">Exception.hpp:43</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception_html_ae25fba4f94c98ae0be85ca0c2d49eb34"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">mxl::lib::fabrics::ofi::Exception::invalidState</a></div><div class="ttdeci">static Exception invalidState(fmt::format_string&lt; T... &gt; fmt, T &amp;&amp;... args)</div><div class="ttdoc">Make an MXL_ERR_INVALID_STATE exception.</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00059">Exception.hpp:59</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress_html_a8d89e8660690d503d0bc8c233522bb7b"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a8d89e8660690d503d0bc8c233522bb7b">mxl::lib::fabrics::ofi::FabricAddress::node</a></div><div class="ttdeci">std::optional&lt; std::string &gt; node() const</div><div class="ttdoc">Return the host portion of the address as a string.</div><div class="ttdef"><b>Definition</b> <a href="FabricAddress_8cpp_source.html#l00341">FabricAddress.cpp:341</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress_html_aded53d219239213a8ea1ad8a969d1d58"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#aded53d219239213a8ea1ad8a969d1d58">mxl::lib::fabrics::ofi::FabricAddress::service</a></div><div class="ttdeci">std::optional&lt; std::string &gt; service() const</div><div class="ttdoc">Return the service/port portion of the address as a string.</div><div class="ttdef"><b>Definition</b> <a href="FabricAddress_8cpp_source.html#l00359">FabricAddress.cpp:359</a></div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_af4c65c9e8976cf4c6c059bd14589c579a295e051ab46695f1647af082cf335405"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#af4c65c9e8976cf4c6c059bd14589c579a295e051ab46695f1647af082cf335405">mxl::lib::fabrics::ofi::Provider::EFA</a></div><div class="ttdeci">@ EFA</div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_af4c65c9e8976cf4c6c059bd14589c579a772420ee0f018530dcdb23299deb9dfd"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#af4c65c9e8976cf4c6c059bd14589c579a772420ee0f018530dcdb23299deb9dfd">mxl::lib::fabrics::ofi::Provider::VERBS</a></div><div class="ttdeci">@ VERBS</div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_af4c65c9e8976cf4c6c059bd14589c579a9f9f27e06d7732493ef31c27c65d9dbd"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#af4c65c9e8976cf4c6c059bd14589c579a9f9f27e06d7732493ef31c27c65d9dbd">mxl::lib::fabrics::ofi::Provider::SHM</a></div><div class="ttdeci">@ SHM</div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_af4c65c9e8976cf4c6c059bd14589c579ab136ef5f6a01d816991fe3cf7a6ac763"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#af4c65c9e8976cf4c6c059bd14589c579ab136ef5f6a01d816991fe3cf7a6ac763">mxl::lib::fabrics::ofi::Provider::TCP</a></div><div class="ttdeci">@ TCP</div></div>
 </div><!-- fragment -->
 </div>
 </div>
-<a id="afd477685bd5968359e94ed08cd0571ee" name="afd477685bd5968359e94ed08cd0571ee"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afd477685bd5968359e94ed08cd0571ee">&#9670;&#160;</a></span>operator==()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool mxl::lib::fabrics::ofi::FabricAddress::operator== </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html">FabricAddress</a> const &amp;&#160;</td>
-          <td class="paramname"><em>other</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="Address_8cpp_source.html#l00045">45</a> of file <a class="el" href="Address_8cpp_source.html">Address.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   46</span>    {</div>
-<div class="line"><span class="lineno">   47</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#ac9b79bd286c6e01e02ea0636990c983e">_inner</a> == other._inner;</div>
-<div class="line"><span class="lineno">   48</span>    }</div>
-</div><!-- fragment -->
-</div>
-</div>
-<a id="a8748394d1b92e769d8391b69d284a634" name="a8748394d1b92e769d8391b69d284a634"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8748394d1b92e769d8391b69d284a634">&#9670;&#160;</a></span>raw() <span class="overload">[1/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void const  * mxl::lib::fabrics::ofi::FabricAddress::raw </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Pointer to the raw address data. </p>
-
-<p class="definition">Definition at line <a class="el" href="Address_8cpp_source.html#l00035">35</a> of file <a class="el" href="Address_8cpp_source.html">Address.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   36</span>    {</div>
-<div class="line"><span class="lineno">   37</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#ac9b79bd286c6e01e02ea0636990c983e">_inner</a>.data();</div>
-<div class="line"><span class="lineno">   38</span>    }</div>
-</div><!-- fragment -->
-</div>
-</div>
-<a id="a4f9532a10ce65bbeced11ecc88997613" name="a4f9532a10ce65bbeced11ecc88997613"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4f9532a10ce65bbeced11ecc88997613">&#9670;&#160;</a></span>raw() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void * mxl::lib::fabrics::ofi::FabricAddress::raw </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Pointer to the raw address data. </p>
-
-<p class="definition">Definition at line <a class="el" href="Address_8cpp_source.html#l00030">30</a> of file <a class="el" href="Address_8cpp_source.html">Address.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   31</span>    {</div>
-<div class="line"><span class="lineno">   32</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#ac9b79bd286c6e01e02ea0636990c983e">_inner</a>.data();</div>
-<div class="line"><span class="lineno">   33</span>    }</div>
-</div><!-- fragment -->
-</div>
-</div>
-<a id="a8ee028644e0cc7822357c35fb1bed948" name="a8ee028644e0cc7822357c35fb1bed948"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8ee028644e0cc7822357c35fb1bed948">&#9670;&#160;</a></span>retrieveFabricAddress()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html">FabricAddress</a> mxl::lib::fabrics::ofi::FabricAddress::retrieveFabricAddress </td>
-          <td>(</td>
-          <td class="paramtype">::fid_t&#160;</td>
-          <td class="paramname"><em>fid</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Retrieve the fabric address of an endpoint by using its fid. </p>
-
-<p class="definition">Definition at line <a class="el" href="Address_8cpp_source.html#l00060">60</a> of file <a class="el" href="Address_8cpp_source.html">Address.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   61</span>    {</div>
-<div class="line"><span class="lineno">   62</span>        <span class="comment">// First obtain the address length</span></div>
-<div class="line"><span class="lineno">   63</span>        std::size_t addrlen = 0;</div>
-<div class="line"><span class="lineno">   64</span>        <span class="keyword">auto</span> ret = fi_getname(fid, <span class="keyword">nullptr</span>, &amp;addrlen);</div>
-<div class="line"><span class="lineno">   65</span>        <span class="keywordflow">if</span> (ret != -FI_ETOOSMALL)</div>
-<div class="line"><span class="lineno">   66</span>        {</div>
-<div class="line"><span class="lineno">   67</span>            <span class="keywordflow">throw</span> FabricException(<span class="stringliteral">&quot;Failed to get address length from endpoint.&quot;</span>, <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>, ret);</div>
-<div class="line"><span class="lineno">   68</span>        }</div>
-<div class="line"><span class="lineno">   69</span> </div>
-<div class="line"><span class="lineno">   70</span>        <span class="comment">// Now that we have the address length, allocate a receiving buffer and call fi_getname again to retrieve the actual address</span></div>
-<div class="line"><span class="lineno">   71</span>        std::vector&lt;std::uint8_t&gt; addr(addrlen);</div>
-<div class="line"><span class="lineno">   72</span>        <a class="code hl_function" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#ac3a4a68b88450dca7e9d46242d0ac652">fiCall</a>(fi_getname, <span class="stringliteral">&quot;Failed to retrieve endpoint&#39;s local address.&quot;</span>, fid, addr.data(), &amp;addrlen);</div>
-<div class="line"><span class="lineno">   73</span> </div>
-<div class="line"><span class="lineno">   74</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a11011edbd657a7cd726b3af8cd945044">FabricAddress</a>{addr};</div>
-<div class="line"><span class="lineno">   75</span>    }</div>
-<div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a></div><div class="ttdeci">@ MXL_ERR_UNKNOWN</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00024">mxl.h:24</a></div></div>
-<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_ac3a4a68b88450dca7e9d46242d0ac652"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#ac3a4a68b88450dca7e9d46242d0ac652">mxl::lib::fabrics::ofi::fiCall</a></div><div class="ttdeci">int fiCall(F &amp;&amp;fun, std::string_view msg, T &amp;&amp;... args)</div><div class="ttdoc">Call a libfabric function and check its return code.</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00146">Exception.hpp:146</a></div></div>
-</div><!-- fragment -->
-</div>
-</div>
-<a id="adbe618f01059b7663584898f2a49bacc" name="adbe618f01059b7663584898f2a49bacc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#adbe618f01059b7663584898f2a49bacc">&#9670;&#160;</a></span>size()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::size_t mxl::lib::fabrics::ofi::FabricAddress::size </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Byte-length of the raw address data. </p>
-
-<p class="definition">Definition at line <a class="el" href="Address_8cpp_source.html#l00040">40</a> of file <a class="el" href="Address_8cpp_source.html">Address.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   41</span>    {</div>
-<div class="line"><span class="lineno">   42</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#ac9b79bd286c6e01e02ea0636990c983e">_inner</a>.size();</div>
-<div class="line"><span class="lineno">   43</span>    }</div>
-</div><!-- fragment -->
-</div>
-</div>
-<a id="adf627e3e7b33eea24fc11f41a0480d59" name="adf627e3e7b33eea24fc11f41a0480d59"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#adf627e3e7b33eea24fc11f41a0480d59">&#9670;&#160;</a></span>toBase64()</h2>
+<a id="aded53d219239213a8ea1ad8a969d1d58" name="aded53d219239213a8ea1ad8a969d1d58"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aded53d219239213a8ea1ad8a969d1d58">&#9670;&#160;</a></span>service()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::string mxl::lib::fabrics::ofi::FabricAddress::toBase64 </td>
+          <td class="memname">std::optional&lt; std::string &gt; mxl::lib::fabrics::ofi::FabricAddress::service </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -486,18 +729,69 @@ Private Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Convert the raw fabric address into a <a class="el" href="namespacebase64.html">base64</a> encoded string. </p>
+<p>Return the service/port portion of the address as a string. </p>
 
-<p class="definition">Definition at line <a class="el" href="Address_8cpp_source.html#l00025">25</a> of file <a class="el" href="Address_8cpp_source.html">Address.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   26</span>    {</div>
-<div class="line"><span class="lineno">   27</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="namespacebase64.html#a2b71b32d60224f421c0e0755b7c616fe">base64::encode_into&lt;std::string&gt;</a>(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#ac9b79bd286c6e01e02ea0636990c983e">_inner</a>.cbegin(), <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#ac9b79bd286c6e01e02ea0636990c983e">_inner</a>.cend());</div>
-<div class="line"><span class="lineno">   28</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FabricAddress_8cpp_source.html#l00359">359</a> of file <a class="el" href="FabricAddress_8cpp_source.html">FabricAddress.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  360</span>    {</div>
+<div class="line"><span class="lineno">  361</span>        <span class="keywordflow">return</span> std::visit(</div>
+<div class="line"><span class="lineno">  362</span>            [](<span class="keyword">auto</span> <span class="keyword">const</span>&amp; value) -&gt; std::optional&lt;std::string&gt;</div>
+<div class="line"><span class="lineno">  363</span>            {</div>
+<div class="line"><span class="lineno">  364</span>                <span class="keyword">using </span>T = std::decay_t&lt;<span class="keyword">decltype</span>(value)&gt;;</div>
+<div class="line"><span class="lineno">  365</span>                <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same_v&lt;T, std::monostate&gt;)</div>
+<div class="line"><span class="lineno">  366</span>                {</div>
+<div class="line"><span class="lineno">  367</span>                    <span class="keywordflow">return</span> std::nullopt;</div>
+<div class="line"><span class="lineno">  368</span>                }</div>
+<div class="line"><span class="lineno">  369</span>                <span class="keywordflow">else</span></div>
+<div class="line"><span class="lineno">  370</span>                {</div>
+<div class="line"><span class="lineno">  371</span>                    <span class="keywordflow">return</span> ofi::serviceString(value);</div>
+<div class="line"><span class="lineno">  372</span>                }</div>
+<div class="line"><span class="lineno">  373</span>            },</div>
+<div class="line"><span class="lineno">  374</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a25b57e10a4120699e80a42170bca1a08">_native</a>);</div>
+<div class="line"><span class="lineno">  375</span>    }</div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="af467b20feb89c42170ad7cc62d35220f" name="af467b20feb89c42170ad7cc62d35220f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af467b20feb89c42170ad7cc62d35220f">&#9670;&#160;</a></span>toString()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string mxl::lib::fabrics::ofi::FabricAddress::toString </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Format the address exactly as libfabric's internal <code>ofi_straddr</code>. </p>
+<p>Returns an empty string for an empty / undecodable address (mirroring <code>ofi_straddr</code> returning NULL). </p>
+
+<p class="definition">Definition at line <a class="el" href="FabricAddress_8cpp_source.html#l00323">323</a> of file <a class="el" href="FabricAddress_8cpp_source.html">FabricAddress.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  324</span>    {</div>
+<div class="line"><span class="lineno">  325</span>        <span class="keywordflow">return</span> std::visit(</div>
+<div class="line"><span class="lineno">  326</span>            [](<span class="keyword">auto</span> <span class="keyword">const</span>&amp; value) -&gt; std::string</div>
+<div class="line"><span class="lineno">  327</span>            {</div>
+<div class="line"><span class="lineno">  328</span>                <span class="keyword">using </span>T = std::decay_t&lt;<span class="keyword">decltype</span>(value)&gt;;</div>
+<div class="line"><span class="lineno">  329</span>                <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same_v&lt;T, std::monostate&gt;)</div>
+<div class="line"><span class="lineno">  330</span>                {</div>
+<div class="line"><span class="lineno">  331</span>                    <span class="keywordflow">return</span> <span class="stringliteral">&quot;&quot;</span>;</div>
+<div class="line"><span class="lineno">  332</span>                }</div>
+<div class="line"><span class="lineno">  333</span>                <span class="keywordflow">else</span></div>
+<div class="line"><span class="lineno">  334</span>                {</div>
+<div class="line"><span class="lineno">  335</span>                    <span class="keywordflow">return</span> ofi::toString(value).value_or(<span class="stringliteral">&quot;&quot;</span>);</div>
+<div class="line"><span class="lineno">  336</span>                }</div>
+<div class="line"><span class="lineno">  337</span>            },</div>
+<div class="line"><span class="lineno">  338</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a25b57e10a4120699e80a42170bca1a08">_native</a>);</div>
+<div class="line"><span class="lineno">  339</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
 <h2 class="groupheader">Member Data Documentation</h2>
-<a id="ac9b79bd286c6e01e02ea0636990c983e" name="ac9b79bd286c6e01e02ea0636990c983e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac9b79bd286c6e01e02ea0636990c983e">&#9670;&#160;</a></span>_inner</h2>
+<a id="a25b57e10a4120699e80a42170bca1a08" name="a25b57e10a4120699e80a42170bca1a08"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a25b57e10a4120699e80a42170bca1a08">&#9670;&#160;</a></span>_native</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -506,7 +800,7 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::vector&lt;std::uint8_t&gt; mxl::lib::fabrics::ofi::FabricAddress::_inner</td>
+          <td class="memname"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#a870fb50c3a01ee94426c0f0046be4bd2">Native</a> mxl::lib::fabrics::ofi::FabricAddress::_native</td>
         </tr>
       </table>
   </td>
@@ -515,15 +809,14 @@ Private Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>libfabric address represented as a buffer of bytes </p>
 
-<p class="definition">Definition at line <a class="el" href="Address_8hpp_source.html#l00069">69</a> of file <a class="el" href="Address_8hpp_source.html">Address.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="FabricAddress_8hpp_source.html#l00152">152</a> of file <a class="el" href="FabricAddress_8hpp_source.html">FabricAddress.hpp</a>.</p>
 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following files:<ul>
-<li>lib/fabrics/ofi/src/internal/<a class="el" href="Address_8hpp_source.html">Address.hpp</a></li>
-<li>lib/fabrics/ofi/src/internal/<a class="el" href="Address_8cpp_source.html">Address.cpp</a></li>
+<li>lib/fabrics/ofi/src/internal/<a class="el" href="FabricAddress_8hpp_source.html">FabricAddress.hpp</a></li>
+<li>lib/fabrics/ofi/src/internal/<a class="el" href="FabricAddress_8cpp_source.html">FabricAddress.cpp</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->

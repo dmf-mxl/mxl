@@ -178,15 +178,15 @@ Private Attributes</h2></td></tr>
 <p>Add a target to the initiator.   </p>
 <p>The is a non-blocking operation. The local endpoint for this target will only actively start connecting to its remote counterpart when control is passed to <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#ad7082583e2a7e76efa90734325fab816" title="Attempts to progress execution, including connection management and data operations.">makeProgress()</a> or <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#a179bb4c36a019455788fa8dc2051cedf" title="Attempts to progress execution, including connection management and data operations.">makeProgressBlocking()</a>. The local endpoint for this target will only accept write requests after the progress functions return false.   </p>
 
-<p class="definition">Definition at line <a class="el" href="Initiator_8cpp_source.html#l00052">52</a> of file <a class="el" href="Initiator_8cpp_source.html">Initiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   53</span>    {</div>
-<div class="line"><span class="lineno">   54</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>)</div>
-<div class="line"><span class="lineno">   55</span>        {</div>
-<div class="line"><span class="lineno">   56</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Initiator is not set up&quot;</span>);</div>
-<div class="line"><span class="lineno">   57</span>        }</div>
-<div class="line"><span class="lineno">   58</span> </div>
-<div class="line"><span class="lineno">   59</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>-&gt;addTarget(targetInfo);</div>
-<div class="line"><span class="lineno">   60</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="Initiator_8cpp_source.html#l00041">41</a> of file <a class="el" href="Initiator_8cpp_source.html">Initiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   42</span>    {</div>
+<div class="line"><span class="lineno">   43</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>)</div>
+<div class="line"><span class="lineno">   44</span>        {</div>
+<div class="line"><span class="lineno">   45</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Initiator is not set up&quot;</span>);</div>
+<div class="line"><span class="lineno">   46</span>        }</div>
+<div class="line"><span class="lineno">   47</span> </div>
+<div class="line"><span class="lineno">   48</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>-&gt;addTarget(targetInfo);</div>
+<div class="line"><span class="lineno">   49</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception_html_ae25fba4f94c98ae0be85ca0c2d49eb34"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">mxl::lib::fabrics::ofi::Exception::invalidState</a></div><div class="ttdeci">static Exception invalidState(fmt::format_string&lt; T... &gt; fmt, T &amp;&amp;... args)</div><div class="ttdoc">Make an MXL_ERR_INVALID_STATE exception.</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00059">Exception.hpp:59</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper_html_af06cdf36c6f834d3b7325e526ffd0da0"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">mxl::lib::fabrics::ofi::InitiatorWrapper::_inner</a></div><div class="ttdeci">std::unique_ptr&lt; Initiator &gt; _inner</div><div class="ttdef"><b>Definition</b> <a href="Initiator_8hpp_source.html#l00151">Initiator.hpp:151</a></div></div>
 </div><!-- fragment -->
@@ -225,10 +225,10 @@ Private Attributes</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html" title="A wrapper around Initiator implementations.">InitiatorWrapper</a> underlying the given mxlFabricsInitiator. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="Initiator_8cpp_source.html#l00014">14</a> of file <a class="el" href="Initiator_8cpp_source.html">Initiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   15</span>    {</div>
-<div class="line"><span class="lineno">   16</span>        <span class="keywordflow">return</span> <span class="keyword">reinterpret_cast&lt;</span>InitiatorWrapper*<span class="keyword">&gt;</span>(api);</div>
-<div class="line"><span class="lineno">   17</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="Initiator_8cpp_source.html#l00015">15</a> of file <a class="el" href="Initiator_8cpp_source.html">Initiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   16</span>    {</div>
+<div class="line"><span class="lineno">   17</span>        <span class="keywordflow">return</span> <span class="keyword">reinterpret_cast&lt;</span>InitiatorWrapper*<span class="keyword">&gt;</span>(api);</div>
+<div class="line"><span class="lineno">   18</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -250,15 +250,15 @@ Private Attributes</h2></td></tr>
 <p>Attempts to progress execution, including connection management and data operations.   </p>
 <p>This is the non-blocking version of the progress function.   </p>
 
-<p class="definition">Definition at line <a class="el" href="Initiator_8cpp_source.html#l00103">103</a> of file <a class="el" href="Initiator_8cpp_source.html">Initiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  104</span>    {</div>
-<div class="line"><span class="lineno">  105</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>)</div>
-<div class="line"><span class="lineno">  106</span>        {</div>
-<div class="line"><span class="lineno">  107</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Initiator is not set up&quot;</span>);</div>
-<div class="line"><span class="lineno">  108</span>        }</div>
-<div class="line"><span class="lineno">  109</span> </div>
-<div class="line"><span class="lineno">  110</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>-&gt;makeProgress();</div>
-<div class="line"><span class="lineno">  111</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="Initiator_8cpp_source.html#l00092">92</a> of file <a class="el" href="Initiator_8cpp_source.html">Initiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   93</span>    {</div>
+<div class="line"><span class="lineno">   94</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>)</div>
+<div class="line"><span class="lineno">   95</span>        {</div>
+<div class="line"><span class="lineno">   96</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Initiator is not set up&quot;</span>);</div>
+<div class="line"><span class="lineno">   97</span>        }</div>
+<div class="line"><span class="lineno">   98</span> </div>
+<div class="line"><span class="lineno">   99</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>-&gt;makeProgress();</div>
+<div class="line"><span class="lineno">  100</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -281,15 +281,15 @@ Private Attributes</h2></td></tr>
 <p>Attempts to progress execution, including connection management and data operations.   </p>
 <p>This is the blocking version of the progress function.   </p>
 
-<p class="definition">Definition at line <a class="el" href="Initiator_8cpp_source.html#l00113">113</a> of file <a class="el" href="Initiator_8cpp_source.html">Initiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  114</span>    {</div>
-<div class="line"><span class="lineno">  115</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>)</div>
-<div class="line"><span class="lineno">  116</span>        {</div>
-<div class="line"><span class="lineno">  117</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Initiator is not set up&quot;</span>);</div>
-<div class="line"><span class="lineno">  118</span>        }</div>
-<div class="line"><span class="lineno">  119</span> </div>
-<div class="line"><span class="lineno">  120</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>-&gt;makeProgressBlocking(timeout);</div>
-<div class="line"><span class="lineno">  121</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="Initiator_8cpp_source.html#l00102">102</a> of file <a class="el" href="Initiator_8cpp_source.html">Initiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  103</span>    {</div>
+<div class="line"><span class="lineno">  104</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>)</div>
+<div class="line"><span class="lineno">  105</span>        {</div>
+<div class="line"><span class="lineno">  106</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Initiator is not set up&quot;</span>);</div>
+<div class="line"><span class="lineno">  107</span>        }</div>
+<div class="line"><span class="lineno">  108</span> </div>
+<div class="line"><span class="lineno">  109</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>-&gt;makeProgressBlocking(timeout);</div>
+<div class="line"><span class="lineno">  110</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -312,15 +312,15 @@ Private Attributes</h2></td></tr>
 <p>Remove a target from the initiator.   </p>
 <p>This is a non-blocking operation. The target is only removed after <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#ad7082583e2a7e76efa90734325fab816" title="Attempts to progress execution, including connection management and data operations.">makeProgress()</a> or <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#a179bb4c36a019455788fa8dc2051cedf" title="Attempts to progress execution, including connection management and data operations.">makeProgressBlocking()</a> returns false.   </p>
 
-<p class="definition">Definition at line <a class="el" href="Initiator_8cpp_source.html#l00062">62</a> of file <a class="el" href="Initiator_8cpp_source.html">Initiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   63</span>    {</div>
-<div class="line"><span class="lineno">   64</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>)</div>
-<div class="line"><span class="lineno">   65</span>        {</div>
-<div class="line"><span class="lineno">   66</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Initiator is not set up&quot;</span>);</div>
-<div class="line"><span class="lineno">   67</span>        }</div>
-<div class="line"><span class="lineno">   68</span> </div>
-<div class="line"><span class="lineno">   69</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>-&gt;removeTarget(targetInfo);</div>
-<div class="line"><span class="lineno">   70</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="Initiator_8cpp_source.html#l00051">51</a> of file <a class="el" href="Initiator_8cpp_source.html">Initiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   52</span>    {</div>
+<div class="line"><span class="lineno">   53</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>)</div>
+<div class="line"><span class="lineno">   54</span>        {</div>
+<div class="line"><span class="lineno">   55</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Initiator is not set up&quot;</span>);</div>
+<div class="line"><span class="lineno">   56</span>        }</div>
+<div class="line"><span class="lineno">   57</span> </div>
+<div class="line"><span class="lineno">   58</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>-&gt;removeTarget(targetInfo);</div>
+<div class="line"><span class="lineno">   59</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -349,41 +349,24 @@ Private Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="Initiator_8cpp_source.html#l00024">24</a> of file <a class="el" href="Initiator_8cpp_source.html">Initiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   25</span>    {</div>
-<div class="line"><span class="lineno">   26</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>)</div>
-<div class="line"><span class="lineno">   27</span>        {</div>
-<div class="line"><span class="lineno">   28</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>.reset();</div>
-<div class="line"><span class="lineno">   29</span>        }</div>
-<div class="line"><span class="lineno">   30</span> </div>
-<div class="line"><span class="lineno">   31</span>        <span class="keywordflow">switch</span> (config.interface.provider)</div>
-<div class="line"><span class="lineno">   32</span>        {</div>
-<div class="line"><span class="lineno">   33</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="fabrics_8h.html#a612f3e78f6657b88c0ead864114bfa41a3ad69c6f67fe206d664daa2f72fd7547">MXL_FABRICS_PROVIDER_ANY</a>:</div>
-<div class="line"><span class="lineno">   34</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="fabrics_8h.html#a612f3e78f6657b88c0ead864114bfa41a47ec73cdbc100a5c67d1e09fee630a3d">MXL_FABRICS_PROVIDER_TCP</a>:</div>
-<div class="line"><span class="lineno">   35</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="fabrics_8h.html#a612f3e78f6657b88c0ead864114bfa41a09f77088ea6b98fdd19496dbd3797918">MXL_FABRICS_PROVIDER_VERBS</a>:</div>
-<div class="line"><span class="lineno">   36</span>            {</div>
-<div class="line"><span class="lineno">   37</span>                <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a> = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#ae4126899471474b435400dc11652a434">RCInitiator::setup</a>(config);</div>
-<div class="line"><span class="lineno">   38</span>                <span class="keywordflow">return</span>;</div>
-<div class="line"><span class="lineno">   39</span>            }</div>
-<div class="line"><span class="lineno">   40</span> </div>
-<div class="line"><span class="lineno">   41</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="fabrics_8h.html#a612f3e78f6657b88c0ead864114bfa41aca4aa921b4ca5a06e52a40bc5ab36c98">MXL_FABRICS_PROVIDER_SHM</a>:</div>
-<div class="line"><span class="lineno">   42</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="fabrics_8h.html#a612f3e78f6657b88c0ead864114bfa41add1dc4d5db1835262b12962bb03aef22">MXL_FABRICS_PROVIDER_EFA</a>:</div>
-<div class="line"><span class="lineno">   43</span>            {</div>
-<div class="line"><span class="lineno">   44</span>                <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a> = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator.html#a5e813b47fcf8d7962e7aa4a603ba06f5">RDMInitiator::setup</a>(config);</div>
-<div class="line"><span class="lineno">   45</span>                <span class="keywordflow">return</span>;</div>
-<div class="line"><span class="lineno">   46</span>            }</div>
-<div class="line"><span class="lineno">   47</span>        }</div>
-<div class="line"><span class="lineno">   48</span> </div>
-<div class="line"><span class="lineno">   49</span>        <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a0302e7afea5ec6982664237acc8559f4">Exception::invalidArgument</a>(<span class="stringliteral">&quot;Invalid provider value&quot;</span>);</div>
-<div class="line"><span class="lineno">   50</span>    }</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception_html_a0302e7afea5ec6982664237acc8559f4"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a0302e7afea5ec6982664237acc8559f4">mxl::lib::fabrics::ofi::Exception::invalidArgument</a></div><div class="ttdeci">static Exception invalidArgument(fmt::format_string&lt; T... &gt; fmt, T &amp;&amp;... args)</div><div class="ttdoc">Make an MXL_ERR_INVALID_ARG exception.</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00043">Exception.hpp:43</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator_html_ae4126899471474b435400dc11652a434"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#ae4126899471474b435400dc11652a434">mxl::lib::fabrics::ofi::RCInitiator::setup</a></div><div class="ttdeci">static std::unique_ptr&lt; RCInitiator &gt; setup(mxlFabricsInitiatorConfig const &amp;config)</div><div class="ttdoc">Set up a fresh initiator without any targets assigned to it.</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8cpp_source.html#l00271">RCInitiator.cpp:271</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator_html_a5e813b47fcf8d7962e7aa4a603ba06f5"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator.html#a5e813b47fcf8d7962e7aa4a603ba06f5">mxl::lib::fabrics::ofi::RDMInitiator::setup</a></div><div class="ttdeci">static std::unique_ptr&lt; RDMInitiator &gt; setup(mxlFabricsInitiatorConfig const &amp;config)</div><div class="ttdoc">Set up a new RDMInitiator.</div><div class="ttdef"><b>Definition</b> <a href="RDMInitiator_8cpp_source.html#l00120">RDMInitiator.cpp:120</a></div></div>
-<div class="ttc" id="afabrics_8h_html_a612f3e78f6657b88c0ead864114bfa41a09f77088ea6b98fdd19496dbd3797918"><div class="ttname"><a href="fabrics_8h.html#a612f3e78f6657b88c0ead864114bfa41a09f77088ea6b98fdd19496dbd3797918">MXL_FABRICS_PROVIDER_VERBS</a></div><div class="ttdeci">@ MXL_FABRICS_PROVIDER_VERBS</div><div class="ttdef"><b>Definition</b> <a href="fabrics_8h_source.html#l00051">fabrics.h:51</a></div></div>
-<div class="ttc" id="afabrics_8h_html_a612f3e78f6657b88c0ead864114bfa41a3ad69c6f67fe206d664daa2f72fd7547"><div class="ttname"><a href="fabrics_8h.html#a612f3e78f6657b88c0ead864114bfa41a3ad69c6f67fe206d664daa2f72fd7547">MXL_FABRICS_PROVIDER_ANY</a></div><div class="ttdeci">@ MXL_FABRICS_PROVIDER_ANY</div><div class="ttdef"><b>Definition</b> <a href="fabrics_8h_source.html#l00049">fabrics.h:48</a></div></div>
-<div class="ttc" id="afabrics_8h_html_a612f3e78f6657b88c0ead864114bfa41a47ec73cdbc100a5c67d1e09fee630a3d"><div class="ttname"><a href="fabrics_8h.html#a612f3e78f6657b88c0ead864114bfa41a47ec73cdbc100a5c67d1e09fee630a3d">MXL_FABRICS_PROVIDER_TCP</a></div><div class="ttdeci">@ MXL_FABRICS_PROVIDER_TCP</div><div class="ttdef"><b>Definition</b> <a href="fabrics_8h_source.html#l00050">fabrics.h:50</a></div></div>
-<div class="ttc" id="afabrics_8h_html_a612f3e78f6657b88c0ead864114bfa41aca4aa921b4ca5a06e52a40bc5ab36c98"><div class="ttname"><a href="fabrics_8h.html#a612f3e78f6657b88c0ead864114bfa41aca4aa921b4ca5a06e52a40bc5ab36c98">MXL_FABRICS_PROVIDER_SHM</a></div><div class="ttdeci">@ MXL_FABRICS_PROVIDER_SHM</div><div class="ttdef"><b>Definition</b> <a href="fabrics_8h_source.html#l00053">fabrics.h:53</a></div></div>
-<div class="ttc" id="afabrics_8h_html_a612f3e78f6657b88c0ead864114bfa41add1dc4d5db1835262b12962bb03aef22"><div class="ttname"><a href="fabrics_8h.html#a612f3e78f6657b88c0ead864114bfa41add1dc4d5db1835262b12962bb03aef22">MXL_FABRICS_PROVIDER_EFA</a></div><div class="ttdeci">@ MXL_FABRICS_PROVIDER_EFA</div><div class="ttdef"><b>Definition</b> <a href="fabrics_8h_source.html#l00052">fabrics.h:52</a></div></div>
+<p class="definition">Definition at line <a class="el" href="Initiator_8cpp_source.html#l00025">25</a> of file <a class="el" href="Initiator_8cpp_source.html">Initiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   26</span>    {</div>
+<div class="line"><span class="lineno">   27</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>)</div>
+<div class="line"><span class="lineno">   28</span>        {</div>
+<div class="line"><span class="lineno">   29</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>.reset();</div>
+<div class="line"><span class="lineno">   30</span>        }</div>
+<div class="line"><span class="lineno">   31</span> </div>
+<div class="line"><span class="lineno">   32</span>        <span class="keyword">auto</span> <span class="keyword">const</span> [info, provierConfig] = <a class="code hl_function" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a518e53ff7801d8b30edbab91f8a9f779">selectSourceInterface</a>(config.interface, <span class="comment">/* target */</span> <span class="keyword">false</span>);</div>
+<div class="line"><span class="lineno">   33</span>        <span class="keywordflow">switch</span> (info.view().endpointType())</div>
+<div class="line"><span class="lineno">   34</span>        {</div>
+<div class="line"><span class="lineno">   35</span>            <span class="keywordflow">case</span> FI_EP_MSG: <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a> = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#aebdca5b05e8e196e42c150ff9b733613">RCInitiator::setup</a>(config, info.view()); <span class="keywordflow">break</span>;</div>
+<div class="line"><span class="lineno">   36</span>            <span class="keywordflow">case</span> FI_EP_RDM: <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a> = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator.html#ab0d0c4ae487802d65176a17b74dfd49d">RDMInitiator::setup</a>(config, info.view()); <span class="keywordflow">break</span>;</div>
+<div class="line"><span class="lineno">   37</span>            <span class="keywordflow">default</span>:        <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;unsupported endpoint type&quot;</span>);</div>
+<div class="line"><span class="lineno">   38</span>        }</div>
+<div class="line"><span class="lineno">   39</span>    }</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator_html_aebdca5b05e8e196e42c150ff9b733613"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#aebdca5b05e8e196e42c150ff9b733613">mxl::lib::fabrics::ofi::RCInitiator::setup</a></div><div class="ttdeci">static std::unique_ptr&lt; RCInitiator &gt; setup(mxlFabricsInitiatorConfig const &amp;config, FabricInfoView info)</div><div class="ttdoc">Set up a fresh initiator without any targets assigned to it.</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8cpp_source.html#l00274">RCInitiator.cpp:274</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator_html_ab0d0c4ae487802d65176a17b74dfd49d"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator.html#ab0d0c4ae487802d65176a17b74dfd49d">mxl::lib::fabrics::ofi::RDMInitiator::setup</a></div><div class="ttdeci">static std::unique_ptr&lt; RDMInitiator &gt; setup(mxlFabricsInitiatorConfig const &amp;config, FabricInfoView info)</div><div class="ttdoc">Set up a new RDMInitiator.</div><div class="ttdef"><b>Definition</b> <a href="RDMInitiator_8cpp_source.html#l00120">RDMInitiator.cpp:120</a></div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_a518e53ff7801d8b30edbab91f8a9f779"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a518e53ff7801d8b30edbab91f8a9f779">mxl::lib::fabrics::ofi::selectSourceInterface</a></div><div class="ttdeci">std::pair&lt; FabricInfo, ProviderConfig &gt; selectSourceInterface(::mxlFabricsInterfaceConfig const &amp;interfaceConfig, bool isTarget)</div><div class="ttdef"><b>Definition</b> <a href="FabricInterfaceProbe_8cpp_source.html#l00164">FabricInterfaceProbe.cpp:164</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -413,10 +396,10 @@ Private Attributes</h2></td></tr>
 <p>Convert this <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html" title="A wrapper around Initiator implementations.">InitiatorWrapper</a> to its API representation. </p>
 <dl class="section return"><dt>Returns</dt><dd>The mxlFabricsInitiator representing this <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html" title="A wrapper around Initiator implementations.">InitiatorWrapper</a>. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="Initiator_8cpp_source.html#l00019">19</a> of file <a class="el" href="Initiator_8cpp_source.html">Initiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   20</span>    {</div>
-<div class="line"><span class="lineno">   21</span>        <span class="keywordflow">return</span> <span class="keyword">reinterpret_cast&lt;</span><a class="code hl_typedef" href="fabrics_8h.html#ab38bc4c19ad258ed483a612710b13d50">mxlFabricsInitiator</a><span class="keyword">&gt;</span>(<span class="keyword">this</span>);</div>
-<div class="line"><span class="lineno">   22</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="Initiator_8cpp_source.html#l00020">20</a> of file <a class="el" href="Initiator_8cpp_source.html">Initiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   21</span>    {</div>
+<div class="line"><span class="lineno">   22</span>        <span class="keywordflow">return</span> <span class="keyword">reinterpret_cast&lt;</span><a class="code hl_typedef" href="fabrics_8h.html#ab38bc4c19ad258ed483a612710b13d50">mxlFabricsInitiator</a><span class="keyword">&gt;</span>(<span class="keyword">this</span>);</div>
+<div class="line"><span class="lineno">   23</span>    }</div>
 <div class="ttc" id="afabrics_8h_html_ab38bc4c19ad258ed483a612710b13d50"><div class="ttname"><a href="fabrics_8h.html#ab38bc4c19ad258ed483a612710b13d50">mxlFabricsInitiator</a></div><div class="ttdeci">struct mxlFabricsInitiator_t * mxlFabricsInitiator</div><div class="ttdef"><b>Definition</b> <a href="fabrics_8h_source.html#l00044">fabrics.h:44</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -464,15 +447,15 @@ Private Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="Initiator_8cpp_source.html#l00072">72</a> of file <a class="el" href="Initiator_8cpp_source.html">Initiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   73</span>    {</div>
-<div class="line"><span class="lineno">   74</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>)</div>
-<div class="line"><span class="lineno">   75</span>        {</div>
-<div class="line"><span class="lineno">   76</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Initiator is not set up&quot;</span>);</div>
-<div class="line"><span class="lineno">   77</span>        }</div>
-<div class="line"><span class="lineno">   78</span> </div>
-<div class="line"><span class="lineno">   79</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>-&gt;transferGrain(grainIndex, startSlice, endSlice);</div>
-<div class="line"><span class="lineno">   80</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="Initiator_8cpp_source.html#l00061">61</a> of file <a class="el" href="Initiator_8cpp_source.html">Initiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   62</span>    {</div>
+<div class="line"><span class="lineno">   63</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>)</div>
+<div class="line"><span class="lineno">   64</span>        {</div>
+<div class="line"><span class="lineno">   65</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Initiator is not set up&quot;</span>);</div>
+<div class="line"><span class="lineno">   66</span>        }</div>
+<div class="line"><span class="lineno">   67</span> </div>
+<div class="line"><span class="lineno">   68</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>-&gt;transferGrain(grainIndex, startSlice, endSlice);</div>
+<div class="line"><span class="lineno">   69</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -540,15 +523,15 @@ Private Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="Initiator_8cpp_source.html#l00082">82</a> of file <a class="el" href="Initiator_8cpp_source.html">Initiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   84</span>    {</div>
-<div class="line"><span class="lineno">   85</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>)</div>
-<div class="line"><span class="lineno">   86</span>        {</div>
-<div class="line"><span class="lineno">   87</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Initiator is not set up&quot;</span>);</div>
-<div class="line"><span class="lineno">   88</span>        }</div>
-<div class="line"><span class="lineno">   89</span> </div>
-<div class="line"><span class="lineno">   90</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>-&gt;transferGrainToTarget(targetId, localIndex, remoteIndex, payloadOffset, startSlice, endSlice);</div>
-<div class="line"><span class="lineno">   91</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="Initiator_8cpp_source.html#l00071">71</a> of file <a class="el" href="Initiator_8cpp_source.html">Initiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   73</span>    {</div>
+<div class="line"><span class="lineno">   74</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>)</div>
+<div class="line"><span class="lineno">   75</span>        {</div>
+<div class="line"><span class="lineno">   76</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Initiator is not set up&quot;</span>);</div>
+<div class="line"><span class="lineno">   77</span>        }</div>
+<div class="line"><span class="lineno">   78</span> </div>
+<div class="line"><span class="lineno">   79</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>-&gt;transferGrainToTarget(targetId, localIndex, remoteIndex, payloadOffset, startSlice, endSlice);</div>
+<div class="line"><span class="lineno">   80</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -588,15 +571,15 @@ Private Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="Initiator_8cpp_source.html#l00093">93</a> of file <a class="el" href="Initiator_8cpp_source.html">Initiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   94</span>    {</div>
-<div class="line"><span class="lineno">   95</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>)</div>
-<div class="line"><span class="lineno">   96</span>        {</div>
-<div class="line"><span class="lineno">   97</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Initiator is not set up&quot;</span>);</div>
-<div class="line"><span class="lineno">   98</span>        }</div>
-<div class="line"><span class="lineno">   99</span> </div>
-<div class="line"><span class="lineno">  100</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>-&gt;transferSamples(headIndex, count);</div>
-<div class="line"><span class="lineno">  101</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="Initiator_8cpp_source.html#l00082">82</a> of file <a class="el" href="Initiator_8cpp_source.html">Initiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   83</span>    {</div>
+<div class="line"><span class="lineno">   84</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>)</div>
+<div class="line"><span class="lineno">   85</span>        {</div>
+<div class="line"><span class="lineno">   86</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Initiator is not set up&quot;</span>);</div>
+<div class="line"><span class="lineno">   87</span>        }</div>
+<div class="line"><span class="lineno">   88</span> </div>
+<div class="line"><span class="lineno">   89</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>-&gt;transferSamples(headIndex, count);</div>
+<div class="line"><span class="lineno">   90</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>

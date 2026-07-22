@@ -101,6 +101,7 @@ $(document).ready(function(){initNavTree('classmxl_1_1lib_1_1fabrics_1_1ofi_1_1T
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
+<a href="#pri-methods">Private Member Functions</a> &#124;
 <a href="#pri-attribs">Private Attributes</a> &#124;
 <a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">mxl::lib::fabrics::ofi::TargetWrapper Class Reference</div></div>
@@ -138,6 +139,13 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:acbe0e80c2c5cdd7d65dad83294c28043" id="r_acbe0e80c2c5cdd7d65dad83294c28043"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html">TargetWrapper</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#acbe0e80c2c5cdd7d65dad83294c28043">fromAPI</a> (<a class="el" href="fabrics_8h.html#a7ab8c2a1de2858dd548fbf8695ce63c9">mxlFabricsTarget</a> api) noexcept</td></tr>
 <tr class="memdesc:acbe0e80c2c5cdd7d65dad83294c28043"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert an mxlFabricsTarget API object to its underlying <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html" title="A wrapper around Target implementations.">TargetWrapper</a>.  <br /></td></tr>
 <tr class="separator:acbe0e80c2c5cdd7d65dad83294c28043"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
+Private Member Functions</h2></td></tr>
+<tr class="memitem:ac97332d1679693f1297837749b4b484d" id="r_ac97332d1679693f1297837749b4b484d"><td class="memTemplParams" colspan="2">template&lt;typename TargetT &gt; </td></tr>
+<tr class="memitem:ac97332d1679693f1297837749b4b484d"><td class="memTemplItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html">TargetInfo</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#ac97332d1679693f1297837749b4b484d">setup</a> (<a class="el" href="fabrics_8h.html#a02af038c8078daa1c02d8344bc99b210">mxlFabricsTargetConfig</a> const &amp;config, <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html">FabricInfoView</a> info, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetSetupOptions.html">TargetSetupOptions</a> const &amp;options={})</td></tr>
+<tr class="memdesc:ac97332d1679693f1297837749b4b484d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set up the correct concrete target type internally and returns the target info.  <br /></td></tr>
+<tr class="separator:ac97332d1679693f1297837749b4b484d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
@@ -183,10 +191,10 @@ Private Attributes</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html" title="A wrapper around Target implementations.">TargetWrapper</a> underlying the given mxlFabricsTarget. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="Target_8cpp_source.html#l00028">28</a> of file <a class="el" href="Target_8cpp_source.html">Target.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   29</span>    {</div>
-<div class="line"><span class="lineno">   30</span>        <span class="keywordflow">return</span> <span class="keyword">reinterpret_cast&lt;</span>TargetWrapper*<span class="keyword">&gt;</span>(api);</div>
-<div class="line"><span class="lineno">   31</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="Target_8cpp_source.html#l00029">29</a> of file <a class="el" href="Target_8cpp_source.html">Target.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   30</span>    {</div>
+<div class="line"><span class="lineno">   31</span>        <span class="keywordflow">return</span> <span class="keyword">reinterpret_cast&lt;</span>TargetWrapper*<span class="keyword">&gt;</span>(api);</div>
+<div class="line"><span class="lineno">   32</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -208,17 +216,17 @@ Private Attributes</h2></td></tr>
 <p>Determine if new data can be consumed.   </p>
 <p>A non-blocking operation that also drives the connection forward. Continuous invocation of this function is necessary for connection establishment and ongoing progress.   </p>
 
-<p class="definition">Definition at line <a class="el" href="Target_8cpp_source.html#l00038">38</a> of file <a class="el" href="Target_8cpp_source.html">Target.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   39</span>    {</div>
-<div class="line"><span class="lineno">   40</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a>)</div>
-<div class="line"><span class="lineno">   41</span>        {</div>
-<div class="line"><span class="lineno">   42</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Target is not set up.&quot;</span>);</div>
-<div class="line"><span class="lineno">   43</span>        }</div>
-<div class="line"><span class="lineno">   44</span> </div>
-<div class="line"><span class="lineno">   45</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a>-&gt;readGrain();</div>
-<div class="line"><span class="lineno">   46</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="Target_8cpp_source.html#l00039">39</a> of file <a class="el" href="Target_8cpp_source.html">Target.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   40</span>    {</div>
+<div class="line"><span class="lineno">   41</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a>)</div>
+<div class="line"><span class="lineno">   42</span>        {</div>
+<div class="line"><span class="lineno">   43</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Target is not set up.&quot;</span>);</div>
+<div class="line"><span class="lineno">   44</span>        }</div>
+<div class="line"><span class="lineno">   45</span> </div>
+<div class="line"><span class="lineno">   46</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a>-&gt;readGrain();</div>
+<div class="line"><span class="lineno">   47</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception_html_ae25fba4f94c98ae0be85ca0c2d49eb34"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">mxl::lib::fabrics::ofi::Exception::invalidState</a></div><div class="ttdeci">static Exception invalidState(fmt::format_string&lt; T... &gt; fmt, T &amp;&amp;... args)</div><div class="ttdoc">Make an MXL_ERR_INVALID_STATE exception.</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00059">Exception.hpp:59</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper_html_a49e49158db85d20f1e1b1ac9b4b742f8"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">mxl::lib::fabrics::ofi::TargetWrapper::_inner</a></div><div class="ttdeci">std::unique_ptr&lt; Target &gt; _inner</div><div class="ttdef"><b>Definition</b> <a href="Target_8hpp_source.html#l00153">Target.hpp:153</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper_html_a49e49158db85d20f1e1b1ac9b4b742f8"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">mxl::lib::fabrics::ofi::TargetWrapper::_inner</a></div><div class="ttdeci">std::unique_ptr&lt; Target &gt; _inner</div><div class="ttdef"><b>Definition</b> <a href="Target_8hpp_source.html#l00162">Target.hpp:162</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -241,15 +249,15 @@ Private Attributes</h2></td></tr>
 <p>Determine if new data can be consumed.   </p>
 <p>A blocking version of readGrain. see <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#aaceac409b400fe56f8a098da826d8b91" title="Determine if new data can be consumed.">readGrain()</a>.   </p>
 
-<p class="definition">Definition at line <a class="el" href="Target_8cpp_source.html#l00048">48</a> of file <a class="el" href="Target_8cpp_source.html">Target.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   49</span>    {</div>
-<div class="line"><span class="lineno">   50</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a>)</div>
-<div class="line"><span class="lineno">   51</span>        {</div>
-<div class="line"><span class="lineno">   52</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Target is not set up.&quot;</span>);</div>
-<div class="line"><span class="lineno">   53</span>        }</div>
-<div class="line"><span class="lineno">   54</span> </div>
-<div class="line"><span class="lineno">   55</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a>-&gt;readGrainBlocking(timeout);</div>
-<div class="line"><span class="lineno">   56</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="Target_8cpp_source.html#l00049">49</a> of file <a class="el" href="Target_8cpp_source.html">Target.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   50</span>    {</div>
+<div class="line"><span class="lineno">   51</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a>)</div>
+<div class="line"><span class="lineno">   52</span>        {</div>
+<div class="line"><span class="lineno">   53</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Target is not set up.&quot;</span>);</div>
+<div class="line"><span class="lineno">   54</span>        }</div>
+<div class="line"><span class="lineno">   55</span> </div>
+<div class="line"><span class="lineno">   56</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a>-&gt;readGrainBlocking(timeout);</div>
+<div class="line"><span class="lineno">   57</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -271,15 +279,15 @@ Private Attributes</h2></td></tr>
 <p>Determine if new data can be consumed.   </p>
 <p>A non-blocking operation that also drives the connection forward. Continuous invocation of this function is necessary for connection establishment and ongoing progress.   </p>
 
-<p class="definition">Definition at line <a class="el" href="Target_8cpp_source.html#l00058">58</a> of file <a class="el" href="Target_8cpp_source.html">Target.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   59</span>    {</div>
-<div class="line"><span class="lineno">   60</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a>)</div>
-<div class="line"><span class="lineno">   61</span>        {</div>
-<div class="line"><span class="lineno">   62</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Target is not set up.&quot;</span>);</div>
-<div class="line"><span class="lineno">   63</span>        }</div>
-<div class="line"><span class="lineno">   64</span> </div>
-<div class="line"><span class="lineno">   65</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a>-&gt;readSamples();</div>
-<div class="line"><span class="lineno">   66</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="Target_8cpp_source.html#l00059">59</a> of file <a class="el" href="Target_8cpp_source.html">Target.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   60</span>    {</div>
+<div class="line"><span class="lineno">   61</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a>)</div>
+<div class="line"><span class="lineno">   62</span>        {</div>
+<div class="line"><span class="lineno">   63</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Target is not set up.&quot;</span>);</div>
+<div class="line"><span class="lineno">   64</span>        }</div>
+<div class="line"><span class="lineno">   65</span> </div>
+<div class="line"><span class="lineno">   66</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a>-&gt;readSamples();</div>
+<div class="line"><span class="lineno">   67</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -302,20 +310,80 @@ Private Attributes</h2></td></tr>
 <p>Determine if new data can be consumed.   </p>
 <p>A blocking version of readSamples. see <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#aac40338bb22ff0d82388c08e9826aced" title="Determine if new data can be consumed.">readSamples()</a>.   </p>
 
-<p class="definition">Definition at line <a class="el" href="Target_8cpp_source.html#l00068">68</a> of file <a class="el" href="Target_8cpp_source.html">Target.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   69</span>    {</div>
-<div class="line"><span class="lineno">   70</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a>)</div>
-<div class="line"><span class="lineno">   71</span>        {</div>
-<div class="line"><span class="lineno">   72</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Target is not set up.&quot;</span>);</div>
-<div class="line"><span class="lineno">   73</span>        }</div>
-<div class="line"><span class="lineno">   74</span> </div>
-<div class="line"><span class="lineno">   75</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a>-&gt;readSamplesBlocking(timeout);</div>
-<div class="line"><span class="lineno">   76</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="Target_8cpp_source.html#l00069">69</a> of file <a class="el" href="Target_8cpp_source.html">Target.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   70</span>    {</div>
+<div class="line"><span class="lineno">   71</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a>)</div>
+<div class="line"><span class="lineno">   72</span>        {</div>
+<div class="line"><span class="lineno">   73</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Target is not set up.&quot;</span>);</div>
+<div class="line"><span class="lineno">   74</span>        }</div>
+<div class="line"><span class="lineno">   75</span> </div>
+<div class="line"><span class="lineno">   76</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a>-&gt;readSamplesBlocking(timeout);</div>
+<div class="line"><span class="lineno">   77</span>    }</div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="ac97332d1679693f1297837749b4b484d" name="ac97332d1679693f1297837749b4b484d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac97332d1679693f1297837749b4b484d">&#9670;&#160;</a></span>setup() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename TargetT &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::unique_ptr&lt; <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html">TargetInfo</a> &gt; mxl::lib::fabrics::ofi::TargetWrapper::setup </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="fabrics_8h.html#a02af038c8078daa1c02d8344bc99b210">mxlFabricsTargetConfig</a> const &amp;&#160;</td>
+          <td class="paramname"><em>config</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html">FabricInfoView</a>&#160;</td>
+          <td class="paramname"><em>info</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetSetupOptions.html">TargetSetupOptions</a> const &amp;&#160;</td>
+          <td class="paramname"><em>options</em> = <code>{}</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Set up the correct concrete target type internally and returns the target info. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">config</td><td><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html" title="Abstract base class for Target implementations.">Target</a> configuration passed by the user. </td></tr>
+    <tr><td class="paramname">info</td><td><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Fabric.html" title="RAIII wrapper around a libfabric fabric object (fid_fabric).">Fabric</a> info already resolved from the interface config. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">Definition at line <a class="el" href="Target_8cpp_source.html#l00080">80</a> of file <a class="el" href="Target_8cpp_source.html">Target.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   81</span>    {</div>
+<div class="line"><span class="lineno">   82</span>        <span class="keyword">auto</span> [inner, targetInfo] = TargetT::setup(config, info, options);</div>
+<div class="line"><span class="lineno">   83</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a> = std::move(inner);</div>
+<div class="line"><span class="lineno">   84</span>        <span class="keywordflow">return</span> std::move(targetInfo);</div>
+<div class="line"><span class="lineno">   85</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
 <a id="ae46dabf46098f27692ccc7c2cf9d094f" name="ae46dabf46098f27692ccc7c2cf9d094f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae46dabf46098f27692ccc7c2cf9d094f">&#9670;&#160;</a></span>setup()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ae46dabf46098f27692ccc7c2cf9d094f">&#9670;&#160;</a></span>setup() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -350,43 +418,22 @@ Private Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="Target_8cpp_source.html#l00078">78</a> of file <a class="el" href="Target_8cpp_source.html">Target.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   79</span>    {</div>
-<div class="line"><span class="lineno">   80</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a>)</div>
-<div class="line"><span class="lineno">   81</span>        {</div>
-<div class="line"><span class="lineno">   82</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a>.reset();</div>
-<div class="line"><span class="lineno">   83</span>        }</div>
-<div class="line"><span class="lineno">   84</span> </div>
-<div class="line"><span class="lineno">   85</span>        <span class="keywordflow">switch</span> (config.interface.provider)</div>
-<div class="line"><span class="lineno">   86</span>        {</div>
-<div class="line"><span class="lineno">   87</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="fabrics_8h.html#a612f3e78f6657b88c0ead864114bfa41a3ad69c6f67fe206d664daa2f72fd7547">MXL_FABRICS_PROVIDER_ANY</a>: [[fallthrough]];</div>
-<div class="line"><span class="lineno">   88</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="fabrics_8h.html#a612f3e78f6657b88c0ead864114bfa41a47ec73cdbc100a5c67d1e09fee630a3d">MXL_FABRICS_PROVIDER_TCP</a>: [[fallthrough]];</div>
-<div class="line"><span class="lineno">   89</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="fabrics_8h.html#a612f3e78f6657b88c0ead864114bfa41a09f77088ea6b98fdd19496dbd3797918">MXL_FABRICS_PROVIDER_VERBS</a>:</div>
-<div class="line"><span class="lineno">   90</span>            {</div>
-<div class="line"><span class="lineno">   91</span>                <span class="keyword">auto</span> [target, info] = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCTarget.html#a00257624426c08afca5a356be83ad073">RCTarget::setup</a>(config, options);</div>
-<div class="line"><span class="lineno">   92</span>                <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a> = std::move(target);</div>
-<div class="line"><span class="lineno">   93</span>                <span class="keywordflow">return</span> std::move(info);</div>
-<div class="line"><span class="lineno">   94</span>            }</div>
-<div class="line"><span class="lineno">   95</span> </div>
-<div class="line"><span class="lineno">   96</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="fabrics_8h.html#a612f3e78f6657b88c0ead864114bfa41aca4aa921b4ca5a06e52a40bc5ab36c98">MXL_FABRICS_PROVIDER_SHM</a>: [[fallthrough]];</div>
-<div class="line"><span class="lineno">   97</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="fabrics_8h.html#a612f3e78f6657b88c0ead864114bfa41add1dc4d5db1835262b12962bb03aef22">MXL_FABRICS_PROVIDER_EFA</a>:</div>
-<div class="line"><span class="lineno">   98</span>            {</div>
-<div class="line"><span class="lineno">   99</span>                <span class="keyword">auto</span> [target, info] = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a3b518bd391faa959a64d0f559b86faea">RDMTarget::setup</a>(config, options);</div>
-<div class="line"><span class="lineno">  100</span>                <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a> = std::move(target);</div>
-<div class="line"><span class="lineno">  101</span>                <span class="keywordflow">return</span> std::move(info);</div>
-<div class="line"><span class="lineno">  102</span>            }</div>
-<div class="line"><span class="lineno">  103</span>        }</div>
-<div class="line"><span class="lineno">  104</span> </div>
-<div class="line"><span class="lineno">  105</span>        <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a0302e7afea5ec6982664237acc8559f4">Exception::invalidArgument</a>(<span class="stringliteral">&quot;Invalid provider value&quot;</span>);</div>
-<div class="line"><span class="lineno">  106</span>    }</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception_html_a0302e7afea5ec6982664237acc8559f4"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a0302e7afea5ec6982664237acc8559f4">mxl::lib::fabrics::ofi::Exception::invalidArgument</a></div><div class="ttdeci">static Exception invalidArgument(fmt::format_string&lt; T... &gt; fmt, T &amp;&amp;... args)</div><div class="ttdoc">Make an MXL_ERR_INVALID_ARG exception.</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00043">Exception.hpp:43</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCTarget_html_a00257624426c08afca5a356be83ad073"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCTarget.html#a00257624426c08afca5a356be83ad073">mxl::lib::fabrics::ofi::RCTarget::setup</a></div><div class="ttdeci">static std::pair&lt; std::unique_ptr&lt; RCTarget &gt;, std::unique_ptr&lt; TargetInfo &gt; &gt; setup(mxlFabricsTargetConfig const &amp;config, TargetSetupOptions const &amp;options={})</div><div class="ttdoc">Set up a fresh RCTarget and its associated TargetInfo based on the given configuration.</div><div class="ttdef"><b>Definition</b> <a href="RCTarget_8cpp_source.html#l00021">RCTarget.cpp:21</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget_html_a3b518bd391faa959a64d0f559b86faea"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a3b518bd391faa959a64d0f559b86faea">mxl::lib::fabrics::ofi::RDMTarget::setup</a></div><div class="ttdeci">static std::pair&lt; std::unique_ptr&lt; RDMTarget &gt;, std::unique_ptr&lt; TargetInfo &gt; &gt; setup(mxlFabricsTargetConfig const &amp;config, TargetSetupOptions const &amp;options={})</div><div class="ttdoc">Set up a fresh RDMTarget and its associated TargetInfo based on the given configuration.</div><div class="ttdef"><b>Definition</b> <a href="RDMTarget_8cpp_source.html#l00020">RDMTarget.cpp:20</a></div></div>
-<div class="ttc" id="afabrics_8h_html_a612f3e78f6657b88c0ead864114bfa41a09f77088ea6b98fdd19496dbd3797918"><div class="ttname"><a href="fabrics_8h.html#a612f3e78f6657b88c0ead864114bfa41a09f77088ea6b98fdd19496dbd3797918">MXL_FABRICS_PROVIDER_VERBS</a></div><div class="ttdeci">@ MXL_FABRICS_PROVIDER_VERBS</div><div class="ttdef"><b>Definition</b> <a href="fabrics_8h_source.html#l00051">fabrics.h:51</a></div></div>
-<div class="ttc" id="afabrics_8h_html_a612f3e78f6657b88c0ead864114bfa41a3ad69c6f67fe206d664daa2f72fd7547"><div class="ttname"><a href="fabrics_8h.html#a612f3e78f6657b88c0ead864114bfa41a3ad69c6f67fe206d664daa2f72fd7547">MXL_FABRICS_PROVIDER_ANY</a></div><div class="ttdeci">@ MXL_FABRICS_PROVIDER_ANY</div><div class="ttdef"><b>Definition</b> <a href="fabrics_8h_source.html#l00049">fabrics.h:48</a></div></div>
-<div class="ttc" id="afabrics_8h_html_a612f3e78f6657b88c0ead864114bfa41a47ec73cdbc100a5c67d1e09fee630a3d"><div class="ttname"><a href="fabrics_8h.html#a612f3e78f6657b88c0ead864114bfa41a47ec73cdbc100a5c67d1e09fee630a3d">MXL_FABRICS_PROVIDER_TCP</a></div><div class="ttdeci">@ MXL_FABRICS_PROVIDER_TCP</div><div class="ttdef"><b>Definition</b> <a href="fabrics_8h_source.html#l00050">fabrics.h:50</a></div></div>
-<div class="ttc" id="afabrics_8h_html_a612f3e78f6657b88c0ead864114bfa41aca4aa921b4ca5a06e52a40bc5ab36c98"><div class="ttname"><a href="fabrics_8h.html#a612f3e78f6657b88c0ead864114bfa41aca4aa921b4ca5a06e52a40bc5ab36c98">MXL_FABRICS_PROVIDER_SHM</a></div><div class="ttdeci">@ MXL_FABRICS_PROVIDER_SHM</div><div class="ttdef"><b>Definition</b> <a href="fabrics_8h_source.html#l00053">fabrics.h:53</a></div></div>
-<div class="ttc" id="afabrics_8h_html_a612f3e78f6657b88c0ead864114bfa41add1dc4d5db1835262b12962bb03aef22"><div class="ttname"><a href="fabrics_8h.html#a612f3e78f6657b88c0ead864114bfa41add1dc4d5db1835262b12962bb03aef22">MXL_FABRICS_PROVIDER_EFA</a></div><div class="ttdeci">@ MXL_FABRICS_PROVIDER_EFA</div><div class="ttdef"><b>Definition</b> <a href="fabrics_8h_source.html#l00052">fabrics.h:52</a></div></div>
+<p class="definition">Definition at line <a class="el" href="Target_8cpp_source.html#l00087">87</a> of file <a class="el" href="Target_8cpp_source.html">Target.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   88</span>    {</div>
+<div class="line"><span class="lineno">   89</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a>)</div>
+<div class="line"><span class="lineno">   90</span>        {</div>
+<div class="line"><span class="lineno">   91</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a49e49158db85d20f1e1b1ac9b4b742f8">_inner</a>.reset();</div>
+<div class="line"><span class="lineno">   92</span>        }</div>
+<div class="line"><span class="lineno">   93</span> </div>
+<div class="line"><span class="lineno">   94</span>        <span class="keyword">auto</span> [info, providerConfig] = <a class="code hl_function" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a518e53ff7801d8b30edbab91f8a9f779">selectSourceInterface</a>(config.interface, <span class="comment">/* target */</span> <span class="keyword">true</span>);</div>
+<div class="line"><span class="lineno">   95</span>        <span class="keywordflow">switch</span> (info-&gt;ep_attr-&gt;type)</div>
+<div class="line"><span class="lineno">   96</span>        {</div>
+<div class="line"><span class="lineno">   97</span>            <span class="keywordflow">case</span> FI_EP_MSG: <span class="keywordflow">return</span> setup&lt;RCTarget&gt;(config, info.view(), options);</div>
+<div class="line"><span class="lineno">   98</span>            <span class="keywordflow">case</span> FI_EP_RDM: <span class="keywordflow">return</span> setup&lt;RDMTarget&gt;(config, info.view(), options);</div>
+<div class="line"><span class="lineno">   99</span>            <span class="keywordflow">default</span>:        <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;unsupported endpoint type&quot;</span>);</div>
+<div class="line"><span class="lineno">  100</span>        }</div>
+<div class="line"><span class="lineno">  101</span>    }</div>
+<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_a518e53ff7801d8b30edbab91f8a9f779"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a518e53ff7801d8b30edbab91f8a9f779">mxl::lib::fabrics::ofi::selectSourceInterface</a></div><div class="ttdeci">std::pair&lt; FabricInfo, ProviderConfig &gt; selectSourceInterface(::mxlFabricsInterfaceConfig const &amp;interfaceConfig, bool isTarget)</div><div class="ttdef"><b>Definition</b> <a href="FabricInterfaceProbe_8cpp_source.html#l00164">FabricInterfaceProbe.cpp:164</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -416,10 +463,10 @@ Private Attributes</h2></td></tr>
 <p>Convert this <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html" title="A wrapper around Target implementations.">TargetWrapper</a> to its API representation. </p>
 <dl class="section return"><dt>Returns</dt><dd>The mxlFabricsTarget representing this <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html" title="A wrapper around Target implementations.">TargetWrapper</a>. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="Target_8cpp_source.html#l00033">33</a> of file <a class="el" href="Target_8cpp_source.html">Target.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   34</span>    {</div>
-<div class="line"><span class="lineno">   35</span>        <span class="keywordflow">return</span> <span class="keyword">reinterpret_cast&lt;</span><a class="code hl_typedef" href="fabrics_8h.html#a7ab8c2a1de2858dd548fbf8695ce63c9">mxlFabricsTarget</a><span class="keyword">&gt;</span>(<span class="keyword">this</span>);</div>
-<div class="line"><span class="lineno">   36</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="Target_8cpp_source.html#l00034">34</a> of file <a class="el" href="Target_8cpp_source.html">Target.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   35</span>    {</div>
+<div class="line"><span class="lineno">   36</span>        <span class="keywordflow">return</span> <span class="keyword">reinterpret_cast&lt;</span><a class="code hl_typedef" href="fabrics_8h.html#a7ab8c2a1de2858dd548fbf8695ce63c9">mxlFabricsTarget</a><span class="keyword">&gt;</span>(<span class="keyword">this</span>);</div>
+<div class="line"><span class="lineno">   37</span>    }</div>
 <div class="ttc" id="afabrics_8h_html_a7ab8c2a1de2858dd548fbf8695ce63c9"><div class="ttname"><a href="fabrics_8h.html#a7ab8c2a1de2858dd548fbf8695ce63c9">mxlFabricsTarget</a></div><div class="ttdeci">struct mxlFabricsTarget_t * mxlFabricsTarget</div><div class="ttdef"><b>Definition</b> <a href="fabrics_8h_source.html#l00034">fabrics.h:34</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -446,7 +493,7 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>The underlying target implementation. </p>
 
-<p class="definition">Definition at line <a class="el" href="Target_8hpp_source.html#l00153">153</a> of file <a class="el" href="Target_8hpp_source.html">Target.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="Target_8hpp_source.html#l00162">162</a> of file <a class="el" href="Target_8hpp_source.html">Target.hpp</a>.</p>
 
 </div>
 </div>

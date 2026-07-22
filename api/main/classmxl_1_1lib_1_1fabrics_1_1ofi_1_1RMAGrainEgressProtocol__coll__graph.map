@@ -1,11 +1,11 @@
 <map id="mxl::lib::fabrics::ofi::RMAGrainEgressProtocol" name="mxl::lib::fabrics::ofi::RMAGrainEgressProtocol">
-<area shape="rect" id="Node000001" title=" " alt="" coords="597,69,804,109"/>
-<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html" title="Interface for transfer operations." alt="" coords="303,5,445,45"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="460,39,598,67,597,72,459,44"/>
-<area shape="rect" id="Node000003" href="$structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html" title="TargetInfo contains all the information required by an initiator to operate transfers to the given ta..." alt="" coords="309,69,439,109"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="453,87,597,87,597,92,453,92"/>
-<area shape="rect" id="Node000004" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html" title="Wrapper around a libfabric endpoint address." alt="" coords="5,69,141,109"/>
-<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="155,87,309,87,309,92,155,92"/>
-<area shape="rect" id="Node000005" href="$structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete.html" title="Discrete layout variant of DataLayout." alt="" coords="283,133,465,173"/>
-<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="478,130,597,107,598,112,479,136"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="625,69,832,109"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html" title="Interface for transfer operations." alt="" coords="331,5,473,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="488,39,626,67,625,72,487,44"/>
+<area shape="rect" id="Node000003" href="$structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html" title="TargetInfo contains all the information required by an initiator to operate transfers to the given ta..." alt="" coords="337,69,467,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="481,87,625,87,625,92,481,92"/>
+<area shape="rect" id="Node000004" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RawFabricAddress.html" title="Wrapper around a libfabric endpoint address." alt="" coords="5,69,169,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="183,87,336,87,336,92,183,92"/>
+<area shape="rect" id="Node000005" href="$structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete.html" title="Discrete layout variant of DataLayout." alt="" coords="311,133,493,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="506,130,625,107,626,112,507,136"/>
 </map>

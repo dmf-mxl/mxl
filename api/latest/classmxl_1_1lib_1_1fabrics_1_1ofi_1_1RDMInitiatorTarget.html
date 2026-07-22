@@ -120,7 +120,7 @@ Collaboration diagram for mxl::lib::fabrics::ofi::RDMInitiatorTarget:</div>
 <area shape="rect" title="A single endpoint within an RDMInitiator." alt="" coords="5,211,173,251"/>
 <area shape="rect" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html" title="TargetInfo contains all the information required by an initiator to operate transfers to the given ta..." alt="" coords="24,108,155,148"/>
 <area shape="poly" title=" " alt="" coords="92,162,92,211,87,211,87,162"/>
-<area shape="rect" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html" title="Wrapper around a libfabric endpoint address." alt="" coords="21,5,157,45"/>
+<area shape="rect" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RawFabricAddress.html" title="Wrapper around a libfabric endpoint address." alt="" coords="7,5,171,45"/>
 <area shape="poly" title=" " alt="" coords="92,59,92,108,87,108,87,59"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
@@ -284,7 +284,7 @@ Private Attributes</h2></td></tr>
 <div class="line"><span class="lineno">   44</span>            overloaded{</div>
 <div class="line"><span class="lineno">   45</span>                [&amp;](Idle) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiatorTarget.html#a38c338bf1fb4be57cc1dc8069cdc9dc0">State</a></div>
 <div class="line"><span class="lineno">   46</span>                {</div>
-<div class="line"><span class="lineno">   47</span>                    <span class="keyword">auto</span> fiAddr = ep.addressVector()-&gt;insert(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiatorTarget.html#aece567114b33931e6a91aaa01ece4296">_remoteInfo</a>.<a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html#a82fe03d43ffc5b03a8b43ffaee891247">fabricAddress</a>);</div>
+<div class="line"><span class="lineno">   47</span>                    <span class="keyword">auto</span> fiAddr = ep.addressVector()-&gt;insert(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiatorTarget.html#aece567114b33931e6a91aaa01ece4296">_remoteInfo</a>.<a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html#ac694cd30e356892f35ff994d3d5b68ef">fabricAddress</a>);</div>
 <div class="line"><span class="lineno">   48</span>                    <span class="keywordflow">return</span> Activated{.fiAddr = fiAddr};</div>
 <div class="line"><span class="lineno">   49</span>                },</div>
 <div class="line"><span class="lineno">   50</span>                [](Activated state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiatorTarget.html#a38c338bf1fb4be57cc1dc8069cdc9dc0">State</a> { <span class="keywordflow">return</span> state; },</div>
@@ -294,7 +294,7 @@ Private Attributes</h2></td></tr>
 <div class="line"><span class="lineno">   54</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception_html_ae25fba4f94c98ae0be85ca0c2d49eb34"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">mxl::lib::fabrics::ofi::Exception::invalidState</a></div><div class="ttdeci">static Exception invalidState(fmt::format_string&lt; T... &gt; fmt, T &amp;&amp;... args)</div><div class="ttdoc">Make an MXL_ERR_INVALID_STATE exception.</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00059">Exception.hpp:59</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiatorTarget_html_a38c338bf1fb4be57cc1dc8069cdc9dc0"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiatorTarget.html#a38c338bf1fb4be57cc1dc8069cdc9dc0">mxl::lib::fabrics::ofi::RDMInitiatorTarget::State</a></div><div class="ttdeci">std::variant&lt; Idle, Activated, Done &gt; State</div><div class="ttdoc">The various states that the endpoint can be in are stored inside a variant that we move from and then...</div><div class="ttdef"><b>Definition</b> <a href="RDMInitiator_8hpp_source.html#l00094">RDMInitiator.hpp:94</a></div></div>
-<div class="ttc" id="astructmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo_html_a82fe03d43ffc5b03a8b43ffaee891247"><div class="ttname"><a href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html#a82fe03d43ffc5b03a8b43ffaee891247">mxl::lib::fabrics::ofi::TargetInfo::fabricAddress</a></div><div class="ttdeci">FabricAddress fabricAddress</div><div class="ttdef"><b>Definition</b> <a href="TargetInfo_8hpp_source.html#l00055">TargetInfo.hpp:55</a></div></div>
+<div class="ttc" id="astructmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo_html_ac694cd30e356892f35ff994d3d5b68ef"><div class="ttname"><a href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html#ac694cd30e356892f35ff994d3d5b68ef">mxl::lib::fabrics::ofi::TargetInfo::fabricAddress</a></div><div class="ttdeci">RawFabricAddress fabricAddress</div><div class="ttdef"><b>Definition</b> <a href="TargetInfo_8hpp_source.html#l00055">TargetInfo.hpp:55</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>

@@ -1,7 +1,7 @@
 var searchData=
 [
   ['calculatedindex_0',['calculatedIndex',['../test__time_8cpp.html#a8d90b61ab960eac48b238108af7cfa1f',1,'test_time.cpp']]],
-  ['caps_1',['caps',['../structmxlFabricsInterfaceConfig__t.html#a5e7998b5f3d5b87868ef46e776278ae7',1,'mxlFabricsInterfaceConfig_t']]],
+  ['caps_1',['caps',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1ProviderConfigValues.html#a4c673456006f19354de902fd99e8fae5',1,'mxl::lib::fabrics::ofi::ProviderConfigValues::caps'],['../structmxlFabricsInterfaceConfig__t.html#a5e7998b5f3d5b87868ef46e776278ae7',1,'mxlFabricsInterfaceConfig_t::caps']]],
   ['channel_5fdata_5ffile_5fname_2',['CHANNEL_DATA_FILE_NAME',['../namespacemxl_1_1lib.html#a2438463309d4c01dd389a2b12eab1dbc',1,'mxl::lib']]],
   ['channelcount_3',['channelcount',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Continuous.html#a52a54e285a3c33cfa27134a890572ba7',1,'mxl::lib::fabrics::ofi::DataLayout::Continuous::channelCount'],['../structmxlContinuousFlowConfigInfo__t.html#a4496fd4c0ae35318d64d8dd3db69dcb9',1,'mxlContinuousFlowConfigInfo_t::channelCount']]],
   ['common_4',['common',['../structmxlFlowConfigInfo__t.html#a2953d9b232d0377fa4e8934db6b0098a',1,'mxlFlowConfigInfo_t']]],

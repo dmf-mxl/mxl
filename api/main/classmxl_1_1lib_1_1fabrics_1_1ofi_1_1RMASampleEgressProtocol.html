@@ -125,17 +125,17 @@ Collaboration diagram for mxl::lib::fabrics::ofi::RMASampleEgressProtocol:</div>
 <div class="dyncontent">
 <div class="center"><img src="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocol__coll__graph.png" border="0" usemap="#amxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocol_coll__map" alt="Collaboration graph"/></div>
 <map name="amxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocol_coll__map" id="amxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocol_coll__map">
-<area shape="rect" title=" " alt="" coords="621,101,843,141"/>
-<area shape="rect" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html" title="Interface for transfer operations." alt="" coords="313,5,455,45"/>
-<area shape="poly" title=" " alt="" coords="469,44,598,79,666,99,665,104,597,84,468,49"/>
-<area shape="rect" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html" title="TargetInfo contains all the information required by an initiator to operate transfers to the given ta..." alt="" coords="319,69,449,109"/>
-<area shape="poly" title=" " alt="" coords="463,94,621,109,621,114,463,99"/>
-<area shape="rect" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html" title="Wrapper around a libfabric endpoint address." alt="" coords="5,69,141,109"/>
-<area shape="poly" title=" " alt="" coords="155,87,319,87,319,92,155,92"/>
-<area shape="rect" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Continuous.html" title="Continuous layout variant of DataLayout." alt="" coords="283,133,485,173"/>
-<area shape="poly" title=" " alt="" coords="499,140,621,129,621,134,500,145"/>
-<area shape="rect" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1LocalRegion.html" title="Represent a source memory region used for for data transfer." alt="" coords="319,197,449,237"/>
-<area shape="poly" title=" " alt="" coords="462,194,597,157,662,139,663,144,598,163,463,199"/>
+<area shape="rect" title=" " alt="" coords="649,101,871,141"/>
+<area shape="rect" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html" title="Interface for transfer operations." alt="" coords="341,5,483,45"/>
+<area shape="poly" title=" " alt="" coords="497,44,626,79,694,99,693,104,625,84,496,49"/>
+<area shape="rect" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html" title="TargetInfo contains all the information required by an initiator to operate transfers to the given ta..." alt="" coords="347,69,477,109"/>
+<area shape="poly" title=" " alt="" coords="491,94,649,109,649,114,491,99"/>
+<area shape="rect" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RawFabricAddress.html" title="Wrapper around a libfabric endpoint address." alt="" coords="5,69,169,109"/>
+<area shape="poly" title=" " alt="" coords="183,87,347,87,347,92,183,92"/>
+<area shape="rect" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Continuous.html" title="Continuous layout variant of DataLayout." alt="" coords="311,133,513,173"/>
+<area shape="poly" title=" " alt="" coords="527,140,649,129,649,134,528,145"/>
+<area shape="rect" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1LocalRegion.html" title="Represent a source memory region used for for data transfer." alt="" coords="347,197,477,237"/>
+<area shape="poly" title=" " alt="" coords="490,194,625,157,690,139,691,144,626,163,491,199"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -726,8 +726,8 @@ With this protocol, the audio entry headers will get registered. </dd></dl>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocol_html_af3338d8b42d2d88b43686ba2c2c0e622"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocol.html#af3338d8b42d2d88b43686ba2c2c0e622">mxl::lib::fabrics::ofi::RMASampleEgressProtocol::makeScatterGatherList</a></div><div class="ttdeci">static std::vector&lt; LocalRegion &gt; makeScatterGatherList(DataLayout::Continuous const &amp;layout, std::uint64_t headIndex, std::size_t count, LocalRegion const &amp;region)</div><div class="ttdoc">Create the scatter-gather list for a given audio region and data layout. This will be used for the re...</div><div class="ttdef"><b>Definition</b> <a href="ProtocolEgressRMA_8cpp_source.html#l00188">ProtocolEgressRMA.cpp:188</a></div></div>
 <div class="ttc" id="astructmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Continuous_html_a52a54e285a3c33cfa27134a890572ba7"><div class="ttname"><a href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Continuous.html#a52a54e285a3c33cfa27134a890572ba7">mxl::lib::fabrics::ofi::DataLayout::Continuous::channelCount</a></div><div class="ttdeci">std::size_t channelCount</div><div class="ttdef"><b>Definition</b> <a href="DataLayout_8hpp_source.html#l00033">DataLayout.hpp:33</a></div></div>
 <div class="ttc" id="astructmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Continuous_html_af00a00acdbf0fff0071b8ba4fb6a36a4"><div class="ttname"><a href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Continuous.html#af00a00acdbf0fff0071b8ba4fb6a36a4">mxl::lib::fabrics::ofi::DataLayout::Continuous::sampleSize</a></div><div class="ttdeci">std::size_t sampleSize</div><div class="ttdef"><b>Definition</b> <a href="DataLayout_8hpp_source.html#l00032">DataLayout.hpp:32</a></div></div>
-<div class="ttc" id="astructmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo_html_a6686d98aed52659d3870da6e39f1ecd5"><div class="ttname"><a href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html#a6686d98aed52659d3870da6e39f1ecd5">mxl::lib::fabrics::ofi::TargetInfo::remoteRegions</a></div><div class="ttdeci">std::vector&lt; RemoteRegion &gt; remoteRegions</div><div class="ttdef"><b>Definition</b> <a href="TargetInfo_8hpp_source.html#l00057">TargetInfo.hpp:57</a></div></div>
-<div class="ttc" id="astructmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo_html_a834c527ecdc4b6f05973df8c75004e61"><div class="ttname"><a href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html#a834c527ecdc4b6f05973df8c75004e61">mxl::lib::fabrics::ofi::TargetInfo::bounceBufferInfo</a></div><div class="ttdeci">std::optional&lt; TargetInfoBounceBufferInfo &gt; bounceBufferInfo</div><div class="ttdef"><b>Definition</b> <a href="TargetInfo_8hpp_source.html#l00058">TargetInfo.hpp:58</a></div></div>
+<div class="ttc" id="astructmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo_html_a6686d98aed52659d3870da6e39f1ecd5"><div class="ttname"><a href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html#a6686d98aed52659d3870da6e39f1ecd5">mxl::lib::fabrics::ofi::TargetInfo::remoteRegions</a></div><div class="ttdeci">std::vector&lt; RemoteRegion &gt; remoteRegions</div><div class="ttdef"><b>Definition</b> <a href="TargetInfo_8hpp_source.html#l00058">TargetInfo.hpp:58</a></div></div>
+<div class="ttc" id="astructmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo_html_a834c527ecdc4b6f05973df8c75004e61"><div class="ttname"><a href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html#a834c527ecdc4b6f05973df8c75004e61">mxl::lib::fabrics::ofi::TargetInfo::bounceBufferInfo</a></div><div class="ttdeci">std::optional&lt; TargetInfoBounceBufferInfo &gt; bounceBufferInfo</div><div class="ttdef"><b>Definition</b> <a href="TargetInfo_8hpp_source.html#l00059">TargetInfo.hpp:59</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
