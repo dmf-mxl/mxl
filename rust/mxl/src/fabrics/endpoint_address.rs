@@ -14,27 +14,33 @@ pub struct EndpointAddress<'a> {
     pub service: Option<&'a str>,
 }
 
-impl<'a> TryFrom<&EndpointAddress<'a>> for mxl_sys::fabrics::FabricsEndpointAddress {
-    type Error = Error;
-
-    fn try_from(value: &EndpointAddress) -> Result<Self, Self::Error> {
-        let node = if let Some(node) = value.node {
-            CString::new(node)?.into_raw()
-        } else {
-            std::ptr::null_mut()
-        };
-        let service = if let Some(service) = value.service {
-            CString::new(service)?.into_raw()
-        } else {
-            std::ptr::null_mut()
-        };
-        Ok(mxl_sys::fabrics::FabricsEndpointAddress { node, service })
-    }
+/// A wrapper around the FFI representation of an EndpointAddress, which owns the underlying CStrings for node and service.
+pub(crate) struct OwnedEndpointAddress {
+    inner: mxl_sys::fabrics::FabricsEndpointAddress,
+    _node: Option<CString>,
+    _service: Option<CString>,
 }
-impl<'a> TryFrom<EndpointAddress<'a>> for mxl_sys::fabrics::FabricsEndpointAddress {
-    type Error = Error;
 
-    fn try_from(value: EndpointAddress) -> Result<Self, Self::Error> {
-        (&value).try_into()
+impl OwnedEndpointAddress {
+    pub(crate) fn new(value: &EndpointAddress<'_>) -> Result<Self, Error> {
+        let node = value.node.map(CString::new).transpose()?;
+        let service = value.service.map(CString::new).transpose()?;
+
+        Ok(Self {
+            inner: mxl_sys::fabrics::FabricsEndpointAddress {
+                node: node
+                    .as_ref()
+                    .map_or(std::ptr::null_mut(), |value| value.as_ptr() as *mut i8),
+                service: service
+                    .as_ref()
+                    .map_or(std::ptr::null_mut(), |value| value.as_ptr() as *mut i8),
+            },
+            _node: node,
+            _service: service,
+        })
+    }
+
+    pub(crate) fn as_ffi(&self) -> mxl_sys::fabrics::FabricsEndpointAddress {
+        self.inner
     }
 }

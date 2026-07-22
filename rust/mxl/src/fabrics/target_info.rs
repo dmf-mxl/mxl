@@ -48,18 +48,17 @@ impl TargetInfo {
             )
         })?;
 
-        // The size returned by `fabrics_target_info_to_string` previous call already includes space for null terminator.
-        // Since CString ctor also includes the null terminated character, we must take the size minus 1.
-        let out_string = unsafe { CString::from_vec_unchecked(vec![0; size - 1]) };
-
+        let mut out_string = vec![0u8; size];
         Error::from_status(unsafe {
             self.ctx.api().fabrics_target_info_to_string(
                 self.inner,
-                out_string.as_ptr() as *mut i8,
+                out_string.as_mut_ptr() as *mut i8,
                 &mut size,
             )
         })?;
-        out_string
+
+        CString::from_vec_with_nul(out_string)
+            .map_err(|e| Error::Other(e.to_string()))?
             .into_string()
             .map_err(|e| Error::Other(e.to_string()))
     }

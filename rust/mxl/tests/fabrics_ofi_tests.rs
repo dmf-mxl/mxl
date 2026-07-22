@@ -12,7 +12,7 @@ use mxl::{
     Error, FlowReader, FlowWriter, GrainReader, GrainWriter, OwnedGrainData, OwnedSamplesData,
     SamplesReader, SamplesWriter,
     fabrics::{
-        EndpointAddress,
+        EndpointAddress, InterfaceConfig, Provider,
         initiator::{self, Initiator},
         target::{self, Target},
     },
@@ -22,11 +22,17 @@ const POLL_TIMEOUT: Duration = Duration::from_secs(5);
 const BLOCKING_WAIT: Duration = Duration::from_millis(20);
 const AUDIO_SAMPLE_COUNT: usize = 42;
 
-fn tcp_endpoint() -> EndpointAddress {
+fn tcp_endpoint() -> EndpointAddress<'static> {
     EndpointAddress {
         node: Some("127.0.0.1"),
         service: Some("0"),
     }
+}
+
+fn tcp_interface(provider: &Provider) -> InterfaceConfig<'static> {
+    InterfaceConfig::builder(tcp_endpoint())
+        .provider(provider.prov_type().clone())
+        .build()
 }
 
 fn poll_until_success<F>(mut step: F, timeout_message: &str)
@@ -354,7 +360,7 @@ fn target_info_roundtrip() {
 
         let provider = fabrics_instance.provider_from_str("tcp").unwrap();
         let target = fabrics_instance.create_target().unwrap();
-        let config = target::Config::new(tcp_endpoint(), provider, &flow_writer);
+        let config = target::Config::new(tcp_interface(&provider), &flow_writer);
         let (_target, target_info) = target.setup(&config).unwrap();
 
         let serialized = target_info.to_string().unwrap();
@@ -387,7 +393,7 @@ fn tcp_grain_transfer_delivers_payload_to_target_flow() {
             let target_provider = fabrics_instance.provider_from_str("tcp").unwrap();
             let target = fabrics_instance.create_target().unwrap();
             let target_config =
-                target::Config::new(tcp_endpoint(), target_provider, &target_flow_writer);
+                target::Config::new(tcp_interface(&target_provider), &target_flow_writer);
             target.setup(&target_config).unwrap()
         };
         let target_grain_writer: GrainWriter = target_flow_writer.to_grain_writer().unwrap();
@@ -402,8 +408,10 @@ fn tcp_grain_transfer_delivers_payload_to_target_flow() {
         let initiator = {
             let initiator_provider = fabrics_instance.provider_from_str("tcp").unwrap();
             let initiator = fabrics_instance.create_initiator().unwrap();
-            let initiator_config =
-                initiator::Config::new(tcp_endpoint(), initiator_provider, &initiator_flow_reader);
+            let initiator_config = initiator::Config::new(
+                tcp_interface(&initiator_provider),
+                &initiator_flow_reader,
+            );
             initiator.setup(&initiator_config).unwrap()
         };
         let initiator = match initiator.specialize(&source_flow_config) {
@@ -463,7 +471,7 @@ fn tcp_samples_transfer_delivers_payload_to_target_flow() {
             let target_provider = fabrics_instance.provider_from_str("tcp").unwrap();
             let target = fabrics_instance.create_target().unwrap();
             let target_config =
-                target::Config::new(tcp_endpoint(), target_provider, &target_flow_writer);
+                target::Config::new(tcp_interface(&target_provider), &target_flow_writer);
             target.setup(&target_config).unwrap()
         };
         let target_samples_writer: SamplesWriter = target_flow_writer.to_samples_writer().unwrap();
@@ -478,8 +486,10 @@ fn tcp_samples_transfer_delivers_payload_to_target_flow() {
         let initiator = {
             let initiator_provider = fabrics_instance.provider_from_str("tcp").unwrap();
             let initiator = fabrics_instance.create_initiator().unwrap();
-            let initiator_config =
-                initiator::Config::new(tcp_endpoint(), initiator_provider, &initiator_flow_reader);
+            let initiator_config = initiator::Config::new(
+                tcp_interface(&initiator_provider),
+                &initiator_flow_reader,
+            );
             initiator.setup(&initiator_config).unwrap()
         };
         let initiator = match initiator.specialize(&source_flow_config) {

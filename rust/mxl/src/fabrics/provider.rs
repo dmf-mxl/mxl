@@ -22,10 +22,15 @@ unsafe impl Sync for Provider {}
 /// The available transports
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProviderType {
+    ///  Any provider. Currently useful as an input to `FabricsInstance::get_interfaces`
     Any,
+    /// Provider that use linux TCP sockets.
     Tcp,
+    /// Provider for userspace verbs (libibverbs and librdmacm)
     Verbs,
+    /// Provider for AWS Elastic Fabric Adapter
     Efa,
+    /// Provider used for moving data between 2 memory regions inside the same system.
     Shm,
 }
 
@@ -90,25 +95,25 @@ impl Provider {
     pub fn to_string(&self) -> Result<String> {
         let mut size = 0;
 
-        let prov: mxl_sys::fabrics::FabricsProvider = (&self.inner).into();
-
-        Error::from_status(unsafe {
-            self.ctx
-                .api()
-                .fabrics_provider_to_string(prov, std::ptr::null_mut(), &mut size)
-        })?;
-
-        // fabrics_provider_to_string already includes space for null terminator. So we must remove it here, because CString includes it.
-        let out_string = unsafe { CString::from_vec_unchecked(vec![0; size - 1]) };
-
         Error::from_status(unsafe {
             self.ctx.api().fabrics_provider_to_string(
-                prov,
-                out_string.as_ptr() as *mut i8,
+                (&self.inner).into(),
+                std::ptr::null_mut(),
                 &mut size,
             )
         })?;
-        out_string
+
+        let mut out_string = vec![0u8; size];
+        Error::from_status(unsafe {
+            self.ctx.api().fabrics_provider_to_string(
+                (&self.inner).into(),
+                out_string.as_mut_ptr() as *mut i8,
+                &mut size,
+            )
+        })?;
+
+        CString::from_vec_with_nul(out_string)
+            .map_err(|e| Error::Other(e.to_string()))?
             .into_string()
             .map_err(|e| Error::Other(e.to_string()))
     }

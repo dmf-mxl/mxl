@@ -5,7 +5,7 @@
 //
 use crate::{
     Error, Result,
-    fabrics::{target::Target, target::states::Grain},
+    fabrics::target::{Target, states::Grain},
 };
 use std::time::Duration;
 
@@ -21,7 +21,7 @@ impl Target<Grain> {
         Error::from_status(unsafe {
             self.instance.ctx.api().fabrics_target_read_grain(
                 self.instance.inner,
-                timeout.as_millis() as u16,
+                u16::try_from(timeout.as_millis()).map_err(|_| Error::InvalidArg)?,
                 &mut grain_index,
             )
         })?;

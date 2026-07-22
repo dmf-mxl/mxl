@@ -1,3 +1,4 @@
+/// Capabilities of the fabric interface
 #[derive(Debug)]
 pub struct Capabilities {
     blocking_operations: bool,
@@ -10,6 +11,26 @@ impl Capabilities {
     pub fn builder() -> CapabilitiesBuilder {
         CapabilitiesBuilder::default()
     }
+
+    /// The interface supports blocking operations.
+    pub fn supports_blocking_operations(&self) -> bool {
+        self.blocking_operations
+    }
+
+    /// The interface supports remote-write (RDMA) operations.
+    pub fn supports_remote_write(&self) -> bool {
+        self.remote_write
+    }
+
+    /// The interface supports send/receive message operations.
+    pub fn supports_send_recv(&self) -> bool {
+        self.send_recv
+    }
+
+    /// Maximum message size supported on this interface.
+    pub fn max_message_size(&self) -> u64 {
+        self.max_message_size
+    }
 }
 impl Default for Capabilities {
     fn default() -> Self {
@@ -21,7 +42,6 @@ impl Default for Capabilities {
         }
     }
 }
-
 impl From<&Capabilities> for mxl_sys::fabrics::FabricsInterfaceCaps {
     fn from(value: &Capabilities) -> Self {
         let flags = (if value.blocking_operations {
@@ -74,18 +94,18 @@ pub struct CapabilitiesBuilder {
     max_message_size: u64,
 }
 impl CapabilitiesBuilder {
-    pub fn supports_blocking_operations(mut self) -> Self {
-        self.blocking_operations = true;
+    pub fn with_blocking_operations(mut self, value: bool) -> Self {
+        self.blocking_operations = value;
         self
     }
 
-    pub fn supports_remote_write(mut self) -> Self {
-        self.remote_write = true;
+    pub fn with_remote_write(mut self, value: bool) -> Self {
+        self.remote_write = value;
         self
     }
 
-    pub fn supports_send_recv(mut self) -> Self {
-        self.send_recv = true;
+    pub fn with_send_recv(mut self, value: bool) -> Self {
+        self.send_recv = value;
         self
     }
 
@@ -106,8 +126,8 @@ impl CapabilitiesBuilder {
 impl Default for CapabilitiesBuilder {
     fn default() -> Self {
         Self {
-            blocking_operations: false,
-            remote_write: false,
+            blocking_operations: true,
+            remote_write: true,
             send_recv: false,
             max_message_size: u64::MAX,
         }

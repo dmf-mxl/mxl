@@ -469,8 +469,8 @@ fn main() -> Result<(), anyhow::Error> {
 
     let interface_config = mxl::fabrics::InterfaceConfig::builder(endpoint_address)
         .provider(provider.prov_type().clone())
-        .caps(Capabilities::builder().supports_remote_write().build())
-        .build()?;
+        .caps(Capabilities::default())
+        .build();
 
     let interfaces = fabrics_instance
         .get_interfaces(Some(interface_config))

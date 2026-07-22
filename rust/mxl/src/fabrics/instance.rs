@@ -22,15 +22,15 @@ pub(crate) fn create_instance(
     fabrics_api: &MxlFabricsAPiHandle,
 ) -> Result<FabricsInstance> {
     let mut inst = std::ptr::null_mut();
-    unsafe {
-        Error::from_status(fabrics_api.fabrics_create_instance(
+    Error::from_status(unsafe {
+        fabrics_api.fabrics_create_instance(
             std::mem::transmute::<*mut mxl_sys::Instance_t, *mut mxl_sys::fabrics::Instance_t>(
                 ctx.instance,
             ),
             std::ptr::null(), // Unused for now
             &mut inst,
-        ))?;
-    }
+        )
+    })?;
     if inst.is_null() {
         return Err(Error::Other(
             "Failed to create fabrics instance.".to_string(),

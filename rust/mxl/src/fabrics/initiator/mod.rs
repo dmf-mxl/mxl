@@ -8,7 +8,7 @@ mod samples;
 use crate::{
     FlowConfigInfo,
     error::{Error, Result},
-    fabrics::instance::FabricsInstanceContext,
+    fabrics::{initiator::config::OwnedInitiatorConfig, instance::FabricsInstanceContext},
 };
 
 pub use config::Config;
@@ -95,10 +95,11 @@ impl Initiator<New> {
 impl Initiator<Initializing> {
     ///  Configure the initiator.
     pub fn setup(self, config: &Config) -> Result<Initiator<Specializing>> {
+        let config = OwnedInitiatorConfig::new(config)?;
         Error::from_status(unsafe {
             self.instance.ctx.api().fabrics_initiator_setup(
                 self.instance.inner,
-                &config.try_into()?,
+                config.as_ffi(),
                 std::ptr::null(), // Unused for now
             )
         })?;

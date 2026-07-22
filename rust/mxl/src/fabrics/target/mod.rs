@@ -10,7 +10,10 @@ use std::{marker::PhantomData, sync::Arc};
 use crate::{
     FlowConfigInfo,
     error::{Error, Result},
-    fabrics::{instance::FabricsInstanceContext, target_info::TargetInfo},
+    fabrics::{
+        instance::FabricsInstanceContext, target::config::OwnedTargetConfig,
+        target_info::TargetInfo,
+    },
 };
 pub use config::Config;
 
@@ -93,10 +96,11 @@ impl Target<Initializing> {
     /// setup(), but be deferred until the first call to mxlFabricsTargetTryNewGrain().
     pub fn setup(self, config: &Config) -> Result<(Target<Specializing>, TargetInfo)> {
         let mut info = mxl_sys::fabrics::FabricsTargetInfo::default();
+        let config = OwnedTargetConfig::new(config)?;
         Error::from_status(unsafe {
             self.instance.ctx.api().fabrics_target_setup(
                 self.instance.inner,
-                &config.try_into()?,
+                config.as_ffi(),
                 std::ptr::null(),
                 &mut info,
             )

@@ -22,7 +22,7 @@ impl Target<Sample> {
         Error::from_status(unsafe {
             self.instance.ctx.api().fabrics_target_read_samples(
                 self.instance.inner,
-                timeout.as_millis() as u16,
+                u16::try_from(timeout.as_millis()).map_err(|_| Error::InvalidArg)?,
                 &mut head_index,
                 &mut count,
             )

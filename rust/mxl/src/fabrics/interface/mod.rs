@@ -2,7 +2,10 @@ use std::sync::Arc;
 
 use crate::{
     Error,
-    fabrics::{instance::FabricsInstanceContext, interface::config::InterfaceConfig},
+    fabrics::{
+        instance::FabricsInstanceContext,
+        interface::config::{InterfaceConfig, OwnedInterfaceConfig},
+    },
 };
 
 pub mod config;
@@ -18,12 +21,12 @@ impl Interfaces {
         query: Option<InterfaceConfig>,
     ) -> Result<Self, crate::Error> {
         let query_storage = match query {
-            Some(q) => Some::<mxl_sys::fabrics::FabricsInterfaceConfig>(q.try_into()?),
+            Some(q) => Some(OwnedInterfaceConfig::new(&q)?),
             None => None,
         };
         let query_ptr = query_storage
             .as_ref()
-            .map_or(std::ptr::null(), |q| q as *const _);
+            .map_or(std::ptr::null(), |q| q.as_ffi() as *const _);
 
         let mut out_list: *mut mxl_sys::fabrics::FabricsInterfaceList = std::ptr::null_mut();
 

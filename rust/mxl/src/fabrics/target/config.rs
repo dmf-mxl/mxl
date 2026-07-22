@@ -4,13 +4,13 @@
 use crate::FlowWriter;
 
 use crate::Error;
-use crate::fabrics::InterfaceConfig;
+use crate::fabrics::{InterfaceConfig, interface::config::OwnedInterfaceConfig};
 
 /// Configuration object required to set up a target.
 pub struct Config<'a> {
     version: i32,
     interface: InterfaceConfig<'a>,
-    flow_writer: &'a FlowWriter,
+    pub(crate) flow_writer: &'a FlowWriter,
 }
 
 impl<'a> Config<'a> {
@@ -23,19 +23,27 @@ impl<'a> Config<'a> {
     }
 }
 
-impl<'a> TryFrom<&Config<'a>> for mxl_sys::fabrics::FabricsTargetConfig {
-    type Error = Error;
+pub(crate) struct OwnedTargetConfig {
+    inner: mxl_sys::fabrics::FabricsTargetConfig,
+    _interface: OwnedInterfaceConfig,
+}
 
-    fn try_from(value: &Config) -> Result<Self, Self::Error> {
+impl OwnedTargetConfig {
+    pub(crate) fn new(value: &Config<'_>) -> Result<Self, Error> {
+        let interface = OwnedInterfaceConfig::new(&value.interface)?;
+
         Ok(Self {
-            version: value.version,
-            interface: (&value.interface).try_into()?,
-            // SAFETY: The type cast is necessary, because this FlowWriter is scoped in mxl_sys::fabrics::*, not mxl_sys::*, but this is the same type.
-            writer: unsafe {
-                std::mem::transmute::<mxl_sys::FlowWriter, mxl_sys::fabrics::FlowWriter>(
-                    value.flow_writer.inner(),
-                )
+            inner: mxl_sys::fabrics::FabricsTargetConfig {
+                version: value.version,
+                interface: *interface.as_ffi(),
+                // SAFETY: Both types are equivalent opaque writer handles from different bindgen modules.
+                writer: value.flow_writer.inner().cast(),
             },
+            _interface: interface,
         })
+    }
+
+    pub(crate) fn as_ffi(&self) -> &mxl_sys::fabrics::FabricsTargetConfig {
+        &self.inner
     }
 }
