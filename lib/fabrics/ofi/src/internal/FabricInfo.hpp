@@ -18,6 +18,8 @@ namespace mxl::lib::fabrics::ofi
 
     class FabricInfoView;
     class FabricInfoList;
+    class FabricAddress;
+    class ProviderConfig;
 
     /** \brief RAII wrapper around a libfabric `fi_info`` structure.
      *
@@ -135,6 +137,9 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         std::size_t txIovLimit() const noexcept;
 
+        [[nodiscard]]
+        ::fi_ep_type endpointType() const noexcept;
+
     private:
         friend FabricInfoIterator<true>;
         friend FabricInfoIterator<false>;
@@ -218,12 +223,13 @@ namespace mxl::lib::fabrics::ofi
         using const_iterator = FabricInfoIterator<true>;
 
     public:
-        /**
-         * \brief  Get a list of provider configurations supported to the specified
-         * node/service
-         */
+        /** \brief Calls fi_getinfo without any hints and returns the full list of fabric information objects */
         [[nodiscard]]
-        static FabricInfoList get(char const* node, char const* service, Provider provider, std::uint64_t caps, ::fi_ep_type epType);
+        static FabricInfoList get();
+
+        /** \brief Calls fi_getinfo with FI_SOURCE to get source interface information. Uses hints derived from the provider config value. */
+        [[nodiscard]]
+        static FabricInfoList getSourceInterfaces(ProviderConfig const& providerConfig, std::optional<FabricAddress> const& sourceAddress);
 
         /** \brief Take ownership over a fi_info raw pointer.
          */

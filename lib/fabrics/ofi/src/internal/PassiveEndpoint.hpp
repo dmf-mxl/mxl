@@ -81,9 +81,9 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Obtain the local fabric address for this passive endpoint.
          */
         [[nodiscard]]
-        FabricAddress localAddress()
+        RawFabricAddress localAddress()
         {
-            return FabricAddress::fromFid(&_raw->fid);
+            return RawFabricAddress::fromFid(&_raw->fid, _fabric->info());
         }
 
         /** \brief Access the underlying raw `fid_pep` pointer.

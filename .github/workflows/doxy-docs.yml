@@ -1,0 +1,321 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: CC-BY-4.0
+
+name: Build Doxygen Documentation
+
+on:
+  push:
+    branches:
+      - main
+      - docs-* # for testing
+    # Only run on branch pushes that change inputs to the API reference
+    # (the C/C++ sources or this workflow's own configuration). Tag pushes
+    # are handled by the `tags:` filter below and are not subject to
+    # `paths:` (GitHub treats a new ref as "all files changed").
+    paths:
+      - "lib/**"
+      - "Doxyfile.in"
+      - ".github/doxygen/**"
+      - ".github/workflows/doxy-docs.yml"
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: >-
+          Optional branch or tag to build docs from. Leave empty to build the
+          ref this workflow runs on. Use this to (re)build docs for historical
+          tags whose own copy of this workflow predates workflow_dispatch.
+        required: false
+        default: ""
+      alias_latest:
+        description: "Also publish this build under the 'latest' alias"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+# Serialize with the zensical Documentation workflow, which also pushes to
+# gh-pages. Running them concurrently would race the worktree / push.
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Check out the ref that triggered this run (the pushed branch/tag,
+      # or --- for workflow_dispatch --- the ref the workflow was dispatched
+      # from, which defaults to the default branch). This keeps the workflow
+      # file and every asset it references (Doxyfile.in, .github/doxygen/,
+      # scripts) coming from the *same* commit, so new files added in the
+      # same commit as new workflow steps are always visible.
+      #
+      # The C/C++ sources for BUILD_REF are overlaid from that ref in a
+      # separate step below, so doxygen documents the correct version even
+      # when we're re-running from a different ref (e.g. dispatched from
+      # main to rebuild docs for an older tag).
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      # Decide which name this build is published as on gh-pages. Same rule
+      # as docs.yml: dispatched input wins, otherwise the triggering ref.
+      - name: Determine build ref
+        env:
+          INPUT_REF: ${{ inputs.ref }}
+        run: |
+          if [[ -n "${INPUT_REF}" ]]; then
+            BUILD_REF="${INPUT_REF}"
+          else
+            BUILD_REF="${GITHUB_REF_NAME}"
+          fi
+          echo "BUILD_REF=${BUILD_REF}" >> "$GITHUB_ENV"
+          echo "Publishing API docs as version: ${BUILD_REF}"
+
+      # Overlay the C/C++ sources from BUILD_REF onto main's checkout so
+      # doxygen documents the right version. When BUILD_REF is itself "main"
+      # this is a no-op.
+      - name: Overlay lib/ from build ref
+        run: |
+          git checkout "${BUILD_REF}" -- lib/
+
+      - name: Install Doxygen and Graphviz
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y doxygen graphviz
+
+      - name: Fetch doxygen-awesome-css
+        run: |
+          mkdir -p third_party
+          curl -fsSL -o third_party/doxygen-awesome.zip \
+            https://github.com/jothepro/doxygen-awesome-css/archive/refs/heads/main.zip
+          unzip -q third_party/doxygen-awesome.zip -d third_party
+          mv third_party/doxygen-awesome-css-main third_party/doxygen-awesome-css
+
+      - name: Generate Doxyfile from template
+        run: |
+          # Doxyfile.in is a CMake configure_file template. Substitute the
+          # two @VAR@ placeholders that the CMake build would normally fill in.
+          sed \
+            -e "s|@CMAKE_CURRENT_SOURCE_DIR@|${GITHUB_WORKSPACE}|g" \
+            -e "s|@AWESOME_CSS_DIR@|${GITHUB_WORKSPACE}/third_party/doxygen-awesome-css|g" \
+            Doxyfile.in > Doxyfile
+
+      # Customise the doxygen output beyond what Doxyfile.in expresses:
+      #   1. LAYOUT_FILE: hide the "Main Page" tab (we don't ship a doxygen
+      #      landing page; the zensical site is the project landing page).
+      #   2. HTML_HEADER: inject a small <script> that loads the version
+      #      selector. We base it on doxygen's own default header so the
+      #      $relpath^ / $treeview / $search / $mathjax / $extrastylesheet
+      #      tokens stay intact and we don't have to track header changes
+      #      across doxygen versions.
+      #   3. HTML_EXTRA_FILES / HTML_EXTRA_STYLESHEET: ship the selector's
+      #      JS and CSS alongside the rest of the html output.
+      - name: Customise layout, header, and assets
+        run: |
+          set -euo pipefail
+          mkdir -p doxygen-gen
+
+          # 1. Default layout file, with the mainpage tab disabled.
+          doxygen -l doxygen-gen/DoxygenLayout.xml
+          sed -i \
+            's|<tab type="mainpage" visible="yes"|<tab type="mainpage" visible="no"|' \
+            doxygen-gen/DoxygenLayout.xml
+
+          # 2. Default html header/footer/stylesheet (the stylesheet output
+          #    is required by `doxygen -w html` but we don't use it).
+          doxygen -w html doxygen-gen/header.html doxygen-gen/footer.html \
+            doxygen-gen/_unused.css Doxyfile
+          # Inject the version selector, main-docs back-link, and GitHub
+          # repo-link scripts before </head>. Use a literal newline so each
+          # inserted line ends up on its own line.
+          sed -i '/<\/head>/i\
+          <script type="text/javascript" src="$relpath^version-selector.js" defer></script>' \
+            doxygen-gen/header.html
+          sed -i '/<\/head>/i\
+          <script type="text/javascript" src="$relpath^main-docs-link.js" defer></script>' \
+            doxygen-gen/header.html
+          sed -i '/<\/head>/i\
+          <script type="text/javascript" src="$relpath^github-repo-link.js" defer></script>' \
+            doxygen-gen/header.html
+
+          # 2a. Bake the current build's repo URL into a build-time copy of
+          #     github-repo-link.js. HTML_EXTRA_FILES copies files verbatim,
+          #     so we can't do the substitution in the source tree.
+          cp .github/doxygen/github-repo-link.js doxygen-gen/github-repo-link.js
+          sed -i "s|__REPO_URL__|${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}|g" \
+            doxygen-gen/github-repo-link.js
+
+          # 3. Append the customisation options to the Doxyfile. Using `+=`
+          #    for the list-valued options means we add to (rather than
+          #    replace) whatever Doxyfile.in already set.
+          cat >> Doxyfile <<EOF
+
+          # Appended by .github/workflows/doxy-docs.yml -----------------------------
+          LAYOUT_FILE             = ${GITHUB_WORKSPACE}/doxygen-gen/DoxygenLayout.xml
+          HTML_HEADER             = ${GITHUB_WORKSPACE}/doxygen-gen/header.html
+          HTML_FOOTER             = ${GITHUB_WORKSPACE}/doxygen-gen/footer.html
+          HTML_EXTRA_FILES       += ${GITHUB_WORKSPACE}/.github/doxygen/version-selector.js
+          HTML_EXTRA_FILES       += ${GITHUB_WORKSPACE}/.github/doxygen/main-docs-link.js
+          HTML_EXTRA_FILES       += ${GITHUB_WORKSPACE}/doxygen-gen/github-repo-link.js
+          HTML_EXTRA_STYLESHEET  += ${GITHUB_WORKSPACE}/.github/doxygen/version-selector.css
+          HTML_EXTRA_STYLESHEET  += ${GITHUB_WORKSPACE}/.github/doxygen/main-docs-link.css
+          HTML_EXTRA_STYLESHEET  += ${GITHUB_WORKSPACE}/.github/doxygen/github-repo-link.css
+          EOF
+
+      - name: Build doxygen docs
+        run: doxygen Doxyfile
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      # Publish under api/<version>/ on gh-pages, with an optional api/latest/
+      # alias. Versioning rules match the mike invocation in docs.yml:
+      #   - push to branch:    publish as <branch>, update 'latest'
+      #   - push to tag:       publish as <tag>, no alias change
+      #   - workflow_dispatch: publish as <BUILD_REF>; update 'latest' only
+      #                        when the alias_latest input is true
+      #
+      # We use a gh-pages worktree and a normal commit (rather than a force
+      # push) so the zensical site maintained by mike in the same branch is
+      # left untouched.
+      - name: Publish API docs to gh-pages
+        env:
+          ALIAS_LATEST: ${{ inputs.alias_latest }}
+        run: |
+          set -euo pipefail
+
+          UPDATE_LATEST=0
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            [[ "${ALIAS_LATEST}" == "true" ]] && UPDATE_LATEST=1
+          elif [[ "${GITHUB_REF_TYPE}" == "branch" ]]; then
+            UPDATE_LATEST=1
+          fi
+
+          SRC="${GITHUB_WORKSPACE}/docs/html"
+
+          # Make sure we have gh-pages locally. mike (in docs.yml) is normally
+          # the workflow that first creates it; if it doesn't exist yet, start
+          # an orphan branch so this workflow can run standalone too.
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null; then
+            git fetch origin gh-pages:gh-pages || git fetch origin gh-pages
+            git worktree add gh-pages-wt gh-pages
+          else
+            git worktree add --detach gh-pages-wt
+            git -C gh-pages-wt checkout --orphan gh-pages
+            git -C gh-pages-wt rm -rf . >/dev/null 2>&1 || true
+          fi
+
+          mkdir -p gh-pages-wt/api
+          rm -rf "gh-pages-wt/api/${BUILD_REF}"
+          cp -a "${SRC}/." "gh-pages-wt/api/${BUILD_REF}"
+
+          if [[ "${UPDATE_LATEST}" == "1" ]]; then
+            rm -rf "gh-pages-wt/api/latest"
+            cp -a "${SRC}/." "gh-pages-wt/api/latest"
+            # Record which version 'latest' currently aliases, so the
+            # selector can label it "vX.Y.Z (latest)" in versions.json.
+            echo "${BUILD_REF}" > "gh-pages-wt/api/.latest_alias_of"
+          fi
+
+          # Regenerate gh-pages/api/versions.json (mike-compatible format)
+          # so the in-page version selector can populate itself. Each entry
+          # has {version, title, aliases}; the one matching .latest_alias_of
+          # gets aliases: ["latest"].
+          LATEST_OF=""
+          [[ -f gh-pages-wt/api/.latest_alias_of ]] && \
+            LATEST_OF="$(cat gh-pages-wt/api/.latest_alias_of)"
+          (
+            cd gh-pages-wt/api
+            shopt -s nullglob
+            vdirs=()
+            for d in */; do
+              d="${d%/}"
+              [[ "${d}" == "latest" ]] && continue
+              vdirs+=("${d}")
+            done
+            if (( ${#vdirs[@]} > 0 )); then
+              printf '%s\n' "${vdirs[@]}" \
+                | sort -Vr \
+                | jq -Rs --arg latest "${LATEST_OF}" '
+                    split("\n")
+                    | map(select(length > 0))
+                    | map({
+                        version: .,
+                        title: .,
+                        aliases: (if . == $latest then ["latest"] else [] end)
+                      })
+                  ' > versions.json
+            else
+              echo '[]' > versions.json
+            fi
+          )
+
+          # Regenerate gh-pages/api/index.html with a sorted list of all
+          # published versions, so /mxl/api/ is browsable. 'latest' is pinned
+          # to the top; everything else is version-sorted, descending.
+          INDEX="gh-pages-wt/api/index.html"
+          {
+            echo '<!DOCTYPE html>'
+            echo '<html lang="en">'
+            echo '<head>'
+            echo '  <meta charset="utf-8">'
+            echo '  <title>MXL API Reference — published versions</title>'
+            echo '  <meta name="viewport" content="width=device-width, initial-scale=1">'
+            echo '  <style>'
+            echo '    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;max-width:40rem;margin:3rem auto;padding:0 1rem;line-height:1.5;color:#24292f}'
+            echo '    h1{margin-bottom:.25rem} p{color:#57606a}'
+            echo '    ul{padding-left:1.25rem} li{margin:.25rem 0}'
+            echo '    a{color:#0969da;text-decoration:none} a:hover{text-decoration:underline}'
+            echo '    code{background:#f6f8fa;padding:1px 4px;border-radius:4px}'
+            echo '  </style>'
+            echo '</head>'
+            echo '<body>'
+            echo '  <h1>MXL API Reference</h1>'
+            echo '  <p>Doxygen-generated C/C++ API reference. Pick a version:</p>'
+            echo '  <ul>'
+            (
+              cd gh-pages-wt/api
+              if [[ -d latest ]]; then
+                echo '    <li><a href="latest/"><strong>latest</strong></a> &mdash; alias for the default branch</li>'
+              fi
+              # All other version directories, version-sorted descending.
+              # Use globbing rather than `find -printf` so this works on any
+              # POSIX `find`. The shell expands */ to top-level dirs only.
+              shopt -s nullglob
+              dirs=()
+              for d in */; do
+                d="${d%/}"
+                [[ "${d}" == "latest" ]] && continue
+                dirs+=("${d}")
+              done
+              if (( ${#dirs[@]} > 0 )); then
+                printf '%s\n' "${dirs[@]}" \
+                  | sort -Vr \
+                  | while IFS= read -r d; do
+                      printf '    <li><a href="%s/"><code>%s</code></a></li>\n' "${d}" "${d}"
+                    done
+              fi
+            )
+            echo '  </ul>'
+            echo '</body>'
+            echo '</html>'
+          } > "${INDEX}"
+
+          cd gh-pages-wt
+          git add api
+          if git diff --cached --quiet; then
+            echo "No changes to API docs; nothing to commit."
+            exit 0
+          fi
+
+          MSG="doxygen: publish API docs for ${BUILD_REF}"
+          [[ "${UPDATE_LATEST}" == "1" ]] && MSG="${MSG} (latest)"
+          git commit -m "${MSG}"
+          git push origin gh-pages

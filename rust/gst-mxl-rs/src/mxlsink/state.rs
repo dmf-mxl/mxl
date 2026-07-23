@@ -1,27 +1,16 @@
 // SPDX-FileCopyrightText: 2025-2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{
-    collections::HashMap,
-    process,
-    str::FromStr,
-    sync::{Arc, Condvar, Mutex},
-    thread,
-};
+use std::{collections::HashMap, process, str::FromStr};
 
-use crate::mxlsink::{
-    imp::CAT,
-    render_audio::{WriteGrainData, WriteSampleData, await_audio_buffer},
-    render_data::await_data_buffer,
-    render_video::await_video_buffer,
-};
-use crossbeam::channel::bounded;
+use crate::mxlsink::imp::CAT;
 use gst::StructureRef;
+use gst::prelude::*;
 use gst_audio::AudioInfo;
 use gstreamer as gst;
 use gstreamer_audio as gst_audio;
 use mxl::{
-    FlowConfigInfo, GrainWriter, MxlInstance, Rational, SamplesWriter,
+    FlowConfigInfo, GrainWriter, MxlInstance, SamplesWriter,
     flowdef::{
         Component, FlowDef, FlowDefAudio, FlowDefData, FlowDefDetails, FlowDefVideo, InterlaceMode,
         Rate,
@@ -33,12 +22,20 @@ use uuid::Uuid;
 
 pub(crate) const DEFAULT_FLOW_ID: &str = "";
 pub(crate) const DEFAULT_DOMAIN: &str = "";
-const MAX_CHANNEL_SIZE: usize = 50;
+pub(crate) const GROUPHINT_TAG: &str = "urn:x-nmos:tag:grouphint/v1.0";
 
 #[derive(Debug, Clone)]
 pub(crate) struct Settings {
+    /// UUID of the MXL flow.
     pub flow_id: String,
+    /// Local path to the MXL domain directory.
     pub domain: String,
+    /// Top-level flow_def `label`. Empty keeps the built-in default.
+    pub label: String,
+    /// Top-level flow_def `description`. Empty keeps the built-in default.
+    pub description: String,
+    /// `urn:x-nmos:tag:grouphint/v1.0` value. Empty keeps the built-in default.
+    pub group_hint: String,
 }
 
 impl Default for Settings {
@@ -46,53 +43,125 @@ impl Default for Settings {
         Settings {
             flow_id: DEFAULT_FLOW_ID.to_owned(),
             domain: DEFAULT_DOMAIN.to_owned(),
+            label: String::new(),
+            description: String::new(),
+            group_hint: String::new(),
         }
     }
 }
 
+/// Format a rational frame rate for human-readable flow metadata.
+/// Exact integers stay unadorned (`25/1` → `"25"`); otherwise two decimals
+/// (`60000/1001` → `"59.94"`, `24000/1001` → `"23.98"`).
+pub(crate) fn format_framerate(numer: i32, denom: i32) -> String {
+    if denom != 0 && numer % denom == 0 {
+        (numer / denom).to_string()
+    } else {
+        format!("{:.2}", numer as f64 / denom as f64)
+    }
+}
+
+/// Format a sample rate in Hz as a compact kHz string (`48000` → `"48 kHz"`,
+/// `44100` → `"44.1 kHz"`).
+pub(crate) fn format_sample_rate_khz(rate_hz: i32) -> String {
+    if rate_hz % 1000 == 0 {
+        format!("{} kHz", rate_hz / 1000)
+    } else {
+        format!("{:.1} kHz", rate_hz as f64 / 1000.0)
+    }
+}
+
+/// Replace `:` so grouphint group/role components stay well-formed.
+fn sanitize_grouphint_component(s: &str) -> String {
+    s.replace(':', "-")
+}
+
+/// Walk parents for the enclosing [`gst::Pipeline`] name, if any.
+fn containing_pipeline_name(element: &gst::Element) -> Option<String> {
+    let mut current = element.upcast_ref::<gst::Object>().parent();
+    while let Some(obj) = current {
+        if let Ok(pipeline) = obj.clone().downcast::<gst::Pipeline>() {
+            return Some(pipeline.name().to_string());
+        }
+        current = obj.parent();
+    }
+    None
+}
+
+/// Built-in group hint: process- and pipeline-scoped group name, plus a
+/// media-type role that includes the GStreamer element name so multiple sinks
+/// of the same type stay unique
+/// (`Media Function 12345 pipeline0:Video mxlsink0`).
+pub(crate) fn default_group_hint(media_role: &str, element: &gst::Element) -> String {
+    let group = match containing_pipeline_name(element) {
+        Some(pipeline_name) => {
+            format!("Media Function {} {}", process::id(), pipeline_name)
+        }
+        None => format!("Media Function {}", process::id()),
+    };
+    let role = format!("{media_role} {}", element.name());
+    format!(
+        "{}:{}",
+        sanitize_grouphint_component(&group),
+        sanitize_grouphint_component(&role)
+    )
+}
+
+/// Resolve optional `label` / `description` / `group-hint` property overrides
+/// against the built-in defaults used when those properties are empty.
+/// `default_name` is used for both `label` and `description` when unset.
+pub(crate) fn resolve_flow_metadata(
+    settings: &Settings,
+    default_name: String,
+    default_group_hint: String,
+) -> (String, String, HashMap<String, Vec<String>>) {
+    let label = if settings.label.is_empty() {
+        default_name.clone()
+    } else {
+        settings.label.clone()
+    };
+    let description = if settings.description.is_empty() {
+        default_name
+    } else {
+        settings.description.clone()
+    };
+    let group_hint = if settings.group_hint.is_empty() {
+        default_group_hint
+    } else {
+        settings.group_hint.clone()
+    };
+    let mut tags = HashMap::new();
+    tags.insert(GROUPHINT_TAG.to_string(), vec![group_hint]);
+    (label, description, tags)
+}
+
 pub(crate) struct State {
     pub instance: MxlInstance,
-    pub flow: Option<FlowConfigInfo>,
-    pub video: Option<VideoState>,
-    pub audio: Option<AudioState>,
-    pub data: Option<DataState>,
+    pub flow_config: Option<FlowConfigInfo>,
+    /// Writer state after `set_caps`; `None` between `start` and caps.
+    pub flow_state: Option<FlowState>,
 }
 
-pub(crate) struct VideoState {
-    pub tx: crossbeam::channel::Sender<VideoCommand>,
-    pub grain_index: u64,
-    pub initial_time: Option<InitialTime>,
-    pub latency: u64,
-    pub sleep_flag: Arc<(Mutex<bool>, Condvar)>,
+/// Mutually exclusive writer kinds for a single MXL flow.
+pub(crate) enum FlowState {
+    Discrete(DiscreteState),
+    Continuous(ContinuousState),
 }
 
-#[derive(Debug)]
-pub(crate) struct AudioState {
-    pub tx: crossbeam::channel::Sender<AudioCommand>,
+#[derive(Clone, Copy)]
+pub(crate) enum DiscreteFormat {
+    Video,
+    Data,
+}
+
+pub(crate) struct DiscreteState {
+    pub format: DiscreteFormat,
+    pub writer: GrainWriter,
+}
+
+pub(crate) struct ContinuousState {
+    pub writer: SamplesWriter,
     pub flow_def: FlowDefAudio,
-    pub initial_time: Option<InitialTime>,
-    pub latency: u64,
-    pub sleep_flag: Arc<(Mutex<bool>, Condvar)>,
-}
-
-pub(crate) struct DataState {
-    pub tx: crossbeam::channel::Sender<DataCommand>,
-    pub grain_index: u64,
-    pub initial_time: Option<InitialTime>,
-    pub latency: u64,
-    pub sleep_flag: Arc<(Mutex<bool>, Condvar)>,
-}
-
-pub enum VideoCommand {
-    Write { data: WriteGrainData },
-}
-
-pub enum AudioCommand {
-    Write { data: WriteSampleData },
-}
-
-pub enum DataCommand {
-    Write { data: WriteGrainData },
 }
 
 #[derive(Default)]
@@ -100,36 +169,11 @@ pub(crate) struct Context {
     pub state: Option<State>,
 }
 
-pub struct VideoEngine {
-    pub writer: Option<GrainWriter>,
-    pub instance: MxlInstance,
-    pub grain_rate: Rational,
-    pub sleep_flag: Arc<(Mutex<bool>, Condvar)>,
-}
-
-pub struct AudioEngine {
-    pub writer: Option<SamplesWriter>,
-    pub instance: MxlInstance,
-    pub sample_rate: Rational,
-    pub sleep_flag: Arc<(Mutex<bool>, Condvar)>,
-}
-
-pub struct DataEngine {
-    pub writer: Option<GrainWriter>,
-    pub instance: MxlInstance,
-    pub grain_rate: Rational,
-    pub sleep_flag: Arc<(Mutex<bool>, Condvar)>,
-}
-
-#[derive(Debug, Clone)]
-pub struct InitialTime {
-    pub mxl_pts_offset: u64,
-}
-
 pub(crate) fn init_state_with_video(
     state: &mut State,
     structure: &StructureRef,
-    flow_id: &str,
+    settings: &Settings,
+    element: &gst::Element,
 ) -> Result<(), gst::LoggableError> {
     let format = structure
         .get::<String>("format")
@@ -147,12 +191,13 @@ pub(crate) fn init_state_with_video(
     let colorimetry = structure
         .get::<String>("colorimetry")
         .unwrap_or_else(|_| "BT709".to_string());
-    let pid = process::id();
-    let mut tags = HashMap::new();
-    tags.insert(
-        "urn:x-nmos:tag:grouphint/v1.0".to_string(),
-        vec![format!("Media Function {}:Video", pid).to_string()],
+    let default_name = format!(
+        "MXL Video Flow, {}p{}",
+        height,
+        format_framerate(framerate.numer(), framerate.denom())
     );
+    let (label, description, tags) =
+        resolve_flow_metadata(settings, default_name, default_group_hint("Video", element));
     let flow_def_details = FlowDefVideo {
         grain_rate: Rate {
             numerator: framerate.numer(),
@@ -184,20 +229,12 @@ pub(crate) fn init_state_with_video(
         ],
     };
     let flow_def = FlowDef {
-        id: Uuid::parse_str(flow_id)
+        id: Uuid::parse_str(&settings.flow_id)
             .map_err(|e| gst::loggable_error!(CAT, "Flow ID is invalid: {}", e))?,
-        description: format!(
-            "MXL Test Flow, {}p{}",
-            height,
-            framerate.numer() / framerate.denom()
-        ),
+        description,
         tags,
         format: "urn:x-nmos:format:video".into(),
-        label: format!(
-            "MXL Test Flow, {}p{}",
-            height,
-            framerate.numer() / framerate.denom()
-        ),
+        label,
         parents: vec![],
         media_type: format!("video/{}", format),
         details: mxl::flowdef::FlowDefDetails::Video(flow_def_details),
@@ -218,38 +255,14 @@ pub(crate) fn init_state_with_video(
             "The writer could not be created, the UUID belongs to a flow with another active writer"
         ));
     }
-    let writer = Some(
-        flow_writer
-            .to_grain_writer()
-            .map_err(|e| gst::loggable_error!(CAT, "Failed to create grain writer: {}", e))?,
-    );
-    let grain_rate = flow
-        .common()
-        .grain_rate()
-        .map_err(|e| gst::loggable_error!(CAT, "Failed to get grain rate: {}", e))?;
-    let index = instance.get_current_index(&grain_rate);
-    let instance = instance.clone();
-    let (tx, rx) = bounded::<VideoCommand>(MAX_CHANNEL_SIZE);
-    let sleep_flag_init = Arc::new((Mutex::new(false), Condvar::new()));
-    let sleep_flag = sleep_flag_init.clone();
-    thread::spawn(move || {
-        let mut engine = VideoEngine {
-            writer,
-            instance,
-            grain_rate,
-            sleep_flag,
-        };
-        await_video_buffer(&mut engine, rx)
-    });
-    let sleep_flag = sleep_flag_init.clone();
-    state.video = Some(VideoState {
-        grain_index: index,
-        initial_time: None,
-        latency: 0,
-        tx,
-        sleep_flag,
-    });
-    state.flow = Some(flow);
+    let writer = flow_writer
+        .to_grain_writer()
+        .map_err(|e| gst::loggable_error!(CAT, "Failed to create grain writer: {}", e))?;
+    state.flow_state = Some(FlowState::Discrete(DiscreteState {
+        format: DiscreteFormat::Video,
+        writer,
+    }));
+    state.flow_config = Some(flow);
 
     Ok(())
 }
@@ -257,18 +270,20 @@ pub(crate) fn init_state_with_video(
 pub(crate) fn init_state_with_audio(
     state: &mut State,
     info: AudioInfo,
-    flow_id: &str,
+    settings: &Settings,
+    element: &gst::Element,
 ) -> Result<(), gst::LoggableError> {
     let channels = info.channels() as i32;
     let rate = info.rate() as i32;
     let bit_depth = info.depth() as u8;
     let format = info.format().to_string();
-    let pid = process::id();
-    let mut tags = HashMap::new();
-    tags.insert(
-        "urn:x-nmos:tag:grouphint/v1.0".to_string(),
-        vec![format!("Media Function {}:Audio", pid).to_string()],
+    let default_name = format!(
+        "MXL Audio Flow, {} ch, {}",
+        channels,
+        format_sample_rate_khz(rate)
     );
+    let (label, description, tags) =
+        resolve_flow_metadata(settings, default_name, default_group_hint("Audio", element));
 
     let flow_def_details = FlowDefAudio {
         sample_rate: Rate {
@@ -280,12 +295,12 @@ pub(crate) fn init_state_with_audio(
     };
 
     let flow_def = FlowDef {
-        id: Uuid::parse_str(flow_id)
+        id: Uuid::parse_str(&settings.flow_id)
             .map_err(|e| gst::loggable_error!(CAT, "Flow ID is invalid: {}", e))?,
-        description: "MXL Audio Flow".into(),
+        description,
         format: "urn:x-nmos:format:audio".into(),
         tags,
-        label: "MXL Audio Flow".into(),
+        label,
         media_type: "audio/float32".to_string(),
         parents: vec![],
         details: FlowDefDetails::Audio(flow_def_details.clone()),
@@ -300,46 +315,21 @@ pub(crate) fn init_state_with_audio(
             None,
         )
         .map_err(|e| gst::loggable_error!(CAT, "Failed to create flow writer: {}", e))?;
-    let writer = Some(
-        flow_writer
-            .to_samples_writer()
-            .map_err(|e| gst::loggable_error!(CAT, "Failed to create grain writer: {}", e))?,
-    );
-    let (tx, rx) = bounded::<AudioCommand>(MAX_CHANNEL_SIZE);
-    let instance = state.instance.clone();
     if !is_created {
         return Err(gst::loggable_error!(
             CAT,
             "The writer could not be created, the UUID belongs to a flow with another active writer"
         ));
     }
-    let sleep_flag_init = Arc::new((Mutex::new(false), Condvar::new()));
-    let sleep_flag = sleep_flag_init.clone();
-    let audio_state = AudioState {
-        tx,
+    let writer = flow_writer
+        .to_samples_writer()
+        .map_err(|e| gst::loggable_error!(CAT, "Failed to create grain writer: {}", e))?;
+    state.flow_state = Some(FlowState::Continuous(ContinuousState {
+        writer,
         flow_def: flow_def_details,
-        initial_time: None,
-        latency: 0,
-        sleep_flag,
-    };
-    state.audio = Some(audio_state);
-    state.flow = Some(flow);
+    }));
+    state.flow_config = Some(flow);
 
-    let sample_rate = Rational {
-        numerator: rate as i64,
-        denominator: 1,
-    };
-
-    let sleep_flag = sleep_flag_init.clone();
-    thread::spawn(move || {
-        let mut engine = AudioEngine {
-            writer,
-            instance,
-            sample_rate,
-            sleep_flag,
-        };
-        await_audio_buffer(&mut engine, rx)
-    });
     trace!(
         "Made it to the end of set_caps with format {}, channel_count {}, sample_rate {}, bit_depth {}",
         format, channels, rate, bit_depth
@@ -350,17 +340,18 @@ pub(crate) fn init_state_with_audio(
 pub(crate) fn init_state_with_data(
     state: &mut State,
     structure: &StructureRef,
-    flow_id: &str,
+    settings: &Settings,
+    element: &gst::Element,
 ) -> Result<(), gst::LoggableError> {
     let framerate = structure
         .get::<gst::Fraction>("framerate")
         .unwrap_or_else(|_| gst::Fraction::new(30000, 1001));
-    let pid = process::id();
-    let mut tags = HashMap::new();
-    tags.insert(
-        "urn:x-nmos:tag:grouphint/v1.0".to_string(),
-        vec![format!("Media Function {}:Data", pid).to_string()],
+    let default_name = format!(
+        "MXL Data Flow, {} Hz",
+        format_framerate(framerate.numer(), framerate.denom())
     );
+    let (label, description, tags) =
+        resolve_flow_metadata(settings, default_name, default_group_hint("Data", element));
     let flow_def_details = FlowDefData {
         grain_rate: Rate {
             numerator: framerate.numer(),
@@ -368,12 +359,12 @@ pub(crate) fn init_state_with_data(
         },
     };
     let flow_def = FlowDef {
-        id: Uuid::parse_str(flow_id)
+        id: Uuid::parse_str(&settings.flow_id)
             .map_err(|e| gst::loggable_error!(CAT, "Flow ID is invalid: {}", e))?,
-        description: "MXL SMPTE 291 data flow".into(),
+        description,
         tags,
         format: "urn:x-nmos:format:data".into(),
-        label: "MXL data flow".into(),
+        label,
         parents: vec![],
         media_type: "video/smpte291".into(),
         details: FlowDefDetails::Data(flow_def_details),
@@ -394,38 +385,14 @@ pub(crate) fn init_state_with_data(
             "The writer could not be created, the UUID belongs to a flow with another active writer"
         ));
     }
-    let writer = Some(
-        flow_writer
-            .to_grain_writer()
-            .map_err(|e| gst::loggable_error!(CAT, "Failed to create grain writer: {}", e))?,
-    );
-    let grain_rate = flow
-        .common()
-        .grain_rate()
-        .map_err(|e| gst::loggable_error!(CAT, "Failed to get grain rate: {}", e))?;
-    let index = instance.get_current_index(&grain_rate);
-    let instance = instance.clone();
-    let (tx, rx) = bounded::<DataCommand>(MAX_CHANNEL_SIZE);
-    let sleep_flag_init = Arc::new((Mutex::new(false), Condvar::new()));
-    let sleep_flag = sleep_flag_init.clone();
-    thread::spawn(move || {
-        let mut engine = DataEngine {
-            writer,
-            instance,
-            grain_rate,
-            sleep_flag,
-        };
-        await_data_buffer(&mut engine, rx)
-    });
-    let sleep_flag = sleep_flag_init.clone();
-    state.data = Some(DataState {
-        grain_index: index,
-        initial_time: None,
-        latency: 0,
-        tx,
-        sleep_flag,
-    });
-    state.flow = Some(flow);
+    let writer = flow_writer
+        .to_grain_writer()
+        .map_err(|e| gst::loggable_error!(CAT, "Failed to create grain writer: {}", e))?;
+    state.flow_state = Some(FlowState::Discrete(DiscreteState {
+        format: DiscreteFormat::Data,
+        writer,
+    }));
+    state.flow_config = Some(flow);
 
     Ok(())
 }

@@ -1,0 +1,197 @@
+// SPDX-FileCopyrightText: 2025-2026 Contributors to the Media eXchange Layer project.
+// SPDX-License-Identifier: Apache-2.0
+
+use crate::mxlsink::{
+    self,
+    state::{ContinuousState, FlowState},
+};
+
+use gstreamer::{self as gst, prelude::ElementExt};
+use mxl::Rational;
+use tracing::trace;
+
+pub(crate) fn continuous(
+    state: &mut mxlsink::state::State,
+    element: &gst::Element,
+    buffer: &gst::Buffer,
+    offset: u64,
+) -> Result<gst::FlowSuccess, gst::FlowError> {
+    let base_time = element.base_time().ok_or(gst::FlowError::Error)?;
+    let map = buffer.map_readable().map_err(|_| gst::FlowError::Error)?;
+    let src = map.as_slice();
+    let buffer_length = state
+        .flow_config
+        .as_ref()
+        .ok_or(gst::FlowError::Error)?
+        .continuous()
+        .map_err(|_| gst::FlowError::Error)?
+        .bufferLength as u64;
+    let max_chunk = (buffer_length / 2) as usize;
+    let gst_pts = buffer.pts().ok_or(gst::FlowError::Error)?;
+    trace!("AUDIO gst PTS: {:#?}", gst_pts);
+
+    let continuous_state = match state.flow_state.as_mut() {
+        Some(FlowState::Continuous(continuous)) => continuous,
+        _ => return Err(gst::FlowError::Error),
+    };
+    let bytes_per_sample = (continuous_state.flow_def.bit_depth / 8) as usize;
+    let num_channels = continuous_state.flow_def.channel_count as usize;
+    let samples_per_buffer = src.len() / (num_channels * bytes_per_sample);
+    let sample_rate = Rational {
+        numerator: continuous_state.flow_def.sample_rate.numerator as i64,
+        denominator: continuous_state.flow_def.sample_rate.denominator as i64,
+    };
+
+    let mut remaining = samples_per_buffer;
+    let mut src_offset_samples = 0;
+    // First chunk's MXL timestamp; each chunk advances by its own duration so
+    // consecutive chunks map to consecutive sample indices.
+    let mut base_mxl_ts = gst_pts
+        .nseconds()
+        .checked_add(base_time.nseconds())
+        .and_then(|timestamp| timestamp.checked_add(offset))
+        .ok_or(gst::FlowError::Error)?;
+
+    while remaining > 0 {
+        let chunk_mxl_ts = base_mxl_ts;
+        let chunk_samples = remaining.min(max_chunk);
+        let chunk_bytes = chunk_samples * num_channels * bytes_per_sample;
+        let chunk = compute_chunk(
+            src,
+            bytes_per_sample,
+            num_channels,
+            src_offset_samples,
+            chunk_bytes,
+        );
+        let chunk_duration_ns =
+            (chunk_samples as u128 * sample_rate.denominator as u128 * 1_000_000_000u128)
+                / sample_rate.numerator as u128;
+        let chunk_duration_ns =
+            u64::try_from(chunk_duration_ns).map_err(|_| gst::FlowError::Error)?;
+        base_mxl_ts = base_mxl_ts
+            .checked_add(chunk_duration_ns)
+            .ok_or(gst::FlowError::Error)?;
+        trace!(
+            "AUDIO chunk with samples {:#?} with MXL ts: {:#?}",
+            chunk_samples, chunk_mxl_ts
+        );
+
+        let mxl_index = state
+            .instance
+            .timestamp_to_index(chunk_mxl_ts, &sample_rate)
+            .map_err(|_| gst::FlowError::Error)?;
+        trace!("AUDIO mapped mxl_index from pts: {:#?}", mxl_index);
+
+        // GstBaseSink (sync=true) has already waited for this buffer's running
+        // time, so commit straight to the ring here: no separate pacing.
+        commit_chunk(
+            continuous_state,
+            mxl_index,
+            chunk,
+            chunk_samples,
+            bytes_per_sample,
+            num_channels,
+        )?;
+        src_offset_samples += chunk_samples;
+        remaining -= chunk_samples;
+    }
+    Ok(gst::FlowSuccess::Ok)
+}
+
+fn commit_chunk(
+    continuous_state: &mut ContinuousState,
+    index: u64,
+    chunk: &[u8],
+    chunk_samples: usize,
+    bytes_per_sample: usize,
+    num_channels: usize,
+) -> Result<(), gst::FlowError> {
+    // `open_samples(end, count)` writes the `count` samples at absolute indices
+    // `[end - count, end)` (last written is `end - 1`). `index` is this chunk's
+    // first sample, so pass `index + chunk_samples` as the end.
+    let chunk_samples_u64 = u64::try_from(chunk_samples).map_err(|_| gst::FlowError::Error)?;
+    let end = index
+        .checked_add(chunk_samples_u64)
+        .ok_or(gst::FlowError::Error)?;
+    let mut access = continuous_state
+        .writer
+        .open_samples(end, chunk_samples)
+        .map_err(|_| gst::FlowError::Error)?;
+    write_samples_per_channel(
+        bytes_per_sample,
+        num_channels,
+        &mut access,
+        chunk_samples,
+        chunk,
+    )?;
+    access.commit().map_err(|_| gst::FlowError::Error)?;
+    Ok(())
+}
+
+fn write_samples_per_channel(
+    bytes_per_sample: usize,
+    num_channels: usize,
+    access: &mut mxl::SamplesWriteAccess<'_>,
+    samples_per_channel: usize,
+    src_chunk: &[u8],
+) -> Result<(), gst::FlowError> {
+    for ch in 0..num_channels {
+        let (plane1, plane2) = access
+            .channel_data_mut(ch)
+            .map_err(|_| gst::FlowError::Error)?;
+
+        let mut written = 0;
+        let offset = ch * bytes_per_sample;
+
+        for i in 0..samples_per_channel {
+            let sample_offset = i * num_channels * bytes_per_sample + offset;
+            if sample_offset + bytes_per_sample > src_chunk.len() {
+                break;
+            }
+
+            if does_sample_fit_in_plane(bytes_per_sample, plane1, written) {
+                write_sample(bytes_per_sample, src_chunk, plane1, written, sample_offset);
+            } else if written < plane1.len() + plane2.len() {
+                let plane2_offset = written.saturating_sub(plane1.len());
+                if does_sample_fit_in_plane(bytes_per_sample, plane2, plane2_offset) {
+                    write_sample(
+                        bytes_per_sample,
+                        src_chunk,
+                        plane2,
+                        plane2_offset,
+                        sample_offset,
+                    );
+                }
+            }
+
+            written += bytes_per_sample;
+        }
+    }
+    Ok(())
+}
+
+fn write_sample(
+    bytes_per_sample: usize,
+    src_chunk: &[u8],
+    plane1: &mut [u8],
+    written: usize,
+    sample_offset: usize,
+) {
+    plane1[written..written + bytes_per_sample]
+        .copy_from_slice(&src_chunk[sample_offset..sample_offset + bytes_per_sample]);
+}
+
+fn does_sample_fit_in_plane(bytes_per_sample: usize, plane: &mut [u8], offset: usize) -> bool {
+    offset + bytes_per_sample <= plane.len()
+}
+
+fn compute_chunk(
+    src: &[u8],
+    bytes_per_sample: usize,
+    num_channels: usize,
+    src_offset_samples: usize,
+    chunk_bytes: usize,
+) -> &[u8] {
+    &src[src_offset_samples * num_channels * bytes_per_sample
+        ..src_offset_samples * num_channels * bytes_per_sample + chunk_bytes]
+}

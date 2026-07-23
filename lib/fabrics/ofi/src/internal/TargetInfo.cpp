@@ -9,6 +9,9 @@
 #include <uuid/uuid.h>
 #include "Address.hpp"
 #include "Exception.hpp"
+#include "FabricAddress.hpp"
+#include "Format.hpp" // IWYU pragma: keep; for fmt::format
+#include "Provider.hpp"
 #include "RemoteRegion.hpp"
 
 namespace mxl::lib::fabrics::ofi
@@ -29,6 +32,7 @@ namespace mxl::lib::fabrics::ofi
         auto root = picojson::object{};
 
         root["fabricAddress"] = picojson::value(fabricAddress.toBase64());
+        root["addressFormat"] = picojson::value{static_cast<double>(fabricAddress.format())};
 
         auto regions = picojson::array{};
         for (auto const& remoteRegion : remoteRegions)
@@ -50,6 +54,7 @@ namespace mxl::lib::fabrics::ofi
         }
 
         root["id"] = picojson::value(std::to_string(id));
+        root["provider"] = picojson::value{fmt::to_string(provider)};
 
         return picojson::value(root).serialize(false);
     }
@@ -70,7 +75,8 @@ namespace mxl::lib::fabrics::ofi
 
         auto root = parsed.get<picojson::object>();
 
-        auto const fabricAddress = FabricAddress::fromBase64(root.at("fabricAddress").get<std::string>());
+        auto const addressFormat = mustConvertAddressFormat(static_cast<std::uint32_t>(root.at("addressFormat").get<double>()));
+        auto const fabricAddress = RawFabricAddress::fromBase64(root.at("fabricAddress").get<std::string>(), addressFormat);
 
         auto regions = std::vector<RemoteRegion>{};
         for (auto const& regionValue : root.at("regions").get<picojson::array>())
@@ -95,8 +101,8 @@ namespace mxl::lib::fabrics::ofi
         }
 
         auto const id = std::stoull(root.at("id").get<std::string>());
-
-        return {.id = id, .fabricAddress = fabricAddress, .remoteRegions = regions, .bounceBufferInfo = bounceBufferInfo};
+        auto const provider = providerFromString(root.at("provider").get<std::string>()).value_or(Provider::ANY);
+        return {.id = id, .fabricAddress = fabricAddress, .provider = provider, .remoteRegions = regions, .bounceBufferInfo = bounceBufferInfo};
     }
 
     bool TargetInfo::operator==(TargetInfo const& other) const noexcept

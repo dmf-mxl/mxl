@@ -33,6 +33,17 @@ site_author = "The MXL Project"
 # Read more: https://zensical.org/docs/setup/basics/#site_url
 #site_url = "https://www.example.com/"
 
+# The repository this project lives in. Zensical renders a link (with the
+# host's icon --- GitHub octocat here) in the top-right of the page header
+# and enables optional "edit this page" / "view source" actions via the
+# content.action.* features below. Templated by .github/scripts/prepare-docs.sh
+# so both fork builds (e.g. peterbrightwell/mxl) and the upstream
+# (dmf-mxl/mxl) point at the correct repo without config drift.
+#
+# Read more: https://zensical.org/docs/setup/repository/
+repo_name = "__REPO_SLUG__"
+repo_url = "https://github.com/__REPO_SLUG__"
+
 # The copyright notice appears in the page footer and can contain an HTML
 # fragment.
 #

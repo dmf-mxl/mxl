@@ -28,40 +28,28 @@ use std::sync::LazyLock;
 use std::sync::Mutex;
 use std::sync::MutexGuard;
 
+use crate::clock::ClockOffsetExt;
 use crate::mxlsink;
 use crate::mxlsink::state::Context;
 use crate::mxlsink::state::DEFAULT_DOMAIN;
 use crate::mxlsink::state::DEFAULT_FLOW_ID;
+use crate::mxlsink::state::FlowState;
 use crate::mxlsink::state::Settings;
 use crate::mxlsink::state::State;
 use crate::mxlsink::state::init_state_with_audio;
 use crate::mxlsink::state::init_state_with_data;
 use crate::mxlsink::state::init_state_with_video;
-use crate::mxlsink::{render_audio, render_data, render_video};
+use crate::mxlsink::{render_continuous, render_discrete};
 
 pub(crate) static CAT: LazyLock<gst::DebugCategory> = LazyLock::new(|| {
     gst::DebugCategory::new("mxlsink", gst::DebugColorFlags::empty(), Some("MXL Sink"))
 });
 
-struct ClockWait {
-    clock_id: Option<gst::SingleShotClockId>,
-    flushing: bool,
-}
-
-impl Default for ClockWait {
-    fn default() -> ClockWait {
-        ClockWait {
-            clock_id: None,
-            flushing: true,
-        }
-    }
-}
-
 #[derive(Default)]
 pub struct MxlSink {
     settings: Mutex<Settings>,
     context: Mutex<Context>,
-    clock_wait: Mutex<ClockWait>,
+    shared_clock_offset: Mutex<Option<crate::clock::SharedClockOffset>>,
 }
 
 #[glib::object_subclass]
@@ -82,9 +70,36 @@ impl ObjectImpl for MxlSink {
                     .mutable_ready()
                     .build(),
                 glib::ParamSpecString::builder("domain")
-                    .nick("Domain")
-                    .blurb("Domain")
+                    .nick("Domain Path")
+                    .blurb("Local path to the MXL domain directory")
                     .default_value(DEFAULT_DOMAIN)
+                    .mutable_ready()
+                    .build(),
+                glib::ParamSpecString::builder("label")
+                    .nick("Label")
+                    .blurb(
+                        "Human-readable label written into the flow_def `label` \
+                         field. Empty keeps the built-in default.",
+                    )
+                    .mutable_ready()
+                    .build(),
+                glib::ParamSpecString::builder("description")
+                    .nick("Description")
+                    .blurb(
+                        "Human-readable description written into the flow_def \
+                         `description` field. Empty keeps the built-in default.",
+                    )
+                    .mutable_ready()
+                    .build(),
+                glib::ParamSpecString::builder("group-hint")
+                    .nick("Group Hint")
+                    .blurb(
+                        "NMOS group hint written into the flow_def \
+                         `urn:x-nmos:tag:grouphint/v1.0` tag, for example \
+                         `Camera:Video`. Empty uses `Media Function \
+                         <pid> <pipeline-name>:<Video|Audio|Data> \
+                         <element-name>`.",
+                    )
                     .mutable_ready()
                     .build(),
             ]
@@ -144,6 +159,27 @@ impl ObjectImpl for MxlSink {
                         gst::error!(CAT, imp = self, "Invalid type for domain property");
                     }
                 }
+                "label" => {
+                    settings.label = value
+                        .get::<Option<String>>()
+                        .ok()
+                        .flatten()
+                        .unwrap_or_default();
+                }
+                "description" => {
+                    settings.description = value
+                        .get::<Option<String>>()
+                        .ok()
+                        .flatten()
+                        .unwrap_or_default();
+                }
+                "group-hint" => {
+                    settings.group_hint = value
+                        .get::<Option<String>>()
+                        .ok()
+                        .flatten()
+                        .unwrap_or_default();
+                }
                 other => {
                     gst::error!(CAT, imp = self, "Unknown property '{}'", other);
                 }
@@ -162,6 +198,9 @@ impl ObjectImpl for MxlSink {
             match pspec.name() {
                 "flow-id" => settings.flow_id.to_value(),
                 "domain" => settings.domain.to_value(),
+                "label" => settings.label.to_value(),
+                "description" => settings.description.to_value(),
+                "group-hint" => settings.group_hint.to_value(),
                 _ => {
                     gst::error!(CAT, imp = self, "Unknown property {}", pspec.name());
                     glib::Value::from(&"")
@@ -243,14 +282,47 @@ impl ElementImpl for MxlSink {
     ) -> Result<gst::StateChangeSuccess, gst::StateChangeError> {
         self.parent_change_state(transition)
     }
+
+    fn set_clock(&self, clock: Option<&gst::Clock>) -> bool {
+        self.handle_set_clock(clock)
+    }
+
+    fn set_context(&self, context: &gst::Context) {
+        self.handle_set_context(context);
+    }
+}
+
+impl crate::clock::ClockOffsetExt for MxlSink {
+    fn mxl_now(&self) -> Result<Option<u64>, crate::clock::ClockOffsetError> {
+        let context = self
+            .context
+            .lock()
+            .map_err(|_| crate::clock::ClockOffsetError::Failed)?;
+        Ok(context
+            .state
+            .as_ref()
+            .map(|state| state.instance.get_time()))
+    }
+
+    fn shared_clock_offset(&self) -> &Mutex<Option<crate::clock::SharedClockOffset>> {
+        &self.shared_clock_offset
+    }
 }
 
 impl BaseSinkImpl for MxlSink {
     fn start(&self) -> Result<(), gst::ErrorMessage> {
+        // Adopt the pipeline-shared offset cell now, during the sequential
+        // READY->PAUSED state change, so sibling MXL elements deterministically
+        // share one `D` (see clock.rs). Establishing it lazily at first render
+        // races: two sinks can each publish their own cell and sample `D`
+        // microseconds apart, rounding the same PTS to indices one grain apart
+        // and mispairing flows in st2038combiner.
+        self.ensure_clock_offset()
+            .map_err(|_| crate::clock::ClockOffsetError::Failed.into_error_message())?;
+
         let mut context = self.context.lock().map_err(|e| {
             gst::error_msg!(gst::CoreError::Failed, ["Failed to get state mutex: {}", e])
         })?;
-        self.unlock_stop()?;
         let settings = self.settings.lock().map_err(|e| {
             gst::error_msg!(
                 gst::CoreError::Failed,
@@ -260,10 +332,8 @@ impl BaseSinkImpl for MxlSink {
         let instance = init_mxl_instance(&settings)?;
         context.state = Some(State {
             instance,
-            flow: None,
-            video: None,
-            audio: None,
-            data: None,
+            flow_config: None,
+            flow_state: None,
         });
 
         Ok(())
@@ -276,43 +346,29 @@ impl BaseSinkImpl for MxlSink {
                 ["Failed to get context mutex: {}", e]
             )
         })?;
-        self.unlock()?;
-        let state = context.state.as_mut().ok_or(gst::error_msg!(
-            gst::CoreError::Failed,
-            ["Failed to get state"]
-        ))?;
 
-        if let Some(video) = state.video.take() {
-            let (lock, cvar) = &*video.sleep_flag;
-
-            let mut flag = lock.lock().map_err(|_| {
-                gst::error_msg!(gst::CoreError::Failed, ["Failed to get video sleep lock"])
-            })?;
-            *flag = true;
-            cvar.notify_all();
-            drop(video.tx);
-        }
-
-        if let Some(audio) = state.audio.take() {
-            let (lock, cvar) = &*audio.sleep_flag;
-
-            let mut flag = lock.lock().map_err(|_| {
-                gst::error_msg!(gst::CoreError::Failed, ["Failed to get audio sleep lock"])
-            })?;
-            *flag = true;
-            cvar.notify_all();
-            drop(audio.tx);
-        }
-
-        if let Some(data) = state.data.take() {
-            let (lock, cvar) = &*data.sleep_flag;
-
-            let mut flag = lock.lock().map_err(|_| {
-                gst::error_msg!(gst::CoreError::Failed, ["Failed to get data sleep lock"])
-            })?;
-            *flag = true;
-            cvar.notify_all();
-            drop(data.tx);
+        // Destroy the flow writers before dropping the MXL instance they belong
+        // to, then release the instance and clock.
+        if let Some(mut state) = context.state.take() {
+            match state.flow_state.take() {
+                Some(FlowState::Discrete(discrete)) => {
+                    discrete.writer.destroy().map_err(|e| {
+                        gst::error_msg!(
+                            gst::CoreError::Failed,
+                            ["Failed to destroy discrete writer: {}", e]
+                        )
+                    })?;
+                }
+                Some(FlowState::Continuous(continuous)) => {
+                    continuous.writer.destroy().map_err(|e| {
+                        gst::error_msg!(
+                            gst::CoreError::Failed,
+                            ["Failed to destroy continuous writer: {}", e]
+                        )
+                    })?;
+                }
+                None => {}
+            }
         }
 
         gst::info!(CAT, imp = self, "Stopped");
@@ -322,22 +378,43 @@ impl BaseSinkImpl for MxlSink {
     fn render(&self, buffer: &gst::Buffer) -> Result<gst::FlowSuccess, gst::FlowError> {
         trace!("START RENDER");
 
+        // Establish the pipeline-shared `D` before taking the context lock.
+        let offset = match self.resolve_clock_offset() {
+            Ok(Some(offset)) => offset,
+            Ok(None) => {
+                gst::element_imp_error!(
+                    self,
+                    gst::CoreError::Failed,
+                    ["Pipeline clock not available for clock offset"]
+                );
+                return Err(gst::FlowError::Error);
+            }
+            Err(_) => {
+                gst::element_imp_error!(
+                    self,
+                    gst::CoreError::Failed,
+                    ["Internal clock offset error"]
+                );
+                return Err(gst::FlowError::Error);
+            }
+        };
+
         let mut context = self.context.lock().map_err(|_| gst::FlowError::Error)?;
         let state = context.state.as_mut().ok_or(gst::FlowError::Error)?;
         // Borrow the element for the duration of this render call so
-        // the format-specific paths can read its propagated pipeline
-        // clock via `Element::clock()` without `State` having to
-        // cache a strong ref (which would form a refcount cycle).
+        // the format-specific paths can read its base time via
+        // `Element::base_time()` without `State` having to cache a
+        // strong ref (which would form a refcount cycle).
         let element = self.obj();
         let element: &gst::Element = element.upcast_ref();
-        if state.video.is_some() {
-            render_video::video(state, element, buffer)
-        } else if state.audio.is_some() {
-            render_audio::audio(state, element, buffer)
-        } else if state.data.is_some() {
-            render_data::data(state, element, buffer)
-        } else {
-            Err(gst::FlowError::Error)
+        match &state.flow_state {
+            Some(FlowState::Discrete(_)) => {
+                render_discrete::discrete(state, element, buffer, offset)
+            }
+            Some(FlowState::Continuous(_)) => {
+                render_continuous::continuous(state, element, buffer, offset)
+            }
+            None => Err(gst::FlowError::Error),
         }
     }
 
@@ -383,18 +460,20 @@ impl BaseSinkImpl for MxlSink {
         let structure = caps
             .structure(0)
             .ok_or_else(|| gst::loggable_error!(CAT, "No structure in caps {}", caps))?;
+        let element = self.obj();
+        let element: &gst::Element = element.upcast_ref();
         let name = structure.name();
         if name == "video/x-raw" {
-            init_state_with_video(state, structure, &settings.flow_id)?;
+            init_state_with_video(state, structure, &settings, element)?;
             Ok(())
         } else if name == "audio/x-raw" {
             let info = gst_audio::AudioInfo::from_caps(caps)
                 .map_err(|e| gst::loggable_error!(CAT, "Invalid audio caps: {}", e))?;
 
-            init_state_with_audio(state, info, &settings.flow_id)?;
+            init_state_with_audio(state, info, &settings, element)?;
             Ok(())
         } else if name == "meta/x-st-2038" {
-            init_state_with_data(state, structure, &settings.flow_id)?;
+            init_state_with_data(state, structure, &settings, element)?;
             Ok(())
         } else {
             Err(gst::loggable_error!(CAT, "Unknown caps: {}", caps))
@@ -403,29 +482,6 @@ impl BaseSinkImpl for MxlSink {
 
     fn fixate(&self, caps: gst::Caps) -> gst::Caps {
         self.parent_fixate(caps)
-    }
-
-    fn unlock(&self) -> Result<(), gst::ErrorMessage> {
-        gst::debug!(CAT, imp = self, "Unlocking");
-        let mut clock_wait = self.clock_wait.lock().map_err(|e| {
-            gst::error_msg!(gst::CoreError::Failed, ["Failed to lock clock: {}", e])
-        })?;
-        if let Some(clock_id) = clock_wait.clock_id.take() {
-            clock_id.unschedule();
-        }
-        clock_wait.flushing = true;
-
-        Ok(())
-    }
-
-    fn unlock_stop(&self) -> Result<(), gst::ErrorMessage> {
-        gst::debug!(CAT, imp = self, "Unlock stop");
-        let mut clock_wait = self.clock_wait.lock().map_err(|e| {
-            gst::error_msg!(gst::CoreError::Failed, ["Failed to lock clock: {}", e])
-        })?;
-        clock_wait.flushing = false;
-
-        Ok(())
     }
 
     fn propose_allocation(

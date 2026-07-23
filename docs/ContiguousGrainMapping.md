@@ -217,6 +217,5 @@ Fabrics tests cover:
 
 - Issue **#575** - contiguous storage for discrete flows.
 - PR **#572** - original contiguous-storage work.
-- Jira **SDBQ-3536** - domain-level layout configuration follow-up.
 - mxl-requirements **#38** - inter-host memory sharing.
 - mxl-requirements **#176** - representing granular flows in one DMA mapping.

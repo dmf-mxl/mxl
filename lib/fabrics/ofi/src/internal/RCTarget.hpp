@@ -26,10 +26,12 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Set up a fresh RCTarget and its associated TargetInfo based on the given configuration.
          *
          * \param config The configuration to use for setting up the target.
+         * \param options Optional tuning parameters (e.g. completion queue depth).
          * \return A pair consisting of the newly setup RCTarget and its associated TargetInfo.
          */
         [[nodiscard]]
-        static std::pair<std::unique_ptr<RCTarget>, std::unique_ptr<TargetInfo>> setup(mxlFabricsTargetConfig const& config);
+        static std::pair<std::unique_ptr<RCTarget>, std::unique_ptr<TargetInfo>> setup(mxlFabricsTargetConfig const& config, FabricInfoView info,
+            TargetSetupOptions const& options = {});
 
         /** \copydoc Target::readGrain()
          */
@@ -88,8 +90,9 @@ namespace mxl::lib::fabrics::ofi
          *
          * \param domain The domain to create the RCTarget on.
          * \param pep The passive endpoint to use for listening for incoming connection requests.
+         * \param options The setup options applied when the completion queue is created for the accepted connection.
          */
-        RCTarget(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain);
+        RCTarget(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain, TargetSetupOptions options);
 
         /** \brief Internal method to drive progress based on the current state.
          *
@@ -105,6 +108,7 @@ namespace mxl::lib::fabrics::ofi
     private:
         std::unique_ptr<IngressProtocol> _proto;
         std::shared_ptr<Domain> _domain;
-        State _state; /**< The current state of the RCTarget. */
+        TargetSetupOptions _setupOptions; /**< Setup options applied when accepting connections. */
+        State _state;                     /**< The current state of the RCTarget. */
     };
 }

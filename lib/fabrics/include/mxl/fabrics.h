@@ -45,8 +45,7 @@ extern "C"
 
     typedef enum mxlFabricsProvider_t
     {
-        MXL_FABRICS_PROVIDER_ANY = 0,   /**< Auto select the best provider. ** This might not be supported by all implementations. Currently this
-                                           allways falls back to the TCP provider. */
+        MXL_FABRICS_PROVIDER_ANY = 0,   /**< Any provider. Currently useful as an input value to mxlFabricsGetInterfaces. */
         MXL_FABRICS_PROVIDER_TCP = 1,   /**< Provider that uses linux tcp sockets. */
         MXL_FABRICS_PROVIDER_VERBS = 2, /**< Provider for userspace verbs (libibverbs) and librdmcm for connection management. */
         MXL_FABRICS_PROVIDER_EFA = 3,   /**< Provider for AWS Elastic Fabric Adapter. */
@@ -65,28 +64,43 @@ extern "C"
         char const* service;
     } mxlFabricsEndpointAddress;
 
+    /** Capability flags describing what an interface supports.
+     *
+     * When returned by mxlFabricsGetInterfaces(), these flags are informational: they describe the capabilities
+     * of each discovered interface. The caller reads them to decide which interface to use.
+     *
+     * When passed to mxlFabricsTargetSetup() or mxlFabricsInitiatorSetup() (via mxlFabricsInterfaceConfig), these
+     * flags express requirements. At least one transfer capability (REMOTE_WRITE or SEND_RECEIVE) must be set. Currently only REMOTE_WRITE is
+     * implemented but this could change in the future if an implementation for SEND_RECEIVE was added.
+     */
     typedef enum mxlFabricsInterfaceCapFlags_t
     {
-        MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS = MXL_FABRICS_FLAG(0), /**< The interface supports blocking operations */
-        MXL_FABRICS_IFACE_CAP_REMOTE_WRITE = MXL_FABRICS_FLAG(1),        /**< The interface supports remote-write operations */
-        MXL_FABRICS_IFACE_CAP_SEND_RECEIVE = MXL_FABRICS_FLAG(2),        /**< The interface supports send/receive type operations */
+        MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS = MXL_FABRICS_FLAG(0), /**< The interface supports blocking operations. */
+        MXL_FABRICS_IFACE_CAP_REMOTE_WRITE = MXL_FABRICS_FLAG(1),        /**< The interface supports remote-write (RDMA) operations. */
+        MXL_FABRICS_IFACE_CAP_SEND_RECEIVE = MXL_FABRICS_FLAG(2),        /**< The interface supports send/receive message operations. */
     } mxlFabricsInterfaceCapFlags;
 
-    /** Capabilities of an interface */
+    /** Capabilities of an interface. Returned as informational output by mxlFabricsGetInterfaces().
+     *  When used inside mxlFabricsInterfaceConfig for setup functions, only the \c flags field is
+     *  evaluated as requirements; \c maxMessageSize is ignored.
+     */
     typedef struct mxlFabricsInterfaceCaps_t
     {
         int version;             /**< Struct version, must be set to MXL_FABRICS_API_VERSION by the caller. */
-        uint64_t flags;          /**< Capabilities expressed as binary flags. Value can be a bitset of any of mxlFabricsInterfaceCapFlags */
-        uint64_t maxMessageSize; /**< Maximum message size supported on this interface. */
+        uint64_t flags;          /**< Bitwise OR of mxlFabricsInterfaceCapFlags values.
+                                      See mxlFabricsInterfaceCapFlags for the dual semantics (informational vs. requirements). */
+        uint64_t maxMessageSize; /**< Maximum message size supported on this interface. Reported by mxlFabricsGetInterfaces().
+                                      Currently not enforced by setup functions, but callers should initialize this field to a
+                                      valid value as it will be required in a future version. */
     } mxlFabricsInterfaceCaps;
 
-    /** Fabric interface configuration */
     typedef struct mxlFabricsInterfaceConfig_t
     {
         int version;                       /**< Struct version, must be set to MXL_FABRICS_API_VERSION by the caller. */
-        mxlFabricsProvider provider;       /**< The provider that the interface can be used with */
-        mxlFabricsInterfaceCaps caps;      /**< Interface capabilities */
-        mxlFabricsEndpointAddress address; /**< Address (node/service) of this interface */
+        mxlFabricsProvider provider;       /**< The provider that the interface can be used with. */
+        mxlFabricsInterfaceCaps caps;      /**< Interface capabilities. Output-only for mxlFabricsGetInterfaces(); requirements for setup functions.
+                                                See mxlFabricsInterfaceCapFlags for details. */
+        mxlFabricsEndpointAddress address; /**< Address (node/service) of this interface. */
 
         /**
          * Extra information about the interface in a json document. Provided on a best-effort basis. Not all fields are available on certain
@@ -95,6 +109,18 @@ extern "C"
          */
         char const* attr;
     } mxlFabricsInterfaceConfig;
+
+    /**
+     * A list of interfaces returned by mxlFabricsGetInterfaces. Should be freed with mxlFabricsFreeInterfaceList
+     */
+    typedef struct mxlFabricsInterfaceList_t mxlFabricsInterfaceList;
+
+    /** \copydoc mxlFabricsFreeInterfaceList */
+    struct mxlFabricsInterfaceList_t
+    {
+        mxlFabricsInterfaceList* next;       /**< Next entry in the list. NULL at the last entry. */
+        mxlFabricsInterfaceConfig interface; /**< A single interface available on this host. */
+    };
 
     /** Configuration object required to set up a new target.
      */
@@ -134,6 +160,25 @@ extern "C"
     mxlStatus mxlFabricsDestroyInstance(mxlFabricsInstance in_instance);
 
     /**
+     * Query a list of available providers, interfaces and their capabilities on this system.
+     * \param[in] in_instance A valid mxlFabricsInstance.
+     * \param[in] in_query (Optional) Can be used to filter the items returned by this function. Only the provider and address fields are used for
+     * filtering; capability flags in the query are ignored. Use MXL_FABRICS_PROVIDER_ANY or NULL to list interfaces for all providers.
+     * \param[out] out_list A list of interfaces available on the system. Each entry includes the detected capability flags for that interface.
+     * The whole list should be freed with mxlFabricsFreeInterfaceList(). This will also free the character arrays returned from this function.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFabricsGetInterfaces(mxlFabricsInstance in_instance, mxlFabricsInterfaceConfig const* in_query, mxlFabricsInterfaceList** out_list);
+
+    /**
+     * Free an interface list previously allocated by mxlFabricsGetInterfaces. This function will also free the character strings in each interface
+     * endpoint address struct that is part of the list.
+     * \param interfaceList The list of interfaces to free.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFabricsFreeInterfaceList(mxlFabricsInterfaceList* interfaceList);
+
+    /**
      * Create a fabrics target. The target is the receiver of write operations from an initiator.
      * \param in_fabricsInstance A valid mxl fabrics instance
      * \param out_target A valid fabrics target
@@ -156,7 +201,10 @@ extern "C"
      * \param in_target A valid fabrics target
      * \param in_config The target configuration. This will be used to create an endpoint and register a memory region. The memory region
      * corresponds to the one that will be written to by the initiator.
-     * \param options A json-formatted string with options. Currently not used.
+     * \param in_options An optional json-formatted string with options. May be NULL or empty. Recognized fields:
+     *  - "cqDepth" (number >= 1): the depth of the target's completion queue. Increase this for high-frame-rate or many-stream
+     *    receivers, or when per-completion processing is slow, to avoid completion queue overflow. See the "Receiving grains" section
+     *    of docs/Fabrics.md. When omitted, an implementation default is used.
      * \param out_info An mxlFabricsTargetInfo_t object which should be shared to a remote initiator which this target should receive data from. The
      * object must be freed with mxlFabricsFreeTargetInfo().
      * \return The result code. \see mxlStatus

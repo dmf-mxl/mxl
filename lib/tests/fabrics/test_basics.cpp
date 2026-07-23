@@ -226,8 +226,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connection o
             .version = MXL_FABRICS_API_VERSION,
             .interface = {.version = MXL_FABRICS_API_VERSION,
                           .provider = MXL_FABRICS_PROVIDER_TCP,
-                          .caps = {},
-                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .caps =
+                    {
+                        .version = MXL_FABRICS_API_VERSION,
+                        .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                        .maxMessageSize = 0,
+                    }, .address = {.node = "127.0.0.1", .service = nullptr},
                           .attr = nullptr},
             .writer = writer,
         };
@@ -238,8 +242,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connection o
             .version = MXL_FABRICS_API_VERSION,
             .interface = {.version = MXL_FABRICS_API_VERSION,
                           .provider = MXL_FABRICS_PROVIDER_TCP,
-                          .caps = {},
-                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .caps =
+                    {
+                        .version = MXL_FABRICS_API_VERSION,
+                        .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                        .maxMessageSize = 0,
+                    }, .address = {.node = "127.0.0.1", .service = nullptr},
                           .attr = nullptr},
             .reader = reader,
         };
@@ -304,8 +312,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connectionle
         .version = MXL_FABRICS_API_VERSION,
         .interface = {.version = MXL_FABRICS_API_VERSION,
                       .provider = MXL_FABRICS_PROVIDER_SHM,
-                      .caps = {},
-                      .address = {.node = "target", .service = "activation"},
+                      .caps =
+                {
+                    .version = MXL_FABRICS_API_VERSION,
+                    .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                    .maxMessageSize = 0,
+                }, .address = {.node = "target", .service = "activation"},
                       .attr = nullptr},
         .writer = writer,
     };
@@ -316,8 +328,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connectionle
         .version = MXL_FABRICS_API_VERSION,
         .interface = {.version = MXL_FABRICS_API_VERSION,
                       .provider = MXL_FABRICS_PROVIDER_SHM,
-                      .caps = {},
-                      .address = {.node = "initiator", .service = "activation"},
+                      .caps =
+                {
+                    .version = MXL_FABRICS_API_VERSION,
+                    .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                    .maxMessageSize = 0,
+                }, .address = {.node = "initiator", .service = "activation"},
                       .attr = nullptr},
         .reader = reader,
     };
@@ -382,8 +398,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             .version = MXL_FABRICS_API_VERSION,
             .interface = {.version = MXL_FABRICS_API_VERSION,
                           .provider = MXL_FABRICS_PROVIDER_TCP,
-                          .caps = {},
-                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .caps =
+                    {
+                        .version = MXL_FABRICS_API_VERSION,
+                        .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                        .maxMessageSize = 0,
+                    }, .address = {.node = "127.0.0.1", .service = nullptr},
                           .attr = nullptr},
             .writer = writer,
         };
@@ -394,8 +414,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             .version = MXL_FABRICS_API_VERSION,
             .interface = {.version = MXL_FABRICS_API_VERSION,
                           .provider = MXL_FABRICS_PROVIDER_TCP,
-                          .caps = {},
-                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .caps =
+                    {
+                        .version = MXL_FABRICS_API_VERSION,
+                        .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                        .maxMessageSize = 0,
+                    }, .address = {.node = "127.0.0.1", .service = nullptr},
                           .attr = nullptr},
             .reader = reader,
         };
@@ -438,8 +462,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             .version = MXL_FABRICS_API_VERSION,
             .interface = {.version = MXL_FABRICS_API_VERSION,
                           .provider = MXL_FABRICS_PROVIDER_SHM,
-                          .caps = {},
-                          .address = {.node = "target", .service = "test"},
+                          .caps =
+                    {
+                        .version = MXL_FABRICS_API_VERSION,
+                        .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                        .maxMessageSize = 0,
+                    }, .address = {.node = "target", .service = "test"},
                           .attr = nullptr},
             .writer = writer,
         };
@@ -450,8 +478,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             .version = MXL_FABRICS_API_VERSION,
             .interface = {.version = MXL_FABRICS_API_VERSION,
                           .provider = MXL_FABRICS_PROVIDER_SHM,
-                          .caps = {},
-                          .address = {.node = "initiator", .service = "test"},
+                          .caps =
+                    {
+                        .version = MXL_FABRICS_API_VERSION,
+                        .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                        .maxMessageSize = 0,
+                    }, .address = {.node = "initiator", .service = "test"},
                           .attr = nullptr},
             .reader = reader,
         };
@@ -525,8 +557,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             .version = MXL_FABRICS_API_VERSION,
             .interface = {.version = MXL_FABRICS_API_VERSION,
                           .provider = MXL_FABRICS_PROVIDER_TCP,
-                          .caps = {},
-                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .caps =
+                    {
+                        .version = MXL_FABRICS_API_VERSION,
+                        .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                        .maxMessageSize = 0,
+                    }, .address = {.node = "127.0.0.1", .service = nullptr},
                           .attr = nullptr},
             .writer = writer,
         };
@@ -537,8 +573,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             .version = MXL_FABRICS_API_VERSION,
             .interface = {.version = MXL_FABRICS_API_VERSION,
                           .provider = MXL_FABRICS_PROVIDER_TCP,
-                          .caps = {},
-                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .caps =
+                    {
+                        .version = MXL_FABRICS_API_VERSION,
+                        .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                        .maxMessageSize = 0,
+                    }, .address = {.node = "127.0.0.1", .service = nullptr},
                           .attr = nullptr},
             .reader = reader,
         };
@@ -582,8 +622,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             .version = MXL_FABRICS_API_VERSION,
             .interface = {.version = MXL_FABRICS_API_VERSION,
                           .provider = MXL_FABRICS_PROVIDER_SHM,
-                          .caps = {},
-                          .address = {.node = "target", .service = "test"},
+                          .caps =
+                    {
+                        .version = MXL_FABRICS_API_VERSION,
+                        .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                        .maxMessageSize = 0,
+                    }, .address = {.node = "target", .service = "test"},
                           .attr = nullptr},
             .writer = writer,
         };
@@ -594,8 +638,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             .version = MXL_FABRICS_API_VERSION,
             .interface = {.version = MXL_FABRICS_API_VERSION,
                           .provider = MXL_FABRICS_PROVIDER_SHM,
-                          .caps = {},
-                          .address = {.node = "initiator", .service = "test"},
+                          .caps =
+                    {
+                        .version = MXL_FABRICS_API_VERSION,
+                        .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                        .maxMessageSize = 0,
+                    }, .address = {.node = "initiator", .service = "test"},
                           .attr = nullptr},
             .reader = reader,
         };
@@ -682,8 +730,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             .version = MXL_FABRICS_API_VERSION,
             .interface = {.version = MXL_FABRICS_API_VERSION,
                           .provider = MXL_FABRICS_PROVIDER_TCP,
-                          .caps = {},
-                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .caps =
+                    {
+                        .version = MXL_FABRICS_API_VERSION,
+                        .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                        .maxMessageSize = 0,
+                    }, .address = {.node = "127.0.0.1", .service = nullptr},
                           .attr = nullptr},
             .reader = reader,
         };
@@ -698,8 +750,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
                 .version = MXL_FABRICS_API_VERSION,
                 .interface = {.version = MXL_FABRICS_API_VERSION,
                               .provider = MXL_FABRICS_PROVIDER_TCP,
-                              .caps = {},
-                              .address = {.node = "127.0.0.1", .service = "0"},
+                              .caps =
+                        {
+                            .version = MXL_FABRICS_API_VERSION,
+                            .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                            .maxMessageSize = 0,
+                        }, .address = {.node = "127.0.0.1", .service = nullptr},
                               .attr = nullptr},
                 .writer = writer[i],
             };
@@ -756,8 +812,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
             .version = MXL_FABRICS_API_VERSION,
             .interface = {.version = MXL_FABRICS_API_VERSION,
                           .provider = MXL_FABRICS_PROVIDER_SHM,
-                          .caps = {},
-                          .address = {.node = "initiator", .service = "test"},
+                          .caps =
+                    {
+                        .version = MXL_FABRICS_API_VERSION,
+                        .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                        .maxMessageSize = 0,
+                    }, .address = {.node = "initiator", .service = "test"},
                           .attr = nullptr},
             .reader = reader,
         };
@@ -771,8 +831,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
                 .version = MXL_FABRICS_API_VERSION,
                 .interface = {.version = MXL_FABRICS_API_VERSION,
                               .provider = MXL_FABRICS_PROVIDER_SHM,
-                              .caps = {},
-                              .address = {.node = "target", .service = "test"},
+                              .caps =
+                        {
+                            .version = MXL_FABRICS_API_VERSION,
+                            .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                            .maxMessageSize = 0,
+                        }, .address = {.node = "target", .service = "test"},
                               .attr = nullptr},
                 .writer = writer[i],
             };
@@ -875,8 +939,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             .version = MXL_FABRICS_API_VERSION,
             .interface = {.version = MXL_FABRICS_API_VERSION,
                           .provider = MXL_FABRICS_PROVIDER_TCP,
-                          .caps = {},
-                          .address = {.node = "127.0.0.1", .service = "0"},
+                          .caps =
+                    {
+                        .version = MXL_FABRICS_API_VERSION,
+                        .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                        .maxMessageSize = 0,
+                    }, .address = {.node = "127.0.0.1", .service = nullptr},
                           .attr = nullptr},
             .reader = reader,
         };
@@ -891,8 +959,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
                 .version = MXL_FABRICS_API_VERSION,
                 .interface = {.version = MXL_FABRICS_API_VERSION,
                               .provider = MXL_FABRICS_PROVIDER_TCP,
-                              .caps = {},
-                              .address = {.node = "127.0.0.1", .service = "0"},
+                              .caps =
+                        {
+                            .version = MXL_FABRICS_API_VERSION,
+                            .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                            .maxMessageSize = 0,
+                        }, .address = {.node = "127.0.0.1", .service = nullptr},
                               .attr = nullptr},
                 .writer = writer[i],
             };
@@ -951,8 +1023,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
             .version = MXL_FABRICS_API_VERSION,
             .interface = {.version = MXL_FABRICS_API_VERSION,
                           .provider = MXL_FABRICS_PROVIDER_SHM,
-                          .caps = {},
-                          .address = {.node = "initiator", .service = "test"},
+                          .caps =
+                    {
+                        .version = MXL_FABRICS_API_VERSION,
+                        .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                        .maxMessageSize = 0,
+                    }, .address = {.node = "initiator", .service = "test"},
                           .attr = nullptr},
             .reader = reader,
         };
@@ -966,8 +1042,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
                 .version = MXL_FABRICS_API_VERSION,
                 .interface = {.version = MXL_FABRICS_API_VERSION,
                               .provider = MXL_FABRICS_PROVIDER_SHM,
-                              .caps = {},
-                              .address = {.node = "target", .service = "test"},
+                              .caps =
+                        {
+                            .version = MXL_FABRICS_API_VERSION,
+                            .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                            .maxMessageSize = 0,
+                        }, .address = {.node = "target", .service = "test"},
                               .attr = nullptr},
                 .writer = writer[i],
             };
@@ -1052,8 +1132,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: TargetInfo 
         .version = MXL_FABRICS_API_VERSION,
         .interface = {.version = MXL_FABRICS_API_VERSION,
                       .provider = MXL_FABRICS_PROVIDER_TCP,
-                      .caps = {},
-                      .address = {.node = "127.0.0.1", .service = "0"},
+                      .caps =
+                {
+                    .version = MXL_FABRICS_API_VERSION,
+                    .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                    .maxMessageSize = 0,
+                }, .address = {.node = "127.0.0.1", .service = nullptr},
                       .attr = nullptr},
         .writer = writer,
     };
@@ -1079,6 +1163,72 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: TargetInfo 
 
     // Cleanup
     REQUIRE(mxlFabricsDestroyTarget(fabrics, target) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsDestroyInstance(fabrics) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+}
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Target setup honors cqDepth option", "[fabrics][cqdepth]")
+{
+    auto instance = mxlCreateInstance(domain.c_str(), "");
+    mxlFabricsInstance fabrics;
+    REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
+
+    auto flowDef = mxl::tests::readFile("../data/v210_flow.json");
+    mxlFlowWriter writer;
+    REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), nullptr, &writer, nullptr, nullptr) == MXL_STATUS_OK);
+
+    auto makeConfig = [&]()
+    {
+        return mxlFabricsTargetConfig{
+            .version = MXL_FABRICS_API_VERSION,
+            .interface = {.version = MXL_FABRICS_API_VERSION,
+                          .provider = MXL_FABRICS_PROVIDER_TCP,
+                          .caps =
+                    {
+                        .version = MXL_FABRICS_API_VERSION,
+                        .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                        .maxMessageSize = 0,
+                    }, .address = {.node = "127.0.0.1", .service = "0"},
+                          .attr = nullptr},
+            .writer = writer,
+        };
+    };
+
+    auto setupWithOptions = [&](char const* options, mxlFabricsTargetInfo* outInfo)
+    {
+        mxlFabricsTarget target;
+        REQUIRE(mxlFabricsCreateTarget(fabrics, &target) == MXL_STATUS_OK);
+        auto config = makeConfig();
+        auto const status = mxlFabricsTargetSetup(target, &config, options, outInfo);
+        REQUIRE(mxlFabricsDestroyTarget(fabrics, target) == MXL_STATUS_OK);
+        return status;
+    };
+
+    SECTION("a valid cqDepth option is accepted")
+    {
+        mxlFabricsTargetInfo targetInfo;
+        REQUIRE(setupWithOptions(R"({"cqDepth": 64})", &targetInfo) == MXL_STATUS_OK);
+    }
+
+    SECTION("no options selects the default and is accepted")
+    {
+        mxlFabricsTargetInfo targetInfo;
+        REQUIRE(setupWithOptions(nullptr, &targetInfo) == MXL_STATUS_OK);
+        REQUIRE(setupWithOptions("", &targetInfo) == MXL_STATUS_OK);
+    }
+
+    SECTION("an invalid cqDepth option is rejected")
+    {
+        mxlFabricsTargetInfo targetInfo;
+        // Zero / negative depth.
+        REQUIRE(setupWithOptions(R"({"cqDepth": 0})", &targetInfo) == MXL_ERR_INVALID_ARG);
+        // Wrong type.
+        REQUIRE(setupWithOptions(R"({"cqDepth": "big"})", &targetInfo) == MXL_ERR_INVALID_ARG);
+        // Malformed JSON.
+        REQUIRE(setupWithOptions("{not json", &targetInfo) == MXL_ERR_INVALID_ARG);
+    }
+
     REQUIRE(mxlFabricsDestroyInstance(fabrics) == MXL_STATUS_OK);
     REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);

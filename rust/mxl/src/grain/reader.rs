@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2025-2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
 use std::{sync::Arc, time::Duration};
@@ -84,6 +84,7 @@ impl GrainReader {
             payload,
             total_size: grain_info.grainSize as usize,
             flags: grain_info.flags,
+            index: grain_info.index,
         })
     }
 
@@ -117,6 +118,7 @@ impl GrainReader {
             payload,
             total_size: grain_info.grainSize as usize,
             flags: grain_info.flags,
+            index: grain_info.index,
         })
     }
 

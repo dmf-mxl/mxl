@@ -3,81 +3,63 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "RCTarget.hpp"
-#include <cstdint>
 #include <mxl-internal/Logging.hpp>
 #include <rdma/fabric.h>
-#include "mxl/mxl.h"
 #include "Exception.hpp"
+#include "FabricAddress.hpp"
 #include "FabricInfo.hpp"
+#include "FabricInfoHelpers.hpp"
 #include "Format.hpp" // IWYU pragma: keep; Includes template specializations of fmt::formatter for our types
 #include "PassiveEndpoint.hpp"
 #include "Protocol.hpp"
+#include "Provider.hpp"
 #include "Region.hpp"
 #include "VariantUtils.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
 
-    std::pair<std::unique_ptr<RCTarget>, std::unique_ptr<TargetInfo>> RCTarget::setup(mxlFabricsTargetConfig const& config)
+    std::pair<std::unique_ptr<RCTarget>, std::unique_ptr<TargetInfo>> RCTarget::setup(mxlFabricsTargetConfig const& config, FabricInfoView info,
+        TargetSetupOptions const& options)
     {
-        // Both fields may arrive as null at this call site — libfabric's FI_SOURCE path
-        // accepts that and treats it as "bind to any local address". fmt's `{}` formatter
-        // for char const*, however, throws fmt::format_error("string pointer is null") on a
-        // nullptr argument. The MXL_INFO macro swallows that exception and emits an
-        // unhelpful "*** LOG ERROR #NNNN ***" line; the Exception::make below would re-throw
-        // it as the exception out of setup() instead of MXL_ERR_NO_FABRIC, masking the real
-        // failure. Substitute a printable sentinel for formatting only — the original
-        // pointers still go to fi_getinfo so the wildcard semantics are preserved.
-        char const* const nodeStr = config.interface.address.node ? config.interface.address.node : "<unspecified>";
-        char const* const serviceStr = config.interface.address.service ? config.interface.address.service : "<unspecified>";
-
-        MXL_INFO("setting up target [endpoint = {}:{}, provider = {}]", nodeStr, serviceStr, config.interface.provider);
-
-        // Convert to our internal enum type.
-        auto provider = providerFromAPI(config.interface.provider);
+        requireCapability(info, FI_REMOTE_WRITE, "Interface is missing required remote write capability");
+        auto provider = providerFromString(info->fabric_attr->prov_name);
         if (!provider)
         {
-            throw Exception::invalidArgument("Invalid provider passed");
+            throw Exception::invalidArgument("invalid provider: {}", info->fabric_attr->prov_name);
         }
 
-        // Get a list of available fabric configurations available on this machine.
-        std::uint64_t caps = FI_RMA | FI_REMOTE_WRITE;
-        // To enable device memory support:
-        // caps |=  FI_HMEM;
-        auto fabricInfoList = FabricInfoList::get(config.interface.address.node, config.interface.address.service, provider.value(), caps, FI_EP_MSG);
-
-        if (fabricInfoList.begin() == fabricInfoList.end())
-        {
-            throw Exception::make(MXL_ERR_NO_FABRIC, "No fabric available for provider {} at {}:{}", config.interface.provider, nodeStr, serviceStr);
-        }
+        MXL_INFO("Setting up RC target with source address: {}", FabricAddress::fromSource(info).toString());
 
         // Open fabric and domain. These represent the context of the local network fabric adapter that will be used
         // to receive data.
         // See fi_domain(3) and fi_fabric(3) for more complete information about these concepts.
-        auto fabric = Fabric::open(*fabricInfoList.begin());
+        auto fabric = Fabric::open(info);
         auto domain = Domain::open(fabric);
 
         auto pep = makeListener(fabric);
 
         auto const mxlRegions = MxlRegions::forWriter(config.writer);
         auto proto = selectIngressProtocol(mxlRegions.dataLayout(), mxlRegions.regions(), mxlRegions.maxSyncBatchSize());
-        auto targetInfo = std::make_unique<TargetInfo>(pep.id(), pep.localAddress(), proto->registerMemory(domain), proto->bounceBufferInfo());
+        auto targetInfo = std::make_unique<TargetInfo>(
+            pep.id(), pep.localAddress(), *provider, proto->registerMemory(domain), proto->bounceBufferInfo());
 
         // Helper struct to enable the std::make_unique function to access the private constructor of this class.
         struct MakeUniqueEnabler : RCTarget
         {
-            MakeUniqueEnabler(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain)
-                : RCTarget(std::move(pep), std::move(proto), std::move(domain))
+            MakeUniqueEnabler(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain, TargetSetupOptions options)
+                : RCTarget(std::move(pep), std::move(proto), std::move(domain), options)
             {}
         };
 
         // Return the constructed RCTarget and associated TargetInfo for remote peers to connect.
-        return {std::make_unique<MakeUniqueEnabler>(std::move(pep), std::move(proto), std::move(domain)), std::move(targetInfo)};
+        return {std::make_unique<MakeUniqueEnabler>(std::move(pep), std::move(proto), std::move(domain), options), std::move(targetInfo)};
     }
 
-    RCTarget::RCTarget(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain)
+    RCTarget::RCTarget(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain, TargetSetupOptions options)
         : _proto(std::move(proto))
         , _domain(std::move(domain))
+        , _setupOptions(options)
         , _state(WaitForConnectionRequest{std::move(pep)})
     {}
 
@@ -154,10 +136,13 @@ namespace mxl::lib::fabrics::ofi
                     // Check if the entry is available and is a connection request
                     if (event && event->isConnReq())
                     {
-                        MXL_DEBUG("Connection request received, creating endpoint for remote address: {}", event->connReq().info().raw()->dest_addr);
-                        auto endpoint = Endpoint::create(_domain, state.pep.id(), event->connReq().info());
+                        auto remoteAddr = FabricAddress::fromDestination(event->connReq().info());
+                        MXL_INFO("Accept connection from: {}", remoteAddr.toString());
 
-                        auto cq = CompletionQueue::open(_domain, CompletionQueue::Attributes::defaults());
+                        auto cqAttr = CompletionQueue::Attributes::defaults();
+                        cqAttr.size = _setupOptions.cqDepth.value_or(CompletionQueue::Attributes::DEFAULT_SIZE);
+                        auto cq = CompletionQueue::open(_domain, cqAttr);
+                        auto endpoint = Endpoint::create(_domain, state.pep.id(), event->connReq().info());
                         endpoint.bind(cq, FI_RECV);
 
                         auto eq = EventQueue::open(_domain->fabric(), EventQueue::Attributes::defaults());

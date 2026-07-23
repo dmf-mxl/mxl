@@ -106,12 +106,14 @@ namespace mxl::lib::fabrics::ofi
             slices);
 
         auto srcAddr = entry.samples();
-        for (auto& fragment : slices.base.fragments)
+        // The egress side writes the payload in channel-major order: all fragments for one channel are contiguous before the next channel.
+        // Consume fragments in that same order so wrapped slices do not interleave channel data.
+        for (auto chan = std::size_t{0}; chan < slices.count; chan++)
         {
-            // check if the fragment present
-            if (fragment.size > 0)
+            for (auto const& fragment : slices.base.fragments)
             {
-                for (auto chan = std::size_t{0}; chan < slices.count; chan++)
+                // check if the fragment present
+                if (fragment.size > 0)
                 {
                     auto const dstAddr = reinterpret_cast<std::uint8_t*>(fragment.pointer) + (slices.stride * chan);
                     std::memcpy(dstAddr, srcAddr, fragment.size);

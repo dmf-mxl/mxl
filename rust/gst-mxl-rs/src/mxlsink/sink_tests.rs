@@ -5,12 +5,55 @@
 mod tests {
     use std::collections::HashMap;
 
-    use crate::mxlsink::imp::*;
-    use glib::subclass::types::ObjectSubclassType;
-    use gst::{CoreError, Fraction, prelude::*};
+    use crate::mxlsink::state::{
+        GROUPHINT_TAG, Settings, default_group_hint, format_framerate, format_sample_rate_khz,
+        resolve_flow_metadata,
+    };
+    use gst::prelude::*;
+    use gst::{CoreError, Fraction};
     use gstreamer as gst;
     use mxl::flowdef::*;
     use uuid::Uuid;
+
+    #[test]
+    fn format_framerate_examples() {
+        assert_eq!(format_framerate(25, 1), "25");
+        assert_eq!(format_framerate(50, 1), "50");
+        assert_eq!(format_framerate(30, 1), "30");
+        assert_eq!(format_framerate(60000, 1001), "59.94");
+        assert_eq!(format_framerate(30000, 1001), "29.97");
+        assert_eq!(format_framerate(24000, 1001), "23.98");
+    }
+
+    #[test]
+    fn format_sample_rate_khz_examples() {
+        assert_eq!(format_sample_rate_khz(48000), "48 kHz");
+        assert_eq!(format_sample_rate_khz(96000), "96 kHz");
+        assert_eq!(format_sample_rate_khz(44100), "44.1 kHz");
+    }
+
+    #[test]
+    fn default_group_hint_includes_role_and_element_name() {
+        gst::init().unwrap();
+        let pipeline = gst::Pipeline::builder().name("pipeline0").build();
+        let element = gst::Bin::builder().name("mxlsink0").build();
+        pipeline.add(&element).unwrap();
+        let hint = default_group_hint("Video", element.upcast_ref());
+        assert!(hint.ends_with(":Video mxlsink0"), "unexpected hint: {hint}");
+        assert!(
+            hint.contains(" pipeline0:"),
+            "pipeline name missing from group: {hint}"
+        );
+        assert!(hint.starts_with("Media Function "));
+
+        let element = gst::Bin::builder().name("sink:cam").build();
+        let hint = default_group_hint("Audio", element.upcast_ref());
+        assert!(hint.ends_with(":Audio sink-cam"), "unexpected hint: {hint}");
+        assert!(
+            !hint.contains(" pipeline"),
+            "pipeline-less hint should omit pipeline token: {hint}"
+        );
+    }
 
     #[test]
     #[cfg_attr(feature = "tracing", tracing_test::traced_test)]
@@ -22,9 +65,14 @@ mod tests {
         let interlace_mode = InterlaceMode::Progressive;
         let colorimetry = "BT709".to_string();
         let format = "v210".to_string();
+        let default_name = format!(
+            "MXL Video Flow, {}p{}",
+            height,
+            format_framerate(framerate.numer(), framerate.denom())
+        );
         let mut tags = HashMap::new();
         tags.insert(
-            "urn:x-nmos:tag:grouphint/v1.0".to_string(),
+            GROUPHINT_TAG.to_string(),
             vec!["Media Function XYZ:Audio".to_string()],
         );
         let flow_def_details = FlowDefVideo {
@@ -61,16 +109,10 @@ mod tests {
         let flow_def = FlowDef {
             id: Uuid::parse_str(&flow_id)
                 .map_err(|_| glib::Error::new(CoreError::Failed, "Failed to parse UUID"))?,
-            description: format!(
-                "MXL Test Flow, 1080p{}",
-                framerate.numer() / framerate.denom()
-            ),
+            description: default_name.clone(),
             tags,
             format: "urn:x-nmos:format:video".into(),
-            label: format!(
-                "MXL Test Flow, 1080p{}",
-                framerate.numer() / framerate.denom()
-            ),
+            label: default_name,
             parents: vec![],
             media_type: format!("video/{}", format),
             details: FlowDefDetails::Video(flow_def_details),
@@ -80,11 +122,11 @@ mod tests {
             .map_err(|_| glib::Error::new(CoreError::Failed, "Failed to convert to json"))?;
 
         let expected_json = serde_json::json!({
-            "description": "MXL Test Flow, 1080p29",
+            "description": "MXL Video Flow, 1080p29.97",
             "id": "5fbec3b1-1b0f-417d-9059-8b94a47197ed",
             "tags": {"urn:x-nmos:tag:grouphint/v1.0": ["Media Function XYZ:Audio"]},
             "format": "urn:x-nmos:format:video",
-            "label": "MXL Test Flow, 1080p29",
+            "label": "MXL Video Flow, 1080p29.97",
             "parents": [],
             "media_type": "video/v210",
             "grain_rate": {
@@ -122,99 +164,33 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(feature = "tracing", tracing_test::traced_test)]
-    #[ignore = "MXL + GStreamer integration - failing on CI but not reproducible; opt-in with cargo test -- --ignored"]
-    fn valid_gray_pipeline() -> Result<(), glib::Error> {
-        gst::init()?;
-        gst::Element::register(
-            None,
-            "mxlsrc",
-            gst::Rank::NONE,
-            crate::mxlsrc::MxlSrc::static_type(),
-        )
-        .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-        gst::Element::register(None, "mxlsink", gst::Rank::NONE, MxlSink::type_())
-            .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-        let pipeline = gst::Pipeline::new();
-        let src = gst::ElementFactory::make("videotestsrc")
-            .build()
-            .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
+    fn resolve_flow_metadata_keeps_defaults_when_unset() {
+        let settings = Settings::default();
+        let (label, description, tags) =
+            resolve_flow_metadata(&settings, "default-name".into(), "default:Video".into());
+        assert_eq!(label, "default-name");
+        assert_eq!(description, "default-name");
+        assert_eq!(
+            tags.get(GROUPHINT_TAG).map(Vec::as_slice),
+            Some(["default:Video".to_string()].as_slice())
+        );
+    }
 
-        let queue1 = gst::ElementFactory::make("queue")
-            .build()
-            .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-        let convert1 = gst::ElementFactory::make("videoconvert")
-            .build()
-            .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-        let queue2 = gst::ElementFactory::make("queue")
-            .build()
-            .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-
-        let caps = gst::Caps::builder("video/x-raw")
-            .field("format", "GRAY8")
-            .build();
-        let capsfilter = gst::ElementFactory::make("capsfilter")
-            .property("caps", &caps)
-            .build()
-            .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-
-        let queue3 = gst::ElementFactory::make("queue")
-            .build()
-            .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-        let convert2 = gst::ElementFactory::make("videoconvert")
-            .build()
-            .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-        let queue4 = gst::ElementFactory::make("queue")
-            .build()
-            .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-
-        let sink = gst::ElementFactory::make("mxlsink")
-            .property("flow-id", "7fbec3b1-1b0f-417d-9059-8b94a47197ed")
-            .property("domain", "/dev/shm")
-            .build()
-            .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-
-        pipeline
-            .add_many([
-                &src,
-                &queue1,
-                &convert1,
-                &queue2,
-                &capsfilter,
-                &queue3,
-                &convert2,
-                &queue4,
-                &sink,
-            ])
-            .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-        gst::Element::link_many([
-            &src,
-            &queue1,
-            &convert1,
-            &queue2,
-            &capsfilter,
-            &queue3,
-            &convert2,
-            &queue4,
-            &sink,
-        ])
-        .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
-        pipeline
-            .set_state(gst::State::Playing)
-            .map_err(|_| glib::Error::new(CoreError::Failed, "State change failed"))?;
-        let src_pad = src
-            .static_pad("src")
-            .ok_or(CoreError::Failed)
-            .map_err(|_| glib::Error::new(CoreError::Pad, "Source pad failed"))?;
-        if let Some(caps) = src_pad.current_caps() {
-            println!("Negotiated caps: {}", caps);
-        } else {
-            println!("No negotiated caps found");
-        }
-        std::thread::sleep(std::time::Duration::from_millis(600));
-        pipeline
-            .set_state(gst::State::Null)
-            .map_err(|_| glib::Error::new(CoreError::Failed, "State change failed"))?;
-        Ok(())
+    #[test]
+    fn resolve_flow_metadata_applies_property_overrides() {
+        let settings = Settings {
+            label: "Studio A camera".into(),
+            description: "v210 1080p50".into(),
+            group_hint: "Camera:Video".into(),
+            ..Settings::default()
+        };
+        let (label, description, tags) =
+            resolve_flow_metadata(&settings, "default-name".into(), "default:Video".into());
+        assert_eq!(label, "Studio A camera");
+        assert_eq!(description, "v210 1080p50");
+        assert_eq!(
+            tags.get(GROUPHINT_TAG).map(Vec::as_slice),
+            Some(["Camera:Video".to_string()].as_slice())
+        );
     }
 }
