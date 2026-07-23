@@ -217,11 +217,8 @@ impl<'a> InitiatorEndpoint<'a> {
         flow_id: &str,
     ) -> Result<Self, mxl::Error> {
         let flow_reader = instance.create_flow_reader(flow_id)?;
-
         let initiator = fabrics_instance.create_initiator()?;
-
         let initiator_config = initiator::Config::new(interface, &flow_reader);
-
         let initiator = initiator.setup(&initiator_config)?;
 
         Ok(Self {
