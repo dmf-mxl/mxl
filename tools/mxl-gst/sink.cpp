@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <utility>
 #include <uuid.h>
 #include <CLI/CLI.hpp>
 #include <fmt/core.h>
@@ -401,25 +402,27 @@ namespace
         void operator=(MxlReader const&) = delete;
 
         MxlReader(MxlReader&& other) noexcept
-            : _instance{other._instance}
-            , _reader{other._reader}
-            , _configInfo{other._configInfo}
+            : MxlReader{}
         {
-            other._instance = nullptr;
-            other._reader = nullptr;
+            // *this is fully initialized through the delegating constructor,
+            // then takes ownership from other via swap.
+            swap(other);
         }
 
-        MxlReader& operator=(MxlReader&& other)
+        MxlReader& operator=(MxlReader other) noexcept
         {
-            this->close();
-
-            _instance = other._instance;
-            other._instance = nullptr;
-
-            _reader = other._reader;
-            other._reader = nullptr;
+            swap(other);
 
             return *this;
+        }
+
+        void swap(MxlReader& other) noexcept
+        {
+            using std::swap;
+            swap(_instance, other._instance);
+            swap(_reader, other._reader);
+            swap(_configInfo, other._configInfo);
+            swap(_highestLatencyNs, other._highestLatencyNs);
         }
 
         void close()
@@ -894,6 +897,12 @@ namespace
         std::uint64_t _highestLatencyNs;
     };
 
+    [[maybe_unused]]
+    void swap(MxlReader& lhs, MxlReader& rhs) noexcept
+    {
+        lhs.swap(rhs);
+    }
+
     class MultiviewerPipeline : public GstreamerPipeline
     {
     public:
@@ -909,7 +918,7 @@ namespace
             MXL_INFO("Creating multiviewer pipeline with {} video flow(s)", configs.size());
 
             // Build the compositor layout pipeline
-            auto pipelineDesc = buildMultiviewerPipeline();
+            auto const pipelineDesc = buildMultiviewerPipeline();
             MXL_INFO("Generating multiviewer gstreamer pipeline -> {}", pipelineDesc);
             launchPipeline(pipelineDesc, "appsource0");
 
@@ -917,7 +926,7 @@ namespace
             for (auto i = std::size_t{0}; i < _configs.size(); ++i)
             {
                 auto const sourceName = fmt::format("appsource{}", i);
-                auto* appSrc = ::gst_bin_get_by_name(GST_BIN(getPipeline()), sourceName.c_str());
+                auto* const appSrc = ::gst_bin_get_by_name(GST_BIN(getPipeline()), sourceName.c_str());
                 if (appSrc)
                 {
                     ::g_object_set(G_OBJECT(appSrc), "format", GST_FORMAT_TIME, nullptr);
@@ -931,7 +940,7 @@ namespace
             }
 
             // Get compositor element and configure sink pad positions
-            auto compositor = ::gst_bin_get_by_name(GST_BIN(getPipeline()), "c");
+            auto const compositor = ::gst_bin_get_by_name(GST_BIN(getPipeline()), "c");
             if (compositor)
             {
                 MXL_INFO("Retrieved compositor element: {}", GST_ELEMENT_NAME(compositor));
@@ -946,7 +955,7 @@ namespace
                 GValue val = G_VALUE_INIT;
                 ::g_value_init(&val, G_TYPE_UINT);
                 ::g_object_get_property(G_OBJECT(compositor), "n-pads", &val);
-                auto numPads = ::g_value_get_uint(&val);
+                auto const numPads = ::g_value_get_uint(&val);
                 ::g_value_unset(&val);
                 MXL_INFO("Compositor has {} sink pads", numPads);
 
@@ -968,7 +977,7 @@ namespace
     private:
         std::string buildMultiviewerPipeline()
         {
-            auto pipelineDesc = std::stringstream{};
+            auto pipelineDesc = std::ostringstream{};
 
             // Create appsrc for each video flow
             for (auto i = std::size_t{0}; i < _configs.size(); ++i)
@@ -1004,7 +1013,7 @@ namespace
             return pipelineDesc.str();
         }
 
-        std::pair<std::uint64_t, std::uint64_t> getOutputResolution(std::size_t flowCount) const
+        constexpr std::pair<std::uint64_t, std::uint64_t> getOutputResolution(std::size_t flowCount) const noexcept
         {
             switch (flowCount)
             {
@@ -1023,12 +1032,12 @@ namespace
             MXL_INFO("Configuring compositor layout for {} video flows", numFlows);
 
             // Iterate through all pads to see what's available
-            GstIterator* padIter = ::gst_element_iterate_sink_pads(compositor);
+            auto* padIter = ::gst_element_iterate_sink_pads(compositor);
             GValue item = G_VALUE_INIT;
-            int padCount = 0;
+            auto padCount = 0;
             while (::gst_iterator_next(padIter, &item) == GST_ITERATOR_OK)
             {
-                GstPad* pad = static_cast<GstPad*>(::g_value_get_object(&item));
+                auto const* pad = static_cast<GstPad*>(::g_value_get_object(&item));
                 MXL_INFO("Found compositor pad: {}", GST_PAD_NAME(pad));
                 ::g_value_reset(&item);
                 padCount++;
@@ -1088,7 +1097,8 @@ namespace
             }
         }
 
-        std::tuple<std::uint64_t, std::uint64_t, std::uint64_t, std::uint64_t> getLayoutPosition(std::size_t flowCount, std::size_t index) const
+        constexpr std::tuple<std::uint64_t, std::uint64_t, std::uint64_t, std::uint64_t> getLayoutPosition(std::size_t flowCount,
+            std::size_t index) const noexcept
         {
             switch (flowCount)
             {
@@ -1163,7 +1173,7 @@ namespace
         }
 
         // Only start the pipeline once (first reader)
-        static std::once_flag startFlag;
+        static auto startFlag = std::once_flag{};
         std::call_once(startFlag, [&]() { gstPipeline.start(); });
 
         auto const rate = _configInfo.common.grainRate;
@@ -1191,7 +1201,7 @@ namespace
         while (!g_exit_requested)
         {
             auto ret = mxlStatus{};
-            mxlGrainInfo grainInfo;
+            auto grainInfo = mxlGrainInfo{};
             uint8_t* payload;
 
             auto const iterationStartTime = ::mxlGetTime();
