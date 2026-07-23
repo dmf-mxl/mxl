@@ -31,6 +31,8 @@ target_sources(mxl-fabrics-ofi-tests
             test_Provider.cpp
             test_ProviderConfig.cpp
             test_Region.cpp
+            test_DataLayout.cpp
+            test_GrainSlices.cpp
     )
 
 target_link_libraries(mxl-fabrics-ofi-tests

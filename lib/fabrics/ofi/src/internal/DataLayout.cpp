@@ -9,10 +9,56 @@
 
 namespace mxl::lib::fabrics::ofi
 {
-    DataLayout DataLayout::fromDiscrete(std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN> const& sliceSizes) noexcept
+    DataLayout DataLayout::fromDiscrete(std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN> const& sliceSizes, std::uint16_t totalSlices) noexcept
     {
-        return DataLayout{DataLayout::Discrete{.sliceSizes = sliceSizes}};
+        return DataLayout{
+            DataLayout::Discrete{.sliceSizes = sliceSizes, .totalSlices = totalSlices}
+        };
     };
+
+    std::size_t DataLayout::Discrete::totalLength() const noexcept
+    {
+        auto totalLength = std::size_t{0};
+        for (auto const s : sliceSizes)
+        {
+            if (s == 0)
+            {
+                return totalLength;
+            }
+
+            totalLength += s;
+        }
+
+        return totalLength;
+    }
+
+    std::size_t DataLayout::Discrete::activePlaneCount() const noexcept
+    {
+        auto count = std::size_t{0};
+        for (auto s : sliceSizes)
+        {
+            if (s == 0)
+            {
+                break;
+            }
+            ++count;
+        }
+        return count;
+    }
+
+    std::uint32_t DataLayout::Discrete::planePayloadOffset(std::size_t planeIndex, std::uint32_t grainPayloadOffset) const noexcept
+    {
+        auto offset = grainPayloadOffset;
+        for (std::size_t i = 0; i < planeIndex && i < MXL_MAX_PLANES_PER_GRAIN; ++i)
+        {
+            if (sliceSizes[i] == 0)
+            {
+                break;
+            }
+            offset += static_cast<std::uint32_t>(totalSlices) * sliceSizes[i];
+        }
+        return offset;
+    }
 
     DataLayout DataLayout::fromContinuous(std::size_t sampleSize, std::size_t channelCount, std::size_t bufferLength) noexcept
     {
