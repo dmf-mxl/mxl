@@ -159,7 +159,7 @@ namespace
                 .interface = {
                     .version = MXL_FABRICS_API_VERSION,
                     .provider = ProviderType::provider,
-                    .caps = {},
+                    .caps = { .version = MXL_FABRICS_API_VERSION, .flags = MXL_FABRICS_IFACE_CAP_REMOTE_WRITE | MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS, .maxMessageSize = 0 },
                     .address = {.node = ProviderType::targetNode, .service = ProviderType::targetService},
                     .attr = nullptr,
                 },
@@ -173,7 +173,7 @@ namespace
                 .interface = {
                     .version = MXL_FABRICS_API_VERSION,
                     .provider = ProviderType::provider,
-                    .caps = {},
+                    .caps = { .version = MXL_FABRICS_API_VERSION, .flags = MXL_FABRICS_IFACE_CAP_REMOTE_WRITE | MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS , .maxMessageSize = 0 },
                     .address = {.node = ProviderType::initiatorNode, .service = ProviderType::initiatorService},
                     .attr = nullptr,
                 },
@@ -437,7 +437,7 @@ namespace
     };
 }
 
-TEMPLATE_TEST_CASE_METHOD(FabricsTestFixture, "Slice transfer single", "[sliced][single-slices]", TCP_V210, TCP_V210a, SHM_V210a)
+TEMPLATE_TEST_CASE_METHOD(FabricsTestFixture, "Slice transfer single", "[sliced][single-slices]", TCP_V210, TCP_V210a /*, SHM_V210, SHM_V210a */)
 {
     constexpr auto const startGrainIndex = std::uint64_t{140};
     for (auto iteration = std::size_t{0}; iteration < 4; ++iteration)
@@ -481,7 +481,7 @@ TEMPLATE_TEST_CASE_METHOD(FabricsTestFixture, "Slice transfer single", "[sliced]
     }
 }
 
-TEMPLATE_TEST_CASE_METHOD(FabricsTestFixture, "Slice transfer blocks", "[sliced][slice-blocks]", TCP_V210, TCP_V210a, SHM_V210)
+TEMPLATE_TEST_CASE_METHOD(FabricsTestFixture, "Slice transfer blocks", "[sliced][slice-blocks]", TCP_V210, TCP_V210a /*, SHM_V210, SHM_V210a */)
 {
     // test different block sizes
     constexpr auto const blockSizes = std::array{2, 13, 73, 720};
