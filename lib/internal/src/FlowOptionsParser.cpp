@@ -67,6 +67,16 @@ namespace mxl::lib
                 throw std::invalid_argument{"maxSyncBatchSizeHint must be a multiple of maxCommitBatchSizeHint."};
             }
         }
+
+        auto contiguousGrainsIt = _root.find("contiguousGrains");
+        if (contiguousGrainsIt != _root.end())
+        {
+            if (!contiguousGrainsIt->second.is<bool>())
+            {
+                throw std::invalid_argument{"contiguousGrains must be a boolean."};
+            }
+            _useContiguousGrains = contiguousGrainsIt->second.get<bool>();
+        }
     }
 
     std::optional<std::uint32_t> FlowOptionsParser::getMaxCommitBatchSizeHint() const
@@ -77,5 +87,10 @@ namespace mxl::lib
     std::optional<std::uint32_t> FlowOptionsParser::getMaxSyncBatchSizeHint() const
     {
         return _maxSyncBatchSizeHint;
+    }
+
+    bool FlowOptionsParser::getUseContiguousGrains() const
+    {
+        return _useContiguousGrains;
     }
 } // namespace mxl::lib
