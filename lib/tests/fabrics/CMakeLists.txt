@@ -26,6 +26,7 @@ target_sources(mxl-fabrics-tests
         PRIVATE
             test_basics.cpp
             test_interfaces.cpp
+            test_Sliced.cpp
     )
 
 target_link_libraries(mxl-fabrics-tests

@@ -178,8 +178,9 @@ namespace mxl::lib::fabrics::ofi
                 regions.emplace_back(grainInfoBaseAddr, grainInfoSize + grainPayloadSize, nullptr, nullptr, Region::Location::host());
             }
 
+            auto const totalSlices = discreteFlow.grainAt(0)->header.info.totalSlices;
             return {std::move(regions),
-                DataLayout::fromDiscrete(std::to_array(discreteFlow.flowInfo()->config.discrete.sliceSizes)),
+                DataLayout::fromDiscrete(std::to_array(discreteFlow.flowInfo()->config.discrete.sliceSizes), totalSlices),
                 discreteFlow.flowInfo()->config.common.maxSyncBatchSizeHint};
         }
         else if (mxlIsContinuousDataFormat(static_cast<int>(flow.flowInfo()->config.common.format)))
