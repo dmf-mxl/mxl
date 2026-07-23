@@ -60,7 +60,7 @@ namespace mxl::lib::fabrics::ofi
         auto immData = completionData->data();
         if (!immData)
         {
-            throw Exception::invalidState("Received a completion without immediate data.");
+            return {};
         }
 
         auto [slot, slice] = ImmDataGrain{static_cast<std::uint32_t>(*immData)}.unpack();
