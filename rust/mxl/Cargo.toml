@@ -21,6 +21,13 @@ serde.workspace = true
 clap.workspace = true
 serde_json.workspace = true
 tracing-subscriber.workspace = true
+ctrlc = "3"
+base64 = "0.22"
 
 [features]
 mxl-not-built = ["mxl-sys/mxl-not-built"]
+mxl-fabrics-ofi = ["mxl-sys/mxl-fabrics-ofi"]
+
+[[example]]
+name = "fabrics-demo"
+required-features = ["mxl-fabrics-ofi"]

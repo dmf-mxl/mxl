@@ -71,6 +71,11 @@ impl FlowReader {
         Self { context, reader }
     }
 
+    #[allow(dead_code)]
+    pub(crate) fn inner(&self) -> mxl_sys::FlowReader {
+        self.reader
+    }
+
     pub fn get_info(&self) -> Result<FlowInfo> {
         get_flow_info(&self.context, self.reader)
     }

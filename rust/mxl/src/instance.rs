@@ -3,6 +3,8 @@
 
 use std::{ffi::CString, sync::Arc};
 
+#[cfg(feature = "mxl-fabrics-ofi")]
+use crate::api::MxlFabricsAPiHandle;
 use crate::{Error, FlowConfigInfo, FlowReader, FlowWriter, Result, api::MxlApiHandle};
 
 /// This struct stores the context that is shared by all objects.
@@ -239,5 +241,15 @@ impl MxlInstance {
         let context = Arc::into_inner(self.context)
             .ok_or_else(|| Error::Other("Instance is still in use.".to_string()))?;
         context.destroy()
+    }
+
+    #[cfg(feature = "mxl-fabrics-ofi")]
+    pub fn create_fabrics_instance(
+        &self,
+        fabrics_api: &MxlFabricsAPiHandle,
+    ) -> Result<crate::fabrics::FabricsInstance> {
+        use crate::fabrics;
+
+        fabrics::create_instance(self.context.clone(), fabrics_api)
     }
 }

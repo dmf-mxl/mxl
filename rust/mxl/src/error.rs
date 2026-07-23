@@ -23,6 +23,12 @@ pub enum Error {
     InvalidArg,
     #[error("Conflict")]
     Conflict,
+    #[error("Not ready")]
+    NotReady,
+    #[error("Not found")]
+    NotFound,
+    #[error("Interrupted")]
+    Interrupted,
     /// The error is not defined in the MXL API, but it is used to wrap other errors.
     #[error("Other error: {0}")]
     Other(String),
@@ -47,6 +53,9 @@ impl Error {
             mxl_sys::MXL_ERR_TIMEOUT => Err(Error::Timeout),
             mxl_sys::MXL_ERR_INVALID_ARG => Err(Error::InvalidArg),
             mxl_sys::MXL_ERR_CONFLICT => Err(Error::Conflict),
+            mxl_sys::MXL_ERR_NOT_READY => Err(Error::NotReady),
+            mxl_sys::MXL_ERR_NOT_FOUND => Err(Error::NotFound),
+            mxl_sys::MXL_ERR_INTERRUPTED => Err(Error::Interrupted),
             other => Err(Error::Unknown(other)),
         }
     }
