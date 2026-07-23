@@ -1037,7 +1037,7 @@ namespace
             auto padCount = 0;
             while (::gst_iterator_next(padIter, &item) == GST_ITERATOR_OK)
             {
-                auto const* pad = static_cast<GstPad*>(::g_value_get_object(&item));
+                auto* const pad = static_cast<GstPad*>(::g_value_get_object(&item));
                 MXL_INFO("Found compositor pad: {}", GST_PAD_NAME(pad));
                 ::g_value_reset(&item);
                 padCount++;
