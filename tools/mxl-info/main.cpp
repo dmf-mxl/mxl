@@ -116,27 +116,34 @@ namespace
         void outputLatency(std::ostream& os, std::uint64_t headIndex, ::mxlRational const& grainRate, std::uint64_t limit)
         {
             auto const now = ::mxlGetTime();
-
             auto const currentIndex = ::mxlTimestampToIndex(&grainRate, now);
-            // The latency should never really be negative (grains in the future), but in case of clock mismatch, incorrect code or similar, this may
-            // happen. This tool is often used for basic problem diagnostics, so let's handle this gracefully.
+
+            // Grain headIndex spans [timestamp(headIndex), timestamp(headIndex + 1)).
+            // The actual event time is somewhere in that interval, so the latency is a range.
+            auto const grainStartNs = mxlIndexToTimestamp(&grainRate, headIndex);
+            auto const grainEndNs = mxlIndexToTimestamp(&grainRate, headIndex + 1);
+
             bool inTheFuture;
             std::uint64_t latencyGrains;
-            std::uint64_t latencyNs;
             if (currentIndex >= headIndex)
             {
                 inTheFuture = false;
                 latencyGrains = currentIndex - headIndex;
-                latencyNs = now - mxlIndexToTimestamp(&grainRate, headIndex);
             }
             else
             {
                 inTheFuture = true;
                 latencyGrains = headIndex - currentIndex;
-                latencyNs = mxlIndexToTimestamp(&grainRate, headIndex) - now;
             }
+
+            auto const signedDiffMs = [](std::uint64_t a, std::uint64_t b) -> double {
+                return (a >= b) ? static_cast<double>(a - b) / 1'000'000.0 : -static_cast<double>(b - a) / 1'000'000.0;
+            };
+
+            auto const latencyMinMs = signedDiffMs(now, grainEndNs);
+            auto const latencyMaxMs = signedDiffMs(now, grainStartNs);
+
             char const* sign = (inTheFuture ? "-" : "");
-            auto const latencyMs = latencyNs / 1'000'000.0;
 
             if (isTerminal(os))
             {
@@ -150,12 +157,16 @@ namespace
                     color = fmt::color::yellow;
                 }
 
-                os << '\t' << fmt::format(fmt::fg(color), "{: >20}: {}{}, {}{:.6f}", "Latency (grains, ms)", sign, latencyGrains, sign, latencyMs)
+                os << '\t'
+                   << fmt::format(fmt::fg(color), "{: >20}: {}{}, [{:.2f} .. {:.2f}]", "Latency (grains, ms)", sign, latencyGrains, latencyMinMs,
+                                  latencyMaxMs)
                    << std::endl;
             }
             else
             {
-                os << '\t' << fmt::format("{: >20}: {}{}, {}{:.6f}", "Latency (grains, ms)", sign, latencyGrains, sign, latencyMs) << std::endl;
+                os << '\t'
+                   << fmt::format("{: >20}: {}{}, [{:.2f} .. {:.2f}]", "Latency (grains, ms)", sign, latencyGrains, latencyMinMs, latencyMaxMs)
+                   << std::endl;
             }
         }
 
@@ -210,9 +221,13 @@ namespace
             }
 
             os << '\n'
-               << '\t' << fmt::format("{: >20}: {}", "Head index", info.runtime.headIndex) << '\n'
-               << '\t' << fmt::format("{: >20}: {}", "Last write time", info.runtime.lastWriteTime) << '\n'
-               << '\t' << fmt::format("{: >20}: {}", "Last read time", info.runtime.lastReadTime) << '\n';
+               << '\t' << fmt::format("{: >20}: {}", "Head index", info.runtime.headIndex) << '\n';
+
+            if (mxlIsDiscreteDataFormat(info.config.common.format))
+            {
+                os << '\t' << fmt::format("{: >20}: {}", "Last write time", info.runtime.lastWriteTime) << '\n'
+                   << '\t' << fmt::format("{: >20}: {}", "Last read time", info.runtime.lastReadTime) << '\n';
+            }
 
             return os;
         }
