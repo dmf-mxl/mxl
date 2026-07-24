@@ -137,11 +137,11 @@ namespace mxl::lib::fabrics::ofi
 
         /** \copydoc Initiator::makeProgress()
          */
-        virtual bool makeProgress() final;
+        virtual Initiator::MakeProgressResult makeProgress() final;
 
         /** \copydoc Initiator::makeProgressBlocking()
          */
-        virtual bool makeProgressBlocking(std::chrono::steady_clock::duration timeout) final;
+        virtual Initiator::MakeProgressResult makeProgressBlocking(std::chrono::steady_clock::duration timeout) final;
 
     private:
         /** \brief Construct a new RDMInitiator object.
@@ -167,7 +167,7 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Returns true if any of the endpoints contained in this initiator have pending work.
          */
         [[nodiscard]]
-        bool hasPendingWork() const noexcept;
+        Initiator::MakeProgressResult afterProgressResult() const noexcept;
 
         /** \brief Block on the completion queue with a timeout.
          */

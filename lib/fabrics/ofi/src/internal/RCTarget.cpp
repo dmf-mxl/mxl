@@ -63,60 +63,14 @@ namespace mxl::lib::fabrics::ofi
         , _state(WaitForConnectionRequest{std::move(pep)})
     {}
 
-    std::optional<Target::GrainReadResult> RCTarget::readGrain()
+    std::optional<Target::ReadResult> RCTarget::read()
     {
-        if (!_proto->canReadGrains())
-        {
-            throw Exception::unsupportedOperation("The current protocol does not support reading grains.");
-        }
-
-        if (auto res = readNext<QueueReadMode::NonBlocking>(std::chrono::steady_clock::duration::zero()); res)
-        {
-            return std::get<Target::GrainReadResult>(*res);
-        }
-        return std::nullopt;
+        return readNext<QueueReadMode::NonBlocking>(std::chrono::steady_clock::duration::zero());
     }
 
-    std::optional<Target::GrainReadResult> RCTarget::readGrainBlocking(std::chrono::steady_clock::duration timeout)
+    std::optional<Target::ReadResult> RCTarget::readBlocking(std::chrono::steady_clock::duration timeout)
     {
-        if (!_proto->canReadGrains())
-        {
-            throw Exception::unsupportedOperation("The current protocol does not support reading grains.");
-        }
-
-        if (auto res = readNext<QueueReadMode::Blocking>(timeout); res)
-        {
-            return std::get<Target::GrainReadResult>(*res);
-        }
-        return std::nullopt;
-    }
-
-    std::optional<Target::SampleReadResult> RCTarget::readSamples()
-    {
-        if (!_proto->canReadSamples())
-        {
-            throw Exception::unsupportedOperation("The current protocol does not support reading samples.");
-        }
-
-        if (auto res = readNext<QueueReadMode::NonBlocking>(std::chrono::steady_clock::duration::zero()); res)
-        {
-            return std::get<Target::SampleReadResult>(*res);
-        }
-        return std::nullopt;
-    }
-
-    std::optional<Target::SampleReadResult> RCTarget::readSamplesBlocking(std::chrono::steady_clock::duration timeout)
-    {
-        if (!_proto->canReadSamples())
-        {
-            throw Exception::unsupportedOperation("The current protocol does not support reading samples.");
-        }
-
-        if (auto res = readNext<QueueReadMode::Blocking>(timeout); res)
-        {
-            return std::get<Target::SampleReadResult>(*res);
-        }
-        return std::nullopt;
+        return readNext<QueueReadMode::Blocking>(timeout);
     }
 
     void RCTarget::shutdown()
@@ -131,67 +85,106 @@ namespace mxl::lib::fabrics::ofi
             overloaded{[](std::monostate) -> State { throw Exception::invalidState("Target is in an invalid state an can no longer make progress"); },
                 [&](WaitForConnectionRequest state) -> State
                 {
-                    auto event = readEventQueue<queueReadMode>(*state.pep.eventQueue(), timeout);
-
-                    // Check if the entry is available and is a connection request
-                    if (event && event->isConnReq())
+                    try
                     {
-                        auto remoteAddr = FabricAddress::fromDestination(event->connReq().info());
-                        MXL_INFO("Accept connection from: {}", remoteAddr.toString());
+                        auto event = readEventQueue<queueReadMode>(*state.pep.eventQueue(), timeout);
 
-                        auto cqAttr = CompletionQueue::Attributes::defaults();
-                        cqAttr.size = _setupOptions.cqDepth.value_or(CompletionQueue::Attributes::DEFAULT_SIZE);
-                        auto cq = CompletionQueue::open(_domain, cqAttr);
-                        auto endpoint = Endpoint::create(_domain, state.pep.id(), event->connReq().info());
-                        endpoint.bind(cq, FI_RECV);
+                        // Check if the entry is available and is a connection request
+                        if (event && event->isConnReq())
+                        {
+                            auto remoteAddr = FabricAddress::fromDestination(event->connReq().info());
+                            MXL_INFO("Accept connection from: {}", remoteAddr.toString());
 
-                        auto eq = EventQueue::open(_domain->fabric(), EventQueue::Attributes::defaults());
-                        endpoint.bind(eq);
+                            auto cqAttr = CompletionQueue::Attributes::defaults();
+                            cqAttr.size = _setupOptions.cqDepth.value_or(CompletionQueue::Attributes::DEFAULT_SIZE);
+                            auto cq = CompletionQueue::open(_domain, cqAttr);
+                            auto endpoint = Endpoint::create(_domain, state.pep.id(), event->connReq().info());
+                            endpoint.bind(cq, FI_RECV);
 
-                        // we are now ready to accept the connection
-                        endpoint.accept();
-                        MXL_DEBUG("Accepted the connection waiting for connected event notification.");
+                            auto eq = EventQueue::open(_domain->fabric(), EventQueue::Attributes::defaults());
+                            endpoint.bind(eq);
 
-                        // Return the new state as the variant type
-                        return RCTarget::WaitForConnection{std::move(endpoint)};
+                            // we are now ready to accept the connection
+                            endpoint.accept();
+                            MXL_DEBUG("Accepted the connection waiting for connected event notification.");
+
+                            // Return the new state as the variant type
+                            return RCTarget::WaitForConnection{std::move(endpoint)};
+                        }
+
+                        return WaitForConnectionRequest{.pep = std::move(state.pep)};
                     }
+                    catch (FabricException const& ex)
+                    {
+                        if (ex.isInterrupted())
+                        {
+                            result = std::make_optional<Target::Interrupted>();
+                            return WaitForConnectionRequest{.pep = std::move(state.pep)};
+                        }
 
-                    return WaitForConnectionRequest{.pep = std::move(state.pep)};
+                        throw;
+                    }
                 },
                 [&](WaitForConnection state) -> State
                 {
-                    auto event = readEventQueue<queueReadMode>(*state.ep.eventQueue(), timeout);
-
-                    if (event && event->isConnected())
+                    try
                     {
-                        MXL_INFO("Received connected event notification, now connected.");
+                        auto event = readEventQueue<queueReadMode>(*state.ep.eventQueue(), timeout);
 
-                        // We have a connected event, so we can transition to the connected state
-                        auto connected = Connected{.ep = std::move(state.ep)};
+                        if (event && event->isConnected())
+                        {
+                            MXL_INFO("Received connected event notification, now connected.");
 
-                        // The endpoint is now ready, initialize the protocol.
-                        _proto->start(connected.ep);
+                            // We have a connected event, so we can transition to the connected state
+                            auto connected = Connected{.ep = std::move(state.ep)};
 
-                        return connected;
+                            // The endpoint is now ready, initialize the protocol.
+                            _proto->start(connected.ep);
+
+                            return connected;
+                        }
+
+                        return WaitForConnection{std::move(state.ep)};
                     }
+                    catch (FabricException const& ex)
+                    {
+                        if (ex.isInterrupted())
+                        {
+                            result = std::make_optional<Target::Interrupted>();
+                            return WaitForConnection{.ep = std::move(state.ep)};
+                        }
 
-                    return WaitForConnection{std::move(state.ep)};
+                        throw;
+                    }
                 },
                 [&](RCTarget::Connected state) -> State
                 {
-                    auto [completion, event] = readEndpointQueues<queueReadMode>(state.ep, timeout);
-                    if (event && event.value().isShutdown())
+                    try
                     {
-                        MXL_INFO("Remote endpoint has shutdown the connection. Transitioning to listening to new connection.");
-                        return WaitForConnectionRequest{.pep = makeListener(state.ep.domain()->fabric())};
-                    }
+                        auto [completion, event] = readEndpointQueues<queueReadMode>(state.ep, timeout);
+                        if (event && event.value().isShutdown())
+                        {
+                            MXL_INFO("Remote endpoint has shutdown the connection. Transitioning to listening to new connection.");
+                            return WaitForConnectionRequest{.pep = makeListener(state.ep.domain()->fabric())};
+                        }
 
-                    if (completion)
+                        if (completion)
+                        {
+                            result = _proto->read(state.ep, *completion);
+                        }
+
+                        return Connected{.ep = std::move(state.ep)};
+                    }
+                    catch (FabricException const& ex)
                     {
-                        result = _proto->read(state.ep, *completion);
-                    }
+                        if (ex.isInterrupted())
+                        {
+                            result = std::make_optional<Target::Interrupted>();
+                            return Connected{.ep = std::move(state.ep)};
+                        }
 
-                    return Connected{.ep = std::move(state.ep)};
+                        throw;
+                    }
                 }},
             std::move(_state));
 

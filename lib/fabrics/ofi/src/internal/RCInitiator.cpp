@@ -358,18 +358,18 @@ namespace mxl::lib::fabrics::ofi
         }
     }
 
-    bool RCInitiator::hasPendingWork() const noexcept
+    Initiator::MakeProgressResult RCInitiator::afterProgressResult() const noexcept
     {
         // Check if any of the targets have pending work.
         for (auto& [_, target] : _targets)
         {
             if (target.hasPendingWork())
             {
-                return true;
+                return Initiator::NotReady{};
             }
         }
 
-        return false;
+        return Initiator::Ready{};
     }
 
     bool RCInitiator::hasTarget() const noexcept
@@ -392,7 +392,7 @@ namespace mxl::lib::fabrics::ofi
         std::erase_if(_targets, [](auto const& item) { return item.second.canEvict(); });
     }
 
-    void RCInitiator::blockOnCQ(std::chrono::steady_clock::duration timeout)
+    Initiator::MakeProgressResult RCInitiator::blockOnCQ(std::chrono::steady_clock::duration timeout)
     {
         // A zero timeout would cause the queue to block indefinetly, which
         // is not our documented behaviour.
@@ -400,30 +400,45 @@ namespace mxl::lib::fabrics::ofi
         {
             // So just behave exactly like the non-blocking variant.
             makeProgress();
-            return;
+            return afterProgressResult();
         }
 
         for (;;)
         {
-            auto completion = _cq->readBlocking(timeout);
-            if (!completion)
+            try
             {
-                // No completion available, if we were flushing any endpoint, transition their state to done.
-                for (auto& [_, target] : _targets)
+                auto completion = _cq->readBlocking(timeout);
+                if (!completion)
                 {
-                    target.terminate();
+                    // No completion available, if we were flushing any endpoint, transition their state to done.
+                    for (auto& [_, target] : _targets)
+                    {
+                        target.terminate();
+                    }
+
+                    return afterProgressResult();
                 }
-                return;
-            }
 
-            // Find the endpoint that this completion was generated from
-            auto ep = _targets.find(Endpoint::idFromToken(completion->token()));
-            if (ep == _targets.end())
+                // Find the endpoint that this completion was generated from
+                auto ep = _targets.find(Endpoint::idFromToken(completion->token()));
+                if (ep == _targets.end())
+                {
+                    MXL_WARN("Received completion for an unknown endpoint");
+                }
+
+                ep->second.consume(*completion);
+
+                return afterProgressResult();
+            }
+            catch (FabricException const& ex)
             {
-                MXL_WARN("Received completion for an unknown endpoint");
-            }
+                if (ex.isInterrupted())
+                {
+                    return Initiator::Interrupted{};
+                }
 
-            return ep->second.consume(*completion);
+                throw;
+            }
         }
     }
 
@@ -478,7 +493,7 @@ namespace mxl::lib::fabrics::ofi
         }
     }
 
-    bool RCInitiator::makeProgress()
+    Initiator::MakeProgressResult RCInitiator::makeProgress()
     {
         if (!hasTarget())
         {
@@ -495,18 +510,17 @@ namespace mxl::lib::fabrics::ofi
         // Evict any peers that are dead and no longer will make progress.
         evictDeadEndpoints();
 
-        return hasPendingWork();
+        return afterProgressResult();
     }
 
-    bool RCInitiator::makeProgressBlocking(std::chrono::steady_clock::duration timeout)
+    Initiator::MakeProgressResult RCInitiator::makeProgressBlocking(std::chrono::steady_clock::duration timeout)
     {
         // If the timeout is less than our maintainance interval, just check all the queues once, execute all maintainance tasks once
         // and block on the completion queue for the rest of the time.
         if (timeout < EQPollInterval)
         {
             makeProgress();
-            blockOnCQ(timeout);
-            return hasPendingWork();
+            return blockOnCQ(timeout);
         }
 
         auto deadline = std::chrono::steady_clock::now() + timeout;
@@ -514,9 +528,9 @@ namespace mxl::lib::fabrics::ofi
         for (;;)
         {
             // Poll all queues, execute all maintainance actions
-            if (!makeProgress())
+            if (std::holds_alternative<Initiator::Ready>(makeProgress()))
             {
-                return false;
+                return Initiator::Ready{};
             }
 
             // Calculate the remaining time until the user wants the blocking function to return. If there is no time left
@@ -524,14 +538,18 @@ namespace mxl::lib::fabrics::ofi
             auto timeUntilDeadline = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - std::chrono::steady_clock::now());
             if (timeUntilDeadline <= decltype(timeUntilDeadline){0})
             {
-                return hasPendingWork();
+                return afterProgressResult();
             }
 
             // Block on the completion queue until a completion arrives, or the interval timeout occurs.
-            blockOnCQ(std::min(EQPollInterval, timeUntilDeadline));
-        }
+            auto const res = blockOnCQ(std::min(EQPollInterval, timeUntilDeadline));
+            if (std::holds_alternative<Initiator::NotReady>(res))
+            {
+                continue;
+            }
 
-        return hasPendingWork();
+            return res;
+        }
     }
 
     void RCInitiator::shutdown()
