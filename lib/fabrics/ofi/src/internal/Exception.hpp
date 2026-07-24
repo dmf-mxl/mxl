@@ -138,6 +138,9 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         int fiErrno() const noexcept;
 
+        [[nodiscard]]
+        bool isInterrupted() const noexcept;
+
     private:
         int _fiErrno;
     };

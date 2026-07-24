@@ -218,15 +218,15 @@ namespace mxl::lib::fabrics::ofi
     }
 
     // makeProgress
-    bool RDMInitiator::makeProgress()
+    Initiator::MakeProgressResult RDMInitiator::makeProgress()
     {
         activateIdleEndpoints();
         pollCQ();
-        return hasPendingWork();
+        return afterProgressResult();
     }
 
     // makeProgressBlocking
-    bool RDMInitiator::makeProgressBlocking(std::chrono::steady_clock::duration timeout)
+    Initiator::MakeProgressResult RDMInitiator::makeProgressBlocking(std::chrono::steady_clock::duration timeout)
     {
         auto now = std::chrono::steady_clock::now();
         activateIdleEndpoints();
@@ -235,14 +235,25 @@ namespace mxl::lib::fabrics::ofi
         auto remaining = timeout - elapsed;
         if (remaining.count() >= 0)
         {
-            blockOnCQ(remaining);
+            try
+            {
+                blockOnCQ(remaining);
+            }
+            catch (FabricException const& ex)
+            {
+                if (ex.isInterrupted())
+                {
+                    return Initiator::Interrupted{};
+                }
+                throw;
+            }
         }
         else
         {
             pollCQ();
         }
 
-        return hasPendingWork();
+        return afterProgressResult();
     }
 
     RDMInitiatorTarget& RDMInitiator::findRemoteByEndpoint(Endpoint::Id id)
@@ -267,17 +278,17 @@ namespace mxl::lib::fabrics::ofi
         return it->second;
     }
 
-    bool RDMInitiator::hasPendingWork() const noexcept
+    Initiator::MakeProgressResult RDMInitiator::afterProgressResult() const noexcept
     {
         for (auto const& [_, remote] : _targets)
         {
             if (remote.hasPendingWork())
             {
-                return true;
+                return Initiator::NotReady{};
             }
         }
 
-        return false;
+        return Initiator::Ready{};
     }
 
     void RDMInitiator::blockOnCQ(std::chrono::steady_clock::duration timeout)

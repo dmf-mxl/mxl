@@ -51,9 +51,9 @@ struct Config
     InterfaceSelection interface;
 };
 
-void signal_handler(int)
+void signal_handler(int signal)
 {
-    g_exit_requested = 1;
+    g_exit_requested = signal;
 }
 
 std::string capabilitiesString(std::uint64_t caps)
@@ -317,7 +317,7 @@ public:
             status = makeProgress(std::chrono::milliseconds(250));
             if (status == MXL_ERR_INTERRUPTED)
             {
-                return MXL_STATUS_OK;
+                return status;
             }
 
             if (status != MXL_ERR_NOT_READY && status != MXL_STATUS_OK)
@@ -423,7 +423,7 @@ public:
                 status = makeProgress(std::chrono::milliseconds(10));
                 if (status == MXL_ERR_INTERRUPTED)
                 {
-                    return MXL_STATUS_OK;
+                    return status;
                 }
 
                 if (status != MXL_ERR_NOT_READY && status != MXL_STATUS_OK)
@@ -513,7 +513,7 @@ public:
                 status = makeProgress(std::chrono::milliseconds(10));
                 if (status == MXL_ERR_INTERRUPTED)
                 {
-                    return MXL_STATUS_OK;
+                    return status;
                 }
 
                 if (status != MXL_ERR_NOT_READY && status != MXL_STATUS_OK)
@@ -761,7 +761,7 @@ public:
             }
             else if (status == MXL_ERR_INTERRUPTED)
             {
-                return MXL_STATUS_OK;
+                return status;
             }
             else if (status != MXL_STATUS_OK)
             {
@@ -1004,6 +1004,11 @@ int main(int argc, char** argv)
 
         if (status = app.run(); status != MXL_STATUS_OK)
         {
+            if (status == MXL_ERR_INTERRUPTED)
+            {
+                return 128 + g_exit_requested;
+            }
+
             MXL_ERROR("Failed to run initiator with status '{}'", static_cast<int>(status));
             return status;
         }
@@ -1058,6 +1063,11 @@ int main(int argc, char** argv)
 
         if (status = app.run(); status != MXL_STATUS_OK)
         {
+            if (status == MXL_ERR_INTERRUPTED)
+            {
+                return 128 + g_exit_requested;
+            }
+
             MXL_ERROR("Failed to run target with status '{}'", static_cast<int>(status));
             return status;
         }

@@ -23,6 +23,7 @@
 #include "internal/Target.hpp"
 #include "internal/TargetInfo.hpp"
 #include "mxl/platform.h"
+#include "VariantUtils.hpp"
 
 namespace ofi = mxl::lib::fabrics::ofi;
 
@@ -238,13 +239,24 @@ mxlStatus mxlFabricsTargetReadGrainNonBlocking(mxlFabricsTarget in_target, uint6
     return ofi::try_run(
         [&]()
         {
-            auto res = ofi::TargetWrapper::fromAPI(in_target)->readGrain();
-            if (!res)
+            auto const result = ofi::TargetWrapper::fromAPI(in_target)->read();
+            if (!result)
             {
                 return MXL_ERR_NOT_READY;
             }
 
-            *out_grainIndex = res->grainIndex;
+            if (std::holds_alternative<ofi::Target::Interrupted>(*result))
+            {
+                return MXL_ERR_INTERRUPTED;
+            }
+
+            auto const grainResult = std::get_if<ofi::Target::GrainReadResult>(&*result);
+            if (grainResult == nullptr)
+            {
+                return MXL_ERR_INVALID_STATE;
+            }
+
+            *out_grainIndex = grainResult->grainIndex;
             return MXL_STATUS_OK;
         },
         "Failed to try for new grain");
@@ -261,13 +273,24 @@ mxlStatus mxlFabricsTargetReadGrain(mxlFabricsTarget in_target, uint16_t in_time
     return ofi::try_run(
         [&]()
         {
-            auto res = ofi::TargetWrapper::fromAPI(in_target)->readGrainBlocking(std::chrono::milliseconds(in_timeoutMs));
-            if (!res)
+            auto const result = ofi::TargetWrapper::fromAPI(in_target)->readBlocking(std::chrono::milliseconds(in_timeoutMs));
+            if (!result)
             {
                 return MXL_ERR_NOT_READY;
             }
 
-            *out_grainIndex = res->grainIndex;
+            if (std::holds_alternative<ofi::Target::Interrupted>(*result))
+            {
+                return MXL_ERR_INTERRUPTED;
+            }
+
+            auto const grainResult = std::get_if<ofi::Target::GrainReadResult>(&*result);
+            if (grainResult == nullptr)
+            {
+                return MXL_ERR_INVALID_STATE;
+            }
+
+            *out_grainIndex = grainResult->grainIndex;
             return MXL_STATUS_OK;
         },
         "Failed to wait for new grain");
@@ -284,14 +307,25 @@ mxlStatus mxlFabricsTargetReadSamplesNonBlocking(mxlFabricsTarget in_target, uin
     return ofi::try_run(
         [&]()
         {
-            auto res = ofi::TargetWrapper::fromAPI(in_target)->readSamples();
-            if (!res)
+            auto const result = ofi::TargetWrapper::fromAPI(in_target)->read();
+            if (!result)
             {
                 return MXL_ERR_NOT_READY;
             }
 
-            *out_headIndex = res->headIndex;
-            *out_count = res->count;
+            if (std::holds_alternative<ofi::Target::Interrupted>(*result))
+            {
+                return MXL_ERR_INTERRUPTED;
+            }
+
+            auto const sampleResult = std::get_if<ofi::Target::SampleReadResult>(&*result);
+            if (sampleResult == nullptr)
+            {
+                return MXL_ERR_INVALID_STATE;
+            }
+
+            *out_headIndex = sampleResult->headIndex;
+            *out_count = sampleResult->count;
             return MXL_STATUS_OK;
         },
         "Failed to try for new samples");
@@ -308,14 +342,25 @@ mxlStatus mxlFabricsTargetReadSamples(mxlFabricsTarget in_target, uint16_t in_ti
     return ofi::try_run(
         [&]()
         {
-            auto res = ofi::TargetWrapper::fromAPI(in_target)->readSamplesBlocking(std::chrono::milliseconds(in_timeoutMs));
-            if (!res)
+            auto const result = ofi::TargetWrapper::fromAPI(in_target)->readBlocking(std::chrono::milliseconds(in_timeoutMs));
+            if (!result)
             {
                 return MXL_ERR_NOT_READY;
             }
 
-            *out_headIndex = res->headIndex;
-            *out_count = res->count;
+            if (std::holds_alternative<ofi::Target::Interrupted>(*result))
+            {
+                return MXL_ERR_INTERRUPTED;
+            }
+
+            auto const sampleResult = std::get_if<ofi::Target::SampleReadResult>(&*result);
+            if (sampleResult == nullptr)
+            {
+                return MXL_ERR_INVALID_STATE;
+            }
+
+            *out_headIndex = sampleResult->headIndex;
+            *out_count = sampleResult->count;
             return MXL_STATUS_OK;
         },
         "Failed to wait for new samples");
@@ -462,12 +507,14 @@ mxlStatus mxlFabricsInitiatorMakeProgressNonBlocking(mxlFabricsInitiator in_init
     return ofi::try_run(
         [&]()
         {
-            if (ofi::InitiatorWrapper::fromAPI(in_initiator)->makeProgress())
-            {
-                return MXL_ERR_NOT_READY;
-            }
-
-            return MXL_STATUS_OK;
+            auto const result = ofi::InitiatorWrapper::fromAPI(in_initiator)->makeProgress();
+            return std::visit(
+                ofi::overloaded{
+                    [](ofi::Initiator::Ready) { return MXL_STATUS_OK; },
+                    [](ofi::Initiator::NotReady) { return MXL_ERR_NOT_READY; },
+                    [](ofi::Initiator::Interrupted) { return MXL_ERR_INTERRUPTED; },
+                },
+                result);
         },
         "Failed to make progress in the initiator");
 }
@@ -483,12 +530,14 @@ mxlStatus mxlFabricsInitiatorMakeProgressBlocking(mxlFabricsInitiator in_initiat
     return ofi::try_run(
         [&]()
         {
-            if (ofi::InitiatorWrapper::fromAPI(in_initiator)->makeProgressBlocking(std::chrono::milliseconds(in_timeoutMs)))
-            {
-                return MXL_ERR_NOT_READY;
-            }
-
-            return MXL_STATUS_OK;
+            auto const result = ofi::InitiatorWrapper::fromAPI(in_initiator)->makeProgressBlocking(std::chrono::milliseconds(in_timeoutMs));
+            return std::visit(
+                ofi::overloaded{
+                    [](ofi::Initiator::Ready) { return MXL_STATUS_OK; },
+                    [](ofi::Initiator::NotReady) { return MXL_ERR_NOT_READY; },
+                    [](ofi::Initiator::Interrupted) { return MXL_ERR_INTERRUPTED; },
+                },
+                result);
         },
         "Failed to make progress in the initiator");
 }

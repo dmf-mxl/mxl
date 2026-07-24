@@ -16,6 +16,18 @@ namespace mxl::lib::fabrics::ofi
     class Initiator
     {
     public:
+        struct Ready
+        {};
+
+        struct NotReady
+        {};
+
+        struct Interrupted
+        {};
+
+        using MakeProgressResult = std::variant<Ready, NotReady, Interrupted>;
+
+    public:
         virtual ~Initiator() = default;
 
         /** \brief Add a target to the initiator.
@@ -69,13 +81,13 @@ namespace mxl::lib::fabrics::ofi
          *
          * This is the non-blocking version of the progress function.
          */
-        virtual bool makeProgress() = 0;
+        virtual MakeProgressResult makeProgress() = 0;
 
         /** \brief Attempts to progress execution, including connection management and data operations.
          *
          * This is the blocking version of the progress function.
          */
-        virtual bool makeProgressBlocking(std::chrono::steady_clock::duration) = 0;
+        virtual MakeProgressResult makeProgressBlocking(std::chrono::steady_clock::duration) = 0;
 
         /** \brief Shut down the initiator gracefully.
          *
@@ -141,11 +153,11 @@ namespace mxl::lib::fabrics::ofi
 
         /** \copydoc Initiator::makeProgress()
          */
-        bool makeProgress();
+        Initiator::MakeProgressResult makeProgress();
 
         /** \copydoc Initiator::makeProgressBlocking()
          */
-        bool makeProgressBlocking(std::chrono::steady_clock::duration);
+        Initiator::MakeProgressResult makeProgressBlocking(std::chrono::steady_clock::duration);
 
     private:
         std::unique_ptr<Initiator> _inner; /**< The underlying initiator implementation. */
