@@ -13,10 +13,10 @@
       
       
       
-        <link rel="prev" href="../FabricsDeveloperGuide/">
+        <link rel="prev" href="../Fabrics/">
       
       
-        <link rel="next" href="../Timing/">
+        <link rel="next" href="../FabricsDeveloperGuide/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>MXL Fabrics — Getting Started - MXL</title>
+        <title>MXL Fabric: Media Payload Calculation - MXL</title>
       
     
     
@@ -83,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#mxl-fabrics-getting-started" class="md-skip">
+        <a href="#mxl-fabric-media-payload-calculation" class="md-skip">
           Skip to content
         </a>
       
@@ -123,7 +123,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              MXL Fabrics — Getting Started
+              MXL Fabric: Media Payload Calculation
             
           </span>
         </div>
@@ -421,10 +421,36 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../FabricsBandwidth/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  MXL Fabric: Media Payload Calculation
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
         
   
   
@@ -439,6 +465,249 @@
   
 
       </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#goal" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Goal
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#assumptions-and-units" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Assumptions and Units
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-media-payload-calculation-protocol-agnostic" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1) Media Payload Calculation (Protocol-Agnostic)
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1) Media Payload Calculation (Protocol-Agnostic)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#video-v210" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Video (v210)
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Video (v210)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#video-v210a" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Video (v210a)
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#audio-float32-pcm" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Audio (float32 PCM)
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-videosmpte291-in-mxl" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Data (video/smpte291 in MXL)
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-mxl-sdklibfabric-provider-transport-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2) MXL SDK/libfabric Provider Transport Model
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2) MXL SDK&#x2f;libfabric Provider Transport Model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#provider-profile-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Provider Profile Contract
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#current-provider-profile-rdma_rocev2" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Current Provider Profile: <code>rdma_rocev2</code>
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#packetization-formula" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Packetization Formula
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-final-wire-bandwidth-calculation" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3) Final Wire Bandwidth Calculation
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-worked-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4) Worked Examples
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4) Worked Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#video-example-videov210-1920x1080p25-mtu4096" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Video Example (<code>video/v210</code>, <code>1920x1080p25</code>, <code>mtu=4096</code>)
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#video-example-videov210a-1920x1080p25-mtu4096" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Video Example (<code>video/v210a</code>, <code>1920x1080p25</code>, <code>mtu=4096</code>)
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#audio-example-2ch-48khz-ptime10ms-mtu4096" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Audio Example (<code>2ch</code>, <code>48kHz</code>, <code>ptime=10ms</code>, <code>mtu=4096</code>)
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-example-grainrate60-mtu4096" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Data Example (<code>grainRate=60</code>, <code>mtu=4096</code>)
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#practical-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Practical Notes
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -473,36 +742,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  MXL Fabrics — Getting Started
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="././" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../FabricsGettingStarted/" class="md-nav__link">
         
   
   
@@ -517,232 +760,6 @@
   
 
       </a>
-      
-        
-
-
-<nav class="md-nav md-nav--secondary" aria-label="On this page">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      On this page
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#what-is-mxl-fabrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        What is MXL Fabrics?
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#1-building-the-demo-applications" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        1. Building the demo applications
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-discovering-interfaces-with-mxl-fabrics-info" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        2. Discovering interfaces with <code>mxl-fabrics-info</code>
-      </span>
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2. Discovering interfaces with mxl-fabrics-info">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#filtering" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Filtering
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-providers" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        3. Providers
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-node-and-service-values" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        4. Node and service values
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-using-the-demo-application" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        5. Using the demo application
-      </span>
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="5. Using the demo application">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#51-command-line-options" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        5.1 Command line options
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#52-target-info-exchange" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        5.2 Target info exchange
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#53-target-setup" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        5.3 Target setup
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#54-initiator-setup" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        5.4 Initiator setup
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#55-interface-auto-selection-in-the-demo-tool" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        5.5 Interface auto-selection in the demo tool
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#6-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        6. Examples
-      </span>
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="6. Examples">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#61-local-tcp-transfer" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        6.1 Local TCP transfer
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#62-rdma-verbs-transfer" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        6.2 RDMA Verbs transfer
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#63-efa-transfer" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        6.3 EFA transfer
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#7-rocev2-qos-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        7. RoCEv2 QoS configuration
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -866,10 +883,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-is-mxl-fabrics" class="md-nav__link">
+  <a href="#goal" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        What is MXL Fabrics?
+        Goal
       </span>
     </span>
   </a>
@@ -877,10 +894,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#1-building-the-demo-applications" class="md-nav__link">
+  <a href="#assumptions-and-units" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        1. Building the demo applications
+        Assumptions and Units
       </span>
     </span>
   </a>
@@ -888,22 +905,61 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-discovering-interfaces-with-mxl-fabrics-info" class="md-nav__link">
+  <a href="#1-media-payload-calculation-protocol-agnostic" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        2. Discovering interfaces with <code>mxl-fabrics-info</code>
+        1) Media Payload Calculation (Protocol-Agnostic)
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="2. Discovering interfaces with mxl-fabrics-info">
+    <nav class="md-nav" aria-label="1) Media Payload Calculation (Protocol-Agnostic)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#filtering" class="md-nav__link">
+  <a href="#video-v210" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Filtering
+        Video (v210)
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Video (v210)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#video-v210a" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Video (v210a)
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#audio-float32-pcm" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Audio (float32 PCM)
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-videosmpte291-in-mxl" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Data (video/smpte291 in MXL)
       </span>
     </span>
   </a>
@@ -916,44 +972,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-providers" class="md-nav__link">
+  <a href="#2-mxl-sdklibfabric-provider-transport-model" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        3. Providers
+        2) MXL SDK/libfabric Provider Transport Model
       </span>
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-node-and-service-values" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        4. Node and service values
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-using-the-demo-application" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        5. Using the demo application
-      </span>
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="5. Using the demo application">
+    <nav class="md-nav" aria-label="2) MXL SDK&#x2f;libfabric Provider Transport Model">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#51-command-line-options" class="md-nav__link">
+  <a href="#provider-profile-contract" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        5.1 Command line options
+        Provider Profile Contract
       </span>
     </span>
   </a>
@@ -961,10 +995,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#52-target-info-exchange" class="md-nav__link">
+  <a href="#current-provider-profile-rdma_rocev2" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        5.2 Target info exchange
+        Current Provider Profile: <code>rdma_rocev2</code>
       </span>
     </span>
   </a>
@@ -972,32 +1006,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#53-target-setup" class="md-nav__link">
+  <a href="#packetization-formula" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        5.3 Target setup
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#54-initiator-setup" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        5.4 Initiator setup
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#55-interface-auto-selection-in-the-demo-tool" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        5.5 Interface auto-selection in the demo tool
+        Packetization Formula
       </span>
     </span>
   </a>
@@ -1010,22 +1022,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#6-examples" class="md-nav__link">
+  <a href="#3-final-wire-bandwidth-calculation" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        6. Examples
+        3) Final Wire Bandwidth Calculation
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="6. Examples">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-worked-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4) Worked Examples
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4) Worked Examples">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#61-local-tcp-transfer" class="md-nav__link">
+  <a href="#video-example-videov210-1920x1080p25-mtu4096" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        6.1 Local TCP transfer
+        Video Example (<code>video/v210</code>, <code>1920x1080p25</code>, <code>mtu=4096</code>)
       </span>
     </span>
   </a>
@@ -1033,10 +1056,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#62-rdma-verbs-transfer" class="md-nav__link">
+  <a href="#video-example-videov210a-1920x1080p25-mtu4096" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        6.2 RDMA Verbs transfer
+        Video Example (<code>video/v210a</code>, <code>1920x1080p25</code>, <code>mtu=4096</code>)
       </span>
     </span>
   </a>
@@ -1044,10 +1067,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#63-efa-transfer" class="md-nav__link">
+  <a href="#audio-example-2ch-48khz-ptime10ms-mtu4096" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        6.3 EFA transfer
+        Audio Example (<code>2ch</code>, <code>48kHz</code>, <code>ptime=10ms</code>, <code>mtu=4096</code>)
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-example-grainrate60-mtu4096" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Data Example (<code>grainRate=60</code>, <code>mtu=4096</code>)
       </span>
     </span>
   </a>
@@ -1060,10 +1094,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#7-rocev2-qos-configuration" class="md-nav__link">
+  <a href="#practical-notes" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        7. RoCEv2 QoS configuration
+        Practical Notes
       </span>
     </span>
   </a>
@@ -1099,234 +1133,248 @@
 <!-- SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project. -->
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 
-<h1 id="mxl-fabrics-getting-started">MXL Fabrics — Getting Started</h1>
-<h2 id="what-is-mxl-fabrics">What is MXL Fabrics?</h2>
-<p>MXL Fabrics is a library for transferring MXL media flows between hosts over a network. It is built on <a href="https://ofiwg.github.io/libfabric/">libfabric</a> and supports multiple transport providers, including RDMA Verbs, AWS EFA, TCP, and shared memory.</p>
-<p>A transfer involves two sides: a target that exposes its media buffers to the network, and an initiator that writes flow data into those buffers. The target generates a <code>TargetInfo</code> object containing its fabric address and memory region keys. This object is shared with the initiator through any out-of-band mechanism (a file, a signaling protocol, etc.). Once the initiator has the target info, it can connect and begin transferring grains (for discrete/video flows) or samples (for continuous/audio flows).</p>
-<p>The library uses Remote Write (RDMA) to place data directly into the target's memory without involving the target CPU. The selected provider must support Remote Write.</p>
-<p>This guide walks through building the demo tools, discovering network interfaces, and running your first transfer. It assumes familiarity with the MXL Flow API. For the full design rationale and transfer protocol details, see <a href="../Fabrics/">Fabrics.md</a>.</p>
-<h2 id="1-building-the-demo-applications">1. Building the demo applications</h2>
-<p>Enable the libfabric-based Fabrics implementation and build:</p>
-<div class="highlight"><pre><span></span><code>cmake<span class="w"> </span>--preset<span class="w"> </span>Linux-GCC-Release<span class="w"> </span>-DMXL_ENABLE_FABRICS_OFI<span class="o">=</span>ON<span class="w"> </span>.
-cmake<span class="w"> </span>--build<span class="w"> </span>build/Linux-GCC-Release
-</code></pre></div>
-<p>This produces two binaries:</p>
-<table>
-<thead>
-<tr>
-<th>Binary</th>
-<th>Path</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>mxl-fabrics-demo</code></td>
-<td><code>build/Linux-GCC-Release/tools/mxl-fabrics-demo/mxl-fabrics-demo</code></td>
-</tr>
-<tr>
-<td><code>mxl-fabrics-info</code></td>
-<td><code>build/Linux-GCC-Release/tools/mxl-fabrics-info/mxl-fabrics-info</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="2-discovering-interfaces-with-mxl-fabrics-info">2. Discovering interfaces with <code>mxl-fabrics-info</code></h2>
-<p><code>mxl-fabrics-info</code> lists the interface configurations available on the current host. Each entry is one combination of a provider and a node address.</p>
-<div class="highlight"><pre><span></span><code>mxl-fabrics-info
-</code></pre></div>
-<p>On a machine with an RDMA-capable NIC (<code>mlx5_0</code>) and a second non-RDMA NIC (<code>ens18</code>), the output might look like this:</p>
-<div class="highlight"><pre><span></span><code>interface verbs-0 node 10.130.40.12 dev mlx5_0
-interface verbs-1 node fe80::8ae9:a4ff:fe48:d514 dev mlx5_0
-interface shm-0 node dev03 dev &lt;none&gt;
-interface tcp-0 node 10.130.40.12 dev ens16np0
-interface tcp-1 node fe80::8ae9:a4ff:fe48:d514 dev ens16np0
-interface tcp-2 node 10.130.100.100 dev ens18
-interface tcp-3 node fe80::be24:11ff:fe05:3c1d dev ens18
-interface tcp-4 node 127.0.0.1 dev lo
-interface tcp-5 node ::1 dev lo
-</code></pre></div>
-<p>The same physical interface can appear under multiple providers. Verbs and TCP entries for <code>10.130.40.12</code> both refer to the same NIC; the difference is the transport.</p>
-<h3 id="filtering">Filtering</h3>
-<p>Narrow the output by provider (<code>-p</code>) and/or node address (<code>-n</code>):</p>
-<div class="highlight"><pre><span></span><code>mxl-fabrics-info<span class="w"> </span>-p<span class="w"> </span>tcp<span class="w"> </span>-n<span class="w"> </span>::1
-</code></pre></div>
-<div class="highlight"><pre><span></span><code>interface tcp-0 node ::1 dev lo
-</code></pre></div>
-<p>Use <code>-v</code> for additional detail about each interface.</p>
-<h2 id="3-providers">3. Providers</h2>
-<p>The library supports several providers. Each provider targets different hardware and connection characteristics:</p>
-<table>
-<thead>
-<tr>
-<th>Provider</th>
-<th>Typical hardware</th>
-<th>Endpoint type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>EFA</td>
-<td>AWS Elastic Fabric Adapter</td>
-<td>RDM (connectionless)</td>
-</tr>
-<tr>
-<td>Verbs</td>
-<td>RDMA NICs (ConnectX, etc.)</td>
-<td>MSG (connected)</td>
-</tr>
-<tr>
-<td>TCP</td>
-<td>Any network interface</td>
-<td>MSG (connected)</td>
-</tr>
-<tr>
-<td>SHM</td>
-<td>Local (same host)</td>
-<td>RDM (connectionless)</td>
-</tr>
-</tbody>
-</table>
-<p>All transfers use Remote Write, which lets the initiator write directly into the target's memory without involving the target CPU. The selected provider must support Remote Write (the <code>MXL_FABRICS_IFACE_CAP_REMOTE_WRITE</code> capability flag).</p>
-<p>The difference between connected (MSG) and connectionless (RDM) endpoints is abstracted by the library. The API and workflow are the same regardless of the underlying endpoint type, though there can be slight differences in behavior (for example, error reporting on a failed connection-oriented endpoint may differ from a connectionless one).</p>
-<p>The library itself does not select a provider or interface automatically. The caller queries the available interfaces with <code>mxlFabricsGetInterfaces()</code> and chooses which provider and node address to pass to the setup functions. The demo application (<code>mxl-fabrics-demo</code>) implements its own auto-selection heuristic on top of this query; see <a href="#55-interface-auto-selection-in-the-demo-tool">section 5.5</a> for details.</p>
-<h2 id="4-node-and-service-values">4. Node and service values</h2>
-<p>The terminology follows libfabric and the Linux Verbs API:</p>
+<h1 id="mxl-fabric-media-payload-calculation">MXL Fabric: Media Payload Calculation</h1>
+<h2 id="goal">Goal</h2>
+<p>Estimate wire bandwidth for MXL media streams across libfabric providers.</p>
+<h2 id="assumptions-and-units">Assumptions and Units</h2>
 <ul>
-<li><strong>node</strong> — typically an IP address assigned to an interface. Use <code>mxl-fabrics-info</code> or <code>fi_info</code> (from libfabric) to discover available node addresses.</li>
-<li><strong>service</strong> — for TCP and RoCEv2 this is the port number. Some providers (like EFA) ignore it. The SHM provider concatenates node and service into a filename.</li>
+<li>Media payload math is provider-agnostic.</li>
+<li>Transport overhead math is provider-specific and driven by a provider profile.</li>
+<li>This document starts with one provider profile: <code>rdma_rocev2</code>.</li>
+<li>Rates are presented in decimal units (<code>MB/s = 10^6 B/s</code>, <code>GB/s = 10^9 B/s</code>).</li>
 </ul>
-<p>In most cases, let the library choose a random service automatically. Only set it explicitly when you need a fixed, known port.</p>
-<h2 id="5-using-the-demo-application">5. Using the demo application</h2>
-<p><code>mxl-fabrics-demo</code> transfers video (discrete flow) or audio (continuous flow) data between two endpoints. Both target and initiator roles are in the same binary. By default it runs as a target; pass <code>-i</code> to run as an initiator.</p>
-<h3 id="51-command-line-options">5.1 Command line options</h3>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>-d &lt;path&gt;</code></td>
-<td>MXL domain directory (required).</td>
-</tr>
-<tr>
-<td><code>-f &lt;flow&gt;</code></td>
-<td>As target: path to a flow definition JSON file. As initiator: the source flow UUID.</td>
-</tr>
-<tr>
-<td><code>--flow-options &lt;path&gt;</code></td>
-<td>Optional flow options file (target only).</td>
-</tr>
-<tr>
-<td><code>-i</code></td>
-<td>Run as initiator. Without this flag, the tool runs as target.</td>
-</tr>
-<tr>
-<td><code>-p &lt;provider&gt;</code></td>
-<td>Use a specific provider (<code>tcp</code>, <code>verbs</code>, <code>efa</code>, <code>shm</code>). If omitted, the demo picks one automatically.</td>
-</tr>
-<tr>
-<td><code>-n &lt;address&gt;</code></td>
-<td>Bind to a specific node address. If omitted, the demo picks one automatically.</td>
-</tr>
-<tr>
-<td><code>-s &lt;service&gt;</code></td>
-<td>Service identifier (e.g. a port number).</td>
-</tr>
-<tr>
-<td><code>-t &lt;target-info&gt;</code></td>
-<td>Target info exchange (see below).</td>
-</tr>
-</tbody>
-</table>
-<h3 id="52-target-info-exchange">5.2 Target info exchange</h3>
-<p>The target and initiator must exchange a <code>TargetInfo</code> object out of band. This object contains the target's fabric address, remote memory keys, and buffer addresses. The demo tool supports two exchange methods:</p>
-<p><strong>File-based</strong> (recommended for local testing): use the <code>@</code> prefix to read/write raw JSON.
-- Target side: <code>-t @/tmp/target.json</code> writes the target info to a file.
-- Initiator side: <code>-t @/tmp/target.json</code> reads the target info from that file.</p>
-<p><strong>Base64 string</strong>: without the <code>@</code> prefix, the target prints a base64-encoded string to stdout, and the initiator accepts the same string via <code>-t &lt;base64&gt;</code>.</p>
-<h3 id="53-target-setup">5.3 Target setup</h3>
-<ol>
-<li>Start the target with a flow definition, a domain directory, and optionally a specific provider and node address.</li>
-<li>The target prints or writes a <code>TargetInfo</code>. Share this with the initiator.</li>
-<li>The target waits for an initiator to connect and then receives grains or samples as they arrive.</li>
-</ol>
-<h3 id="54-initiator-setup">5.4 Initiator setup</h3>
-<ol>
-<li>Start the initiator with the source flow UUID, the same domain directory, and the target info obtained from the target.</li>
-<li>The initiator connects and begins transferring grains or samples.</li>
-</ol>
-<h3 id="55-interface-auto-selection-in-the-demo-tool">5.5 Interface auto-selection in the demo tool</h3>
-<p>When <code>-p</code> and <code>-n</code> are omitted, the demo application queries all available interfaces with <code>mxlFabricsGetInterfaces()</code> and picks the one whose provider has the highest priority:</p>
-<table>
-<thead>
-<tr>
-<th>Priority</th>
-<th>Provider</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>4 (highest)</td>
-<td>EFA</td>
-</tr>
-<tr>
-<td>3</td>
-<td>Verbs</td>
-</tr>
-<tr>
-<td>2</td>
-<td>TCP</td>
-</tr>
-<tr>
-<td>1 (lowest)</td>
-<td>SHM</td>
-</tr>
-</tbody>
-</table>
-<p>This is a convenience built into the demo tool. The Fabrics library itself has no built-in provider preference; your application is responsible for choosing a provider and interface from the list returned by <code>mxlFabricsGetInterfaces()</code>.</p>
-<h2 id="6-examples">6. Examples</h2>
-<h3 id="61-local-tcp-transfer">6.1 Local TCP transfer</h3>
-<p>The simplest setup: both endpoints on the same machine using the TCP provider over loopback.</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Terminal 1 — Target</span>
-mxl-fabrics-demo<span class="w"> </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span>-p<span class="w"> </span>tcp<span class="w"> </span>-n<span class="w"> </span>::1<span class="w"> </span>-s<span class="w"> </span><span class="m">1312</span><span class="w"> </span>-f<span class="w"> </span>flow.json<span class="w"> </span>-t<span class="w"> </span>@/tmp/target.json
-
-<span class="c1"># Terminal 2 — Initiator</span>
-mxl-fabrics-demo<span class="w"> </span>-i<span class="w"> </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span>-p<span class="w"> </span>tcp<span class="w"> </span>-n<span class="w"> </span>::1<span class="w"> </span>-f<span class="w"> </span>5fbec3b1-1b0f-417d-9059-8b94a47197ed<span class="w"> </span>-t<span class="w"> </span>@/tmp/target.json
-</code></pre></div>
-<h3 id="62-rdma-verbs-transfer">6.2 RDMA Verbs transfer</h3>
-<p>If there is only one Verbs interface on the system, the demo's auto-selection picks it up without any additional flags:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Terminal 1 — Target</span>
-mxl-fabrics-demo<span class="w"> </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span>-s<span class="w"> </span><span class="m">1312</span><span class="w"> </span>-f<span class="w"> </span>flow.json<span class="w"> </span>-t<span class="w"> </span>@/tmp/target.json
-
-<span class="c1"># Terminal 2 — Initiator</span>
-mxl-fabrics-demo<span class="w"> </span>-i<span class="w"> </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span>-f<span class="w"> </span>5fbec3b1-1b0f-417d-9059-8b94a47197ed<span class="w"> </span>-t<span class="w"> </span>@/tmp/target.json
-</code></pre></div>
-<p>On a host with multiple Verbs interfaces, use <code>-n &lt;address&gt;</code> to select the right one.</p>
-<h3 id="63-efa-transfer">6.3 EFA transfer</h3>
-<p>EFA has the highest priority in the demo's auto-selection and will be chosen when available. The service value is ignored by the EFA provider.</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Terminal 1 — Target</span>
-mxl-fabrics-demo<span class="w"> </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span>-f<span class="w"> </span>flow.json<span class="w"> </span>-t<span class="w"> </span>@/tmp/target.json
-
-<span class="c1"># Terminal 2 — Initiator</span>
-mxl-fabrics-demo<span class="w"> </span>-i<span class="w"> </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span>-f<span class="w"> </span>5fbec3b1-1b0f-417d-9059-8b94a47197ed<span class="w"> </span>-t<span class="w"> </span>@/tmp/target.json
-</code></pre></div>
-<h2 id="7-rocev2-qos-configuration">7. RoCEv2 QoS configuration</h2>
-<p>When using RDMA over Converged Ethernet (RoCEv2) with Mellanox/NVIDIA NICs and the MLNX_OFED driver, you may want to configure DSCP-based priority and enable Priority Flow Control (PFC). The examples below set DSCP 26, map it to priority 3, and enable PFC for that priority.</p>
-<p>In the commands below, <code>&lt;interface&gt;</code> is the Linux network interface (e.g. <code>ens16np0</code>) and <code>&lt;ib-interface&gt;</code> is the InfiniBand device (e.g. <code>mlx5_0</code>).</p>
-<p>Set the default traffic class for RDMA-CM based RoCE connections (tclass = DSCP * 4):</p>
-<div class="highlight"><pre><span></span><code>cma_roce_tos<span class="w"> </span>-d<span class="w"> </span>&lt;ib-interface&gt;<span class="w"> </span>-t<span class="w"> </span><span class="m">104</span>
-</code></pre></div>
-<p>Enable DSCP-based QoS trust on the interface:</p>
-<div class="highlight"><pre><span></span><code>mlnx_qos<span class="w"> </span>-i<span class="w"> </span>&lt;interface&gt;<span class="w"> </span>--trust-dscp
-</code></pre></div>
-<p>Map DSCP 26 to priority 3:</p>
-<div class="highlight"><pre><span></span><code>mlnx_qos<span class="w"> </span>-i<span class="w"> </span>&lt;interface&gt;<span class="w"> </span>--dscp2prio<span class="w"> </span>set,26,3
-</code></pre></div>
-<p>Enable PFC on priority 3 only:</p>
-<div class="highlight"><pre><span></span><code>mlnx_qos<span class="w"> </span>-i<span class="w"> </span>&lt;interface&gt;<span class="w"> </span>--pfc<span class="w"> </span><span class="m">0</span>,0,0,1,0,0,0,0
-</code></pre></div>
+<hr />
+<h2 id="1-media-payload-calculation-protocol-agnostic">1) Media Payload Calculation (Protocol-Agnostic)</h2>
+<p>This section calculates raw media byte rate before adding network or protocol overhead.</p>
+<h3 id="video-v210">Video (v210)</h3>
+<div class="arithmatex">\[
+bytesPerFrame(w,h) = \lceil \frac{w}{48} \rceil \times 128 \times h
+\]</div>
+<p>Equivalent integer form used in MXL implementation:
+- <code>v210LineBytes = ((w + 47) / 48) * 128</code></p>
+<p>How to read this formula:
+- v210 stores luma/chroma samples in fixed-size groups where each 48-pixel chunk maps to 128 bytes.
+- <code>((w + 47) / 48)</code> (integer division) gives the number of 48-pixel chunks per scan line.
+- Multiplying by <code>128</code> gives bytes per scan line.
+- Multiplying by <code>h</code> gives bytes per frame.</p>
+<p>Equivalent form:</p>
+<div class="arithmatex">\[
+bytesPerLine = \lceil \frac{w}{48} \rceil \times 128
+\]</div>
+<div class="arithmatex">\[
+bytesPerFrame = bytesPerLine \times h
+\]</div>
+<p>Example (<code>1920x1080</code>):
+- <code>chunksPerLine = (1920 + 47) / 48 = 40</code>
+- <code>bytesPerLine = 40 \times 128 = 5120</code>
+- <code>bytesPerFrame = 5120 \times 1080 = 5,529,600</code></p>
+<div class="arithmatex">\[
+mediaBytesPerSecond = bytesPerFrame \times fps
+\]</div>
+<p>Difference between <code>video/v210</code> and <code>video/v210a</code>:
+- <code>video/v210</code> carries only the fill image in one plane.
+- <code>video/v210a</code> carries two planes in one grain: fill (<code>v210</code>) plus key (<code>alpha</code>).
+- <code>video/v210a</code> therefore has higher payload than <code>video/v210</code> at the same width, height, and frame rate.
+- Fill packing is unchanged; the extra cost comes from the alpha plane (<code>((width + 2) / 3) * 4</code> bytes per line).</p>
+<h4 id="video-v210a">Video (v210a)</h4>
+<p><code>video/v210a</code> contains two planes in one grain: fill (<code>v210</code>) and key (<code>alpha</code>, packed 10-bit).</p>
+<div class="arithmatex">\[
+v210LineBytes(w) = \lceil \frac{w}{48} \rceil \times 128
+\]</div>
+<div class="arithmatex">\[
+alphaLineBytes(w) = \lceil \frac{w}{3} \rceil \times 4
+\]</div>
+<p>Equivalent integer form used in MXL implementation:
+- <code>alphaLineBytes = ((w + 2) / 3) * 4</code></p>
+<div class="arithmatex">\[
+fillBytesPerFrame = v210LineBytes \times h
+\]</div>
+<div class="arithmatex">\[
+alphaBytesPerFrame = alphaLineBytes \times h
+\]</div>
+<div class="arithmatex">\[
+bytesPerFrame = fillBytesPerFrame + alphaBytesPerFrame
+\]</div>
+<div class="arithmatex">\[
+mediaBytesPerSecond = bytesPerFrame \times fps
+\]</div>
+<h3 id="audio-float32-pcm">Audio (float32 PCM)</h3>
+<div class="arithmatex">\[
+bytesPerPacket = channels \times sampleRate \times 4 \times ptime
+\]</div>
+<div class="arithmatex">\[
+mediaBytesPerSecond = channels \times sampleRate \times 4
+\]</div>
+<h3 id="data-videosmpte291-in-mxl">Data (video/smpte291 in MXL)</h3>
+<p>MXL sets data grain payload to <code>4096 bytes</code> for <code>video/smpte291</code>.</p>
+<div class="arithmatex">\[
+bytesPerGrain = 4096
+\]</div>
+<div class="arithmatex">\[
+mediaBytesPerSecond = bytesPerGrain \times grainRate
+\]</div>
+<hr />
+<h2 id="2-mxl-sdklibfabric-provider-transport-model">2) MXL SDK/libfabric Provider Transport Model</h2>
+<p>This section converts media byte rate into packet rate and adds transport constraints.</p>
+<h3 id="provider-profile-contract">Provider Profile Contract</h3>
+<p>Use these transport constants per libfabric provider:
+- <code>providerWireOverheadBytes</code>: per-packet bytes added on wire beyond media payload.
+- <code>providerMtuOverheadBytes</code>: per-packet bytes that consume MTU budget.
+- <code>effectivePayloadPerPacket = mtu - providerMtuOverheadBytes</code>.</p>
+<p>Units and assumptions:
+- All constants in this section are bytes.
+- <code>mtu</code> is treated as the L3 packet budget used for payload calculations.</p>
+<h3 id="current-provider-profile-rdma_rocev2">Current Provider Profile: <code>rdma_rocev2</code></h3>
+<p>Provider constants:
+- <code>providerMtuOverheadBytes = 44</code>
+- <code>providerWireOverheadBytes = 82</code></p>
+<p>Provenance of <code>providerWireOverheadBytes</code>:
+- This constant is a modeled, per-packet on-wire cost for the verbs provider using RoCEv2.
+- It is derived from protocol framing bytes that must be transmitted for each packet, not from media payload size.
+- The value is assembled from fixed header/trailer fields under the assumptions listed below (no VLAN, no IPv4 options, no IB extension headers).</p>
+<p>Derivation:
+- <code>providerMtuOverheadBytes = 44 = IPv4(20) + UDP(8) + BTH(12) + ICRC(4)</code>
+- Additional on-wire-only framing not counted in MTU payload budget:
+    - <code>Preamble/SFD(8) + IFG(12) + Ethernet header(14) + FCS(4) = 38</code>
+- Therefore:
+    - <code>providerWireOverheadBytes = providerMtuOverheadBytes + 38 = 44 + 38 = 82</code></p>
+<p>Interpretation:
+- Use <code>providerMtuOverheadBytes</code> to compute payload capacity per packet (<code>mtu - overhead</code>).
+- Use <code>providerWireOverheadBytes</code> to compute true wire-rate amplification (<code>packetsPerSecond * overhead</code>).</p>
+<p>Profile assumptions:
+- Ethernet + IPv4 + UDP + RoCEv2 BTH framing.
+- No VLAN tag, no IPv4 options, no InfiniBand extension headers.</p>
+<h3 id="packetization-formula">Packetization Formula</h3>
+<p>For packetized payload streams:</p>
+<div class="arithmatex">\[
+packetsPerEvent = \lceil \frac{payloadBytesPerEvent}{mtu - providerMtuOverheadBytes} \rceil
+\]</div>
+<div class="arithmatex">\[
+packetsPerSecond = packetsPerEvent \times eventRate
+\]</div>
+<p>Where:
+- <code>payloadBytesPerEvent</code> is payload bytes generated per event:
+    - Video: <code>bytesPerFrame</code>
+    - Audio: <code>bytesPerPacket</code> (per <code>ptime</code> event)
+    - Data: <code>bytesPerGrain</code>
+- <code>eventRate</code> is the number of events per second (<code>fps</code>, <code>1/ptime</code>, or <code>grainRate</code>).</p>
+<hr />
+<h2 id="3-final-wire-bandwidth-calculation">3) Final Wire Bandwidth Calculation</h2>
+<div class="arithmatex">\[
+wireBytesPerSecond = mediaBytesPerSecond + packetsPerSecond \times providerWireOverheadBytes
+\]</div>
+<hr />
+<h2 id="4-worked-examples">4) Worked Examples</h2>
+<p>All examples in this section use provider <code>rdma_rocev2</code> with:
+- <code>providerMtuOverheadBytes = 44</code>
+- <code>providerWireOverheadBytes = 82</code></p>
+<p>Naming convention used in examples:
+- <code>payloadBytesPerEvent</code>: payload bytes generated by one media event.
+- <code>packetsPerEvent</code>: packets needed for one media event.
+- Media-specific aliases are shown in parentheses (for example, <code>packetsPerFrame</code>).</p>
+<h3 id="video-example-videov210-1920x1080p25-mtu4096">Video Example (<code>video/v210</code>, <code>1920x1080p25</code>, <code>mtu=4096</code>)</h3>
+<p>Input values:
+- <code>media_type = video/v210</code>
+- <code>frame_width = 1920</code>
+- <code>frame_height = 1080</code>
+- <code>frame_rate = 25</code>
+- <code>mtu = 4096</code> (transport assumption used in this document)</p>
+<p>Format notes:
+- Single fill plane (<code>v210</code>), no alpha/key plane.</p>
+<p>Media payload:
+- <code>chunksPerLine = (1920 + 47) / 48 = 40</code>
+- <code>bytesPerLine = 40 * 128 = 5,120</code>
+- <code>bytesPerFrame = 5,120 * 1080 = 5,529,600</code>
+- <code>mediaBytesPerSecond = 5,529,600 * 25 = 138,240,000 B/s</code></p>
+<p>Network/protocol:
+- <code>effectivePayloadPerPacket = 4096 - providerMtuOverheadBytes = 4096 - 44 = 4,052 bytes</code>
+- <code>payloadBytesPerEvent (bytesPerFrame) = 5,529,600</code>
+- <code>eventRate (fps) = 25</code>
+- <code>packetsPerEvent (packetsPerFrame) = (5,529,600 + 4,052 - 1) / 4,052 = 1,365</code> (integer division, round-up form)
+- <code>packetsPerSecond = packetsPerEvent * eventRate = 1,365 * 25 = 34,125</code>
+- <code>overheadBytesPerSecond = 34,125 * 82 = 2,798,250 B/s</code></p>
+<p>Final wire rate:
+- <code>wireBytesPerSecond = 138,240,000 + 2,798,250 = 141,038,250 B/s</code>
+- <code>wireRate = 141,038,250 / 1,000,000,000 = 0.14103825 GB/s ~= 0.14104 GB/s</code></p>
+<h3 id="video-example-videov210a-1920x1080p25-mtu4096">Video Example (<code>video/v210a</code>, <code>1920x1080p25</code>, <code>mtu=4096</code>)</h3>
+<p>Input values:
+- <code>media_type = video/v210a</code>
+- <code>frame_width = 1920</code>
+- <code>frame_height = 1080</code>
+- <code>frame_rate = 25</code>
+- <code>mtu = 4096</code> (transport assumption used in this document)</p>
+<p>Format notes (from upstream MXL):
+- Fill plane uses v210 line packing: <code>v210LineBytes = ((width + 47) / 48) * 128</code>.
+- Key (alpha) plane uses packed 10-bit line layout: <code>alphaLineBytes = ((width + 2) / 3) * 4</code>.
+- Total frame payload is <code>fillBytesPerFrame + alphaBytesPerFrame</code>.</p>
+<p>Media payload:
+- <code>v210LineBytes = ((1920 + 47) / 48) * 128 = 40 * 128 = 5,120</code>
+- <code>alphaLineBytes = ((1920 + 2) / 3) * 4 = 640 * 4 = 2,560</code>
+- <code>fillBytesPerFrame = 5,120 * 1080 = 5,529,600</code>
+- <code>alphaBytesPerFrame = 2,560 * 1080 = 2,764,800</code>
+- <code>bytesPerFrame = fillBytesPerFrame + alphaBytesPerFrame = 5,529,600 + 2,764,800 = 8,294,400</code>
+- <code>mediaBytesPerSecond = 8,294,400 * 25 = 207,360,000 B/s</code></p>
+<p>Network/protocol:
+- <code>effectivePayloadPerPacket = 4096 - providerMtuOverheadBytes = 4096 - 44 = 4,052 bytes</code>
+- <code>payloadBytesPerEvent (bytesPerFrame) = 8,294,400</code>
+- <code>eventRate (fps) = 25</code>
+- <code>packetsPerEvent (packetsPerFrame) = (8,294,400 + 4,052 - 1) / 4,052 = 2,047</code> (integer division, round-up form)
+- <code>packetsPerSecond = packetsPerEvent * eventRate = 2,047 * 25 = 51,175</code>
+- <code>overheadBytesPerSecond = 51,175 * 82 = 4,196,350 B/s</code></p>
+<p>Final wire rate:
+- <code>wireBytesPerSecond = 207,360,000 + 4,196,350 = 211,556,350 B/s</code>
+- <code>wireRate = 211,556,350 / 1,000,000,000 = 0.21155635 GB/s ~= 0.21156 GB/s</code></p>
+<h3 id="audio-example-2ch-48khz-ptime10ms-mtu4096">Audio Example (<code>2ch</code>, <code>48kHz</code>, <code>ptime=10ms</code>, <code>mtu=4096</code>)</h3>
+<p>Input values:
+- <code>media_type = audio/float32</code>
+- <code>channels = 2</code>
+- <code>sampleRate = 48,000</code>
+- <code>ptime = 0.01 s</code> (<code>10 ms</code>)
+- <code>mtu = 4096</code> (transport assumption used in this document)</p>
+<p>Format notes:
+- <code>audio/float32</code> uses 4 bytes per sample.
+- <code>bytesPerPacket</code> is payload generated per <code>ptime</code> event.</p>
+<p>Media payload:
+- <code>mediaBytesPerSecond = 2 * 48,000 * 4 = 384,000 B/s</code>
+- <code>bytesPerPacket = 2 * 48,000 * 4 * 0.01 = 3,840 bytes</code></p>
+<p>Network/protocol:
+- <code>effectivePayloadPerPacket = 4096 - providerMtuOverheadBytes = 4096 - 44 = 4,052 bytes</code>
+- <code>payloadBytesPerEvent (bytesPerPacket) = 3,840</code>
+- <code>packetsPerEvent (packetsPerPtime) = (3,840 + 4,052 - 1) / 4,052 = 1</code> (integer division, round-up form)
+- <code>eventRate (ptimeEventsPerSecond) = 1 / 0.01 = 100</code>
+- <code>packetsPerSecond = packetsPerEvent * eventRate = 1 * 100 = 100</code>
+- <code>overheadBytesPerSecond = 100 * 82 = 8,200 B/s</code></p>
+<p>Final wire rate:
+- <code>wireBytesPerSecond = 384,000 + 8,200 = 392,200 B/s</code>
+- <code>wireRate = 392,200 / 1,000,000 = 0.3922 MB/s ~= 0.39 MB/s</code></p>
+<h3 id="data-example-grainrate60-mtu4096">Data Example (<code>grainRate=60</code>, <code>mtu=4096</code>)</h3>
+<p>Input values:
+- <code>media_type = video/smpte291</code>
+- <code>bytesPerGrain = 4,096</code>
+- <code>grainRate = 60</code>
+- <code>mtu = 4096</code> (transport assumption used in this document)</p>
+<p>Format notes:
+- MXL uses fixed data grain payload size of <code>4,096</code> bytes for <code>video/smpte291</code>.
+- One grain is one packetization event for this calculation model.</p>
+<p>Media payload:
+- <code>bytesPerGrain = 4,096</code>
+- <code>mediaBytesPerSecond = bytesPerGrain * 60 = 4,096 * 60 = 245,760 B/s</code></p>
+<p>Network/protocol:
+- <code>effectivePayloadPerPacket = 4096 - providerMtuOverheadBytes = 4096 - 44 = 4,052 bytes</code>
+- <code>payloadBytesPerEvent (bytesPerGrain) = 4,096</code>
+- <code>eventRate (grainRate) = 60</code>
+- <code>packetsPerEvent (packetsPerGrain) = (4,096 + 4,052 - 1) / 4,052 = 2</code> (integer division, round-up form)
+- <code>packetsPerSecond = packetsPerEvent * eventRate = 2 * 60 = 120</code>
+- <code>overheadBytesPerSecond = 120 * 82 = 9,840 B/s</code></p>
+<p>Final wire rate:
+- <code>wireBytesPerSecond = 245,760 + 9,840 = 255,600 B/s</code>
+- <code>wireRate = 255,600 / 1,000,000 = 0.2556 MB/s ~= 0.26 MB/s</code></p>
+<hr />
+<h2 id="practical-notes">Practical Notes</h2>
+<ul>
+<li>For audio, wire bandwidth is ptime-sensitive because packet count and per-packet overhead change with ptime, even when raw media byte rate is constant.</li>
+<li>An audio grain duration is the semantical equivalent to what 2110 refers as ptime (packet time)</li>
+</ul>
 
 
 
@@ -1366,7 +1414,7 @@ mxl-fabrics-demo<span class="w"> </span>-i<span class="w"> </span>-d<span class=
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../FabricsDeveloperGuide/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Fabrics Developer Guide">
+          <a href="../Fabrics/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Fabrics">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
@@ -1376,20 +1424,20 @@ mxl-fabrics-demo<span class="w"> </span>-i<span class="w"> </span>-d<span class=
                 Previous
               </span>
               <div class="md-ellipsis">
-                Fabrics Developer Guide
+                Fabrics
               </div>
             </div>
           </a>
         
         
           
-          <a href="../Timing/" class="md-footer__link md-footer__link--next" aria-label="Next: Timing Model">
+          <a href="../FabricsDeveloperGuide/" class="md-footer__link md-footer__link--next" aria-label="Next: Fabrics Developer Guide">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Timing Model
+                Fabrics Developer Guide
               </div>
             </div>
             <div class="md-footer__button md-icon">
