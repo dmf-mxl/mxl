@@ -56,6 +56,48 @@ void signal_handler(int)
     g_exit_requested = 1;
 }
 
+struct TransferStats
+{
+    std::chrono::steady_clock::time_point lastLog = std::chrono::steady_clock::now();
+    uint64_t totalTransfers = 0;
+    uint64_t totalUnits = 0;
+    uint64_t intervalTransfers = 0;
+
+    void record(uint64_t units)
+    {
+        ++totalTransfers;
+        ++intervalTransfers;
+        totalUnits += units;
+    }
+
+    void maybeLog(char const* transferLabel, char const* unitLabel, std::chrono::seconds interval = std::chrono::seconds(2))
+    {
+        auto const now = std::chrono::steady_clock::now();
+        if (now - lastLog < interval)
+        {
+            return;
+        }
+
+        auto const secs = std::chrono::duration<double>(now - lastLog).count();
+        auto const rate = static_cast<double>(intervalTransfers) / secs;
+        auto const avg = (totalTransfers > 0) ? (static_cast<double>(totalUnits) / static_cast<double>(totalTransfers)) : 0.0;
+
+        MXL_INFO("{} {} ({} {}) | {:.1f} {}/s | avg {:.1f} {}/{}",
+            totalTransfers,
+            transferLabel,
+            totalUnits,
+            unitLabel,
+            rate,
+            transferLabel,
+            avg,
+            unitLabel,
+            transferLabel);
+
+        intervalTransfers = 0;
+        lastLog = now;
+    }
+};
+
 std::string capabilitiesString(std::uint64_t caps)
 {
     auto resultLength = std::size_t{0};
@@ -367,6 +409,7 @@ public:
         std::uint8_t* payload;
         std::uint16_t startSlice = 0;
         std::uint16_t endSlice = slicesPerBatch;
+        auto stats = TransferStats{};
 
         uint64_t grainIndex = mxlGetCurrentIndex(&configInfo.common.grainRate);
 
@@ -399,8 +442,10 @@ public:
 
             if (grainInfo.flags & MXL_GRAIN_FLAG_INVALID)
             {
-                // If we've got an invalid grain, do not waster bandwidth, transfer only the grain header and go to the next grain.
+                // If we've got an invalid grain, do not waste bandwidth, transfer only the grain header and go to the next grain.
                 status = mxlFabricsInitiatorTransferGrain(_initiator, grainIndex, 0, 0);
+                stats.record(0);
+                stats.maybeLog("grains", "slices");
                 ++grainIndex;
                 continue;
             }
@@ -433,6 +478,8 @@ public:
             }
             while (status == MXL_ERR_NOT_READY && deadline > std::chrono::steady_clock::now());
             MXL_DEBUG("Transferred grain index={} slices {}-{}", grainIndex, startSlice, grainInfo.validSlices);
+            stats.record(grainInfo.validSlices - startSlice);
+            stats.maybeLog("grains", "slices");
 
             if (grainInfo.validSlices != grainInfo.totalSlices)
             {
@@ -461,6 +508,7 @@ public:
         auto previousHeadIndex = std::uint64_t{0};
         std::size_t batchSize = configInfo.common.maxSyncBatchSizeHint;
         MXL_INFO("batch size in samples: {}", batchSize);
+        auto stats = TransferStats{};
 
         while (!g_exit_requested)
         {
@@ -523,6 +571,8 @@ public:
             }
             while (status == MXL_ERR_NOT_READY && deadline > std::chrono::steady_clock::now());
             MXL_DEBUG("Transferred samples headIndex={} count={}", headIndex, batchSize);
+            stats.record(batchSize);
+            stats.maybeLog("transfers", "samples");
 
             previousHeadIndex = headIndex;
 
@@ -741,6 +791,7 @@ public:
         std::uint64_t grainIndex = 0;
         std::uint8_t* dummyPayload;
         mxlStatus status;
+        auto stats = TransferStats{};
 
         // This demo is a pure proxy: it only commits each grain and does no heavy per-grain processing, so draining and committing one grain
         // per iteration keeps the completion queue empty and is all that is required here. Applications that do slower per-grain work (decoding,
@@ -790,6 +841,8 @@ public:
                 mxlGetCurrentIndex(&_configInfo.common.grainRate),
                 grainInfo.validSlices,
                 grainInfo.flags);
+            stats.record(grainInfo.validSlices);
+            stats.maybeLog("grains", "slices");
         }
 
         return MXL_STATUS_OK;
@@ -802,6 +855,7 @@ public:
         mxlMutableWrappedMultiBufferSlice dummySlice;
 
         mxlStatus status;
+        auto stats = TransferStats{};
 
         while (!g_exit_requested)
         {
@@ -843,6 +897,8 @@ public:
             }
 
             MXL_DEBUG("Cmomitted samples with head index={} count={}", headIndex, count);
+            stats.record(count);
+            stats.maybeLog("transfers", "samples");
         }
 
         return MXL_STATUS_OK;
