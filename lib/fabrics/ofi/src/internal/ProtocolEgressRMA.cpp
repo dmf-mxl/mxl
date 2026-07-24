@@ -39,7 +39,6 @@ namespace mxl::lib::fabrics::ofi
             return;
         }
 
-        auto const numSlices = sliceRange.end() - sliceRange.start();
         auto const planeCount = _layout.activePlaneCount();
         for (std::size_t plane = 0; plane < planeCount; ++plane)
         {
@@ -55,8 +54,8 @@ namespace mxl::lib::fabrics::ofi
             else
             {
                 auto const planeBase = _layout.planePayloadOffset(plane, payloadOffset);
-                offset = planeBase + (sliceRange.start() * sliceSize);
-                size = (numSlices * sliceSize);
+                offset = sliceRange.transferOffset(planeBase, sliceSize);
+                size = sliceRange.transferSize(planeBase, sliceSize);
             }
 
             auto const localRegion = localGrain.sub(offset, size);
