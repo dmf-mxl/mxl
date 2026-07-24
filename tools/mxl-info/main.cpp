@@ -136,7 +136,8 @@ namespace
                 latencyGrains = headIndex - currentIndex;
             }
 
-            auto const signedDiffMs = [](std::uint64_t a, std::uint64_t b) -> double {
+            auto const signedDiffMs = [](std::uint64_t a, std::uint64_t b) -> double
+            {
                 return (a >= b) ? static_cast<double>(a - b) / 1'000'000.0 : -static_cast<double>(b - a) / 1'000'000.0;
             };
 
@@ -158,8 +159,8 @@ namespace
                 }
 
                 os << '\t'
-                   << fmt::format(fmt::fg(color), "{: >20}: {}{}, [{:.2f} .. {:.2f}]", "Latency (grains, ms)", sign, latencyGrains, latencyMinMs,
-                                  latencyMaxMs)
+                   << fmt::format(
+                          fmt::fg(color), "{: >20}: {}{}, [{:.2f} .. {:.2f}]", "Latency (grains, ms)", sign, latencyGrains, latencyMinMs, latencyMaxMs)
                    << std::endl;
             }
             else
@@ -220,8 +221,7 @@ namespace
                    << '\t' << fmt::format("{: >20}: {}", "Buffer length", info.config.continuous.bufferLength) << '\n';
             }
 
-            os << '\n'
-               << '\t' << fmt::format("{: >20}: {}", "Head index", info.runtime.headIndex) << '\n';
+            os << '\n' << '\t' << fmt::format("{: >20}: {}", "Head index", info.runtime.headIndex) << '\n';
 
             if (mxlIsDiscreteDataFormat(info.config.common.format))
             {
