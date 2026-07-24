@@ -135,7 +135,7 @@ Provider constants:
 - `providerWireOverheadBytes = 82`
 
 Provenance of `providerWireOverheadBytes`:
-- This constant is a modeled, per-packet on-wire cost for the `rdma_rocev2` provider profile.
+- This constant is a modeled, per-packet on-wire cost for the verbs provider using RoCEv2.
 - It is derived from protocol framing bytes that must be transmitted for each packet, not from media payload size.
 - The value is assembled from fixed header/trailer fields under the assumptions listed below (no VLAN, no IPv4 options, no IB extension headers).
 
@@ -149,7 +149,7 @@ Derivation:
 Interpretation:
 - Use `providerMtuOverheadBytes` to compute payload capacity per packet (`mtu - overhead`).
 - Use `providerWireOverheadBytes` to compute true wire-rate amplification (`packetsPerSecond * overhead`).
-- Keeping both constants separate avoids mixing MTU-budget math and on-wire transmission-time math.
+
 
 Profile assumptions:
 - Ethernet + IPv4 + UDP + RoCEv2 BTH framing.
@@ -195,14 +195,14 @@ Naming convention used in examples:
 - `packetsPerEvent`: packets needed for one media event.
 - Media-specific aliases are shown in parentheses (for example, `packetsPerFrame`).
 
-### Video Example (`video/v210`, `1920x1080p25`, `mtu=1400`)
+### Video Example (`video/v210`, `1920x1080p25`, `mtu=4096`)
 
 Input values:
 - `media_type = video/v210`
 - `frame_width = 1920`
 - `frame_height = 1080`
 - `frame_rate = 25`
-- `mtu = 1400` (transport assumption used in this document)
+- `mtu = 4096` (transport assumption used in this document)
 
 Format notes:
 - Single fill plane (`v210`), no alpha/key plane.
@@ -214,26 +214,26 @@ Media payload:
 - `mediaBytesPerSecond = 5,529,600 * 25 = 138,240,000 B/s`
 
 Network/protocol:
-- `effectivePayloadPerPacket = 1400 - providerMtuOverheadBytes = 1400 - 44 = 1,356 bytes`
+- `effectivePayloadPerPacket = 4096 - providerMtuOverheadBytes = 4096 - 44 = 4,052 bytes`
 - `payloadBytesPerEvent (bytesPerFrame) = 5,529,600`
 - `eventRate (fps) = 25`
-- `packetsPerEvent (packetsPerFrame) = (5,529,600 + 1,356 - 1) / 1,356 = 4,078` (integer division, round-up form)
-- `packetsPerSecond = packetsPerEvent * eventRate = 4,078 * 25 = 101,950`
-- `overheadBytesPerSecond = 101,950 * 82 = 8,359,900 B/s`
+- `packetsPerEvent (packetsPerFrame) = (5,529,600 + 4,052 - 1) / 4,052 = 1,365` (integer division, round-up form)
+- `packetsPerSecond = packetsPerEvent * eventRate = 1,365 * 25 = 34,125`
+- `overheadBytesPerSecond = 34,125 * 82 = 2,798,250 B/s`
 
 Final wire rate:
-- `wireBytesPerSecond = 138,240,000 + 8,359,900 = 146,599,900 B/s`
-- `wireRate = 146,599,900 / 1,000,000,000 = 0.1465999 GB/s ~= 0.14660 GB/s`
+- `wireBytesPerSecond = 138,240,000 + 2,798,250 = 141,038,250 B/s`
+- `wireRate = 141,038,250 / 1,000,000,000 = 0.14103825 GB/s ~= 0.14104 GB/s`
 
 
-### Video Example (`video/v210a`, `1920x1080p25`, `mtu=1400`)
+### Video Example (`video/v210a`, `1920x1080p25`, `mtu=4096`)
 
 Input values:
 - `media_type = video/v210a`
 - `frame_width = 1920`
 - `frame_height = 1080`
 - `frame_rate = 25`
-- `mtu = 1400` (transport assumption used in this document)
+- `mtu = 4096` (transport assumption used in this document)
 
 Format notes (from upstream MXL):
 - Fill plane uses v210 line packing: `v210LineBytes = ((width + 47) / 48) * 128`.
@@ -249,25 +249,25 @@ Media payload:
 - `mediaBytesPerSecond = 8,294,400 * 25 = 207,360,000 B/s`
 
 Network/protocol:
-- `effectivePayloadPerPacket = 1400 - providerMtuOverheadBytes = 1400 - 44 = 1,356 bytes`
+- `effectivePayloadPerPacket = 4096 - providerMtuOverheadBytes = 4096 - 44 = 4,052 bytes`
 - `payloadBytesPerEvent (bytesPerFrame) = 8,294,400`
 - `eventRate (fps) = 25`
-- `packetsPerEvent (packetsPerFrame) = (8,294,400 + 1,356 - 1) / 1,356 = 6,117` (integer division, round-up form)
-- `packetsPerSecond = packetsPerEvent * eventRate = 6,117 * 25 = 152,925`
-- `overheadBytesPerSecond = 152,925 * 82 = 12,539,850 B/s`
+- `packetsPerEvent (packetsPerFrame) = (8,294,400 + 4,052 - 1) / 4,052 = 2,047` (integer division, round-up form)
+- `packetsPerSecond = packetsPerEvent * eventRate = 2,047 * 25 = 51,175`
+- `overheadBytesPerSecond = 51,175 * 82 = 4,196,350 B/s`
 
 Final wire rate:
-- `wireBytesPerSecond = 207,360,000 + 12,539,850 = 219,899,850 B/s`
-- `wireRate = 219,899,850 / 1,000,000,000 = 0.21989985 GB/s ~= 0.21990 GB/s`
+- `wireBytesPerSecond = 207,360,000 + 4,196,350 = 211,556,350 B/s`
+- `wireRate = 211,556,350 / 1,000,000,000 = 0.21155635 GB/s ~= 0.21156 GB/s`
 
-### Audio Example (`2ch`, `48kHz`, `ptime=10ms`, `mtu=1400`)
+### Audio Example (`2ch`, `48kHz`, `ptime=10ms`, `mtu=4096`)
 
 Input values:
 - `media_type = audio/float32`
 - `channels = 2`
 - `sampleRate = 48,000`
 - `ptime = 0.01 s` (`10 ms`)
-- `mtu = 1400` (transport assumption used in this document)
+- `mtu = 4096` (transport assumption used in this document)
 
 Format notes:
 - `audio/float32` uses 4 bytes per sample.
@@ -278,24 +278,24 @@ Media payload:
 - `bytesPerPacket = 2 * 48,000 * 4 * 0.01 = 3,840 bytes`
 
 Network/protocol:
-- `effectivePayloadPerPacket = 1400 - providerMtuOverheadBytes = 1400 - 44 = 1,356 bytes`
+- `effectivePayloadPerPacket = 4096 - providerMtuOverheadBytes = 4096 - 44 = 4,052 bytes`
 - `payloadBytesPerEvent (bytesPerPacket) = 3,840`
-- `packetsPerEvent (packetsPerPtime) = (3,840 + 1,356 - 1) / 1,356 = 3` (integer division, round-up form)
+- `packetsPerEvent (packetsPerPtime) = (3,840 + 4,052 - 1) / 4,052 = 1` (integer division, round-up form)
 - `eventRate (ptimeEventsPerSecond) = 1 / 0.01 = 100`
-- `packetsPerSecond = packetsPerEvent * eventRate = 3 * 100 = 300`
-- `overheadBytesPerSecond = 300 * 82 = 24,600 B/s`
+- `packetsPerSecond = packetsPerEvent * eventRate = 1 * 100 = 100`
+- `overheadBytesPerSecond = 100 * 82 = 8,200 B/s`
 
 Final wire rate:
-- `wireBytesPerSecond = 384,000 + 24,600 = 408,600 B/s`
-- `wireRate = 408,600 / 1,000,000 = 0.4086 MB/s ~= 0.41 MB/s`
+- `wireBytesPerSecond = 384,000 + 8,200 = 392,200 B/s`
+- `wireRate = 392,200 / 1,000,000 = 0.3922 MB/s ~= 0.39 MB/s`
 
-### Data Example (`grainRate=60`, `mtu=1400`)
+### Data Example (`grainRate=60`, `mtu=4096`)
 
 Input values:
 - `media_type = video/smpte291`
 - `bytesPerGrain = 4,096`
 - `grainRate = 60`
-- `mtu = 1400` (transport assumption used in this document)
+- `mtu = 4096` (transport assumption used in this document)
 
 Format notes:
 - MXL uses fixed data grain payload size of `4,096` bytes for `video/smpte291`.
@@ -306,18 +306,19 @@ Media payload:
 - `mediaBytesPerSecond = bytesPerGrain * 60 = 4,096 * 60 = 245,760 B/s`
 
 Network/protocol:
-- `effectivePayloadPerPacket = 1400 - providerMtuOverheadBytes = 1400 - 44 = 1,356 bytes`
+- `effectivePayloadPerPacket = 4096 - providerMtuOverheadBytes = 4096 - 44 = 4,052 bytes`
 - `payloadBytesPerEvent (bytesPerGrain) = 4,096`
 - `eventRate (grainRate) = 60`
-- `packetsPerEvent (packetsPerGrain) = (4,096 + 1,356 - 1) / 1,356 = 4` (integer division, round-up form)
-- `packetsPerSecond = packetsPerEvent * eventRate = 4 * 60 = 240`
-- `overheadBytesPerSecond = 240 * 82 = 19,680 B/s`
+- `packetsPerEvent (packetsPerGrain) = (4,096 + 4,052 - 1) / 4,052 = 2` (integer division, round-up form)
+- `packetsPerSecond = packetsPerEvent * eventRate = 2 * 60 = 120`
+- `overheadBytesPerSecond = 120 * 82 = 9,840 B/s`
 
 Final wire rate:
-- `wireBytesPerSecond = 245,760 + 19,680 = 265,440 B/s`
-- `wireRate = 265,440 / 1,000,000 = 0.26544 MB/s ~= 0.27 MB/s`
+- `wireBytesPerSecond = 245,760 + 9,840 = 255,600 B/s`
+- `wireRate = 255,600 / 1,000,000 = 0.2556 MB/s ~= 0.26 MB/s`
 
 ---
 
 ## Practical Notes
 - For audio, wire bandwidth is ptime-sensitive because packet count and per-packet overhead change with ptime, even when raw media byte rate is constant.
+- An audio grain duration is the semantical equivalent to what 2110 refers as ptime (packet time)
