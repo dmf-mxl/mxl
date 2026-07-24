@@ -33,21 +33,8 @@ namespace mxl::lib::fabrics::ofi
         static std::pair<std::unique_ptr<RCTarget>, std::unique_ptr<TargetInfo>> setup(mxlFabricsTargetConfig const& config, FabricInfoView info,
             TargetSetupOptions const& options = {});
 
-        /** \copydoc Target::readGrain()
-         */
-        virtual std::optional<Target::GrainReadResult> readGrain() final;
-
-        /** \copydoc Target::readGrainBlocking()
-         */
-        virtual std::optional<Target::GrainReadResult> readGrainBlocking(std::chrono::steady_clock::duration timeout) final;
-
-        /** \copydoc Target::readSamples()
-         */
-        virtual std::optional<Target::SampleReadResult> readSamples() final;
-
-        /** copydoc Target::readSamplesBlocking()
-         */
-        virtual std::optional<Target::SampleReadResult> readSamplesBlocking(std::chrono::steady_clock::duration timeout) final;
+        virtual std::optional<Target::ReadResult> read();
+        virtual std::optional<Target::ReadResult> readBlocking(std::chrono::steady_clock::duration timeout) final;
 
         /** \brief Shut down the target.
          */

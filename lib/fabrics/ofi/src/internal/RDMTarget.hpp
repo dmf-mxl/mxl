@@ -29,19 +29,11 @@ namespace mxl::lib::fabrics::ofi
 
         /** \copydoc Target::read()
          */
-        virtual std::optional<Target::GrainReadResult> readGrain() final;
+        virtual std::optional<Target::ReadResult> read() final;
 
         /** \copydoc Target::readSamples()
          */
-        virtual std::optional<Target::SampleReadResult> readSamples() final;
-
-        /** \copydoc Target::readBlocking()
-         */
-        virtual std::optional<Target::GrainReadResult> readGrainBlocking(std::chrono::steady_clock::duration timeout) final;
-
-        /** \copydoc Target::readSamplesBlocking()
-         */
-        virtual std::optional<Target::SampleReadResult> readSamplesBlocking(std::chrono::steady_clock::duration timeout) final;
+        virtual std::optional<Target::ReadResult> readBlocking(std::chrono::steady_clock::duration timeout) final;
 
         /** \copydoc Target::shutdown()
          */

@@ -195,11 +195,11 @@ namespace mxl::lib::fabrics::ofi
 
         /** \copydoc Initiator::makeProgress()
          */
-        virtual bool makeProgress() final;
+        virtual Initiator::MakeProgressResult makeProgress() final;
 
         /** \copydoc Initiator::makeProgressBlocking()
          */
-        virtual bool makeProgressBlocking(std::chrono::steady_clock::duration) final;
+        virtual Initiator::MakeProgressResult makeProgressBlocking(std::chrono::steady_clock::duration) final;
 
         virtual void shutdown() final;
 
@@ -207,7 +207,7 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Returns true if any of the endpoints contained in this initiator have pending work.
          */
         [[nodiscard]]
-        bool hasPendingWork() const noexcept;
+        Initiator::MakeProgressResult afterProgressResult() const noexcept;
 
         /** \brief Returns true if the initiator has at least 1 target added no matter what the state is.
          */
@@ -229,7 +229,8 @@ namespace mxl::lib::fabrics::ofi
 
         /** \brief Block on the completion queue with a timeout.
          */
-        void blockOnCQ(std::chrono::steady_clock::duration timeout);
+        [[nodiscard]]
+        Initiator::MakeProgressResult blockOnCQ(std::chrono::steady_clock::duration timeout);
 
         /** \brief Poll the completion queue and process the events until the queue is empty.
          */

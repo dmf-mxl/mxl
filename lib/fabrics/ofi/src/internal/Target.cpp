@@ -36,44 +36,24 @@ namespace mxl::lib::fabrics::ofi
         return reinterpret_cast<mxlFabricsTarget>(this);
     }
 
-    std::optional<Target::GrainReadResult> TargetWrapper::readGrain()
+    std::optional<Target::ReadResult> TargetWrapper::read()
     {
         if (!_inner)
         {
             throw Exception::invalidState("Target is not set up.");
         }
 
-        return _inner->readGrain();
+        return _inner->read();
     }
 
-    std::optional<Target::GrainReadResult> TargetWrapper::readGrainBlocking(std::chrono::steady_clock::duration timeout)
+    std::optional<Target::ReadResult> TargetWrapper::readBlocking(std::chrono::steady_clock::duration timeout)
     {
         if (!_inner)
         {
             throw Exception::invalidState("Target is not set up.");
         }
 
-        return _inner->readGrainBlocking(timeout);
-    }
-
-    std::optional<Target::SampleReadResult> TargetWrapper::readSamples()
-    {
-        if (!_inner)
-        {
-            throw Exception::invalidState("Target is not set up.");
-        }
-
-        return _inner->readSamples();
-    }
-
-    std::optional<Target::SampleReadResult> TargetWrapper::readSamplesBlocking(std::chrono::steady_clock::duration timeout)
-    {
-        if (!_inner)
-        {
-            throw Exception::invalidState("Target is not set up.");
-        }
-
-        return _inner->readSamplesBlocking(timeout);
+        return _inner->readBlocking(timeout);
     }
 
     template<typename TargetT>

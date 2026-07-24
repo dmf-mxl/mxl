@@ -89,7 +89,7 @@ namespace mxl::lib::fabrics::ofi
         _inner->transferSamples(headIndex, count);
     }
 
-    bool InitiatorWrapper::makeProgress()
+    Initiator::MakeProgressResult InitiatorWrapper::makeProgress()
     {
         if (!_inner)
         {
@@ -99,7 +99,7 @@ namespace mxl::lib::fabrics::ofi
         return _inner->makeProgress();
     }
 
-    bool InitiatorWrapper::makeProgressBlocking(std::chrono::steady_clock::duration timeout)
+    Initiator::MakeProgressResult InitiatorWrapper::makeProgressBlocking(std::chrono::steady_clock::duration timeout)
     {
         if (!_inner)
         {
