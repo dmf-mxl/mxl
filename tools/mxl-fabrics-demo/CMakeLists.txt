@@ -25,7 +25,7 @@ target_link_libraries(mxl-fabrics-demo
             CLI11::CLI11
             spdlog::spdlog
     )
-set_target_properties(mxl-data-probe
+set_target_properties(mxl-fabrics-demo
         PROPERTIES
             INSTALL_RPATH "${MXL_TOOLS_INSTALL_RPATH}"
     )
