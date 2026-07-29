@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include "GrainSlices.hpp"
+#include "SliceRange.hpp"
 #include "Exception.hpp"
 
 namespace mxl::lib::fabrics::ofi
@@ -17,28 +17,14 @@ namespace mxl::lib::fabrics::ofi
         return SliceRange{start, end};
     }
 
-    std::uint32_t SliceRange::transferSize(std::uint32_t payloadOffset, std::uint32_t sliceSize) const noexcept
+    std::uint32_t SliceRange::transferSize(std::uint32_t sliceSize) const noexcept
     {
-        auto size = (_end - _start) * sliceSize;
-
-        if (_start == 0)
-        {
-            size += payloadOffset;
-        }
-
-        return size;
+        return ((_end - _start) * sliceSize);
     }
 
     std::uint32_t SliceRange::transferOffset(std::uint32_t payloadOffset, std::uint32_t sliceSize) const noexcept
     {
-        if (_start == 0)
-        {
-            return 0;
-        }
-        else
-        {
-            return payloadOffset + (_start * sliceSize);
-        }
+        return payloadOffset + (_start * sliceSize);
     }
 
     std::uint16_t SliceRange::start() const noexcept

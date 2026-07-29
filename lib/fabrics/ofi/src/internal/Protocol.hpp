@@ -10,8 +10,8 @@
 #include <rdma/fabric.h>
 #include "DataLayout.hpp"
 #include "Endpoint.hpp"
-#include "GrainSlices.hpp"
 #include "Region.hpp"
+#include "SliceRange.hpp"
 #include "Target.hpp"
 #include "TargetInfo.hpp"
 

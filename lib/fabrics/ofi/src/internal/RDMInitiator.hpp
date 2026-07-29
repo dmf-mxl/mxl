@@ -11,9 +11,9 @@
 #include <rdma/fabric.h>
 #include "mxl/fabrics.h"
 #include "Endpoint.hpp"
-#include "GrainSlices.hpp"
 #include "Initiator.hpp"
 #include "Protocol.hpp"
+#include "SliceRange.hpp"
 #include "TargetInfo.hpp"
 
 namespace mxl::lib::fabrics::ofi

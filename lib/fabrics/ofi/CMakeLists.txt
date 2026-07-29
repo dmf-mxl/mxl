@@ -62,7 +62,7 @@ target_sources(mxl-fabrics-objects
             src/internal/Region.cpp
             src/internal/RegisteredRegion.cpp
             src/internal/RemoteRegion.cpp
-            src/internal/GrainSlices.cpp
+            src/internal/SliceRange.cpp
             src/internal/Target.cpp
             src/internal/TargetInfo.cpp
     )

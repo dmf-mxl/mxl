@@ -16,9 +16,9 @@
 #include "Exception.hpp"
 #include "FabricInfo.hpp"
 #include "FabricInfoHelpers.hpp"
-#include "GrainSlices.hpp"
 #include "Protocol.hpp"
 #include "Region.hpp"
+#include "SliceRange.hpp"
 #include "VariantUtils.hpp"
 
 namespace mxl::lib::fabrics::ofi

@@ -40,7 +40,7 @@ namespace mxl::lib::fabrics::ofi
          * \note When start is 0, the size includes the header, it adds the payload offset.
          */
         [[nodiscard]]
-        std::uint32_t transferSize(std::uint32_t payloadOffset, std::uint32_t sliceSize) const noexcept;
+        std::uint32_t transferSize(std::uint32_t sliceSize) const noexcept;
 
         /** \brief Get the offset within the payload for the start of the range.
          * \note When start is 0, the offset is 0, because we include the header in the transfer.

@@ -48,14 +48,23 @@ namespace mxl::lib::fabrics::ofi
 
             if (plane == 0)
             {
-                offset = sliceRange.transferOffset(payloadOffset, sliceSize);
-                size = sliceRange.transferSize(payloadOffset, sliceSize);
+                // need to include header with slice 0-x
+                if (sliceRange.start() == 0)
+                {
+                    offset = sliceRange.transferOffset(0, sliceSize);
+                    size = sliceRange.transferSize(sliceSize) + payloadOffset;
+                }
+                else
+                {
+                    offset = sliceRange.transferOffset(payloadOffset, sliceSize);
+                    size = sliceRange.transferSize(sliceSize);
+                }
             }
             else
             {
                 auto const planeBase = _layout.planePayloadOffset(plane, payloadOffset);
                 offset = sliceRange.transferOffset(planeBase, sliceSize);
-                size = sliceRange.transferSize(planeBase, sliceSize);
+                size = sliceRange.transferSize(sliceSize);
             }
 
             auto const localRegion = localGrain.sub(offset, size);

@@ -39,7 +39,7 @@ namespace mxl::lib::fabrics::ofi
              * \param grainPayloadOffset The byte offset of the first plane's payload from the grain start (i.e. the grain header size).
              */
             [[nodiscard]]
-            std::uint32_t planePayloadOffset(std::size_t planeIndex, std::uint32_t grainPayloadOffset) const noexcept;
+            std::uint32_t planePayloadOffset(std::size_t planeIndex, std::uint32_t grainPayloadOffset) const;
         };
 
         /** \brief Continuous layout variant of DataLayout.
