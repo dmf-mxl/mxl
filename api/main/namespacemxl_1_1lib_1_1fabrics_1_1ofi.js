@@ -99,7 +99,7 @@ var namespacemxl_1_1lib_1_1fabrics_1_1ofi =
     [ "getEmptyVideoMxlRegions", "namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#af08709430cd9cdd70f082483ac6e6ff3", null ],
     [ "getGrainIndexInRingSlot", "namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a2f1804429230115e5a3a34951147fe7c", null ],
     [ "getHostRegionGroups", "namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a2d405498d17ddd8c3c5322af6e3436fa", null ],
-    [ "getMxlRegions", "namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#aa2bc413c82a068726d9d4b50b56d082a", null ],
+    [ "getMxlRegions", "namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a5469b9f8e014afd69a44e962f6af315d", null ],
     [ "interfaceCapsString", "namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a6c02f837b8e11f287edd2a8f09a1dbd1", null ],
     [ "mustConvertAddressFormat", "namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#afe438651e7e6c34c84ed45220fdadf73", null ],
     [ "mxlFabricsRegionsFromFlow", "namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#aa1252d750dfc283633baffee8cf46d0d", null ],

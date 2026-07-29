@@ -32,7 +32,7 @@ var searchData=
   ['getmaxsyncbatchsizehint_29',['getMaxSyncBatchSizeHint',['../classmxl_1_1lib_1_1FlowOptionsParser.html#a6488366fa676cb217d7b50be846b798f',1,'mxl::lib::FlowOptionsParser']]],
   ['getmaxwritelength_30',['getmaxwritelength',['../classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad6b37a4f7eb09d2c4bc3944e4e4519ab',1,'mxl::lib::PosixContinuousFlowWriter::getMaxWriteLength()'],['../classmxl_1_1lib_1_1ContinuousFlowWriter.html#a10e3d358d2ce904822225821ad93571d',1,'mxl::lib::ContinuousFlowWriter::getMaxWriteLength()']]],
   ['getmutablemultibufferslices_31',['getMutableMultiBufferSlices',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html#a632fe777f8ce6096af85399b4a161de9',1,'mxl::lib::fabrics::ofi::AudioBounceBuffer']]],
-  ['getmxlregions_32',['getMxlRegions',['../namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#aa2bc413c82a068726d9d4b50b56d082a',1,'mxl::lib::fabrics::ofi']]],
+  ['getmxlregions_32',['getMxlRegions',['../namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a5469b9f8e014afd69a44e962f6af315d',1,'mxl::lib::fabrics::ofi']]],
   ['getpayloadsize_33',['getPayloadSize',['../classmxl_1_1lib_1_1FlowParser.html#ad86947dc3aeed8445005ec6ee009ffcf',1,'mxl::lib::FlowParser']]],
   ['getpayloadslicelengths_34',['getPayloadSliceLengths',['../classmxl_1_1lib_1_1FlowParser.html#a374e8491d941fa23b0f68466409c3872',1,'mxl::lib::FlowParser']]],
   ['getprovidername_35',['getProviderName',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1ProviderConfig.html#a8e69b49a6aabafd6d1d9a0bb38cfe94b',1,'mxl::lib::fabrics::ofi::ProviderConfig']]],

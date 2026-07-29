@@ -7,7 +7,7 @@ var classmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout =
     [ "asContinuous", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout.html#a619df2cfa74ac44f687df4c1c0939e65", null ],
     [ "asDiscrete", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout.html#a25735dffca6ac54a419cee73de8c9dfa", null ],
     [ "fromContinuous", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout.html#a94230f729a9d9bc325065d60d1f59346", null ],
-    [ "fromDiscrete", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout.html#ab1534cbef546eff1340db8dc7bbc1861", null ],
+    [ "fromDiscrete", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout.html#ad49b1dcc5075a8800c157248e42ae0a6", null ],
     [ "isContinuous", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout.html#a4081edf097ebb3343703b9ed264eae67", null ],
     [ "isDiscrete", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout.html#a920ebd4c884ed1c7144854a1aed97376", null ],
     [ "_inner", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout.html#a2e41b56a2eb5abca7c7905b32acd87d3", null ]

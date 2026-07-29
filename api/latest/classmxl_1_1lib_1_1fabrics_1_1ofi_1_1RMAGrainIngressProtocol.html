@@ -395,7 +395,7 @@ Private Attributes</h2></td></tr>
 <div class="line"><span class="lineno">   60</span>        <span class="keyword">auto</span> immData = completionData-&gt;data();</div>
 <div class="line"><span class="lineno">   61</span>        <span class="keywordflow">if</span> (!immData)</div>
 <div class="line"><span class="lineno">   62</span>        {</div>
-<div class="line"><span class="lineno">   63</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Received a completion without immediate data.&quot;</span>);</div>
+<div class="line"><span class="lineno">   63</span>            <span class="keywordflow">return</span> {};</div>
 <div class="line"><span class="lineno">   64</span>        }</div>
 <div class="line"><span class="lineno">   65</span> </div>
 <div class="line"><span class="lineno">   66</span>        <span class="keyword">auto</span> [slot, slice] = ImmDataGrain{<span class="keyword">static_cast&lt;</span>std::uint32_t<span class="keyword">&gt;</span>(*immData)}.unpack();</div>
@@ -409,9 +409,8 @@ Private Attributes</h2></td></tr>
 <div class="line"><span class="lineno">   74</span> </div>
 <div class="line"><span class="lineno">   75</span>        <span class="keywordflow">return</span> std::make_optional&lt;Target::GrainReadResult&gt;(grainIndex);</div>
 <div class="line"><span class="lineno">   76</span>    }</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception_html_ae25fba4f94c98ae0be85ca0c2d49eb34"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">mxl::lib::fabrics::ofi::Exception::invalidState</a></div><div class="ttdeci">static Exception invalidState(fmt::format_string&lt; T... &gt; fmt, T &amp;&amp;... args)</div><div class="ttdoc">Make an MXL_ERR_INVALID_STATE exception.</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00059">Exception.hpp:59</a></div></div>
-<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_a2f1804429230115e5a3a34951147fe7c"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a2f1804429230115e5a3a34951147fe7c">mxl::lib::fabrics::ofi::getGrainIndexInRingSlot</a></div><div class="ttdeci">std::uint64_t getGrainIndexInRingSlot(std::vector&lt; Region &gt; const &amp;regions, std::uint16_t slot)</div><div class="ttdef"><b>Definition</b> <a href="Region_8cpp_source.html#l00207">Region.cpp:207</a></div></div>
-<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_a7c98a4ca108a65a8f782a4c8aa6adb5b"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a7c98a4ca108a65a8f782a4c8aa6adb5b">mxl::lib::fabrics::ofi::setValidSlicesForGrain</a></div><div class="ttdeci">void setValidSlicesForGrain(std::vector&lt; Region &gt; const &amp;regions, std::uint16_t slot, std::uint16_t validSlices)</div><div class="ttdef"><b>Definition</b> <a href="Region_8cpp_source.html#l00217">Region.cpp:217</a></div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_a2f1804429230115e5a3a34951147fe7c"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a2f1804429230115e5a3a34951147fe7c">mxl::lib::fabrics::ofi::getGrainIndexInRingSlot</a></div><div class="ttdeci">std::uint64_t getGrainIndexInRingSlot(std::vector&lt; Region &gt; const &amp;regions, std::uint16_t slot)</div><div class="ttdef"><b>Definition</b> <a href="Region_8cpp_source.html#l00208">Region.cpp:208</a></div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_a7c98a4ca108a65a8f782a4c8aa6adb5b"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a7c98a4ca108a65a8f782a4c8aa6adb5b">mxl::lib::fabrics::ofi::setValidSlicesForGrain</a></div><div class="ttdeci">void setValidSlicesForGrain(std::vector&lt; Region &gt; const &amp;regions, std::uint16_t slot, std::uint16_t validSlices)</div><div class="ttdef"><b>Definition</b> <a href="Region_8cpp_source.html#l00218">Region.cpp:218</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -462,6 +461,7 @@ Private Attributes</h2></td></tr>
 <div class="line"><span class="lineno">   30</span> </div>
 <div class="line"><span class="lineno">   31</span>        <span class="keywordflow">return</span> domain-&gt;remoteRegions();</div>
 <div class="line"><span class="lineno">   32</span>    }</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception_html_ae25fba4f94c98ae0be85ca0c2d49eb34"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">mxl::lib::fabrics::ofi::Exception::invalidState</a></div><div class="ttdeci">static Exception invalidState(fmt::format_string&lt; T... &gt; fmt, T &amp;&amp;... args)</div><div class="ttdoc">Make an MXL_ERR_INVALID_STATE exception.</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00059">Exception.hpp:59</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMAGrainIngressProtocol_html_a659e3d870a03637100f66ef20072ea8d"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMAGrainIngressProtocol.html#a659e3d870a03637100f66ef20072ea8d">mxl::lib::fabrics::ofi::RMAGrainIngressProtocol::_isMemoryRegistered</a></div><div class="ttdeci">bool _isMemoryRegistered</div><div class="ttdef"><b>Definition</b> <a href="ProtocolIngressRMA_8hpp_source.html#l00061">ProtocolIngressRMA.hpp:61</a></div></div>
 </div><!-- fragment -->
 </div>

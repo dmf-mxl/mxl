@@ -191,10 +191,10 @@ Private Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ProtocolEgressRMA_8cpp_source.html#l00228">228</a> of file <a class="el" href="ProtocolEgressRMA_8cpp_source.html">ProtocolEgressRMA.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  229</span>        : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate.html#a10ac1e96fe9e6e8e90769ba912e24197">_layout</a>{layout}</div>
-<div class="line"><span class="lineno">  230</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate.html#acd1e36b562fb83c673b0c3a9cbc45d90">_region</a>{region}</div>
-<div class="line"><span class="lineno">  231</span>    {}</div>
+<p class="definition">Definition at line <a class="el" href="ProtocolEgressRMA_8cpp_source.html#l00265">265</a> of file <a class="el" href="ProtocolEgressRMA_8cpp_source.html">ProtocolEgressRMA.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  266</span>        : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate.html#a10ac1e96fe9e6e8e90769ba912e24197">_layout</a>{layout}</div>
+<div class="line"><span class="lineno">  267</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate.html#acd1e36b562fb83c673b0c3a9cbc45d90">_region</a>{region}</div>
+<div class="line"><span class="lineno">  268</span>    {}</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate_html_a10ac1e96fe9e6e8e90769ba912e24197"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate.html#a10ac1e96fe9e6e8e90769ba912e24197">mxl::lib::fabrics::ofi::RMASampleEgressProtocolTemplate::_layout</a></div><div class="ttdeci">DataLayout::Continuous _layout</div><div class="ttdef"><b>Definition</b> <a href="ProtocolEgressRMA_8hpp_source.html#l00156">ProtocolEgressRMA.hpp:156</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate_html_acd1e36b562fb83c673b0c3a9cbc45d90"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate.html#acd1e36b562fb83c673b0c3a9cbc45d90">mxl::lib::fabrics::ofi::RMASampleEgressProtocolTemplate::_region</a></div><div class="ttdeci">Region _region</div><div class="ttdef"><b>Definition</b> <a href="ProtocolEgressRMA_8hpp_source.html#l00157">ProtocolEgressRMA.hpp:157</a></div></div>
 </div><!-- fragment -->
@@ -239,28 +239,28 @@ Private Attributes</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocolTemplate.html#a47296d60338cb5a9c7cac6ce9c5f7923">mxl::lib::fabrics::ofi::EgressProtocolTemplate</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="ProtocolEgressRMA_8cpp_source.html#l00253">253</a> of file <a class="el" href="ProtocolEgressRMA_8cpp_source.html">ProtocolEgressRMA.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  254</span>    {</div>
-<div class="line"><span class="lineno">  255</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate.html#ac0c4c85ac58f4ff5ba44446ab4e065d2">_localRegion</a>)</div>
-<div class="line"><span class="lineno">  256</span>        {</div>
-<div class="line"><span class="lineno">  257</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Cannot create protocol before memory is registered.&quot;</span>);</div>
-<div class="line"><span class="lineno">  258</span>        }</div>
-<div class="line"><span class="lineno">  259</span> </div>
-<div class="line"><span class="lineno">  260</span>        <span class="keywordflow">if</span> (!remoteInfo.bounceBufferInfo)</div>
-<div class="line"><span class="lineno">  261</span>        {</div>
-<div class="line"><span class="lineno">  262</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a0302e7afea5ec6982664237acc8559f4">Exception::invalidArgument</a>(<span class="stringliteral">&quot;Remote target does not have bounce buffer info required for sample egress protocol.&quot;</span>);</div>
-<div class="line"><span class="lineno">  263</span>        }</div>
-<div class="line"><span class="lineno">  264</span> </div>
-<div class="line"><span class="lineno">  265</span>        <span class="keyword">struct </span>MakeUniqueEnabler : RMASampleEgressProtocol</div>
-<div class="line"><span class="lineno">  266</span>        {</div>
-<div class="line"><span class="lineno">  267</span>            MakeUniqueEnabler(Completion::Token token, TargetInfo info, DataLayout::Continuous layout, LocalRegion localRegion,</div>
-<div class="line"><span class="lineno">  268</span>                std::uint32_t bounceBufferEntryCount)</div>
-<div class="line"><span class="lineno">  269</span>                : RMASampleEgressProtocol{token, std::move(info), layout, localRegion, bounceBufferEntryCount}</div>
-<div class="line"><span class="lineno">  270</span>            {}</div>
-<div class="line"><span class="lineno">  271</span>        };</div>
-<div class="line"><span class="lineno">  272</span> </div>
-<div class="line"><span class="lineno">  273</span>        <span class="keywordflow">return</span> std::make_unique&lt;MakeUniqueEnabler&gt;(token, std::move(remoteInfo), <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate.html#a10ac1e96fe9e6e8e90769ba912e24197">_layout</a>, *<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate.html#ac0c4c85ac58f4ff5ba44446ab4e065d2">_localRegion</a>, remoteInfo.bounceBufferInfo-&gt;entryCount);</div>
-<div class="line"><span class="lineno">  274</span>    };</div>
+<p class="definition">Definition at line <a class="el" href="ProtocolEgressRMA_8cpp_source.html#l00290">290</a> of file <a class="el" href="ProtocolEgressRMA_8cpp_source.html">ProtocolEgressRMA.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  291</span>    {</div>
+<div class="line"><span class="lineno">  292</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate.html#ac0c4c85ac58f4ff5ba44446ab4e065d2">_localRegion</a>)</div>
+<div class="line"><span class="lineno">  293</span>        {</div>
+<div class="line"><span class="lineno">  294</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Cannot create protocol before memory is registered.&quot;</span>);</div>
+<div class="line"><span class="lineno">  295</span>        }</div>
+<div class="line"><span class="lineno">  296</span> </div>
+<div class="line"><span class="lineno">  297</span>        <span class="keywordflow">if</span> (!remoteInfo.bounceBufferInfo)</div>
+<div class="line"><span class="lineno">  298</span>        {</div>
+<div class="line"><span class="lineno">  299</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a0302e7afea5ec6982664237acc8559f4">Exception::invalidArgument</a>(<span class="stringliteral">&quot;Remote target does not have bounce buffer info required for sample egress protocol.&quot;</span>);</div>
+<div class="line"><span class="lineno">  300</span>        }</div>
+<div class="line"><span class="lineno">  301</span> </div>
+<div class="line"><span class="lineno">  302</span>        <span class="keyword">struct </span>MakeUniqueEnabler : RMASampleEgressProtocol</div>
+<div class="line"><span class="lineno">  303</span>        {</div>
+<div class="line"><span class="lineno">  304</span>            MakeUniqueEnabler(Completion::Token token, TargetInfo info, DataLayout::Continuous layout, LocalRegion localRegion,</div>
+<div class="line"><span class="lineno">  305</span>                std::uint32_t bounceBufferEntryCount)</div>
+<div class="line"><span class="lineno">  306</span>                : RMASampleEgressProtocol{token, std::move(info), layout, localRegion, bounceBufferEntryCount}</div>
+<div class="line"><span class="lineno">  307</span>            {}</div>
+<div class="line"><span class="lineno">  308</span>        };</div>
+<div class="line"><span class="lineno">  309</span> </div>
+<div class="line"><span class="lineno">  310</span>        <span class="keywordflow">return</span> std::make_unique&lt;MakeUniqueEnabler&gt;(token, std::move(remoteInfo), <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate.html#a10ac1e96fe9e6e8e90769ba912e24197">_layout</a>, *<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate.html#ac0c4c85ac58f4ff5ba44446ab4e065d2">_localRegion</a>, remoteInfo.bounceBufferInfo-&gt;entryCount);</div>
+<div class="line"><span class="lineno">  311</span>    };</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception_html_a0302e7afea5ec6982664237acc8559f4"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a0302e7afea5ec6982664237acc8559f4">mxl::lib::fabrics::ofi::Exception::invalidArgument</a></div><div class="ttdeci">static Exception invalidArgument(fmt::format_string&lt; T... &gt; fmt, T &amp;&amp;... args)</div><div class="ttdoc">Make an MXL_ERR_INVALID_ARG exception.</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00043">Exception.hpp:43</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception_html_ae25fba4f94c98ae0be85ca0c2d49eb34"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">mxl::lib::fabrics::ofi::Exception::invalidState</a></div><div class="ttdeci">static Exception invalidState(fmt::format_string&lt; T... &gt; fmt, T &amp;&amp;... args)</div><div class="ttdoc">Make an MXL_ERR_INVALID_STATE exception.</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00059">Exception.hpp:59</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate_html_ac0c4c85ac58f4ff5ba44446ab4e065d2"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate.html#ac0c4c85ac58f4ff5ba44446ab4e065d2">mxl::lib::fabrics::ofi::RMASampleEgressProtocolTemplate::_localRegion</a></div><div class="ttdeci">std::optional&lt; LocalRegion &gt; _localRegion</div><div class="ttdef"><b>Definition</b> <a href="ProtocolEgressRMA_8hpp_source.html#l00158">ProtocolEgressRMA.hpp:158</a></div></div>
@@ -295,25 +295,25 @@ Private Attributes</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocolTemplate.html#ae287ebdbc259e746ced83b3bf2ef3fbc">mxl::lib::fabrics::ofi::EgressProtocolTemplate</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="ProtocolEgressRMA_8cpp_source.html#l00233">233</a> of file <a class="el" href="ProtocolEgressRMA_8cpp_source.html">ProtocolEgressRMA.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  234</span>    {</div>
-<div class="line"><span class="lineno">  235</span>        <span class="comment">// This function should be called once during setup and be the first memory to register, otherwise it&#39;s a bug.</span></div>
-<div class="line"><span class="lineno">  236</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate.html#ac0c4c85ac58f4ff5ba44446ab4e065d2">_localRegion</a>)</div>
-<div class="line"><span class="lineno">  237</span>        {</div>
-<div class="line"><span class="lineno">  238</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Memory already registered.&quot;</span>);</div>
-<div class="line"><span class="lineno">  239</span>        }</div>
-<div class="line"><span class="lineno">  240</span>        <span class="keywordflow">if</span> (!domain-&gt;localRegions().empty())</div>
-<div class="line"><span class="lineno">  241</span>        {</div>
-<div class="line"><span class="lineno">  242</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;No memory should be previously registered.&quot;</span>);</div>
-<div class="line"><span class="lineno">  243</span>        }</div>
-<div class="line"><span class="lineno">  244</span> </div>
-<div class="line"><span class="lineno">  245</span>        <span class="comment">// Register the audio region provided by the user. When the actual protocol instance is created, the protocol will register additional</span></div>
-<div class="line"><span class="lineno">  246</span>        <span class="comment">// regions for the bounce buffer entry headers, but we can only do that once we have the actual protocol instance since the bounce buffer</span></div>
-<div class="line"><span class="lineno">  247</span>        <span class="comment">// entry count is a parameter of the protocol instance.</span></div>
-<div class="line"><span class="lineno">  248</span>        domain-&gt;registerRegion(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate.html#acd1e36b562fb83c673b0c3a9cbc45d90">_region</a>, FI_WRITE);</div>
-<div class="line"><span class="lineno">  249</span> </div>
-<div class="line"><span class="lineno">  250</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate.html#ac0c4c85ac58f4ff5ba44446ab4e065d2">_localRegion</a> = domain-&gt;localRegions().front();</div>
-<div class="line"><span class="lineno">  251</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="ProtocolEgressRMA_8cpp_source.html#l00270">270</a> of file <a class="el" href="ProtocolEgressRMA_8cpp_source.html">ProtocolEgressRMA.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  271</span>    {</div>
+<div class="line"><span class="lineno">  272</span>        <span class="comment">// This function should be called once during setup and be the first memory to register, otherwise it&#39;s a bug.</span></div>
+<div class="line"><span class="lineno">  273</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate.html#ac0c4c85ac58f4ff5ba44446ab4e065d2">_localRegion</a>)</div>
+<div class="line"><span class="lineno">  274</span>        {</div>
+<div class="line"><span class="lineno">  275</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Memory already registered.&quot;</span>);</div>
+<div class="line"><span class="lineno">  276</span>        }</div>
+<div class="line"><span class="lineno">  277</span>        <span class="keywordflow">if</span> (!domain-&gt;localRegions().empty())</div>
+<div class="line"><span class="lineno">  278</span>        {</div>
+<div class="line"><span class="lineno">  279</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;No memory should be previously registered.&quot;</span>);</div>
+<div class="line"><span class="lineno">  280</span>        }</div>
+<div class="line"><span class="lineno">  281</span> </div>
+<div class="line"><span class="lineno">  282</span>        <span class="comment">// Register the audio region provided by the user. When the actual protocol instance is created, the protocol will register additional</span></div>
+<div class="line"><span class="lineno">  283</span>        <span class="comment">// regions for the bounce buffer entry headers, but we can only do that once we have the actual protocol instance since the bounce buffer</span></div>
+<div class="line"><span class="lineno">  284</span>        <span class="comment">// entry count is a parameter of the protocol instance.</span></div>
+<div class="line"><span class="lineno">  285</span>        domain-&gt;registerRegion(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate.html#acd1e36b562fb83c673b0c3a9cbc45d90">_region</a>, FI_WRITE);</div>
+<div class="line"><span class="lineno">  286</span> </div>
+<div class="line"><span class="lineno">  287</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate.html#ac0c4c85ac58f4ff5ba44446ab4e065d2">_localRegion</a> = domain-&gt;localRegions().front();</div>
+<div class="line"><span class="lineno">  288</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>

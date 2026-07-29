@@ -99,6 +99,7 @@ $(document).ready(function(){initNavTree('structmxl_1_1lib_1_1fabrics_1_1ofi_1_1
 
 <div class="header">
   <div class="summary">
+<a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">mxl::lib::fabrics::ofi::DataLayout::Discrete Struct Reference</div></div>
@@ -110,16 +111,147 @@ $(document).ready(function(){initNavTree('structmxl_1_1lib_1_1fabrics_1_1ofi_1_1
 
 <p><code>#include &lt;<a class="el" href="DataLayout_8hpp_source.html">DataLayout.hpp</a>&gt;</code></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:a08c0e60082e80eadea91ad5ea0aea870" id="r_a08c0e60082e80eadea91ad5ea0aea870"><td class="memItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete.html#a08c0e60082e80eadea91ad5ea0aea870">activePlaneCount</a> () const noexcept</td></tr>
+<tr class="memdesc:a08c0e60082e80eadea91ad5ea0aea870"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the number of active planes (consecutive non-zero sliceSizes entries).  <br /></td></tr>
+<tr class="separator:a08c0e60082e80eadea91ad5ea0aea870"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5d03cd0416ab5e2bbda30be24760e4a9" id="r_a5d03cd0416ab5e2bbda30be24760e4a9"><td class="memItemLeft" align="right" valign="top">std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete.html#a5d03cd0416ab5e2bbda30be24760e4a9">planePayloadOffset</a> (std::size_t planeIndex, std::uint32_t grainPayloadOffset) const</td></tr>
+<tr class="memdesc:a5d03cd0416ab5e2bbda30be24760e4a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the byte offset from the grain start to where a given plane's payload begins.  <br /></td></tr>
+<tr class="separator:a5d03cd0416ab5e2bbda30be24760e4a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa6577e34a29be7352035c18614171528" id="r_aa6577e34a29be7352035c18614171528"><td class="memItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete.html#aa6577e34a29be7352035c18614171528">totalLength</a> () const noexcept</td></tr>
+<tr class="memdesc:aa6577e34a29be7352035c18614171528"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the total length of all active planes together.  <br /></td></tr>
+<tr class="separator:aa6577e34a29be7352035c18614171528"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:aa396d55e083ce6b7b5c678d442a8bc52" id="r_aa396d55e083ce6b7b5c678d442a8bc52"><td class="memItemLeft" align="right" valign="top">std::array&lt; std::uint32_t, <a class="el" href="flowinfo_8h.html#ad748e8ffdc270b5c66f2638deee6d373">MXL_MAX_PLANES_PER_GRAIN</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete.html#aa396d55e083ce6b7b5c678d442a8bc52">sliceSizes</a></td></tr>
 <tr class="separator:aa396d55e083ce6b7b5c678d442a8bc52"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a194cba652dbfdcb60c4c0f90b4117550" id="r_a194cba652dbfdcb60c4c0f90b4117550"><td class="memItemLeft" align="right" valign="top">std::uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete.html#a194cba652dbfdcb60c4c0f90b4117550">totalSlices</a></td></tr>
+<tr class="separator:a194cba652dbfdcb60c4c0f90b4117550"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p><a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete.html" title="Discrete layout variant of DataLayout.">Discrete</a> layout variant of <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout.html" title="Describes the layout of data within memory regions.">DataLayout</a>. </p>
 
 <p class="definition">Definition at line <a class="el" href="DataLayout_8hpp_source.html#l00023">23</a> of file <a class="el" href="DataLayout_8hpp_source.html">DataLayout.hpp</a>.</p>
-</div><h2 class="groupheader">Member Data Documentation</h2>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a08c0e60082e80eadea91ad5ea0aea870" name="a08c0e60082e80eadea91ad5ea0aea870"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a08c0e60082e80eadea91ad5ea0aea870">&#9670;&#160;</a></span>activePlaneCount()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::size_t mxl::lib::fabrics::ofi::DataLayout::Discrete::activePlaneCount </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Return the number of active planes (consecutive non-zero sliceSizes entries). </p>
+
+<p class="definition">Definition at line <a class="el" href="DataLayout_8cpp_source.html#l00027">27</a> of file <a class="el" href="DataLayout_8cpp_source.html">DataLayout.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   28</span>    {</div>
+<div class="line"><span class="lineno">   29</span>        <span class="keywordflow">return</span> std::ranges::count_if(<a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete.html#aa396d55e083ce6b7b5c678d442a8bc52">sliceSizes</a>, [](std::uint32_t sliceSize) { <span class="keywordflow">return</span> sliceSize &gt; 0; });</div>
+<div class="line"><span class="lineno">   30</span>    }</div>
+<div class="ttc" id="astructmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete_html_aa396d55e083ce6b7b5c678d442a8bc52"><div class="ttname"><a href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete.html#aa396d55e083ce6b7b5c678d442a8bc52">mxl::lib::fabrics::ofi::DataLayout::Discrete::sliceSizes</a></div><div class="ttdeci">std::array&lt; std::uint32_t, MXL_MAX_PLANES_PER_GRAIN &gt; sliceSizes</div><div class="ttdef"><b>Definition</b> <a href="DataLayout_8hpp_source.html#l00026">DataLayout.hpp:26</a></div></div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="a5d03cd0416ab5e2bbda30be24760e4a9" name="a5d03cd0416ab5e2bbda30be24760e4a9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5d03cd0416ab5e2bbda30be24760e4a9">&#9670;&#160;</a></span>planePayloadOffset()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::uint32_t mxl::lib::fabrics::ofi::DataLayout::Discrete::planePayloadOffset </td>
+          <td>(</td>
+          <td class="paramtype">std::size_t&#160;</td>
+          <td class="paramname"><em>planeIndex</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::uint32_t&#160;</td>
+          <td class="paramname"><em>grainPayloadOffset</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Return the byte offset from the grain start to where a given plane's payload begins. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">planeIndex</td><td>The zero-based plane index. </td></tr>
+    <tr><td class="paramname">grainPayloadOffset</td><td>The byte offset of the first plane's payload from the grain start (i.e. the grain header size). </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">Definition at line <a class="el" href="DataLayout_8cpp_source.html#l00032">32</a> of file <a class="el" href="DataLayout_8cpp_source.html">DataLayout.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   33</span>    {</div>
+<div class="line"><span class="lineno">   34</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete.html#aa396d55e083ce6b7b5c678d442a8bc52">sliceSizes</a>.size() &lt;= planeIndex)</div>
+<div class="line"><span class="lineno">   35</span>        {</div>
+<div class="line"><span class="lineno">   36</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">Exception::invalidState</a>(<span class="stringliteral">&quot;Invalid plane index {} not in range {}-{}&quot;</span>, planeIndex, 0, <a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete.html#aa396d55e083ce6b7b5c678d442a8bc52">sliceSizes</a>.size());</div>
+<div class="line"><span class="lineno">   37</span>        }</div>
+<div class="line"><span class="lineno">   38</span> </div>
+<div class="line"><span class="lineno">   39</span>        <span class="keywordflow">return</span> std::accumulate(<a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete.html#aa396d55e083ce6b7b5c678d442a8bc52">sliceSizes</a>.begin(),</div>
+<div class="line"><span class="lineno">   40</span>            <a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete.html#aa396d55e083ce6b7b5c678d442a8bc52">sliceSizes</a>.begin() + planeIndex,</div>
+<div class="line"><span class="lineno">   41</span>            grainPayloadOffset,</div>
+<div class="line"><span class="lineno">   42</span>            [<span class="keyword">this</span>](std::uint32_t lhs, std::uint32_t rhs) { return lhs + (rhs * static_cast&lt;std::uint32_t&gt;(totalSlices)); });</div>
+<div class="line"><span class="lineno">   43</span>    }</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception_html_ae25fba4f94c98ae0be85ca0c2d49eb34"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">mxl::lib::fabrics::ofi::Exception::invalidState</a></div><div class="ttdeci">static Exception invalidState(fmt::format_string&lt; T... &gt; fmt, T &amp;&amp;... args)</div><div class="ttdoc">Make an MXL_ERR_INVALID_STATE exception.</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00059">Exception.hpp:59</a></div></div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="aa6577e34a29be7352035c18614171528" name="aa6577e34a29be7352035c18614171528"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa6577e34a29be7352035c18614171528">&#9670;&#160;</a></span>totalLength()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::size_t mxl::lib::fabrics::ofi::DataLayout::Discrete::totalLength </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Return the total length of all active planes together. </p>
+
+<p class="definition">Definition at line <a class="el" href="DataLayout_8cpp_source.html#l00022">22</a> of file <a class="el" href="DataLayout_8cpp_source.html">DataLayout.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   23</span>    {</div>
+<div class="line"><span class="lineno">   24</span>        <span class="keywordflow">return</span> std::accumulate(<a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete.html#aa396d55e083ce6b7b5c678d442a8bc52">sliceSizes</a>.begin(), <a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete.html#aa396d55e083ce6b7b5c678d442a8bc52">sliceSizes</a>.end(), std::size_t{0});</div>
+<div class="line"><span class="lineno">   25</span>    }</div>
+</div><!-- fragment -->
+</div>
+</div>
+<h2 class="groupheader">Member Data Documentation</h2>
 <a id="aa396d55e083ce6b7b5c678d442a8bc52" name="aa396d55e083ce6b7b5c678d442a8bc52"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa396d55e083ce6b7b5c678d442a8bc52">&#9670;&#160;</a></span>sliceSizes</h2>
 
@@ -131,14 +263,32 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Number of slices per plane. </p><dl class="section see"><dt>See also</dt><dd><a class="el" href="flowinfo_8h.html#ad748e8ffdc270b5c66f2638deee6d373">MXL_MAX_PLANES_PER_GRAIN</a> </dd></dl>
+<p>Size in bytes of a single slice for each plane. </p><dl class="section see"><dt>See also</dt><dd><a class="el" href="flowinfo_8h.html#ad748e8ffdc270b5c66f2638deee6d373">MXL_MAX_PLANES_PER_GRAIN</a> </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="DataLayout_8hpp_source.html#l00025">25</a> of file <a class="el" href="DataLayout_8hpp_source.html">DataLayout.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="DataLayout_8hpp_source.html#l00026">26</a> of file <a class="el" href="DataLayout_8hpp_source.html">DataLayout.hpp</a>.</p>
 
 </div>
 </div>
-<hr/>The documentation for this struct was generated from the following file:<ul>
+<a id="a194cba652dbfdcb60c4c0f90b4117550" name="a194cba652dbfdcb60c4c0f90b4117550"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a194cba652dbfdcb60c4c0f90b4117550">&#9670;&#160;</a></span>totalSlices</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::uint16_t mxl::lib::fabrics::ofi::DataLayout::Discrete::totalSlices</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Total number of slices (e.g. video lines) per grain. </p>
+
+<p class="definition">Definition at line <a class="el" href="DataLayout_8hpp_source.html#l00027">27</a> of file <a class="el" href="DataLayout_8hpp_source.html">DataLayout.hpp</a>.</p>
+
+</div>
+</div>
+<hr/>The documentation for this struct was generated from the following files:<ul>
 <li>lib/fabrics/ofi/src/internal/<a class="el" href="DataLayout_8hpp_source.html">DataLayout.hpp</a></li>
+<li>lib/fabrics/ofi/src/internal/<a class="el" href="DataLayout_8cpp_source.html">DataLayout.cpp</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
