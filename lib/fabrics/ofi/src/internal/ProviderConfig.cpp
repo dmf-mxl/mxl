@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "ProviderConfig.hpp"
 #include "Exception.hpp"
+#include <algorithm>
 
 namespace mxl::lib::fabrics::ofi
 {
