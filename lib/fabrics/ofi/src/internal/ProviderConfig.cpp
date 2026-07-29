@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 #include "ProviderConfig.hpp"
-#include "Exception.hpp"
 #include <algorithm>
+#include "Exception.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
