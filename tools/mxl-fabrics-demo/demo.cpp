@@ -51,9 +51,9 @@ struct Config
     InterfaceSelection interface;
 };
 
-void signal_handler(int signal)
+void signal_handler(int)
 {
-    g_exit_requested = signal;
+    g_exit_requested = 1;
 }
 
 struct TransferStats
@@ -468,7 +468,12 @@ public:
                 status = makeProgress(std::chrono::milliseconds(10));
                 if (status == MXL_ERR_INTERRUPTED)
                 {
-                    return status;
+                    if (g_exit_requested)
+                    {
+                        return MXL_STATUS_OK;
+                    }
+
+                    continue;
                 }
 
                 if (status != MXL_ERR_NOT_READY && status != MXL_STATUS_OK)
@@ -561,7 +566,12 @@ public:
                 status = makeProgress(std::chrono::milliseconds(10));
                 if (status == MXL_ERR_INTERRUPTED)
                 {
-                    return status;
+                    if (g_exit_requested)
+                    {
+                        return MXL_STATUS_OK;
+                    }
+
+                    continue;
                 }
 
                 if (status != MXL_ERR_NOT_READY && status != MXL_STATUS_OK)
@@ -812,7 +822,12 @@ public:
             }
             else if (status == MXL_ERR_INTERRUPTED)
             {
-                return status;
+                if (g_exit_requested)
+                {
+                    return MXL_STATUS_OK;
+                }
+
+                continue;
             }
             else if (status != MXL_STATUS_OK)
             {
@@ -872,7 +887,12 @@ public:
             }
             else if (status == MXL_ERR_INTERRUPTED)
             {
-                return MXL_STATUS_OK;
+                if (g_exit_requested)
+                {
+                    return MXL_STATUS_OK;
+                }
+
+                continue;
             }
             else if (status != MXL_STATUS_OK)
             {
@@ -1060,11 +1080,6 @@ int main(int argc, char** argv)
 
         if (status = app.run(); status != MXL_STATUS_OK)
         {
-            if (status == MXL_ERR_INTERRUPTED)
-            {
-                return 128 + g_exit_requested;
-            }
-
             MXL_ERROR("Failed to run initiator with status '{}'", static_cast<int>(status));
             return status;
         }
@@ -1119,11 +1134,6 @@ int main(int argc, char** argv)
 
         if (status = app.run(); status != MXL_STATUS_OK)
         {
-            if (status == MXL_ERR_INTERRUPTED)
-            {
-                return 128 + g_exit_requested;
-            }
-
             MXL_ERROR("Failed to run target with status '{}'", static_cast<int>(status));
             return status;
         }
