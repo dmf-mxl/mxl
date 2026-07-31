@@ -160,10 +160,10 @@ namespace
     class UdwUnpacker
     {
     public:
-        constexpr explicit UdwUnpacker(BigEndianWordReader& reader)
+        constexpr UdwUnpacker(BigEndianWordReader& reader, std::uint16_t initialBits, std::uint32_t initialBitCount)
             : _reader{&reader}
-            , _accumulatedBits{0}
-            , _bitCount{0}
+            , _accumulatedBits{initialBits}
+            , _bitCount{initialBitCount}
         {}
 
         [[nodiscard]]
@@ -243,7 +243,7 @@ namespace
             element.dataCount = static_cast<std::uint8_t>((word3 >> 2U) & Lower8Bits);
             element.udw.reserve(element.dataCount);
 
-            auto unpacker = UdwUnpacker{reader};
+            auto unpacker = UdwUnpacker{reader, static_cast<std::uint16_t>(word3 & 0x0003U), 2U};
             for (auto word = std::uint8_t{0}; word < element.dataCount; ++word)
             {
                 element.udw.push_back(static_cast<std::uint8_t>(unpacker.read() & Lower8Bits));
