@@ -468,11 +468,6 @@ public:
                 status = makeProgress(std::chrono::milliseconds(10));
                 if (status == MXL_ERR_INTERRUPTED)
                 {
-                    if (g_exit_requested)
-                    {
-                        return MXL_STATUS_OK;
-                    }
-
                     continue;
                 }
 
@@ -566,11 +561,6 @@ public:
                 status = makeProgress(std::chrono::milliseconds(10));
                 if (status == MXL_ERR_INTERRUPTED)
                 {
-                    if (g_exit_requested)
-                    {
-                        return MXL_STATUS_OK;
-                    }
-
                     continue;
                 }
 
@@ -822,11 +812,6 @@ public:
             }
             else if (status == MXL_ERR_INTERRUPTED)
             {
-                if (g_exit_requested)
-                {
-                    return MXL_STATUS_OK;
-                }
-
                 continue;
             }
             else if (status != MXL_STATUS_OK)
@@ -887,11 +872,6 @@ public:
             }
             else if (status == MXL_ERR_INTERRUPTED)
             {
-                if (g_exit_requested)
-                {
-                    return MXL_STATUS_OK;
-                }
-
                 continue;
             }
             else if (status != MXL_STATUS_OK)
