@@ -12,6 +12,7 @@
 #   include <UdpLayer.h>
 #endif
 
+#include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -1023,4 +1024,53 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlCreateFlow: unwri
     // restore perms so we can clean up
     permissions(domain, std::filesystem::perms::owner_all, std::filesystem::perm_options::add);
     remove_all(domain);
+}
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlFlowWriterCommitSamples should notify the reader", "[mxl flows][futex]")
+{
+    auto flowDef = mxl::tests::readFile("data/audio_flow.json");
+
+    auto instance = mxlCreateInstance(domain.c_str(), nullptr);
+    REQUIRE(instance != nullptr);
+
+    mxlFlowWriter writer = nullptr;
+    mxlFlowReader reader = nullptr;
+    auto configInfo = mxlFlowConfigInfo{};
+
+    REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), nullptr, &writer, &configInfo, nullptr) == MXL_STATUS_OK);
+    REQUIRE(mxlCreateFlowReader(instance, "b3bb5be7-9fe9-4324-a5bb-4c70e1084449", nullptr, &reader) == MXL_STATUS_OK);
+
+    auto stillWriting = std::atomic_flag{true};
+    auto writerThread = std::thread{[&]()
+        {
+            auto slice = mxlMutableWrappedMultiBufferSlice{};
+            for (auto i = std::uint64_t{0}; i < 100; ++i)
+            {
+                REQUIRE(mxlFlowWriterOpenSamples(writer, 1000 + (i * 480), 480, &slice) == MXL_STATUS_OK);
+                REQUIRE(mxlFlowWriterCommitSamples(writer) == MXL_STATUS_OK);
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+            stillWriting.clear();
+        }};
+
+    // read in a loop until `stillWriting` is cleared
+    auto slices = mxlWrappedMultiBufferSlice{};
+    auto readBlock = std::uint64_t{0};
+    for (;;)
+    {
+        auto const status = mxlFlowReaderGetSamples(reader, 1000 + (readBlock * 480), 480, 100000000, &slices);
+        if (!stillWriting.test_and_set())
+        {
+            break;
+        }
+
+        REQUIRE(status == MXL_STATUS_OK);
+        ++readBlock;
+    }
+
+    writerThread.join();
+    REQUIRE(mxlReleaseFlowReader(instance, reader) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
+
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
 }
