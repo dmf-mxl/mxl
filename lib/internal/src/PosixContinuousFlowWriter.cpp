@@ -111,7 +111,6 @@ namespace mxl::lib
         {
             auto const flow = _flowData->flow();
             flow->info.runtime.headIndex = _currentIndex;
-            _currentIndex = MXL_UNDEFINED_INDEX;
 
             if (signalCompletedBatch())
             {
@@ -120,6 +119,7 @@ namespace mxl::lib
                 wakeAll(&flow->state.syncCounter);
             }
 
+            _currentIndex = MXL_UNDEFINED_INDEX;
             return MXL_STATUS_OK;
         }
         else
