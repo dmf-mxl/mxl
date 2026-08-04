@@ -1028,15 +1028,17 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlCreateFlow: unwri
 
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlFlowWriterCommitSamples should notify the reader", "[mxl flows][futex]")
 {
+    constexpr auto const startIndex = 1000;
+    constexpr auto const blockSize = 480;
+    constexpr auto const iterations = std::uint64_t{50};
+    constexpr auto const readTimeout = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(50));
     auto flowDef = mxl::tests::readFile("data/audio_flow.json");
-
+    auto configInfo = mxlFlowConfigInfo{};
     auto instance = mxlCreateInstance(domain.c_str(), nullptr);
-    REQUIRE(instance != nullptr);
-
     mxlFlowWriter writer = nullptr;
     mxlFlowReader reader = nullptr;
-    auto configInfo = mxlFlowConfigInfo{};
 
+    REQUIRE(instance != nullptr);
     REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), nullptr, &writer, &configInfo, nullptr) == MXL_STATUS_OK);
     REQUIRE(mxlCreateFlowReader(instance, "b3bb5be7-9fe9-4324-a5bb-4c70e1084449", nullptr, &reader) == MXL_STATUS_OK);
 
@@ -1044,9 +1046,9 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlFlowWriterCommitS
     auto writerThread = std::thread{[&]()
         {
             auto slice = mxlMutableWrappedMultiBufferSlice{};
-            for (auto i = std::uint64_t{0}; i < 100; ++i)
+            for (auto i = std::uint64_t{0}; i < iterations; ++i)
             {
-                REQUIRE(mxlFlowWriterOpenSamples(writer, 1000 + (i * 480), 480, &slice) == MXL_STATUS_OK);
+                REQUIRE(mxlFlowWriterOpenSamples(writer, startIndex + (i * blockSize), blockSize, &slice) == MXL_STATUS_OK);
                 REQUIRE(mxlFlowWriterCommitSamples(writer) == MXL_STATUS_OK);
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
@@ -1055,20 +1057,22 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlFlowWriterCommitS
 
     // read in a loop until `stillWriting` is cleared
     auto slices = mxlWrappedMultiBufferSlice{};
-    auto readBlock = std::uint64_t{0};
+    auto currentBlockIndex = std::uint64_t{0};
     for (;;)
     {
-        auto const status = mxlFlowReaderGetSamples(reader, 1000 + (readBlock * 480), 480, 100000000, &slices);
+        auto const status = mxlFlowReaderGetSamples(reader, startIndex + (currentBlockIndex * blockSize), blockSize, readTimeout.count(), &slices);
         if (!stillWriting.test_and_set())
         {
             break;
         }
 
         REQUIRE(status == MXL_STATUS_OK);
-        ++readBlock;
+        ++currentBlockIndex;
     }
 
     writerThread.join();
+    REQUIRE(currentBlockIndex == iterations);
+
     REQUIRE(mxlReleaseFlowReader(instance, reader) == MXL_STATUS_OK);
     REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
 
