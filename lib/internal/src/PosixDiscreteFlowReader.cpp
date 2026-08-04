@@ -50,6 +50,19 @@ namespace mxl::lib
         // Ignore failures.
     }
 
+    PosixDiscreteFlowReader::~PosixDiscreteFlowReader()
+    {
+        if (_accessFileFd != -1)
+        {
+            if (::close(_accessFileFd) != 0)
+            {
+                auto const error = errno;
+                MXL_ERROR("Failed to close access file fd: {}", ::strerror(error));
+            }
+            _accessFileFd = -1;
+        }
+    }
+
     FlowData const& PosixDiscreteFlowReader::getFlowData() const
     {
         if (_flowData)
