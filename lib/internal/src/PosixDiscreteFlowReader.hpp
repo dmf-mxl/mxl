@@ -27,6 +27,11 @@ namespace mxl::lib
          */
         PosixDiscreteFlowReader(FlowManager const& manager, uuids::uuid const& flowId, std::unique_ptr<DiscreteFlowData>&& data);
 
+        /**
+         * Close the access file fd.
+         */
+        virtual ~PosixDiscreteFlowReader();
+
         /** \see FlowReader::getFlowData */
         [[nodiscard]]
         virtual FlowData const& getFlowData() const override;
