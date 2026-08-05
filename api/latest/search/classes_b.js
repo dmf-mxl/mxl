@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['ofisockaddrib_0',['OfiSockaddrIb',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1OfiSockaddrIb.html',1,'mxl::lib::fabrics::ofi']]],
-  ['overloaded_1',['overloaded',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1overloaded.html',1,'mxl::lib::fabrics::ofi']]]
+  ['notready_0',['NotReady',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Initiator_1_1NotReady.html',1,'mxl::lib::fabrics::ofi::Initiator']]]
 ];

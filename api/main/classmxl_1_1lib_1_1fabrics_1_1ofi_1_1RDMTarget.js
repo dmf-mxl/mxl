@@ -2,11 +2,9 @@ var classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget =
 [
     [ "RDMTarget", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#aa803cda8e5d1063e18dec86719fcd345", null ],
     [ "RDMTarget", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#acb78acf4095e354a9a5321522a4a15c9", null ],
-    [ "readGrain", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a5f4308595a83d47950251f4ef4b3b05a", null ],
-    [ "readGrainBlocking", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a4e98cffce0b993d5f0bf8a905b125dae", null ],
+    [ "read", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a2cd1d34a8dae414c1144c1111d3ef3e3", null ],
+    [ "readBlocking", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#aa23c98b412614a5586f8940d8d3180a8", null ],
     [ "readNext", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a1cb6417350574cabca171803205540f5", null ],
-    [ "readSamples", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a833ca8201e3f7c627471409577a5b6f5", null ],
-    [ "readSamplesBlocking", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a637bb4b0ae59bc61c970d3db1321993e", null ],
     [ "setup", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a09067e4b2e8c0f9cd21b47c67446ea04", null ],
     [ "shutdown", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#ae39f4d0bc6ed6201a99403fbd62f6dd4", null ],
     [ "_ep", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a715e7cd147fabc751ee7c01dd5b1453a", null ],

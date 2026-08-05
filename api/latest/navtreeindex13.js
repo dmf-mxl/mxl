@@ -1,17 +1,5 @@
 var NAVTREEINDEX13 =
 {
-"namespacemxl_1_1lib.html#ac56568c9b90aa7900cafd0c54bf6b43e":[1,0,1,0,60],
-"namespacemxl_1_1lib.html#ac635ae6fa32715af59e16f08093fcda6":[1,0,1,0,49],
-"namespacemxl_1_1lib.html#ac74c1ea407f851b3914f32d0f2c80f63":[1,0,1,0,77],
-"namespacemxl_1_1lib.html#ac790ffdc56e090cc3b808235965a7da6":[1,0,1,0,40],
-"namespacemxl_1_1lib.html#ac7a6dcbc0a5565d4a6700dbc4cef02b1":[1,0,1,0,37],
-"namespacemxl_1_1lib.html#ac7a6dcbc0a5565d4a6700dbc4cef02b1a47c7e7cb36a953a8c47e02000036bb44":[1,0,1,0,37,0],
-"namespacemxl_1_1lib.html#ac7a6dcbc0a5565d4a6700dbc4cef02b1a75139f51d6c8f471e006c04eab46548c":[1,0,1,0,37,2],
-"namespacemxl_1_1lib.html#ac7a6dcbc0a5565d4a6700dbc4cef02b1aa7b843fb734e3b3fea8e5f902d3f4144":[1,0,1,0,37,1],
-"namespacemxl_1_1lib.html#ac8e25c203b5eec345332f29af0ced4b4":[1,0,1,0,81],
-"namespacemxl_1_1lib.html#ac8fcc594bcda24d8d9893cec06fe9870":[1,0,1,0,50],
-"namespacemxl_1_1lib.html#acebeb5a6c2361ba379c4d1008540abe5":[1,0,1,0,73],
-"namespacemxl_1_1lib.html#ad3f5d3561c83048f1790e4405481e986":[1,0,1,0,123],
 "namespacemxl_1_1lib.html#ad51efcf178cc0abcea30f14d00717e95":[1,0,1,0,83],
 "namespacemxl_1_1lib.html#ad7ae9445f7502d4d1ffcc5af64c8f1a5":[1,0,1,0,104],
 "namespacemxl_1_1lib.html#ad8c65b006c5ca55d780dea52924a6b2c":[1,0,1,0,119],
@@ -249,5 +237,17 @@ var NAVTREEINDEX13 =
 "structmxlWrappedMultiBufferSlice__t.html#a4829e7ae2040e290adae63b83f846523":[2,0,25,1],
 "structmxlWrappedMultiBufferSlice__t.html#ad111dcac53c787b5e66b170fa569e1ad":[2,0,25,2],
 "structmxl_1_1lib_1_1DomainWatcherRecord.html":[2,0,1,0,9],
-"structmxl_1_1lib_1_1DomainWatcherRecord.html":[1,0,1,0,11]
+"structmxl_1_1lib_1_1DomainWatcherRecord.html":[1,0,1,0,11],
+"structmxl_1_1lib_1_1DomainWatcherRecord.html#a78b7df1863c7ec2d936f1525ff43701c":[1,0,1,0,11,4],
+"structmxl_1_1lib_1_1DomainWatcherRecord.html#a78b7df1863c7ec2d936f1525ff43701c":[2,0,1,0,9,4],
+"structmxl_1_1lib_1_1DomainWatcherRecord.html#a7a7c5a1b2b725d8c76553e41a4471aa9":[2,0,1,0,9,5],
+"structmxl_1_1lib_1_1DomainWatcherRecord.html#a7a7c5a1b2b725d8c76553e41a4471aa9":[1,0,1,0,11,5],
+"structmxl_1_1lib_1_1DomainWatcherRecord.html#ac525997032294ea11d46b0f8b2008355":[1,0,1,0,11,2],
+"structmxl_1_1lib_1_1DomainWatcherRecord.html#ac525997032294ea11d46b0f8b2008355":[2,0,1,0,9,2],
+"structmxl_1_1lib_1_1DomainWatcherRecord.html#ac5829531c31927dd754a7565b836476d":[1,0,1,0,11,3],
+"structmxl_1_1lib_1_1DomainWatcherRecord.html#ac5829531c31927dd754a7565b836476d":[2,0,1,0,9,3],
+"structmxl_1_1lib_1_1DomainWatcherRecord.html#ade2f37e4d420199c0da8bf76d6f62ea6":[1,0,1,0,11,1],
+"structmxl_1_1lib_1_1DomainWatcherRecord.html#ade2f37e4d420199c0da8bf76d6f62ea6":[2,0,1,0,9,1],
+"structmxl_1_1lib_1_1DomainWatcherRecord.html#ae41c888c9bcdcdbbe2362ca08a4e6cc9":[1,0,1,0,11,0],
+"structmxl_1_1lib_1_1DomainWatcherRecord.html#ae41c888c9bcdcdbbe2362ca08a4e6cc9":[2,0,1,0,9,0]
 };

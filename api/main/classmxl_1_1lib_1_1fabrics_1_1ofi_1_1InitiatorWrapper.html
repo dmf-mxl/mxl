@@ -117,12 +117,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a04fadc602c1ae7ba5c7da8a1f01a17dc" id="r_a04fadc602c1ae7ba5c7da8a1f01a17dc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#a04fadc602c1ae7ba5c7da8a1f01a17dc">addTarget</a> (<a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html">TargetInfo</a> const &amp;targetInfo)</td></tr>
 <tr class="memdesc:a04fadc602c1ae7ba5c7da8a1f01a17dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a target to the initiator.    <br /></td></tr>
 <tr class="separator:a04fadc602c1ae7ba5c7da8a1f01a17dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad7082583e2a7e76efa90734325fab816" id="r_ad7082583e2a7e76efa90734325fab816"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#ad7082583e2a7e76efa90734325fab816">makeProgress</a> ()</td></tr>
-<tr class="memdesc:ad7082583e2a7e76efa90734325fab816"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attempts to progress execution, including connection management and data operations.    <br /></td></tr>
-<tr class="separator:ad7082583e2a7e76efa90734325fab816"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a179bb4c36a019455788fa8dc2051cedf" id="r_a179bb4c36a019455788fa8dc2051cedf"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#a179bb4c36a019455788fa8dc2051cedf">makeProgressBlocking</a> (std::chrono::steady_clock::duration)</td></tr>
-<tr class="memdesc:a179bb4c36a019455788fa8dc2051cedf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attempts to progress execution, including connection management and data operations.    <br /></td></tr>
-<tr class="separator:a179bb4c36a019455788fa8dc2051cedf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acb28fe766e20c95e180d0d0362411260" id="r_acb28fe766e20c95e180d0d0362411260"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Initiator.html#adf54f0502cf5242193b8d8cb3626ff94">Initiator::MakeProgressResult</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#acb28fe766e20c95e180d0d0362411260">makeProgress</a> ()</td></tr>
+<tr class="memdesc:acb28fe766e20c95e180d0d0362411260"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attempts to progress execution, including connection management and data operations.    <br /></td></tr>
+<tr class="separator:acb28fe766e20c95e180d0d0362411260"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a030aaa2d45ff005eab2cddb8145237ad" id="r_a030aaa2d45ff005eab2cddb8145237ad"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Initiator.html#adf54f0502cf5242193b8d8cb3626ff94">Initiator::MakeProgressResult</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#a030aaa2d45ff005eab2cddb8145237ad">makeProgressBlocking</a> (std::chrono::steady_clock::duration)</td></tr>
+<tr class="memdesc:a030aaa2d45ff005eab2cddb8145237ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attempts to progress execution, including connection management and data operations.    <br /></td></tr>
+<tr class="separator:a030aaa2d45ff005eab2cddb8145237ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a633ebf116249379a1a2c6155ce17f395" id="r_a633ebf116249379a1a2c6155ce17f395"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#a633ebf116249379a1a2c6155ce17f395">removeTarget</a> (<a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html">TargetInfo</a> const &amp;targetInfo)</td></tr>
 <tr class="memdesc:a633ebf116249379a1a2c6155ce17f395"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove a target from the initiator.    <br /></td></tr>
 <tr class="separator:a633ebf116249379a1a2c6155ce17f395"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -157,7 +157,7 @@ Private Attributes</h2></td></tr>
 <div class="textblock"><p>A wrapper around <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Initiator.html" title="Abstract base class for Initiator implementations.">Initiator</a> implementations. </p>
 <p>This wrapper creates an unspecified initiator that can be configured for a specific type by calling the <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#ace1efdd891390864ec06789ca59b1b40" title="Set up the initiator with the specified configuration.">setup()</a> method. </p>
 
-<p class="definition">Definition at line <a class="el" href="Initiator_8hpp_source.html#l00094">94</a> of file <a class="el" href="Initiator_8hpp_source.html">Initiator.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="Initiator_8hpp_source.html#l00106">106</a> of file <a class="el" href="Initiator_8hpp_source.html">Initiator.hpp</a>.</p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a04fadc602c1ae7ba5c7da8a1f01a17dc" name="a04fadc602c1ae7ba5c7da8a1f01a17dc"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a04fadc602c1ae7ba5c7da8a1f01a17dc">&#9670;&#160;</a></span>addTarget()</h2>
@@ -176,7 +176,7 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Add a target to the initiator.   </p>
-<p>The is a non-blocking operation. The local endpoint for this target will only actively start connecting to its remote counterpart when control is passed to <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#ad7082583e2a7e76efa90734325fab816" title="Attempts to progress execution, including connection management and data operations.">makeProgress()</a> or <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#a179bb4c36a019455788fa8dc2051cedf" title="Attempts to progress execution, including connection management and data operations.">makeProgressBlocking()</a>. The local endpoint for this target will only accept write requests after the progress functions return false.   </p>
+<p>The is a non-blocking operation. The local endpoint for this target will only actively start connecting to its remote counterpart when control is passed to <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#acb28fe766e20c95e180d0d0362411260" title="Attempts to progress execution, including connection management and data operations.">makeProgress()</a> or <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#a030aaa2d45ff005eab2cddb8145237ad" title="Attempts to progress execution, including connection management and data operations.">makeProgressBlocking()</a>. The local endpoint for this target will only accept write requests after the progress functions return false.   </p>
 
 <p class="definition">Definition at line <a class="el" href="Initiator_8cpp_source.html#l00041">41</a> of file <a class="el" href="Initiator_8cpp_source.html">Initiator.cpp</a>.</p>
 <div class="fragment"><div class="line"><span class="lineno">   42</span>    {</div>
@@ -188,7 +188,7 @@ Private Attributes</h2></td></tr>
 <div class="line"><span class="lineno">   48</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">_inner</a>-&gt;addTarget(targetInfo);</div>
 <div class="line"><span class="lineno">   49</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception_html_ae25fba4f94c98ae0be85ca0c2d49eb34"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#ae25fba4f94c98ae0be85ca0c2d49eb34">mxl::lib::fabrics::ofi::Exception::invalidState</a></div><div class="ttdeci">static Exception invalidState(fmt::format_string&lt; T... &gt; fmt, T &amp;&amp;... args)</div><div class="ttdoc">Make an MXL_ERR_INVALID_STATE exception.</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00059">Exception.hpp:59</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper_html_af06cdf36c6f834d3b7325e526ffd0da0"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">mxl::lib::fabrics::ofi::InitiatorWrapper::_inner</a></div><div class="ttdeci">std::unique_ptr&lt; Initiator &gt; _inner</div><div class="ttdef"><b>Definition</b> <a href="Initiator_8hpp_source.html#l00151">Initiator.hpp:151</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper_html_af06cdf36c6f834d3b7325e526ffd0da0"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#af06cdf36c6f834d3b7325e526ffd0da0">mxl::lib::fabrics::ofi::InitiatorWrapper::_inner</a></div><div class="ttdeci">std::unique_ptr&lt; Initiator &gt; _inner</div><div class="ttdef"><b>Definition</b> <a href="Initiator_8hpp_source.html#l00163">Initiator.hpp:163</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -232,14 +232,14 @@ Private Attributes</h2></td></tr>
 </div><!-- fragment -->
 </div>
 </div>
-<a id="ad7082583e2a7e76efa90734325fab816" name="ad7082583e2a7e76efa90734325fab816"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad7082583e2a7e76efa90734325fab816">&#9670;&#160;</a></span>makeProgress()</h2>
+<a id="acb28fe766e20c95e180d0d0362411260" name="acb28fe766e20c95e180d0d0362411260"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acb28fe766e20c95e180d0d0362411260">&#9670;&#160;</a></span>makeProgress()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">bool mxl::lib::fabrics::ofi::InitiatorWrapper::makeProgress </td>
+          <td class="memname"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Initiator.html#adf54f0502cf5242193b8d8cb3626ff94">Initiator::MakeProgressResult</a> mxl::lib::fabrics::ofi::InitiatorWrapper::makeProgress </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -262,14 +262,14 @@ Private Attributes</h2></td></tr>
 </div><!-- fragment -->
 </div>
 </div>
-<a id="a179bb4c36a019455788fa8dc2051cedf" name="a179bb4c36a019455788fa8dc2051cedf"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a179bb4c36a019455788fa8dc2051cedf">&#9670;&#160;</a></span>makeProgressBlocking()</h2>
+<a id="a030aaa2d45ff005eab2cddb8145237ad" name="a030aaa2d45ff005eab2cddb8145237ad"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a030aaa2d45ff005eab2cddb8145237ad">&#9670;&#160;</a></span>makeProgressBlocking()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">bool mxl::lib::fabrics::ofi::InitiatorWrapper::makeProgressBlocking </td>
+          <td class="memname"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Initiator.html#adf54f0502cf5242193b8d8cb3626ff94">Initiator::MakeProgressResult</a> mxl::lib::fabrics::ofi::InitiatorWrapper::makeProgressBlocking </td>
           <td>(</td>
           <td class="paramtype">std::chrono::steady_clock::duration&#160;</td>
           <td class="paramname"><em>timeout</em></td><td>)</td>
@@ -310,7 +310,7 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Remove a target from the initiator.   </p>
-<p>This is a non-blocking operation. The target is only removed after <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#ad7082583e2a7e76efa90734325fab816" title="Attempts to progress execution, including connection management and data operations.">makeProgress()</a> or <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#a179bb4c36a019455788fa8dc2051cedf" title="Attempts to progress execution, including connection management and data operations.">makeProgressBlocking()</a> returns false.   </p>
+<p>This is a non-blocking operation. The target is only removed after <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#acb28fe766e20c95e180d0d0362411260" title="Attempts to progress execution, including connection management and data operations.">makeProgress()</a> or <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#a030aaa2d45ff005eab2cddb8145237ad" title="Attempts to progress execution, including connection management and data operations.">makeProgressBlocking()</a> returns false.   </p>
 
 <p class="definition">Definition at line <a class="el" href="Initiator_8cpp_source.html#l00051">51</a> of file <a class="el" href="Initiator_8cpp_source.html">Initiator.cpp</a>.</p>
 <div class="fragment"><div class="line"><span class="lineno">   52</span>    {</div>
@@ -437,7 +437,7 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Transfer a grain to all targets.   </p>
-<p>This is a non-blocking operation. The transfer is complete only after <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#ad7082583e2a7e76efa90734325fab816" title="Attempts to progress execution, including connection management and data operations.">makeProgress()</a> or <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#a179bb4c36a019455788fa8dc2051cedf" title="Attempts to progress execution, including connection management and data operations.">makeProgressBlocking()</a> returns false.</p>
+<p>This is a non-blocking operation. The transfer is complete only after <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#acb28fe766e20c95e180d0d0362411260" title="Attempts to progress execution, including connection management and data operations.">makeProgress()</a> or <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#a030aaa2d45ff005eab2cddb8145237ad" title="Attempts to progress execution, including connection management and data operations.">makeProgressBlocking()</a> returns false.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">grainIndex</td><td>The index of the grain to transfer. </td></tr>
@@ -510,7 +510,7 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Transfer a grain to a specific target.   </p>
-<p>This is a non-blocking operation. The transfer is complete only after <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#ad7082583e2a7e76efa90734325fab816" title="Attempts to progress execution, including connection management and data operations.">makeProgress()</a> or <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#a179bb4c36a019455788fa8dc2051cedf" title="Attempts to progress execution, including connection management and data operations.">makeProgressBlocking()</a> returns false.</p>
+<p>This is a non-blocking operation. The transfer is complete only after <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#acb28fe766e20c95e180d0d0362411260" title="Attempts to progress execution, including connection management and data operations.">makeProgress()</a> or <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#a030aaa2d45ff005eab2cddb8145237ad" title="Attempts to progress execution, including connection management and data operations.">makeProgressBlocking()</a> returns false.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">targetId</td><td>The ID of the target to transfer the grain to. </td></tr>
@@ -562,7 +562,7 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Transfer samples to all targets.   </p>
-<p>This is a non-blocking operation. The transfer is complete only after <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#ad7082583e2a7e76efa90734325fab816" title="Attempts to progress execution, including connection management and data operations.">makeProgress()</a> or <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#a179bb4c36a019455788fa8dc2051cedf" title="Attempts to progress execution, including connection management and data operations.">makeProgressBlocking()</a> returns false.</p>
+<p>This is a non-blocking operation. The transfer is complete only after <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#acb28fe766e20c95e180d0d0362411260" title="Attempts to progress execution, including connection management and data operations.">makeProgress()</a> or <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#a030aaa2d45ff005eab2cddb8145237ad" title="Attempts to progress execution, including connection management and data operations.">makeProgressBlocking()</a> returns false.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">headIndex</td><td>The head index to transfer. </td></tr>
@@ -605,7 +605,7 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>The underlying initiator implementation. </p>
 
-<p class="definition">Definition at line <a class="el" href="Initiator_8hpp_source.html#l00151">151</a> of file <a class="el" href="Initiator_8hpp_source.html">Initiator.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="Initiator_8hpp_source.html#l00163">163</a> of file <a class="el" href="Initiator_8hpp_source.html">Initiator.hpp</a>.</p>
 
 </div>
 </div>

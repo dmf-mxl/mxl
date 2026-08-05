@@ -1,10 +1,23 @@
 var searchData=
 [
-  ['samplereadresult_0',['SampleReadResult',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1SampleReadResult.html',1,'mxl::lib::fabrics::ofi::Target']]],
-  ['sharedmemorybase_1',['SharedMemoryBase',['../classmxl_1_1lib_1_1SharedMemoryBase.html',1,'mxl::lib']]],
-  ['sharedmemoryinstance_2',['SharedMemoryInstance',['../structmxl_1_1lib_1_1SharedMemoryInstance.html',1,'mxl::lib']]],
-  ['sharedmemoryinstance_3c_20mxl_3a_3alib_3a_3aflow_20_3e_3',['SharedMemoryInstance&lt; mxl::lib::Flow &gt;',['../structmxl_1_1lib_1_1SharedMemoryInstance.html',1,'mxl::lib']]],
-  ['sharedmemorysegment_4',['SharedMemorySegment',['../structmxl_1_1lib_1_1SharedMemorySegment.html',1,'mxl::lib']]],
-  ['shutdown_5',['Shutdown',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Event_1_1Shutdown.html',1,'mxl::lib::fabrics::ofi::Event']]],
-  ['slicerange_6',['SliceRange',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1SliceRange.html',1,'mxl::lib::fabrics::ofi']]]
+  ['rawfabricaddress_0',['RawFabricAddress',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RawFabricAddress.html',1,'mxl::lib::fabrics::ofi']]],
+  ['rcinitiator_1',['RCInitiator',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html',1,'mxl::lib::fabrics::ofi']]],
+  ['rcinitiatorendpoint_2',['RCInitiatorEndpoint',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html',1,'mxl::lib::fabrics::ofi']]],
+  ['rctarget_3',['RCTarget',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCTarget.html',1,'mxl::lib::fabrics::ofi']]],
+  ['rdminitiator_4',['RDMInitiator',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator.html',1,'mxl::lib::fabrics::ofi']]],
+  ['rdminitiatortarget_5',['RDMInitiatorTarget',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiatorTarget.html',1,'mxl::lib::fabrics::ofi']]],
+  ['rdmtarget_6',['RDMTarget',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html',1,'mxl::lib::fabrics::ofi']]],
+  ['ready_7',['Ready',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Initiator_1_1Ready.html',1,'mxl::lib::fabrics::ofi::Initiator']]],
+  ['refcounted_8',['RefCounted',['../classmxl_1_1lib_1_1Instance_1_1RefCounted.html',1,'mxl::lib::Instance']]],
+  ['region_9',['Region',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Region.html',1,'mxl::lib::fabrics::ofi']]],
+  ['regiongroup_10',['RegionGroup',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RegionGroup.html',1,'mxl::lib::fabrics::ofi']]],
+  ['registeredregion_11',['RegisteredRegion',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RegisteredRegion.html',1,'mxl::lib::fabrics::ofi']]],
+  ['remoteregion_12',['RemoteRegion',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RemoteRegion.html',1,'mxl::lib::fabrics::ofi']]],
+  ['remoteregiongroup_13',['RemoteRegionGroup',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RemoteRegionGroup.html',1,'mxl::lib::fabrics::ofi']]],
+  ['rmagrainegressprotocol_14',['RMAGrainEgressProtocol',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMAGrainEgressProtocol.html',1,'mxl::lib::fabrics::ofi']]],
+  ['rmagrainegressprotocoltemplate_15',['RMAGrainEgressProtocolTemplate',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMAGrainEgressProtocolTemplate.html',1,'mxl::lib::fabrics::ofi']]],
+  ['rmagrainingressprotocol_16',['RMAGrainIngressProtocol',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMAGrainIngressProtocol.html',1,'mxl::lib::fabrics::ofi']]],
+  ['rmasampleegressprotocol_17',['RMASampleEgressProtocol',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocol.html',1,'mxl::lib::fabrics::ofi']]],
+  ['rmasampleegressprotocoltemplate_18',['RMASampleEgressProtocolTemplate',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate.html',1,'mxl::lib::fabrics::ofi']]],
+  ['rmasampleingressprotocol_19',['RMASampleIngressProtocol',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleIngressProtocol.html',1,'mxl::lib::fabrics::ofi']]]
 ];

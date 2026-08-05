@@ -56,6 +56,9 @@ var hierarchy =
       [ "mxl::lib::fabrics::ofi::RCInitiator", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html", null ],
       [ "mxl::lib::fabrics::ofi::RDMInitiator", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator.html", null ]
     ] ],
+    [ "mxl::lib::fabrics::ofi::Initiator::Interrupted", "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Initiator_1_1Interrupted.html", null ],
+    [ "mxl::lib::fabrics::ofi::Initiator::NotReady", "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Initiator_1_1NotReady.html", null ],
+    [ "mxl::lib::fabrics::ofi::Initiator::Ready", "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Initiator_1_1Ready.html", null ],
     [ "mxl::lib::fabrics::ofi::InitiatorWrapper", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html", null ],
     [ "mxl::lib::fabrics::ofi::LocalRegion", "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1LocalRegion.html", null ],
     [ "mxl::lib::fabrics::ofi::LocalRegionGroup", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1LocalRegionGroup.html", null ],
@@ -96,6 +99,7 @@ var hierarchy =
     ] ],
     [ "mxl::lib::fabrics::ofi::Target::GrainReadResult", "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1GrainReadResult.html", null ],
     [ "mxl::lib::fabrics::ofi::Target::ImmediateDataLocation", "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1ImmediateDataLocation.html", null ],
+    [ "mxl::lib::fabrics::ofi::Target::Interrupted", "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1Interrupted.html", null ],
     [ "mxl::lib::fabrics::ofi::Target::SampleReadResult", "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1SampleReadResult.html", null ],
     [ "mxl::lib::fabrics::ofi::TargetInfo", "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html", null ],
     [ "mxl::lib::fabrics::ofi::TargetInfoBounceBufferInfo", "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfoBounceBufferInfo.html", null ],

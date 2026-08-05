@@ -132,28 +132,24 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1ImmediateDataLocation.html">ImmediateDataLocation</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represent an immediate data.  <a href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1ImmediateDataLocation.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1Interrupted.html">Interrupted</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1SampleReadResult.html">SampleReadResult</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a0134e6ace9c7d107a9d2ec08323e25cb" id="r_a0134e6ace9c7d107a9d2ec08323e25cb"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#a0134e6ace9c7d107a9d2ec08323e25cb">ReadResult</a> = std::variant&lt; <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1GrainReadResult.html">GrainReadResult</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1SampleReadResult.html">SampleReadResult</a> &gt;</td></tr>
-<tr class="separator:a0134e6ace9c7d107a9d2ec08323e25cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afa0c3c569920a8dfb7cf31a7a9377206" id="r_afa0c3c569920a8dfb7cf31a7a9377206"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#afa0c3c569920a8dfb7cf31a7a9377206">ReadResult</a> = std::variant&lt; <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1GrainReadResult.html">GrainReadResult</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1SampleReadResult.html">SampleReadResult</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1Interrupted.html">Interrupted</a> &gt;</td></tr>
+<tr class="separator:afa0c3c569920a8dfb7cf31a7a9377206"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a77583f8f3452996b751a98d08c118e7c" id="r_a77583f8f3452996b751a98d08c118e7c"><td class="memItemLeft" align="right" valign="top">virtual std::optional&lt; <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1GrainReadResult.html">GrainReadResult</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#a77583f8f3452996b751a98d08c118e7c">readGrain</a> ()=0</td></tr>
-<tr class="memdesc:a77583f8f3452996b751a98d08c118e7c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determine if new data can be consumed.  <br /></td></tr>
-<tr class="separator:a77583f8f3452996b751a98d08c118e7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a68949918b2183650a437618123d3df13" id="r_a68949918b2183650a437618123d3df13"><td class="memItemLeft" align="right" valign="top">virtual std::optional&lt; <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1GrainReadResult.html">GrainReadResult</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#a68949918b2183650a437618123d3df13">readGrainBlocking</a> (std::chrono::steady_clock::duration timeout)=0</td></tr>
-<tr class="memdesc:a68949918b2183650a437618123d3df13"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determine if new data can be consumed.  <br /></td></tr>
-<tr class="separator:a68949918b2183650a437618123d3df13"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a39c649c4cd25d9f1a6de46f23d2ff615" id="r_a39c649c4cd25d9f1a6de46f23d2ff615"><td class="memItemLeft" align="right" valign="top">virtual std::optional&lt; <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1SampleReadResult.html">SampleReadResult</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#a39c649c4cd25d9f1a6de46f23d2ff615">readSamples</a> ()=0</td></tr>
-<tr class="memdesc:a39c649c4cd25d9f1a6de46f23d2ff615"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determine if new data can be consumed.  <br /></td></tr>
-<tr class="separator:a39c649c4cd25d9f1a6de46f23d2ff615"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4111fc0224cb4f9fbd1d04a20cdd5971" id="r_a4111fc0224cb4f9fbd1d04a20cdd5971"><td class="memItemLeft" align="right" valign="top">virtual std::optional&lt; <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1SampleReadResult.html">SampleReadResult</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#a4111fc0224cb4f9fbd1d04a20cdd5971">readSamplesBlocking</a> (std::chrono::steady_clock::duration timeout)=0</td></tr>
-<tr class="memdesc:a4111fc0224cb4f9fbd1d04a20cdd5971"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determine if new data can be consumed.  <br /></td></tr>
-<tr class="separator:a4111fc0224cb4f9fbd1d04a20cdd5971"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a9273f785c6efbbf77cb79a4262ee40" id="r_a6a9273f785c6efbbf77cb79a4262ee40"><td class="memItemLeft" align="right" valign="top">virtual std::optional&lt; <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#afa0c3c569920a8dfb7cf31a7a9377206">ReadResult</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#a6a9273f785c6efbbf77cb79a4262ee40">read</a> ()=0</td></tr>
+<tr class="memdesc:a6a9273f785c6efbbf77cb79a4262ee40"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determine if new data can be consumed.  <br /></td></tr>
+<tr class="separator:a6a9273f785c6efbbf77cb79a4262ee40"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2bdf6076581a963dd3f08684a8948314" id="r_a2bdf6076581a963dd3f08684a8948314"><td class="memItemLeft" align="right" valign="top">virtual std::optional&lt; <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#afa0c3c569920a8dfb7cf31a7a9377206">ReadResult</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#a2bdf6076581a963dd3f08684a8948314">readBlocking</a> (std::chrono::steady_clock::duration timeout)=0</td></tr>
+<tr class="memdesc:a2bdf6076581a963dd3f08684a8948314"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determine if new data can be consumed.  <br /></td></tr>
+<tr class="separator:a2bdf6076581a963dd3f08684a8948314"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a26ab148ad8bcd4b5ea2d22d12b70a160" id="r_a26ab148ad8bcd4b5ea2d22d12b70a160"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#a26ab148ad8bcd4b5ea2d22d12b70a160">shutdown</a> ()=0</td></tr>
 <tr class="memdesc:a26ab148ad8bcd4b5ea2d22d12b70a160"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shut down the target gracefully. Initiates a graceful shutdown of the target and blocks until the shutdown is complete. Can throw an exception if the shutdown is not successful. If this function throws the target can now longer be used.  <br /></td></tr>
 <tr class="separator:a26ab148ad8bcd4b5ea2d22d12b70a160"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -165,19 +161,19 @@ Public Member Functions</h2></td></tr>
 
 <p class="definition">Definition at line <a class="el" href="Target_8hpp_source.html#l00034">34</a> of file <a class="el" href="Target_8hpp_source.html">Target.hpp</a>.</p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
-<a id="a0134e6ace9c7d107a9d2ec08323e25cb" name="a0134e6ace9c7d107a9d2ec08323e25cb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0134e6ace9c7d107a9d2ec08323e25cb">&#9670;&#160;</a></span>ReadResult</h2>
+<a id="afa0c3c569920a8dfb7cf31a7a9377206" name="afa0c3c569920a8dfb7cf31a7a9377206"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afa0c3c569920a8dfb7cf31a7a9377206">&#9670;&#160;</a></span>ReadResult</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#a0134e6ace9c7d107a9d2ec08323e25cb">mxl::lib::fabrics::ofi::Target::ReadResult</a> =  std::variant&lt;<a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1GrainReadResult.html">GrainReadResult</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1SampleReadResult.html">SampleReadResult</a>&gt;</td>
+          <td class="memname">using <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#afa0c3c569920a8dfb7cf31a7a9377206">mxl::lib::fabrics::ofi::Target::ReadResult</a> =  std::variant&lt;<a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1GrainReadResult.html">GrainReadResult</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1SampleReadResult.html">SampleReadResult</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1Interrupted.html">Interrupted</a>&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="Target_8hpp_source.html#l00050">50</a> of file <a class="el" href="Target_8hpp_source.html">Target.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="Target_8hpp_source.html#l00053">53</a> of file <a class="el" href="Target_8hpp_source.html">Target.hpp</a>.</p>
 
 </div>
 </div>
@@ -208,8 +204,8 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a77583f8f3452996b751a98d08c118e7c" name="a77583f8f3452996b751a98d08c118e7c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a77583f8f3452996b751a98d08c118e7c">&#9670;&#160;</a></span>readGrain()</h2>
+<a id="a6a9273f785c6efbbf77cb79a4262ee40" name="a6a9273f785c6efbbf77cb79a4262ee40"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6a9273f785c6efbbf77cb79a4262ee40">&#9670;&#160;</a></span>read()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -218,7 +214,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual std::optional&lt; <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1GrainReadResult.html">GrainReadResult</a> &gt; mxl::lib::fabrics::ofi::Target::readGrain </td>
+          <td class="memname">virtual std::optional&lt; <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#afa0c3c569920a8dfb7cf31a7a9377206">ReadResult</a> &gt; mxl::lib::fabrics::ofi::Target::read </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -234,12 +230,12 @@ Public Member Functions</h2></td></tr>
 <p>Determine if new data can be consumed. </p>
 <p>A non-blocking operation that also drives the connection forward. Continuous invocation of this function is necessary for connection establishment and ongoing progress. </p>
 
-<p>Implemented in <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCTarget.html#a52bee92e09de0bf7c804b7ee2ca87bc5">mxl::lib::fabrics::ofi::RCTarget</a>, and <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a5f4308595a83d47950251f4ef4b3b05a">mxl::lib::fabrics::ofi::RDMTarget</a>.</p>
+<p>Implemented in <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCTarget.html#a213feeb36637e71e8769a44024937623">mxl::lib::fabrics::ofi::RCTarget</a>, and <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a2cd1d34a8dae414c1144c1111d3ef3e3">mxl::lib::fabrics::ofi::RDMTarget</a>.</p>
 
 </div>
 </div>
-<a id="a68949918b2183650a437618123d3df13" name="a68949918b2183650a437618123d3df13"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a68949918b2183650a437618123d3df13">&#9670;&#160;</a></span>readGrainBlocking()</h2>
+<a id="a2bdf6076581a963dd3f08684a8948314" name="a2bdf6076581a963dd3f08684a8948314"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2bdf6076581a963dd3f08684a8948314">&#9670;&#160;</a></span>readBlocking()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -248,7 +244,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual std::optional&lt; <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1GrainReadResult.html">GrainReadResult</a> &gt; mxl::lib::fabrics::ofi::Target::readGrainBlocking </td>
+          <td class="memname">virtual std::optional&lt; <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#afa0c3c569920a8dfb7cf31a7a9377206">ReadResult</a> &gt; mxl::lib::fabrics::ofi::Target::readBlocking </td>
           <td>(</td>
           <td class="paramtype">std::chrono::steady_clock::duration&#160;</td>
           <td class="paramname"><em>timeout</em></td><td>)</td>
@@ -263,70 +259,9 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Determine if new data can be consumed. </p>
-<p>A blocking version of readGrain. see <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#a77583f8f3452996b751a98d08c118e7c" title="Determine if new data can be consumed.">readGrain()</a>. </p>
+<p>A blocking version of readGrain. see readGrain(). </p>
 
-<p>Implemented in <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCTarget.html#ab5c59e9737b264ef794fe3587edd3d92">mxl::lib::fabrics::ofi::RCTarget</a>, and <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a4e98cffce0b993d5f0bf8a905b125dae">mxl::lib::fabrics::ofi::RDMTarget</a>.</p>
-
-</div>
-</div>
-<a id="a39c649c4cd25d9f1a6de46f23d2ff615" name="a39c649c4cd25d9f1a6de46f23d2ff615"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a39c649c4cd25d9f1a6de46f23d2ff615">&#9670;&#160;</a></span>readSamples()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual std::optional&lt; <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1SampleReadResult.html">SampleReadResult</a> &gt; mxl::lib::fabrics::ofi::Target::readSamples </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Determine if new data can be consumed. </p>
-<p>A non-blocking operation that also drives the connection forward. Continuous invocation of this function is necessary for connection establishment and ongoing progress. </p>
-
-<p>Implemented in <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCTarget.html#a14249d49758471f72146fb8ea9c9c369">mxl::lib::fabrics::ofi::RCTarget</a>, and <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a833ca8201e3f7c627471409577a5b6f5">mxl::lib::fabrics::ofi::RDMTarget</a>.</p>
-
-</div>
-</div>
-<a id="a4111fc0224cb4f9fbd1d04a20cdd5971" name="a4111fc0224cb4f9fbd1d04a20cdd5971"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4111fc0224cb4f9fbd1d04a20cdd5971">&#9670;&#160;</a></span>readSamplesBlocking()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual std::optional&lt; <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target_1_1SampleReadResult.html">SampleReadResult</a> &gt; mxl::lib::fabrics::ofi::Target::readSamplesBlocking </td>
-          <td>(</td>
-          <td class="paramtype">std::chrono::steady_clock::duration&#160;</td>
-          <td class="paramname"><em>timeout</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Determine if new data can be consumed. </p>
-<p>A blocking version of readSamples. see <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#a39c649c4cd25d9f1a6de46f23d2ff615" title="Determine if new data can be consumed.">readSamples()</a>. </p>
-
-<p>Implemented in <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCTarget.html#a8350e19c6beb49207aa37cc81588ca1c">mxl::lib::fabrics::ofi::RCTarget</a>, and <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a637bb4b0ae59bc61c970d3db1321993e">mxl::lib::fabrics::ofi::RDMTarget</a>.</p>
+<p>Implemented in <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCTarget.html#ac7dab1e7d65b4aa78f7a3b3b57c79448">mxl::lib::fabrics::ofi::RCTarget</a>, and <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#aa23c98b412614a5586f8940d8d3180a8">mxl::lib::fabrics::ofi::RDMTarget</a>.</p>
 
 </div>
 </div>

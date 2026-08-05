@@ -617,17 +617,17 @@ template&lt;typename F &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="Exception_8hpp_source.html#l00165">165</a> of file <a class="el" href="Exception_8hpp_source.html">Exception.hpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  166</span>    {</div>
-<div class="line"><span class="lineno">  167</span>        <span class="keywordflow">try</span></div>
-<div class="line"><span class="lineno">  168</span>        {</div>
-<div class="line"><span class="lineno">  169</span>            fun();</div>
-<div class="line"><span class="lineno">  170</span>        }</div>
-<div class="line"><span class="lineno">  171</span>        <span class="keywordflow">catch</span> (FabricException <span class="keyword">const</span>&amp; e)</div>
-<div class="line"><span class="lineno">  172</span>        {</div>
-<div class="line"><span class="lineno">  173</span>            <a class="code hl_define" href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a>(<span class="stringliteral">&quot;FabricException caught: {}: {}&quot;</span>, msg, e.what());</div>
-<div class="line"><span class="lineno">  174</span>        }</div>
-<div class="line"><span class="lineno">  175</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="Exception_8hpp_source.html#l00168">168</a> of file <a class="el" href="Exception_8hpp_source.html">Exception.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  169</span>    {</div>
+<div class="line"><span class="lineno">  170</span>        <span class="keywordflow">try</span></div>
+<div class="line"><span class="lineno">  171</span>        {</div>
+<div class="line"><span class="lineno">  172</span>            fun();</div>
+<div class="line"><span class="lineno">  173</span>        }</div>
+<div class="line"><span class="lineno">  174</span>        <span class="keywordflow">catch</span> (FabricException <span class="keyword">const</span>&amp; e)</div>
+<div class="line"><span class="lineno">  175</span>        {</div>
+<div class="line"><span class="lineno">  176</span>            <a class="code hl_define" href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a>(<span class="stringliteral">&quot;FabricException caught: {}: {}&quot;</span>, msg, e.what());</div>
+<div class="line"><span class="lineno">  177</span>        }</div>
+<div class="line"><span class="lineno">  178</span>    }</div>
 <div class="ttc" id="aLogging_8hpp_html_ac235c0b6be0299ec9671f7bd4551b0ad"><div class="ttname"><a href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a></div><div class="ttdeci">#define MXL_ERROR(...)</div><div class="ttdef"><b>Definition</b> <a href="Logging_8hpp_source.html#l00067">Logging.hpp:67</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -712,17 +712,17 @@ template&lt;typename F , typename... T&gt; </div>
 <p>Call a libfabric function and check its return code. </p>
 <p>If the code is not FI_SUCCESS, throws an <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricException.html" title="An internal exception type that extends.">FabricException</a> that includes the error code, and the message passed in as the second argument. </p>
 
-<p class="definition">Definition at line <a class="el" href="Exception_8hpp_source.html#l00152">152</a> of file <a class="el" href="Exception_8hpp_source.html">Exception.hpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  153</span>    {</div>
-<div class="line"><span class="lineno">  154</span>        <span class="keywordtype">int</span> result = fun(std::forward&lt;T&gt;(args)...);</div>
-<div class="line"><span class="lineno">  155</span>        <span class="keywordflow">if</span> (result &lt; 0)</div>
-<div class="line"><span class="lineno">  156</span>        {</div>
-<div class="line"><span class="lineno">  157</span>            <span class="keyword">auto</span> str = ::fi_strerror(result);</div>
-<div class="line"><span class="lineno">  158</span>            <span class="keywordflow">throw</span> FabricException::make(result, <span class="stringliteral">&quot;{}: {}, code {}&quot;</span>, msg, str, result);</div>
-<div class="line"><span class="lineno">  159</span>        }</div>
-<div class="line"><span class="lineno">  160</span> </div>
-<div class="line"><span class="lineno">  161</span>        <span class="keywordflow">return</span> result;</div>
-<div class="line"><span class="lineno">  162</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="Exception_8hpp_source.html#l00155">155</a> of file <a class="el" href="Exception_8hpp_source.html">Exception.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  156</span>    {</div>
+<div class="line"><span class="lineno">  157</span>        <span class="keywordtype">int</span> result = fun(std::forward&lt;T&gt;(args)...);</div>
+<div class="line"><span class="lineno">  158</span>        <span class="keywordflow">if</span> (result &lt; 0)</div>
+<div class="line"><span class="lineno">  159</span>        {</div>
+<div class="line"><span class="lineno">  160</span>            <span class="keyword">auto</span> str = ::fi_strerror(result);</div>
+<div class="line"><span class="lineno">  161</span>            <span class="keywordflow">throw</span> FabricException::make(result, <span class="stringliteral">&quot;{}: {}, code {}&quot;</span>, msg, str, result);</div>
+<div class="line"><span class="lineno">  162</span>        }</div>
+<div class="line"><span class="lineno">  163</span> </div>
+<div class="line"><span class="lineno">  164</span>        <span class="keywordflow">return</span> result;</div>
+<div class="line"><span class="lineno">  165</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -1369,16 +1369,16 @@ template&lt;typename F , typename... T&gt; </div>
 
 <p>Convert an error code returned by libfabric to an appropriate mxlStatus code. </p>
 
-<p class="definition">Definition at line <a class="el" href="Exception_8cpp_source.html#l00036">36</a> of file <a class="el" href="Exception_8cpp_source.html">Exception.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   37</span>    {</div>
-<div class="line"><span class="lineno">   38</span>        <span class="keywordflow">switch</span> (fiErrno)</div>
-<div class="line"><span class="lineno">   39</span>        {</div>
-<div class="line"><span class="lineno">   40</span>            <span class="keywordflow">case</span> -FI_EINTR:  <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa40a76b46ec8a8b104af83d91d7978872">MXL_ERR_INTERRUPTED</a>;</div>
-<div class="line"><span class="lineno">   41</span>            <span class="keywordflow">case</span> -FI_EAGAIN: <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa0cb52f9d68c812b6659a09674916d4fd">MXL_ERR_NOT_READY</a>;</div>
-<div class="line"><span class="lineno">   42</span>            <span class="keywordflow">case</span> -FI_ENOSYS: <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa9334fc7b5b81fff235834229a1a48907">MXL_ERR_UNSUPPORTED_OPERATION</a>;</div>
-<div class="line"><span class="lineno">   43</span>            <span class="keywordflow">default</span>:         <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
-<div class="line"><span class="lineno">   44</span>        }</div>
-<div class="line"><span class="lineno">   45</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="Exception_8cpp_source.html#l00041">41</a> of file <a class="el" href="Exception_8cpp_source.html">Exception.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   42</span>    {</div>
+<div class="line"><span class="lineno">   43</span>        <span class="keywordflow">switch</span> (fiErrno)</div>
+<div class="line"><span class="lineno">   44</span>        {</div>
+<div class="line"><span class="lineno">   45</span>            <span class="keywordflow">case</span> -FI_EINTR:  <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa40a76b46ec8a8b104af83d91d7978872">MXL_ERR_INTERRUPTED</a>;</div>
+<div class="line"><span class="lineno">   46</span>            <span class="keywordflow">case</span> -FI_EAGAIN: <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa0cb52f9d68c812b6659a09674916d4fd">MXL_ERR_NOT_READY</a>;</div>
+<div class="line"><span class="lineno">   47</span>            <span class="keywordflow">case</span> -FI_ENOSYS: <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa9334fc7b5b81fff235834229a1a48907">MXL_ERR_UNSUPPORTED_OPERATION</a>;</div>
+<div class="line"><span class="lineno">   48</span>            <span class="keywordflow">default</span>:         <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">   49</span>        }</div>
+<div class="line"><span class="lineno">   50</span>    }</div>
 <div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344fa0cb52f9d68c812b6659a09674916d4fd"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa0cb52f9d68c812b6659a09674916d4fd">MXL_ERR_NOT_READY</a></div><div class="ttdeci">@ MXL_ERR_NOT_READY</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00045">mxl.h:45</a></div></div>
 <div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344fa40a76b46ec8a8b104af83d91d7978872"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa40a76b46ec8a8b104af83d91d7978872">MXL_ERR_INTERRUPTED</a></div><div class="ttdeci">@ MXL_ERR_INTERRUPTED</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00041">mxl.h:41</a></div></div>
 <div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344fa9334fc7b5b81fff235834229a1a48907"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa9334fc7b5b81fff235834229a1a48907">MXL_ERR_UNSUPPORTED_OPERATION</a></div><div class="ttdeci">@ MXL_ERR_UNSUPPORTED_OPERATION</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00048">mxl.h:48</a></div></div>
