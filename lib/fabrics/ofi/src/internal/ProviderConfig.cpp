@@ -1,5 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
+#include <algorithm>
+
 #include "ProviderConfig.hpp"
 #include "Exception.hpp"
 
@@ -10,6 +12,12 @@ namespace mxl::lib::fabrics::ofi
         namespace
         {
             constexpr auto const supportedMemoryRegistrationModes = std::uint64_t{FI_MR_VIRT_ADDR | FI_MR_LOCAL | FI_MR_ALLOCATED | FI_MR_PROV_KEY};
+        }
+
+        [[nodiscard]]
+        bool requiresHmem(std::optional<ProviderCapabilities> const& capabilities) noexcept
+        {
+            return capabilities && ((capabilities->interfaceCaps & MXL_FABRICS_IFACE_CAP_HMEM) != 0);
         }
 
         std::uint64_t libfabricCaps(std::optional<ProviderCapabilities> const& capabilities, bool isTarget)
@@ -27,6 +35,10 @@ namespace mxl::lib::fabrics::ofi
             {
                 result |= FI_SEND | FI_RECV;
             }
+            if ((capabilities->interfaceCaps & MXL_FABRICS_IFACE_CAP_HMEM) != 0)
+            {
+                result |= FI_HMEM;
+            }
             return result;
         }
 
@@ -41,7 +53,40 @@ namespace mxl::lib::fabrics::ofi
             {
                 result |= FI_RMA;
             }
+            if ((capabilities->interfaceCaps & MXL_FABRICS_IFACE_CAP_HMEM) != 0)
+            {
+                result |= FI_HMEM;
+            }
             return result;
+        }
+
+        std::uint64_t memoryRegistrationModes(std::optional<ProviderCapabilities> const& capabilities) noexcept
+        {
+            auto modes = supportedMemoryRegistrationModes;
+            if (requiresHmem(capabilities))
+            {
+                modes |= FI_MR_HMEM;
+            }
+            return modes;
+        }
+
+        /**
+         * Host-only setups reject FI_HMEM domains so we keep the historical non-HMEM path.
+         * When HMEM is required (device grain payloads), keep FI_HMEM domains and require the cap.
+         * On the query path (no capabilities), do not filter FI_HMEM so callers can discover
+         * HMEM-capable interfaces via mxlFabricsGetInterfaces().
+         */
+        std::uint64_t filteredCapsForProvider(std::uint64_t baseFilteredCaps, std::optional<ProviderCapabilities> const& capabilities) noexcept
+        {
+            if (!capabilities)
+            {
+                return baseFilteredCaps;
+            }
+            if (requiresHmem(capabilities))
+            {
+                return baseFilteredCaps & ~static_cast<std::uint64_t>(FI_HMEM);
+            }
+            return baseFilteredCaps | FI_HMEM;
         }
     }
 
@@ -67,30 +112,39 @@ namespace mxl::lib::fabrics::ofi
 
     ProviderConfig ProviderConfig::tcp(bool isTarget, std::optional<ProviderCapabilities> capabilities)
     {
+        // TCP has no real HMEM path today; requesting HMEM will fail at fi_getinfo / requiredCaps.
+        // When concrete capabilities are supplied, include FI_MSG in hints so returned fi_info
+        // objects advertise FI_MSG (requiredCaps checks it). Leave discovery (nullopt) unchanged.
+        auto const msgCap = capabilities ? static_cast<std::uint64_t>(FI_MSG) : 0;
         auto values = ProviderConfigValues{
             .providerName = "tcp",
-            .memoryRegistrationModes = supportedMemoryRegistrationModes,
+            .memoryRegistrationModes = static_cast<int>(memoryRegistrationModes(capabilities)),
             .endpointType = FI_EP_MSG,
-            .caps = libfabricCaps(capabilities, isTarget),
+            .caps = libfabricCaps(capabilities, isTarget) | msgCap,
             .supportedAddressFormats = {FI_SOCKADDR_IN, FI_SOCKADDR_IN6},
             .supportedProtocols = {FI_PROTO_SOCK_TCP},
-            .requiredCaps = libfabricRequiredCaps(capabilities) | FI_MSG,
-            .filteredCaps = FI_TAGGED,
+            .requiredCaps = libfabricRequiredCaps(capabilities) | msgCap,
+            .filteredCaps = filteredCapsForProvider(FI_TAGGED, capabilities),
         };
         return ProviderConfig{std::move(values), capabilities};
     }
 
     ProviderConfig ProviderConfig::verbs(bool isTarget, std::optional<ProviderCapabilities> capabilities)
     {
+        // When concrete capabilities are supplied, include FI_MSG in hints so returned fi_info
+        // objects advertise FI_MSG (requiredCaps checks it). Without this, HMEM-capable domains
+        // can be returned without FI_MSG set and then rejected by isSupportedFabricInfo.
+        // Discovery (nullopt) keeps historical zero-cap hints.
+        auto const msgCap = capabilities ? static_cast<std::uint64_t>(FI_MSG) : 0;
         auto values = ProviderConfigValues{
             .providerName = "verbs",
-            .memoryRegistrationModes = supportedMemoryRegistrationModes,
+            .memoryRegistrationModes = static_cast<int>(memoryRegistrationModes(capabilities)),
             .endpointType = FI_EP_MSG,
-            .caps = libfabricCaps(capabilities, isTarget),
+            .caps = libfabricCaps(capabilities, isTarget) | msgCap,
             .supportedAddressFormats = {FI_SOCKADDR_IN, FI_SOCKADDR_IN6},
             .supportedProtocols = {FI_PROTO_RDMA_CM_IB_RC},
-            .requiredCaps = libfabricRequiredCaps(capabilities) | FI_MSG,
-            .filteredCaps = FI_HMEM,
+            .requiredCaps = libfabricRequiredCaps(capabilities) | msgCap,
+            .filteredCaps = filteredCapsForProvider(0, capabilities),
         };
         return ProviderConfig{std::move(values), capabilities};
     }
@@ -99,13 +153,13 @@ namespace mxl::lib::fabrics::ofi
     {
         auto values = ProviderConfigValues{
             .providerName = "shm",
-            .memoryRegistrationModes = supportedMemoryRegistrationModes,
+            .memoryRegistrationModes = static_cast<int>(memoryRegistrationModes(capabilities)),
             .endpointType = FI_EP_RDM,
             .caps = libfabricCaps(capabilities, isTarget),
             .supportedAddressFormats = {FI_ADDR_STR},
             .supportedProtocols = {FI_PROTO_SHM},
             .requiredCaps = libfabricRequiredCaps(capabilities),
-            .filteredCaps = FI_HMEM,
+            .filteredCaps = filteredCapsForProvider(0, capabilities),
         };
         return ProviderConfig{std::move(values), capabilities};
     }
@@ -114,13 +168,13 @@ namespace mxl::lib::fabrics::ofi
     {
         auto values = ProviderConfigValues{
             .providerName = "efa",
-            .memoryRegistrationModes = supportedMemoryRegistrationModes,
+            .memoryRegistrationModes = static_cast<int>(memoryRegistrationModes(capabilities)),
             .endpointType = FI_EP_RDM,
             .caps = libfabricCaps(capabilities, isTarget),
             .supportedAddressFormats = {FI_ADDR_EFA},
             .supportedProtocols = {FI_PROTO_EFA},
             .requiredCaps = libfabricRequiredCaps(capabilities),
-            .filteredCaps = FI_HMEM | FI_TAGGED,
+            .filteredCaps = filteredCapsForProvider(FI_TAGGED, capabilities),
         };
         return ProviderConfig{std::move(values), capabilities};
     }

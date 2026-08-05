@@ -202,10 +202,16 @@ namespace mxl::lib::fabrics::ofi
     class MxlRegions
     {
     public:
-        MxlRegions(std::vector<Region> regions, DataLayout dataLayout, std::uint32_t maxSyncBatchSize = 0)
+        /**
+         * \param regionsPerGrain For discrete flows: 1 when header+payload are one contiguous host
+         *        mapping, 2 when header (host) and payload (e.g. CUDA) are registered separately
+         *        and interleaved as [header0, payload0, header1, payload1, ...].
+         */
+        MxlRegions(std::vector<Region> regions, DataLayout dataLayout, std::uint32_t maxSyncBatchSize = 0, std::size_t regionsPerGrain = 1)
             : _regions{std::move(regions)}
             , _layout{dataLayout}
             , _maxSyncBatchSize{maxSyncBatchSize}
+            , _regionsPerGrain{regionsPerGrain}
         {}
 
         static MxlRegions forReader(mxlFlowReader);
@@ -222,14 +228,22 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         std::uint32_t maxSyncBatchSize() const noexcept;
 
+        /**
+         * \brief Number of registered memory regions that belong to one discrete grain slot.
+         * Always 1 for continuous flows.
+         */
+        [[nodiscard]]
+        std::size_t regionsPerGrain() const noexcept;
+
     private:
-        friend MxlRegions mxlFabricsRegionsFromFlow(FlowData& flow);
+        friend MxlRegions mxlFabricsRegionsFromFlow(FlowData const& flow);
         friend MxlRegions mxlFabricsRegionsFromMutableFlow(FlowData& flow);
 
     private:
         std::vector<Region> _regions;
         DataLayout _layout;
         std::uint32_t _maxSyncBatchSize;
+        std::size_t _regionsPerGrain;
     };
 
     /** \brief Convert a FlowData's memory regions to MxlRegions.
@@ -244,11 +258,13 @@ namespace mxl::lib::fabrics::ofi
     [[nodiscard]]
     MxlRegions mxlFabricsRegionsFromMutableFlow(FlowData& flow);
 
-    /** \brief
-     */
-    std::uint64_t getGrainIndexInRingSlot(std::vector<Region> const& regions, std::uint16_t slotIndex);
+    /** \brief Read the grain index from the header region for ring slot \p slotIndex. */
+    std::uint64_t getGrainIndexInRingSlot(std::vector<Region> const& regions, std::uint16_t slotIndex, std::size_t regionsPerGrain = 1);
 
-    /** \brief
-     */
-    void setValidSlicesForGrain(std::vector<Region> const& regions, std::uint16_t slot, std::uint16_t validSlices);
+    /** \brief Update validSlices on the header region for ring slot \p slot. */
+    void setValidSlicesForGrain(std::vector<Region> const& regions, std::uint16_t slot, std::uint16_t validSlices, std::size_t regionsPerGrain = 1);
+
+    /** \brief True when any region is backed by non-host memory (e.g. CUDA) and needs FI_HMEM. */
+    [[nodiscard]]
+    bool regionsNeedHmem(std::vector<Region> const& regions) noexcept;
 }

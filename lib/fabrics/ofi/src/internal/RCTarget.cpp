@@ -40,7 +40,7 @@ namespace mxl::lib::fabrics::ofi
         auto pep = makeListener(fabric);
 
         auto const mxlRegions = MxlRegions::forWriter(config.writer);
-        auto proto = selectIngressProtocol(mxlRegions.dataLayout(), mxlRegions.regions(), mxlRegions.maxSyncBatchSize());
+        auto proto = selectIngressProtocol(mxlRegions.dataLayout(), mxlRegions.regions(), mxlRegions.maxSyncBatchSize(), mxlRegions.regionsPerGrain());
         auto targetInfo = std::make_unique<TargetInfo>(
             pep.id(), pep.localAddress(), *provider, proto->registerMemory(domain), proto->bounceBufferInfo());
 
@@ -143,7 +143,8 @@ namespace mxl::lib::fabrics::ofi
                         cqAttr.size = _setupOptions.cqDepth.value_or(CompletionQueue::Attributes::DEFAULT_SIZE);
                         auto cq = CompletionQueue::open(_domain, cqAttr);
                         auto endpoint = Endpoint::create(_domain, state.pep.id(), event->connReq().info());
-                        endpoint.bind(cq, FI_RECV);
+                        // HMEM / RMA-capable MSG endpoints advertise transmit caps; bind both directions.
+                        endpoint.bind(cq, FI_RECV | FI_TRANSMIT);
 
                         auto eq = EventQueue::open(_domain->fabric(), EventQueue::Attributes::defaults());
                         endpoint.bind(eq);

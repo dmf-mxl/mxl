@@ -127,6 +127,11 @@ namespace mxl::lib::fabrics::ofi
         return _maxSyncBatchSize;
     }
 
+    std::size_t MxlRegions::regionsPerGrain() const noexcept
+    {
+        return _regionsPerGrain;
+    }
+
     MxlRegions mxlFabricsRegionsFromMutableFlow(FlowData& flow)
     {
         auto mxlRegions = mxlFabricsRegionsFromFlow(flow);
@@ -134,16 +139,22 @@ namespace mxl::lib::fabrics::ofi
         if (mxlIsDiscreteDataFormat(static_cast<int>(flow.flowInfo()->config.common.format)))
         {
             auto& discreteFlow = static_cast<DiscreteFlowData&>(flow);
+            auto const stride = mxlRegions.regionsPerGrain();
 
-            if (mxlRegions._regions.size() != discreteFlow.grainCount())
+            if ((stride == 0) || ((mxlRegions._regions.size() % stride) != 0) ||
+                ((mxlRegions._regions.size() / stride) != discreteFlow.grainCount()))
             {
-                throw Exception::invalidState("Unexpected number of grains in discrete flow");
+                throw Exception::invalidState("Unexpected number of regions in discrete flow (regions={}, grains={}, stride={})",
+                    mxlRegions._regions.size(),
+                    discreteFlow.grainCount(),
+                    stride);
             }
 
             for (std::size_t i = 0; i < discreteFlow.grainCount(); ++i)
             {
-                mxlRegions._regions[i].grainIndexPtr = &discreteFlow.grainAt(i)->header.info.index;
-                mxlRegions._regions[i].validSlicesPtr = &discreteFlow.grainAt(i)->header.info.validSlices;
+                auto& headerRegion = mxlRegions._regions[i * stride];
+                headerRegion.grainIndexPtr = &discreteFlow.grainAt(i)->header.info.index;
+                headerRegion.validSlicesPtr = &discreteFlow.grainAt(i)->header.info.validSlices;
             }
         }
 
@@ -156,34 +167,81 @@ namespace mxl::lib::fabrics::ofi
             "GrainHeader type size changed! The Fabrics API makes assumptions on the memory layout of a flow, please review the code below if the "
             "change is intended!");
 
-        if (flow.flowInfo()->config.common.payloadLocation != MXL_PAYLOAD_LOCATION_HOST_MEMORY)
-        {
-            throw Exception::make(MXL_ERR_UNKNOWN,
-                "GPU memory is not currently supported in the Flow API of MXL. Edit the code below when it is supported");
-        }
-
         if (mxlIsDiscreteDataFormat(static_cast<int>(flow.flowInfo()->config.common.format)))
         {
             auto const& discreteFlow = static_cast<DiscreteFlowData const&>(flow);
+            auto const payloadLocation = static_cast<mxlPayloadLocation>(flow.flowInfo()->config.common.payloadLocation);
             auto regions = std::vector<Region>{};
-            regions.reserve(discreteFlow.grainCount());
-            for (auto i = std::size_t{0}; i < discreteFlow.grainCount(); ++i)
+            auto regionsPerGrain = std::size_t{1};
+
+            if (payloadLocation == MXL_PAYLOAD_LOCATION_HOST_MEMORY)
             {
-                auto grain = discreteFlow.grainAt(i);
+                regions.reserve(discreteFlow.grainCount());
+                for (auto i = std::size_t{0}; i < discreteFlow.grainCount(); ++i)
+                {
+                    auto const* grain = discreteFlow.grainAt(i);
+                    auto const grainInfoBaseAddr = reinterpret_cast<std::uintptr_t>(grain);
+                    auto const grainInfoSize = sizeof(GrainHeader);
+                    auto const grainPayloadSize = grain->header.info.grainSize;
 
-                auto grainInfoBaseAddr = reinterpret_cast<std::uintptr_t>(discreteFlow.grainAt(i));
-                auto grainInfoSize = sizeof(GrainHeader);
-                auto grainPayloadSize = grain->header.info.grainSize;
+                    // Host-mapped payloads remain embedded after the grain header (single contiguous MR).
+                    regions.emplace_back(grainInfoBaseAddr, grainInfoSize + grainPayloadSize, nullptr, nullptr, Region::Location::host());
+                }
+            }
+            else if (payloadLocation == MXL_PAYLOAD_LOCATION_DEVICE_MEMORY)
+            {
+                regionsPerGrain = 2;
+                regions.reserve(discreteFlow.grainCount() * regionsPerGrain);
 
-                regions.emplace_back(grainInfoBaseAddr, grainInfoSize + grainPayloadSize, nullptr, nullptr, Region::Location::host());
+                for (auto i = std::size_t{0}; i < discreteFlow.grainCount(); ++i)
+                {
+                    auto const* grain = discreteFlow.grainAt(i);
+                    auto const headerBase = reinterpret_cast<std::uintptr_t>(grain);
+
+                    mxlPayloadView payloadView{};
+                    if (auto const status = discreteFlow.payloadViewAt(i, &payloadView); status != MXL_STATUS_OK)
+                    {
+                        throw Exception::make(status,
+                            "Failed to resolve device grain payload for fabrics registration at slot {} (status {})",
+                            i,
+                            static_cast<int>(status));
+                    }
+                    if (payloadView.kind != MXL_PAYLOAD_KIND_DEVICE_PTR)
+                    {
+                        throw Exception::make(MXL_ERR_UNSUPPORTED_OPERATION,
+                            "Fabrics discrete device flows currently require DEVICE_PTR payloads (got kind {})",
+                            payloadView.kind);
+                    }
+                    if (payloadView.u.devicePtr == 0)
+                    {
+                        throw Exception::invalidState("Device payload pointer is null at grain slot {}", i);
+                    }
+
+                    regions.emplace_back(headerBase, sizeof(GrainHeader), nullptr, nullptr, Region::Location::host());
+                    regions.emplace_back(static_cast<std::uintptr_t>(payloadView.u.devicePtr),
+                        payloadView.grainSize,
+                        nullptr,
+                        nullptr,
+                        Region::Location::cuda(payloadView.deviceIndex));
+                }
+            }
+            else
+            {
+                throw Exception::make(MXL_ERR_UNSUPPORTED_OPERATION, "Unsupported payload location {}", static_cast<int>(payloadLocation));
             }
 
             return {std::move(regions),
                 DataLayout::fromDiscrete(std::to_array(discreteFlow.flowInfo()->config.discrete.sliceSizes)),
-                discreteFlow.flowInfo()->config.common.maxSyncBatchSizeHint};
+                discreteFlow.flowInfo()->config.common.maxSyncBatchSizeHint,
+                regionsPerGrain};
         }
         else if (mxlIsContinuousDataFormat(static_cast<int>(flow.flowInfo()->config.common.format)))
         {
+            if (flow.flowInfo()->config.common.payloadLocation != MXL_PAYLOAD_LOCATION_HOST_MEMORY)
+            {
+                throw Exception::make(MXL_ERR_UNSUPPORTED_OPERATION, "Continuous flows with non-host payloads are not supported by fabrics");
+            }
+
             auto const& continuousFlow = static_cast<ContinuousFlowData const&>(flow);
             auto regions = std::vector<Region>{};
 
@@ -196,7 +254,8 @@ namespace mxl::lib::fabrics::ofi
 
             return {std::move(regions),
                 DataLayout::fromContinuous(continuousFlow.sampleWordSize(), continuousFlow.channelCount(), continuousFlow.channelBufferLength()),
-                continuousFlow.flowInfo()->config.common.maxSyncBatchSizeHint};
+                continuousFlow.flowInfo()->config.common.maxSyncBatchSizeHint,
+                1};
         }
         else
         {
@@ -204,23 +263,47 @@ namespace mxl::lib::fabrics::ofi
         }
     }
 
-    std::uint64_t getGrainIndexInRingSlot(std::vector<Region> const& regions, std::uint16_t slot)
+    namespace
     {
-        if (slot >= regions.size())
+        std::size_t headerRegionIndex(std::uint16_t slot, std::size_t regionsPerGrain, std::size_t regionCount)
         {
-            throw Exception::invalidArgument("Invalid ring buffer slot number: {}, ring buffer len: {}", slot, regions.size());
-        }
+            if ((regionsPerGrain == 0) || ((regionCount % regionsPerGrain) != 0))
+            {
+                throw Exception::invalidState("Invalid regionsPerGrain {} for region count {}", regionsPerGrain, regionCount);
+            }
 
-        return *regions[slot].grainIndexPtr;
+            auto const grainCount = regionCount / regionsPerGrain;
+            if (slot >= grainCount)
+            {
+                throw Exception::invalidArgument("Invalid ring buffer slot number: {}, grain count: {}", slot, grainCount);
+            }
+
+            return static_cast<std::size_t>(slot) * regionsPerGrain;
+        }
     }
 
-    void setValidSlicesForGrain(std::vector<Region> const& regions, std::uint16_t slot, std::uint16_t validSlices)
+    std::uint64_t getGrainIndexInRingSlot(std::vector<Region> const& regions, std::uint16_t slot, std::size_t regionsPerGrain)
     {
-        if (slot >= regions.size())
+        auto const index = headerRegionIndex(slot, regionsPerGrain, regions.size());
+        if (regions[index].grainIndexPtr == nullptr)
         {
-            throw Exception::invalidArgument("Invalid ring buffer slot number: {}, ring buffer len: {}", slot, regions.size());
+            throw Exception::invalidState("Grain index pointer is not set for ring slot {}", slot);
         }
+        return *regions[index].grainIndexPtr;
+    }
 
-        *regions[slot].validSlicesPtr = validSlices;
+    void setValidSlicesForGrain(std::vector<Region> const& regions, std::uint16_t slot, std::uint16_t validSlices, std::size_t regionsPerGrain)
+    {
+        auto const index = headerRegionIndex(slot, regionsPerGrain, regions.size());
+        if (regions[index].validSlicesPtr == nullptr)
+        {
+            throw Exception::invalidState("Valid slices pointer is not set for ring slot {}", slot);
+        }
+        *regions[index].validSlicesPtr = validSlices;
+    }
+
+    bool regionsNeedHmem(std::vector<Region> const& regions) noexcept
+    {
+        return std::ranges::any_of(regions, [](Region const& region) { return !region.loc.isHost(); });
     }
 }

@@ -138,6 +138,10 @@ namespace mxl::lib::fabrics::ofi
         {
             caps |= MXL_FABRICS_IFACE_CAP_REMOTE_WRITE;
         }
+        if ((info->caps & FI_HMEM) != 0)
+        {
+            caps |= MXL_FABRICS_IFACE_CAP_HMEM;
+        }
         if ((*provider != Provider::EFA) || (CompletionQueue::isWaitObjectSupportedForEFA()))
         {
             caps |= MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS;

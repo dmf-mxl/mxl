@@ -134,16 +134,19 @@ namespace mxl::lib::fabrics::ofi
      * \param layout The data layout.
      * \param regions The regions involved.
      * \param maxSyncBatchSize The maximum batch size for transfers.
+     * \param regionsPerGrain Number of registered regions per discrete grain (1 = contiguous header+payload, 2 = split).
      * \return A unique pointer to the selected ingress protocol.
      */
     [[nodiscard]]
-    std::unique_ptr<IngressProtocol> selectIngressProtocol(DataLayout const& layout, std::vector<Region> regions, std::uint32_t maxSyncBatchSize);
+    std::unique_ptr<IngressProtocol> selectIngressProtocol(DataLayout const& layout, std::vector<Region> regions, std::uint32_t maxSyncBatchSize,
+        std::size_t regionsPerGrain = 1);
 
     /** \brief Select an appropriate egress protocol based on the data layout
      * \param layout The data layout.
      * \param regions The regions involved.
+     * \param regionsPerGrain Number of registered regions per discrete grain (1 = contiguous header+payload, 2 = split).
      * \return A unique pointer to the selected egress protocol.
      */
     [[nodiscard]]
-    std::unique_ptr<EgressProtocolTemplate> selectEgressProtocol(DataLayout const& layout, std::vector<Region> regions);
+    std::unique_ptr<EgressProtocolTemplate> selectEgressProtocol(DataLayout const& layout, std::vector<Region> regions, std::size_t regionsPerGrain = 1);
 }

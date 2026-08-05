@@ -10,11 +10,12 @@
 
 namespace mxl::lib::fabrics::ofi
 {
-    std::unique_ptr<IngressProtocol> selectIngressProtocol(DataLayout const& layout, std::vector<Region> regions, std::uint32_t maxSyncBatchSize)
+    std::unique_ptr<IngressProtocol> selectIngressProtocol(DataLayout const& layout, std::vector<Region> regions, std::uint32_t maxSyncBatchSize,
+        std::size_t regionsPerGrain)
     {
         if (layout.isDiscrete())
         {
-            return std::make_unique<RMAGrainIngressProtocol>(std::move(regions));
+            return std::make_unique<RMAGrainIngressProtocol>(std::move(regions), regionsPerGrain);
         }
         else if (layout.isContinuous())
         {
@@ -30,11 +31,11 @@ namespace mxl::lib::fabrics::ofi
         }
     }
 
-    std::unique_ptr<EgressProtocolTemplate> selectEgressProtocol(DataLayout const& layout, std::vector<Region> regions)
+    std::unique_ptr<EgressProtocolTemplate> selectEgressProtocol(DataLayout const& layout, std::vector<Region> regions, std::size_t regionsPerGrain)
     {
         if (layout.isDiscrete())
         {
-            return std::make_unique<RMAGrainEgressProtocolTemplate>(layout.asDiscrete(), std::move(regions));
+            return std::make_unique<RMAGrainEgressProtocolTemplate>(layout.asDiscrete(), std::move(regions), regionsPerGrain);
         }
         else if (layout.isContinuous())
         {

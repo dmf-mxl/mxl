@@ -58,7 +58,8 @@ namespace mxl::lib::fabrics::ofi
         attr.auth_key = nullptr;
         attr.iface = region.loc.iface();
         attr.hmem_data = nullptr;
-        attr.page_size = 4096;  // not used'
+        // Leave page_size unset (0). Matching the zero-initialized libfabric default is safest across host and HMEM.
+        attr.page_size = 0;
         attr.base_mr = nullptr; // not used
         attr.sub_mr_cnt = 0;    // not used
 

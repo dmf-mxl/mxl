@@ -117,8 +117,10 @@ namespace mxl::lib::fabrics::ofi
                         std::chrono::duration_cast<std::chrono::milliseconds>(idleDuration).count());
 
                     // The endpoint in an idle target is always fresh and thus needs to be bound the the queues.
+                    // Bind FI_RECV as well: verbs often advertises FI_RECV on MSG endpoints even for RMA-only
+                    // setups (especially FI_HMEM domains), and fi_connect requires a recv CQ in that case.
                     state.ep.bind(eq);
-                    state.ep.bind(cq, FI_TRANSMIT);
+                    state.ep.bind(cq, FI_TRANSMIT | FI_RECV);
 
                     // Transition into the connecting state
                     auto const faddr = _info.fabricAddress.decode();
@@ -283,7 +285,7 @@ namespace mxl::lib::fabrics::ofi
         auto cq = CompletionQueue::open(domain);
 
         auto regions = MxlRegions::forReader(config.reader);
-        auto proto = selectEgressProtocol(regions.dataLayout(), regions.regions());
+        auto proto = selectEgressProtocol(regions.dataLayout(), regions.regions(), regions.regionsPerGrain());
         proto->registerMemory(domain);
 
         struct MakeUniqueEnabler : RCInitiator

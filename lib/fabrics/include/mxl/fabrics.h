@@ -78,6 +78,11 @@ extern "C"
         MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS = MXL_FABRICS_FLAG(0), /**< The interface supports blocking operations. */
         MXL_FABRICS_IFACE_CAP_REMOTE_WRITE = MXL_FABRICS_FLAG(1),        /**< The interface supports remote-write (RDMA) operations. */
         MXL_FABRICS_IFACE_CAP_SEND_RECEIVE = MXL_FABRICS_FLAG(2),        /**< The interface supports send/receive message operations. */
+        /**
+         * The interface supports heterogeneous memory (libfabric FI_HMEM), including CUDA device
+         * buffers via FI_HMEM_CUDA. Required when MXL grain payloads live in device memory.
+         */
+        MXL_FABRICS_IFACE_CAP_HMEM = MXL_FABRICS_FLAG(3),
     } mxlFabricsInterfaceCapFlags;
 
     /** Capabilities of an interface. Returned as informational output by mxlFabricsGetInterfaces().

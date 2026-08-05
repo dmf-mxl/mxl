@@ -72,6 +72,21 @@ target_link_libraries(mxl-fabrics-objects
             mxl-fabrics-headers
             PkgConfig::libfabric
 )
+if (MXL_BUILT_WITH_CUDA)
+    find_package(CUDAToolkit REQUIRED)
+    target_compile_definitions(mxl-fabrics-objects
+            PRIVATE
+                MXL_HAS_CUDA=1
+        )
+    target_include_directories(mxl-fabrics-objects
+            PRIVATE
+                ${CUDAToolkit_INCLUDE_DIRS}
+        )
+    target_link_libraries(mxl-fabrics-objects
+            PRIVATE
+                CUDA::cudart
+        )
+endif()
 set_target_properties(mxl-fabrics-objects
         PROPERTIES
             POSITION_INDEPENDENT_CODE ${MXL_POSITION_INDEPENDENT_CODE}
@@ -115,6 +130,12 @@ target_link_libraries(mxl-fabrics
             spdlog::spdlog
             fmt::fmt
       )
+if (MXL_BUILT_WITH_CUDA)
+    target_link_libraries(mxl-fabrics
+            PRIVATE
+                CUDA::cudart
+        )
+endif()
 
 # Add common linker options
 mxl_add_common_target_link_options(mxl-fabrics PRIVATE)

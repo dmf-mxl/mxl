@@ -17,7 +17,7 @@ namespace mxl::lib::fabrics::ofi
     class RMAGrainIngressProtocol final : public IngressProtocol
     {
     public:
-        RMAGrainIngressProtocol(std::vector<Region> regions);
+        RMAGrainIngressProtocol(std::vector<Region> regions, std::size_t regionsPerGrain = 1);
 
         /** \copydoc IngressProtocol::registerMemory()
          */
@@ -58,6 +58,7 @@ namespace mxl::lib::fabrics::ofi
 
     private:
         std::vector<Region> _regions;
+        std::size_t _regionsPerGrain{1};
         bool _isMemoryRegistered{false};
         std::optional<Target::ImmediateDataLocation> _immDataBuffer{};
     };

@@ -47,13 +47,16 @@ namespace mxl::lib::fabrics::ofi
     private:
         friend class RMAGrainEgressProtocolTemplate;
 
-        RMAGrainEgressProtocol(Completion::Token token, TargetInfo info, DataLayout::Discrete dataLayout, std::vector<LocalRegion> _localRegions);
+        RMAGrainEgressProtocol(Completion::Token token, TargetInfo info, DataLayout::Discrete dataLayout, std::vector<LocalRegion> localRegions,
+            std::vector<Region> sourceRegions, std::size_t regionsPerGrain);
 
     private:
         Completion::Token _token;
         TargetInfo _remoteInfo;
         DataLayout::Discrete _layout;
         std::vector<LocalRegion> _localRegions;
+        std::vector<Region> _sourceRegions;
+        std::size_t _regionsPerGrain{1};
         std::size_t _pending = 0;
     };
 
@@ -63,14 +66,27 @@ namespace mxl::lib::fabrics::ofi
     class RMAGrainEgressProtocolTemplate final : public EgressProtocolTemplate
     {
     public:
-        RMAGrainEgressProtocolTemplate(DataLayout::Discrete layout, std::vector<Region> regions);
+        RMAGrainEgressProtocolTemplate(DataLayout::Discrete layout, std::vector<Region> regions, std::size_t regionsPerGrain);
+        ~RMAGrainEgressProtocolTemplate() override;
 
         virtual void registerMemory(std::shared_ptr<Domain> domain) override;
         virtual std::unique_ptr<EgressProtocol> createInstance(Completion::Token, TargetInfo remoteInfo) override;
 
     private:
+        /** \brief For CUDA payloads, allocate process-local cudaMalloc buffers for peermem registration.
+         *
+         * CUDA IPC-imported pointers (reader / non-owning process) cannot be registered with nvidia_peermem.
+         * Egress therefore registers owned bounce buffers and device-to-device copies from the source
+         * pointers before each RDMA write.
+         */
+        void prepareRegisterableCudaRegions();
+
+    private:
         DataLayout::Discrete _layout;
+        std::vector<Region> _sourceRegions;
         std::vector<Region> _regions;
+        std::vector<void*> _cudaBounceBuffers;
+        std::size_t _regionsPerGrain{1};
         std::optional<std::vector<LocalRegion>> _localRegions{};
     };
 
