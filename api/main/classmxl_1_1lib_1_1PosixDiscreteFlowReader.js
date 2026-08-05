@@ -1,6 +1,7 @@
 var classmxl_1_1lib_1_1PosixDiscreteFlowReader =
 [
     [ "PosixDiscreteFlowReader", "classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a32cbca0323ed241420cd115184edd3b9", null ],
+    [ "~PosixDiscreteFlowReader", "classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a6b15a9eb80fde431869f7422b7869678", null ],
     [ "getFlowConfigInfo", "classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a813730fecdd9f57596eca38eeb040459", null ],
     [ "getFlowData", "classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a09e9a1f13a901d3f22be8b6c45e6b026", null ],
     [ "getFlowInfo", "classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a68482587b8c9649e07c64819b3ac1e11", null ],

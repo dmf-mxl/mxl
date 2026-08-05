@@ -152,6 +152,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a32cbca0323ed241420cd115184edd3b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad9abdde652816c3e6f5d5450b79b4555" id="r_ad9abdde652816c3e6f5d5450b79b4555"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ad9abdde652816c3e6f5d5450b79b4555">waitForGrain</a> (std::uint64_t in_index, std::uint16_t in_minValidSlices, <a class="el" href="structmxl_1_1lib_1_1Timepoint.html">Timepoint</a> in_deadline) const override</td></tr>
 <tr class="separator:ad9abdde652816c3e6f5d5450b79b4555"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6b15a9eb80fde431869f7422b7869678" id="r_a6b15a9eb80fde431869f7422b7869678"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a6b15a9eb80fde431869f7422b7869678">~PosixDiscreteFlowReader</a> ()</td></tr>
+<tr class="separator:a6b15a9eb80fde431869f7422b7869678"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classmxl_1_1lib_1_1FlowReader"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classmxl_1_1lib_1_1FlowReader')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classmxl_1_1lib_1_1FlowReader.html">mxl::lib::FlowReader</a></td></tr>
 <tr class="memitem:acc4be1ee3041836abdab114f7a508dc8 inherit pub_methods_classmxl_1_1lib_1_1FlowReader" id="r_acc4be1ee3041836abdab114f7a508dc8"><td class="memItemLeft" align="right" valign="top">std::filesystem::path const &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowReader.html#acc4be1ee3041836abdab114f7a508dc8">getDomain</a> () const</td></tr>
 <tr class="separator:acc4be1ee3041836abdab114f7a508dc8 inherit pub_methods_classmxl_1_1lib_1_1FlowReader"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -248,10 +250,50 @@ Private Attributes</h2></td></tr>
 <div class="line"><span class="lineno">   49</span>        <span class="comment">// we can still execute properly but the &#39;lastReadTime&#39; will never be updated.</span></div>
 <div class="line"><span class="lineno">   50</span>        <span class="comment">// Ignore failures.</span></div>
 <div class="line"><span class="lineno">   51</span>    }</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1PosixDiscreteFlowReader_html_a803bc858f397ee06bee24d66b8a70571"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a803bc858f397ee06bee24d66b8a70571">mxl::lib::PosixDiscreteFlowReader::_flowData</a></div><div class="ttdeci">std::unique_ptr&lt; DiscreteFlowData &gt; _flowData</div><div class="ttdef"><b>Definition</b> <a href="PosixDiscreteFlowReader_8hpp_source.html#l00090">PosixDiscreteFlowReader.hpp:90</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1PosixDiscreteFlowReader_html_ac43fedf12e65b342f1155da6acb2ca9f"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ac43fedf12e65b342f1155da6acb2ca9f">mxl::lib::PosixDiscreteFlowReader::_accessFileFd</a></div><div class="ttdeci">int _accessFileFd</div><div class="ttdef"><b>Definition</b> <a href="PosixDiscreteFlowReader_8hpp_source.html#l00091">PosixDiscreteFlowReader.hpp:91</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1PosixDiscreteFlowReader_html_a803bc858f397ee06bee24d66b8a70571"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a803bc858f397ee06bee24d66b8a70571">mxl::lib::PosixDiscreteFlowReader::_flowData</a></div><div class="ttdeci">std::unique_ptr&lt; DiscreteFlowData &gt; _flowData</div><div class="ttdef"><b>Definition</b> <a href="PosixDiscreteFlowReader_8hpp_source.html#l00095">PosixDiscreteFlowReader.hpp:95</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1PosixDiscreteFlowReader_html_ac43fedf12e65b342f1155da6acb2ca9f"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ac43fedf12e65b342f1155da6acb2ca9f">mxl::lib::PosixDiscreteFlowReader::_accessFileFd</a></div><div class="ttdeci">int _accessFileFd</div><div class="ttdef"><b>Definition</b> <a href="PosixDiscreteFlowReader_8hpp_source.html#l00096">PosixDiscreteFlowReader.hpp:96</a></div></div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_a57c0a4f52e26a828deedc371ec79d6ef"><div class="ttname"><a href="namespacemxl_1_1lib.html#a57c0a4f52e26a828deedc371ec79d6ef">mxl::lib::makeFlowAccessFilePath</a></div><div class="ttdeci">std::filesystem::path makeFlowAccessFilePath(std::filesystem::path const &amp;flowDirectory)</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8cpp_source.html#l00029">PathUtils.cpp:29</a></div></div>
 <div class="ttc" id="atest__flows_8cpp_html_a8120482e2d040fcf08a3008238ee95e8"><div class="ttname"><a href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a></div><div class="ttdeci">auto const flowId</div><div class="ttdef"><b>Definition</b> <a href="test__flows_8cpp_source.html#l00145">test_flows.cpp:145</a></div></div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="a6b15a9eb80fde431869f7422b7869678" name="a6b15a9eb80fde431869f7422b7869678"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6b15a9eb80fde431869f7422b7869678">&#9670;&#160;</a></span>~PosixDiscreteFlowReader()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">mxl::lib::PosixDiscreteFlowReader::~PosixDiscreteFlowReader </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Close the access file fd. </p>
+
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00053">53</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   54</span>    {</div>
+<div class="line"><span class="lineno">   55</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ac43fedf12e65b342f1155da6acb2ca9f">_accessFileFd</a> != -1)</div>
+<div class="line"><span class="lineno">   56</span>        {</div>
+<div class="line"><span class="lineno">   57</span>            <span class="keywordflow">if</span> (::close(<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ac43fedf12e65b342f1155da6acb2ca9f">_accessFileFd</a>) != 0)</div>
+<div class="line"><span class="lineno">   58</span>            {</div>
+<div class="line"><span class="lineno">   59</span>                <span class="keyword">auto</span> <span class="keyword">const</span> error = errno;</div>
+<div class="line"><span class="lineno">   60</span>                <a class="code hl_define" href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a>(<span class="stringliteral">&quot;Failed to close access file fd: {}&quot;</span>, ::strerror(error));</div>
+<div class="line"><span class="lineno">   61</span>            }</div>
+<div class="line"><span class="lineno">   62</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ac43fedf12e65b342f1155da6acb2ca9f">_accessFileFd</a> = -1;</div>
+<div class="line"><span class="lineno">   63</span>        }</div>
+<div class="line"><span class="lineno">   64</span>    }</div>
+<div class="ttc" id="aLogging_8hpp_html_ac235c0b6be0299ec9671f7bd4551b0ad"><div class="ttname"><a href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a></div><div class="ttdeci">#define MXL_ERROR(...)</div><div class="ttdef"><b>Definition</b> <a href="Logging_8hpp_source.html#l00067">Logging.hpp:67</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -282,12 +324,12 @@ Private Attributes</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowReader.html#aab9d3e56e0289d56e5f0d3a619c55d28">mxl::lib::FlowReader</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00067">67</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   68</span>    {</div>
-<div class="line"><span class="lineno">   69</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a09e9a1f13a901d3f22be8b6c45e6b026">getFlowData</a>().<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">flowInfo</a>()-&gt;<a class="code hl_variable" href="structmxlFlowInfo__t.html#a7b1b68b9c2c6e7a1d7a8ba5f2fb3a83f">config</a>;</div>
-<div class="line"><span class="lineno">   70</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00080">80</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   81</span>    {</div>
+<div class="line"><span class="lineno">   82</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a09e9a1f13a901d3f22be8b6c45e6b026">getFlowData</a>().<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">flowInfo</a>()-&gt;<a class="code hl_variable" href="structmxlFlowInfo__t.html#a7b1b68b9c2c6e7a1d7a8ba5f2fb3a83f">config</a>;</div>
+<div class="line"><span class="lineno">   83</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1FlowData_html_a789a71b8f1538ba04f195bb4d2f27913"><div class="ttname"><a href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">mxl::lib::FlowData::flowInfo</a></div><div class="ttdeci">constexpr mxlFlowInfo * flowInfo() noexcept</div><div class="ttdef"><b>Definition</b> <a href="FlowData_8hpp_source.html#l00092">FlowData.hpp:92</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1PosixDiscreteFlowReader_html_a09e9a1f13a901d3f22be8b6c45e6b026"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a09e9a1f13a901d3f22be8b6c45e6b026">mxl::lib::PosixDiscreteFlowReader::getFlowData</a></div><div class="ttdeci">virtual FlowData const &amp; getFlowData() const override</div><div class="ttdef"><b>Definition</b> <a href="PosixDiscreteFlowReader_8cpp_source.html#l00053">PosixDiscreteFlowReader.cpp:53</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1PosixDiscreteFlowReader_html_a09e9a1f13a901d3f22be8b6c45e6b026"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a09e9a1f13a901d3f22be8b6c45e6b026">mxl::lib::PosixDiscreteFlowReader::getFlowData</a></div><div class="ttdeci">virtual FlowData const &amp; getFlowData() const override</div><div class="ttdef"><b>Definition</b> <a href="PosixDiscreteFlowReader_8cpp_source.html#l00066">PosixDiscreteFlowReader.cpp:66</a></div></div>
 <div class="ttc" id="astructmxlFlowInfo__t_html_a7b1b68b9c2c6e7a1d7a8ba5f2fb3a83f"><div class="ttname"><a href="structmxlFlowInfo__t.html#a7b1b68b9c2c6e7a1d7a8ba5f2fb3a83f">mxlFlowInfo_t::config</a></div><div class="ttdeci">mxlFlowConfigInfo config</div><div class="ttdef"><b>Definition</b> <a href="flowinfo_8h_source.html#l00195">flowinfo.h:195</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -318,14 +360,14 @@ Private Attributes</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowReader.html#a0aabd16fef9caab9fc42ee6cf97e18cb">mxl::lib::FlowReader</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00053">53</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   54</span>    {</div>
-<div class="line"><span class="lineno">   55</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a803bc858f397ee06bee24d66b8a70571">_flowData</a>)</div>
-<div class="line"><span class="lineno">   56</span>        {</div>
-<div class="line"><span class="lineno">   57</span>            <span class="keywordflow">return</span> *<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a803bc858f397ee06bee24d66b8a70571">_flowData</a>;</div>
-<div class="line"><span class="lineno">   58</span>        }</div>
-<div class="line"><span class="lineno">   59</span>        <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;No open flow.&quot;</span>);</div>
-<div class="line"><span class="lineno">   60</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00066">66</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   67</span>    {</div>
+<div class="line"><span class="lineno">   68</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a803bc858f397ee06bee24d66b8a70571">_flowData</a>)</div>
+<div class="line"><span class="lineno">   69</span>        {</div>
+<div class="line"><span class="lineno">   70</span>            <span class="keywordflow">return</span> *<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a803bc858f397ee06bee24d66b8a70571">_flowData</a>;</div>
+<div class="line"><span class="lineno">   71</span>        }</div>
+<div class="line"><span class="lineno">   72</span>        <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;No open flow.&quot;</span>);</div>
+<div class="line"><span class="lineno">   73</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -355,10 +397,10 @@ Private Attributes</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowReader.html#a1cc04208bf84a238f110e259bf28fd37">mxl::lib::FlowReader</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00062">62</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   63</span>    {</div>
-<div class="line"><span class="lineno">   64</span>        <span class="keywordflow">return</span> *<a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a09e9a1f13a901d3f22be8b6c45e6b026">getFlowData</a>().<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">flowInfo</a>();</div>
-<div class="line"><span class="lineno">   65</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00075">75</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   76</span>    {</div>
+<div class="line"><span class="lineno">   77</span>        <span class="keywordflow">return</span> *<a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a09e9a1f13a901d3f22be8b6c45e6b026">getFlowData</a>().<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">flowInfo</a>();</div>
+<div class="line"><span class="lineno">   78</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -388,10 +430,10 @@ Private Attributes</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowReader.html#a1271e8b4bb0cf18935acca1ea6e06481">mxl::lib::FlowReader</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00072">72</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   73</span>    {</div>
-<div class="line"><span class="lineno">   74</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a09e9a1f13a901d3f22be8b6c45e6b026">getFlowData</a>().<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">flowInfo</a>()-&gt;<a class="code hl_variable" href="structmxlFlowInfo__t.html#a1adeafe3d8c0fc08ad90ed343504bae5">runtime</a>;</div>
-<div class="line"><span class="lineno">   75</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00085">85</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   86</span>    {</div>
+<div class="line"><span class="lineno">   87</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a09e9a1f13a901d3f22be8b6c45e6b026">getFlowData</a>().<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">flowInfo</a>()-&gt;<a class="code hl_variable" href="structmxlFlowInfo__t.html#a1adeafe3d8c0fc08ad90ed343504bae5">runtime</a>;</div>
+<div class="line"><span class="lineno">   88</span>    }</div>
 <div class="ttc" id="astructmxlFlowInfo__t_html_a1adeafe3d8c0fc08ad90ed343504bae5"><div class="ttname"><a href="structmxlFlowInfo__t.html#a1adeafe3d8c0fc08ad90ed343504bae5">mxlFlowInfo_t::runtime</a></div><div class="ttdeci">mxlFlowRuntimeInfo runtime</div><div class="ttdef"><b>Definition</b> <a href="flowinfo_8h_source.html#l00197">flowinfo.h:197</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -445,32 +487,32 @@ Private Attributes</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowReader.html#ad3ae74ca266b7a5bc11856dcd533eb43">mxl::lib::DiscreteFlowReader</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00123">123</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  125</span>    {</div>
-<div class="line"><span class="lineno">  126</span>        <span class="keyword">auto</span> result = <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
-<div class="line"><span class="lineno">  127</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a803bc858f397ee06bee24d66b8a70571">_flowData</a>)</div>
-<div class="line"><span class="lineno">  128</span>        {</div>
-<div class="line"><span class="lineno">  129</span>            result = <a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ad65141908834fe5fed7aae14d81a9c49">getGrainImpl</a>(in_index, in_minValidSlices, out_grainInfo, out_payload);</div>
-<div class="line"><span class="lineno">  130</span>            <span class="keywordflow">if</span> (result == <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>)</div>
-<div class="line"><span class="lineno">  131</span>            {</div>
-<div class="line"><span class="lineno">  132</span>                <span class="comment">// We ignore the return value of updateFileAccessTime. It may fail if the domain is in a read-only volume.</span></div>
-<div class="line"><span class="lineno">  133</span>                (void)updateFileAccessTime(<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ac43fedf12e65b342f1155da6acb2ca9f">_accessFileFd</a>);</div>
-<div class="line"><span class="lineno">  134</span>            }</div>
-<div class="line"><span class="lineno">  135</span>            <span class="keywordflow">else</span> <span class="keywordflow">if</span> (result == <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa38f56f23dcef13bd3352179b758db601">MXL_ERR_OUT_OF_RANGE_TOO_EARLY</a>)</div>
-<div class="line"><span class="lineno">  136</span>            {</div>
-<div class="line"><span class="lineno">  137</span>                <span class="comment">// If we were too early it could very well be that we&#39;re operating</span></div>
-<div class="line"><span class="lineno">  138</span>                <span class="comment">// on a stale flow, so we use the opportunity to check whether it&#39;s</span></div>
-<div class="line"><span class="lineno">  139</span>                <span class="comment">// valid.</span></div>
-<div class="line"><span class="lineno">  140</span>                <span class="keywordflow">if</span> (!<a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ac618265a631882d92bbedb6be9edd819">isFlowValidImpl</a>())</div>
-<div class="line"><span class="lineno">  141</span>                {</div>
-<div class="line"><span class="lineno">  142</span>                    result = <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa07f4214fd967779d57a4419dce1f1003">MXL_ERR_FLOW_INVALID</a>;</div>
-<div class="line"><span class="lineno">  143</span>                }</div>
-<div class="line"><span class="lineno">  144</span>            }</div>
-<div class="line"><span class="lineno">  145</span>        }</div>
-<div class="line"><span class="lineno">  146</span>        <span class="keywordflow">return</span> result;</div>
-<div class="line"><span class="lineno">  147</span>    }</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1PosixDiscreteFlowReader_html_ac618265a631882d92bbedb6be9edd819"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ac618265a631882d92bbedb6be9edd819">mxl::lib::PosixDiscreteFlowReader::isFlowValidImpl</a></div><div class="ttdeci">bool isFlowValidImpl() const</div><div class="ttdef"><b>Definition</b> <a href="PosixDiscreteFlowReader_8cpp_source.html#l00224">PosixDiscreteFlowReader.cpp:224</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1PosixDiscreteFlowReader_html_ad65141908834fe5fed7aae14d81a9c49"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ad65141908834fe5fed7aae14d81a9c49">mxl::lib::PosixDiscreteFlowReader::getGrainImpl</a></div><div class="ttdeci">mxlStatus getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo *out_grainInfo, std::uint8_t **out_payload) const</div><div class="ttdef"><b>Definition</b> <a href="PosixDiscreteFlowReader_8cpp_source.html#l00149">PosixDiscreteFlowReader.cpp:149</a></div></div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00136">136</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  138</span>    {</div>
+<div class="line"><span class="lineno">  139</span>        <span class="keyword">auto</span> result = <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">  140</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a803bc858f397ee06bee24d66b8a70571">_flowData</a>)</div>
+<div class="line"><span class="lineno">  141</span>        {</div>
+<div class="line"><span class="lineno">  142</span>            result = <a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ad65141908834fe5fed7aae14d81a9c49">getGrainImpl</a>(in_index, in_minValidSlices, out_grainInfo, out_payload);</div>
+<div class="line"><span class="lineno">  143</span>            <span class="keywordflow">if</span> (result == <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>)</div>
+<div class="line"><span class="lineno">  144</span>            {</div>
+<div class="line"><span class="lineno">  145</span>                <span class="comment">// We ignore the return value of updateFileAccessTime. It may fail if the domain is in a read-only volume.</span></div>
+<div class="line"><span class="lineno">  146</span>                (void)updateFileAccessTime(<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ac43fedf12e65b342f1155da6acb2ca9f">_accessFileFd</a>);</div>
+<div class="line"><span class="lineno">  147</span>            }</div>
+<div class="line"><span class="lineno">  148</span>            <span class="keywordflow">else</span> <span class="keywordflow">if</span> (result == <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa38f56f23dcef13bd3352179b758db601">MXL_ERR_OUT_OF_RANGE_TOO_EARLY</a>)</div>
+<div class="line"><span class="lineno">  149</span>            {</div>
+<div class="line"><span class="lineno">  150</span>                <span class="comment">// If we were too early it could very well be that we&#39;re operating</span></div>
+<div class="line"><span class="lineno">  151</span>                <span class="comment">// on a stale flow, so we use the opportunity to check whether it&#39;s</span></div>
+<div class="line"><span class="lineno">  152</span>                <span class="comment">// valid.</span></div>
+<div class="line"><span class="lineno">  153</span>                <span class="keywordflow">if</span> (!<a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ac618265a631882d92bbedb6be9edd819">isFlowValidImpl</a>())</div>
+<div class="line"><span class="lineno">  154</span>                {</div>
+<div class="line"><span class="lineno">  155</span>                    result = <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa07f4214fd967779d57a4419dce1f1003">MXL_ERR_FLOW_INVALID</a>;</div>
+<div class="line"><span class="lineno">  156</span>                }</div>
+<div class="line"><span class="lineno">  157</span>            }</div>
+<div class="line"><span class="lineno">  158</span>        }</div>
+<div class="line"><span class="lineno">  159</span>        <span class="keywordflow">return</span> result;</div>
+<div class="line"><span class="lineno">  160</span>    }</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1PosixDiscreteFlowReader_html_ac618265a631882d92bbedb6be9edd819"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ac618265a631882d92bbedb6be9edd819">mxl::lib::PosixDiscreteFlowReader::isFlowValidImpl</a></div><div class="ttdeci">bool isFlowValidImpl() const</div><div class="ttdef"><b>Definition</b> <a href="PosixDiscreteFlowReader_8cpp_source.html#l00237">PosixDiscreteFlowReader.cpp:237</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1PosixDiscreteFlowReader_html_ad65141908834fe5fed7aae14d81a9c49"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ad65141908834fe5fed7aae14d81a9c49">mxl::lib::PosixDiscreteFlowReader::getGrainImpl</a></div><div class="ttdeci">mxlStatus getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo *out_grainInfo, std::uint8_t **out_payload) const</div><div class="ttdef"><b>Definition</b> <a href="PosixDiscreteFlowReader_8cpp_source.html#l00162">PosixDiscreteFlowReader.cpp:162</a></div></div>
 <div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344fa07f4214fd967779d57a4419dce1f1003"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa07f4214fd967779d57a4419dce1f1003">MXL_ERR_FLOW_INVALID</a></div><div class="ttdeci">@ MXL_ERR_FLOW_INVALID</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00037">mxl.h:37</a></div></div>
 <div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a></div><div class="ttdeci">@ MXL_ERR_UNKNOWN</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00024">mxl.h:24</a></div></div>
 <div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344fa38f56f23dcef13bd3352179b758db601"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa38f56f23dcef13bd3352179b758db601">MXL_ERR_OUT_OF_RANGE_TOO_EARLY</a></div><div class="ttdeci">@ MXL_ERR_OUT_OF_RANGE_TOO_EARLY</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00027">mxl.h:27</a></div></div>
@@ -533,30 +575,30 @@ Private Attributes</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowReader.html#ae3e5b7dd8b3026029d9044a02fe17cbb">mxl::lib::DiscreteFlowReader</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00097">97</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   99</span>    {</div>
-<div class="line"><span class="lineno">  100</span>        <span class="keyword">auto</span> result = <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
-<div class="line"><span class="lineno">  101</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a803bc858f397ee06bee24d66b8a70571">_flowData</a>)</div>
-<div class="line"><span class="lineno">  102</span>        {</div>
-<div class="line"><span class="lineno">  103</span>            result = <a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ad65141908834fe5fed7aae14d81a9c49">getGrainImpl</a>(in_index, in_minValidSlices, in_deadline, out_grainInfo, out_payload);</div>
-<div class="line"><span class="lineno">  104</span>            <span class="keywordflow">if</span> (result == <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>)</div>
-<div class="line"><span class="lineno">  105</span>            {</div>
-<div class="line"><span class="lineno">  106</span>                <span class="comment">// We ignore the return value of updateFileAccessTime. It may fail if the domain is in a read-only volume.</span></div>
-<div class="line"><span class="lineno">  107</span>                (void)updateFileAccessTime(<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ac43fedf12e65b342f1155da6acb2ca9f">_accessFileFd</a>);</div>
-<div class="line"><span class="lineno">  108</span>            }</div>
-<div class="line"><span class="lineno">  109</span>            <span class="keywordflow">else</span> <span class="keywordflow">if</span> (result == <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa38f56f23dcef13bd3352179b758db601">MXL_ERR_OUT_OF_RANGE_TOO_EARLY</a>)</div>
-<div class="line"><span class="lineno">  110</span>            {</div>
-<div class="line"><span class="lineno">  111</span>                <span class="comment">// If we were ultimately too early, even with blocking for a certain amount</span></div>
-<div class="line"><span class="lineno">  112</span>                <span class="comment">// of time it could very well be that we&#39;re operating on a stale flow, so we</span></div>
-<div class="line"><span class="lineno">  113</span>                <span class="comment">// use the opportunity to check whether it&#39;s valid.</span></div>
-<div class="line"><span class="lineno">  114</span>                <span class="keywordflow">if</span> (!<a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ac618265a631882d92bbedb6be9edd819">isFlowValidImpl</a>())</div>
-<div class="line"><span class="lineno">  115</span>                {</div>
-<div class="line"><span class="lineno">  116</span>                    result = <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa07f4214fd967779d57a4419dce1f1003">MXL_ERR_FLOW_INVALID</a>;</div>
-<div class="line"><span class="lineno">  117</span>                }</div>
-<div class="line"><span class="lineno">  118</span>            }</div>
-<div class="line"><span class="lineno">  119</span>        }</div>
-<div class="line"><span class="lineno">  120</span>        <span class="keywordflow">return</span> result;</div>
-<div class="line"><span class="lineno">  121</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00110">110</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  112</span>    {</div>
+<div class="line"><span class="lineno">  113</span>        <span class="keyword">auto</span> result = <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">  114</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a803bc858f397ee06bee24d66b8a70571">_flowData</a>)</div>
+<div class="line"><span class="lineno">  115</span>        {</div>
+<div class="line"><span class="lineno">  116</span>            result = <a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ad65141908834fe5fed7aae14d81a9c49">getGrainImpl</a>(in_index, in_minValidSlices, in_deadline, out_grainInfo, out_payload);</div>
+<div class="line"><span class="lineno">  117</span>            <span class="keywordflow">if</span> (result == <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>)</div>
+<div class="line"><span class="lineno">  118</span>            {</div>
+<div class="line"><span class="lineno">  119</span>                <span class="comment">// We ignore the return value of updateFileAccessTime. It may fail if the domain is in a read-only volume.</span></div>
+<div class="line"><span class="lineno">  120</span>                (void)updateFileAccessTime(<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ac43fedf12e65b342f1155da6acb2ca9f">_accessFileFd</a>);</div>
+<div class="line"><span class="lineno">  121</span>            }</div>
+<div class="line"><span class="lineno">  122</span>            <span class="keywordflow">else</span> <span class="keywordflow">if</span> (result == <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa38f56f23dcef13bd3352179b758db601">MXL_ERR_OUT_OF_RANGE_TOO_EARLY</a>)</div>
+<div class="line"><span class="lineno">  123</span>            {</div>
+<div class="line"><span class="lineno">  124</span>                <span class="comment">// If we were ultimately too early, even with blocking for a certain amount</span></div>
+<div class="line"><span class="lineno">  125</span>                <span class="comment">// of time it could very well be that we&#39;re operating on a stale flow, so we</span></div>
+<div class="line"><span class="lineno">  126</span>                <span class="comment">// use the opportunity to check whether it&#39;s valid.</span></div>
+<div class="line"><span class="lineno">  127</span>                <span class="keywordflow">if</span> (!<a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ac618265a631882d92bbedb6be9edd819">isFlowValidImpl</a>())</div>
+<div class="line"><span class="lineno">  128</span>                {</div>
+<div class="line"><span class="lineno">  129</span>                    result = <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa07f4214fd967779d57a4419dce1f1003">MXL_ERR_FLOW_INVALID</a>;</div>
+<div class="line"><span class="lineno">  130</span>                }</div>
+<div class="line"><span class="lineno">  131</span>            }</div>
+<div class="line"><span class="lineno">  132</span>        }</div>
+<div class="line"><span class="lineno">  133</span>        <span class="keywordflow">return</span> result;</div>
+<div class="line"><span class="lineno">  134</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -607,50 +649,50 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>Implementation of the various forms of <a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#acf06ab97fa5f8813910681716eb09db5">getGrain()</a> that can also be used by other methods that have previously asserted that we're operating on a valid flow (i.e. that _flowData is a valid pointer). </p>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00149">149</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  151</span>    {</div>
-<div class="line"><span class="lineno">  152</span>        <span class="keyword">auto</span> result = <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
-<div class="line"><span class="lineno">  153</span>        <span class="keyword">auto</span> <span class="keyword">const</span> flow = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a803bc858f397ee06bee24d66b8a70571">_flowData</a>-&gt;flow();</div>
-<div class="line"><span class="lineno">  154</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> headIndex = flow-&gt;info.runtime.headIndex; in_index &lt;= headIndex)</div>
-<div class="line"><span class="lineno">  155</span>        {</div>
-<div class="line"><span class="lineno">  156</span>            <span class="keyword">auto</span> <span class="keyword">const</span> grainCount = flow-&gt;info.config.discrete.grainCount;</div>
-<div class="line"><span class="lineno">  157</span>            <span class="keyword">auto</span> <span class="keyword">const</span> minIndex = (headIndex &gt;= grainCount) ? (headIndex - grainCount + 1U) : std::uint64_t{0};</div>
-<div class="line"><span class="lineno">  158</span>            <span class="keywordflow">if</span> (in_index &gt;= minIndex)</div>
-<div class="line"><span class="lineno">  159</span>            {</div>
-<div class="line"><span class="lineno">  160</span>                <span class="keyword">auto</span> <span class="keyword">const</span> offset = in_index % grainCount;</div>
-<div class="line"><span class="lineno">  161</span>                <span class="keyword">auto</span> <span class="keyword">const</span> grain = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a803bc858f397ee06bee24d66b8a70571">_flowData</a>-&gt;grainAt(offset);</div>
-<div class="line"><span class="lineno">  162</span> </div>
-<div class="line"><span class="lineno">  163</span>                <span class="keywordflow">if</span> ((grain-&gt;header.info.validSlices &gt;= std::min(in_minValidSlices, grain-&gt;header.info.totalSlices)) ||</div>
-<div class="line"><span class="lineno">  164</span>                    ((grain-&gt;header.info.flags &amp; <a class="code hl_define" href="flow_8h.html#a9266a2a1e1247d4d0aa028eacfd939a5">MXL_GRAIN_FLAG_INVALID</a>) != 0))</div>
-<div class="line"><span class="lineno">  165</span>                {</div>
-<div class="line"><span class="lineno">  166</span>                    <span class="keywordflow">if</span> (out_grainInfo != <span class="keyword">nullptr</span>)</div>
-<div class="line"><span class="lineno">  167</span>                    {</div>
-<div class="line"><span class="lineno">  168</span>                        *out_grainInfo = grain-&gt;header.info;</div>
-<div class="line"><span class="lineno">  169</span>                    }</div>
-<div class="line"><span class="lineno">  170</span>                    <span class="keywordflow">if</span> (out_payload != <span class="keyword">nullptr</span>)</div>
-<div class="line"><span class="lineno">  171</span>                    {</div>
-<div class="line"><span class="lineno">  172</span>                        *out_payload = <span class="keyword">reinterpret_cast&lt;</span>std::uint8_t*<span class="keyword">&gt;</span>(&amp;grain-&gt;header + 1);</div>
-<div class="line"><span class="lineno">  173</span>                    }</div>
-<div class="line"><span class="lineno">  174</span> </div>
-<div class="line"><span class="lineno">  175</span>                    result = <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
-<div class="line"><span class="lineno">  176</span>                }</div>
-<div class="line"><span class="lineno">  177</span>                <span class="keywordflow">else</span></div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00162">162</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  164</span>    {</div>
+<div class="line"><span class="lineno">  165</span>        <span class="keyword">auto</span> result = <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">  166</span>        <span class="keyword">auto</span> <span class="keyword">const</span> flow = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a803bc858f397ee06bee24d66b8a70571">_flowData</a>-&gt;flow();</div>
+<div class="line"><span class="lineno">  167</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> headIndex = flow-&gt;info.runtime.headIndex; in_index &lt;= headIndex)</div>
+<div class="line"><span class="lineno">  168</span>        {</div>
+<div class="line"><span class="lineno">  169</span>            <span class="keyword">auto</span> <span class="keyword">const</span> grainCount = flow-&gt;info.config.discrete.grainCount;</div>
+<div class="line"><span class="lineno">  170</span>            <span class="keyword">auto</span> <span class="keyword">const</span> minIndex = (headIndex &gt;= grainCount) ? (headIndex - grainCount + 1U) : std::uint64_t{0};</div>
+<div class="line"><span class="lineno">  171</span>            <span class="keywordflow">if</span> (in_index &gt;= minIndex)</div>
+<div class="line"><span class="lineno">  172</span>            {</div>
+<div class="line"><span class="lineno">  173</span>                <span class="keyword">auto</span> <span class="keyword">const</span> offset = in_index % grainCount;</div>
+<div class="line"><span class="lineno">  174</span>                <span class="keyword">auto</span> <span class="keyword">const</span> grain = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a803bc858f397ee06bee24d66b8a70571">_flowData</a>-&gt;grainAt(offset);</div>
+<div class="line"><span class="lineno">  175</span> </div>
+<div class="line"><span class="lineno">  176</span>                <span class="keywordflow">if</span> ((grain-&gt;header.info.validSlices &gt;= std::min(in_minValidSlices, grain-&gt;header.info.totalSlices)) ||</div>
+<div class="line"><span class="lineno">  177</span>                    ((grain-&gt;header.info.flags &amp; <a class="code hl_define" href="flow_8h.html#a9266a2a1e1247d4d0aa028eacfd939a5">MXL_GRAIN_FLAG_INVALID</a>) != 0))</div>
 <div class="line"><span class="lineno">  178</span>                {</div>
-<div class="line"><span class="lineno">  179</span>                    result = <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa38f56f23dcef13bd3352179b758db601">MXL_ERR_OUT_OF_RANGE_TOO_EARLY</a>;</div>
-<div class="line"><span class="lineno">  180</span>                }</div>
-<div class="line"><span class="lineno">  181</span>            }</div>
-<div class="line"><span class="lineno">  182</span>            <span class="keywordflow">else</span></div>
-<div class="line"><span class="lineno">  183</span>            {</div>
-<div class="line"><span class="lineno">  184</span>                result = <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344faee9c3588a2f78051ddf08142ffdebb2c">MXL_ERR_OUT_OF_RANGE_TOO_LATE</a>;</div>
-<div class="line"><span class="lineno">  185</span>            }</div>
-<div class="line"><span class="lineno">  186</span>        }</div>
-<div class="line"><span class="lineno">  187</span>        <span class="keywordflow">else</span></div>
-<div class="line"><span class="lineno">  188</span>        {</div>
-<div class="line"><span class="lineno">  189</span>            result = <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa38f56f23dcef13bd3352179b758db601">MXL_ERR_OUT_OF_RANGE_TOO_EARLY</a>;</div>
-<div class="line"><span class="lineno">  190</span>        }</div>
-<div class="line"><span class="lineno">  191</span> </div>
-<div class="line"><span class="lineno">  192</span>        <span class="keywordflow">return</span> result;</div>
-<div class="line"><span class="lineno">  193</span>    }</div>
+<div class="line"><span class="lineno">  179</span>                    <span class="keywordflow">if</span> (out_grainInfo != <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">  180</span>                    {</div>
+<div class="line"><span class="lineno">  181</span>                        *out_grainInfo = grain-&gt;header.info;</div>
+<div class="line"><span class="lineno">  182</span>                    }</div>
+<div class="line"><span class="lineno">  183</span>                    <span class="keywordflow">if</span> (out_payload != <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">  184</span>                    {</div>
+<div class="line"><span class="lineno">  185</span>                        *out_payload = <span class="keyword">reinterpret_cast&lt;</span>std::uint8_t*<span class="keyword">&gt;</span>(&amp;grain-&gt;header + 1);</div>
+<div class="line"><span class="lineno">  186</span>                    }</div>
+<div class="line"><span class="lineno">  187</span> </div>
+<div class="line"><span class="lineno">  188</span>                    result = <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
+<div class="line"><span class="lineno">  189</span>                }</div>
+<div class="line"><span class="lineno">  190</span>                <span class="keywordflow">else</span></div>
+<div class="line"><span class="lineno">  191</span>                {</div>
+<div class="line"><span class="lineno">  192</span>                    result = <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa38f56f23dcef13bd3352179b758db601">MXL_ERR_OUT_OF_RANGE_TOO_EARLY</a>;</div>
+<div class="line"><span class="lineno">  193</span>                }</div>
+<div class="line"><span class="lineno">  194</span>            }</div>
+<div class="line"><span class="lineno">  195</span>            <span class="keywordflow">else</span></div>
+<div class="line"><span class="lineno">  196</span>            {</div>
+<div class="line"><span class="lineno">  197</span>                result = <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344faee9c3588a2f78051ddf08142ffdebb2c">MXL_ERR_OUT_OF_RANGE_TOO_LATE</a>;</div>
+<div class="line"><span class="lineno">  198</span>            }</div>
+<div class="line"><span class="lineno">  199</span>        }</div>
+<div class="line"><span class="lineno">  200</span>        <span class="keywordflow">else</span></div>
+<div class="line"><span class="lineno">  201</span>        {</div>
+<div class="line"><span class="lineno">  202</span>            result = <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa38f56f23dcef13bd3352179b758db601">MXL_ERR_OUT_OF_RANGE_TOO_EARLY</a>;</div>
+<div class="line"><span class="lineno">  203</span>        }</div>
+<div class="line"><span class="lineno">  204</span> </div>
+<div class="line"><span class="lineno">  205</span>        <span class="keywordflow">return</span> result;</div>
+<div class="line"><span class="lineno">  206</span>    }</div>
 <div class="ttc" id="aflow_8h_html_a9266a2a1e1247d4d0aa028eacfd939a5"><div class="ttname"><a href="flow_8h.html#a9266a2a1e1247d4d0aa028eacfd939a5">MXL_GRAIN_FLAG_INVALID</a></div><div class="ttdeci">#define MXL_GRAIN_FLAG_INVALID</div><div class="ttdef"><b>Definition</b> <a href="flow_8h_source.html#l00029">flow.h:29</a></div></div>
 <div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344faee9c3588a2f78051ddf08142ffdebb2c"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344faee9c3588a2f78051ddf08142ffdebb2c">MXL_ERR_OUT_OF_RANGE_TOO_LATE</a></div><div class="ttdeci">@ MXL_ERR_OUT_OF_RANGE_TOO_LATE</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00026">mxl.h:26</a></div></div>
 </div><!-- fragment -->
@@ -709,28 +751,28 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>Implementation of the blocking form of <a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#acf06ab97fa5f8813910681716eb09db5">getGrain()</a> and <a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ad9abdde652816c3e6f5d5450b79b4555">waitForGrain()</a> that can also be used by other methods that have previously asserted that we're operating on a valid flow (i.e. that _flowData is a valid pointer). </p>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00195">195</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  197</span>    {</div>
-<div class="line"><span class="lineno">  198</span>        <span class="keyword">auto</span> <span class="keyword">const</span> flow = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a803bc858f397ee06bee24d66b8a70571">_flowData</a>-&gt;flow();</div>
-<div class="line"><span class="lineno">  199</span>        <span class="keyword">auto</span> <span class="keyword">const</span> syncObject = std::atomic_ref{flow-&gt;state.syncCounter};</div>
-<div class="line"><span class="lineno">  200</span>        <span class="keywordflow">while</span> (<span class="keyword">true</span>)</div>
-<div class="line"><span class="lineno">  201</span>        {</div>
-<div class="line"><span class="lineno">  202</span>            <span class="comment">// We remember the sync counter before checking the head index, otherwise we would introduce a race condition:</span></div>
-<div class="line"><span class="lineno">  203</span>            <span class="comment">// 1. We check the header index, data won&#39;t be available yet.</span></div>
-<div class="line"><span class="lineno">  204</span>            <span class="comment">// 2. Writer writes the data and updates the counter.</span></div>
-<div class="line"><span class="lineno">  205</span>            <span class="comment">// 3. If we used the current value of the counter for the futex, we would delay everything by 1 grain.</span></div>
-<div class="line"><span class="lineno">  206</span>            <span class="keyword">auto</span> <span class="keyword">const</span> previousSyncCounter = syncObject.load(std::memory_order_acquire);</div>
-<div class="line"><span class="lineno">  207</span>            <span class="keyword">auto</span> <span class="keyword">const</span> result = <a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ad65141908834fe5fed7aae14d81a9c49">getGrainImpl</a>(in_index, in_minValidSlices, out_grainInfo, out_payload);</div>
-<div class="line"><span class="lineno">  208</span>            <span class="comment">// NOTE: Before C++26 there is no way to access the address of the object wrapped</span></div>
-<div class="line"><span class="lineno">  209</span>            <span class="comment">//      by an atomic_ref. If there were it would be much more appropriate to pass</span></div>
-<div class="line"><span class="lineno">  210</span>            <span class="comment">//      syncObject by reference here and only unwrap the underlying integer in the</span></div>
-<div class="line"><span class="lineno">  211</span>            <span class="comment">//      implementation of waitUntilChanged.</span></div>
-<div class="line"><span class="lineno">  212</span>            <span class="keywordflow">if</span> ((result != <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa38f56f23dcef13bd3352179b758db601">MXL_ERR_OUT_OF_RANGE_TOO_EARLY</a>) || !<a class="code hl_function" href="namespacemxl_1_1lib.html#aa37aab0e44ea953e8354cefdbd0d263a">waitUntilChanged</a>(&amp;flow-&gt;state.syncCounter, previousSyncCounter, in_deadline))</div>
-<div class="line"><span class="lineno">  213</span>            {</div>
-<div class="line"><span class="lineno">  214</span>                <span class="keywordflow">return</span> result;</div>
-<div class="line"><span class="lineno">  215</span>            }</div>
-<div class="line"><span class="lineno">  216</span>        }</div>
-<div class="line"><span class="lineno">  217</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00208">208</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  210</span>    {</div>
+<div class="line"><span class="lineno">  211</span>        <span class="keyword">auto</span> <span class="keyword">const</span> flow = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a803bc858f397ee06bee24d66b8a70571">_flowData</a>-&gt;flow();</div>
+<div class="line"><span class="lineno">  212</span>        <span class="keyword">auto</span> <span class="keyword">const</span> syncObject = std::atomic_ref{flow-&gt;state.syncCounter};</div>
+<div class="line"><span class="lineno">  213</span>        <span class="keywordflow">while</span> (<span class="keyword">true</span>)</div>
+<div class="line"><span class="lineno">  214</span>        {</div>
+<div class="line"><span class="lineno">  215</span>            <span class="comment">// We remember the sync counter before checking the head index, otherwise we would introduce a race condition:</span></div>
+<div class="line"><span class="lineno">  216</span>            <span class="comment">// 1. We check the header index, data won&#39;t be available yet.</span></div>
+<div class="line"><span class="lineno">  217</span>            <span class="comment">// 2. Writer writes the data and updates the counter.</span></div>
+<div class="line"><span class="lineno">  218</span>            <span class="comment">// 3. If we used the current value of the counter for the futex, we would delay everything by 1 grain.</span></div>
+<div class="line"><span class="lineno">  219</span>            <span class="keyword">auto</span> <span class="keyword">const</span> previousSyncCounter = syncObject.load(std::memory_order_acquire);</div>
+<div class="line"><span class="lineno">  220</span>            <span class="keyword">auto</span> <span class="keyword">const</span> result = <a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ad65141908834fe5fed7aae14d81a9c49">getGrainImpl</a>(in_index, in_minValidSlices, out_grainInfo, out_payload);</div>
+<div class="line"><span class="lineno">  221</span>            <span class="comment">// NOTE: Before C++26 there is no way to access the address of the object wrapped</span></div>
+<div class="line"><span class="lineno">  222</span>            <span class="comment">//      by an atomic_ref. If there were it would be much more appropriate to pass</span></div>
+<div class="line"><span class="lineno">  223</span>            <span class="comment">//      syncObject by reference here and only unwrap the underlying integer in the</span></div>
+<div class="line"><span class="lineno">  224</span>            <span class="comment">//      implementation of waitUntilChanged.</span></div>
+<div class="line"><span class="lineno">  225</span>            <span class="keywordflow">if</span> ((result != <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa38f56f23dcef13bd3352179b758db601">MXL_ERR_OUT_OF_RANGE_TOO_EARLY</a>) || !<a class="code hl_function" href="namespacemxl_1_1lib.html#aa37aab0e44ea953e8354cefdbd0d263a">waitUntilChanged</a>(&amp;flow-&gt;state.syncCounter, previousSyncCounter, in_deadline))</div>
+<div class="line"><span class="lineno">  226</span>            {</div>
+<div class="line"><span class="lineno">  227</span>                <span class="keywordflow">return</span> result;</div>
+<div class="line"><span class="lineno">  228</span>            }</div>
+<div class="line"><span class="lineno">  229</span>        }</div>
+<div class="line"><span class="lineno">  230</span>    }</div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_aa37aab0e44ea953e8354cefdbd0d263a"><div class="ttname"><a href="namespacemxl_1_1lib.html#aa37aab0e44ea953e8354cefdbd0d263a">mxl::lib::waitUntilChanged</a></div><div class="ttdeci">bool waitUntilChanged(T const *in_addr, T in_expected, Timepoint in_deadline)</div><div class="ttdef"><b>Definition</b> <a href="Sync_8cpp_source.html#l00068">Sync.cpp:68</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -761,10 +803,10 @@ Private Attributes</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowReader.html#a9549c6fa7e336cff278fb77594c8f5e3">mxl::lib::FlowReader</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00219">219</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  220</span>    {</div>
-<div class="line"><span class="lineno">  221</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a803bc858f397ee06bee24d66b8a70571">_flowData</a> &amp;&amp; <a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ac618265a631882d92bbedb6be9edd819">isFlowValidImpl</a>();</div>
-<div class="line"><span class="lineno">  222</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00232">232</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  233</span>    {</div>
+<div class="line"><span class="lineno">  234</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a803bc858f397ee06bee24d66b8a70571">_flowData</a> &amp;&amp; <a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ac618265a631882d92bbedb6be9edd819">isFlowValidImpl</a>();</div>
+<div class="line"><span class="lineno">  235</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -792,18 +834,18 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>Implementation of <a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a41bee44eccb72f416bef115ac5d633be">isFlowValid()</a> that can be used by other methods that have previously asserted that we're operating on a valid flow (i.e. that _flowData is a valid pointer). </p>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00224">224</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  225</span>    {</div>
-<div class="line"><span class="lineno">  226</span>        <span class="keyword">auto</span> <span class="keyword">const</span> flowState = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a803bc858f397ee06bee24d66b8a70571">_flowData</a>-&gt;flowState();</div>
-<div class="line"><span class="lineno">  227</span>        <span class="keyword">auto</span> <span class="keyword">const</span> flowDataPath = <a class="code hl_function" href="namespacemxl_1_1lib.html#a70469f14e75438e90bdf85253ad817f9">makeFlowDataFilePath</a>(<a class="code hl_function" href="classmxl_1_1lib_1_1FlowReader.html#acc4be1ee3041836abdab114f7a508dc8">getDomain</a>(), to_string(<a class="code hl_function" href="classmxl_1_1lib_1_1FlowReader.html#a74f5ef0f23fe9fbe82dbd401a24366ad">getId</a>()));</div>
-<div class="line"><span class="lineno">  228</span> </div>
-<div class="line"><span class="lineno">  229</span>        <span class="keyword">struct </span>stat st;</div>
-<div class="line"><span class="lineno">  230</span>        <span class="keywordflow">if</span> (::stat(flowDataPath.string().c_str(), &amp;st) != 0)</div>
-<div class="line"><span class="lineno">  231</span>        {</div>
-<div class="line"><span class="lineno">  232</span>            <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
-<div class="line"><span class="lineno">  233</span>        }</div>
-<div class="line"><span class="lineno">  234</span>        <span class="keywordflow">return</span> (st.st_ino == flowState-&gt;inode);</div>
-<div class="line"><span class="lineno">  235</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00237">237</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  238</span>    {</div>
+<div class="line"><span class="lineno">  239</span>        <span class="keyword">auto</span> <span class="keyword">const</span> flowState = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a803bc858f397ee06bee24d66b8a70571">_flowData</a>-&gt;flowState();</div>
+<div class="line"><span class="lineno">  240</span>        <span class="keyword">auto</span> <span class="keyword">const</span> flowDataPath = <a class="code hl_function" href="namespacemxl_1_1lib.html#a70469f14e75438e90bdf85253ad817f9">makeFlowDataFilePath</a>(<a class="code hl_function" href="classmxl_1_1lib_1_1FlowReader.html#acc4be1ee3041836abdab114f7a508dc8">getDomain</a>(), to_string(<a class="code hl_function" href="classmxl_1_1lib_1_1FlowReader.html#a74f5ef0f23fe9fbe82dbd401a24366ad">getId</a>()));</div>
+<div class="line"><span class="lineno">  241</span> </div>
+<div class="line"><span class="lineno">  242</span>        <span class="keyword">struct </span>stat st;</div>
+<div class="line"><span class="lineno">  243</span>        <span class="keywordflow">if</span> (::stat(flowDataPath.string().c_str(), &amp;st) != 0)</div>
+<div class="line"><span class="lineno">  244</span>        {</div>
+<div class="line"><span class="lineno">  245</span>            <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><span class="lineno">  246</span>        }</div>
+<div class="line"><span class="lineno">  247</span>        <span class="keywordflow">return</span> (st.st_ino == flowState-&gt;inode);</div>
+<div class="line"><span class="lineno">  248</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1FlowReader_html_a74f5ef0f23fe9fbe82dbd401a24366ad"><div class="ttname"><a href="classmxl_1_1lib_1_1FlowReader.html#a74f5ef0f23fe9fbe82dbd401a24366ad">mxl::lib::FlowReader::getId</a></div><div class="ttdeci">uuids::uuid const &amp; getId() const</div><div class="ttdef"><b>Definition</b> <a href="FlowReader_8cpp_source.html#l00023">FlowReader.cpp:23</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1FlowReader_html_acc4be1ee3041836abdab114f7a508dc8"><div class="ttname"><a href="classmxl_1_1lib_1_1FlowReader.html#acc4be1ee3041836abdab114f7a508dc8">mxl::lib::FlowReader::getDomain</a></div><div class="ttdeci">std::filesystem::path const &amp; getDomain() const</div><div class="ttdef"><b>Definition</b> <a href="FlowReader_8cpp_source.html#l00028">FlowReader.cpp:28</a></div></div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_a70469f14e75438e90bdf85253ad817f9"><div class="ttname"><a href="namespacemxl_1_1lib.html#a70469f14e75438e90bdf85253ad817f9">mxl::lib::makeFlowDataFilePath</a></div><div class="ttdeci">std::filesystem::path makeFlowDataFilePath(std::filesystem::path const &amp;flowDirectory)</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8cpp_source.html#l00017">PathUtils.cpp:17</a></div></div>
@@ -853,25 +895,25 @@ Private Attributes</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowReader.html#a9e38230bbea677de5e02fd93ee09be83">mxl::lib::DiscreteFlowReader</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00077">77</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   78</span>    {</div>
-<div class="line"><span class="lineno">   79</span>        <span class="keyword">auto</span> result = <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
-<div class="line"><span class="lineno">   80</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a803bc858f397ee06bee24d66b8a70571">_flowData</a>)</div>
-<div class="line"><span class="lineno">   81</span>        {</div>
-<div class="line"><span class="lineno">   82</span>            result = <a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ad65141908834fe5fed7aae14d81a9c49">getGrainImpl</a>(in_index, in_minValidSlices, in_deadline, <span class="keyword">nullptr</span>, <span class="keyword">nullptr</span>);</div>
-<div class="line"><span class="lineno">   83</span>            <span class="keywordflow">if</span> (result == <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa38f56f23dcef13bd3352179b758db601">MXL_ERR_OUT_OF_RANGE_TOO_EARLY</a>)</div>
-<div class="line"><span class="lineno">   84</span>            {</div>
-<div class="line"><span class="lineno">   85</span>                <span class="comment">// If we were ultimately too early, even with blocking for a certain amount</span></div>
-<div class="line"><span class="lineno">   86</span>                <span class="comment">// of time it could very well be that we&#39;re operating on a stale flow, so we</span></div>
-<div class="line"><span class="lineno">   87</span>                <span class="comment">// use the opportunity to check whether it&#39;s valid.</span></div>
-<div class="line"><span class="lineno">   88</span>                <span class="keywordflow">if</span> (!<a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ac618265a631882d92bbedb6be9edd819">isFlowValidImpl</a>())</div>
-<div class="line"><span class="lineno">   89</span>                {</div>
-<div class="line"><span class="lineno">   90</span>                    result = <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa07f4214fd967779d57a4419dce1f1003">MXL_ERR_FLOW_INVALID</a>;</div>
-<div class="line"><span class="lineno">   91</span>                }</div>
-<div class="line"><span class="lineno">   92</span>            }</div>
-<div class="line"><span class="lineno">   93</span>        }</div>
-<div class="line"><span class="lineno">   94</span>        <span class="keywordflow">return</span> result;</div>
-<div class="line"><span class="lineno">   95</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html#l00090">90</a> of file <a class="el" href="PosixDiscreteFlowReader_8cpp_source.html">PosixDiscreteFlowReader.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   91</span>    {</div>
+<div class="line"><span class="lineno">   92</span>        <span class="keyword">auto</span> result = <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">   93</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a803bc858f397ee06bee24d66b8a70571">_flowData</a>)</div>
+<div class="line"><span class="lineno">   94</span>        {</div>
+<div class="line"><span class="lineno">   95</span>            result = <a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ad65141908834fe5fed7aae14d81a9c49">getGrainImpl</a>(in_index, in_minValidSlices, in_deadline, <span class="keyword">nullptr</span>, <span class="keyword">nullptr</span>);</div>
+<div class="line"><span class="lineno">   96</span>            <span class="keywordflow">if</span> (result == <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa38f56f23dcef13bd3352179b758db601">MXL_ERR_OUT_OF_RANGE_TOO_EARLY</a>)</div>
+<div class="line"><span class="lineno">   97</span>            {</div>
+<div class="line"><span class="lineno">   98</span>                <span class="comment">// If we were ultimately too early, even with blocking for a certain amount</span></div>
+<div class="line"><span class="lineno">   99</span>                <span class="comment">// of time it could very well be that we&#39;re operating on a stale flow, so we</span></div>
+<div class="line"><span class="lineno">  100</span>                <span class="comment">// use the opportunity to check whether it&#39;s valid.</span></div>
+<div class="line"><span class="lineno">  101</span>                <span class="keywordflow">if</span> (!<a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#ac618265a631882d92bbedb6be9edd819">isFlowValidImpl</a>())</div>
+<div class="line"><span class="lineno">  102</span>                {</div>
+<div class="line"><span class="lineno">  103</span>                    result = <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa07f4214fd967779d57a4419dce1f1003">MXL_ERR_FLOW_INVALID</a>;</div>
+<div class="line"><span class="lineno">  104</span>                }</div>
+<div class="line"><span class="lineno">  105</span>            }</div>
+<div class="line"><span class="lineno">  106</span>        }</div>
+<div class="line"><span class="lineno">  107</span>        <span class="keywordflow">return</span> result;</div>
+<div class="line"><span class="lineno">  108</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -896,7 +938,7 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8hpp_source.html#l00091">91</a> of file <a class="el" href="PosixDiscreteFlowReader_8hpp_source.html">PosixDiscreteFlowReader.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8hpp_source.html#l00096">96</a> of file <a class="el" href="PosixDiscreteFlowReader_8hpp_source.html">PosixDiscreteFlowReader.hpp</a>.</p>
 
 </div>
 </div>
@@ -920,7 +962,7 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8hpp_source.html#l00090">90</a> of file <a class="el" href="PosixDiscreteFlowReader_8hpp_source.html">PosixDiscreteFlowReader.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowReader_8hpp_source.html#l00095">95</a> of file <a class="el" href="PosixDiscreteFlowReader_8hpp_source.html">PosixDiscreteFlowReader.hpp</a>.</p>
 
 </div>
 </div>

@@ -1,5 +1,7 @@
 var NAVTREEINDEX14 =
 {
+"structmxl_1_1lib_1_1DomainWatcherRecord.html#a78b7df1863c7ec2d936f1525ff43701c":[2,0,1,0,9,4],
+"structmxl_1_1lib_1_1DomainWatcherRecord.html#a78b7df1863c7ec2d936f1525ff43701c":[1,0,1,0,11,4],
 "structmxl_1_1lib_1_1DomainWatcherRecord.html#a7a7c5a1b2b725d8c76553e41a4471aa9":[2,0,1,0,9,5],
 "structmxl_1_1lib_1_1DomainWatcherRecord.html#a7a7c5a1b2b725d8c76553e41a4471aa9":[1,0,1,0,11,5],
 "structmxl_1_1lib_1_1DomainWatcherRecord.html#ac525997032294ea11d46b0f8b2008355":[2,0,1,0,9,2],
@@ -247,7 +249,5 @@ var NAVTREEINDEX14 =
 "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1ProviderConfigValues.html#ab492bf1118cfcb1790075aa659a1f435":[1,0,1,0,1,0,39,1],
 "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1ProviderConfigValues.html#ab492bf1118cfcb1790075aa659a1f435":[2,0,1,0,0,0,39,1],
 "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1ProviderConfigValues.html#ac8e1a7221ee0b50b9a1d989578d00cae":[2,0,1,0,0,0,39,7],
-"structmxl_1_1lib_1_1fabrics_1_1ofi_1_1ProviderConfigValues.html#ac8e1a7221ee0b50b9a1d989578d00cae":[1,0,1,0,1,0,39,7],
-"structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Connected.html":[2,0,1,0,0,0,42,0],
-"structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Connected.html":[1,0,1,0,1,0,42,0]
+"structmxl_1_1lib_1_1fabrics_1_1ofi_1_1ProviderConfigValues.html#ac8e1a7221ee0b50b9a1d989578d00cae":[1,0,1,0,1,0,39,7]
 };
