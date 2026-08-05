@@ -57,6 +57,18 @@ if (gstreamer_FOUND)
                 PkgConfig::gstreamer-video
             )
 
+    if (MXL_BUILT_WITH_CUDA)
+        find_package(CUDAToolkit REQUIRED)
+        target_compile_definitions(mxl-gst-testsrc
+                PRIVATE
+                    MXL_HAS_CUDA=1
+            )
+        target_link_libraries(mxl-gst-testsrc
+                PRIVATE
+                    CUDA::cudart
+            )
+    endif()
+
 
     add_executable(mxl-gst-sink)
     target_compile_features(mxl-gst-sink
@@ -90,6 +102,18 @@ if (gstreamer_FOUND)
                 PkgConfig::gstreamer-audio
                 PkgConfig::gstreamer-video
         )
+
+    if (MXL_BUILT_WITH_CUDA)
+        find_package(CUDAToolkit REQUIRED)
+        target_compile_definitions(mxl-gst-sink
+                PRIVATE
+                    MXL_HAS_CUDA=1
+            )
+        target_link_libraries(mxl-gst-sink
+                PRIVATE
+                    CUDA::cudart
+            )
+    endif()
 
     add_executable(mxl-gst-looping-filesrc)
     target_compile_features(mxl-gst-looping-filesrc

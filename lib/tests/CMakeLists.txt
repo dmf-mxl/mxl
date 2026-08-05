@@ -67,6 +67,18 @@ target_link_libraries(mxl-tests
             Catch2::Catch2WithMain
     )
 
+if (MXL_BUILT_WITH_CUDA)
+    find_package(CUDAToolkit REQUIRED)
+    target_compile_definitions(mxl-tests
+            PRIVATE
+                MXL_HAS_CUDA=1
+        )
+    target_link_libraries(mxl-tests
+            PRIVATE
+                CUDA::cudart
+        )
+endif()
+
 if (TARGET PcapPlusPlus::Pcap++)
     target_link_libraries(mxl-tests
             PRIVATE

@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <vector>
 #include <glib.h>
 #include <uuid.h>
 #include <CLI/CLI.hpp>
@@ -21,6 +22,10 @@
 #include <mxl/time.h>
 #include "utils.hpp"
 
+#if defined(MXL_HAS_CUDA) && MXL_HAS_CUDA
+#   include <cuda_runtime_api.h>
+#endif
+
 namespace
 {
     auto volatile g_exit_requested = std::sig_atomic_t{0};
@@ -29,6 +34,120 @@ namespace
     {
         g_exit_requested = 1;
     }
+
+    /**
+     * Opens a discrete grain via OpenGrainEx and provides a host-writable pointer.
+     * For host payloads that pointer is the grain itself. For CUDA device payloads a
+     * staging buffer is used and ranges are uploaded with cudaMemcpy on flush/commit.
+     */
+    class GrainWriteSession
+    {
+    public:
+        GrainWriteSession() = default;
+
+        [[nodiscard]]
+        mxlStatus open(mxlFlowWriter writer, std::uint64_t index)
+        {
+            _view = {};
+            _staging.clear();
+            auto const status = ::mxlFlowWriterOpenGrainEx(writer, index, &_info, &_view);
+            if (status != MXL_STATUS_OK)
+            {
+                return status;
+            }
+
+            if (_view.kind == MXL_PAYLOAD_KIND_HOST_PTR)
+            {
+                if (_view.u.hostPtr == nullptr)
+                {
+                    return MXL_ERR_UNKNOWN;
+                }
+                return MXL_STATUS_OK;
+            }
+
+            if (_view.kind == MXL_PAYLOAD_KIND_DEVICE_PTR)
+            {
+#if defined(MXL_HAS_CUDA) && MXL_HAS_CUDA
+                if (_view.u.devicePtr == 0)
+                {
+                    return MXL_ERR_UNKNOWN;
+                }
+                _staging.assign(_view.grainSize, 0);
+                return MXL_STATUS_OK;
+#else
+                MXL_ERROR("Device payload requested but mxl-gst-testsrc was built without CUDA support");
+                return MXL_ERR_UNSUPPORTED_OPERATION;
+#endif
+            }
+
+            MXL_ERROR("Unsupported grain payload kind {}", _view.kind);
+            return MXL_ERR_UNSUPPORTED_OPERATION;
+        }
+
+        [[nodiscard]]
+        mxlGrainInfo& info() noexcept
+        {
+            return _info;
+        }
+
+        [[nodiscard]]
+        std::uint8_t* writableBase() noexcept
+        {
+            if (_view.kind == MXL_PAYLOAD_KIND_HOST_PTR)
+            {
+                return _view.u.hostPtr;
+            }
+            return _staging.data();
+        }
+
+        /**
+         * Ensure bytes [offset, offset+size) written into writableBase() are visible in the
+         * grain payload backing store (no-op for host-mapped payloads).
+         */
+        [[nodiscard]]
+        mxlStatus flushRange(std::size_t offset, std::size_t size) const
+        {
+            if (size == 0U)
+            {
+                return MXL_STATUS_OK;
+            }
+            if (_view.kind == MXL_PAYLOAD_KIND_HOST_PTR)
+            {
+                return MXL_STATUS_OK;
+            }
+            if (_view.kind != MXL_PAYLOAD_KIND_DEVICE_PTR)
+            {
+                return MXL_ERR_UNSUPPORTED_OPERATION;
+            }
+            if ((offset + size) > _staging.size())
+            {
+                return MXL_ERR_INVALID_ARG;
+            }
+
+#if defined(MXL_HAS_CUDA) && MXL_HAS_CUDA
+            if (auto const err = ::cudaSetDevice(_view.deviceIndex); err != cudaSuccess)
+            {
+                MXL_ERROR("cudaSetDevice({}) failed: {}", _view.deviceIndex, cudaGetErrorString(err));
+                return MXL_ERR_UNKNOWN;
+            }
+            auto* const devicePtr = reinterpret_cast<std::uint8_t*>(_view.u.devicePtr);
+            if (auto const err = ::cudaMemcpy(devicePtr + offset, _staging.data() + offset, size, cudaMemcpyHostToDevice); err != cudaSuccess)
+            {
+                MXL_ERROR("cudaMemcpy H2D failed: {}", cudaGetErrorString(err));
+                return MXL_ERR_UNKNOWN;
+            }
+            return MXL_STATUS_OK;
+#else
+            (void)offset;
+            return MXL_ERR_UNSUPPORTED_OPERATION;
+#endif
+        }
+
+    private:
+        mxlGrainInfo _info{};
+        mxlPayloadView _view{};
+        std::vector<std::uint8_t> _staging;
+    };
 
     struct VideoPipelineConfig
     {
@@ -459,6 +578,15 @@ namespace
             {
                 MXL_WARN("Reusing existing flow.");
             }
+
+            if (_configInfo.common.payloadLocation == MXL_PAYLOAD_LOCATION_DEVICE_MEMORY)
+            {
+                MXL_INFO("Grain payload location: device (deviceIndex={})", _configInfo.common.deviceIndex);
+            }
+            else
+            {
+                MXL_INFO("Grain payload location: host");
+            }
         }
 
         ~MxlWriter()
@@ -526,19 +654,17 @@ namespace
                         // Generate the skipped grains as invalid grains
                         while (grainIndex < gstGrainIndex)
                         {
-                            auto gInfo = mxlGrainInfo{};
-                            std::uint8_t* mxlBuffer = nullptr;
                             auto const actualGrainIndex = grainIndex - offset;
+                            auto session = GrainWriteSession{};
 
-                            /// Open the grain for writing.
-                            if (::mxlFlowWriterOpenGrain(_writer, actualGrainIndex, &gInfo, &mxlBuffer) != MXL_STATUS_OK)
+                            if (session.open(_writer, actualGrainIndex) != MXL_STATUS_OK)
                             {
                                 MXL_ERROR("Failed to open grain at index '{}'", actualGrainIndex);
                                 break;
                             }
 
-                            gInfo.flags = MXL_GRAIN_FLAG_INVALID;
-                            if (::mxlFlowWriterCommitGrain(_writer, &gInfo) != MXL_STATUS_OK)
+                            session.info().flags = MXL_GRAIN_FLAG_INVALID;
+                            if (::mxlFlowWriterCommitGrain(_writer, &session.info()) != MXL_STATUS_OK)
                             {
                                 MXL_ERROR("Failed to commit invalid grain at index '{}'", actualGrainIndex);
                                 break;
@@ -557,19 +683,16 @@ namespace
                         auto mapInfo = ::GstMapInfo{};
                         if (::gst_buffer_map(pipelineSample.buffer(), &mapInfo, GST_MAP_READ))
                         {
-                            /// Open the grain.
-                            auto gInfo = ::mxlGrainInfo{};
-                            std::uint8_t* mxlBuffer = nullptr;
-
-                            /// Open the grain for writing.
-                            if (::mxlFlowWriterOpenGrain(_writer, actualGrainIndex, &gInfo, &mxlBuffer) != MXL_STATUS_OK)
+                            auto session = GrainWriteSession{};
+                            if (session.open(_writer, actualGrainIndex) != MXL_STATUS_OK)
                             {
                                 MXL_ERROR("Failed to open grain at index '{}'", actualGrainIndex);
                                 ::gst_buffer_unmap(pipelineSample.buffer(), &mapInfo);
                                 break;
                             }
 
-                            gInfo.validSlices = 0;
+                            session.info().validSlices = 0;
+                            auto* const mxlBuffer = session.writableBase();
 
                             auto const sliceSize = gstPipeline.config().sliceSize;
 
@@ -589,13 +712,21 @@ namespace
 
                             for (auto i = std::size_t{0}; i < nbBatches; ++i)
                             {
-                                auto const nbSlices = std::min<std::uint16_t>(slicesPerBatch, gInfo.totalSlices - gInfo.validSlices);
+                                auto const nbSlices =
+                                    std::min<std::uint16_t>(slicesPerBatch, session.info().totalSlices - session.info().validSlices);
 
                                 auto const batchOffset = sliceSize * slicesPerBatch * i;
-                                ::memcpy(mxlBuffer + batchOffset, mapInfo.data + batchOffset, nbSlices * sliceSize);
-                                gInfo.validSlices += nbSlices;
+                                auto const batchBytes = static_cast<std::size_t>(nbSlices) * sliceSize;
+                                ::memcpy(mxlBuffer + batchOffset, mapInfo.data + batchOffset, batchBytes);
+                                if (session.flushRange(batchOffset, batchBytes) != MXL_STATUS_OK)
+                                {
+                                    MXL_ERROR("Failed to flush grain payload batch at index '{}'", actualGrainIndex);
+                                    break;
+                                }
 
-                                if (::mxlFlowWriterCommitGrain(_writer, &gInfo) != MXL_STATUS_OK)
+                                session.info().validSlices += nbSlices;
+
+                                if (::mxlFlowWriterCommitGrain(_writer, &session.info()) != MXL_STATUS_OK)
                                 {
                                     MXL_ERROR("Failed to commit grain at index '{}'", actualGrainIndex);
                                     break;

@@ -15,6 +15,9 @@ namespace mxl::lib
     constexpr auto const GRAIN_DATA_FILE_NAME_STEM = "data";
     constexpr auto const CHANNEL_DATA_FILE_NAME = "channels";
     constexpr auto const DOMAIN_OPTIONS_FILE_NAME = "options.json";
+    constexpr auto const PAYLOAD_DIRECTORY_NAME = "payload";
+    constexpr auto const PAYLOAD_DESCRIPTOR_FILE_NAME = "payload.json";
+    constexpr auto const PAYLOAD_SLOT_FILE_NAME_STEM = "slot";
 
     std::filesystem::path makeFlowDirectoryName(std::filesystem::path const& domain, std::string const& uuid);
 
@@ -37,6 +40,10 @@ namespace mxl::lib
     std::filesystem::path makeChannelDataFilePath(std::filesystem::path const& domain, std::string const& uuid);
 
     std::filesystem::path makeDomainOptionsFilePath(std::filesystem::path const& domain);
+
+    std::filesystem::path makePayloadDirectoryName(std::filesystem::path const& flowDirectory);
+    std::filesystem::path makePayloadDescriptorFilePath(std::filesystem::path const& flowDirectory);
+    std::filesystem::path makePayloadSlotFilePath(std::filesystem::path const& flowDirectory, unsigned int index);
 
     /**************************************************************************/
     /* Inline implementation.                                                 */

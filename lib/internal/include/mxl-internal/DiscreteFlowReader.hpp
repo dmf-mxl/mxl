@@ -48,6 +48,12 @@ namespace mxl::lib
             std::uint8_t** out_payload) = 0;
 
         /**
+         * Blocking accessor returning an extended payload view.
+         */
+        virtual mxlStatus getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, Timepoint in_deadline, mxlGrainInfo* out_grainInfo,
+            mxlPayloadView* out_payload) = 0;
+
+        /**
          * Non-blocking accessor for a specific grain at a specific index.
          * The index must be greater than or equal to the current tail index of the flow.
          *
@@ -61,6 +67,12 @@ namespace mxl::lib
          */
         virtual mxlStatus getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo,
             std::uint8_t** out_payload) = 0;
+
+        /**
+         * Non-blocking accessor returning an extended payload view.
+         */
+        virtual mxlStatus getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo,
+            mxlPayloadView* out_payload) = 0;
 
     protected:
         using FlowReader::FlowReader;

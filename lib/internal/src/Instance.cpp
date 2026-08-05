@@ -249,7 +249,10 @@ namespace mxl::lib
             parser.getTotalPayloadSlices(),
             parser.getPayloadSliceLengths(),
             optionsParser.getMaxSyncBatchSizeHint().value_or(batchSizeDefault),
-            optionsParser.getMaxCommitBatchSizeHint().value_or(batchSizeDefault));
+            optionsParser.getMaxCommitBatchSizeHint().value_or(batchSizeDefault),
+            optionsParser.getPayloadLocation(),
+            optionsParser.getDeviceIndex(),
+            optionsParser.getPayloadBackend());
 
         return {std::move(flowData), created};
     }
@@ -282,7 +285,9 @@ namespace mxl::lib
             sampleWordSize,
             pageAlignedLength,
             optionsParser.getMaxSyncBatchSizeHint().value_or(batchSizeDefault),
-            optionsParser.getMaxCommitBatchSizeHint().value_or(batchSizeDefault));
+            optionsParser.getMaxCommitBatchSizeHint().value_or(batchSizeDefault),
+            optionsParser.getPayloadLocation(),
+            optionsParser.getDeviceIndex());
 
         return {std::move(flowData), created};
     }

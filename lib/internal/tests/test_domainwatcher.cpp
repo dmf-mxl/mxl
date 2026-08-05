@@ -191,6 +191,11 @@ struct MockWriter : mxl::lib::DiscreteFlowWriter
         return MXL_STATUS_OK;
     }
 
+    virtual mxlStatus openGrain(std::uint64_t, mxlGrainInfo*, mxlPayloadView*) override
+    {
+        return MXL_STATUS_OK;
+    }
+
     virtual mxlStatus commit(mxlGrainInfo const&) override
     {
         return MXL_STATUS_OK;

@@ -1,0 +1,7 @@
+{
+  "payload": {
+    "location": "device",
+    "deviceIndex": 0,
+    "backend": "cuda-linear"
+  }
+}

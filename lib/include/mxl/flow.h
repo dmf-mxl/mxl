@@ -298,6 +298,12 @@ extern "C"
     mxlStatus mxlFlowReaderGetGrain(mxlFlowReader reader, uint64_t index, uint64_t timeoutNs, mxlGrainInfo* grain, uint8_t** payload);
 
     /**
+     * Like \ref mxlFlowReaderGetGrain but returns an \ref mxlPayloadView.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowReaderGetGrainEx(mxlFlowReader reader, uint64_t index, uint64_t timeoutNs, mxlGrainInfo* grain, mxlPayloadView* payload);
+
+    /**
      * Accessors for a flow grain at a specific index, with a minimum number of valid slices.
      *
      * \param[in] reader A valid discrete flow reader.
@@ -317,6 +323,13 @@ extern "C"
         uint8_t** payload);
 
     /**
+     * Like \ref mxlFlowReaderGetGrainSlice but returns an \ref mxlPayloadView.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowReaderGetGrainSliceEx(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, uint64_t timeoutNs, mxlGrainInfo* grain,
+        mxlPayloadView* payload);
+
+    /**
      * Non-blocking accessor for a flow grain at a specific index
      *
      * \param[in] reader A valid flow reader
@@ -331,6 +344,12 @@ extern "C"
      */
     MXL_EXPORT
     mxlStatus mxlFlowReaderGetGrainNonBlocking(mxlFlowReader reader, uint64_t index, mxlGrainInfo* grain, uint8_t** payload);
+
+    /**
+     * Like \ref mxlFlowReaderGetGrainNonBlocking but returns an \ref mxlPayloadView.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowReaderGetGrainNonBlockingEx(mxlFlowReader reader, uint64_t index, mxlGrainInfo* grain, mxlPayloadView* payload);
 
     /**
      * Non-blocking accessor for a flow grain at a specific index, with a minimum number of valid slices.
@@ -349,6 +368,13 @@ extern "C"
     MXL_EXPORT
     mxlStatus mxlFlowReaderGetGrainSliceNonBlocking(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, mxlGrainInfo* grain,
         uint8_t** payload);
+
+    /**
+     * Like \ref mxlFlowReaderGetGrainSliceNonBlocking but returns an \ref mxlPayloadView.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowReaderGetGrainSliceNonBlockingEx(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, mxlGrainInfo* grain,
+        mxlPayloadView* payload);
 
     /**
      * Get grain info for a given index. This is used to inspect the grain info without opening the grain for mutation.
@@ -384,6 +410,19 @@ extern "C"
      */
     MXL_EXPORT
     mxlStatus mxlFlowWriterOpenGrain(mxlFlowWriter writer, uint64_t index, mxlGrainInfo* mxlGrainInfo, uint8_t** payload);
+
+    /**
+     * Open a grain for mutation and return an extended payload view.
+     *
+     * Prefer this over \ref mxlFlowWriterOpenGrain when the flow may use a non-host payload
+     * backing store. For host-mapped flows the returned view has kind \c MXL_PAYLOAD_KIND_HOST_PTR
+     * and \c u.hostPtr matches the pointer that \ref mxlFlowWriterOpenGrain would return.
+     *
+     * \return \c MXL_ERR_UNSUPPORTED_OPERATION when the flow records a device payload location but
+     *         no device allocator has been configured yet.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowWriterOpenGrainEx(mxlFlowWriter writer, uint64_t index, mxlGrainInfo* mxlGrainInfo, mxlPayloadView* payload);
 
     /**
      *
