@@ -147,7 +147,7 @@ namespace mxl::lib::fabrics::ofi
         endpoint.enable();
 
         auto regions = MxlRegions::forReader(config.reader);
-        auto proto = selectEgressProtocol(regions.dataLayout(), regions.regions());
+        auto proto = selectEgressProtocol(regions.dataLayout(), regions.regions(), regions.regionsPerGrain());
 
         proto->registerMemory(domain);
 

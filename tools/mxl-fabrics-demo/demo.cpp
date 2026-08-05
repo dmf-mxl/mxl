@@ -7,12 +7,14 @@
 #include <cstdint>
 #include <cstdlib>
 #include <fstream>
+#include <iterator>
 #include <optional>
 #include <string>
 #include <type_traits>
 #include <uuid.h>
 #include <sys/types.h>
 #include <CLI/CLI.hpp>
+#include <fmt/format.h>
 #include <mxl-internal/FlowParser.hpp>
 #include <mxl-internal/Logging.hpp>
 #include <mxl/fabrics.h>
@@ -30,7 +32,13 @@
         2- Paste the target info that gets printed in stdout to the --target-info argument of the initiator.
         3- Start a sender: ./mxl-fabrics-demo -i -d <tmpfs folder> -f <test source flow uuid> --service 1234 --target-info <targetInfo>
 
+    Device (CUDA) grain payloads:
+        Target: add --flow-options examples/payload-options/cuda-payload-options.json and prefer -p verbs
+        (HMEM-capable). The demo uses OpenGrainEx / GetGrain*Ex so device flows work; fabrics
+        registers header + CUDA payload regions separately.
+
     The best available interface is selected automatically (EFA > VERBS > TCP > SHM).
+    When a device payload flow is detected, HMEM-capable interfaces are preferred/required.
     Use --node to bind to a specific address.
 */
 
@@ -114,6 +122,10 @@ std::string capabilitiesString(std::uint64_t caps)
     {
         resultLength += capStrings.emplace_back("SEND_RECEIVE").size();
     }
+    if ((caps & MXL_FABRICS_IFACE_CAP_HMEM) != 0)
+    {
+        resultLength += capStrings.emplace_back("HMEM").size();
+    }
     if (capStrings.empty())
     {
         resultLength += capStrings.emplace_back("<none>").size();
@@ -157,8 +169,46 @@ int providerPriority(mxlFabricsProvider provider)
     }
 }
 
+[[nodiscard]]
+bool interfaceHasHmem(mxlFabricsInterfaceConfig const& interface) noexcept
+{
+    return (interface.caps.flags & MXL_FABRICS_IFACE_CAP_HMEM) != 0;
+}
+
+[[nodiscard]]
+int interfaceScore(mxlFabricsInterfaceConfig const& interface, bool preferHmem) noexcept
+{
+    auto score = providerPriority(interface.provider) * 10;
+    if (preferHmem)
+    {
+        score += interfaceHasHmem(interface) ? 5 : -100;
+    }
+    return score;
+}
+
+[[nodiscard]]
+bool flowOptionsRequestDevicePayload(std::string const& flowOptions)
+{
+    return (flowOptions.find("\"device\"") != std::string::npos) || (flowOptions.find("cuda-linear") != std::string::npos) ||
+           (flowOptions.find("\"payloadLocation\":\"device\"") != std::string::npos);
+}
+
+[[nodiscard]]
+bool existingFlowNeedsHmem(std::string const& domain, std::string const& flowId)
+{
+    auto const payloadJsonPath = fmt::format("{}/{}.mxl-flow/payload.json", domain, flowId);
+    auto file = std::ifstream{payloadJsonPath};
+    if (!file)
+    {
+        return false;
+    }
+    auto const contents = std::string{std::istreambuf_iterator<char>{file}, std::istreambuf_iterator<char>{}};
+    return (contents.find("cuda-linear") != std::string::npos) || (contents.find("\"location\": \"device\"") != std::string::npos) ||
+           (contents.find("\"location\":\"device\"") != std::string::npos);
+}
+
 InterfaceSelection selectInterface(mxlFabricsInstance instance, std::optional<std::string> const& node, std::optional<std::string> const& service,
-    std::optional<mxlFabricsProvider> provider = std::nullopt)
+    std::optional<mxlFabricsProvider> provider = std::nullopt, bool preferHmem = false)
 {
     auto list = std::add_pointer_t<mxlFabricsInterfaceList>{nullptr};
     auto query = mxlFabricsInterfaceConfig{};
@@ -183,7 +233,7 @@ InterfaceSelection selectInterface(mxlFabricsInstance instance, std::optional<st
     auto best = std::add_pointer_t<mxlFabricsInterfaceConfig const>{nullptr};
     for (auto* entry = list; entry != nullptr; entry = entry->next)
     {
-        if (!best || (providerPriority(entry->interface.provider) > providerPriority(best->provider)))
+        if (!best || (interfaceScore(entry->interface, preferHmem) > interfaceScore(*best, preferHmem)))
         {
             best = &entry->interface;
         }
@@ -192,6 +242,13 @@ InterfaceSelection selectInterface(mxlFabricsInstance instance, std::optional<st
     if (!best)
     {
         MXL_ERROR("No matching interfaces found");
+        mxlFabricsFreeInterfaceList(list);
+        std::exit(MXL_ERR_NO_FABRIC);
+    }
+
+    if (preferHmem && !interfaceHasHmem(*best))
+    {
+        MXL_ERROR("Device grain payloads require an HMEM-capable fabric interface (e.g. -p verbs with nvidia_peermem loaded)");
         mxlFabricsFreeInterfaceList(list);
         std::exit(MXL_ERR_NO_FABRIC);
     }
@@ -308,6 +365,21 @@ public:
             return status;
         }
 
+        {
+            mxlFlowConfigInfo readerConfig{};
+            if (mxlFlowReaderGetConfigInfo(_reader, &readerConfig) == MXL_STATUS_OK)
+            {
+                if (readerConfig.common.payloadLocation == MXL_PAYLOAD_LOCATION_DEVICE_MEMORY)
+                {
+                    MXL_INFO("Grain payload location: device (deviceIndex={})", readerConfig.common.deviceIndex);
+                }
+                else
+                {
+                    MXL_INFO("Grain payload location: host");
+                }
+            }
+        }
+
         status = mxlFabricsCreateInitiator(_fabricsInstance, &_initiator);
         if (status != MXL_STATUS_OK)
         {
@@ -406,7 +478,7 @@ public:
         MXL_INFO("Using batch size of {} slices", slicesPerBatch);
 
         mxlGrainInfo grainInfo;
-        std::uint8_t* payload;
+        mxlPayloadView payloadView{};
         std::uint16_t startSlice = 0;
         std::uint16_t endSlice = slicesPerBatch;
         auto stats = TransferStats{};
@@ -415,7 +487,8 @@ public:
 
         while (!g_exit_requested)
         {
-            auto status = mxlFlowReaderGetGrainSlice(_reader, grainIndex, endSlice, 200000000, &grainInfo, &payload);
+            // Use the Ex API so device (CUDA) payload flows work; only grain metadata is needed here.
+            auto status = mxlFlowReaderGetGrainSliceEx(_reader, grainIndex, endSlice, 200000000, &grainInfo, &payloadView);
             if (status == MXL_ERR_OUT_OF_RANGE_TOO_LATE)
             {
                 // We are too late.. time travel!
@@ -694,6 +767,15 @@ public:
             MXL_WARN("Reusing existing flow");
         }
 
+        if (_configInfo.common.payloadLocation == MXL_PAYLOAD_LOCATION_DEVICE_MEMORY)
+        {
+            MXL_INFO("Grain payload location: device (deviceIndex={})", _configInfo.common.deviceIndex);
+        }
+        else
+        {
+            MXL_INFO("Grain payload location: host");
+        }
+
         status = mxlFabricsCreateTarget(_fabricsInstance, &_target);
         if (status != MXL_STATUS_OK)
         {
@@ -789,7 +871,7 @@ public:
     {
         mxlGrainInfo grainInfo;
         std::uint64_t grainIndex = 0;
-        std::uint8_t* dummyPayload;
+        mxlPayloadView unusedPayloadView{};
         mxlStatus status;
         auto stats = TransferStats{};
 
@@ -820,8 +902,8 @@ public:
                 return status;
             }
 
-            // Here we open so that we can commit, we are not going to modify the grain as it was already modified by the initiator.
-            status = mxlFlowWriterOpenGrain(_writer, grainIndex, &grainInfo, &dummyPayload);
+            // Open so we can commit. Payload was already written by the remote initiator (host or device).
+            status = mxlFlowWriterOpenGrainEx(_writer, grainIndex, &grainInfo, &unusedPayloadView);
             if (status != MXL_STATUS_OK)
             {
                 MXL_ERROR("Failed to open grain with status '{}'", static_cast<int>(status));
@@ -1001,7 +1083,28 @@ int main(int argc, char** argv)
         return s;
     }
 
-    auto selectedInterface = selectInterface(fabricsInstance, optNode, optService, optProvider);
+    // Detect device payloads before interface selection so we can require HMEM (e.g. verbs).
+    auto preferHmem = false;
+    auto flowOptionsPreview = std::string{};
+    if (!runAsInitiator && !flowOptionsFile.empty())
+    {
+        if (auto optionFile = std::ifstream{flowOptionsFile, std::ios::in | std::ios::binary}; optionFile)
+        {
+            flowOptionsPreview = {std::istreambuf_iterator<char>(optionFile), std::istreambuf_iterator<char>()};
+            preferHmem = flowOptionsRequestDevicePayload(flowOptionsPreview);
+        }
+    }
+    else if (runAsInitiator)
+    {
+        preferHmem = existingFlowNeedsHmem(domain, flowConf);
+    }
+
+    if (preferHmem)
+    {
+        MXL_INFO("Device grain payload detected; preferring HMEM-capable fabric interfaces");
+    }
+
+    auto selectedInterface = selectInterface(fabricsInstance, optNode, optService, optProvider, preferHmem);
     mxlFabricsDestroyInstance(fabricsInstance);
     mxlDestroyInstance(instance);
 
@@ -1079,8 +1182,8 @@ int main(int argc, char** argv)
 
         auto flowId = uuids::to_string(descriptorParser.getId());
 
-        std::string flowOptions;
-        if (!flowOptionsFile.empty())
+        std::string flowOptions = std::move(flowOptionsPreview);
+        if (flowOptions.empty() && !flowOptionsFile.empty())
         {
             std::ifstream optionFile(flowOptionsFile, std::ios::in | std::ios::binary);
             if (!optionFile)

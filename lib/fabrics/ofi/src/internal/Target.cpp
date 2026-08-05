@@ -8,15 +8,31 @@
 #include <fmt/format.h>
 #include <rdma/fabric.h>
 #include <rdma/fi_errno.h>
+#include <mxl-internal/Logging.hpp>
 #include "mxl/fabrics.h"
 #include "Exception.hpp"
+#include "FabricInfoHelpers.hpp"
 #include "FabricInterfaceProbe.hpp"
 #include "LocalRegion.hpp"
 #include "RCTarget.hpp"
 #include "RDMTarget.hpp"
+#include "Region.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
+    namespace
+    {
+        ::mxlFabricsInterfaceConfig interfaceConfigWithHmemIfNeeded(::mxlFabricsInterfaceConfig interfaceConfig, bool needsHmem)
+        {
+            if (needsHmem)
+            {
+                interfaceConfig.caps.flags |= MXL_FABRICS_IFACE_CAP_HMEM;
+                MXL_INFO("Device grain payloads detected; requiring FI_HMEM-capable fabric interface");
+            }
+            return interfaceConfig;
+        }
+    }
+
     LocalRegion Target::ImmediateDataLocation::toLocalRegion() const noexcept
     {
         return LocalRegion{
@@ -91,7 +107,16 @@ namespace mxl::lib::fabrics::ofi
             _inner.reset();
         }
 
-        auto [info, providerConfig] = selectSourceInterface(config.interface, /* target */ true);
+        auto const needsHmem = regionsNeedHmem(MxlRegions::forWriter(config.writer).regions());
+        auto interfaceConfig = interfaceConfigWithHmemIfNeeded(config.interface, needsHmem);
+        auto [info, providerConfig] = selectSourceInterface(interfaceConfig, /* target */ true);
+        (void)providerConfig;
+
+        if (needsHmem)
+        {
+            requireCapability(info.view(), FI_HMEM, "Selected fabric interface does not support FI_HMEM required by device grain payloads");
+        }
+
         switch (info->ep_attr->type)
         {
             case FI_EP_MSG: return setup<RCTarget>(config, info.view(), options);

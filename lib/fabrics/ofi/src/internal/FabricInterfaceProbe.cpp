@@ -180,6 +180,9 @@ namespace mxl::lib::fabrics::ofi
         {
             throw Exception::noFabric("Unsupported provider constraints: Only REMOTE_WRITE supported at this time.");
         }
+        // RMA endpoints only bind a transmit CQ today. Drop SEND_RECEIVE so fi_getinfo does not
+        // advertise FI_RECV (which would require a receive CQ at fi_connect / fi_listen).
+        caps.interfaceCaps &= ~static_cast<std::uint64_t>(MXL_FABRICS_IFACE_CAP_SEND_RECEIVE);
         if (caps.maxMessageSize == 0)
         {
             MXL_WARN("maxMessageSize is not set. This field will be required in a future version.");
@@ -189,11 +192,38 @@ namespace mxl::lib::fabrics::ofi
             *provider, optStringFromCStr(interfaceConfig.address.node), optStringFromCStr(interfaceConfig.address.service));
 
         auto sourceInterfaces = FabricInfoList::getSourceInterfaces(providerConfig, fabricAddress);
-        if (std::ranges::distance(sourceInterfaces) == 0)
+        auto first = sourceInterfaces.begin();
+        auto const end = sourceInterfaces.end();
+        if (first == end)
         {
+            if ((caps.interfaceCaps & MXL_FABRICS_IFACE_CAP_HMEM) != 0)
+            {
+                throw Exception::noFabric(
+                    "no HMEM-capable interface found for provider '{}'. Device grain payloads require a provider/domain with FI_HMEM "
+                    "(e.g. verbs with nvidia_peermem loaded)",
+                    providerConfig.getProviderName());
+            }
             throw Exception::noFabric("no supported interfaces found");
         }
 
-        return {*sourceInterfaces.begin(), std::move(providerConfig)};
+        // Prefer an info entry that passes provider filters (important for HMEM selection).
+        for (auto info = first; info != end; ++info)
+        {
+            if (providerConfig.isSupportedFabricInfo(*info))
+            {
+                return {FabricInfo{*info}, std::move(providerConfig)};
+            }
+        }
+
+        if ((caps.interfaceCaps & MXL_FABRICS_IFACE_CAP_HMEM) != 0)
+        {
+            throw Exception::noFabric(
+                "no HMEM-capable interface found for provider '{}'. Device grain payloads require a provider/domain with FI_HMEM "
+                "(e.g. verbs with nvidia_peermem loaded)",
+                providerConfig.getProviderName());
+        }
+
+        // Host path: preserve historical behavior and accept the first fi_getinfo match.
+        return {FabricInfo{*first}, std::move(providerConfig)};
     }
 }

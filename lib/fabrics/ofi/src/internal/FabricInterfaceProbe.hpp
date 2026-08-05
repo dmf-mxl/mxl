@@ -20,9 +20,10 @@ namespace mxl::lib::fabrics::ofi
 
     /**
      * Setup path: select a single source interface for target or initiator setup.
-     * Capabilities from \p interfaceConfig are treated as requirements if no transfer capability
-     * (REMOTE_WRITE or SEND_RECEIVE) is set, REMOTE_WRITE is applied with a warning. Returns the
-     * matched fabric info and its resolved provider configuration.
+     * Capabilities from \p interfaceConfig are treated as requirements. At least one transfer
+     * capability (REMOTE_WRITE or SEND_RECEIVE) must be set; currently only REMOTE_WRITE is
+     * implemented. When \c MXL_FABRICS_IFACE_CAP_HMEM is set, only FI_HMEM-capable domains are
+     * accepted (required for CUDA device grain payloads).
      * \param isTarget true for target (FI_REMOTE_WRITE), false for initiator (FI_WRITE).
      * \throws Exception::noFabric if no matching interface is found or capabilities are unsupported.
      */

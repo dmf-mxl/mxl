@@ -8,16 +8,23 @@
 #include "Exception.hpp"
 #include "ImmData.hpp"
 #include "LocalRegion.hpp"
+#include <mxl-internal/Logging.hpp>
+
+#if defined(MXL_HAS_CUDA) && MXL_HAS_CUDA
+#  include <cuda_runtime.h>
+#endif
 
 namespace mxl::lib::fabrics::ofi
 {
 
     RMAGrainEgressProtocol::RMAGrainEgressProtocol(Completion::Token token, TargetInfo info, DataLayout::Discrete layout,
-        std::vector<LocalRegion> localRegions)
+        std::vector<LocalRegion> localRegions, std::vector<Region> sourceRegions, std::size_t regionsPerGrain)
         : _token{token}
         , _remoteInfo{std::move(info)}
         , _layout{layout}
         , _localRegions{std::move(localRegions)}
+        , _sourceRegions{std::move(sourceRegions)}
+        , _regionsPerGrain{regionsPerGrain}
     {}
 
     void RMAGrainEgressProtocol::registerMemory(std::shared_ptr<Domain>)
@@ -28,16 +35,84 @@ namespace mxl::lib::fabrics::ofi
     void RMAGrainEgressProtocol::transferGrain(Endpoint const& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint32_t payloadOffset,
         SliceRange const& sliceRange, ::fi_addr_t destAddr)
     {
-        auto const localSize = sliceRange.transferSize(payloadOffset, _layout.sliceSizes[0]);
-        auto const localOffset = sliceRange.transferOffset(payloadOffset, _layout.sliceSizes[0]);
-        auto const remoteSize = sliceRange.transferSize(payloadOffset, _layout.sliceSizes[0]);
-        auto const remoteOffset = sliceRange.transferOffset(payloadOffset, _layout.sliceSizes[0]);
+        if ((_regionsPerGrain == 0) || ((_localRegions.size() % _regionsPerGrain) != 0) ||
+            ((_remoteInfo.remoteRegions.size() % _regionsPerGrain) != 0))
+        {
+            throw Exception::invalidState("Invalid regionsPerGrain {} for local/remote region counts {}/{}",
+                _regionsPerGrain,
+                _localRegions.size(),
+                _remoteInfo.remoteRegions.size());
+        }
 
-        auto const localRegion = _localRegions[localIndex % _localRegions.size()].sub(localOffset, localSize);
-        auto const remoteRegion = _remoteInfo.remoteRegions[remoteIndex % _remoteInfo.remoteRegions.size()].sub(remoteOffset, remoteSize);
-        auto const remoteSlot = remoteIndex % _remoteInfo.remoteRegions.size();
+        auto const localGrainCount = _localRegions.size() / _regionsPerGrain;
+        auto const remoteGrainCount = _remoteInfo.remoteRegions.size() / _regionsPerGrain;
+        auto const localSlot = localIndex % localGrainCount;
+        auto const remoteSlot = remoteIndex % remoteGrainCount;
+        auto const immData = ImmDataGrain{remoteSlot, sliceRange.end()}.data();
 
-        _pending += ep.write(_token, localRegion, remoteRegion, destAddr, ImmDataGrain{remoteSlot, sliceRange.end()}.data());
+        if (_regionsPerGrain == 1)
+        {
+            // Contiguous host mapping: [GrainHeader | payload]
+            auto const localSize = sliceRange.transferSize(payloadOffset, _layout.sliceSizes[0]);
+            auto const localOffset = sliceRange.transferOffset(payloadOffset, _layout.sliceSizes[0]);
+            auto const remoteSize = sliceRange.transferSize(payloadOffset, _layout.sliceSizes[0]);
+            auto const remoteOffset = sliceRange.transferOffset(payloadOffset, _layout.sliceSizes[0]);
+
+            auto const localRegion = _localRegions[localSlot].sub(localOffset, localSize);
+            auto const remoteRegion = _remoteInfo.remoteRegions[remoteSlot].sub(remoteOffset, remoteSize);
+
+            _pending += ep.write(_token, localRegion, remoteRegion, destAddr, immData);
+            return;
+        }
+
+        // Split header (host) + payload (e.g. CUDA): interleaved [H0,P0,H1,P1,...]
+        // payloadOffset is only meaningful for the contiguous host layout above.
+        (void)payloadOffset;
+
+        auto const headerLocal = _localRegions[localSlot * _regionsPerGrain];
+        auto const payloadLocal = _localRegions[localSlot * _regionsPerGrain + 1];
+        auto const headerRemote = _remoteInfo.remoteRegions[remoteSlot * _regionsPerGrain];
+        auto const payloadRemote = _remoteInfo.remoteRegions[remoteSlot * _regionsPerGrain + 1];
+
+        auto const includeHeader = (sliceRange.start() == 0);
+        auto const payloadByteOffset = static_cast<std::uint64_t>(sliceRange.start()) * _layout.sliceSizes[0];
+        auto const payloadByteSize = static_cast<std::size_t>(sliceRange.end() - sliceRange.start()) * _layout.sliceSizes[0];
+
+        if (includeHeader && (payloadByteSize == 0))
+        {
+            // Header-only transfer (e.g. invalid grain).
+            _pending += ep.write(_token, headerLocal, headerRemote, destAddr, immData);
+            return;
+        }
+
+        if (includeHeader)
+        {
+            _pending += ep.write(_token, headerLocal, headerRemote, destAddr, std::nullopt);
+        }
+
+        if (payloadByteSize > 0)
+        {
+#if defined(MXL_HAS_CUDA) && MXL_HAS_CUDA
+            // Refresh bounce buffer from the flow's device pointer (may be CUDA IPC) before RDMA.
+            auto const& sourcePayload = _sourceRegions[localSlot * _regionsPerGrain + 1];
+            if (!sourcePayload.loc.isHost() && (sourcePayload.base != payloadLocal.addr))
+            {
+                if (auto const err = ::cudaSetDevice(static_cast<int>(sourcePayload.loc.id())); err != cudaSuccess)
+                {
+                    throw Exception::make(MXL_ERR_UNKNOWN, "cudaSetDevice failed before egress bounce copy: {}", cudaGetErrorString(err));
+                }
+                auto const* src = reinterpret_cast<void const*>(sourcePayload.base + payloadByteOffset);
+                auto* dst = reinterpret_cast<void*>(payloadLocal.addr + payloadByteOffset);
+                if (auto const err = ::cudaMemcpy(dst, src, payloadByteSize, cudaMemcpyDeviceToDevice); err != cudaSuccess)
+                {
+                    throw Exception::make(MXL_ERR_UNKNOWN, "cudaMemcpy to egress bounce buffer failed: {}", cudaGetErrorString(err));
+                }
+            }
+#endif
+            auto const localPayload = payloadLocal.sub(payloadByteOffset, payloadByteSize);
+            auto const remotePayload = payloadRemote.sub(payloadByteOffset, payloadByteSize);
+            _pending += ep.write(_token, localPayload, remotePayload, destAddr, immData);
+        }
     }
 
     void RMAGrainEgressProtocol::transferSamples(Endpoint const&, std::uint64_t, std::size_t, ::fi_addr_t)
@@ -60,10 +135,91 @@ namespace mxl::lib::fabrics::ofi
         return std::exchange(_pending, 0);
     }
 
-    RMAGrainEgressProtocolTemplate::RMAGrainEgressProtocolTemplate(DataLayout::Discrete layout, std::vector<Region> regions)
+    RMAGrainEgressProtocolTemplate::RMAGrainEgressProtocolTemplate(DataLayout::Discrete layout, std::vector<Region> regions, std::size_t regionsPerGrain)
         : _layout{layout}
+        , _sourceRegions{regions}
         , _regions{std::move(regions)}
+        , _regionsPerGrain{regionsPerGrain}
     {}
+
+    RMAGrainEgressProtocolTemplate::~RMAGrainEgressProtocolTemplate()
+    {
+#if defined(MXL_HAS_CUDA) && MXL_HAS_CUDA
+        for (auto* ptr : _cudaBounceBuffers)
+        {
+            if (ptr != nullptr)
+            {
+                (void)::cudaFree(ptr);
+            }
+        }
+#endif
+        _cudaBounceBuffers.clear();
+    }
+
+    void RMAGrainEgressProtocolTemplate::prepareRegisterableCudaRegions()
+    {
+#if defined(MXL_HAS_CUDA) && MXL_HAS_CUDA
+        auto needsBounce = false;
+        for (auto const& region : _regions)
+        {
+            if (!region.loc.isHost())
+            {
+                needsBounce = true;
+                break;
+            }
+        }
+        if (!needsBounce)
+        {
+            return;
+        }
+
+        MXL_INFO("Preparing process-local CUDA bounce buffers for fabrics egress registration "
+                 "(CUDA IPC imports are not registerable with nvidia_peermem)");
+
+        auto registerable = std::vector<Region>{};
+        registerable.reserve(_regions.size());
+
+        for (auto const& region : _regions)
+        {
+            if (region.loc.isHost())
+            {
+                registerable.push_back(region);
+                continue;
+            }
+
+            if (auto const err = ::cudaSetDevice(static_cast<int>(region.loc.id())); err != cudaSuccess)
+            {
+                throw Exception::make(MXL_ERR_UNKNOWN, "cudaSetDevice({}) failed while preparing egress bounce buffers: {}",
+                    region.loc.id(),
+                    cudaGetErrorString(err));
+            }
+
+            void* bounce = nullptr;
+            if (auto const err = ::cudaMalloc(&bounce, region.size); err != cudaSuccess)
+            {
+                throw Exception::make(MXL_ERR_UNKNOWN, "cudaMalloc({} bytes) for egress bounce buffer failed: {}", region.size, cudaGetErrorString(err));
+            }
+            _cudaBounceBuffers.push_back(bounce);
+
+            registerable.emplace_back(reinterpret_cast<std::uintptr_t>(bounce),
+                region.size,
+                region.grainIndexPtr,
+                region.validSlicesPtr,
+                region.loc);
+        }
+
+        _regions = std::move(registerable);
+#else
+        for (auto const& region : _regions)
+        {
+            if (!region.loc.isHost())
+            {
+                throw Exception::make(MXL_ERR_UNSUPPORTED_OPERATION,
+                    "CUDA grain payloads require MXL built with CUDA to register fabrics egress buffers");
+            }
+        }
+#endif
+    }
 
     void RMAGrainEgressProtocolTemplate::registerMemory(std::shared_ptr<Domain> domain)
     {
@@ -72,6 +228,7 @@ namespace mxl::lib::fabrics::ofi
             throw Exception::invalidState("Memory already registered.");
         }
 
+        prepareRegisterableCudaRegions();
         domain->registerRegions(_regions, FI_WRITE);
         _localRegions = domain->localRegions();
     }
@@ -83,14 +240,22 @@ namespace mxl::lib::fabrics::ofi
             throw Exception::invalidState("Cannot create protocol before memory is registered.");
         }
 
+        if (remoteInfo.remoteRegions.size() != _localRegions->size())
+        {
+            throw Exception::invalidArgument("Remote region count {} does not match local region count {}",
+                remoteInfo.remoteRegions.size(),
+                _localRegions->size());
+        }
+
         struct MakeUniqueEnabler : RMAGrainEgressProtocol
         {
-            MakeUniqueEnabler(Completion::Token token, TargetInfo info, DataLayout::Discrete layout, std::vector<LocalRegion> localRegion)
-                : RMAGrainEgressProtocol{token, std::move(info), layout, std::move(localRegion)}
+            MakeUniqueEnabler(Completion::Token token, TargetInfo info, DataLayout::Discrete layout, std::vector<LocalRegion> localRegion,
+                std::vector<Region> sourceRegions, std::size_t regionsPerGrain)
+                : RMAGrainEgressProtocol{token, std::move(info), layout, std::move(localRegion), std::move(sourceRegions), regionsPerGrain}
             {}
         };
 
-        return std::make_unique<MakeUniqueEnabler>(token, std::move(remoteInfo), _layout, *_localRegions);
+        return std::make_unique<MakeUniqueEnabler>(token, std::move(remoteInfo), _layout, *_localRegions, _sourceRegions, _regionsPerGrain);
     }
 
     RMASampleEgressProtocol::RMASampleEgressProtocol(Completion::Token token, TargetInfo info, DataLayout::Continuous layout, LocalRegion localRegion,

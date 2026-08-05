@@ -14,8 +14,9 @@ namespace mxl::lib::fabrics::ofi
 {
     //
     // RMAGrainIngressProtocol implementations below
-    RMAGrainIngressProtocol::RMAGrainIngressProtocol(std::vector<Region> regions)
+    RMAGrainIngressProtocol::RMAGrainIngressProtocol(std::vector<Region> regions, std::size_t regionsPerGrain)
         : _regions{std::move(regions)}
+        , _regionsPerGrain{regionsPerGrain}
     {}
 
     std::vector<RemoteRegion> RMAGrainIngressProtocol::registerMemory(std::shared_ptr<Domain> domain)
@@ -67,10 +68,10 @@ namespace mxl::lib::fabrics::ofi
 
         // Set the number of valid slices in the grain header. This information is received through the immediate data and must be updated
         // in the local shared memory in the case of partial writes.
-        setValidSlicesForGrain(_regions, slot, slice);
+        setValidSlicesForGrain(_regions, slot, slice, _regionsPerGrain);
 
         // Get the actual grain index from the grain header in share memory. This was written in the first RMA write.
-        auto grainIndex = getGrainIndexInRingSlot(_regions, slot);
+        auto grainIndex = getGrainIndexInRingSlot(_regions, slot, _regionsPerGrain);
 
         return std::make_optional<Target::GrainReadResult>(grainIndex);
     }

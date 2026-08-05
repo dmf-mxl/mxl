@@ -3,14 +3,29 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Initiator.hpp"
+#include <mxl-internal/Logging.hpp>
 #include "mxl/fabrics.h"
 #include "Exception.hpp"
+#include "FabricInfoHelpers.hpp"
 #include "FabricInterfaceProbe.hpp"
 #include "RCInitiator.hpp"
 #include "RDMInitiator.hpp"
+#include "Region.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
+    namespace
+    {
+        ::mxlFabricsInterfaceConfig interfaceConfigWithHmemIfNeeded(::mxlFabricsInterfaceConfig interfaceConfig, bool needsHmem)
+        {
+            if (needsHmem)
+            {
+                interfaceConfig.caps.flags |= MXL_FABRICS_IFACE_CAP_HMEM;
+                MXL_INFO("Device grain payloads detected; requiring FI_HMEM-capable fabric interface");
+            }
+            return interfaceConfig;
+        }
+    }
 
     InitiatorWrapper* InitiatorWrapper::fromAPI(mxlFabricsInitiator api) noexcept
     {
@@ -29,7 +44,16 @@ namespace mxl::lib::fabrics::ofi
             _inner.reset();
         }
 
-        auto const [info, provierConfig] = selectSourceInterface(config.interface, /* target */ false);
+        auto const needsHmem = regionsNeedHmem(MxlRegions::forReader(config.reader).regions());
+        auto interfaceConfig = interfaceConfigWithHmemIfNeeded(config.interface, needsHmem);
+        auto const [info, providerConfig] = selectSourceInterface(interfaceConfig, /* target */ false);
+        (void)providerConfig;
+
+        if (needsHmem)
+        {
+            requireCapability(info.view(), FI_HMEM, "Selected fabric interface does not support FI_HMEM required by device grain payloads");
+        }
+
         switch (info.view().endpointType())
         {
             case FI_EP_MSG: _inner = RCInitiator::setup(config, info.view()); break;

@@ -24,6 +24,10 @@ namespace mxl::lib::fabrics::ofi
         {
             resultLength += capStrings.emplace_back("SEND_RECEIVE").size();
         }
+        if ((caps & MXL_FABRICS_IFACE_CAP_HMEM) != 0)
+        {
+            resultLength += capStrings.emplace_back("HMEM").size();
+        }
         if (capStrings.empty())
         {
             resultLength += capStrings.emplace_back("<none>").size();

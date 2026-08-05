@@ -66,7 +66,7 @@ namespace mxl::lib::fabrics::ofi
         endpoint.enable();
 
         auto mxlRegions = MxlRegions::forWriter(config.writer);
-        auto protocol = selectIngressProtocol(mxlRegions.dataLayout(), mxlRegions.regions(), mxlRegions.maxSyncBatchSize());
+        auto protocol = selectIngressProtocol(mxlRegions.dataLayout(), mxlRegions.regions(), mxlRegions.maxSyncBatchSize(), mxlRegions.regionsPerGrain());
         auto targetInfo = std::make_unique<TargetInfo>(
             endpoint.id(), endpoint.localAddress(), *provider, protocol->registerMemory(domain), protocol->bounceBufferInfo());
 
