@@ -127,7 +127,7 @@ namespace mxl::lib
         if (currentSyncSampleBatch == _lastSyncSampleBatch)
         {
             // Signal now before overshooting the maximum the next time around
-            if ((_currentIndex % _syncBatchSize) > _earlySyncThreshold)
+            if ((flow->info.runtime.headIndex % _syncBatchSize) > _earlySyncThreshold)
             {
                 _lastSyncSampleBatch = currentSyncSampleBatch + 1U;
             }
