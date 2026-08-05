@@ -246,8 +246,8 @@ var NAVTREEINDEX13 =
 "structmxlWrappedMultiBufferSlice__t.html#a19cda114c5f63a539c5048b1621ee1dd":[2,0,25,0],
 "structmxlWrappedMultiBufferSlice__t.html#a4829e7ae2040e290adae63b83f846523":[2,0,25,1],
 "structmxlWrappedMultiBufferSlice__t.html#ad111dcac53c787b5e66b170fa569e1ad":[2,0,25,2],
-"structmxl_1_1lib_1_1DomainWatcherRecord.html":[1,0,1,0,11],
 "structmxl_1_1lib_1_1DomainWatcherRecord.html":[2,0,1,0,9],
+"structmxl_1_1lib_1_1DomainWatcherRecord.html":[1,0,1,0,11],
 "structmxl_1_1lib_1_1DomainWatcherRecord.html#a78b7df1863c7ec2d936f1525ff43701c":[2,0,1,0,9,4],
 "structmxl_1_1lib_1_1DomainWatcherRecord.html#a78b7df1863c7ec2d936f1525ff43701c":[1,0,1,0,11,4]
 };
