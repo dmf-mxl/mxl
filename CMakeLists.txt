@@ -21,7 +21,7 @@ option(MXL_ENABLE_FABRICS_OFI "Enable building the fabrics library with libfabri
 set(MXL_BUILD_TYPE "")
 set(MXL_BUILD_SUFFIX "")
 
-set(mxl_VERSION 1.0.0)
+set(mxl_VERSION 1.0.2)
 
 if(DEFINED MXL_BUILD_NUMBER)
     string(APPEND mxl_VERSION ".${MXL_BUILD_NUMBER}")
