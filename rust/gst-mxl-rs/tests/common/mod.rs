@@ -101,9 +101,9 @@ fn dev_shm_skip_reason() -> Option<String> {
     let mut path = b"/dev/shm/mxl_gst_shm_probeXXXXXX\0".to_vec();
     let created = unsafe {
         unsafe extern "C" {
-            fn mkdtemp(template: *mut i8) -> *mut i8;
+            fn mkdtemp(template: *mut std::ffi::c_char) -> *mut std::ffi::c_char;
         }
-        mkdtemp(path.as_mut_ptr() as *mut i8)
+        mkdtemp(path.as_mut_ptr() as *mut std::ffi::c_char)
     };
     if created.is_null() {
         let err = std::io::Error::last_os_error();
