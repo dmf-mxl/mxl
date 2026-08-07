@@ -21,7 +21,7 @@ permissions:
 jobs:
   compute_build_image_cache_key:
     name: Compute build image cache key prefix
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       prefix: ${{ steps.build-key.outputs.prefix }}
     steps:
@@ -35,12 +35,12 @@ jobs:
 
   create_build_images:
     name: Create build image
-    runs-on: ubuntu-latest
     needs: [ compute_build_image_cache_key ]
     strategy:
       matrix:
         base-image-version: [24.04]
         architecture: [amd64, arm64]
+    runs-on: ${{ startsWith(matrix.architecture, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -97,12 +97,12 @@ jobs:
 
   check_format_compliance:
     name: Check clang-format compliance
-    runs-on: ubuntu-latest
     needs: [ compute_build_image_cache_key, create_build_images ]
     strategy:
       matrix:
         base-image-version: [24.04]
         architecture: [amd64]
+    runs-on: ${{ startsWith(matrix.architecture, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -133,15 +133,14 @@ jobs:
             "
 
   build_c_cxx:
-    name: Build C library on Ubuntu - ${{ matrix.architecture }} - ${{ matrix.compiler }}
-    runs-on: ubuntu-latest
+    name: Build C library on Ubuntu
     needs: [ compute_build_image_cache_key, create_build_images ]
     strategy:
       matrix:
         base-image-version: [24.04]
         architecture: [amd64, arm64]
         compiler: [Linux-GCC-Release, Linux-Clang-Release]
-
+    runs-on: ${{ startsWith(matrix.architecture, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -226,14 +225,13 @@ jobs:
             **/test-results.xml
 
   build_rust:
-    name: Build Rust bindings on Ubuntu - ${{ matrix.architecture }}
-    runs-on: ubuntu-latest
+    name: Build Rust bindings on Ubuntu
     needs: [ compute_build_image_cache_key, create_build_images ]
     strategy:
       matrix:
         base-image-version: [24.04]
         architecture: [amd64, arm64]
-
+    runs-on: ${{ startsWith(matrix.architecture, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
