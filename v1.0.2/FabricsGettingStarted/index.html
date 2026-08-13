@@ -1,0 +1,1447 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Media eXchange Layer">
+      
+      
+        <meta name="author" content="The MXL Project">
+      
+      
+      
+        <link rel="prev" href="../FabricsDeveloperGuide/">
+      
+      
+        <link rel="next" href="../Timing/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.53">
+    
+    
+      
+        <title>MXL Fabrics — Getting Started - MXL</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../assets/stylesheets/modern/main.20815dad.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../assets/stylesheets/modern/palette.dfe2e883.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#mxl-fabrics-getting-started" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="./.." title="MXL" class="md-header__button md-logo" aria-label="MXL" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MXL
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              MXL Fabrics — Getting Started
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="none" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="none" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/dmf-mxl/mxl" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dmf-mxl/mxl
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="./.." title="MXL" class="md-nav__button md-logo" aria-label="MXL" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    MXL
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dmf-mxl/mxl" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dmf-mxl/mxl
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  MXL : Media eXchange Layer
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../API%20Reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API Reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Addressability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  MXL Addressability
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Architecture
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Building/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Building
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Configuration
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Fabrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Fabrics
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FabricsBandwidth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  MXL Fabric: Media Payload Calculation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FabricsDeveloperGuide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Fabrics Developer Guide
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  MXL Fabrics — Getting Started
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  MXL Fabrics — Getting Started
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-mxl-fabrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What is MXL Fabrics?
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-building-the-demo-applications" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. Building the demo applications
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-discovering-interfaces-with-mxl-fabrics-info" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. Discovering interfaces with <code>mxl-fabrics-info</code>
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Discovering interfaces with mxl-fabrics-info">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#filtering" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Filtering
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. Providers
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-node-and-service-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. Node and service values
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-using-the-demo-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. Using the demo application
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Using the demo application">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-command-line-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.1 Command line options
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-target-info-exchange" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.2 Target info exchange
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-target-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.3 Target setup
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-initiator-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.4 Initiator setup
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-interface-auto-selection-in-the-demo-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.5 Interface auto-selection in the demo tool
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. Examples
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-local-tcp-transfer" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.1 Local TCP transfer
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-rdma-verbs-transfer" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.2 RDMA Verbs transfer
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-efa-transfer" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.3 EFA transfer
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-rocev2-qos-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. RoCEv2 QoS configuration
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Timing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Timing Model
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Tools
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-mxl-fabrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What is MXL Fabrics?
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-building-the-demo-applications" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. Building the demo applications
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-discovering-interfaces-with-mxl-fabrics-info" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. Discovering interfaces with <code>mxl-fabrics-info</code>
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Discovering interfaces with mxl-fabrics-info">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#filtering" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Filtering
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. Providers
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-node-and-service-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. Node and service values
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-using-the-demo-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. Using the demo application
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Using the demo application">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-command-line-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.1 Command line options
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-target-info-exchange" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.2 Target info exchange
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-target-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.3 Target setup
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-initiator-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.4 Initiator setup
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-interface-auto-selection-in-the-demo-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5.5 Interface auto-selection in the demo tool
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. Examples
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-local-tcp-transfer" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.1 Local TCP transfer
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-rdma-verbs-transfer" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.2 RDMA Verbs transfer
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-efa-transfer" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6.3 EFA transfer
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-rocev2-qos-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. RoCEv2 QoS configuration
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+<!-- SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project. -->
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
+
+<h1 id="mxl-fabrics-getting-started">MXL Fabrics — Getting Started</h1>
+<h2 id="what-is-mxl-fabrics">What is MXL Fabrics?</h2>
+<p>MXL Fabrics is a library for transferring MXL media flows between hosts over a network. It is built on <a href="https://ofiwg.github.io/libfabric/">libfabric</a> and supports multiple transport providers, including RDMA Verbs, AWS EFA, TCP, and shared memory.</p>
+<p>A transfer involves two sides: a target that exposes its media buffers to the network, and an initiator that writes flow data into those buffers. The target generates a <code>TargetInfo</code> object containing its fabric address and memory region keys. This object is shared with the initiator through any out-of-band mechanism (a file, a signaling protocol, etc.). Once the initiator has the target info, it can connect and begin transferring grains (for discrete/video flows) or samples (for continuous/audio flows).</p>
+<p>The library uses Remote Write (RDMA) to place data directly into the target's memory without involving the target CPU. The selected provider must support Remote Write.</p>
+<p>This guide walks through building the demo tools, discovering network interfaces, and running your first transfer. It assumes familiarity with the MXL Flow API. For the full design rationale and transfer protocol details, see <a href="../Fabrics/">Fabrics.md</a>.</p>
+<h2 id="1-building-the-demo-applications">1. Building the demo applications</h2>
+<p>Enable the libfabric-based Fabrics implementation and build:</p>
+<div class="highlight"><pre><span></span><code>cmake<span class="w"> </span>--preset<span class="w"> </span>Linux-GCC-Release<span class="w"> </span>-DMXL_ENABLE_FABRICS_OFI<span class="o">=</span>ON<span class="w"> </span>.
+cmake<span class="w"> </span>--build<span class="w"> </span>build/Linux-GCC-Release
+</code></pre></div>
+<p>This produces two binaries:</p>
+<table>
+<thead>
+<tr>
+<th>Binary</th>
+<th>Path</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mxl-fabrics-demo</code></td>
+<td><code>build/Linux-GCC-Release/tools/mxl-fabrics-demo/mxl-fabrics-demo</code></td>
+</tr>
+<tr>
+<td><code>mxl-fabrics-info</code></td>
+<td><code>build/Linux-GCC-Release/tools/mxl-fabrics-info/mxl-fabrics-info</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="2-discovering-interfaces-with-mxl-fabrics-info">2. Discovering interfaces with <code>mxl-fabrics-info</code></h2>
+<p><code>mxl-fabrics-info</code> lists the interface configurations available on the current host. Each entry is one combination of a provider and a node address.</p>
+<div class="highlight"><pre><span></span><code>mxl-fabrics-info
+</code></pre></div>
+<p>On a machine with an RDMA-capable NIC (<code>mlx5_0</code>) and a second non-RDMA NIC (<code>ens18</code>), the output might look like this:</p>
+<div class="highlight"><pre><span></span><code>interface verbs-0 node 10.130.40.12 dev mlx5_0
+interface verbs-1 node fe80::8ae9:a4ff:fe48:d514 dev mlx5_0
+interface shm-0 node dev03 dev &lt;none&gt;
+interface tcp-0 node 10.130.40.12 dev ens16np0
+interface tcp-1 node fe80::8ae9:a4ff:fe48:d514 dev ens16np0
+interface tcp-2 node 10.130.100.100 dev ens18
+interface tcp-3 node fe80::be24:11ff:fe05:3c1d dev ens18
+interface tcp-4 node 127.0.0.1 dev lo
+interface tcp-5 node ::1 dev lo
+</code></pre></div>
+<p>The same physical interface can appear under multiple providers. Verbs and TCP entries for <code>10.130.40.12</code> both refer to the same NIC; the difference is the transport.</p>
+<h3 id="filtering">Filtering</h3>
+<p>Narrow the output by provider (<code>-p</code>) and/or node address (<code>-n</code>):</p>
+<div class="highlight"><pre><span></span><code>mxl-fabrics-info<span class="w"> </span>-p<span class="w"> </span>tcp<span class="w"> </span>-n<span class="w"> </span>::1
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>interface tcp-0 node ::1 dev lo
+</code></pre></div>
+<p>Use <code>-v</code> for additional detail about each interface.</p>
+<h2 id="3-providers">3. Providers</h2>
+<p>The library supports several providers. Each provider targets different hardware and connection characteristics:</p>
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>Typical hardware</th>
+<th>Endpoint type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EFA</td>
+<td>AWS Elastic Fabric Adapter</td>
+<td>RDM (connectionless)</td>
+</tr>
+<tr>
+<td>Verbs</td>
+<td>RDMA NICs (ConnectX, etc.)</td>
+<td>MSG (connected)</td>
+</tr>
+<tr>
+<td>TCP</td>
+<td>Any network interface</td>
+<td>MSG (connected)</td>
+</tr>
+<tr>
+<td>SHM</td>
+<td>Local (same host)</td>
+<td>RDM (connectionless)</td>
+</tr>
+</tbody>
+</table>
+<p>All transfers use Remote Write, which lets the initiator write directly into the target's memory without involving the target CPU. The selected provider must support Remote Write (the <code>MXL_FABRICS_IFACE_CAP_REMOTE_WRITE</code> capability flag).</p>
+<p>The difference between connected (MSG) and connectionless (RDM) endpoints is abstracted by the library. The API and workflow are the same regardless of the underlying endpoint type, though there can be slight differences in behavior (for example, error reporting on a failed connection-oriented endpoint may differ from a connectionless one).</p>
+<p>The library itself does not select a provider or interface automatically. The caller queries the available interfaces with <code>mxlFabricsGetInterfaces()</code> and chooses which provider and node address to pass to the setup functions. The demo application (<code>mxl-fabrics-demo</code>) implements its own auto-selection heuristic on top of this query; see <a href="#55-interface-auto-selection-in-the-demo-tool">section 5.5</a> for details.</p>
+<h2 id="4-node-and-service-values">4. Node and service values</h2>
+<p>The terminology follows libfabric and the Linux Verbs API:</p>
+<ul>
+<li><strong>node</strong> — typically an IP address assigned to an interface. Use <code>mxl-fabrics-info</code> or <code>fi_info</code> (from libfabric) to discover available node addresses.</li>
+<li><strong>service</strong> — for TCP and RoCEv2 this is the port number. Some providers (like EFA) ignore it. The SHM provider concatenates node and service into a filename.</li>
+</ul>
+<p>In most cases, let the library choose a random service automatically. Only set it explicitly when you need a fixed, known port.</p>
+<h2 id="5-using-the-demo-application">5. Using the demo application</h2>
+<p><code>mxl-fabrics-demo</code> transfers video (discrete flow) or audio (continuous flow) data between two endpoints. Both target and initiator roles are in the same binary. By default it runs as a target; pass <code>-i</code> to run as an initiator.</p>
+<h3 id="51-command-line-options">5.1 Command line options</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-d &lt;path&gt;</code></td>
+<td>MXL domain directory (required).</td>
+</tr>
+<tr>
+<td><code>-f &lt;flow&gt;</code></td>
+<td>As target: path to a flow definition JSON file. As initiator: the source flow UUID.</td>
+</tr>
+<tr>
+<td><code>--flow-options &lt;path&gt;</code></td>
+<td>Optional flow options file (target only).</td>
+</tr>
+<tr>
+<td><code>-i</code></td>
+<td>Run as initiator. Without this flag, the tool runs as target.</td>
+</tr>
+<tr>
+<td><code>-p &lt;provider&gt;</code></td>
+<td>Use a specific provider (<code>tcp</code>, <code>verbs</code>, <code>efa</code>, <code>shm</code>). If omitted, the demo picks one automatically.</td>
+</tr>
+<tr>
+<td><code>-n &lt;address&gt;</code></td>
+<td>Bind to a specific node address. If omitted, the demo picks one automatically.</td>
+</tr>
+<tr>
+<td><code>-s &lt;service&gt;</code></td>
+<td>Service identifier (e.g. a port number).</td>
+</tr>
+<tr>
+<td><code>-t &lt;target-info&gt;</code></td>
+<td>Target info exchange (see below).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="52-target-info-exchange">5.2 Target info exchange</h3>
+<p>The target and initiator must exchange a <code>TargetInfo</code> object out of band. This object contains the target's fabric address, remote memory keys, and buffer addresses. The demo tool supports two exchange methods:</p>
+<p><strong>File-based</strong> (recommended for local testing): use the <code>@</code> prefix to read/write raw JSON.
+- Target side: <code>-t @/tmp/target.json</code> writes the target info to a file.
+- Initiator side: <code>-t @/tmp/target.json</code> reads the target info from that file.</p>
+<p><strong>Base64 string</strong>: without the <code>@</code> prefix, the target prints a base64-encoded string to stdout, and the initiator accepts the same string via <code>-t &lt;base64&gt;</code>.</p>
+<h3 id="53-target-setup">5.3 Target setup</h3>
+<ol>
+<li>Start the target with a flow definition, a domain directory, and optionally a specific provider and node address.</li>
+<li>The target prints or writes a <code>TargetInfo</code>. Share this with the initiator.</li>
+<li>The target waits for an initiator to connect and then receives grains or samples as they arrive.</li>
+</ol>
+<h3 id="54-initiator-setup">5.4 Initiator setup</h3>
+<ol>
+<li>Start the initiator with the source flow UUID, the same domain directory, and the target info obtained from the target.</li>
+<li>The initiator connects and begins transferring grains or samples.</li>
+</ol>
+<h3 id="55-interface-auto-selection-in-the-demo-tool">5.5 Interface auto-selection in the demo tool</h3>
+<p>When <code>-p</code> and <code>-n</code> are omitted, the demo application queries all available interfaces with <code>mxlFabricsGetInterfaces()</code> and picks the one whose provider has the highest priority:</p>
+<table>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Provider</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4 (highest)</td>
+<td>EFA</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Verbs</td>
+</tr>
+<tr>
+<td>2</td>
+<td>TCP</td>
+</tr>
+<tr>
+<td>1 (lowest)</td>
+<td>SHM</td>
+</tr>
+</tbody>
+</table>
+<p>This is a convenience built into the demo tool. The Fabrics library itself has no built-in provider preference; your application is responsible for choosing a provider and interface from the list returned by <code>mxlFabricsGetInterfaces()</code>.</p>
+<h2 id="6-examples">6. Examples</h2>
+<h3 id="61-local-tcp-transfer">6.1 Local TCP transfer</h3>
+<p>The simplest setup: both endpoints on the same machine using the TCP provider over loopback.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Terminal 1 — Target</span>
+mxl-fabrics-demo<span class="w"> </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span>-p<span class="w"> </span>tcp<span class="w"> </span>-n<span class="w"> </span>::1<span class="w"> </span>-s<span class="w"> </span><span class="m">1312</span><span class="w"> </span>-f<span class="w"> </span>flow.json<span class="w"> </span>-t<span class="w"> </span>@/tmp/target.json
+
+<span class="c1"># Terminal 2 — Initiator</span>
+mxl-fabrics-demo<span class="w"> </span>-i<span class="w"> </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span>-p<span class="w"> </span>tcp<span class="w"> </span>-n<span class="w"> </span>::1<span class="w"> </span>-f<span class="w"> </span>5fbec3b1-1b0f-417d-9059-8b94a47197ed<span class="w"> </span>-t<span class="w"> </span>@/tmp/target.json
+</code></pre></div>
+<h3 id="62-rdma-verbs-transfer">6.2 RDMA Verbs transfer</h3>
+<p>If there is only one Verbs interface on the system, the demo's auto-selection picks it up without any additional flags:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Terminal 1 — Target</span>
+mxl-fabrics-demo<span class="w"> </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span>-s<span class="w"> </span><span class="m">1312</span><span class="w"> </span>-f<span class="w"> </span>flow.json<span class="w"> </span>-t<span class="w"> </span>@/tmp/target.json
+
+<span class="c1"># Terminal 2 — Initiator</span>
+mxl-fabrics-demo<span class="w"> </span>-i<span class="w"> </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span>-f<span class="w"> </span>5fbec3b1-1b0f-417d-9059-8b94a47197ed<span class="w"> </span>-t<span class="w"> </span>@/tmp/target.json
+</code></pre></div>
+<p>On a host with multiple Verbs interfaces, use <code>-n &lt;address&gt;</code> to select the right one.</p>
+<h3 id="63-efa-transfer">6.3 EFA transfer</h3>
+<p>EFA has the highest priority in the demo's auto-selection and will be chosen when available. The service value is ignored by the EFA provider.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Terminal 1 — Target</span>
+mxl-fabrics-demo<span class="w"> </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span>-f<span class="w"> </span>flow.json<span class="w"> </span>-t<span class="w"> </span>@/tmp/target.json
+
+<span class="c1"># Terminal 2 — Initiator</span>
+mxl-fabrics-demo<span class="w"> </span>-i<span class="w"> </span>-d<span class="w"> </span>/dev/shm<span class="w"> </span>-f<span class="w"> </span>5fbec3b1-1b0f-417d-9059-8b94a47197ed<span class="w"> </span>-t<span class="w"> </span>@/tmp/target.json
+</code></pre></div>
+<h2 id="7-rocev2-qos-configuration">7. RoCEv2 QoS configuration</h2>
+<p>When using RDMA over Converged Ethernet (RoCEv2) with Mellanox/NVIDIA NICs and the MLNX_OFED driver, you may want to configure DSCP-based priority and enable Priority Flow Control (PFC). The examples below set DSCP 26, map it to priority 3, and enable PFC for that priority.</p>
+<p>In the commands below, <code>&lt;interface&gt;</code> is the Linux network interface (e.g. <code>ens16np0</code>) and <code>&lt;ib-interface&gt;</code> is the InfiniBand device (e.g. <code>mlx5_0</code>).</p>
+<p>Set the default traffic class for RDMA-CM based RoCE connections (tclass = DSCP * 4):</p>
+<div class="highlight"><pre><span></span><code>cma_roce_tos<span class="w"> </span>-d<span class="w"> </span>&lt;ib-interface&gt;<span class="w"> </span>-t<span class="w"> </span><span class="m">104</span>
+</code></pre></div>
+<p>Enable DSCP-based QoS trust on the interface:</p>
+<div class="highlight"><pre><span></span><code>mlnx_qos<span class="w"> </span>-i<span class="w"> </span>&lt;interface&gt;<span class="w"> </span>--trust-dscp
+</code></pre></div>
+<p>Map DSCP 26 to priority 3:</p>
+<div class="highlight"><pre><span></span><code>mlnx_qos<span class="w"> </span>-i<span class="w"> </span>&lt;interface&gt;<span class="w"> </span>--dscp2prio<span class="w"> </span>set,26,3
+</code></pre></div>
+<p>Enable PFC on priority 3 only:</p>
+<div class="highlight"><pre><span></span><code>mlnx_qos<span class="w"> </span>-i<span class="w"> </span>&lt;interface&gt;<span class="w"> </span>--pfc<span class="w"> </span><span class="m">0</span>,0,0,1,0,0,0,0
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../FabricsDeveloperGuide/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Fabrics Developer Guide">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Fabrics Developer Guide
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../Timing/" class="md-footer__link md-footer__link--next" aria-label="Next: Timing Model">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Timing Model
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Contributors to the Media eXchange Layer project.
+
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["announce.dismiss","content.code.annotate","content.code.copy","content.code.select","content.footnote.tooltips","content.tabs.link","content.tooltips","navigation.expand","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.prefetch","navigation.path","navigation.sections","navigation.top","navigation.tracking","search.highlight"],"search":"../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":{"provider":"mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.69c251d7.min.js"></script>
+      
+        <script src="../javascripts/mermaid.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
