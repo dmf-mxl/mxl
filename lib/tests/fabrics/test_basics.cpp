@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <cstring>
 #include <algorithm>
+#include <random>
 #include <vector>
 #include <uuid.h>
 #include <catch2/catch_message.hpp>
@@ -708,10 +709,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Gr
     std::array<std::string, nbTargets> flowDefs;
     std::array<mxlFlowConfigInfo, nbTargets> configInfo;
     std::array<mxlFlowWriter, nbTargets> writer;
+    auto engine = std::mt19937{std::random_device{}()};
+    auto uuidGen = uuids::uuid_random_generator{engine};
     for (size_t i = 0; i < nbTargets; i++)
     {
         REQUIRE(mxlFabricsCreateTarget(fabrics, &targets[i]) == MXL_STATUS_OK);
-        flowIds[i] = uuids::to_string(uuids::uuid_system_generator{}());
+        flowIds[i] = uuids::to_string(uuidGen());
         root.at("id") = picojson::value{flowIds[i]};
         flowDefs[i] = picojson::value{root}.serialize();
         REQUIRE(mxlCreateFlowWriter(instance, flowDefs[i].c_str(), nullptr, &writer[i], &configInfo[i], nullptr) == MXL_STATUS_OK);
@@ -917,10 +920,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Transfer Sa
     std::array<std::string, nbTargets> flowDefs;
     std::array<mxlFlowConfigInfo, nbTargets> configInfo;
     std::array<mxlFlowWriter, nbTargets> writer;
+    auto engine = std::mt19937{std::random_device{}()};
+    auto uuidGen = uuids::uuid_random_generator{engine};
     for (size_t i = 0; i < nbTargets; i++)
     {
         REQUIRE(mxlFabricsCreateTarget(fabrics, &targets[i]) == MXL_STATUS_OK);
-        flowIds[i] = uuids::to_string(uuids::uuid_system_generator{}());
+        flowIds[i] = uuids::to_string(uuidGen());
         root.at("id") = picojson::value{flowIds[i]};
         flowDefs[i] = picojson::value{root}.serialize();
         REQUIRE(mxlCreateFlowWriter(instance, flowDefs[i].c_str(), nullptr, &writer[i], &configInfo[i], nullptr) == MXL_STATUS_OK);
