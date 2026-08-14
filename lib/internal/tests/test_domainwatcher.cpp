@@ -4,6 +4,7 @@
 #include <condition_variable>
 #include <cstdio>
 #include <cstdlib>
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <list>
