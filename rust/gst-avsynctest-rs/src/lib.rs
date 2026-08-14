@@ -26,10 +26,13 @@
 //!   avsyncaudiotestsrc is-live=true ! audioconvert ! autoaudiosink
 //! ```
 
+#![allow(unused_doc_comments)]
+
 use gst::glib;
 use gstreamer as gst;
 
 pub mod analyze;
+pub mod ancillary;
 pub mod audiosrc;
 pub mod captions;
 pub(crate) mod imp_error;
@@ -42,6 +45,11 @@ fn plugin_init(plugin: &gst::Plugin) -> Result<(), glib::BoolError> {
     Ok(())
 }
 
+/**
+ * plugin-avsynctest:
+ *
+ * Phase-locked audio/video test sources for end-to-end synchronisation testing.
+ */
 gst::plugin_define!(
     avsynctest,
     env!("CARGO_PKG_DESCRIPTION"),

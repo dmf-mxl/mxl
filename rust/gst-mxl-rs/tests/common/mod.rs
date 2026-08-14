@@ -149,56 +149,6 @@ impl Drop for TestDomainGuard {
     }
 }
 
-fn extend_with_even_odd_parity(v: u8) -> u16 {
-    if v.count_ones() & 1 == 0 {
-        0x1_00 | (v as u16)
-    } else {
-        0x2_00 | (v as u16)
-    }
-}
-
-fn compute_checksum(did_10bit: u16, sdid_10bit: u16, dc_10bit: u16, data: &[u16]) -> u16 {
-    let mut checksum = 0u16;
-    checksum = checksum.wrapping_add(did_10bit & 0x1ff);
-    checksum = checksum.wrapping_add(sdid_10bit & 0x1ff);
-    checksum = checksum.wrapping_add(dc_10bit & 0x1ff);
-    for &w in data {
-        checksum = checksum.wrapping_add(w & 0x1ff);
-    }
-    checksum &= 0x1ff;
-    checksum |= ((!(checksum >> 8)) & 0x01) << 9;
-    checksum
-}
-
-/// Attach one `GstAncillaryMeta` (SMPTE 291 DID/SDID + payload) to `buffer`,
-/// extending each octet to a 10-bit even/odd-parity word and computing the
-/// checksum, as `st2038extractor` expects on the wire.
-pub fn add_ancillary_meta(
-    buffer: &mut gst::BufferRef,
-    line: u16,
-    offset: u16,
-    did: u8,
-    sdid: u8,
-    payload: &[u8],
-) {
-    let mut meta = gst_video::video_meta::AncillaryMeta::add(buffer);
-    meta.set_c_not_y_channel(false);
-    meta.set_line(line);
-    meta.set_offset(offset);
-    let did_10bit = extend_with_even_odd_parity(did);
-    let sdid_10bit = extend_with_even_odd_parity(sdid);
-    let dc_10bit = extend_with_even_odd_parity(payload.len() as u8);
-    meta.set_did(did_10bit);
-    meta.set_sdid_block_number(sdid_10bit);
-    let data: Vec<u16> = payload
-        .iter()
-        .copied()
-        .map(extend_with_even_odd_parity)
-        .collect();
-    meta.set_checksum(compute_checksum(did_10bit, sdid_10bit, dc_10bit, &data));
-    meta.set_data(glib::Slice::from(data));
-}
-
 /// `parse::launch` the shared producer (`appsrc` → `st2038extractor` → a video
 /// `mxlsink` and a companion data `mxlsink`) and return the pipeline, its
 /// `appsrc`, and the v210 frame size in bytes.

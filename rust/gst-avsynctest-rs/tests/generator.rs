@@ -190,6 +190,65 @@ fn video_bar_sweeps_and_centres_on_pip() {
     }
 }
 
+/// [`add_ancillary_meta`](gstavsynctest::ancillary::add_ancillary_meta) produces metas
+/// that pass [`has_valid_ancillary_metas`](gstavsynctest::ancillary::has_valid_ancillary_metas)
+/// (odd and even DC bit counts), with DID/SDID/DC matching ST 291 parity.
+#[test]
+fn add_ancillary_meta_produces_valid_meta() {
+    use gstavsynctest::ancillary::add_ancillary_meta;
+    init();
+    let mut buffer = gst::Buffer::with_size(1).unwrap();
+    {
+        let buffer = buffer.get_mut().unwrap();
+        // DC of 1 (odd bit count) and 3 (even bit count) exercise both parity cases.
+        add_ancillary_meta(buffer, 9, 0, 0x44, 0x01, &[0x11]);
+        add_ancillary_meta(buffer, 9, 32, 0x61, 0x01, &[0x22, 0x33, 0x44]);
+    }
+    let metas: Vec<_> = buffer
+        .iter_meta::<gst_video::video_meta::AncillaryMeta>()
+        .collect();
+    assert_eq!(metas.len(), 2);
+    // Direct ST 291 checks (not only circular against extend_with_even_odd_parity).
+    assert_eq!(metas[0].did(), 0x244); // 0x44: 2 ones, even => 0x244
+    assert_eq!(metas[0].sdid_block_number(), 0x101); // 0x01: 1 one, odd => 0x101
+    assert_eq!(metas[0].data_count(), 0x101); // DC=1, odd => 0x101
+    assert_eq!(metas[1].did(), 0x161); // 0x61: 3 ones, odd => 0x161
+    assert_eq!(metas[1].sdid_block_number(), 0x101);
+    assert_eq!(metas[1].data_count(), 0x203); // DC=3, even => 0x203
+    assert!(
+        gstavsynctest::ancillary::has_valid_ancillary_metas(buffer.as_ref()),
+        "add_ancillary_meta wrote invalid AncillaryMeta"
+    );
+}
+
+/// Every `GstAncillaryMeta` (frame-index and CEA-708) passes
+/// [`has_valid_ancillary_metas`](gstavsynctest::ancillary::has_valid_ancillary_metas).
+#[test]
+fn video_has_valid_ancillary_metas() {
+    init();
+    let desc = format!(
+        "avsyncvideotestsrc num-buffers={VIDEO_FRAMES} pip-interval={PIP_INTERVAL_NS} is-live=false \
+           ! video/x-raw,format=v210,width={WIDTH},height={HEIGHT},framerate={FPS}/1 \
+           ! appsink name=sink sync=false"
+    );
+    let samples = run(&desc);
+    assert_eq!(samples.len(), VIDEO_FRAMES as usize);
+    for (i, s) in samples.iter().enumerate() {
+        let buffer = s.buffer().unwrap();
+        let n_meta = buffer
+            .iter_meta::<gst_video::video_meta::AncillaryMeta>()
+            .count();
+        assert!(
+            n_meta >= 2,
+            "frame {i}: expected index + caption ancillary, got {n_meta}"
+        );
+        assert!(
+            gstavsynctest::ancillary::has_valid_ancillary_metas(buffer),
+            "frame {i}: AncillaryMeta invalid (parity, reserved UDW, or checksum)"
+        );
+    }
+}
+
 /// The video source attaches a phase-locked CEA-708 caption: TICK/TOCK on each
 /// pip frame (alternating), a null CDP on every other frame. Round-tripped
 /// through `cdp-types`/`cea708-types` straight off the ancillary meta (before any
