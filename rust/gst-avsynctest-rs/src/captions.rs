@@ -25,6 +25,7 @@ pub const CC_DID: u8 = 0x61;
 pub const CC_SDID: u8 = 0x01;
 /// Ancillary line for the caption packet (distinct from the frame-index line).
 pub const CC_LINE: u16 = 10;
+pub const CC_OFFSET: u16 = 0;
 /// The single CEA-708 service the captions are written to.
 pub const CC_SERVICE_NO: u8 = 1;
 

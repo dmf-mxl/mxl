@@ -10,6 +10,7 @@ resolver = "2"
 edition = "2024"
 publish = false
 version = "0.1.0"
+rust-version = "1.87"
 license = "Apache-2.0"
 license-file = "../LICENSE.txt"
 repository = "https://github.com/dmf-mxl/mxl"
