@@ -19,158 +19,201 @@ permissions:
   packages: write
 
 jobs:
-  build_c_cxx:
-    name: Build C library on Ubuntu ${{ matrix.os }} - ${{matrix.version}} - ${{ matrix.architecture }} - ${{ matrix.compiler }}
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-          os: [ubuntu]
-          version: [24.04]
-          architecture: [x86_64, arm64]
-          compiler: [Linux-GCC-Release, Linux-Clang-Release]
-
-    env:
-      DOCKER_BUILDKIT: 1
-      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg_cache,readwrite
-
+  compute_build_image_cache_key:
+    name: Compute build image cache key prefix
+    runs-on: ubuntu-24.04
+    outputs:
+      prefix: ${{ steps.build-key.outputs.prefix }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: REUSE Compliance Check
-        uses: fsfe/reuse-action@v5
+      - name: Compute key prefix
+        id: build-key
+        run: |
+          printf 'prefix=build-images-${{ hashFiles('.devcontainer/Dockerfile', '.devcontainer/scripts/**/*') }}\n' >> "${GITHUB_OUTPUT}"
 
-      - name: Initialize Git Submodules (if needed)
-        run: git submodule update --init --recursive
+  create_build_images:
+    name: Create build image
+    needs: [ compute_build_image_cache_key ]
+    strategy:
+      matrix:
+        base-image-version: [24.04]
+        architecture: [amd64, arm64]
+    runs-on: ${{ startsWith(matrix.architecture, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v4
+      - name: Lookup cached build image
+        id: lookup-build-image
+        uses: actions/cache/restore@v6
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Calculate Docker image hash
-        id: docker-hash
-        run: |
-          # Create a hash based on Dockerfile content and matrix parameters
-          HASH_INPUT=$(cat -- .devcontainer/Dockerfile $(find .devcontainer/scripts/ -type f) vcpkg.json)
-          HASH_INPUT="${HASH_INPUT}${{ matrix.version }}${{ matrix.architecture }}${{ matrix.compiler }}"
-          DOCKER_HASH=$(echo -n "$HASH_INPUT" | sha256sum | cut -d' ' -f1)
-          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          echo "hash=$DOCKER_HASH" >> $GITHUB_OUTPUT
-          echo "image-tag=ghcr.io/${OWNER_LC}/mxl-build:$DOCKER_HASH" >> $GITHUB_OUTPUT
-
-      - name: Check if Docker image exists
-        id: check-image
-        run: |
-          if docker manifest inspect ${{ steps.docker-hash.outputs.image-tag }} >/dev/null 2>&1; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "Docker image ${{ steps.docker-hash.outputs.image-tag }} already exists"
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "Docker image ${{ steps.docker-hash.outputs.image-tag }} does not exist"
-          fi
+          lookup-only: true
+          path: mxl-build-image-${{ matrix.architecture }}.tar.gz
+          key: ${{ needs.compute_build_image_cache_key.outputs.prefix }}-${{ matrix.base-image-version }}-${{ matrix.architecture }}
 
       - name: Get runner UID and GID
-        id: vars
+        if: steps.lookup-build-image.outputs.cache-hit != 'true'
+        id: check-user-ids
         run: |
-          echo "uid=$(id -u)" >> $GITHUB_OUTPUT
-          echo "gid=$(id -g)" >> $GITHUB_OUTPUT
+          printf 'uid=%s\n' "$(id -u)" >> "${GITHUB_OUTPUT}"
+          printf 'gid=%s\n' "$(id -g)" >> "${GITHUB_OUTPUT}"
 
-      - name: Set workspace permissions for access in the devcontainer
-        run: |
-          mkdir -p ${{ github.workspace }}/build
-          chmod 777 ${{ github.workspace }}/build
-          chmod g+s ${{ github.workspace }}/build
-          mkdir -p ${{ github.workspace }}/install
-          chmod 777 ${{ github.workspace }}/install
-          chmod g+s ${{ github.workspace }}/install
+      - name: Set up QEMU
+        if: steps.lookup-build-image.outputs.cache-hit != 'true'
+        uses: docker/setup-qemu-action@v4
 
-      - name: Build Docker image
-        if: steps.check-image.outputs.exists == 'false'
-        run: |
-          docker build \
-            --build-arg BASE_IMAGE_VERSION=${{ matrix.version }} \
-            --build-arg USER_UID=${{ steps.vars.outputs.uid }} \
-            --build-arg USER_GID=${{ steps.vars.outputs.gid }} \
-            -t ${{ steps.docker-hash.outputs.image-tag }} \
-            -t mxl_build_container_with_source \
-            -f .devcontainer/Dockerfile \
-            .devcontainer
+      - name: Set up Docker Buildx
+        if: steps.lookup-build-image.outputs.cache-hit != 'true'
+        uses: docker/setup-buildx-action@v4
 
-      - name: Check if PR comes from a fork
-        id: is-fork-check
-        run: |
-          if [[ "${{ github.event.pull_request.head.repo.fork }}" == "true" ]]; then
-            echo "This pull request originates from a forked repository."
-            echo "is-fork=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "This pull request originates from the base repository."
-            echo "is-fork=false" >> "$GITHUB_OUTPUT"
-          fi
+      - name: Build build image
+        if: steps.lookup-build-image.outputs.cache-hit != 'true'
+        uses: docker/build-push-action@v7
+        with:
+          build-args: |
+            BASE_IMAGE_VERSION=${{ matrix.base-image-version }}
+            USER_UID=${{ steps.check-user-ids.outputs.uid }}
+            USER_GID=${{ steps.check-user-ids.outputs.gid }}
+          platforms: linux/${{ matrix.architecture }}
+          tags:
+            mxl-build-image-${{ matrix.architecture }}:latest
+          load: true
+          pull: true
+          context: .devcontainer
 
-      - name: Push Docker image to registry
-        if: steps.check-image.outputs.exists == 'false' && steps.is-fork-check.outputs.is-fork == 'false'
+      - name: Export build image
+        if: steps.lookup-build-image.outputs.cache-hit != 'true'
         run: |
-          docker push ${{ steps.docker-hash.outputs.image-tag }}
+          docker save 'mxl-build-image-${{ matrix.architecture }}:latest' | gzip > 'mxl-build-image-${{ matrix.architecture }}.tar.gz'
 
-      - name: Pull Docker image from registry
-        if: steps.check-image.outputs.exists == 'true'
+      - name: Save build image to cache
+        if: steps.lookup-build-image.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: mxl-build-image-${{ matrix.architecture }}.tar.gz
+          key: ${{ steps.lookup-build-image.outputs.cache-primary-key }}
+
+  check_format_compliance:
+    name: Check clang-format compliance
+    needs: [ compute_build_image_cache_key, create_build_images ]
+    strategy:
+      matrix:
+        base-image-version: [24.04]
+        architecture: [amd64]
+    runs-on: ${{ startsWith(matrix.architecture, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Restore cached build image
+        uses: actions/cache/restore@v6
+        with:
+          path: mxl-build-image-${{ matrix.architecture }}.tar.gz
+          key: ${{ needs.compute_build_image_cache_key.outputs.prefix }}-${{ matrix.base-image-version }}-${{ matrix.architecture }}
+
+      - name: Load build image
         run: |
-          docker pull ${{ steps.docker-hash.outputs.image-tag }}
-          docker tag ${{ steps.docker-hash.outputs.image-tag }} mxl_build_container_with_source
+          docker image load -i 'mxl-build-image-${{ matrix.architecture }}.tar.gz'
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
 
       - name: Run clang-format
         run: |
-          docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
-            -i mxl_build_container_with_source \
-            bash -c "
+          docker run \
+            --rm --interactive \
+            --mount src='${{ github.workspace }},target=/workspace/mxl,type=bind' \
+            --platform='linux/${{ matrix.architecture }}' \
+            mxl-build-image-${{ matrix.architecture }}:latest \
+            bash -c " \
               cd /workspace/mxl && \
               find lib tools -iregex '.*\.\(h\|c\|hpp\|cpp\)' | xargs clang-format --dry-run --Werror
             "
 
+  build_c_cxx:
+    name: Build C library on Ubuntu
+    needs: [ compute_build_image_cache_key, create_build_images ]
+    strategy:
+      matrix:
+        base-image-version: [24.04]
+        architecture: [amd64, arm64]
+        compiler: [Linux-GCC-Release, Linux-Clang-Release]
+    runs-on: ${{ startsWith(matrix.architecture, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize Git Submodules (if needed)
+        run: git submodule update --init --recursive
+
+      - name: Restore cached build image
+        uses: actions/cache/restore@v6
+        with:
+          path: mxl-build-image-${{ matrix.architecture }}.tar.gz
+          key: ${{ needs.compute_build_image_cache_key.outputs.prefix }}-${{ matrix.base-image-version }}-${{ matrix.architecture }}
+
+      - name: Load build image
+        run: |
+          docker image load -i 'mxl-build-image-${{ matrix.architecture }}.tar.gz'
+
+      - name: Set workspace permissions for access in the devcontainer
+        run: |
+          mkdir -p '${{ github.workspace }}'/{build,install}
+          chmod a+x,g+s '${{ github.workspace }}'/{build,install}
+
       - name: Restore vcpkg cache
-        uses: actions/cache/restore@v5
+        id: vcpkg-cache-restore
+        uses: actions/cache/restore@v6
         with:
           path: ${{ github.workspace }}/vcpkg_cache
-          key: vcpkg-${{ steps.docker-hash.outputs.image-tag }}-${{ hashFiles('vcpkg.json') }}
-          restore-keys: vcpkg-${{ steps.docker-hash.outputs.image-tag }}-
+          key: vcpkg-ubuntu-${{ matrix.base-image-version }}-${{ matrix.architecture }}-${{ matrix.compiler }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: vcpkg-ubuntu-${{ matrix.base-image-version }}-${{ matrix.architecture }}-${{ matrix.compiler }}-
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
 
       - name: Configure CMake
         run: |
-          docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
-            -e VCPKG_BINARY_SOURCES="clear;files,/workspace/mxl/vcpkg_cache,readwrite" \
-            -i mxl_build_container_with_source \
-            bash -c "
-              cmake -S /workspace/mxl -B /workspace/mxl/build/${{ matrix.compiler }} \
-                --preset ${{ matrix.compiler }} \
-                -DMXL_BUILD_NUMBER=${{ github.run_number }} \
-                -DCMAKE_INSTALL_PREFIX=/workspace/mxl/install \
-                -DMXL_ENABLE_FABRICS_OFI=ON  
-            "
+          docker run \
+            --rm --interactive \
+            --mount src='${{ github.workspace }},target=/workspace/mxl,type=bind' \
+            --env VCPKG_BINARY_SOURCES='clear;files,/workspace/mxl/vcpkg_cache,readwrite' \
+            --platform='linux/${{ matrix.architecture }}' \
+            'mxl-build-image-${{ matrix.architecture }}:latest' \
+            cmake -S /workspace/mxl -B '/workspace/mxl/build/${{ matrix.compiler }}' \
+              --preset '${{ matrix.compiler }}' \
+              -DMXL_BUILD_NUMBER='${{ github.run_number }}' \
+              -DCMAKE_INSTALL_PREFIX=/workspace/mxl/install \
+              -DMXL_ENABLE_FABRICS_OFI=ON
 
       - name: Save vcpkg cache
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6
         with:
           path: ${{ github.workspace }}/vcpkg_cache
-          key: vcpkg-${{ steps.docker-hash.outputs.image-tag }}-${{ hashFiles('vcpkg.json') }}
+          key: ${{ steps.vcpkg-cache-restore.outputs.cache-primary-key }}
 
       - name: Build Project
         run: |
-          docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
-            -i mxl_build_container_with_source \
-            bash -c "
-              cmake --build /workspace/mxl/build/${{ matrix.compiler }} -t all doc install package
-            "
+          docker run \
+            --rm --interactive \
+            --mount src='${{ github.workspace }},target=/workspace/mxl,type=bind' \
+            --env VCPKG_BINARY_SOURCES='clear;files,/workspace/mxl/vcpkg_cache,readwrite' \
+            --platform='linux/${{ matrix.architecture }}' \
+            'mxl-build-image-${{ matrix.architecture }}:latest' \
+            cmake --build '/workspace/mxl/build/${{ matrix.compiler }}' -t all doc install package
 
       - name: Run Tests
         run: |
-          docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
+          docker run \
+            --rm --interactive \
+            --mount src='${{ github.workspace }},target=/workspace/mxl,type=bind' \
+            --platform='linux/${{ matrix.architecture }}' \
             --shm-size=1g \
-            -i mxl_build_container_with_source \
+            'mxl-build-image-${{ matrix.architecture }}:latest' \
             bash -c "
-              cd /workspace/mxl/build/${{ matrix.compiler }} && \
+              cd '/workspace/mxl/build/${{ matrix.compiler }}' && \
               ctest --output-junit test-results.xml
             "
 
@@ -182,109 +225,32 @@ jobs:
             **/test-results.xml
 
   build_rust:
-    name: Build Rust bindings on Ubuntu ${{ matrix.os }} - ${{matrix.version}} - ${{ matrix.architecture }}
-    runs-on: ubuntu-latest
+    name: Build Rust bindings on Ubuntu
+    needs: [ compute_build_image_cache_key, create_build_images ]
     strategy:
       matrix:
-          os: [ubuntu]
-          version: [24.04]
-          architecture: [x86_64, arm64]
-          compiler: [Linux-GCC-Release, Linux-Clang-Release]
-
-    env:
-      DOCKER_BUILDKIT: 1
-      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg_cache,readwrite
-
+        base-image-version: [24.04]
+        architecture: [amd64, arm64]
+    runs-on: ${{ startsWith(matrix.architecture, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: REUSE Compliance Check
-        uses: fsfe/reuse-action@v5
-
       - name: Initialize Git Submodules (if needed)
         run: git submodule update --init --recursive
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v4
+      - name: Restore cached build image
+        uses: actions/cache/restore@v6
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          path: mxl-build-image-${{ matrix.architecture }}.tar.gz
+          key: ${{ needs.compute_build_image_cache_key.outputs.prefix }}-${{ matrix.base-image-version }}-${{ matrix.architecture }}
 
-      - name: Calculate Docker image hash
-        id: docker-hash
+      - name: Load build image
         run: |
-          # Create a hash based on Dockerfile content and matrix parameters
-          HASH_INPUT=$(cat -- .devcontainer/Dockerfile $(find .devcontainer/scripts/ -type f) vcpkg.json)
-          HASH_INPUT="${HASH_INPUT}${{ matrix.version }}${{ matrix.architecture }}${{ matrix.compiler }}"
-          DOCKER_HASH=$(echo -n "$HASH_INPUT" | sha256sum | cut -d' ' -f1)
-          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          echo "hash=$DOCKER_HASH" >> $GITHUB_OUTPUT
-          echo "image-tag=ghcr.io/${OWNER_LC}/mxl-build:$DOCKER_HASH" >> $GITHUB_OUTPUT
-
-      - name: Check if Docker image exists
-        id: check-image
-        run: |
-          if docker manifest inspect ${{ steps.docker-hash.outputs.image-tag }} >/dev/null 2>&1; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "Docker image ${{ steps.docker-hash.outputs.image-tag }} already exists"
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "Docker image ${{ steps.docker-hash.outputs.image-tag }} does not exist"
-          fi
-
-      - name: Get runner UID and GID
-        id: vars
-        run: |
-          echo "uid=$(id -u)" >> $GITHUB_OUTPUT
-          echo "gid=$(id -g)" >> $GITHUB_OUTPUT
-          mkdir -p ${{ github.workspace }}/build
-          chmod 777 ${{ github.workspace }}/build
-          chmod g+s ${{ github.workspace }}/build
-
-      - name: Set workspace permissions for access in the devcontainer
-        run: |
-          mkdir -p ${{ github.workspace }}/rust/target
-          chmod 777 ${{ github.workspace }}/rust/target
-          chmod g+s ${{ github.workspace }}/rust/target
-
-      - name: Build Docker image
-        if: steps.check-image.outputs.exists == 'false'
-        run: |
-          docker build \
-            --build-arg BASE_IMAGE_VERSION=${{ matrix.version }} \
-            --build-arg USER_UID=${{ steps.vars.outputs.uid }} \
-            --build-arg USER_GID=${{ steps.vars.outputs.gid }} \
-            -t ${{ steps.docker-hash.outputs.image-tag }} \
-            -t mxl_build_container_with_source \
-            -f .devcontainer/Dockerfile \
-            .devcontainer
-
-      - name: Check if PR comes from a fork
-        id: is-fork-check
-        run: |
-          if [[ "${{ github.event.pull_request.head.repo.fork }}" == "true" ]]; then
-            echo "This pull request originates from a forked repository."
-            echo "is-fork=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "This pull request originates from the base repository."
-            echo "is-fork=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Push Docker image to registry
-        if: steps.check-image.outputs.exists == 'false' && steps.is-fork-check.outputs.is-fork == 'false'
-        run: |
-          docker push ${{ steps.docker-hash.outputs.image-tag }}
-
-      - name: Pull Docker image from registry
-        if: steps.check-image.outputs.exists == 'true'
-        run: |
-          docker pull ${{ steps.docker-hash.outputs.image-tag }}
-          docker tag ${{ steps.docker-hash.outputs.image-tag }} mxl_build_container_with_source
+          docker image load -i 'mxl-build-image-${{ matrix.architecture }}.tar.gz'
 
       - name: Cache Cargo registry
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/bin/
@@ -292,15 +258,21 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-lint-${{ hashFiles('**/Cargo.toml') }}
-          restore-keys: ${{ runner.os }}-cargo-lint-
+          key: cargo-lint-ubuntu-${{ matrix.base-image-version }}-${{ matrix.architecture }}-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: cargo-lint-ubuntu-${{ matrix.base-image-version }}-${{ matrix.architecture }}-
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
 
       - name: Check the Rust bindings
         env:
           RUSTFLAGS: "-Dwarnings"
         run: |
-          docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
-            -i mxl_build_container_with_source \
+          docker run \
+            --rm --interactive \
+            --mount src='${{ github.workspace }}',target=/workspace/mxl,type=bind \
+            --platform='linux/${{ matrix.architecture }}' \
+            'mxl-build-image-${{ matrix.architecture }}:latest' \
             bash -c "
               cd /workspace/mxl/rust && \
               cargo fmt -- --check && \
@@ -313,8 +285,11 @@ jobs:
 
       - name: Build Rust bindings
         run: |
-          docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
-            -i mxl_build_container_with_source \
+          docker run \
+            --rm --interactive \
+            --mount src='${{ github.workspace }}',target=/workspace/mxl,type=bind \
+            --platform='linux/${{ matrix.architecture }}' \
+            'mxl-build-image-${{ matrix.architecture }}:latest' \
             bash -c "
               cd /workspace/mxl/rust && \
               cargo build --release --all-targets --locked
@@ -331,9 +306,11 @@ jobs:
         # passing silently.
         run: |
           set +e
-          docker run --mount src=${{ github.workspace }},target=/workspace/mxl,type=bind \
-            --shm-size=1g \
-            -i mxl_build_container_with_source \
+          docker run \
+            --rm --interactive \
+            --mount src='${{ github.workspace }}',target=/workspace/mxl,type=bind \
+            --platform='linux/${{ matrix.architecture }}' \
+            'mxl-build-image-${{ matrix.architecture }}:latest' \
             bash -c "
               cd /workspace/mxl/rust && \
               cargo test --release --all-targets --locked -- --test-threads=1 --show-output
@@ -342,15 +319,10 @@ jobs:
           set -e
           skipped=$(grep -E '^test .* \.\.\. skipped,' test.log || true)
           count=$(grep -cE '^test .* \.\.\. skipped,' test.log || true)
-          echo "test result: ${count} skipped"
-          if [ "${count}" -gt 0 ]; then
-            echo "::notice title=Runtime tests skipped::${count} test(s) self-skipped; see job summary"
-            {
-              echo "### Runtime tests skipped (${count})"
-              echo
-              echo '```text'
-              printf '%s\n' "${skipped}"
-              echo '```'
-            } >> "$GITHUB_STEP_SUMMARY"
+          printf 'test result: %s skipped\n' "${count}"
+          if [[ "${count}" -gt 0 ]]
+          then
+            printf '::notice title=Runtime tests skipped::%s test(s) self-skipped; see job summary\n' "${count}"
+            printf '### Runtime tests skipped (%s)\n\n```text\n%s\n```\n' "${count}" "${skipped}" >> "${GITHUB_STEP_SUMMARY}"
           fi
           exit "${status}"
