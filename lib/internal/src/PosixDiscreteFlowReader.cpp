@@ -43,7 +43,7 @@ namespace mxl::lib
         , _accessFileFd{-1}
     {
         auto const accessFile = makeFlowAccessFilePath(manager.getDomain(), to_string(flowId));
-        _accessFileFd = ::open(accessFile.string().c_str(), O_RDWR);
+        _accessFileFd = ::open(accessFile.string().c_str(), O_RDWR | O_CLOEXEC);
 
         // Opening the access file may fail if the domain is in a read only volume.
         // we can still execute properly but the 'lastReadTime' will never be updated.
