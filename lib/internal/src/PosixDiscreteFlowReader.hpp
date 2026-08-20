@@ -57,8 +57,16 @@ namespace mxl::lib
             std::uint8_t** out_payload) override;
 
         /** \see DiscreteFlowReader::getGrain */
+        virtual mxlStatus getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, Timepoint in_deadline, mxlGrainInfo* out_grainInfo,
+            mxlPayloadView* out_payload) override;
+
+        /** \see DiscreteFlowReader::getGrain */
         virtual mxlStatus getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo,
             std::uint8_t** out_payload) override;
+
+        /** \see DiscreteFlowReader::getGrain */
+        virtual mxlStatus getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo,
+            mxlPayloadView* out_payload) override;
 
     protected:
         /** \see FlowReader::isFlowValid */
@@ -82,6 +90,9 @@ namespace mxl::lib
         mxlStatus getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo,
             std::uint8_t** out_payload) const;
 
+        mxlStatus getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo,
+            mxlPayloadView* out_payload) const;
+
         /**
          * Implementation of the blocking form of getGrain() and waitForGrain()
          * that can also be used by other methods that have previously asserted
@@ -90,6 +101,9 @@ namespace mxl::lib
          */
         mxlStatus getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, Timepoint in_deadline, mxlGrainInfo* out_grainInfo,
             std::uint8_t** out_payload) const;
+
+        mxlStatus getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, Timepoint in_deadline, mxlGrainInfo* out_grainInfo,
+            mxlPayloadView* out_payload) const;
 
     private:
         std::unique_ptr<DiscreteFlowData> _flowData;

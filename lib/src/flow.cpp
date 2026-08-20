@@ -361,8 +361,38 @@ mxlStatus mxlFlowReaderGetGrain(mxlFlowReader reader, uint64_t index, uint64_t t
 
 extern "C"
 MXL_EXPORT
+mxlStatus mxlFlowReaderGetGrainEx(mxlFlowReader reader, uint64_t index, uint64_t timeoutNs, mxlGrainInfo* grainInfo, mxlPayloadView* payload)
+{
+    return mxlFlowReaderGetGrainSliceEx(reader, index, MXL_GRAIN_VALID_SLICES_ALL, timeoutNs, grainInfo, payload);
+}
+
+extern "C"
+MXL_EXPORT
 mxlStatus mxlFlowReaderGetGrainSlice(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, uint64_t timeoutNs, mxlGrainInfo* grainInfo,
     uint8_t** payload)
+{
+    try
+    {
+        if ((grainInfo != nullptr) && (payload != nullptr))
+        {
+            if (auto const cppReader = dynamic_cast<DiscreteFlowReader*>(to_FlowReader(reader)); cppReader != nullptr)
+            {
+                return cppReader->getGrain(index, minValidSlices, toDeadline(timeoutNs), grainInfo, payload);
+            }
+            return MXL_ERR_INVALID_FLOW_READER;
+        }
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowReaderGetGrainSliceEx(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, uint64_t timeoutNs, mxlGrainInfo* grainInfo,
+    mxlPayloadView* payload)
 {
     try
     {
@@ -391,8 +421,38 @@ mxlStatus mxlFlowReaderGetGrainNonBlocking(mxlFlowReader reader, uint64_t index,
 
 extern "C"
 MXL_EXPORT
+mxlStatus mxlFlowReaderGetGrainNonBlockingEx(mxlFlowReader reader, uint64_t index, mxlGrainInfo* grainInfo, mxlPayloadView* payload)
+{
+    return mxlFlowReaderGetGrainSliceNonBlockingEx(reader, index, MXL_GRAIN_VALID_SLICES_ALL, grainInfo, payload);
+}
+
+extern "C"
+MXL_EXPORT
 mxlStatus mxlFlowReaderGetGrainSliceNonBlocking(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, mxlGrainInfo* grainInfo,
     uint8_t** payload)
+{
+    try
+    {
+        if ((grainInfo != nullptr) && (payload != nullptr))
+        {
+            if (auto const cppReader = dynamic_cast<DiscreteFlowReader*>(to_FlowReader(reader)); cppReader != nullptr)
+            {
+                return cppReader->getGrain(index, minValidSlices, grainInfo, payload);
+            }
+            return MXL_ERR_INVALID_FLOW_READER;
+        }
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowReaderGetGrainSliceNonBlockingEx(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, mxlGrainInfo* grainInfo,
+    mxlPayloadView* payload)
 {
     try
     {
@@ -439,6 +499,29 @@ mxlStatus mxlFlowWriterGetGrainInfo(mxlFlowWriter writer, uint64_t index, mxlGra
 extern "C"
 MXL_EXPORT
 mxlStatus mxlFlowWriterOpenGrain(mxlFlowWriter writer, uint64_t index, mxlGrainInfo* grainInfo, uint8_t** payload)
+{
+    try
+    {
+        if ((grainInfo != nullptr) && (payload != nullptr))
+        {
+            if (auto const cppWriter = dynamic_cast<DiscreteFlowWriter*>(to_FlowWriter(writer)); cppWriter != nullptr)
+            {
+                return cppWriter->openGrain(index, grainInfo, payload);
+            }
+
+            return MXL_ERR_INVALID_FLOW_WRITER;
+        }
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowWriterOpenGrainEx(mxlFlowWriter writer, uint64_t index, mxlGrainInfo* grainInfo, mxlPayloadView* payload)
 {
     try
     {

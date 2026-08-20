@@ -92,7 +92,7 @@ namespace mxl::lib
         auto result = MXL_ERR_UNKNOWN;
         if (_flowData)
         {
-            result = getGrainImpl(in_index, in_minValidSlices, in_deadline, nullptr, nullptr);
+            result = getGrainImpl(in_index, in_minValidSlices, in_deadline, nullptr, static_cast<std::uint8_t**>(nullptr));
             if (result == MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
             {
                 // If we were ultimately too early, even with blocking for a certain amount
@@ -133,6 +133,28 @@ namespace mxl::lib
         return result;
     }
 
+    mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, Timepoint in_deadline,
+        mxlGrainInfo* out_grainInfo, mxlPayloadView* out_payload)
+    {
+        auto result = MXL_ERR_UNKNOWN;
+        if (_flowData)
+        {
+            result = getGrainImpl(in_index, in_minValidSlices, in_deadline, out_grainInfo, out_payload);
+            if (result == MXL_STATUS_OK)
+            {
+                (void)updateFileAccessTime(_accessFileFd);
+            }
+            else if (result == MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
+            {
+                if (!isFlowValidImpl())
+                {
+                    result = MXL_ERR_FLOW_INVALID;
+                }
+            }
+        }
+        return result;
+    }
+
     mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo,
         std::uint8_t** out_payload)
     {
@@ -159,8 +181,30 @@ namespace mxl::lib
         return result;
     }
 
+    mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo,
+        mxlPayloadView* out_payload)
+    {
+        auto result = MXL_ERR_UNKNOWN;
+        if (_flowData)
+        {
+            result = getGrainImpl(in_index, in_minValidSlices, out_grainInfo, out_payload);
+            if (result == MXL_STATUS_OK)
+            {
+                (void)updateFileAccessTime(_accessFileFd);
+            }
+            else if (result == MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
+            {
+                if (!isFlowValidImpl())
+                {
+                    result = MXL_ERR_FLOW_INVALID;
+                }
+            }
+        }
+        return result;
+    }
+
     mxlStatus PosixDiscreteFlowReader::getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo,
-        std::uint8_t** out_payload) const
+        mxlPayloadView* out_payload) const
     {
         auto result = MXL_ERR_UNKNOWN;
         auto const flow = _flowData->flow();
@@ -182,10 +226,12 @@ namespace mxl::lib
                     }
                     if (out_payload != nullptr)
                     {
-                        *out_payload = reinterpret_cast<std::uint8_t*>(&grain->header + 1);
+                        result = _flowData->payloadViewAt(offset, out_payload);
                     }
-
-                    result = MXL_STATUS_OK;
+                    else
+                    {
+                        result = MXL_STATUS_OK;
+                    }
                 }
                 else
                 {
@@ -205,8 +251,28 @@ namespace mxl::lib
         return result;
     }
 
+    mxlStatus PosixDiscreteFlowReader::getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo,
+        std::uint8_t** out_payload) const
+    {
+        mxlPayloadView view{};
+        auto const status = getGrainImpl(in_index, in_minValidSlices, out_grainInfo, (out_payload != nullptr) ? &view : nullptr);
+        if (status != MXL_STATUS_OK)
+        {
+            return status;
+        }
+        if (out_payload != nullptr)
+        {
+            if (view.kind != MXL_PAYLOAD_KIND_HOST_PTR)
+            {
+                return MXL_ERR_UNSUPPORTED_OPERATION;
+            }
+            *out_payload = view.u.hostPtr;
+        }
+        return MXL_STATUS_OK;
+    }
+
     mxlStatus PosixDiscreteFlowReader::getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, Timepoint in_deadline,
-        mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload) const
+        mxlGrainInfo* out_grainInfo, mxlPayloadView* out_payload) const
     {
         auto const flow = _flowData->flow();
         auto const syncObject = std::atomic_ref{flow->state.syncCounter};
@@ -227,6 +293,26 @@ namespace mxl::lib
                 return result;
             }
         }
+    }
+
+    mxlStatus PosixDiscreteFlowReader::getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, Timepoint in_deadline,
+        mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload) const
+    {
+        mxlPayloadView view{};
+        auto const status = getGrainImpl(in_index, in_minValidSlices, in_deadline, out_grainInfo, (out_payload != nullptr) ? &view : nullptr);
+        if (status != MXL_STATUS_OK)
+        {
+            return status;
+        }
+        if (out_payload != nullptr)
+        {
+            if (view.kind != MXL_PAYLOAD_KIND_HOST_PTR)
+            {
+                return MXL_ERR_UNSUPPORTED_OPERATION;
+            }
+            *out_payload = view.u.hostPtr;
+        }
+        return MXL_STATUS_OK;
     }
 
     bool PosixDiscreteFlowReader::isFlowValid() const

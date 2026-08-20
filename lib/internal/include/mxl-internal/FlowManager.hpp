@@ -57,18 +57,25 @@ namespace mxl::lib
         /// \param[in] flowFormat The flow data format. Must be one of the discrete formats.
         /// \param[in] grainCount How many individual grains to create.
         /// \param[in] grainRate The grain rate.
-        /// \param[in] grainPayloadSize Size of the grain in host memory.  0 if the grain payload lives in device memory.
+        /// \param[in] grainPayloadSize Logical size of the grain payload in bytes. When the payload lives in
+        /// host memory this is also the number of bytes embedded after each grain header. When the payload
+        /// lives in device memory, grain files are header-only (mapped payload size 0) and this value is still
+        /// stored in \c mxlGrainInfo::grainSize.
         /// \param[in] grainNumOfSlices Number of slices per grain.
         /// \param[in] grainSliceLengths Length of each slice in bytes.
         /// \param[in] maxSyncBatchSizeHintOpt Optional max sync batch size hint.
         /// \param[in] maxCommitBatchSizeHintOpt Optional max commit batch size hint
+        /// \param[in] payloadLocation Host or device payload location.
+        /// \param[in] deviceIndex Device index (-1 for host memory).
         /// \return (created, flowData) If the flow was created, the first returnd value is true. If the flow was opened instead, false will be
         /// returned. The second returned value is the flow data of the opened or created flow.
         ///
         std::pair<bool, std::unique_ptr<DiscreteFlowData>> createOrOpenDiscreteFlow(uuids::uuid const& flowId, std::string const& flowDef,
             mxlDataFormat flowFormat, std::size_t grainCount, mxlRational const& grainRate, std::size_t grainPayloadSize,
             std::size_t grainNumOfSlices, std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN> grainSliceLengths,
-            std::uint32_t maxSyncBatchSizeHintOpt = 1, std::uint32_t maxCommitBatchSizeHintOpt = 1);
+            std::uint32_t maxSyncBatchSizeHintOpt = 1, std::uint32_t maxCommitBatchSizeHintOpt = 1,
+            mxlPayloadLocation payloadLocation = MXL_PAYLOAD_LOCATION_HOST_MEMORY, int32_t deviceIndex = -1,
+            std::string const& payloadBackend = {});
 
         ///
         /// Create a new continuous flow together with its associated channel store and open it in read-write mode.
@@ -82,12 +89,15 @@ namespace mxl::lib
         /// \param[in] bufferLength The length of each channel buffer in samples.
         /// \param[in] maxSyncBatchSizeHintOpt Optional max sync batch size hint.
         /// \param[in] maxCommitBatchSizeHintOpt Optional max commit batch size hint
+        /// \param[in] payloadLocation Host or device payload location.
+        /// \param[in] deviceIndex Device index (-1 for host memory).
         /// \return (created, flowData) If the flow was created, the first returnd value is true. If the flow was opened instead, false will be
         /// returned. The second returned value is the flow data of the opened or created flow.
         ///
         std::pair<bool, std::unique_ptr<ContinuousFlowData>> createOrOpenContinuousFlow(uuids::uuid const& flowId, std::string const& flowDef,
             mxlDataFormat flowFormat, mxlRational const& sampleRate, std::size_t channelCount, std::size_t sampleWordSize, std::size_t bufferLength,
-            std::uint32_t maxSyncBatchSizeHintOpt = 1, std::uint32_t maxCommitBatchSizeHintOpt = 1);
+            std::uint32_t maxSyncBatchSizeHintOpt = 1, std::uint32_t maxCommitBatchSizeHintOpt = 1,
+            mxlPayloadLocation payloadLocation = MXL_PAYLOAD_LOCATION_HOST_MEMORY, int32_t deviceIndex = -1);
 
         /// Open an existing flow by id.
         ///

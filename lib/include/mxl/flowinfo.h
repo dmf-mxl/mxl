@@ -37,6 +37,54 @@ extern "C"
     } mxlPayloadLocation;
 
     /**
+     * How a grain payload can be addressed by a reader or writer.
+     *
+     * Host-mapped payloads (the default today) use \ref MXL_PAYLOAD_KIND_HOST_PTR and are also
+     * exposed through the classic \c uint8_t* grain accessors. Device and opaque backends use the
+     * extended \c mxlPayloadView accessors (\c mxlFlowWriterOpenGrainEx / \c mxlFlowReaderGetGrainEx).
+     */
+    typedef enum mxlPayloadKind
+    {
+        /** Linear payload in the calling process's address space. \c mxlPayloadView::u.hostPtr is valid. */
+        MXL_PAYLOAD_KIND_HOST_PTR = 0,
+        /** Linear device address (e.g. CUDA device pointer). \c mxlPayloadView::u.devicePtr is valid. */
+        MXL_PAYLOAD_KIND_DEVICE_PTR = 1,
+        /** Exported DMA-BUF file descriptor. \c mxlPayloadView::u.dmaBufFd is valid. */
+        MXL_PAYLOAD_KIND_DMABUF = 2,
+        /** Backend-specific opaque resource (e.g. CUDA array, Vulkan image). */
+        MXL_PAYLOAD_KIND_OPAQUE = 3,
+    } mxlPayloadKind;
+
+    /**
+     * Description of a grain payload backing store.
+     *
+     * Grain headers and flow synchronization always live in host shared memory. This structure
+     * describes only the payload bytes that follow (or are associated with) a grain header.
+     */
+    typedef struct mxlPayloadView
+    {
+        /** Payload addressing kind. \see mxlPayloadKind */
+        uint32_t kind;
+        /** Logical payload size in bytes (matches \c mxlGrainInfo::grainSize). */
+        uint32_t grainSize;
+        /** Device index when the payload lives in device memory; -1 for host memory. */
+        int32_t deviceIndex;
+        /** Reserved for future use; must be zero. */
+        uint32_t reserved;
+        union
+        {
+            /** Valid when kind == MXL_PAYLOAD_KIND_HOST_PTR. */
+            uint8_t* hostPtr;
+            /** Valid when kind == MXL_PAYLOAD_KIND_DEVICE_PTR. */
+            uint64_t devicePtr;
+            /** Valid when kind == MXL_PAYLOAD_KIND_DMABUF. */
+            int64_t dmaBufFd;
+            /** Valid when kind == MXL_PAYLOAD_KIND_OPAQUE. */
+            uint64_t opaqueHandle;
+        } u;
+    } mxlPayloadView;
+
+    /**
      * Immutable metadata about a media flow that is independent of the data
      * format of the flow and thus common to all flows handled by MXL.
      */

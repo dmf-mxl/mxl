@@ -71,6 +71,7 @@ target_sources(mxl-internal-objects
             src/FlowReader.cpp
             src/FlowSynchronizationGroup.cpp
             src/FlowWriter.cpp
+            src/GrainPayloadAllocator.cpp
             src/Instance.cpp
             src/Logging.cpp
             src/MediaUtils.cpp
@@ -86,6 +87,37 @@ target_sources(mxl-internal-objects
             src/Time.cpp
             src/Timing.cpp
     )
+
+option(MXL_ENABLE_CUDA "Enable CUDA linear grain payload allocator" ON)
+if (MXL_ENABLE_CUDA)
+    find_package(CUDAToolkit QUIET)
+    if (CUDAToolkit_FOUND)
+        message(STATUS "CUDA toolkit found: enabling CudaLinearPayloadAllocator")
+        target_sources(mxl-internal-objects
+                PRIVATE
+                    src/CudaLinearPayloadAllocator.cpp
+            )
+        target_compile_definitions(mxl-internal-objects
+                PRIVATE
+                    MXL_HAS_CUDA=1
+            )
+        target_include_directories(mxl-internal-objects
+                PRIVATE
+                    ${CUDAToolkit_INCLUDE_DIRS}
+            )
+        # PUBLIC so dependents that link mxl-internal-objects (libmxl) also link cudart.
+        target_link_libraries(mxl-internal-objects
+                PUBLIC
+                    CUDA::cudart
+            )
+        set(MXL_BUILT_WITH_CUDA ON CACHE INTERNAL "MXL was configured with CUDA payload support")
+    else()
+        message(STATUS "MXL_ENABLE_CUDA is ON but CUDAToolkit was not found; building without CUDA payload support")
+        set(MXL_BUILT_WITH_CUDA OFF CACHE INTERNAL "MXL was configured with CUDA payload support")
+    endif()
+else()
+    set(MXL_BUILT_WITH_CUDA OFF CACHE INTERNAL "MXL was configured with CUDA payload support")
+endif()
 
 if (NOT TARGET stduuid)
     find_package(stduuid CONFIG REQUIRED)

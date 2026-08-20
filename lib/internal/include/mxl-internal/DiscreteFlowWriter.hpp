@@ -18,6 +18,11 @@ namespace mxl::lib
 
         virtual mxlStatus openGrain(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload) = 0;
 
+        /**
+         * Open a grain and return an extended payload view (host pointer, device pointer, dmabuf, ...).
+         */
+        virtual mxlStatus openGrain(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, mxlPayloadView* out_payload) = 0;
+
         virtual mxlStatus commit(mxlGrainInfo const& mxlGrainInfo) = 0;
 
         virtual mxlStatus cancel() = 0;

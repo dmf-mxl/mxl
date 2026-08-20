@@ -62,6 +62,9 @@ namespace mxl::lib
         /** \see DiscreteFlowWriter::openGrain */
         virtual mxlStatus openGrain(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload) override;
 
+        /** \see DiscreteFlowWriter::openGrain */
+        virtual mxlStatus openGrain(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, mxlPayloadView* out_payload) override;
+
         /** \see DiscreteFlowWriter::commit */
         virtual mxlStatus commit(mxlGrainInfo const& mxlGrainInfo) override;
 

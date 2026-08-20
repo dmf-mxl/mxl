@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
+#include "mxl-internal/GrainPayloadAllocator.hpp"
 #include "mxl-internal/Logging.hpp"
 #include "mxl-internal/PathUtils.hpp"
 #include "mxl-internal/SharedMemory.hpp"
@@ -101,7 +102,7 @@ namespace mxl::lib
         }
 
         mxlCommonFlowConfigInfo initCommonFlowConfigInfo(uuids::uuid const& flowId, mxlDataFormat format, mxlRational grainRate,
-            std::uint32_t maxSyncBatchSizeHintOpt, std::uint32_t maxCommitBatchSizeHintOpt)
+            std::uint32_t maxSyncBatchSizeHintOpt, std::uint32_t maxCommitBatchSizeHintOpt, mxlPayloadLocation payloadLocation, int32_t deviceIndex)
         {
             auto result = mxlCommonFlowConfigInfo{};
 
@@ -113,9 +114,8 @@ namespace mxl::lib
             result.maxCommitBatchSizeHint = maxCommitBatchSizeHintOpt;
             result.maxSyncBatchSizeHint = maxSyncBatchSizeHintOpt;
 
-            // FIXME: This should come from the configuration when device memory is supported
-            result.payloadLocation = MXL_PAYLOAD_LOCATION_HOST_MEMORY;
-            result.deviceIndex = -1;
+            result.payloadLocation = payloadLocation;
+            result.deviceIndex = deviceIndex;
 
             return result;
         }
@@ -165,16 +165,30 @@ namespace mxl::lib
     std::pair<bool, std::unique_ptr<DiscreteFlowData>> FlowManager::createOrOpenDiscreteFlow(uuids::uuid const& flowId, std::string const& flowDef,
         mxlDataFormat flowFormat, std::size_t grainCount, mxlRational const& grainRate, std::size_t grainPayloadSize, std::size_t grainNumOfSlices,
         std::array<uint32_t, MXL_MAX_PLANES_PER_GRAIN> grainSliceLengths, std::uint32_t maxSyncBatchSizeHintOpt,
-        std::uint32_t maxCommitBatchSizeHintOpt)
+        std::uint32_t maxCommitBatchSizeHintOpt, mxlPayloadLocation payloadLocation, int32_t deviceIndex, std::string const& payloadBackend)
     {
         auto const uuidString = uuids::to_string(flowId);
-        MXL_DEBUG("Create discrete flow. id: {}, grainCount: {}, grain payload size: {}", uuidString, grainCount, grainPayloadSize);
+        MXL_DEBUG("Create discrete flow. id: {}, grainCount: {}, grain payload size: {}, payloadLocation: {}, deviceIndex: {}, backend: {}",
+            uuidString,
+            grainCount,
+            grainPayloadSize,
+            static_cast<int>(payloadLocation),
+            deviceIndex,
+            payloadBackend.empty() ? "<default>" : payloadBackend);
 
         flowFormat = sanitizeFlowFormat(flowFormat);
         if (!mxlIsDiscreteDataFormat(flowFormat))
         {
             throw std::runtime_error{"Attempt to create discrete flow with unsupported or non matching format."};
         }
+
+        auto payloadAllocator = makeGrainPayloadAllocator(GrainPayloadAllocatorSpec{
+            .location = payloadLocation,
+            .deviceIndex = deviceIndex,
+            .logicalPayloadSize = grainPayloadSize,
+            .backend = payloadBackend,
+        });
+        auto const mappedPayloadBytes = payloadAllocator->mappedPayloadBytes();
 
         auto const tempDirectory = createTemporaryFlowDirectory(_mxlDomain);
         auto _ = defer(
@@ -205,7 +219,8 @@ namespace mxl::lib
         auto& info = *flowData->flowInfo();
         info.version = FLOW_DATA_VERSION;
         info.size = sizeof info;
-        info.config.common = initCommonFlowConfigInfo(flowId, flowFormat, grainRate, maxSyncBatchSizeHintOpt, maxCommitBatchSizeHintOpt);
+        info.config.common = initCommonFlowConfigInfo(
+            flowId, flowFormat, grainRate, maxSyncBatchSizeHintOpt, maxCommitBatchSizeHintOpt, payloadAllocator->location(), payloadAllocator->deviceIndex());
         info.config.discrete = {};
         info.config.discrete.grainCount = grainCount;
         std::copy(grainSliceLengths.begin(), grainSliceLengths.end(), info.config.discrete.sliceSizes);
@@ -224,10 +239,11 @@ namespace mxl::lib
         for (auto i = std::size_t{0}; i < grainCount; ++i)
         {
             auto const grainPath = makeGrainDataFilePath(grainDir, i);
-            MXL_TRACE("Creating grain: {}", grainPath.string());
+            MXL_TRACE("Creating grain: {} (mapped payload bytes: {})", grainPath.string(), mappedPayloadBytes);
 
-            // \todo Handle payload stored device memory
-            auto const grain = flowData->emplaceGrain(grainPath.string().c_str(), grainPayloadSize);
+            // Host allocator embeds payload after the header. Device allocators map header only
+            // (grainPayloadSize / logical size is still recorded in grain info).
+            auto const grain = flowData->emplaceGrain(grainPath.string().c_str(), mappedPayloadBytes);
             auto& gInfo = grain->header.info;
             gInfo.grainSize = grainPayloadSize;
             gInfo.totalSlices = grainNumOfSlices;
@@ -239,6 +255,14 @@ namespace mxl::lib
         auto const finalDir = makeFlowDirectoryName(_mxlDomain, uuidString);
         if (publishFlowDirectory(tempDirectory, finalDir))
         {
+            // Attach after publish so payload descriptors / CUDA IPC registry keys use the final path.
+            payloadAllocator->attach(GrainPayloadAttachContext{
+                .flowDir = finalDir,
+                .grainCount = grainCount,
+                .logicalPayloadSize = grainPayloadSize,
+                .accessMode = AccessMode::CREATE_READ_WRITE,
+            });
+            flowData->setPayloadAllocator(std::move(payloadAllocator));
             return {true, std::move(flowData)};
         }
         else
@@ -255,7 +279,8 @@ namespace mxl::lib
 
     std::pair<bool, std::unique_ptr<ContinuousFlowData>> FlowManager::createOrOpenContinuousFlow(uuids::uuid const& flowId,
         std::string const& flowDef, mxlDataFormat flowFormat, mxlRational const& sampleRate, std::size_t channelCount, std::size_t sampleWordSize,
-        std::size_t bufferLength, std::uint32_t maxSyncBatchSizeHintOpt, std::uint32_t maxCommitBatchSizeHintOpt)
+        std::size_t bufferLength, std::uint32_t maxSyncBatchSizeHintOpt, std::uint32_t maxCommitBatchSizeHintOpt, mxlPayloadLocation payloadLocation,
+        int32_t deviceIndex)
     {
         auto const uuidString = uuids::to_string(flowId);
         MXL_DEBUG("Create continuous flow. id: {}, channel count: {}, word size: {}, buffer length: {}",
@@ -282,7 +307,8 @@ namespace mxl::lib
             auto& info = *flowData->flowInfo();
             info.version = FLOW_DATA_VERSION;
             info.size = sizeof info;
-            info.config.common = initCommonFlowConfigInfo(flowId, flowFormat, sampleRate, maxSyncBatchSizeHintOpt, maxCommitBatchSizeHintOpt);
+            info.config.common = initCommonFlowConfigInfo(
+                flowId, flowFormat, sampleRate, maxSyncBatchSizeHintOpt, maxCommitBatchSizeHintOpt, payloadLocation, deviceIndex);
             info.config.continuous = {};
             info.config.continuous.channelCount = channelCount;
             info.config.continuous.bufferLength = bufferLength;
@@ -375,6 +401,7 @@ namespace mxl::lib
                     auto const grainPath = makeGrainDataFilePath(grainDir, i).string();
                     MXL_TRACE("Opening grain: {}", grainPath);
 
+                    // File size is taken from disk; payload may be embedded (host) or absent (device).
                     flowData->emplaceGrain(grainPath.c_str(), /*payloadSize=*/0U);
                 }
             }
@@ -384,6 +411,28 @@ namespace mxl::lib
                     "Grain directory not found.", grainDir, std::make_error_code(std::errc::no_such_file_or_directory)};
             }
         }
+
+        auto const& common = flowData->flowInfo()->config.common;
+        auto logicalPayloadSize = std::size_t{0};
+        if (flowData->grainCount() > 0U)
+        {
+            logicalPayloadSize = flowData->grainAt(0)->header.info.grainSize;
+        }
+
+        auto payloadAllocator = makeGrainPayloadAllocatorForFlow(flowDir,
+            GrainPayloadAllocatorSpec{
+                .location = static_cast<mxlPayloadLocation>(common.payloadLocation),
+                .deviceIndex = common.deviceIndex,
+                .logicalPayloadSize = logicalPayloadSize,
+                .backend = {},
+            });
+        payloadAllocator->attach(GrainPayloadAttachContext{
+            .flowDir = flowDir,
+            .grainCount = flowData->grainCount(),
+            .logicalPayloadSize = logicalPayloadSize,
+            .accessMode = flowData->accessMode(),
+        });
+        flowData->setPayloadAllocator(std::move(payloadAllocator));
 
         return flowData;
     }

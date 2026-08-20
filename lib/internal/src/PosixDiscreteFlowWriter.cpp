@@ -81,13 +81,35 @@ namespace mxl::lib
 
     mxlStatus PosixDiscreteFlowWriter::openGrain(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload)
     {
+        mxlPayloadView view{};
+        auto const status = openGrain(in_index, out_grainInfo, &view);
+        if (status != MXL_STATUS_OK)
+        {
+            return status;
+        }
+        if (view.kind != MXL_PAYLOAD_KIND_HOST_PTR)
+        {
+            return MXL_ERR_UNSUPPORTED_OPERATION;
+        }
+        *out_payload = view.u.hostPtr;
+        return MXL_STATUS_OK;
+    }
+
+    mxlStatus PosixDiscreteFlowWriter::openGrain(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, mxlPayloadView* out_payload)
+    {
         if (_flowData)
         {
             auto offset = in_index % _flowData->flowInfo()->config.discrete.grainCount;
             auto const grain = _flowData->grainAt(offset);
             grain->header.info.index = in_index; // Set the absolute grain index associated to that ring buffer entry
             *out_grainInfo = grain->header.info;
-            *out_payload = reinterpret_cast<std::uint8_t*>(&grain->header + 1);
+
+            auto const status = _flowData->payloadViewAt(offset, out_payload);
+            if (status != MXL_STATUS_OK)
+            {
+                return status;
+            }
+
             _currentIndex = in_index;
             return MXL_STATUS_OK;
         }

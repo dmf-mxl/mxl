@@ -7,6 +7,7 @@
 #include <optional>
 #include <string>
 #include <picojson/wrapper.h>
+#include <mxl/flowinfo.h>
 #include <mxl/platform.h>
 
 namespace mxl::lib
@@ -44,6 +45,29 @@ namespace mxl::lib
         std::optional<std::uint32_t> getMaxSyncBatchSizeHint() const;
 
         /**
+         * Payload location from options. Defaults to host memory when omitted.
+         *
+         * Accepted forms:
+         * - Nested: `{ "payload": { "location": "host"|"device", "deviceIndex": <int>, "backend": "cuda-linear" } }`
+         * - Flat:   `{ "payloadLocation": "host"|"device"|0|1, "deviceIndex": <int>, "payloadBackend": "cuda-linear" }`
+         */
+        [[nodiscard]]
+        mxlPayloadLocation getPayloadLocation() const noexcept;
+
+        /**
+         * Device index from options. Defaults to -1 for host, 0 for device when omitted.
+         */
+        [[nodiscard]]
+        int32_t getDeviceIndex() const noexcept;
+
+        /**
+         * Payload backend name from options (e.g. "host", "cuda-linear", "placeholder").
+         * Empty when the caller did not specify a backend (factory applies defaults).
+         */
+        [[nodiscard]]
+        std::string const& getPayloadBackend() const noexcept;
+
+        /**
          * Generic accessor for json fields.
          *
          * \param in_field The field name.
@@ -59,6 +83,9 @@ namespace mxl::lib
         std::optional<std::uint32_t> _maxSyncBatchSizeHint;
         /// \see mxlCommonFlowInfo::maxCommitBatchSizeHint
         std::optional<std::uint32_t> _maxCommitBatchSizeHint;
+        mxlPayloadLocation _payloadLocation{MXL_PAYLOAD_LOCATION_HOST_MEMORY};
+        int32_t _deviceIndex{-1};
+        std::string _payloadBackend;
         /** The parsed flow object. */
         picojson::object _root;
     };

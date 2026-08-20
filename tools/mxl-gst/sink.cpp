@@ -28,6 +28,10 @@
 #include "mxl/rational.h"
 #include "utils.hpp"
 
+#if defined(MXL_HAS_CUDA) && MXL_HAS_CUDA
+#   include <cuda_runtime_api.h>
+#endif
+
 #ifdef __APPLE__
 #   include <TargetConditionals.h>
 #endif
@@ -39,6 +43,57 @@ namespace
     void signal_handler(int) noexcept
     {
         g_exit_requested = 1;
+    }
+
+    /**
+     * Copy a grain payload view into a host destination buffer.
+     * Host payloads are memcpy'd; CUDA device payloads are downloaded with cudaMemcpy.
+     */
+    [[nodiscard]]
+    mxlStatus copyPayloadViewToHost(mxlPayloadView const& view, void* destination, std::size_t destinationSize)
+    {
+        if ((destination == nullptr) || (destinationSize < view.grainSize))
+        {
+            return MXL_ERR_INVALID_ARG;
+        }
+
+        if (view.kind == MXL_PAYLOAD_KIND_HOST_PTR)
+        {
+            if (view.u.hostPtr == nullptr)
+            {
+                return MXL_ERR_UNKNOWN;
+            }
+            std::memcpy(destination, view.u.hostPtr, view.grainSize);
+            return MXL_STATUS_OK;
+        }
+
+        if (view.kind == MXL_PAYLOAD_KIND_DEVICE_PTR)
+        {
+#if defined(MXL_HAS_CUDA) && MXL_HAS_CUDA
+            if (view.u.devicePtr == 0)
+            {
+                return MXL_ERR_UNKNOWN;
+            }
+            if (auto const err = ::cudaSetDevice(view.deviceIndex); err != cudaSuccess)
+            {
+                MXL_ERROR("cudaSetDevice({}) failed: {}", view.deviceIndex, cudaGetErrorString(err));
+                return MXL_ERR_UNKNOWN;
+            }
+            auto const* const devicePtr = reinterpret_cast<void const*>(static_cast<std::uintptr_t>(view.u.devicePtr));
+            if (auto const err = ::cudaMemcpy(destination, devicePtr, view.grainSize, cudaMemcpyDeviceToHost); err != cudaSuccess)
+            {
+                MXL_ERROR("cudaMemcpy D2H failed: {}", cudaGetErrorString(err));
+                return MXL_ERR_UNKNOWN;
+            }
+            return MXL_STATUS_OK;
+#else
+            MXL_ERROR("Device payload requested but mxl-gst-sink was built without CUDA support");
+            return MXL_ERR_UNSUPPORTED_OPERATION;
+#endif
+        }
+
+        MXL_ERROR("Unsupported grain payload kind {}", view.kind);
+        return MXL_ERR_UNSUPPORTED_OPERATION;
     }
 
     struct VideoPipelineConfig
@@ -390,6 +445,15 @@ namespace
             {
                 throw std::runtime_error{fmt::format("Failed to get flow config info with status code {}", static_cast<int>(ret))};
             }
+
+            if (_configInfo.common.payloadLocation == MXL_PAYLOAD_LOCATION_DEVICE_MEMORY)
+            {
+                MXL_INFO("Grain payload location: device (deviceIndex={})", _configInfo.common.deviceIndex);
+            }
+            else
+            {
+                MXL_INFO("Grain payload location: host");
+            }
         }
 
         ~MxlReader()
@@ -470,8 +534,8 @@ namespace
             while (!g_exit_requested)
             {
                 auto ret = mxlStatus{};
-                mxlGrainInfo grainInfo;
-                uint8_t* payload;
+                mxlGrainInfo grainInfo{};
+                mxlPayloadView payloadView{};
 
                 auto const iterationStartTime = ::mxlGetTime();
                 auto const iterationTimeoutNs =
@@ -481,13 +545,14 @@ namespace
                     // Slice mode is not really useful here since gstreamer needs the full grain to push to the pipeline. But for educational
                     // purposes, here's how you can wait for slices to be available.
                     // Please note that -- contrary to how this sample does it -- you don't have to use the slice based reading just because
-                    // the producer indicates a sub-grain sync batch size and are free to use mxlFlowReaderGetGrain() in any case.
-                    ret = ::mxlFlowReaderGetGrainSlice(_reader, cursor.requestedIndex(), expectedSlices, iterationTimeoutNs, &grainInfo, &payload);
+                    // the producer indicates a sub-grain sync batch size and are free to use mxlFlowReaderGetGrainEx() in any case.
+                    ret = ::mxlFlowReaderGetGrainSliceEx(
+                        _reader, cursor.requestedIndex(), expectedSlices, iterationTimeoutNs, &grainInfo, &payloadView);
                 }
                 else
                 {
                     // Use this function to wait for a full grain
-                    ret = ::mxlFlowReaderGetGrain(_reader, cursor.requestedIndex(), iterationTimeoutNs, &grainInfo, &payload);
+                    ret = ::mxlFlowReaderGetGrainEx(_reader, cursor.requestedIndex(), iterationTimeoutNs, &grainInfo, &payloadView);
                 }
 
                 if (ret == MXL_STATUS_OK)
@@ -507,7 +572,13 @@ namespace
                             auto map = GstMapInfo{};
 
                             ::gst_buffer_map(buffer, &map, GST_MAP_WRITE);
-                            std::memcpy(map.data, payload, grainInfo.grainSize);
+                            if (copyPayloadViewToHost(payloadView, map.data, map.size) != MXL_STATUS_OK)
+                            {
+                                ::gst_buffer_unmap(buffer, &map);
+                                ::gst_buffer_unref(buffer);
+                                MXL_ERROR("Failed to copy grain payload at index {}. Exiting...", cursor.requestedIndex());
+                                return;
+                            }
                             ::gst_buffer_unmap(buffer, &map);
 
                             gstPipeline.pushBuffer(buffer, ::mxlIndexToTimestamp(&rate, cursor.requestedIndex()));
