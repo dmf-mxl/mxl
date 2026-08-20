@@ -44,6 +44,14 @@ namespace mxl::lib
         std::optional<std::uint32_t> getMaxSyncBatchSizeHint() const;
 
         /**
+         * Accessor for the 'contiguousGrains' field, which requests that a discrete flow keep one shared-memory file per grain (like the default
+         * layout) but map every grain contiguously in virtual memory, so an integration can register the whole flow for device DMA with a single
+         * mapping while retaining per-grain files. Defaults to false. Ignored for continuous flows.
+         */
+        [[nodiscard]]
+        bool getUseContiguousGrains() const;
+
+        /**
          * Generic accessor for json fields.
          *
          * \param in_field The field name.
@@ -59,6 +67,8 @@ namespace mxl::lib
         std::optional<std::uint32_t> _maxSyncBatchSizeHint;
         /// \see mxlCommonFlowInfo::maxCommitBatchSizeHint
         std::optional<std::uint32_t> _maxCommitBatchSizeHint;
+        /// Whether to map per-grain files contiguously in virtual memory.
+        bool _useContiguousGrains{false};
         /** The parsed flow object. */
         picojson::object _root;
     };

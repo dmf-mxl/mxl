@@ -7,12 +7,15 @@
 #include <algorithm>
 #include <atomic>
 #include <filesystem>
+#include <limits>
 #include <list>
 #include <memory>
 #include <thread>
+#include <unistd.h>
 #include <uuid.h>
 #include <catch2/catch_test_macros.hpp>
 #include <fmt/format.h>
+#include "mxl-internal/DiscreteFlowData.hpp"
 #include "mxl-internal/FlowManager.hpp"
 #include "mxl-internal/Logging.hpp"
 #include "mxl-internal/PathUtils.hpp"
@@ -131,6 +134,195 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow Manager : Creat
 
     // Confirm that files on disk do not exist anymore
     REQUIRE(!exists(flowDirectory));
+}
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow Manager : Per-grain files remain the default", "[flow manager][grain pool]")
+{
+    auto const flowDef = mxl::tests::readFile("data/v210_flow.json");
+    auto const flowId = *uuids::uuid::from_string("16fd2706-8baf-433b-82eb-8c7fada847da");
+    auto const grainRate = mxlRational{60000, 1001};
+
+    auto const grainCount = std::size_t{3};
+    auto const payloadSize = std::size_t{512};
+    auto const sliceSizes = std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN>{static_cast<std::uint32_t>(payloadSize), 0, 0, 0};
+
+    auto manager = std::make_shared<FlowManager>(domain);
+
+    // Default call (no layout option) must keep the per-grain file layout.
+    auto [created,
+        flowData] = manager->createOrOpenDiscreteFlow(flowId, flowDef, MXL_DATA_FORMAT_VIDEO, grainCount, grainRate, payloadSize, 1, sliceSizes);
+
+    REQUIRE(created);
+    REQUIRE(flowData != nullptr);
+    REQUIRE_FALSE(flowData->isWindowMode());
+    REQUIRE(flowData->grainCount() == grainCount);
+
+    auto const flowDirectory = makeFlowDirectoryName(domain, uuids::to_string(flowId));
+    auto const grainDir = makeGrainDirectoryName(flowDirectory);
+    REQUIRE(exists(makeGrainDataFilePath(grainDir, 0)));
+    REQUIRE((flowData->flowInfo()->config.common.flags & MXL_FLOW_FLAG_CONTIGUOUS_GRAINS) == 0U);
+
+    flowData.reset();
+    manager->deleteFlow(flowId);
+    REQUIRE(!exists(flowDirectory));
+}
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow Manager : Contiguous per-grain files", "[flow manager][grain pool]")
+{
+    auto const flowDef = mxl::tests::readFile("data/v210_flow.json");
+    auto const flowId = *uuids::uuid::from_string("2b1e0f9c-3d4a-4b5c-8e6f-1a2b3c4d5e6f");
+    auto const grainRate = mxlRational{60000, 1001};
+
+    auto const grainCount = std::size_t{5};
+    auto const payloadSize = std::size_t{1024};
+    auto const sliceSizes = std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN>{static_cast<std::uint32_t>(payloadSize), 0, 0, 0};
+
+    auto manager = std::make_shared<FlowManager>(domain);
+
+    // Create the flow with the contiguous per-grain-file layout enabled.
+    auto [created, flowData] = manager->createOrOpenDiscreteFlow(flowId,
+        flowDef,
+        MXL_DATA_FORMAT_VIDEO,
+        grainCount,
+        grainRate,
+        payloadSize,
+        1,
+        sliceSizes,
+        1,
+        1,
+        /*useContiguousGrains=*/true);
+
+    REQUIRE(created);
+    REQUIRE(flowData != nullptr);
+    REQUIRE(flowData->isValid());
+    REQUIRE(flowData->isWindowMode());
+    REQUIRE(flowData->grainCount() == grainCount);
+
+    // The grains must be laid out contiguously in virtual memory at a fixed,
+    // page-aligned stride even though they are backed by individual files.
+    auto const stride = DiscreteFlowData::grainStride(payloadSize);
+    REQUIRE(stride >= sizeof(Grain) + payloadSize);
+    REQUIRE((stride % static_cast<std::size_t>(sysconf(_SC_PAGESIZE))) == 0U);
+
+    auto const* grain0 = reinterpret_cast<std::uint8_t const*>(flowData->grainAt(0));
+    REQUIRE(grain0 != nullptr);
+    for (auto i = std::size_t{0}; i < grainCount; ++i)
+    {
+        auto const* grain = flowData->grainAt(i);
+        REQUIRE(grain != nullptr);
+        REQUIRE(flowData->grainMappedSize(i) == sizeof(Grain) + payloadSize);
+        REQUIRE(reinterpret_cast<std::uint8_t const*>(grain) == grain0 + i * stride);
+        REQUIRE(grain->header.info.version == GRAIN_HEADER_VERSION);
+        REQUIRE(grain->header.info.grainSize == payloadSize);
+    }
+
+    // On disk, the per-grain files must exist.
+    auto const flowDirectory = makeFlowDirectoryName(domain, uuids::to_string(flowId));
+    auto const grainDir = makeGrainDirectoryName(flowDirectory);
+    for (auto i = std::size_t{0}; i < grainCount; ++i)
+    {
+        REQUIRE(exists(makeGrainDataFilePath(grainDir, i)));
+    }
+
+    // The layout flag must be recorded so readers can reconstruct the mapping.
+    REQUIRE((flowData->flowInfo()->config.common.flags & MXL_FLOW_FLAG_CONTIGUOUS_GRAINS) != 0U);
+
+    // A reader opening the same flow must reconstruct the contiguous mapping.
+    {
+        auto readerBase = manager->openFlow(flowId, AccessMode::READ_ONLY);
+        auto* readerFlow = dynamic_cast<DiscreteFlowData*>(readerBase.get());
+        REQUIRE(readerFlow != nullptr);
+        REQUIRE(readerFlow->isWindowMode());
+        REQUIRE(readerFlow->grainCount() == grainCount);
+
+        auto const* readerGrain0 = reinterpret_cast<std::uint8_t const*>(readerFlow->grainAt(0));
+        REQUIRE(readerGrain0 != nullptr);
+        for (auto i = std::size_t{0}; i < grainCount; ++i)
+        {
+            auto const* grain = readerFlow->grainAt(i);
+            REQUIRE(grain != nullptr);
+            REQUIRE(reinterpret_cast<std::uint8_t const*>(grain) == readerGrain0 + i * stride);
+            REQUIRE(grain->header.info.grainSize == payloadSize);
+        }
+    }
+
+    flowData.reset();
+    manager->deleteFlow(flowId);
+    REQUIRE(!exists(flowDirectory));
+}
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Contiguous grain window can be reset before fallback", "[flow manager]")
+{
+    auto const flowPath = domain / "flow.data";
+    auto const grainPath = domain / "grain.data";
+    constexpr auto payloadSize = std::size_t{1024};
+
+    auto flowData = DiscreteFlowData{flowPath.string().c_str(), AccessMode::CREATE_READ_WRITE, LockMode::Shared};
+    auto const stride = DiscreteFlowData::grainStride(payloadSize);
+    REQUIRE(flowData.openContiguousWindow(2U, stride));
+    REQUIRE(flowData.emplaceGrainAt(0U, grainPath.string().c_str(), payloadSize) != nullptr);
+    REQUIRE(flowData.isWindowMode());
+    REQUIRE(flowData.grainCount() == 1U);
+
+    flowData.resetContiguousWindow();
+    REQUIRE_FALSE(flowData.isWindowMode());
+    REQUIRE(flowData.grainCount() == 0U);
+
+    REQUIRE(flowData.emplaceGrain(grainPath.string().c_str(), payloadSize) != nullptr);
+    REQUIRE_FALSE(flowData.isWindowMode());
+    REQUIRE(flowData.grainCount() == 1U);
+    REQUIRE(flowData.grainMappedSize(0U) == sizeof(Grain) + payloadSize);
+}
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow Manager : Rejects inconsistent contiguous grain files", "[flow manager]")
+{
+    auto const flowDef = mxl::tests::readFile("data/v210_flow.json");
+    auto const flowId = *uuids::uuid::from_string("4a5b6c7d-8e9f-4012-a345-6789abcdef01");
+    auto const grainRate = mxlRational{60000, 1001};
+    auto const grainCount = std::size_t{3};
+    auto const payloadSize = std::size_t{1024};
+    auto const sliceSizes = std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN>{static_cast<std::uint32_t>(payloadSize), 0, 0, 0};
+    auto manager = std::make_shared<FlowManager>(domain);
+
+    auto [created, flowData] = manager->createOrOpenDiscreteFlow(flowId,
+        flowDef,
+        MXL_DATA_FORMAT_VIDEO,
+        grainCount,
+        grainRate,
+        payloadSize,
+        1,
+        sliceSizes,
+        1,
+        1,
+        /*useContiguousGrains=*/true);
+    REQUIRE(created);
+
+    auto const grainDir = makeGrainDirectoryName(makeFlowDirectoryName(domain, uuids::to_string(flowId)));
+    flowData.reset();
+
+    SECTION("a later grain exceeds its slot")
+    {
+        resize_file(makeGrainDataFilePath(grainDir, 1U), DiscreteFlowData::grainStride(payloadSize) + 1U);
+        REQUIRE_THROWS_AS(manager->openFlow(flowId, AccessMode::READ_ONLY), std::invalid_argument);
+    }
+
+    SECTION("the first grain is smaller than its header")
+    {
+        resize_file(makeGrainDataFilePath(grainDir, 0U), sizeof(Grain) - 1U);
+        REQUIRE_THROWS(manager->openFlow(flowId, AccessMode::READ_ONLY));
+    }
+
+    manager->deleteFlow(flowId);
+}
+
+TEST_CASE("Contiguous grain sizing rejects overflow", "[flow manager]")
+{
+    auto const maximum = std::numeric_limits<std::size_t>::max();
+    REQUIRE(DiscreteFlowData::grainStride(maximum) == 0U);
+    REQUIRE(ContiguousWindow::alignToPage(maximum) == 0U);
+
+    auto window = ContiguousWindow{maximum, 2U};
+    REQUIRE_FALSE(window.valid());
 }
 
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow Manager : Create Audio Flow Structure", "[flow manager]")
