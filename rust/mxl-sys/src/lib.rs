@@ -17,3 +17,8 @@
 extern crate libloading;
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+
+#[cfg(feature = "mxl-fabrics-ofi")]
+pub mod fabrics {
+    include!(concat!(env!("OUT_DIR"), "/fabrics_bindings.rs"));
+}

@@ -22,3 +22,8 @@ pub use mxl_sys::Rational;
 pub use samples::{
     data::*, reader::SamplesReader, write_access::SamplesWriteAccess, writer::SamplesWriter,
 };
+
+#[cfg(feature = "mxl-fabrics-ofi")]
+pub mod fabrics;
+#[cfg(feature = "mxl-fabrics-ofi")]
+pub use api::{MxlFabricsApi, load_fabrics_api};

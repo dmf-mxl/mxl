@@ -5,83 +5,13 @@
 ///
 /// The tests now require an MXL library of a specific name to be present in the system. This should
 /// change in the future. For now, feel free to just edit the path to your library.
+mod common;
+
 use std::time::Duration;
 
-use mxl::{MxlInstance, OwnedGrainData, OwnedSamplesData, config::get_mxl_so_path};
+use common::{read_flow_def, setup_test};
+use mxl::{OwnedGrainData, OwnedSamplesData};
 use tracing::info;
-
-static LOG_ONCE: std::sync::Once = std::sync::Once::new();
-
-struct TestDomainGuard {
-    dir: std::path::PathBuf,
-}
-
-impl TestDomainGuard {
-    fn new(test: &str) -> Self {
-        let dir = std::path::PathBuf::from(format!(
-            "/dev/shm/mxl_rust_unit_tests_domain_{}_{}",
-            test,
-            uuid::Uuid::new_v4()
-        ));
-        std::fs::create_dir_all(dir.as_path()).unwrap_or_else(|_| {
-            panic!(
-                "Failed to create test domain directory \"{}\".",
-                dir.display()
-            )
-        });
-        Self { dir }
-    }
-
-    fn domain(&self) -> String {
-        self.dir.to_string_lossy().to_string()
-    }
-}
-
-impl Drop for TestDomainGuard {
-    fn drop(&mut self) {
-        std::fs::remove_dir_all(self.dir.as_path()).unwrap_or_else(|_| {
-            panic!(
-                "Failed to remove test domain directory \"{}\".",
-                self.dir.display()
-            )
-        });
-    }
-}
-
-fn setup_test(test: &str) -> (MxlInstance, TestDomainGuard) {
-    // Set up the logging to use the RUST_LOG environment variable and if not present, print INFO
-    // and higher.
-    LOG_ONCE.call_once(|| {
-        tracing_subscriber::fmt()
-            .with_env_filter(
-                tracing_subscriber::EnvFilter::builder()
-                    .with_default_directive(tracing::level_filters::LevelFilter::INFO.into())
-                    .from_env_lossy(),
-            )
-            .init();
-    });
-
-    let mxl_api = mxl::load_api(get_mxl_so_path()).unwrap();
-    let domain_guard = TestDomainGuard::new(test);
-    (
-        MxlInstance::new(mxl_api, domain_guard.domain().as_str(), "").unwrap(),
-        domain_guard,
-    )
-}
-
-fn read_flow_def<P: AsRef<std::path::Path>>(path: P) -> String {
-    let flow_config_file = mxl::config::get_mxl_repo_root().join(path);
-
-    std::fs::read_to_string(flow_config_file.as_path())
-        .map_err(|error| {
-            mxl::Error::Other(format!(
-                "Error while reading flow definition from \"{}\": {}",
-                flow_config_file.display(),
-                error
-            ))
-        })
-        .unwrap()
-}
 
 #[test]
 fn basic_mxl_grain_writing_reading() {
