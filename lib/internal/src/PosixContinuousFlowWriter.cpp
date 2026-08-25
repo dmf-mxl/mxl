@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "PosixContinuousFlowWriter.hpp"
+#include <cstring>
+#include <algorithm>
 #include <stdexcept>
 #include <mxl/time.h>
 #include "mxl-internal/Sync.hpp"
@@ -15,6 +17,7 @@ namespace mxl::lib
         , _channelCount{_flowData->channelCount()}
         , _bufferLength{_flowData->channelBufferLength()}
         , _currentIndex{MXL_UNDEFINED_INDEX}
+        , _lastCommittedIndex{MXL_UNDEFINED_INDEX}
         , _syncBatchSize{1U}
         , _earlySyncThreshold{}
         , _lastSyncSampleBatch{}
@@ -77,6 +80,45 @@ namespace mxl::lib
         {
             if (count <= (_bufferLength / 2))
             {
+                if (index < count)
+                {
+                    return MXL_ERR_INVALID_ARG;
+                }
+
+                auto const writeStartIndex = index - count;
+                if (_lastCommittedIndex != MXL_UNDEFINED_INDEX)
+                {
+                    if ((index <= _lastCommittedIndex) || (writeStartIndex < _lastCommittedIndex))
+                    {
+                        return MXL_ERR_INVALID_ARG;
+                    }
+
+                    if (writeStartIndex > _lastCommittedIndex)
+                    {
+                        // We have to clear any skipped samples in the writable ring. This prevents readers from
+                        // seeing stale payload data when the producer introduces a write gap.
+                        auto const skippedCount = writeStartIndex - _lastCommittedIndex;
+                        auto const clearedCount = std::min<std::uint64_t>(skippedCount, _bufferLength);
+                        auto const gapEndIndex = writeStartIndex;
+
+                        auto const clearStartOffset = (gapEndIndex + _bufferLength - clearedCount) % _bufferLength;
+                        auto const clearEndOffset = gapEndIndex % _bufferLength;
+                        auto const firstClearLength = (clearStartOffset < clearEndOffset) ? clearedCount : _bufferLength - clearStartOffset;
+                        auto const secondClearLength = clearedCount - firstClearLength;
+
+                        auto const sampleWordSize = _flowData->sampleWordSize();
+                        auto const channelStride = sampleWordSize * _bufferLength;
+                        auto* const baseBufferPtr = static_cast<std::uint8_t*>(_flowData->channelData());
+
+                        for (auto channel = std::size_t{0}; channel < _channelCount; ++channel)
+                        {
+                            auto* const channelBasePtr = baseBufferPtr + (channel * channelStride);
+                            std::memset(channelBasePtr + (sampleWordSize * clearStartOffset), 0, sampleWordSize * firstClearLength);
+                            std::memset(channelBasePtr, 0, sampleWordSize * secondClearLength);
+                        }
+                    }
+                }
+
                 auto const startOffset = (index + _bufferLength - count) % _bufferLength;
                 auto const endOffset = (index % _bufferLength);
 
@@ -109,8 +151,14 @@ namespace mxl::lib
     {
         if (_flowData)
         {
+            if (_currentIndex == MXL_UNDEFINED_INDEX)
+            {
+                return MXL_ERR_INVALID_ARG;
+            }
+
             auto const flow = _flowData->flow();
             flow->info.runtime.headIndex = _currentIndex;
+            _lastCommittedIndex = _currentIndex;
             _currentIndex = MXL_UNDEFINED_INDEX;
 
             if (signalCompletedBatch())

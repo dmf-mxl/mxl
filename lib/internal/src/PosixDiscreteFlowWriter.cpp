@@ -3,6 +3,7 @@
 
 #include "PosixDiscreteFlowWriter.hpp"
 #include <cstdint>
+#include <algorithm>
 #include <stdexcept>
 #include <fcntl.h>
 #include <uuid.h>
@@ -22,6 +23,7 @@ namespace mxl::lib
         : DiscreteFlowWriter{flowId, manager.getDomain()}
         , _flowData{std::move(data)}
         , _currentIndex{MXL_UNDEFINED_INDEX}
+        , _lastCommittedIndex{MXL_UNDEFINED_INDEX}
         , _watcher(watcher)
     {
         _watcher->addFlow(this, flowId);
@@ -81,17 +83,43 @@ namespace mxl::lib
 
     mxlStatus PosixDiscreteFlowWriter::openGrain(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload)
     {
-        if (_flowData)
+        if (!_flowData)
         {
-            auto offset = in_index % _flowData->flowInfo()->config.discrete.grainCount;
-            auto const grain = _flowData->grainAt(offset);
-            grain->header.info.index = in_index; // Set the absolute grain index associated to that ring buffer entry
-            *out_grainInfo = grain->header.info;
-            *out_payload = reinterpret_cast<std::uint8_t*>(&grain->header + 1);
-            _currentIndex = in_index;
-            return MXL_STATUS_OK;
+            return MXL_ERR_UNKNOWN;
         }
-        return MXL_ERR_UNKNOWN;
+
+        if (_lastCommittedIndex != MXL_UNDEFINED_INDEX && in_index <= _lastCommittedIndex)
+        {
+            return MXL_ERR_INVALID_ARG;
+        }
+
+        if (_lastCommittedIndex != MXL_UNDEFINED_INDEX && in_index > (_lastCommittedIndex + 1U))
+        {
+            // We have to invalidate any grain that would've been written to if the write was continuous. This is to ensure that the reader doesn't
+            // read stale data from a previous write.
+            auto const grainCount = _flowData->flowInfo()->config.discrete.grainCount;
+            auto const skippedCount = in_index - _lastCommittedIndex - 1U;
+            auto const invalidatedCount = std::min<std::uint64_t>(skippedCount, grainCount);
+            auto const firstInvalidatedIndex = in_index - invalidatedCount;
+
+            for (auto missingIndex = firstInvalidatedIndex; missingIndex < in_index; ++missingIndex)
+            {
+                auto const missingOffset = missingIndex % grainCount;
+                auto const missingGrain = _flowData->grainAt(missingOffset);
+                missingGrain->header.info.index = missingIndex;
+                missingGrain->header.info.validSlices = 0;
+                missingGrain->header.info.flags |= MXL_GRAIN_FLAG_INVALID;
+            }
+        }
+
+        auto offset = in_index % _flowData->flowInfo()->config.discrete.grainCount;
+        auto const grain = _flowData->grainAt(offset);
+        grain->header.info.index = in_index; // Set the absolute grain index associated to that ring buffer entry
+        grain->header.info.flags &= ~MXL_GRAIN_FLAG_INVALID;
+        *out_grainInfo = grain->header.info;
+        *out_payload = reinterpret_cast<std::uint8_t*>(&grain->header + 1);
+        _currentIndex = in_index;
+        return MXL_STATUS_OK;
     }
 
     mxlStatus PosixDiscreteFlowWriter::cancel()
@@ -134,6 +162,7 @@ namespace mxl::lib
 
             auto const offset = _currentIndex % flow->info.config.discrete.grainCount;
             *_flowData->grainInfoAt(offset) = mxlGrainInfo;
+            _lastCommittedIndex = mxlGrainInfo.index;
             flow->info.runtime.lastWriteTime = currentTime(mxl::lib::Clock::TAI).value;
 
             // If the grain is complete, reset the current index of the flow writer.

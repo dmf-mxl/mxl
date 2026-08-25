@@ -128,7 +128,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : Create/
 
     // Use the writer after closing the reader.
     buffer = nullptr;
-    REQUIRE(mxlFlowWriterOpenGrain(writer, index++, &gInfo, &buffer) == MXL_STATUS_OK);
+    REQUIRE(mxlFlowWriterOpenGrain(writer, ++index, &gInfo, &buffer) == MXL_STATUS_OK);
     /// Set a mark at the beginning and the end of the grain payload.
     buffer[0] = 0xCA;
     buffer[gInfo.grainSize - 1] = 0xFE;
@@ -237,7 +237,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow (With Alp
 
     // Use the writer after closing the reader.
     buffer = nullptr;
-    REQUIRE(mxlFlowWriterOpenGrain(writer, index++, &gInfo, &buffer) == MXL_STATUS_OK);
+    REQUIRE(mxlFlowWriterOpenGrain(writer, ++index, &gInfo, &buffer) == MXL_STATUS_OK);
     /// Set a mark at the beginning and the end of the grain payload.
     buffer[0] = 0xCA;
     buffer[gInfo.grainSize - 1] = 0xFE;
@@ -500,7 +500,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Data Flow : Create/D
 
     // Use the writer after closing the reader.
     uint8_t* buffer2 = nullptr;
-    REQUIRE(mxlFlowWriterOpenGrain(writer, index++, &gInfo, &buffer2) == MXL_STATUS_OK);
+    REQUIRE(mxlFlowWriterOpenGrain(writer, ++index, &gInfo, &buffer2) == MXL_STATUS_OK);
 
     REQUIRE(mxlReleaseFlowWriter(instanceWriter, writer) == MXL_STATUS_OK);
 
@@ -1077,4 +1077,169 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlFlowWriterCommitS
     REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
 
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+}
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Audio Flow : Jump forward", "[mxl flows]")
+{
+    auto const opts = "{}";
+    constexpr std::uint64_t samplesPerCommit = 480;
+
+    auto instanceReader = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instanceReader != nullptr);
+
+    auto instanceWriter = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instanceWriter != nullptr);
+
+    auto flowDef = mxl::tests::readFile("data/audio_flow.json");
+    mxlFlowWriter writer;
+    mxlFlowConfigInfo configInfo;
+    bool flowWasCreated = false;
+    REQUIRE(mxlCreateFlowWriter(instanceWriter, flowDef.c_str(), opts, &writer, &configInfo, &flowWasCreated) == MXL_STATUS_OK);
+    REQUIRE(flowWasCreated);
+
+    mxlFlowReader reader;
+    auto const flowId = uuids::to_string(configInfo.common.id);
+    REQUIRE(mxlCreateFlowReader(instanceReader, flowId.c_str(), "", &reader) == MXL_STATUS_OK);
+
+    mxlMutableWrappedMultiBufferSlice writeSlices{};
+    auto const groupToSampleIndex = [](std::uint64_t groupIndex)
+    {
+        return ((groupIndex + 1U) * samplesPerCommit) - 1U;
+    };
+
+    for (std::uint64_t writerGroupIndex = 42; writerGroupIndex <= 46; ++writerGroupIndex)
+    {
+        auto const writerSampleIndex = groupToSampleIndex(writerGroupIndex);
+        REQUIRE(mxlFlowWriterOpenSamples(writer, writerSampleIndex, samplesPerCommit, &writeSlices) == MXL_STATUS_OK);
+        auto const firstSamples = writeSlices.base.fragments[0].size / sizeof(std::uint32_t);
+        for (std::size_t i = 0U; i < firstSamples; ++i)
+        {
+            static_cast<std::uint32_t*>(writeSlices.base.fragments[0].pointer)[i] = static_cast<std::uint32_t>(writerGroupIndex);
+        }
+        auto const secondSamples = writeSlices.base.fragments[1].size / sizeof(std::uint32_t);
+        for (std::size_t i = 0U; i < secondSamples; ++i)
+        {
+            static_cast<std::uint32_t*>(writeSlices.base.fragments[1].pointer)[i] = static_cast<std::uint32_t>(writerGroupIndex);
+        }
+        REQUIRE(mxlFlowWriterCommitSamples(writer) == MXL_STATUS_OK);
+    }
+
+    // Jump forward to group 100, skipping groups 47-99.
+    std::uint64_t writerGroupIndex = 100;
+    std::uint64_t writerSampleIndex = groupToSampleIndex(writerGroupIndex);
+    REQUIRE(mxlFlowWriterOpenSamples(writer, writerSampleIndex, samplesPerCommit, &writeSlices) == MXL_STATUS_OK);
+
+    // From the moment we open sample 100, the whole ring buffer should be invalidated. The head does not move until
+    // group 100 is committed though, so we have to check group endpoints 46 and earlier.
+    mxlWrappedMultiBufferSlice readSlices{};
+    for (std::uint64_t readGroupIndex = 42; readGroupIndex <= 46; ++readGroupIndex)
+    {
+        auto const sampleIndex = groupToSampleIndex(readGroupIndex);
+        auto const returnCode = mxlFlowReaderGetSamplesNonBlocking(reader, sampleIndex, 1U, &readSlices);
+        // This condition lines up because we picked 480 samples (10ms), which is a divider of the default history duration (200 ms).
+        if (sampleIndex % configInfo.continuous.bufferLength == writerSampleIndex % configInfo.continuous.bufferLength)
+        {
+            REQUIRE(returnCode == MXL_ERR_OUT_OF_RANGE_TOO_EARLY);
+        }
+        else
+        {
+            REQUIRE(returnCode == MXL_STATUS_OK);
+            if (readSlices.base.fragments[0].size > 0U)
+            {
+                REQUIRE(static_cast<std::uint32_t const*>(readSlices.base.fragments[0].pointer)[0] == 0U);
+            }
+            if (readSlices.base.fragments[1].size > 0U)
+            {
+                REQUIRE(static_cast<std::uint32_t const*>(readSlices.base.fragments[1].pointer)[0] == 0U);
+            }
+        }
+    }
+
+    auto const firstSamples = writeSlices.base.fragments[0].size / sizeof(std::uint32_t);
+    for (std::size_t i = 0U; i < firstSamples; ++i)
+    {
+        static_cast<std::uint32_t*>(writeSlices.base.fragments[0].pointer)[i] = static_cast<std::uint32_t>(writerGroupIndex);
+    }
+    auto const secondSamples = writeSlices.base.fragments[1].size / sizeof(std::uint32_t);
+    for (std::size_t i = 0U; i < secondSamples; ++i)
+    {
+        static_cast<std::uint32_t*>(writeSlices.base.fragments[1].pointer)[i] = static_cast<std::uint32_t>(writerGroupIndex);
+    }
+    REQUIRE(mxlFlowWriterCommitSamples(writer) == MXL_STATUS_OK);
+
+    // Group 100 endpoint should contain the latest write after commit.
+    REQUIRE(mxlFlowReaderGetSamplesNonBlocking(reader, writerSampleIndex, 1U, &readSlices) == MXL_STATUS_OK);
+    REQUIRE(static_cast<std::uint32_t const*>(readSlices.base.fragments[0].pointer)[0] == 100U);
+
+    REQUIRE(mxlReleaseFlowReader(instanceReader, reader) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowWriter(instanceWriter, writer) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instanceReader) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instanceWriter) == MXL_STATUS_OK);
+}
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : Jump forward", "[mxl flows]")
+{
+    auto const opts = "{}";
+    auto instanceReader = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instanceReader != nullptr);
+
+    auto instanceWriter = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instanceWriter != nullptr);
+
+    auto flowDef = mxl::tests::readFile("data/v210_flow.json");
+    mxlFlowWriter writer;
+    mxlFlowConfigInfo configInfo;
+    bool flowWasCreated = false;
+    REQUIRE(mxlCreateFlowWriter(instanceWriter, flowDef.c_str(), opts, &writer, &configInfo, &flowWasCreated) == MXL_STATUS_OK);
+    REQUIRE(flowWasCreated);
+
+    mxlFlowReader reader;
+    auto const flowId = uuids::to_string(configInfo.common.id);
+    REQUIRE(mxlCreateFlowReader(instanceReader, flowId.c_str(), "", &reader) == MXL_STATUS_OK);
+
+    mxlGrainInfo gInfo;
+    std::uint8_t* buffer = nullptr;
+    for (std::uint64_t writerGrainIndex = 42; writerGrainIndex <= 46; ++writerGrainIndex)
+    {
+        REQUIRE(mxlFlowWriterOpenGrain(writer, writerGrainIndex, &gInfo, &buffer) == MXL_STATUS_OK);
+        REQUIRE(buffer != nullptr);
+        memcpy(buffer, &writerGrainIndex, sizeof(std::uint64_t));
+        gInfo.validSlices = gInfo.totalSlices;
+        REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_STATUS_OK);
+    }
+
+    // Jump forward to grain 100, skipping grains 47-99
+    std::uint64_t writerGrainIndex = 100;
+    REQUIRE(mxlFlowWriterOpenGrain(writer, writerGrainIndex, &gInfo, &buffer) == MXL_STATUS_OK);
+
+    // From the moment we open grain 100, the whole ring buffer should be invalidated. The head does not move until grain 100 is committed though, so
+    // we have to check grains 46 and earlier.
+    for (std::uint64_t grainIndex = std::max(std::uint64_t(46) - configInfo.discrete.grainCount + 2, std::uint64_t(42)); grainIndex <= 46;
+        ++grainIndex)
+    {
+        mxlGrainInfo readGrainInfo;
+        std::uint8_t* readBuffer = nullptr;
+        auto returnCode = mxlFlowReaderGetGrain(reader, grainIndex, 0, &readGrainInfo, &readBuffer);
+        if (grainIndex % configInfo.discrete.grainCount == writerGrainIndex % configInfo.discrete.grainCount)
+        {
+            REQUIRE(returnCode == MXL_ERR_OUT_OF_RANGE_TOO_EARLY);
+        }
+        else
+        {
+            REQUIRE(returnCode == MXL_STATUS_OK);
+        }
+        REQUIRE((readGrainInfo.flags & MXL_GRAIN_FLAG_INVALID) != 0);
+    }
+
+    // Commit grain 100 and verify that it is readable.
+    memcpy(buffer, &writerGrainIndex, sizeof(std::uint64_t));
+    gInfo.validSlices = gInfo.totalSlices;
+    REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_STATUS_OK);
+    REQUIRE(mxlFlowReaderGetGrain(reader, writerGrainIndex, 0, &gInfo, &buffer) == MXL_STATUS_OK);
+    REQUIRE(reinterpret_cast<std::uint64_t*>(buffer)[0] == writerGrainIndex);
+
+    REQUIRE(mxlReleaseFlowReader(instanceReader, reader) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowWriter(instanceWriter, writer) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instanceReader) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instanceWriter) == MXL_STATUS_OK);
 }

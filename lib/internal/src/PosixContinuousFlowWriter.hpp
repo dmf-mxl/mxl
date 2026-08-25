@@ -10,7 +10,6 @@
 #include <mxl/mxl.h>
 #include "mxl-internal/ContinuousFlowData.hpp"
 #include "mxl-internal/ContinuousFlowWriter.hpp"
-#include "mxl-internal/DomainWatcher.hpp"
 #include "mxl-internal/FlowManager.hpp"
 
 namespace mxl::lib
@@ -82,6 +81,8 @@ namespace mxl::lib
         std::size_t _bufferLength;
         /** The currently opened sample range head index. MXL_UNDEFINED_INDEX if no range is currently opened. */
         std::uint64_t _currentIndex;
+        /** The last committed sample range head index. MXL_UNDEFINED_INDEX if no range has been committed yet. */
+        std::uint64_t _lastCommittedIndex;
 
         /** Cached preprocessed copy of mxlCommonFlowInfo::maxSyncBatchSizeHint. */
         std::uint32_t _syncBatchSize;
