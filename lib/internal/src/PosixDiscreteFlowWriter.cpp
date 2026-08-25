@@ -162,13 +162,13 @@ namespace mxl::lib
 
             auto const offset = _currentIndex % flow->info.config.discrete.grainCount;
             *_flowData->grainInfoAt(offset) = mxlGrainInfo;
-            _lastCommittedIndex = mxlGrainInfo.index;
             flow->info.runtime.lastWriteTime = currentTime(mxl::lib::Clock::TAI).value;
 
             // If the grain is complete, reset the current index of the flow writer.
             if (mxlGrainInfo.validSlices == mxlGrainInfo.totalSlices)
             {
                 _currentIndex = MXL_UNDEFINED_INDEX;
+                _lastCommittedIndex = mxlGrainInfo.index;
             }
 
             // Let readers know that the head has moved or that new data is available in a partial grain
