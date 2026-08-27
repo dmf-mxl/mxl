@@ -21,7 +21,11 @@ extern "C"
     typedef enum mxlStatus
     {
         MXL_STATUS_OK,
+
+        // Do not check for MXL_ERR_UNKNOWN. Functions that return MXL_ERR_UNKNOWN in a certain situation, may return
+        // a more descriptive error code in the future and this would not be considered a breaking change.
         MXL_ERR_UNKNOWN,
+
         MXL_ERR_FLOW_NOT_FOUND,
         MXL_ERR_OUT_OF_RANGE_TOO_LATE,
         MXL_ERR_OUT_OF_RANGE_TOO_EARLY,
