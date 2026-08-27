@@ -172,6 +172,8 @@ Private Attributes</h2></td></tr>
 <tr class="separator:ab641fa25cabf4a5e80acd9128c237150"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2bbdf95167de78174ef17126e3f87301" id="r_a2bbdf95167de78174ef17126e3f87301"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowData.html">DiscreteFlowData</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a></td></tr>
 <tr class="separator:a2bbdf95167de78174ef17126e3f87301"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1a35bb17d4a79583ce5ee8f1b5c38a4a" id="r_a1a35bb17d4a79583ce5ee8f1b5c38a4a"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a1a35bb17d4a79583ce5ee8f1b5c38a4a">_lastCommittedIndex</a></td></tr>
+<tr class="separator:a1a35bb17d4a79583ce5ee8f1b5c38a4a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8b949deef80f7611d03e2124f6235797" id="r_a8b949deef80f7611d03e2124f6235797"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classmxl_1_1lib_1_1DomainWatcher.html#a9b228b158de820c3481500cbd9acc787">DomainWatcher::ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a8b949deef80f7611d03e2124f6235797">_watcher</a></td></tr>
 <tr class="separator:a8b949deef80f7611d03e2124f6235797"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -240,16 +242,18 @@ Additional Inherited Members</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00020">20</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   22</span>        : DiscreteFlowWriter{<a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, manager.getDomain()}</div>
-<div class="line"><span class="lineno">   23</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>{std::move(data)}</div>
-<div class="line"><span class="lineno">   24</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#ab641fa25cabf4a5e80acd9128c237150">_currentIndex</a>{<a class="code hl_define" href="rational_8h.html#a0d53b40f480a895e089040442b6efb14">MXL_UNDEFINED_INDEX</a>}</div>
-<div class="line"><span class="lineno">   25</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a8b949deef80f7611d03e2124f6235797">_watcher</a>(watcher)</div>
-<div class="line"><span class="lineno">   26</span>    {</div>
-<div class="line"><span class="lineno">   27</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a8b949deef80f7611d03e2124f6235797">_watcher</a>-&gt;addFlow(<span class="keyword">this</span>, <a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>);</div>
-<div class="line"><span class="lineno">   28</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00021">21</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   23</span>        : DiscreteFlowWriter{<a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, manager.getDomain()}</div>
+<div class="line"><span class="lineno">   24</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>{std::move(data)}</div>
+<div class="line"><span class="lineno">   25</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#ab641fa25cabf4a5e80acd9128c237150">_currentIndex</a>{<a class="code hl_define" href="rational_8h.html#a0d53b40f480a895e089040442b6efb14">MXL_UNDEFINED_INDEX</a>}</div>
+<div class="line"><span class="lineno">   26</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a1a35bb17d4a79583ce5ee8f1b5c38a4a">_lastCommittedIndex</a>{<a class="code hl_define" href="rational_8h.html#a0d53b40f480a895e089040442b6efb14">MXL_UNDEFINED_INDEX</a>}</div>
+<div class="line"><span class="lineno">   27</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a8b949deef80f7611d03e2124f6235797">_watcher</a>(watcher)</div>
+<div class="line"><span class="lineno">   28</span>    {</div>
+<div class="line"><span class="lineno">   29</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a8b949deef80f7611d03e2124f6235797">_watcher</a>-&gt;addFlow(<span class="keyword">this</span>, <a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>);</div>
+<div class="line"><span class="lineno">   30</span>    }</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1PosixDiscreteFlowWriter_html_a1a35bb17d4a79583ce5ee8f1b5c38a4a"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a1a35bb17d4a79583ce5ee8f1b5c38a4a">mxl::lib::PosixDiscreteFlowWriter::_lastCommittedIndex</a></div><div class="ttdeci">std::uint64_t _lastCommittedIndex</div><div class="ttdef"><b>Definition</b> <a href="PosixDiscreteFlowWriter_8hpp_source.html#l00081">PosixDiscreteFlowWriter.hpp:81</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1PosixDiscreteFlowWriter_html_a2bbdf95167de78174ef17126e3f87301"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">mxl::lib::PosixDiscreteFlowWriter::_flowData</a></div><div class="ttdeci">std::unique_ptr&lt; DiscreteFlowData &gt; _flowData</div><div class="ttdef"><b>Definition</b> <a href="PosixDiscreteFlowWriter_8hpp_source.html#l00077">PosixDiscreteFlowWriter.hpp:77</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1PosixDiscreteFlowWriter_html_a8b949deef80f7611d03e2124f6235797"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a8b949deef80f7611d03e2124f6235797">mxl::lib::PosixDiscreteFlowWriter::_watcher</a></div><div class="ttdeci">DomainWatcher::ptr _watcher</div><div class="ttdef"><b>Definition</b> <a href="PosixDiscreteFlowWriter_8hpp_source.html#l00084">PosixDiscreteFlowWriter.hpp:84</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1PosixDiscreteFlowWriter_html_a8b949deef80f7611d03e2124f6235797"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a8b949deef80f7611d03e2124f6235797">mxl::lib::PosixDiscreteFlowWriter::_watcher</a></div><div class="ttdeci">DomainWatcher::ptr _watcher</div><div class="ttdef"><b>Definition</b> <a href="PosixDiscreteFlowWriter_8hpp_source.html#l00086">PosixDiscreteFlowWriter.hpp:86</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1PosixDiscreteFlowWriter_html_ab641fa25cabf4a5e80acd9128c237150"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#ab641fa25cabf4a5e80acd9128c237150">mxl::lib::PosixDiscreteFlowWriter::_currentIndex</a></div><div class="ttdeci">std::uint64_t _currentIndex</div><div class="ttdef"><b>Definition</b> <a href="PosixDiscreteFlowWriter_8hpp_source.html#l00079">PosixDiscreteFlowWriter.hpp:79</a></div></div>
 <div class="ttc" id="arational_8h_html_a0d53b40f480a895e089040442b6efb14"><div class="ttname"><a href="rational_8h.html#a0d53b40f480a895e089040442b6efb14">MXL_UNDEFINED_INDEX</a></div><div class="ttdeci">#define MXL_UNDEFINED_INDEX</div><div class="ttdef"><b>Definition</b> <a href="rational_8h_source.html#l00017">rational.h:17</a></div></div>
 <div class="ttc" id="atest__flows_8cpp_html_a8120482e2d040fcf08a3008238ee95e8"><div class="ttname"><a href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a></div><div class="ttdeci">auto const flowId</div><div class="ttdef"><b>Definition</b> <a href="test__flows_8cpp_source.html#l00145">test_flows.cpp:145</a></div></div>
@@ -279,17 +283,17 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00030">30</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   31</span>    {</div>
-<div class="line"><span class="lineno">   32</span>        <span class="keywordflow">try</span></div>
-<div class="line"><span class="lineno">   33</span>        {</div>
-<div class="line"><span class="lineno">   34</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a8b949deef80f7611d03e2124f6235797">_watcher</a>-&gt;removeFlow(<span class="keyword">this</span>, <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>-&gt;flowInfo()-&gt;config.common.id);</div>
-<div class="line"><span class="lineno">   35</span>        }</div>
-<div class="line"><span class="lineno">   36</span>        <span class="keywordflow">catch</span> (...)</div>
-<div class="line"><span class="lineno">   37</span>        {</div>
-<div class="line"><span class="lineno">   38</span>            <a class="code hl_define" href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a>(<span class="stringliteral">&quot;Bug: exception while removing flow writer from watcher in destructor&quot;</span>);</div>
-<div class="line"><span class="lineno">   39</span>        }</div>
-<div class="line"><span class="lineno">   40</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00032">32</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   33</span>    {</div>
+<div class="line"><span class="lineno">   34</span>        <span class="keywordflow">try</span></div>
+<div class="line"><span class="lineno">   35</span>        {</div>
+<div class="line"><span class="lineno">   36</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a8b949deef80f7611d03e2124f6235797">_watcher</a>-&gt;removeFlow(<span class="keyword">this</span>, <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>-&gt;flowInfo()-&gt;config.common.id);</div>
+<div class="line"><span class="lineno">   37</span>        }</div>
+<div class="line"><span class="lineno">   38</span>        <span class="keywordflow">catch</span> (...)</div>
+<div class="line"><span class="lineno">   39</span>        {</div>
+<div class="line"><span class="lineno">   40</span>            <a class="code hl_define" href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a>(<span class="stringliteral">&quot;Bug: exception while removing flow writer from watcher in destructor&quot;</span>);</div>
+<div class="line"><span class="lineno">   41</span>        }</div>
+<div class="line"><span class="lineno">   42</span>    }</div>
 <div class="ttc" id="aLogging_8hpp_html_ac235c0b6be0299ec9671f7bd4551b0ad"><div class="ttname"><a href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a></div><div class="ttdeci">#define MXL_ERROR(...)</div><div class="ttdef"><b>Definition</b> <a href="Logging_8hpp_source.html#l00067">Logging.hpp:67</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -321,11 +325,11 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowWriter.html#ac49926ea180cb4e8eee518285a71c854">mxl::lib::DiscreteFlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00097">97</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   98</span>    {</div>
-<div class="line"><span class="lineno">   99</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#ab641fa25cabf4a5e80acd9128c237150">_currentIndex</a> = <a class="code hl_define" href="rational_8h.html#a0d53b40f480a895e089040442b6efb14">MXL_UNDEFINED_INDEX</a>;</div>
-<div class="line"><span class="lineno">  100</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
-<div class="line"><span class="lineno">  101</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00125">125</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  126</span>    {</div>
+<div class="line"><span class="lineno">  127</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#ab641fa25cabf4a5e80acd9128c237150">_currentIndex</a> = <a class="code hl_define" href="rational_8h.html#a0d53b40f480a895e089040442b6efb14">MXL_UNDEFINED_INDEX</a>;</div>
+<div class="line"><span class="lineno">  128</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
+<div class="line"><span class="lineno">  129</span>    }</div>
 <div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a></div><div class="ttdeci">@ MXL_STATUS_OK</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00023">mxl.h:23</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -357,36 +361,37 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowWriter.html#a1de693716289a081fa73f8d42ac8ca33">mxl::lib::DiscreteFlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00123">123</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  124</span>    {</div>
-<div class="line"><span class="lineno">  125</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>)</div>
-<div class="line"><span class="lineno">  126</span>        {</div>
-<div class="line"><span class="lineno">  127</span>            <span class="keywordflow">if</span> (<a class="code hl_struct" href="structmxlGrainInfo__t.html">mxlGrainInfo</a>.<a class="code hl_variable" href="structmxlGrainInfo__t.html#a12d63ea78790283255e22d56e27f21cd">index</a> != <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#ab641fa25cabf4a5e80acd9128c237150">_currentIndex</a>)</div>
-<div class="line"><span class="lineno">  128</span>            {</div>
-<div class="line"><span class="lineno">  129</span>                <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
-<div class="line"><span class="lineno">  130</span>            }</div>
-<div class="line"><span class="lineno">  131</span> </div>
-<div class="line"><span class="lineno">  132</span>            <span class="keyword">auto</span> <span class="keyword">const</span> flow = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>-&gt;flow();</div>
-<div class="line"><span class="lineno">  133</span>            flow-&gt;info.runtime.headIndex = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#ab641fa25cabf4a5e80acd9128c237150">_currentIndex</a>;</div>
-<div class="line"><span class="lineno">  134</span> </div>
-<div class="line"><span class="lineno">  135</span>            <span class="keyword">auto</span> <span class="keyword">const</span> offset = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#ab641fa25cabf4a5e80acd9128c237150">_currentIndex</a> % flow-&gt;info.config.discrete.grainCount;</div>
-<div class="line"><span class="lineno">  136</span>            *<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>-&gt;grainInfoAt(offset) = <a class="code hl_typedef" href="flow_8h.html#a33342a4bf46bd9c15c58779146960b67">mxlGrainInfo</a>;</div>
-<div class="line"><span class="lineno">  137</span>            flow-&gt;info.runtime.lastWriteTime = <a class="code hl_variable" href="test__time_8cpp.html#ac12ed1af18970aa7567ed85ff5c1855e">currentTime</a>(<a class="code hl_enumvalue" href="namespacemxl_1_1lib.html#ae3b94a1771eb36ab4684f932741551f3ac636defd7b140ed4c9aefef600460d49">mxl::lib::Clock::TAI</a>).value;</div>
-<div class="line"><span class="lineno">  138</span> </div>
-<div class="line"><span class="lineno">  139</span>            <span class="comment">// If the grain is complete, reset the current index of the flow writer.</span></div>
-<div class="line"><span class="lineno">  140</span>            <span class="keywordflow">if</span> (<a class="code hl_struct" href="structmxlGrainInfo__t.html">mxlGrainInfo</a>.<a class="code hl_variable" href="structmxlGrainInfo__t.html#ac633b740e5f6bfa5e8af0d3ab5991e1e">validSlices</a> == <a class="code hl_struct" href="structmxlGrainInfo__t.html">mxlGrainInfo</a>.<a class="code hl_variable" href="structmxlGrainInfo__t.html#aa016833ae56b59fa5b5b309089b4796a">totalSlices</a>)</div>
-<div class="line"><span class="lineno">  141</span>            {</div>
-<div class="line"><span class="lineno">  142</span>                <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#ab641fa25cabf4a5e80acd9128c237150">_currentIndex</a> = <a class="code hl_define" href="rational_8h.html#a0d53b40f480a895e089040442b6efb14">MXL_UNDEFINED_INDEX</a>;</div>
-<div class="line"><span class="lineno">  143</span>            }</div>
-<div class="line"><span class="lineno">  144</span> </div>
-<div class="line"><span class="lineno">  145</span>            <span class="comment">// Let readers know that the head has moved or that new data is available in a partial grain</span></div>
-<div class="line"><span class="lineno">  146</span>            flow-&gt;state.syncCounter++;</div>
-<div class="line"><span class="lineno">  147</span>            <a class="code hl_function" href="namespacemxl_1_1lib.html#a0b817bd8803aaede61c67167b163a772">wakeAll</a>(&amp;flow-&gt;state.syncCounter);</div>
-<div class="line"><span class="lineno">  148</span> </div>
-<div class="line"><span class="lineno">  149</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
-<div class="line"><span class="lineno">  150</span>        }</div>
-<div class="line"><span class="lineno">  151</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
-<div class="line"><span class="lineno">  152</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00151">151</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  152</span>    {</div>
+<div class="line"><span class="lineno">  153</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>)</div>
+<div class="line"><span class="lineno">  154</span>        {</div>
+<div class="line"><span class="lineno">  155</span>            <span class="keywordflow">if</span> (<a class="code hl_struct" href="structmxlGrainInfo__t.html">mxlGrainInfo</a>.<a class="code hl_variable" href="structmxlGrainInfo__t.html#a12d63ea78790283255e22d56e27f21cd">index</a> != <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#ab641fa25cabf4a5e80acd9128c237150">_currentIndex</a>)</div>
+<div class="line"><span class="lineno">  156</span>            {</div>
+<div class="line"><span class="lineno">  157</span>                <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
+<div class="line"><span class="lineno">  158</span>            }</div>
+<div class="line"><span class="lineno">  159</span> </div>
+<div class="line"><span class="lineno">  160</span>            <span class="keyword">auto</span> <span class="keyword">const</span> flow = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>-&gt;flow();</div>
+<div class="line"><span class="lineno">  161</span>            flow-&gt;info.runtime.headIndex = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#ab641fa25cabf4a5e80acd9128c237150">_currentIndex</a>;</div>
+<div class="line"><span class="lineno">  162</span> </div>
+<div class="line"><span class="lineno">  163</span>            <span class="keyword">auto</span> <span class="keyword">const</span> offset = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#ab641fa25cabf4a5e80acd9128c237150">_currentIndex</a> % flow-&gt;info.config.discrete.grainCount;</div>
+<div class="line"><span class="lineno">  164</span>            *<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>-&gt;grainInfoAt(offset) = <a class="code hl_typedef" href="flow_8h.html#a33342a4bf46bd9c15c58779146960b67">mxlGrainInfo</a>;</div>
+<div class="line"><span class="lineno">  165</span>            flow-&gt;info.runtime.lastWriteTime = <a class="code hl_variable" href="test__time_8cpp.html#ac12ed1af18970aa7567ed85ff5c1855e">currentTime</a>(<a class="code hl_enumvalue" href="namespacemxl_1_1lib.html#ae3b94a1771eb36ab4684f932741551f3ac636defd7b140ed4c9aefef600460d49">mxl::lib::Clock::TAI</a>).value;</div>
+<div class="line"><span class="lineno">  166</span> </div>
+<div class="line"><span class="lineno">  167</span>            <span class="comment">// If the grain is complete, reset the current index of the flow writer.</span></div>
+<div class="line"><span class="lineno">  168</span>            <span class="keywordflow">if</span> (<a class="code hl_struct" href="structmxlGrainInfo__t.html">mxlGrainInfo</a>.<a class="code hl_variable" href="structmxlGrainInfo__t.html#ac633b740e5f6bfa5e8af0d3ab5991e1e">validSlices</a> == <a class="code hl_struct" href="structmxlGrainInfo__t.html">mxlGrainInfo</a>.<a class="code hl_variable" href="structmxlGrainInfo__t.html#aa016833ae56b59fa5b5b309089b4796a">totalSlices</a>)</div>
+<div class="line"><span class="lineno">  169</span>            {</div>
+<div class="line"><span class="lineno">  170</span>                <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#ab641fa25cabf4a5e80acd9128c237150">_currentIndex</a> = <a class="code hl_define" href="rational_8h.html#a0d53b40f480a895e089040442b6efb14">MXL_UNDEFINED_INDEX</a>;</div>
+<div class="line"><span class="lineno">  171</span>                <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a1a35bb17d4a79583ce5ee8f1b5c38a4a">_lastCommittedIndex</a> = <a class="code hl_struct" href="structmxlGrainInfo__t.html">mxlGrainInfo</a>.<a class="code hl_variable" href="structmxlGrainInfo__t.html#a12d63ea78790283255e22d56e27f21cd">index</a>;</div>
+<div class="line"><span class="lineno">  172</span>            }</div>
+<div class="line"><span class="lineno">  173</span> </div>
+<div class="line"><span class="lineno">  174</span>            <span class="comment">// Let readers know that the head has moved or that new data is available in a partial grain</span></div>
+<div class="line"><span class="lineno">  175</span>            flow-&gt;state.syncCounter++;</div>
+<div class="line"><span class="lineno">  176</span>            <a class="code hl_function" href="namespacemxl_1_1lib.html#a0b817bd8803aaede61c67167b163a772">wakeAll</a>(&amp;flow-&gt;state.syncCounter);</div>
+<div class="line"><span class="lineno">  177</span> </div>
+<div class="line"><span class="lineno">  178</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
+<div class="line"><span class="lineno">  179</span>        }</div>
+<div class="line"><span class="lineno">  180</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">  181</span>    }</div>
 <div class="ttc" id="aflow_8h_html_a33342a4bf46bd9c15c58779146960b67"><div class="ttname"><a href="flow_8h.html#a33342a4bf46bd9c15c58779146960b67">mxlGrainInfo</a></div><div class="ttdeci">struct mxlGrainInfo_t mxlGrainInfo</div></div>
 <div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a></div><div class="ttdeci">@ MXL_ERR_UNKNOWN</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00024">mxl.h:24</a></div></div>
 <div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a></div><div class="ttdeci">@ MXL_ERR_INVALID_ARG</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00031">mxl.h:31</a></div></div>
@@ -426,12 +431,12 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriter.html#a0ccd5ed24b10df4f59446ca835801699">mxl::lib::FlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00065">65</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   66</span>    {</div>
-<div class="line"><span class="lineno">   67</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#aecd0a3254c260d668aae3fdb1006be70">getFlowData</a>().<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">flowInfo</a>()-&gt;<a class="code hl_variable" href="structmxlFlowInfo__t.html#a7b1b68b9c2c6e7a1d7a8ba5f2fb3a83f">config</a>;</div>
-<div class="line"><span class="lineno">   68</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00067">67</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   68</span>    {</div>
+<div class="line"><span class="lineno">   69</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#aecd0a3254c260d668aae3fdb1006be70">getFlowData</a>().<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">flowInfo</a>()-&gt;<a class="code hl_variable" href="structmxlFlowInfo__t.html#a7b1b68b9c2c6e7a1d7a8ba5f2fb3a83f">config</a>;</div>
+<div class="line"><span class="lineno">   70</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1FlowData_html_a789a71b8f1538ba04f195bb4d2f27913"><div class="ttname"><a href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">mxl::lib::FlowData::flowInfo</a></div><div class="ttdeci">constexpr mxlFlowInfo * flowInfo() noexcept</div><div class="ttdef"><b>Definition</b> <a href="FlowData_8hpp_source.html#l00092">FlowData.hpp:92</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1PosixDiscreteFlowWriter_html_aecd0a3254c260d668aae3fdb1006be70"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#aecd0a3254c260d668aae3fdb1006be70">mxl::lib::PosixDiscreteFlowWriter::getFlowData</a></div><div class="ttdeci">virtual FlowData &amp; getFlowData() override</div><div class="ttdef"><b>Definition</b> <a href="PosixDiscreteFlowWriter_8cpp_source.html#l00042">PosixDiscreteFlowWriter.cpp:42</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1PosixDiscreteFlowWriter_html_aecd0a3254c260d668aae3fdb1006be70"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#aecd0a3254c260d668aae3fdb1006be70">mxl::lib::PosixDiscreteFlowWriter::getFlowData</a></div><div class="ttdeci">virtual FlowData &amp; getFlowData() override</div><div class="ttdef"><b>Definition</b> <a href="PosixDiscreteFlowWriter_8cpp_source.html#l00044">PosixDiscreteFlowWriter.cpp:44</a></div></div>
 <div class="ttc" id="astructmxlFlowInfo__t_html_a7b1b68b9c2c6e7a1d7a8ba5f2fb3a83f"><div class="ttname"><a href="structmxlFlowInfo__t.html#a7b1b68b9c2c6e7a1d7a8ba5f2fb3a83f">mxlFlowInfo_t::config</a></div><div class="ttdeci">mxlFlowConfigInfo config</div><div class="ttdef"><b>Definition</b> <a href="flowinfo_8h_source.html#l00195">flowinfo.h:195</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -462,14 +467,14 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriter.html#ac4fca0368cad5f88a0de2dc715ff3547">mxl::lib::FlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00051">51</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   52</span>    {</div>
-<div class="line"><span class="lineno">   53</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>)</div>
-<div class="line"><span class="lineno">   54</span>        {</div>
-<div class="line"><span class="lineno">   55</span>            <span class="keywordflow">return</span> *<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>;</div>
-<div class="line"><span class="lineno">   56</span>        }</div>
-<div class="line"><span class="lineno">   57</span>        <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;No open flow.&quot;</span>);</div>
-<div class="line"><span class="lineno">   58</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00053">53</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   54</span>    {</div>
+<div class="line"><span class="lineno">   55</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>)</div>
+<div class="line"><span class="lineno">   56</span>        {</div>
+<div class="line"><span class="lineno">   57</span>            <span class="keywordflow">return</span> *<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>;</div>
+<div class="line"><span class="lineno">   58</span>        }</div>
+<div class="line"><span class="lineno">   59</span>        <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;No open flow.&quot;</span>);</div>
+<div class="line"><span class="lineno">   60</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -499,14 +504,14 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriter.html#ab544c66377410c727ab217bd6c461a78">mxl::lib::FlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00042">42</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   43</span>    {</div>
-<div class="line"><span class="lineno">   44</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>)</div>
-<div class="line"><span class="lineno">   45</span>        {</div>
-<div class="line"><span class="lineno">   46</span>            <span class="keywordflow">return</span> *<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>;</div>
-<div class="line"><span class="lineno">   47</span>        }</div>
-<div class="line"><span class="lineno">   48</span>        <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;No open flow.&quot;</span>);</div>
-<div class="line"><span class="lineno">   49</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00044">44</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   45</span>    {</div>
+<div class="line"><span class="lineno">   46</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>)</div>
+<div class="line"><span class="lineno">   47</span>        {</div>
+<div class="line"><span class="lineno">   48</span>            <span class="keywordflow">return</span> *<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>;</div>
+<div class="line"><span class="lineno">   49</span>        }</div>
+<div class="line"><span class="lineno">   50</span>        <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;No open flow.&quot;</span>);</div>
+<div class="line"><span class="lineno">   51</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -536,10 +541,10 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriter.html#a1d18705b0306122f4d5f5605f2964adc">mxl::lib::FlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00060">60</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   61</span>    {</div>
-<div class="line"><span class="lineno">   62</span>        <span class="keywordflow">return</span> *<a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#aecd0a3254c260d668aae3fdb1006be70">getFlowData</a>().<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">flowInfo</a>();</div>
-<div class="line"><span class="lineno">   63</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00062">62</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   63</span>    {</div>
+<div class="line"><span class="lineno">   64</span>        <span class="keywordflow">return</span> *<a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#aecd0a3254c260d668aae3fdb1006be70">getFlowData</a>().<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">flowInfo</a>();</div>
+<div class="line"><span class="lineno">   65</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -569,10 +574,10 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriter.html#ace64038c95cb835f8e7f8b990408a09f">mxl::lib::FlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00070">70</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   71</span>    {</div>
-<div class="line"><span class="lineno">   72</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#aecd0a3254c260d668aae3fdb1006be70">getFlowData</a>().<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">flowInfo</a>()-&gt;<a class="code hl_variable" href="structmxlFlowInfo__t.html#a1adeafe3d8c0fc08ad90ed343504bae5">runtime</a>;</div>
-<div class="line"><span class="lineno">   73</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00072">72</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   73</span>    {</div>
+<div class="line"><span class="lineno">   74</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#aecd0a3254c260d668aae3fdb1006be70">getFlowData</a>().<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">flowInfo</a>()-&gt;<a class="code hl_variable" href="structmxlFlowInfo__t.html#a1adeafe3d8c0fc08ad90ed343504bae5">runtime</a>;</div>
+<div class="line"><span class="lineno">   75</span>    }</div>
 <div class="ttc" id="astructmxlFlowInfo__t_html_a1adeafe3d8c0fc08ad90ed343504bae5"><div class="ttname"><a href="structmxlFlowInfo__t.html#a1adeafe3d8c0fc08ad90ed343504bae5">mxlFlowInfo_t::runtime</a></div><div class="ttdeci">mxlFlowRuntimeInfo runtime</div><div class="ttdef"><b>Definition</b> <a href="flowinfo_8h_source.html#l00197">flowinfo.h:197</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -604,12 +609,12 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowWriter.html#a49a75122b7ce12a48f837397291d4860">mxl::lib::DiscreteFlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00075">75</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   76</span>    {</div>
-<div class="line"><span class="lineno">   77</span>        <span class="keyword">auto</span>&amp; flowData = <span class="keyword">static_cast&lt;</span>DiscreteFlowData const&amp;<span class="keyword">&gt;</span>(<a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#aecd0a3254c260d668aae3fdb1006be70">getFlowData</a>());</div>
-<div class="line"><span class="lineno">   78</span>        <span class="keyword">auto</span> <span class="keyword">const</span> offset = in_index % flowData.flowInfo()-&gt;config.discrete.grainCount;</div>
-<div class="line"><span class="lineno">   79</span>        <span class="keywordflow">return</span> flowData.grainAt(offset)-&gt;header.info;</div>
-<div class="line"><span class="lineno">   80</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00077">77</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   78</span>    {</div>
+<div class="line"><span class="lineno">   79</span>        <span class="keyword">auto</span>&amp; flowData = <span class="keyword">static_cast&lt;</span>DiscreteFlowData const&amp;<span class="keyword">&gt;</span>(<a class="code hl_function" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#aecd0a3254c260d668aae3fdb1006be70">getFlowData</a>());</div>
+<div class="line"><span class="lineno">   80</span>        <span class="keyword">auto</span> <span class="keyword">const</span> offset = in_index % flowData.flowInfo()-&gt;config.discrete.grainCount;</div>
+<div class="line"><span class="lineno">   81</span>        <span class="keywordflow">return</span> flowData.grainAt(offset)-&gt;header.info;</div>
+<div class="line"><span class="lineno">   82</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -639,15 +644,15 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriter.html#ae81638409e16ea858ae5ccdc644c39a8">mxl::lib::FlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00103">103</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  104</span>    {</div>
-<div class="line"><span class="lineno">  105</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>)</div>
-<div class="line"><span class="lineno">  106</span>        {</div>
-<div class="line"><span class="lineno">  107</span>            <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
-<div class="line"><span class="lineno">  108</span>        }</div>
-<div class="line"><span class="lineno">  109</span> </div>
-<div class="line"><span class="lineno">  110</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>-&gt;isExclusive();</div>
-<div class="line"><span class="lineno">  111</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00131">131</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  132</span>    {</div>
+<div class="line"><span class="lineno">  133</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>)</div>
+<div class="line"><span class="lineno">  134</span>        {</div>
+<div class="line"><span class="lineno">  135</span>            <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><span class="lineno">  136</span>        }</div>
+<div class="line"><span class="lineno">  137</span> </div>
+<div class="line"><span class="lineno">  138</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>-&gt;isExclusive();</div>
+<div class="line"><span class="lineno">  139</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -677,15 +682,15 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriter.html#ab4a60907bc71d906ebccbfaffd3061fd">mxl::lib::FlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00113">113</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  114</span>    {</div>
-<div class="line"><span class="lineno">  115</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>)</div>
-<div class="line"><span class="lineno">  116</span>        {</div>
-<div class="line"><span class="lineno">  117</span>            <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
-<div class="line"><span class="lineno">  118</span>        }</div>
-<div class="line"><span class="lineno">  119</span> </div>
-<div class="line"><span class="lineno">  120</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>-&gt;makeExclusive();</div>
-<div class="line"><span class="lineno">  121</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00141">141</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  142</span>    {</div>
+<div class="line"><span class="lineno">  143</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>)</div>
+<div class="line"><span class="lineno">  144</span>        {</div>
+<div class="line"><span class="lineno">  145</span>            <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><span class="lineno">  146</span>        }</div>
+<div class="line"><span class="lineno">  147</span> </div>
+<div class="line"><span class="lineno">  148</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>-&gt;makeExclusive();</div>
+<div class="line"><span class="lineno">  149</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -732,20 +737,47 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowWriter.html#af15e4515d7497216d9ab6eacc9b01e74">mxl::lib::DiscreteFlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00082">82</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   83</span>    {</div>
-<div class="line"><span class="lineno">   84</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>)</div>
-<div class="line"><span class="lineno">   85</span>        {</div>
-<div class="line"><span class="lineno">   86</span>            <span class="keyword">auto</span> offset = in_index % <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>-&gt;flowInfo()-&gt;config.discrete.grainCount;</div>
-<div class="line"><span class="lineno">   87</span>            <span class="keyword">auto</span> <span class="keyword">const</span> grain = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>-&gt;grainAt(offset);</div>
-<div class="line"><span class="lineno">   88</span>            grain-&gt;header.info.index = in_index; <span class="comment">// Set the absolute grain index associated to that ring buffer entry</span></div>
-<div class="line"><span class="lineno">   89</span>            *out_grainInfo = grain-&gt;header.info;</div>
-<div class="line"><span class="lineno">   90</span>            *out_payload = <span class="keyword">reinterpret_cast&lt;</span>std::uint8_t*<span class="keyword">&gt;</span>(&amp;grain-&gt;header + 1);</div>
-<div class="line"><span class="lineno">   91</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#ab641fa25cabf4a5e80acd9128c237150">_currentIndex</a> = in_index;</div>
-<div class="line"><span class="lineno">   92</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
-<div class="line"><span class="lineno">   93</span>        }</div>
-<div class="line"><span class="lineno">   94</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
-<div class="line"><span class="lineno">   95</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html#l00084">84</a> of file <a class="el" href="PosixDiscreteFlowWriter_8cpp_source.html">PosixDiscreteFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   85</span>    {</div>
+<div class="line"><span class="lineno">   86</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>)</div>
+<div class="line"><span class="lineno">   87</span>        {</div>
+<div class="line"><span class="lineno">   88</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">   89</span>        }</div>
+<div class="line"><span class="lineno">   90</span> </div>
+<div class="line"><span class="lineno">   91</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a1a35bb17d4a79583ce5ee8f1b5c38a4a">_lastCommittedIndex</a> != <a class="code hl_define" href="rational_8h.html#a0d53b40f480a895e089040442b6efb14">MXL_UNDEFINED_INDEX</a> &amp;&amp; in_index &lt;= <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a1a35bb17d4a79583ce5ee8f1b5c38a4a">_lastCommittedIndex</a>)</div>
+<div class="line"><span class="lineno">   92</span>        {</div>
+<div class="line"><span class="lineno">   93</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
+<div class="line"><span class="lineno">   94</span>        }</div>
+<div class="line"><span class="lineno">   95</span> </div>
+<div class="line"><span class="lineno">   96</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a1a35bb17d4a79583ce5ee8f1b5c38a4a">_lastCommittedIndex</a> != <a class="code hl_define" href="rational_8h.html#a0d53b40f480a895e089040442b6efb14">MXL_UNDEFINED_INDEX</a> &amp;&amp; in_index &gt; (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a1a35bb17d4a79583ce5ee8f1b5c38a4a">_lastCommittedIndex</a> + 1U))</div>
+<div class="line"><span class="lineno">   97</span>        {</div>
+<div class="line"><span class="lineno">   98</span>            <span class="comment">// We have to invalidate any grain that would&#39;ve been written to if the write was continuous. This is to ensure that the reader doesn&#39;t</span></div>
+<div class="line"><span class="lineno">   99</span>            <span class="comment">// read stale data from a previous write.</span></div>
+<div class="line"><span class="lineno">  100</span>            <span class="keyword">auto</span> <span class="keyword">const</span> grainCount = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>-&gt;flowInfo()-&gt;config.discrete.grainCount;</div>
+<div class="line"><span class="lineno">  101</span>            <span class="keyword">auto</span> <span class="keyword">const</span> skippedCount = in_index - <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a1a35bb17d4a79583ce5ee8f1b5c38a4a">_lastCommittedIndex</a> - 1U;</div>
+<div class="line"><span class="lineno">  102</span>            <span class="keyword">auto</span> <span class="keyword">const</span> invalidatedCount = std::min&lt;std::uint64_t&gt;(skippedCount, grainCount);</div>
+<div class="line"><span class="lineno">  103</span>            <span class="keyword">auto</span> <span class="keyword">const</span> firstInvalidatedIndex = in_index - invalidatedCount;</div>
+<div class="line"><span class="lineno">  104</span> </div>
+<div class="line"><span class="lineno">  105</span>            <span class="keywordflow">for</span> (<span class="keyword">auto</span> missingIndex = firstInvalidatedIndex; missingIndex &lt; in_index; ++missingIndex)</div>
+<div class="line"><span class="lineno">  106</span>            {</div>
+<div class="line"><span class="lineno">  107</span>                <span class="keyword">auto</span> <span class="keyword">const</span> missingOffset = missingIndex % grainCount;</div>
+<div class="line"><span class="lineno">  108</span>                <span class="keyword">auto</span> <span class="keyword">const</span> missingGrain = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>-&gt;grainAt(missingOffset);</div>
+<div class="line"><span class="lineno">  109</span>                missingGrain-&gt;header.info.index = missingIndex;</div>
+<div class="line"><span class="lineno">  110</span>                missingGrain-&gt;header.info.validSlices = 0;</div>
+<div class="line"><span class="lineno">  111</span>                missingGrain-&gt;header.info.flags |= <a class="code hl_define" href="flow_8h.html#a9266a2a1e1247d4d0aa028eacfd939a5">MXL_GRAIN_FLAG_INVALID</a>;</div>
+<div class="line"><span class="lineno">  112</span>            }</div>
+<div class="line"><span class="lineno">  113</span>        }</div>
+<div class="line"><span class="lineno">  114</span> </div>
+<div class="line"><span class="lineno">  115</span>        <span class="keyword">auto</span> offset = in_index % <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>-&gt;flowInfo()-&gt;config.discrete.grainCount;</div>
+<div class="line"><span class="lineno">  116</span>        <span class="keyword">auto</span> <span class="keyword">const</span> grain = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301">_flowData</a>-&gt;grainAt(offset);</div>
+<div class="line"><span class="lineno">  117</span>        grain-&gt;header.info.index = in_index; <span class="comment">// Set the absolute grain index associated to that ring buffer entry</span></div>
+<div class="line"><span class="lineno">  118</span>        grain-&gt;header.info.flags &amp;= ~MXL_GRAIN_FLAG_INVALID;</div>
+<div class="line"><span class="lineno">  119</span>        *out_grainInfo = grain-&gt;header.info;</div>
+<div class="line"><span class="lineno">  120</span>        *out_payload = <span class="keyword">reinterpret_cast&lt;</span>std::uint8_t*<span class="keyword">&gt;</span>(&amp;grain-&gt;header + 1);</div>
+<div class="line"><span class="lineno">  121</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#ab641fa25cabf4a5e80acd9128c237150">_currentIndex</a> = in_index;</div>
+<div class="line"><span class="lineno">  122</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
+<div class="line"><span class="lineno">  123</span>    }</div>
+<div class="ttc" id="aflow_8h_html_a9266a2a1e1247d4d0aa028eacfd939a5"><div class="ttname"><a href="flow_8h.html#a9266a2a1e1247d4d0aa028eacfd939a5">MXL_GRAIN_FLAG_INVALID</a></div><div class="ttdeci">#define MXL_GRAIN_FLAG_INVALID</div><div class="ttdef"><b>Definition</b> <a href="flow_8h_source.html#l00029">flow.h:29</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -800,6 +832,31 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a1a35bb17d4a79583ce5ee8f1b5c38a4a" name="a1a35bb17d4a79583ce5ee8f1b5c38a4a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1a35bb17d4a79583ce5ee8f1b5c38a4a">&#9670;&#160;</a></span>_lastCommittedIndex</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::uint64_t mxl::lib::PosixDiscreteFlowWriter::_lastCommittedIndex</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>The last committed grain index. MXL_UNDEFINED_INDEX if no grain has been committed yet. </p>
+
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8hpp_source.html#l00081">81</a> of file <a class="el" href="PosixDiscreteFlowWriter_8hpp_source.html">PosixDiscreteFlowWriter.hpp</a>.</p>
+
+</div>
+</div>
 <a id="a8b949deef80f7611d03e2124f6235797" name="a8b949deef80f7611d03e2124f6235797"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8b949deef80f7611d03e2124f6235797">&#9670;&#160;</a></span>_watcher</h2>
 
@@ -820,7 +877,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8hpp_source.html#l00084">84</a> of file <a class="el" href="PosixDiscreteFlowWriter_8hpp_source.html">PosixDiscreteFlowWriter.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="PosixDiscreteFlowWriter_8hpp_source.html#l00086">86</a> of file <a class="el" href="PosixDiscreteFlowWriter_8hpp_source.html">PosixDiscreteFlowWriter.hpp</a>.</p>
 
 </div>
 </div>

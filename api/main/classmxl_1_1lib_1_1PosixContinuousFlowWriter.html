@@ -182,6 +182,8 @@ Private Attributes</h2></td></tr>
 <tr class="separator:a7737f209a829764cdf899175d449d3c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad51f16d4a677a962143ba42ebf04b11a" id="r_ad51f16d4a677a962143ba42ebf04b11a"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1ContinuousFlowData.html">ContinuousFlowData</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a></td></tr>
 <tr class="separator:ad51f16d4a677a962143ba42ebf04b11a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a46d8ec3049a3616280b820a72172c006" id="r_a46d8ec3049a3616280b820a72172c006"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a46d8ec3049a3616280b820a72172c006">_lastCommittedIndex</a></td></tr>
+<tr class="separator:a46d8ec3049a3616280b820a72172c006"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae9f0adae55d0834f76fc9e9bc57ed1fb" id="r_ae9f0adae55d0834f76fc9e9bc57ed1fb"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae9f0adae55d0834f76fc9e9bc57ed1fb">_lastSyncSampleBatch</a></td></tr>
 <tr class="separator:ae9f0adae55d0834f76fc9e9bc57ed1fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a82827f34d32176dea3eae591e42d64c1" id="r_a82827f34d32176dea3eae591e42d64c1"><td class="memItemLeft" align="right" valign="top">std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a82827f34d32176dea3eae591e42d64c1">_syncBatchSize</a></td></tr>
@@ -205,7 +207,7 @@ Additional Inherited Members</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Implementation of a <a class="el" href="classmxl_1_1lib_1_1FlowWriter.html">FlowWriter</a> based on POSIX shared memory mapping. </p>
 
-<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html#l00023">23</a> of file <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html">PosixContinuousFlowWriter.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html#l00022">22</a> of file <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html">PosixContinuousFlowWriter.hpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a145bea188e783033fb114fc919ec5ddc" name="a145bea188e783033fb114fc919ec5ddc"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a145bea188e783033fb114fc919ec5ddc">&#9670;&#160;</a></span>PosixContinuousFlowWriter()</h2>
@@ -246,37 +248,39 @@ Additional Inherited Members</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00011">11</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   13</span>        : ContinuousFlowWriter{<a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, manager.getDomain()}</div>
-<div class="line"><span class="lineno">   14</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>{std::move(data)}</div>
-<div class="line"><span class="lineno">   15</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae5a1179310ff956981dd70f61ff1b011">_channelCount</a>{<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>-&gt;channelCount()}</div>
-<div class="line"><span class="lineno">   16</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">_bufferLength</a>{<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>-&gt;channelBufferLength()}</div>
-<div class="line"><span class="lineno">   17</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a70f2a79aa1b04a400e104592106617b9">_currentIndex</a>{<a class="code hl_define" href="rational_8h.html#a0d53b40f480a895e089040442b6efb14">MXL_UNDEFINED_INDEX</a>}</div>
-<div class="line"><span class="lineno">   18</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a82827f34d32176dea3eae591e42d64c1">_syncBatchSize</a>{1U}</div>
-<div class="line"><span class="lineno">   19</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a7737f209a829764cdf899175d449d3c9">_earlySyncThreshold</a>{}</div>
-<div class="line"><span class="lineno">   20</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae9f0adae55d0834f76fc9e9bc57ed1fb">_lastSyncSampleBatch</a>{}</div>
-<div class="line"><span class="lineno">   21</span>    {</div>
-<div class="line"><span class="lineno">   22</span>        <span class="keywordflow">if</span> (!<a class="code hl_function" href="classmxl_1_1lib_1_1FlowWriter.html#aa0a4db97d7e4db3f4dc4db704696b548">checkPermissions</a>())</div>
-<div class="line"><span class="lineno">   23</span>        {</div>
-<div class="line"><span class="lineno">   24</span>            <span class="keywordflow">throw</span> std::runtime_error{<span class="stringliteral">&quot;Flow is not accessible due to insufficient permissions.&quot;</span>};</div>
-<div class="line"><span class="lineno">   25</span>        }</div>
-<div class="line"><span class="lineno">   26</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>)</div>
-<div class="line"><span class="lineno">   27</span>        {</div>
-<div class="line"><span class="lineno">   28</span>            <span class="keyword">auto</span> <span class="keyword">const</span>&amp; commonFlowConfigInfo = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>-&gt;flowInfo()-&gt;config.common;</div>
-<div class="line"><span class="lineno">   29</span> </div>
-<div class="line"><span class="lineno">   30</span>            <span class="keyword">auto</span> <span class="keyword">const</span> commitBatchSize = std::max(commonFlowConfigInfo.maxCommitBatchSizeHint, 1U);</div>
-<div class="line"><span class="lineno">   31</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a82827f34d32176dea3eae591e42d64c1">_syncBatchSize</a> = std::max(commonFlowConfigInfo.maxSyncBatchSizeHint, 1U);</div>
-<div class="line"><span class="lineno">   32</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a7737f209a829764cdf899175d449d3c9">_earlySyncThreshold</a> = (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a82827f34d32176dea3eae591e42d64c1">_syncBatchSize</a> &gt;= commitBatchSize) ? (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a82827f34d32176dea3eae591e42d64c1">_syncBatchSize</a> - commitBatchSize) : 0U;</div>
-<div class="line"><span class="lineno">   33</span>        }</div>
-<div class="line"><span class="lineno">   34</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00013">13</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   15</span>        : ContinuousFlowWriter{<a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, manager.getDomain()}</div>
+<div class="line"><span class="lineno">   16</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>{std::move(data)}</div>
+<div class="line"><span class="lineno">   17</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae5a1179310ff956981dd70f61ff1b011">_channelCount</a>{<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>-&gt;channelCount()}</div>
+<div class="line"><span class="lineno">   18</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">_bufferLength</a>{<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>-&gt;channelBufferLength()}</div>
+<div class="line"><span class="lineno">   19</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a70f2a79aa1b04a400e104592106617b9">_currentIndex</a>{<a class="code hl_define" href="rational_8h.html#a0d53b40f480a895e089040442b6efb14">MXL_UNDEFINED_INDEX</a>}</div>
+<div class="line"><span class="lineno">   20</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a46d8ec3049a3616280b820a72172c006">_lastCommittedIndex</a>{<a class="code hl_define" href="rational_8h.html#a0d53b40f480a895e089040442b6efb14">MXL_UNDEFINED_INDEX</a>}</div>
+<div class="line"><span class="lineno">   21</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a82827f34d32176dea3eae591e42d64c1">_syncBatchSize</a>{1U}</div>
+<div class="line"><span class="lineno">   22</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a7737f209a829764cdf899175d449d3c9">_earlySyncThreshold</a>{}</div>
+<div class="line"><span class="lineno">   23</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae9f0adae55d0834f76fc9e9bc57ed1fb">_lastSyncSampleBatch</a>{}</div>
+<div class="line"><span class="lineno">   24</span>    {</div>
+<div class="line"><span class="lineno">   25</span>        <span class="keywordflow">if</span> (!<a class="code hl_function" href="classmxl_1_1lib_1_1FlowWriter.html#aa0a4db97d7e4db3f4dc4db704696b548">checkPermissions</a>())</div>
+<div class="line"><span class="lineno">   26</span>        {</div>
+<div class="line"><span class="lineno">   27</span>            <span class="keywordflow">throw</span> std::runtime_error{<span class="stringliteral">&quot;Flow is not accessible due to insufficient permissions.&quot;</span>};</div>
+<div class="line"><span class="lineno">   28</span>        }</div>
+<div class="line"><span class="lineno">   29</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>)</div>
+<div class="line"><span class="lineno">   30</span>        {</div>
+<div class="line"><span class="lineno">   31</span>            <span class="keyword">auto</span> <span class="keyword">const</span>&amp; commonFlowConfigInfo = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>-&gt;flowInfo()-&gt;config.common;</div>
+<div class="line"><span class="lineno">   32</span> </div>
+<div class="line"><span class="lineno">   33</span>            <span class="keyword">auto</span> <span class="keyword">const</span> commitBatchSize = std::max(commonFlowConfigInfo.maxCommitBatchSizeHint, 1U);</div>
+<div class="line"><span class="lineno">   34</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a82827f34d32176dea3eae591e42d64c1">_syncBatchSize</a> = std::max(commonFlowConfigInfo.maxSyncBatchSizeHint, 1U);</div>
+<div class="line"><span class="lineno">   35</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a7737f209a829764cdf899175d449d3c9">_earlySyncThreshold</a> = (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a82827f34d32176dea3eae591e42d64c1">_syncBatchSize</a> &gt;= commitBatchSize) ? (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a82827f34d32176dea3eae591e42d64c1">_syncBatchSize</a> - commitBatchSize) : 0U;</div>
+<div class="line"><span class="lineno">   36</span>        }</div>
+<div class="line"><span class="lineno">   37</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1FlowWriter_html_aa0a4db97d7e4db3f4dc4db704696b548"><div class="ttname"><a href="classmxl_1_1lib_1_1FlowWriter.html#aa0a4db97d7e4db3f4dc4db704696b548">mxl::lib::FlowWriter::checkPermissions</a></div><div class="ttdeci">bool checkPermissions() const</div><div class="ttdef"><b>Definition</b> <a href="FlowWriter_8cpp_source.html#l00026">FlowWriter.cpp:26</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1PosixContinuousFlowWriter_html_a70f2a79aa1b04a400e104592106617b9"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a70f2a79aa1b04a400e104592106617b9">mxl::lib::PosixContinuousFlowWriter::_currentIndex</a></div><div class="ttdeci">std::uint64_t _currentIndex</div><div class="ttdef"><b>Definition</b> <a href="PosixContinuousFlowWriter_8hpp_source.html#l00084">PosixContinuousFlowWriter.hpp:84</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1PosixContinuousFlowWriter_html_a7737f209a829764cdf899175d449d3c9"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a7737f209a829764cdf899175d449d3c9">mxl::lib::PosixContinuousFlowWriter::_earlySyncThreshold</a></div><div class="ttdeci">std::uint32_t _earlySyncThreshold</div><div class="ttdef"><b>Definition</b> <a href="PosixContinuousFlowWriter_8hpp_source.html#l00089">PosixContinuousFlowWriter.hpp:89</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1PosixContinuousFlowWriter_html_a82827f34d32176dea3eae591e42d64c1"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a82827f34d32176dea3eae591e42d64c1">mxl::lib::PosixContinuousFlowWriter::_syncBatchSize</a></div><div class="ttdeci">std::uint32_t _syncBatchSize</div><div class="ttdef"><b>Definition</b> <a href="PosixContinuousFlowWriter_8hpp_source.html#l00087">PosixContinuousFlowWriter.hpp:87</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1PosixContinuousFlowWriter_html_ad51f16d4a677a962143ba42ebf04b11a"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">mxl::lib::PosixContinuousFlowWriter::_flowData</a></div><div class="ttdeci">std::unique_ptr&lt; ContinuousFlowData &gt; _flowData</div><div class="ttdef"><b>Definition</b> <a href="PosixContinuousFlowWriter_8hpp_source.html#l00078">PosixContinuousFlowWriter.hpp:78</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1PosixContinuousFlowWriter_html_ae4c98e2a0e0165982ed98ff716ea3293"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">mxl::lib::PosixContinuousFlowWriter::_bufferLength</a></div><div class="ttdeci">std::size_t _bufferLength</div><div class="ttdef"><b>Definition</b> <a href="PosixContinuousFlowWriter_8hpp_source.html#l00082">PosixContinuousFlowWriter.hpp:82</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1PosixContinuousFlowWriter_html_ae5a1179310ff956981dd70f61ff1b011"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae5a1179310ff956981dd70f61ff1b011">mxl::lib::PosixContinuousFlowWriter::_channelCount</a></div><div class="ttdeci">std::size_t _channelCount</div><div class="ttdef"><b>Definition</b> <a href="PosixContinuousFlowWriter_8hpp_source.html#l00080">PosixContinuousFlowWriter.hpp:80</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1PosixContinuousFlowWriter_html_ae9f0adae55d0834f76fc9e9bc57ed1fb"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae9f0adae55d0834f76fc9e9bc57ed1fb">mxl::lib::PosixContinuousFlowWriter::_lastSyncSampleBatch</a></div><div class="ttdeci">std::uint64_t _lastSyncSampleBatch</div><div class="ttdef"><b>Definition</b> <a href="PosixContinuousFlowWriter_8hpp_source.html#l00092">PosixContinuousFlowWriter.hpp:92</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1PosixContinuousFlowWriter_html_a46d8ec3049a3616280b820a72172c006"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a46d8ec3049a3616280b820a72172c006">mxl::lib::PosixContinuousFlowWriter::_lastCommittedIndex</a></div><div class="ttdeci">std::uint64_t _lastCommittedIndex</div><div class="ttdef"><b>Definition</b> <a href="PosixContinuousFlowWriter_8hpp_source.html#l00085">PosixContinuousFlowWriter.hpp:85</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1PosixContinuousFlowWriter_html_a70f2a79aa1b04a400e104592106617b9"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a70f2a79aa1b04a400e104592106617b9">mxl::lib::PosixContinuousFlowWriter::_currentIndex</a></div><div class="ttdeci">std::uint64_t _currentIndex</div><div class="ttdef"><b>Definition</b> <a href="PosixContinuousFlowWriter_8hpp_source.html#l00083">PosixContinuousFlowWriter.hpp:83</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1PosixContinuousFlowWriter_html_a7737f209a829764cdf899175d449d3c9"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a7737f209a829764cdf899175d449d3c9">mxl::lib::PosixContinuousFlowWriter::_earlySyncThreshold</a></div><div class="ttdeci">std::uint32_t _earlySyncThreshold</div><div class="ttdef"><b>Definition</b> <a href="PosixContinuousFlowWriter_8hpp_source.html#l00090">PosixContinuousFlowWriter.hpp:90</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1PosixContinuousFlowWriter_html_a82827f34d32176dea3eae591e42d64c1"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a82827f34d32176dea3eae591e42d64c1">mxl::lib::PosixContinuousFlowWriter::_syncBatchSize</a></div><div class="ttdeci">std::uint32_t _syncBatchSize</div><div class="ttdef"><b>Definition</b> <a href="PosixContinuousFlowWriter_8hpp_source.html#l00088">PosixContinuousFlowWriter.hpp:88</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1PosixContinuousFlowWriter_html_ad51f16d4a677a962143ba42ebf04b11a"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">mxl::lib::PosixContinuousFlowWriter::_flowData</a></div><div class="ttdeci">std::unique_ptr&lt; ContinuousFlowData &gt; _flowData</div><div class="ttdef"><b>Definition</b> <a href="PosixContinuousFlowWriter_8hpp_source.html#l00077">PosixContinuousFlowWriter.hpp:77</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1PosixContinuousFlowWriter_html_ae4c98e2a0e0165982ed98ff716ea3293"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">mxl::lib::PosixContinuousFlowWriter::_bufferLength</a></div><div class="ttdeci">std::size_t _bufferLength</div><div class="ttdef"><b>Definition</b> <a href="PosixContinuousFlowWriter_8hpp_source.html#l00081">PosixContinuousFlowWriter.hpp:81</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1PosixContinuousFlowWriter_html_ae5a1179310ff956981dd70f61ff1b011"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae5a1179310ff956981dd70f61ff1b011">mxl::lib::PosixContinuousFlowWriter::_channelCount</a></div><div class="ttdeci">std::size_t _channelCount</div><div class="ttdef"><b>Definition</b> <a href="PosixContinuousFlowWriter_8hpp_source.html#l00079">PosixContinuousFlowWriter.hpp:79</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1PosixContinuousFlowWriter_html_ae9f0adae55d0834f76fc9e9bc57ed1fb"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae9f0adae55d0834f76fc9e9bc57ed1fb">mxl::lib::PosixContinuousFlowWriter::_lastSyncSampleBatch</a></div><div class="ttdeci">std::uint64_t _lastSyncSampleBatch</div><div class="ttdef"><b>Definition</b> <a href="PosixContinuousFlowWriter_8hpp_source.html#l00093">PosixContinuousFlowWriter.hpp:93</a></div></div>
 <div class="ttc" id="arational_8h_html_a0d53b40f480a895e089040442b6efb14"><div class="ttname"><a href="rational_8h.html#a0d53b40f480a895e089040442b6efb14">MXL_UNDEFINED_INDEX</a></div><div class="ttdeci">#define MXL_UNDEFINED_INDEX</div><div class="ttdef"><b>Definition</b> <a href="rational_8h_source.html#l00017">rational.h:17</a></div></div>
 <div class="ttc" id="atest__flows_8cpp_html_a8120482e2d040fcf08a3008238ee95e8"><div class="ttname"><a href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a></div><div class="ttdeci">auto const flowId</div><div class="ttdef"><b>Definition</b> <a href="test__flows_8cpp_source.html#l00145">test_flows.cpp:145</a></div></div>
 </div><!-- fragment -->
@@ -309,11 +313,11 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1ContinuousFlowWriter.html#acf643f212c8c361bf32331b4b19fc096">mxl::lib::ContinuousFlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00132">132</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  133</span>    {</div>
-<div class="line"><span class="lineno">  134</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a70f2a79aa1b04a400e104592106617b9">_currentIndex</a> = <a class="code hl_define" href="rational_8h.html#a0d53b40f480a895e089040442b6efb14">MXL_UNDEFINED_INDEX</a>;</div>
-<div class="line"><span class="lineno">  135</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
-<div class="line"><span class="lineno">  136</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00180">180</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  181</span>    {</div>
+<div class="line"><span class="lineno">  182</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a70f2a79aa1b04a400e104592106617b9">_currentIndex</a> = <a class="code hl_define" href="rational_8h.html#a0d53b40f480a895e089040442b6efb14">MXL_UNDEFINED_INDEX</a>;</div>
+<div class="line"><span class="lineno">  183</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
+<div class="line"><span class="lineno">  184</span>    }</div>
 <div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a></div><div class="ttdeci">@ MXL_STATUS_OK</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00023">mxl.h:23</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -344,31 +348,38 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1ContinuousFlowWriter.html#ac6363b7a986e1d3c8db0a52eb64c8dd3">mxl::lib::ContinuousFlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00108">108</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  109</span>    {</div>
-<div class="line"><span class="lineno">  110</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>)</div>
-<div class="line"><span class="lineno">  111</span>        {</div>
-<div class="line"><span class="lineno">  112</span>            <span class="keyword">auto</span> <span class="keyword">const</span> flow = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>-&gt;flow();</div>
-<div class="line"><span class="lineno">  113</span>            flow-&gt;info.runtime.headIndex = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a70f2a79aa1b04a400e104592106617b9">_currentIndex</a>;</div>
-<div class="line"><span class="lineno">  114</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a70f2a79aa1b04a400e104592106617b9">_currentIndex</a> = <a class="code hl_define" href="rational_8h.html#a0d53b40f480a895e089040442b6efb14">MXL_UNDEFINED_INDEX</a>;</div>
-<div class="line"><span class="lineno">  115</span> </div>
-<div class="line"><span class="lineno">  116</span>            <span class="keywordflow">if</span> (<a class="code hl_function" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a27b3cf77d1c3ad56bd6bfaf39fc997fa">signalCompletedBatch</a>())</div>
-<div class="line"><span class="lineno">  117</span>            {</div>
-<div class="line"><span class="lineno">  118</span>                <span class="comment">// Let readers know that the head has moved</span></div>
-<div class="line"><span class="lineno">  119</span>                flow-&gt;state.syncCounter++;</div>
-<div class="line"><span class="lineno">  120</span>                <a class="code hl_function" href="namespacemxl_1_1lib.html#a0b817bd8803aaede61c67167b163a772">wakeAll</a>(&amp;flow-&gt;state.syncCounter);</div>
-<div class="line"><span class="lineno">  121</span>            }</div>
-<div class="line"><span class="lineno">  122</span> </div>
-<div class="line"><span class="lineno">  123</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
-<div class="line"><span class="lineno">  124</span>        }</div>
-<div class="line"><span class="lineno">  125</span>        <span class="keywordflow">else</span></div>
-<div class="line"><span class="lineno">  126</span>        {</div>
-<div class="line"><span class="lineno">  127</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a70f2a79aa1b04a400e104592106617b9">_currentIndex</a> = <a class="code hl_define" href="rational_8h.html#a0d53b40f480a895e089040442b6efb14">MXL_UNDEFINED_INDEX</a>;</div>
-<div class="line"><span class="lineno">  128</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
-<div class="line"><span class="lineno">  129</span>        }</div>
-<div class="line"><span class="lineno">  130</span>    }</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1PosixContinuousFlowWriter_html_a27b3cf77d1c3ad56bd6bfaf39fc997fa"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a27b3cf77d1c3ad56bd6bfaf39fc997fa">mxl::lib::PosixContinuousFlowWriter::signalCompletedBatch</a></div><div class="ttdeci">bool signalCompletedBatch() noexcept</div><div class="ttdef"><b>Definition</b> <a href="PosixContinuousFlowWriter_8cpp_source.html#l00138">PosixContinuousFlowWriter.cpp:138</a></div></div>
+<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00150">150</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  151</span>    {</div>
+<div class="line"><span class="lineno">  152</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>)</div>
+<div class="line"><span class="lineno">  153</span>        {</div>
+<div class="line"><span class="lineno">  154</span>            <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a70f2a79aa1b04a400e104592106617b9">_currentIndex</a> == <a class="code hl_define" href="rational_8h.html#a0d53b40f480a895e089040442b6efb14">MXL_UNDEFINED_INDEX</a>)</div>
+<div class="line"><span class="lineno">  155</span>            {</div>
+<div class="line"><span class="lineno">  156</span>                <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
+<div class="line"><span class="lineno">  157</span>            }</div>
+<div class="line"><span class="lineno">  158</span> </div>
+<div class="line"><span class="lineno">  159</span>            <span class="keyword">auto</span> <span class="keyword">const</span> flow = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>-&gt;flow();</div>
+<div class="line"><span class="lineno">  160</span>            flow-&gt;info.runtime.headIndex = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a70f2a79aa1b04a400e104592106617b9">_currentIndex</a>;</div>
+<div class="line"><span class="lineno">  161</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a46d8ec3049a3616280b820a72172c006">_lastCommittedIndex</a> = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a70f2a79aa1b04a400e104592106617b9">_currentIndex</a>;</div>
+<div class="line"><span class="lineno">  162</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a70f2a79aa1b04a400e104592106617b9">_currentIndex</a> = <a class="code hl_define" href="rational_8h.html#a0d53b40f480a895e089040442b6efb14">MXL_UNDEFINED_INDEX</a>;</div>
+<div class="line"><span class="lineno">  163</span> </div>
+<div class="line"><span class="lineno">  164</span>            <span class="keywordflow">if</span> (<a class="code hl_function" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a27b3cf77d1c3ad56bd6bfaf39fc997fa">signalCompletedBatch</a>())</div>
+<div class="line"><span class="lineno">  165</span>            {</div>
+<div class="line"><span class="lineno">  166</span>                <span class="comment">// Let readers know that the head has moved</span></div>
+<div class="line"><span class="lineno">  167</span>                flow-&gt;state.syncCounter++;</div>
+<div class="line"><span class="lineno">  168</span>                <a class="code hl_function" href="namespacemxl_1_1lib.html#a0b817bd8803aaede61c67167b163a772">wakeAll</a>(&amp;flow-&gt;state.syncCounter);</div>
+<div class="line"><span class="lineno">  169</span>            }</div>
+<div class="line"><span class="lineno">  170</span> </div>
+<div class="line"><span class="lineno">  171</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
+<div class="line"><span class="lineno">  172</span>        }</div>
+<div class="line"><span class="lineno">  173</span>        <span class="keywordflow">else</span></div>
+<div class="line"><span class="lineno">  174</span>        {</div>
+<div class="line"><span class="lineno">  175</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a70f2a79aa1b04a400e104592106617b9">_currentIndex</a> = <a class="code hl_define" href="rational_8h.html#a0d53b40f480a895e089040442b6efb14">MXL_UNDEFINED_INDEX</a>;</div>
+<div class="line"><span class="lineno">  176</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">  177</span>        }</div>
+<div class="line"><span class="lineno">  178</span>    }</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1PosixContinuousFlowWriter_html_a27b3cf77d1c3ad56bd6bfaf39fc997fa"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a27b3cf77d1c3ad56bd6bfaf39fc997fa">mxl::lib::PosixContinuousFlowWriter::signalCompletedBatch</a></div><div class="ttdeci">bool signalCompletedBatch() noexcept</div><div class="ttdef"><b>Definition</b> <a href="PosixContinuousFlowWriter_8cpp_source.html#l00186">PosixContinuousFlowWriter.cpp:186</a></div></div>
 <div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a></div><div class="ttdeci">@ MXL_ERR_UNKNOWN</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00024">mxl.h:24</a></div></div>
+<div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a></div><div class="ttdeci">@ MXL_ERR_INVALID_ARG</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00031">mxl.h:31</a></div></div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_a0b817bd8803aaede61c67167b163a772"><div class="ttname"><a href="namespacemxl_1_1lib.html#a0b817bd8803aaede61c67167b163a772">mxl::lib::wakeAll</a></div><div class="ttdeci">void wakeAll(T const *in_addr)</div><div class="ttdef"><b>Definition</b> <a href="Sync_8cpp_source.html#l00131">Sync.cpp:131</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -399,12 +410,12 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriter.html#a0ccd5ed24b10df4f59446ca835801699">mxl::lib::FlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00059">59</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   60</span>    {</div>
-<div class="line"><span class="lineno">   61</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a3677250fa4b6feebd712ce3a77b610e4">getFlowData</a>().<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">flowInfo</a>()-&gt;<a class="code hl_variable" href="structmxlFlowInfo__t.html#a7b1b68b9c2c6e7a1d7a8ba5f2fb3a83f">config</a>;</div>
-<div class="line"><span class="lineno">   62</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00062">62</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   63</span>    {</div>
+<div class="line"><span class="lineno">   64</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a3677250fa4b6feebd712ce3a77b610e4">getFlowData</a>().<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">flowInfo</a>()-&gt;<a class="code hl_variable" href="structmxlFlowInfo__t.html#a7b1b68b9c2c6e7a1d7a8ba5f2fb3a83f">config</a>;</div>
+<div class="line"><span class="lineno">   65</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1FlowData_html_a789a71b8f1538ba04f195bb4d2f27913"><div class="ttname"><a href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">mxl::lib::FlowData::flowInfo</a></div><div class="ttdeci">constexpr mxlFlowInfo * flowInfo() noexcept</div><div class="ttdef"><b>Definition</b> <a href="FlowData_8hpp_source.html#l00092">FlowData.hpp:92</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1PosixContinuousFlowWriter_html_a3677250fa4b6feebd712ce3a77b610e4"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a3677250fa4b6feebd712ce3a77b610e4">mxl::lib::PosixContinuousFlowWriter::getFlowData</a></div><div class="ttdeci">virtual FlowData &amp; getFlowData() override</div><div class="ttdef"><b>Definition</b> <a href="PosixContinuousFlowWriter_8cpp_source.html#l00036">PosixContinuousFlowWriter.cpp:36</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1PosixContinuousFlowWriter_html_a3677250fa4b6feebd712ce3a77b610e4"><div class="ttname"><a href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a3677250fa4b6feebd712ce3a77b610e4">mxl::lib::PosixContinuousFlowWriter::getFlowData</a></div><div class="ttdeci">virtual FlowData &amp; getFlowData() override</div><div class="ttdef"><b>Definition</b> <a href="PosixContinuousFlowWriter_8cpp_source.html#l00039">PosixContinuousFlowWriter.cpp:39</a></div></div>
 <div class="ttc" id="astructmxlFlowInfo__t_html_a7b1b68b9c2c6e7a1d7a8ba5f2fb3a83f"><div class="ttname"><a href="structmxlFlowInfo__t.html#a7b1b68b9c2c6e7a1d7a8ba5f2fb3a83f">mxlFlowInfo_t::config</a></div><div class="ttdeci">mxlFlowConfigInfo config</div><div class="ttdef"><b>Definition</b> <a href="flowinfo_8h_source.html#l00195">flowinfo.h:195</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -435,14 +446,14 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriter.html#ac4fca0368cad5f88a0de2dc715ff3547">mxl::lib::FlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00045">45</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   46</span>    {</div>
-<div class="line"><span class="lineno">   47</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>)</div>
-<div class="line"><span class="lineno">   48</span>        {</div>
-<div class="line"><span class="lineno">   49</span>            <span class="keywordflow">return</span> *<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>;</div>
-<div class="line"><span class="lineno">   50</span>        }</div>
-<div class="line"><span class="lineno">   51</span>        <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;No open flow.&quot;</span>);</div>
-<div class="line"><span class="lineno">   52</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00048">48</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   49</span>    {</div>
+<div class="line"><span class="lineno">   50</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>)</div>
+<div class="line"><span class="lineno">   51</span>        {</div>
+<div class="line"><span class="lineno">   52</span>            <span class="keywordflow">return</span> *<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>;</div>
+<div class="line"><span class="lineno">   53</span>        }</div>
+<div class="line"><span class="lineno">   54</span>        <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;No open flow.&quot;</span>);</div>
+<div class="line"><span class="lineno">   55</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -472,14 +483,14 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriter.html#ab544c66377410c727ab217bd6c461a78">mxl::lib::FlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00036">36</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   37</span>    {</div>
-<div class="line"><span class="lineno">   38</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>)</div>
-<div class="line"><span class="lineno">   39</span>        {</div>
-<div class="line"><span class="lineno">   40</span>            <span class="keywordflow">return</span> *<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>;</div>
-<div class="line"><span class="lineno">   41</span>        }</div>
-<div class="line"><span class="lineno">   42</span>        <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;No open flow.&quot;</span>);</div>
-<div class="line"><span class="lineno">   43</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00039">39</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   40</span>    {</div>
+<div class="line"><span class="lineno">   41</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>)</div>
+<div class="line"><span class="lineno">   42</span>        {</div>
+<div class="line"><span class="lineno">   43</span>            <span class="keywordflow">return</span> *<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>;</div>
+<div class="line"><span class="lineno">   44</span>        }</div>
+<div class="line"><span class="lineno">   45</span>        <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;No open flow.&quot;</span>);</div>
+<div class="line"><span class="lineno">   46</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -509,10 +520,10 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriter.html#a1d18705b0306122f4d5f5605f2964adc">mxl::lib::FlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00054">54</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   55</span>    {</div>
-<div class="line"><span class="lineno">   56</span>        <span class="keywordflow">return</span> *<a class="code hl_function" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a3677250fa4b6feebd712ce3a77b610e4">getFlowData</a>().<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">flowInfo</a>();</div>
-<div class="line"><span class="lineno">   57</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00057">57</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   58</span>    {</div>
+<div class="line"><span class="lineno">   59</span>        <span class="keywordflow">return</span> *<a class="code hl_function" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a3677250fa4b6feebd712ce3a77b610e4">getFlowData</a>().<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">flowInfo</a>();</div>
+<div class="line"><span class="lineno">   60</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -542,10 +553,10 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriter.html#ace64038c95cb835f8e7f8b990408a09f">mxl::lib::FlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00064">64</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   65</span>    {</div>
-<div class="line"><span class="lineno">   66</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a3677250fa4b6feebd712ce3a77b610e4">getFlowData</a>().<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">flowInfo</a>()-&gt;<a class="code hl_variable" href="structmxlFlowInfo__t.html#a1adeafe3d8c0fc08ad90ed343504bae5">runtime</a>;</div>
-<div class="line"><span class="lineno">   67</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00067">67</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   68</span>    {</div>
+<div class="line"><span class="lineno">   69</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a3677250fa4b6feebd712ce3a77b610e4">getFlowData</a>().<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">flowInfo</a>()-&gt;<a class="code hl_variable" href="structmxlFlowInfo__t.html#a1adeafe3d8c0fc08ad90ed343504bae5">runtime</a>;</div>
+<div class="line"><span class="lineno">   70</span>    }</div>
 <div class="ttc" id="astructmxlFlowInfo__t_html_a1adeafe3d8c0fc08ad90ed343504bae5"><div class="ttname"><a href="structmxlFlowInfo__t.html#a1adeafe3d8c0fc08ad90ed343504bae5">mxlFlowInfo_t::runtime</a></div><div class="ttdeci">mxlFlowRuntimeInfo runtime</div><div class="ttdef"><b>Definition</b> <a href="flowinfo_8h_source.html#l00197">flowinfo.h:197</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -576,10 +587,10 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1ContinuousFlowWriter.html#a10e3d358d2ce904822225821ad93571d">mxl::lib::ContinuousFlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00069">69</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   70</span>    {</div>
-<div class="line"><span class="lineno">   71</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">_bufferLength</a> / 2U;</div>
-<div class="line"><span class="lineno">   72</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00072">72</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   73</span>    {</div>
+<div class="line"><span class="lineno">   74</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">_bufferLength</a> / 2U;</div>
+<div class="line"><span class="lineno">   75</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -609,15 +620,15 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriter.html#ae81638409e16ea858ae5ccdc644c39a8">mxl::lib::FlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00166">166</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  167</span>    {</div>
-<div class="line"><span class="lineno">  168</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>)</div>
-<div class="line"><span class="lineno">  169</span>        {</div>
-<div class="line"><span class="lineno">  170</span>            <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;Flow writer not initialized&quot;</span>);</div>
-<div class="line"><span class="lineno">  171</span>        }</div>
-<div class="line"><span class="lineno">  172</span> </div>
-<div class="line"><span class="lineno">  173</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>-&gt;isExclusive();</div>
-<div class="line"><span class="lineno">  174</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00214">214</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  215</span>    {</div>
+<div class="line"><span class="lineno">  216</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>)</div>
+<div class="line"><span class="lineno">  217</span>        {</div>
+<div class="line"><span class="lineno">  218</span>            <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;Flow writer not initialized&quot;</span>);</div>
+<div class="line"><span class="lineno">  219</span>        }</div>
+<div class="line"><span class="lineno">  220</span> </div>
+<div class="line"><span class="lineno">  221</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>-&gt;isExclusive();</div>
+<div class="line"><span class="lineno">  222</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -647,15 +658,15 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriter.html#ab4a60907bc71d906ebccbfaffd3061fd">mxl::lib::FlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00176">176</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  177</span>    {</div>
-<div class="line"><span class="lineno">  178</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>)</div>
-<div class="line"><span class="lineno">  179</span>        {</div>
-<div class="line"><span class="lineno">  180</span>            <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;Flow writer not initialized&quot;</span>);</div>
-<div class="line"><span class="lineno">  181</span>        }</div>
-<div class="line"><span class="lineno">  182</span> </div>
-<div class="line"><span class="lineno">  183</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>-&gt;makeExclusive();</div>
-<div class="line"><span class="lineno">  184</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00224">224</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  225</span>    {</div>
+<div class="line"><span class="lineno">  226</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>)</div>
+<div class="line"><span class="lineno">  227</span>        {</div>
+<div class="line"><span class="lineno">  228</span>            <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;Flow writer not initialized&quot;</span>);</div>
+<div class="line"><span class="lineno">  229</span>        }</div>
+<div class="line"><span class="lineno">  230</span> </div>
+<div class="line"><span class="lineno">  231</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>-&gt;makeExclusive();</div>
+<div class="line"><span class="lineno">  232</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -702,40 +713,78 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1ContinuousFlowWriter.html#a8b15f3020e462cc7232a84c2d223d845">mxl::lib::ContinuousFlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00074">74</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   75</span>    {</div>
-<div class="line"><span class="lineno">   76</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>)</div>
-<div class="line"><span class="lineno">   77</span>        {</div>
-<div class="line"><span class="lineno">   78</span>            <span class="keywordflow">if</span> (count &lt;= (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">_bufferLength</a> / 2))</div>
-<div class="line"><span class="lineno">   79</span>            {</div>
-<div class="line"><span class="lineno">   80</span>                <span class="keyword">auto</span> <span class="keyword">const</span> startOffset = (<a class="code hl_variable" href="test__flows_8cpp.html#a92fcffcf98bd4a3cb5c3668473eb9d04">index</a> + <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">_bufferLength</a> - count) % <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">_bufferLength</a>;</div>
-<div class="line"><span class="lineno">   81</span>                <span class="keyword">auto</span> <span class="keyword">const</span> endOffset = (<a class="code hl_variable" href="test__flows_8cpp.html#a92fcffcf98bd4a3cb5c3668473eb9d04">index</a> % <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">_bufferLength</a>);</div>
-<div class="line"><span class="lineno">   82</span> </div>
-<div class="line"><span class="lineno">   83</span>                <span class="keyword">auto</span> <span class="keyword">const</span> firstLength = (startOffset &lt; endOffset) ? count : <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">_bufferLength</a> - startOffset;</div>
-<div class="line"><span class="lineno">   84</span>                <span class="keyword">auto</span> <span class="keyword">const</span> secondLength = count - firstLength;</div>
-<div class="line"><span class="lineno">   85</span> </div>
-<div class="line"><span class="lineno">   86</span>                <span class="keyword">auto</span> <span class="keyword">const</span> baseBufferPtr = <span class="keyword">static_cast&lt;</span>std::uint8_t*<span class="keyword">&gt;</span>(<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>-&gt;channelData());</div>
-<div class="line"><span class="lineno">   87</span>                <span class="keyword">auto</span> <span class="keyword">const</span> sampleWordSize = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>-&gt;sampleWordSize();</div>
-<div class="line"><span class="lineno">   88</span> </div>
-<div class="line"><span class="lineno">   89</span>                payloadBufferSlices.<a class="code hl_variable" href="structmxlMutableWrappedMultiBufferSlice__t.html#a739572e86d0310362147b5c394cb51fa">base</a>.<a class="code hl_variable" href="structmxlMutableWrappedBufferSlice__t.html#a35603074f772ae05db9952649ac809c0">fragments</a>[0].<a class="code hl_variable" href="structmxlMutableBufferSlice__t.html#a109b60c301a46a9537d49be2a8f8be0b">pointer</a> = baseBufferPtr + sampleWordSize * startOffset;</div>
-<div class="line"><span class="lineno">   90</span>                payloadBufferSlices.<a class="code hl_variable" href="structmxlMutableWrappedMultiBufferSlice__t.html#a739572e86d0310362147b5c394cb51fa">base</a>.<a class="code hl_variable" href="structmxlMutableWrappedBufferSlice__t.html#a35603074f772ae05db9952649ac809c0">fragments</a>[0].<a class="code hl_variable" href="structmxlMutableBufferSlice__t.html#a41c0b8b3189a4f03958bd83e041297b4">size</a> = sampleWordSize * firstLength;</div>
-<div class="line"><span class="lineno">   91</span> </div>
-<div class="line"><span class="lineno">   92</span>                payloadBufferSlices.<a class="code hl_variable" href="structmxlMutableWrappedMultiBufferSlice__t.html#a739572e86d0310362147b5c394cb51fa">base</a>.<a class="code hl_variable" href="structmxlMutableWrappedBufferSlice__t.html#a35603074f772ae05db9952649ac809c0">fragments</a>[1].<a class="code hl_variable" href="structmxlMutableBufferSlice__t.html#a109b60c301a46a9537d49be2a8f8be0b">pointer</a> = baseBufferPtr;</div>
-<div class="line"><span class="lineno">   93</span>                payloadBufferSlices.<a class="code hl_variable" href="structmxlMutableWrappedMultiBufferSlice__t.html#a739572e86d0310362147b5c394cb51fa">base</a>.<a class="code hl_variable" href="structmxlMutableWrappedBufferSlice__t.html#a35603074f772ae05db9952649ac809c0">fragments</a>[1].<a class="code hl_variable" href="structmxlMutableBufferSlice__t.html#a41c0b8b3189a4f03958bd83e041297b4">size</a> = sampleWordSize * secondLength;</div>
-<div class="line"><span class="lineno">   94</span> </div>
-<div class="line"><span class="lineno">   95</span>                payloadBufferSlices.<a class="code hl_variable" href="structmxlMutableWrappedMultiBufferSlice__t.html#af3be6f0132e22477c7a3fcdec729a4bd">stride</a> = sampleWordSize * <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">_bufferLength</a>;</div>
-<div class="line"><span class="lineno">   96</span>                payloadBufferSlices.<a class="code hl_variable" href="structmxlMutableWrappedMultiBufferSlice__t.html#a1c6b83fc652f5c04b8d0b7fe6b5232d2">count</a> = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae5a1179310ff956981dd70f61ff1b011">_channelCount</a>;</div>
-<div class="line"><span class="lineno">   97</span> </div>
-<div class="line"><span class="lineno">   98</span>                <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a70f2a79aa1b04a400e104592106617b9">_currentIndex</a> = <a class="code hl_variable" href="test__flows_8cpp.html#a92fcffcf98bd4a3cb5c3668473eb9d04">index</a>;</div>
-<div class="line"><span class="lineno">   99</span> </div>
-<div class="line"><span class="lineno">  100</span>                <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
-<div class="line"><span class="lineno">  101</span>            }</div>
-<div class="line"><span class="lineno">  102</span> </div>
-<div class="line"><span class="lineno">  103</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
-<div class="line"><span class="lineno">  104</span>        }</div>
-<div class="line"><span class="lineno">  105</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
-<div class="line"><span class="lineno">  106</span>    }</div>
-<div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a></div><div class="ttdeci">@ MXL_ERR_INVALID_ARG</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00031">mxl.h:31</a></div></div>
+<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00077">77</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   78</span>    {</div>
+<div class="line"><span class="lineno">   79</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>)</div>
+<div class="line"><span class="lineno">   80</span>        {</div>
+<div class="line"><span class="lineno">   81</span>            <span class="keywordflow">if</span> (count &lt;= (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">_bufferLength</a> / 2))</div>
+<div class="line"><span class="lineno">   82</span>            {</div>
+<div class="line"><span class="lineno">   83</span>                <span class="keywordflow">if</span> (<a class="code hl_variable" href="test__flows_8cpp.html#a92fcffcf98bd4a3cb5c3668473eb9d04">index</a> &lt; count)</div>
+<div class="line"><span class="lineno">   84</span>                {</div>
+<div class="line"><span class="lineno">   85</span>                    <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
+<div class="line"><span class="lineno">   86</span>                }</div>
+<div class="line"><span class="lineno">   87</span> </div>
+<div class="line"><span class="lineno">   88</span>                <span class="keyword">auto</span> <span class="keyword">const</span> writeStartIndex = <a class="code hl_variable" href="test__flows_8cpp.html#a92fcffcf98bd4a3cb5c3668473eb9d04">index</a> - count;</div>
+<div class="line"><span class="lineno">   89</span>                <span class="keywordflow">if</span> (<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a46d8ec3049a3616280b820a72172c006">_lastCommittedIndex</a> != <a class="code hl_define" href="rational_8h.html#a0d53b40f480a895e089040442b6efb14">MXL_UNDEFINED_INDEX</a>)</div>
+<div class="line"><span class="lineno">   90</span>                {</div>
+<div class="line"><span class="lineno">   91</span>                    <span class="keywordflow">if</span> ((<a class="code hl_variable" href="test__flows_8cpp.html#a92fcffcf98bd4a3cb5c3668473eb9d04">index</a> &lt;= <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a46d8ec3049a3616280b820a72172c006">_lastCommittedIndex</a>) || (writeStartIndex &lt; <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a46d8ec3049a3616280b820a72172c006">_lastCommittedIndex</a>))</div>
+<div class="line"><span class="lineno">   92</span>                    {</div>
+<div class="line"><span class="lineno">   93</span>                        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
+<div class="line"><span class="lineno">   94</span>                    }</div>
+<div class="line"><span class="lineno">   95</span> </div>
+<div class="line"><span class="lineno">   96</span>                    <span class="keywordflow">if</span> (writeStartIndex &gt; <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a46d8ec3049a3616280b820a72172c006">_lastCommittedIndex</a>)</div>
+<div class="line"><span class="lineno">   97</span>                    {</div>
+<div class="line"><span class="lineno">   98</span>                        <span class="comment">// We have to clear any skipped samples in the writable ring. This prevents readers from</span></div>
+<div class="line"><span class="lineno">   99</span>                        <span class="comment">// seeing stale payload data when the producer introduces a write gap.</span></div>
+<div class="line"><span class="lineno">  100</span>                        <span class="keyword">auto</span> <span class="keyword">const</span> skippedCount = writeStartIndex - <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a46d8ec3049a3616280b820a72172c006">_lastCommittedIndex</a>;</div>
+<div class="line"><span class="lineno">  101</span>                        <span class="keyword">auto</span> <span class="keyword">const</span> clearedCount = std::min&lt;std::uint64_t&gt;(skippedCount, <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">_bufferLength</a>);</div>
+<div class="line"><span class="lineno">  102</span>                        <span class="keyword">auto</span> <span class="keyword">const</span> gapEndIndex = writeStartIndex;</div>
+<div class="line"><span class="lineno">  103</span> </div>
+<div class="line"><span class="lineno">  104</span>                        <span class="keyword">auto</span> <span class="keyword">const</span> clearStartOffset = (gapEndIndex + <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">_bufferLength</a> - clearedCount) % <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">_bufferLength</a>;</div>
+<div class="line"><span class="lineno">  105</span>                        <span class="keyword">auto</span> <span class="keyword">const</span> clearEndOffset = gapEndIndex % <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">_bufferLength</a>;</div>
+<div class="line"><span class="lineno">  106</span>                        <span class="keyword">auto</span> <span class="keyword">const</span> firstClearLength = (clearStartOffset &lt; clearEndOffset) ? clearedCount : <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">_bufferLength</a> - clearStartOffset;</div>
+<div class="line"><span class="lineno">  107</span>                        <span class="keyword">auto</span> <span class="keyword">const</span> secondClearLength = clearedCount - firstClearLength;</div>
+<div class="line"><span class="lineno">  108</span> </div>
+<div class="line"><span class="lineno">  109</span>                        <span class="keyword">auto</span> <span class="keyword">const</span> sampleWordSize = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>-&gt;sampleWordSize();</div>
+<div class="line"><span class="lineno">  110</span>                        <span class="keyword">auto</span> <span class="keyword">const</span> channelStride = sampleWordSize * <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">_bufferLength</a>;</div>
+<div class="line"><span class="lineno">  111</span>                        <span class="keyword">auto</span>* <span class="keyword">const</span> baseBufferPtr = <span class="keyword">static_cast&lt;</span>std::uint8_t*<span class="keyword">&gt;</span>(<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>-&gt;channelData());</div>
+<div class="line"><span class="lineno">  112</span> </div>
+<div class="line"><span class="lineno">  113</span>                        <span class="keywordflow">for</span> (<span class="keyword">auto</span> channel = std::size_t{0}; channel &lt; <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae5a1179310ff956981dd70f61ff1b011">_channelCount</a>; ++channel)</div>
+<div class="line"><span class="lineno">  114</span>                        {</div>
+<div class="line"><span class="lineno">  115</span>                            <span class="keyword">auto</span>* <span class="keyword">const</span> channelBasePtr = baseBufferPtr + (channel * channelStride);</div>
+<div class="line"><span class="lineno">  116</span>                            std::memset(channelBasePtr + (sampleWordSize * clearStartOffset), 0, sampleWordSize * firstClearLength);</div>
+<div class="line"><span class="lineno">  117</span>                            std::memset(channelBasePtr, 0, sampleWordSize * secondClearLength);</div>
+<div class="line"><span class="lineno">  118</span>                        }</div>
+<div class="line"><span class="lineno">  119</span>                    }</div>
+<div class="line"><span class="lineno">  120</span>                }</div>
+<div class="line"><span class="lineno">  121</span> </div>
+<div class="line"><span class="lineno">  122</span>                <span class="keyword">auto</span> <span class="keyword">const</span> startOffset = (<a class="code hl_variable" href="test__flows_8cpp.html#a92fcffcf98bd4a3cb5c3668473eb9d04">index</a> + <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">_bufferLength</a> - count) % <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">_bufferLength</a>;</div>
+<div class="line"><span class="lineno">  123</span>                <span class="keyword">auto</span> <span class="keyword">const</span> endOffset = (<a class="code hl_variable" href="test__flows_8cpp.html#a92fcffcf98bd4a3cb5c3668473eb9d04">index</a> % <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">_bufferLength</a>);</div>
+<div class="line"><span class="lineno">  124</span> </div>
+<div class="line"><span class="lineno">  125</span>                <span class="keyword">auto</span> <span class="keyword">const</span> firstLength = (startOffset &lt; endOffset) ? count : <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">_bufferLength</a> - startOffset;</div>
+<div class="line"><span class="lineno">  126</span>                <span class="keyword">auto</span> <span class="keyword">const</span> secondLength = count - firstLength;</div>
+<div class="line"><span class="lineno">  127</span> </div>
+<div class="line"><span class="lineno">  128</span>                <span class="keyword">auto</span> <span class="keyword">const</span> baseBufferPtr = <span class="keyword">static_cast&lt;</span>std::uint8_t*<span class="keyword">&gt;</span>(<a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>-&gt;channelData());</div>
+<div class="line"><span class="lineno">  129</span>                <span class="keyword">auto</span> <span class="keyword">const</span> sampleWordSize = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>-&gt;sampleWordSize();</div>
+<div class="line"><span class="lineno">  130</span> </div>
+<div class="line"><span class="lineno">  131</span>                payloadBufferSlices.<a class="code hl_variable" href="structmxlMutableWrappedMultiBufferSlice__t.html#a739572e86d0310362147b5c394cb51fa">base</a>.<a class="code hl_variable" href="structmxlMutableWrappedBufferSlice__t.html#a35603074f772ae05db9952649ac809c0">fragments</a>[0].<a class="code hl_variable" href="structmxlMutableBufferSlice__t.html#a109b60c301a46a9537d49be2a8f8be0b">pointer</a> = baseBufferPtr + sampleWordSize * startOffset;</div>
+<div class="line"><span class="lineno">  132</span>                payloadBufferSlices.<a class="code hl_variable" href="structmxlMutableWrappedMultiBufferSlice__t.html#a739572e86d0310362147b5c394cb51fa">base</a>.<a class="code hl_variable" href="structmxlMutableWrappedBufferSlice__t.html#a35603074f772ae05db9952649ac809c0">fragments</a>[0].<a class="code hl_variable" href="structmxlMutableBufferSlice__t.html#a41c0b8b3189a4f03958bd83e041297b4">size</a> = sampleWordSize * firstLength;</div>
+<div class="line"><span class="lineno">  133</span> </div>
+<div class="line"><span class="lineno">  134</span>                payloadBufferSlices.<a class="code hl_variable" href="structmxlMutableWrappedMultiBufferSlice__t.html#a739572e86d0310362147b5c394cb51fa">base</a>.<a class="code hl_variable" href="structmxlMutableWrappedBufferSlice__t.html#a35603074f772ae05db9952649ac809c0">fragments</a>[1].<a class="code hl_variable" href="structmxlMutableBufferSlice__t.html#a109b60c301a46a9537d49be2a8f8be0b">pointer</a> = baseBufferPtr;</div>
+<div class="line"><span class="lineno">  135</span>                payloadBufferSlices.<a class="code hl_variable" href="structmxlMutableWrappedMultiBufferSlice__t.html#a739572e86d0310362147b5c394cb51fa">base</a>.<a class="code hl_variable" href="structmxlMutableWrappedBufferSlice__t.html#a35603074f772ae05db9952649ac809c0">fragments</a>[1].<a class="code hl_variable" href="structmxlMutableBufferSlice__t.html#a41c0b8b3189a4f03958bd83e041297b4">size</a> = sampleWordSize * secondLength;</div>
+<div class="line"><span class="lineno">  136</span> </div>
+<div class="line"><span class="lineno">  137</span>                payloadBufferSlices.<a class="code hl_variable" href="structmxlMutableWrappedMultiBufferSlice__t.html#af3be6f0132e22477c7a3fcdec729a4bd">stride</a> = sampleWordSize * <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae4c98e2a0e0165982ed98ff716ea3293">_bufferLength</a>;</div>
+<div class="line"><span class="lineno">  138</span>                payloadBufferSlices.<a class="code hl_variable" href="structmxlMutableWrappedMultiBufferSlice__t.html#a1c6b83fc652f5c04b8d0b7fe6b5232d2">count</a> = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae5a1179310ff956981dd70f61ff1b011">_channelCount</a>;</div>
+<div class="line"><span class="lineno">  139</span> </div>
+<div class="line"><span class="lineno">  140</span>                <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a70f2a79aa1b04a400e104592106617b9">_currentIndex</a> = <a class="code hl_variable" href="test__flows_8cpp.html#a92fcffcf98bd4a3cb5c3668473eb9d04">index</a>;</div>
+<div class="line"><span class="lineno">  141</span> </div>
+<div class="line"><span class="lineno">  142</span>                <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
+<div class="line"><span class="lineno">  143</span>            }</div>
+<div class="line"><span class="lineno">  144</span> </div>
+<div class="line"><span class="lineno">  145</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
+<div class="line"><span class="lineno">  146</span>        }</div>
+<div class="line"><span class="lineno">  147</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">  148</span>    }</div>
 <div class="ttc" id="astructmxlMutableBufferSlice__t_html_a109b60c301a46a9537d49be2a8f8be0b"><div class="ttname"><a href="structmxlMutableBufferSlice__t.html#a109b60c301a46a9537d49be2a8f8be0b">mxlMutableBufferSlice_t::pointer</a></div><div class="ttdeci">void * pointer</div><div class="ttdef"><b>Definition</b> <a href="flow_8h_source.html#l00061">flow.h:61</a></div></div>
 <div class="ttc" id="astructmxlMutableBufferSlice__t_html_a41c0b8b3189a4f03958bd83e041297b4"><div class="ttname"><a href="structmxlMutableBufferSlice__t.html#a41c0b8b3189a4f03958bd83e041297b4">mxlMutableBufferSlice_t::size</a></div><div class="ttdeci">size_t size</div><div class="ttdef"><b>Definition</b> <a href="flow_8h_source.html#l00063">flow.h:63</a></div></div>
 <div class="ttc" id="astructmxlMutableWrappedBufferSlice__t_html_a35603074f772ae05db9952649ac809c0"><div class="ttname"><a href="structmxlMutableWrappedBufferSlice__t.html#a35603074f772ae05db9952649ac809c0">mxlMutableWrappedBufferSlice_t::fragments</a></div><div class="ttdeci">mxlMutableBufferSlice fragments[2]</div><div class="ttdef"><b>Definition</b> <a href="flow_8h_source.html#l00083">flow.h:83</a></div></div>
@@ -769,33 +818,33 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00138">138</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  139</span>    {</div>
-<div class="line"><span class="lineno">  140</span>        <span class="keyword">auto</span> <span class="keyword">const</span> flow = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>-&gt;flow();</div>
-<div class="line"><span class="lineno">  141</span>        <span class="keyword">auto</span> <span class="keyword">const</span> currentSyncSampleBatch = flow-&gt;info.runtime.headIndex / <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a82827f34d32176dea3eae591e42d64c1">_syncBatchSize</a>;</div>
-<div class="line"><span class="lineno">  142</span>        <span class="keywordflow">if</span> (currentSyncSampleBatch &lt; <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae9f0adae55d0834f76fc9e9bc57ed1fb">_lastSyncSampleBatch</a>)</div>
-<div class="line"><span class="lineno">  143</span>        {</div>
-<div class="line"><span class="lineno">  144</span>            <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
-<div class="line"><span class="lineno">  145</span>        }</div>
-<div class="line"><span class="lineno">  146</span>        <span class="keywordflow">if</span> (currentSyncSampleBatch == <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae9f0adae55d0834f76fc9e9bc57ed1fb">_lastSyncSampleBatch</a>)</div>
-<div class="line"><span class="lineno">  147</span>        {</div>
-<div class="line"><span class="lineno">  148</span>            <span class="comment">// Signal now before overshooting the maximum the next time around</span></div>
-<div class="line"><span class="lineno">  149</span>            <span class="keywordflow">if</span> ((flow-&gt;info.runtime.headIndex % <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a82827f34d32176dea3eae591e42d64c1">_syncBatchSize</a>) &gt; <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a7737f209a829764cdf899175d449d3c9">_earlySyncThreshold</a>)</div>
-<div class="line"><span class="lineno">  150</span>            {</div>
-<div class="line"><span class="lineno">  151</span>                <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae9f0adae55d0834f76fc9e9bc57ed1fb">_lastSyncSampleBatch</a> = currentSyncSampleBatch + 1U;</div>
-<div class="line"><span class="lineno">  152</span>            }</div>
-<div class="line"><span class="lineno">  153</span>            <span class="keywordflow">else</span></div>
-<div class="line"><span class="lineno">  154</span>            {</div>
-<div class="line"><span class="lineno">  155</span>                <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
-<div class="line"><span class="lineno">  156</span>            }</div>
-<div class="line"><span class="lineno">  157</span>        }</div>
-<div class="line"><span class="lineno">  158</span>        <span class="keywordflow">else</span></div>
-<div class="line"><span class="lineno">  159</span>        {</div>
-<div class="line"><span class="lineno">  160</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae9f0adae55d0834f76fc9e9bc57ed1fb">_lastSyncSampleBatch</a> = currentSyncSampleBatch;</div>
-<div class="line"><span class="lineno">  161</span>        }</div>
-<div class="line"><span class="lineno">  162</span> </div>
-<div class="line"><span class="lineno">  163</span>        <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
-<div class="line"><span class="lineno">  164</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html#l00186">186</a> of file <a class="el" href="PosixContinuousFlowWriter_8cpp_source.html">PosixContinuousFlowWriter.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  187</span>    {</div>
+<div class="line"><span class="lineno">  188</span>        <span class="keyword">auto</span> <span class="keyword">const</span> flow = <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a">_flowData</a>-&gt;flow();</div>
+<div class="line"><span class="lineno">  189</span>        <span class="keyword">auto</span> <span class="keyword">const</span> currentSyncSampleBatch = flow-&gt;info.runtime.headIndex / <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a82827f34d32176dea3eae591e42d64c1">_syncBatchSize</a>;</div>
+<div class="line"><span class="lineno">  190</span>        <span class="keywordflow">if</span> (currentSyncSampleBatch &lt; <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae9f0adae55d0834f76fc9e9bc57ed1fb">_lastSyncSampleBatch</a>)</div>
+<div class="line"><span class="lineno">  191</span>        {</div>
+<div class="line"><span class="lineno">  192</span>            <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><span class="lineno">  193</span>        }</div>
+<div class="line"><span class="lineno">  194</span>        <span class="keywordflow">if</span> (currentSyncSampleBatch == <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae9f0adae55d0834f76fc9e9bc57ed1fb">_lastSyncSampleBatch</a>)</div>
+<div class="line"><span class="lineno">  195</span>        {</div>
+<div class="line"><span class="lineno">  196</span>            <span class="comment">// Signal now before overshooting the maximum the next time around</span></div>
+<div class="line"><span class="lineno">  197</span>            <span class="keywordflow">if</span> ((flow-&gt;info.runtime.headIndex % <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a82827f34d32176dea3eae591e42d64c1">_syncBatchSize</a>) &gt; <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a7737f209a829764cdf899175d449d3c9">_earlySyncThreshold</a>)</div>
+<div class="line"><span class="lineno">  198</span>            {</div>
+<div class="line"><span class="lineno">  199</span>                <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae9f0adae55d0834f76fc9e9bc57ed1fb">_lastSyncSampleBatch</a> = currentSyncSampleBatch + 1U;</div>
+<div class="line"><span class="lineno">  200</span>            }</div>
+<div class="line"><span class="lineno">  201</span>            <span class="keywordflow">else</span></div>
+<div class="line"><span class="lineno">  202</span>            {</div>
+<div class="line"><span class="lineno">  203</span>                <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><span class="lineno">  204</span>            }</div>
+<div class="line"><span class="lineno">  205</span>        }</div>
+<div class="line"><span class="lineno">  206</span>        <span class="keywordflow">else</span></div>
+<div class="line"><span class="lineno">  207</span>        {</div>
+<div class="line"><span class="lineno">  208</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae9f0adae55d0834f76fc9e9bc57ed1fb">_lastSyncSampleBatch</a> = currentSyncSampleBatch;</div>
+<div class="line"><span class="lineno">  209</span>        }</div>
+<div class="line"><span class="lineno">  210</span> </div>
+<div class="line"><span class="lineno">  211</span>        <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
+<div class="line"><span class="lineno">  212</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -821,7 +870,7 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 <p>Cached copy of the length of the per channel buffers from mxlFlowInfo. </p>
 
-<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html#l00082">82</a> of file <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html">PosixContinuousFlowWriter.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html#l00081">81</a> of file <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html">PosixContinuousFlowWriter.hpp</a>.</p>
 
 </div>
 </div>
@@ -846,7 +895,7 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 <p>Cached copy of the numer of channels from mxlFlowInfo. </p>
 
-<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html#l00080">80</a> of file <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html">PosixContinuousFlowWriter.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html#l00079">79</a> of file <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html">PosixContinuousFlowWriter.hpp</a>.</p>
 
 </div>
 </div>
@@ -871,7 +920,7 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 <p>The currently opened sample range head index. MXL_UNDEFINED_INDEX if no range is currently opened. </p>
 
-<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html#l00084">84</a> of file <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html">PosixContinuousFlowWriter.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html#l00083">83</a> of file <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html">PosixContinuousFlowWriter.hpp</a>.</p>
 
 </div>
 </div>
@@ -896,7 +945,7 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 <p>The threshold at which to signal even before _syncBatchSize is reached, in order to not exceed the maximum. </p>
 
-<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html#l00089">89</a> of file <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html">PosixContinuousFlowWriter.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html#l00090">90</a> of file <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html">PosixContinuousFlowWriter.hpp</a>.</p>
 
 </div>
 </div>
@@ -921,7 +970,32 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 <p>The <a class="el" href="classmxl_1_1lib_1_1FlowData.html">FlowData</a> for the currently opened flow. null if no flow is opened. </p>
 
-<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html#l00078">78</a> of file <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html">PosixContinuousFlowWriter.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html#l00077">77</a> of file <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html">PosixContinuousFlowWriter.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a46d8ec3049a3616280b820a72172c006" name="a46d8ec3049a3616280b820a72172c006"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a46d8ec3049a3616280b820a72172c006">&#9670;&#160;</a></span>_lastCommittedIndex</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::uint64_t mxl::lib::PosixContinuousFlowWriter::_lastCommittedIndex</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>The last committed sample range head index. MXL_UNDEFINED_INDEX if no range has been committed yet. </p>
+
+<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html#l00085">85</a> of file <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html">PosixContinuousFlowWriter.hpp</a>.</p>
 
 </div>
 </div>
@@ -946,7 +1020,7 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 <p>The last sample batch (as a factor of _syncBatchSize) that has been signaled. </p>
 
-<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html#l00092">92</a> of file <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html">PosixContinuousFlowWriter.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html#l00093">93</a> of file <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html">PosixContinuousFlowWriter.hpp</a>.</p>
 
 </div>
 </div>
@@ -971,7 +1045,7 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 <p>Cached preprocessed copy of mxlCommonFlowInfo::maxSyncBatchSizeHint. </p>
 
-<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html#l00087">87</a> of file <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html">PosixContinuousFlowWriter.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html#l00088">88</a> of file <a class="el" href="PosixContinuousFlowWriter_8hpp_source.html">PosixContinuousFlowWriter.hpp</a>.</p>
 
 </div>
 </div>

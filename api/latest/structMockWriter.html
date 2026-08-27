@@ -217,7 +217,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00102">102</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00103">103</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="aa935dc09aef541f1af230b1e345ac3e8" name="aa935dc09aef541f1af230b1e345ac3e8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa935dc09aef541f1af230b1e345ac3e8">&#9670;&#160;</a></span>MockWriter()</h2>
@@ -259,34 +259,34 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00104">104</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  105</span>        : <a class="code hl_class" href="classmxl_1_1lib_1_1DiscreteFlowWriter.html">mxl::lib::DiscreteFlowWriter</a>{id, domain}</div>
-<div class="line"><span class="lineno">  106</span>        , <a class="code hl_variable" href="structMockWriter.html#a5e0cc9aa898658da9334ba214a114843">_info</a>{}</div>
-<div class="line"><span class="lineno">  107</span>        , <a class="code hl_variable" href="structMockWriter.html#a6a6982f17f49d05e1a2177c65c0c2d63">_id</a>{<span class="keywordtype">id</span>}</div>
-<div class="line"><span class="lineno">  108</span>        , <a class="code hl_variable" href="structMockWriter.html#adbb266964600bc5a1a110d1c3e195c70">_watcher</a>{watcher}</div>
-<div class="line"><span class="lineno">  109</span>    {</div>
-<div class="line"><span class="lineno">  110</span>        <a class="code hl_variable" href="structMockWriter.html#adbb266964600bc5a1a110d1c3e195c70">_watcher</a>-&gt;addFlow(<span class="keyword">this</span>, <a class="code hl_variable" href="structMockWriter.html#a6a6982f17f49d05e1a2177c65c0c2d63">_id</a>);</div>
-<div class="line"><span class="lineno">  111</span>        <a class="code hl_variable" href="structMockWriter.html#a8e187394694413a14eb12e06f0ae35f6">_flowDataFd</a> = ::open(<a class="code hl_function" href="namespacemxl_1_1lib.html#a70469f14e75438e90bdf85253ad817f9">makeFlowDataFilePath</a>(domain, uuids::to_string(<span class="keywordtype">id</span>)).c_str(), O_RDONLY | O_CLOEXEC, 0);</div>
-<div class="line"><span class="lineno">  112</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="structMockWriter.html#a8e187394694413a14eb12e06f0ae35f6">_flowDataFd</a> &lt; 0)</div>
-<div class="line"><span class="lineno">  113</span>        {</div>
-<div class="line"><span class="lineno">  114</span>            <span class="keyword">auto</span> <span class="keyword">const</span> error = errno;</div>
-<div class="line"><span class="lineno">  115</span>            <span class="keywordflow">throw</span> std::system_error{error, std::system_category(), <span class="stringliteral">&quot;Failed to open grain data file&quot;</span>};</div>
-<div class="line"><span class="lineno">  116</span>        }</div>
-<div class="line"><span class="lineno">  117</span> </div>
-<div class="line"><span class="lineno">  118</span>        <a class="code hl_variable" href="structMockWriter.html#a4db8f8308d7bc688839523563fa2b4f5">_flowData</a> = <span class="keyword">reinterpret_cast&lt;</span><a class="code hl_struct" href="structmxl_1_1lib_1_1Flow.html">Flow</a>*<span class="keyword">&gt;</span>(::mmap(<span class="keyword">nullptr</span>, <span class="keyword">sizeof</span>(<a class="code hl_struct" href="structmxl_1_1lib_1_1Flow.html">Flow</a>), PROT_READ, MAP_SHARED, <a class="code hl_variable" href="structMockWriter.html#a8e187394694413a14eb12e06f0ae35f6">_flowDataFd</a>, 0));</div>
-<div class="line"><span class="lineno">  119</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="structMockWriter.html#a4db8f8308d7bc688839523563fa2b4f5">_flowData</a> == MAP_FAILED)</div>
-<div class="line"><span class="lineno">  120</span>        {</div>
-<div class="line"><span class="lineno">  121</span>            <span class="keyword">auto</span> <span class="keyword">const</span> error = errno;</div>
-<div class="line"><span class="lineno">  122</span>            <span class="keywordflow">throw</span> std::system_error{error, std::system_category(), <span class="stringliteral">&quot;Failed to map grain data file&quot;</span>};</div>
-<div class="line"><span class="lineno">  123</span>        }</div>
-<div class="line"><span class="lineno">  124</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00105">105</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  106</span>        : <a class="code hl_class" href="classmxl_1_1lib_1_1DiscreteFlowWriter.html">mxl::lib::DiscreteFlowWriter</a>{id, domain}</div>
+<div class="line"><span class="lineno">  107</span>        , <a class="code hl_variable" href="structMockWriter.html#a5e0cc9aa898658da9334ba214a114843">_info</a>{}</div>
+<div class="line"><span class="lineno">  108</span>        , <a class="code hl_variable" href="structMockWriter.html#a6a6982f17f49d05e1a2177c65c0c2d63">_id</a>{<span class="keywordtype">id</span>}</div>
+<div class="line"><span class="lineno">  109</span>        , <a class="code hl_variable" href="structMockWriter.html#adbb266964600bc5a1a110d1c3e195c70">_watcher</a>{watcher}</div>
+<div class="line"><span class="lineno">  110</span>    {</div>
+<div class="line"><span class="lineno">  111</span>        <a class="code hl_variable" href="structMockWriter.html#adbb266964600bc5a1a110d1c3e195c70">_watcher</a>-&gt;addFlow(<span class="keyword">this</span>, <a class="code hl_variable" href="structMockWriter.html#a6a6982f17f49d05e1a2177c65c0c2d63">_id</a>);</div>
+<div class="line"><span class="lineno">  112</span>        <a class="code hl_variable" href="structMockWriter.html#a8e187394694413a14eb12e06f0ae35f6">_flowDataFd</a> = ::open(<a class="code hl_function" href="namespacemxl_1_1lib.html#a70469f14e75438e90bdf85253ad817f9">makeFlowDataFilePath</a>(domain, uuids::to_string(<span class="keywordtype">id</span>)).c_str(), O_RDONLY | O_CLOEXEC, 0);</div>
+<div class="line"><span class="lineno">  113</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="structMockWriter.html#a8e187394694413a14eb12e06f0ae35f6">_flowDataFd</a> &lt; 0)</div>
+<div class="line"><span class="lineno">  114</span>        {</div>
+<div class="line"><span class="lineno">  115</span>            <span class="keyword">auto</span> <span class="keyword">const</span> error = errno;</div>
+<div class="line"><span class="lineno">  116</span>            <span class="keywordflow">throw</span> std::system_error{error, std::system_category(), <span class="stringliteral">&quot;Failed to open grain data file&quot;</span>};</div>
+<div class="line"><span class="lineno">  117</span>        }</div>
+<div class="line"><span class="lineno">  118</span> </div>
+<div class="line"><span class="lineno">  119</span>        <a class="code hl_variable" href="structMockWriter.html#a4db8f8308d7bc688839523563fa2b4f5">_flowData</a> = <span class="keyword">reinterpret_cast&lt;</span><a class="code hl_struct" href="structmxl_1_1lib_1_1Flow.html">Flow</a>*<span class="keyword">&gt;</span>(::mmap(<span class="keyword">nullptr</span>, <span class="keyword">sizeof</span>(<a class="code hl_struct" href="structmxl_1_1lib_1_1Flow.html">Flow</a>), PROT_READ, MAP_SHARED, <a class="code hl_variable" href="structMockWriter.html#a8e187394694413a14eb12e06f0ae35f6">_flowDataFd</a>, 0));</div>
+<div class="line"><span class="lineno">  120</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="structMockWriter.html#a4db8f8308d7bc688839523563fa2b4f5">_flowData</a> == MAP_FAILED)</div>
+<div class="line"><span class="lineno">  121</span>        {</div>
+<div class="line"><span class="lineno">  122</span>            <span class="keyword">auto</span> <span class="keyword">const</span> error = errno;</div>
+<div class="line"><span class="lineno">  123</span>            <span class="keywordflow">throw</span> std::system_error{error, std::system_category(), <span class="stringliteral">&quot;Failed to map grain data file&quot;</span>};</div>
+<div class="line"><span class="lineno">  124</span>        }</div>
+<div class="line"><span class="lineno">  125</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1DiscreteFlowWriter_html"><div class="ttname"><a href="classmxl_1_1lib_1_1DiscreteFlowWriter.html">mxl::lib::DiscreteFlowWriter</a></div><div class="ttdef"><b>Definition</b> <a href="DiscreteFlowWriter_8hpp_source.html#l00010">DiscreteFlowWriter.hpp:11</a></div></div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_a70469f14e75438e90bdf85253ad817f9"><div class="ttname"><a href="namespacemxl_1_1lib.html#a70469f14e75438e90bdf85253ad817f9">mxl::lib::makeFlowDataFilePath</a></div><div class="ttdeci">std::filesystem::path makeFlowDataFilePath(std::filesystem::path const &amp;flowDirectory)</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8cpp_source.html#l00017">PathUtils.cpp:17</a></div></div>
-<div class="ttc" id="astructMockWriter_html_a4db8f8308d7bc688839523563fa2b4f5"><div class="ttname"><a href="structMockWriter.html#a4db8f8308d7bc688839523563fa2b4f5">MockWriter::_flowData</a></div><div class="ttdeci">Flow * _flowData</div><div class="ttdef"><b>Definition</b> <a href="test__domainwatcher_8cpp_source.html#l00217">test_domainwatcher.cpp:217</a></div></div>
-<div class="ttc" id="astructMockWriter_html_a5e0cc9aa898658da9334ba214a114843"><div class="ttname"><a href="structMockWriter.html#a5e0cc9aa898658da9334ba214a114843">MockWriter::_info</a></div><div class="ttdeci">mxlFlowInfo _info</div><div class="ttdef"><b>Definition</b> <a href="test__domainwatcher_8cpp_source.html#l00211">test_domainwatcher.cpp:211</a></div></div>
-<div class="ttc" id="astructMockWriter_html_a6a6982f17f49d05e1a2177c65c0c2d63"><div class="ttname"><a href="structMockWriter.html#a6a6982f17f49d05e1a2177c65c0c2d63">MockWriter::_id</a></div><div class="ttdeci">uuids::uuid _id</div><div class="ttdef"><b>Definition</b> <a href="test__domainwatcher_8cpp_source.html#l00212">test_domainwatcher.cpp:212</a></div></div>
-<div class="ttc" id="astructMockWriter_html_a8e187394694413a14eb12e06f0ae35f6"><div class="ttname"><a href="structMockWriter.html#a8e187394694413a14eb12e06f0ae35f6">MockWriter::_flowDataFd</a></div><div class="ttdeci">int _flowDataFd</div><div class="ttdef"><b>Definition</b> <a href="test__domainwatcher_8cpp_source.html#l00216">test_domainwatcher.cpp:216</a></div></div>
-<div class="ttc" id="astructMockWriter_html_adbb266964600bc5a1a110d1c3e195c70"><div class="ttname"><a href="structMockWriter.html#adbb266964600bc5a1a110d1c3e195c70">MockWriter::_watcher</a></div><div class="ttdeci">DomainWatcher::ptr _watcher</div><div class="ttdef"><b>Definition</b> <a href="test__domainwatcher_8cpp_source.html#l00213">test_domainwatcher.cpp:213</a></div></div>
+<div class="ttc" id="astructMockWriter_html_a4db8f8308d7bc688839523563fa2b4f5"><div class="ttname"><a href="structMockWriter.html#a4db8f8308d7bc688839523563fa2b4f5">MockWriter::_flowData</a></div><div class="ttdeci">Flow * _flowData</div><div class="ttdef"><b>Definition</b> <a href="test__domainwatcher_8cpp_source.html#l00218">test_domainwatcher.cpp:218</a></div></div>
+<div class="ttc" id="astructMockWriter_html_a5e0cc9aa898658da9334ba214a114843"><div class="ttname"><a href="structMockWriter.html#a5e0cc9aa898658da9334ba214a114843">MockWriter::_info</a></div><div class="ttdeci">mxlFlowInfo _info</div><div class="ttdef"><b>Definition</b> <a href="test__domainwatcher_8cpp_source.html#l00212">test_domainwatcher.cpp:212</a></div></div>
+<div class="ttc" id="astructMockWriter_html_a6a6982f17f49d05e1a2177c65c0c2d63"><div class="ttname"><a href="structMockWriter.html#a6a6982f17f49d05e1a2177c65c0c2d63">MockWriter::_id</a></div><div class="ttdeci">uuids::uuid _id</div><div class="ttdef"><b>Definition</b> <a href="test__domainwatcher_8cpp_source.html#l00213">test_domainwatcher.cpp:213</a></div></div>
+<div class="ttc" id="astructMockWriter_html_a8e187394694413a14eb12e06f0ae35f6"><div class="ttname"><a href="structMockWriter.html#a8e187394694413a14eb12e06f0ae35f6">MockWriter::_flowDataFd</a></div><div class="ttdeci">int _flowDataFd</div><div class="ttdef"><b>Definition</b> <a href="test__domainwatcher_8cpp_source.html#l00217">test_domainwatcher.cpp:217</a></div></div>
+<div class="ttc" id="astructMockWriter_html_adbb266964600bc5a1a110d1c3e195c70"><div class="ttname"><a href="structMockWriter.html#adbb266964600bc5a1a110d1c3e195c70">MockWriter::_watcher</a></div><div class="ttdeci">DomainWatcher::ptr _watcher</div><div class="ttdef"><b>Definition</b> <a href="test__domainwatcher_8cpp_source.html#l00214">test_domainwatcher.cpp:214</a></div></div>
 <div class="ttc" id="astructmxl_1_1lib_1_1Flow_html"><div class="ttname"><a href="structmxl_1_1lib_1_1Flow.html">mxl::lib::Flow</a></div><div class="ttdef"><b>Definition</b> <a href="Flow_8hpp_source.html#l00026">Flow.hpp:27</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -314,19 +314,19 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00126">126</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  127</span>    {</div>
-<div class="line"><span class="lineno">  128</span>        <a class="code hl_variable" href="structMockWriter.html#adbb266964600bc5a1a110d1c3e195c70">_watcher</a>-&gt;removeFlow(<span class="keyword">this</span>, <a class="code hl_variable" href="structMockWriter.html#a6a6982f17f49d05e1a2177c65c0c2d63">_id</a>);</div>
-<div class="line"><span class="lineno">  129</span>        <span class="keywordflow">if</span> ((<a class="code hl_variable" href="structMockWriter.html#a4db8f8308d7bc688839523563fa2b4f5">_flowData</a> != <span class="keyword">nullptr</span>) &amp;&amp; (<a class="code hl_variable" href="structMockWriter.html#a4db8f8308d7bc688839523563fa2b4f5">_flowData</a> != MAP_FAILED))</div>
-<div class="line"><span class="lineno">  130</span>        {</div>
-<div class="line"><span class="lineno">  131</span>            (void)::munmap(<a class="code hl_variable" href="structMockWriter.html#a4db8f8308d7bc688839523563fa2b4f5">_flowData</a>, <span class="keyword">sizeof</span>(<a class="code hl_struct" href="structmxl_1_1lib_1_1Flow.html">Flow</a>));</div>
-<div class="line"><span class="lineno">  132</span>        }</div>
-<div class="line"><span class="lineno">  133</span> </div>
-<div class="line"><span class="lineno">  134</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="structMockWriter.html#a8e187394694413a14eb12e06f0ae35f6">_flowDataFd</a> &gt; -1)</div>
-<div class="line"><span class="lineno">  135</span>        {</div>
-<div class="line"><span class="lineno">  136</span>            (void)::close(<a class="code hl_variable" href="structMockWriter.html#a8e187394694413a14eb12e06f0ae35f6">_flowDataFd</a>);</div>
-<div class="line"><span class="lineno">  137</span>        }</div>
-<div class="line"><span class="lineno">  138</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00127">127</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  128</span>    {</div>
+<div class="line"><span class="lineno">  129</span>        <a class="code hl_variable" href="structMockWriter.html#adbb266964600bc5a1a110d1c3e195c70">_watcher</a>-&gt;removeFlow(<span class="keyword">this</span>, <a class="code hl_variable" href="structMockWriter.html#a6a6982f17f49d05e1a2177c65c0c2d63">_id</a>);</div>
+<div class="line"><span class="lineno">  130</span>        <span class="keywordflow">if</span> ((<a class="code hl_variable" href="structMockWriter.html#a4db8f8308d7bc688839523563fa2b4f5">_flowData</a> != <span class="keyword">nullptr</span>) &amp;&amp; (<a class="code hl_variable" href="structMockWriter.html#a4db8f8308d7bc688839523563fa2b4f5">_flowData</a> != MAP_FAILED))</div>
+<div class="line"><span class="lineno">  131</span>        {</div>
+<div class="line"><span class="lineno">  132</span>            (void)::munmap(<a class="code hl_variable" href="structMockWriter.html#a4db8f8308d7bc688839523563fa2b4f5">_flowData</a>, <span class="keyword">sizeof</span>(<a class="code hl_struct" href="structmxl_1_1lib_1_1Flow.html">Flow</a>));</div>
+<div class="line"><span class="lineno">  133</span>        }</div>
+<div class="line"><span class="lineno">  134</span> </div>
+<div class="line"><span class="lineno">  135</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="structMockWriter.html#a8e187394694413a14eb12e06f0ae35f6">_flowDataFd</a> &gt; -1)</div>
+<div class="line"><span class="lineno">  136</span>        {</div>
+<div class="line"><span class="lineno">  137</span>            (void)::close(<a class="code hl_variable" href="structMockWriter.html#a8e187394694413a14eb12e06f0ae35f6">_flowDataFd</a>);</div>
+<div class="line"><span class="lineno">  138</span>        }</div>
+<div class="line"><span class="lineno">  139</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -356,10 +356,10 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowWriter.html#ac49926ea180cb4e8eee518285a71c854">mxl::lib::DiscreteFlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00199">199</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  200</span>    {</div>
-<div class="line"><span class="lineno">  201</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
-<div class="line"><span class="lineno">  202</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00200">200</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  201</span>    {</div>
+<div class="line"><span class="lineno">  202</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
+<div class="line"><span class="lineno">  203</span>    }</div>
 <div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a></div><div class="ttdeci">@ MXL_STATUS_OK</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00023">mxl.h:23</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -387,13 +387,13 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00204">204</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  205</span>    {</div>
-<div class="line"><span class="lineno">  206</span>        <span class="keyword">auto</span> before = <a class="code hl_variable" href="structMockWriter.html#a3c7daaecaac4c7570b1f163c6d5f8611">_lastReadTime</a>;</div>
-<div class="line"><span class="lineno">  207</span>        <a class="code hl_variable" href="structMockWriter.html#a3c7daaecaac4c7570b1f163c6d5f8611">_lastReadTime</a> = <a class="code hl_variable" href="structMockWriter.html#a4db8f8308d7bc688839523563fa2b4f5">_flowData</a>-&gt;<a class="code hl_variable" href="structmxl_1_1lib_1_1Flow.html#a5752aab3e43adff9aa0feb9bf5a4b75d">info</a>.<a class="code hl_variable" href="structmxlFlowInfo__t.html#a1adeafe3d8c0fc08ad90ed343504bae5">runtime</a>.<a class="code hl_variable" href="structmxlFlowRuntimeInfo__t.html#af81d9f6811c6626ffb98a4cf2598422b">lastReadTime</a>;</div>
-<div class="line"><span class="lineno">  208</span>        <span class="keywordflow">return</span> before != <a class="code hl_variable" href="structMockWriter.html#a3c7daaecaac4c7570b1f163c6d5f8611">_lastReadTime</a>;</div>
-<div class="line"><span class="lineno">  209</span>    }</div>
-<div class="ttc" id="astructMockWriter_html_a3c7daaecaac4c7570b1f163c6d5f8611"><div class="ttname"><a href="structMockWriter.html#a3c7daaecaac4c7570b1f163c6d5f8611">MockWriter::_lastReadTime</a></div><div class="ttdeci">std::uint64_t _lastReadTime</div><div class="ttdef"><b>Definition</b> <a href="test__domainwatcher_8cpp_source.html#l00215">test_domainwatcher.cpp:215</a></div></div>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00205">205</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  206</span>    {</div>
+<div class="line"><span class="lineno">  207</span>        <span class="keyword">auto</span> before = <a class="code hl_variable" href="structMockWriter.html#a3c7daaecaac4c7570b1f163c6d5f8611">_lastReadTime</a>;</div>
+<div class="line"><span class="lineno">  208</span>        <a class="code hl_variable" href="structMockWriter.html#a3c7daaecaac4c7570b1f163c6d5f8611">_lastReadTime</a> = <a class="code hl_variable" href="structMockWriter.html#a4db8f8308d7bc688839523563fa2b4f5">_flowData</a>-&gt;<a class="code hl_variable" href="structmxl_1_1lib_1_1Flow.html#a5752aab3e43adff9aa0feb9bf5a4b75d">info</a>.<a class="code hl_variable" href="structmxlFlowInfo__t.html#a1adeafe3d8c0fc08ad90ed343504bae5">runtime</a>.<a class="code hl_variable" href="structmxlFlowRuntimeInfo__t.html#af81d9f6811c6626ffb98a4cf2598422b">lastReadTime</a>;</div>
+<div class="line"><span class="lineno">  209</span>        <span class="keywordflow">return</span> before != <a class="code hl_variable" href="structMockWriter.html#a3c7daaecaac4c7570b1f163c6d5f8611">_lastReadTime</a>;</div>
+<div class="line"><span class="lineno">  210</span>    }</div>
+<div class="ttc" id="astructMockWriter_html_a3c7daaecaac4c7570b1f163c6d5f8611"><div class="ttname"><a href="structMockWriter.html#a3c7daaecaac4c7570b1f163c6d5f8611">MockWriter::_lastReadTime</a></div><div class="ttdeci">std::uint64_t _lastReadTime</div><div class="ttdef"><b>Definition</b> <a href="test__domainwatcher_8cpp_source.html#l00216">test_domainwatcher.cpp:216</a></div></div>
 <div class="ttc" id="astructmxlFlowInfo__t_html_a1adeafe3d8c0fc08ad90ed343504bae5"><div class="ttname"><a href="structmxlFlowInfo__t.html#a1adeafe3d8c0fc08ad90ed343504bae5">mxlFlowInfo_t::runtime</a></div><div class="ttdeci">mxlFlowRuntimeInfo runtime</div><div class="ttdef"><b>Definition</b> <a href="flowinfo_8h_source.html#l00197">flowinfo.h:197</a></div></div>
 <div class="ttc" id="astructmxlFlowRuntimeInfo__t_html_af81d9f6811c6626ffb98a4cf2598422b"><div class="ttname"><a href="structmxlFlowRuntimeInfo__t.html#af81d9f6811c6626ffb98a4cf2598422b">mxlFlowRuntimeInfo_t::lastReadTime</a></div><div class="ttdeci">uint64_t lastReadTime</div><div class="ttdef"><b>Definition</b> <a href="flowinfo_8h_source.html#l00173">flowinfo.h:173</a></div></div>
 <div class="ttc" id="astructmxl_1_1lib_1_1Flow_html_a5752aab3e43adff9aa0feb9bf5a4b75d"><div class="ttname"><a href="structmxl_1_1lib_1_1Flow.html#a5752aab3e43adff9aa0feb9bf5a4b75d">mxl::lib::Flow::info</a></div><div class="ttdeci">mxlFlowInfo info</div><div class="ttdef"><b>Definition</b> <a href="Flow_8hpp_source.html#l00028">Flow.hpp:28</a></div></div>
@@ -426,10 +426,10 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowWriter.html#a1de693716289a081fa73f8d42ac8ca33">mxl::lib::DiscreteFlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00194">194</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  195</span>    {</div>
-<div class="line"><span class="lineno">  196</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
-<div class="line"><span class="lineno">  197</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00195">195</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  196</span>    {</div>
+<div class="line"><span class="lineno">  197</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
+<div class="line"><span class="lineno">  198</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -459,10 +459,10 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriter.html#a0ccd5ed24b10df4f59446ca835801699">mxl::lib::FlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00159">159</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  160</span>    {</div>
-<div class="line"><span class="lineno">  161</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="structMockWriter.html#a5e0cc9aa898658da9334ba214a114843">_info</a>.<a class="code hl_variable" href="structmxlFlowInfo__t.html#a7b1b68b9c2c6e7a1d7a8ba5f2fb3a83f">config</a>;</div>
-<div class="line"><span class="lineno">  162</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00160">160</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  161</span>    {</div>
+<div class="line"><span class="lineno">  162</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="structMockWriter.html#a5e0cc9aa898658da9334ba214a114843">_info</a>.<a class="code hl_variable" href="structmxlFlowInfo__t.html#a7b1b68b9c2c6e7a1d7a8ba5f2fb3a83f">config</a>;</div>
+<div class="line"><span class="lineno">  163</span>    }</div>
 <div class="ttc" id="astructmxlFlowInfo__t_html_a7b1b68b9c2c6e7a1d7a8ba5f2fb3a83f"><div class="ttname"><a href="structmxlFlowInfo__t.html#a7b1b68b9c2c6e7a1d7a8ba5f2fb3a83f">mxlFlowInfo_t::config</a></div><div class="ttdeci">mxlFlowConfigInfo config</div><div class="ttdef"><b>Definition</b> <a href="flowinfo_8h_source.html#l00195">flowinfo.h:195</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -493,11 +493,11 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriter.html#ac4fca0368cad5f88a0de2dc715ff3547">mxl::lib::FlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00148">148</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  149</span>    {</div>
-<div class="line"><span class="lineno">  150</span>        <span class="comment">// Implementation is not provided</span></div>
-<div class="line"><span class="lineno">  151</span>        std::terminate();</div>
-<div class="line"><span class="lineno">  152</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00149">149</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  150</span>    {</div>
+<div class="line"><span class="lineno">  151</span>        <span class="comment">// Implementation is not provided</span></div>
+<div class="line"><span class="lineno">  152</span>        std::terminate();</div>
+<div class="line"><span class="lineno">  153</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -527,11 +527,11 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriter.html#ab544c66377410c727ab217bd6c461a78">mxl::lib::FlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00141">141</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  142</span>    {</div>
-<div class="line"><span class="lineno">  143</span>        <span class="comment">// Implementation is not provided</span></div>
-<div class="line"><span class="lineno">  144</span>        std::terminate();</div>
-<div class="line"><span class="lineno">  145</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00142">142</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  143</span>    {</div>
+<div class="line"><span class="lineno">  144</span>        <span class="comment">// Implementation is not provided</span></div>
+<div class="line"><span class="lineno">  145</span>        std::terminate();</div>
+<div class="line"><span class="lineno">  146</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -561,10 +561,10 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriter.html#a1d18705b0306122f4d5f5605f2964adc">mxl::lib::FlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00154">154</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  155</span>    {</div>
-<div class="line"><span class="lineno">  156</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="structMockWriter.html#a5e0cc9aa898658da9334ba214a114843">_info</a>;</div>
-<div class="line"><span class="lineno">  157</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00155">155</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  156</span>    {</div>
+<div class="line"><span class="lineno">  157</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="structMockWriter.html#a5e0cc9aa898658da9334ba214a114843">_info</a>;</div>
+<div class="line"><span class="lineno">  158</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -594,10 +594,10 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriter.html#ace64038c95cb835f8e7f8b990408a09f">mxl::lib::FlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00164">164</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  165</span>    {</div>
-<div class="line"><span class="lineno">  166</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="structMockWriter.html#a5e0cc9aa898658da9334ba214a114843">_info</a>.<a class="code hl_variable" href="structmxlFlowInfo__t.html#a1adeafe3d8c0fc08ad90ed343504bae5">runtime</a>;</div>
-<div class="line"><span class="lineno">  167</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00165">165</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  166</span>    {</div>
+<div class="line"><span class="lineno">  167</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="structMockWriter.html#a5e0cc9aa898658da9334ba214a114843">_info</a>.<a class="code hl_variable" href="structmxlFlowInfo__t.html#a1adeafe3d8c0fc08ad90ed343504bae5">runtime</a>;</div>
+<div class="line"><span class="lineno">  168</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -628,11 +628,11 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowWriter.html#a49a75122b7ce12a48f837397291d4860">mxl::lib::DiscreteFlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00183">183</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  184</span>    {</div>
-<div class="line"><span class="lineno">  185</span>        <span class="comment">// Implementation is not provided</span></div>
-<div class="line"><span class="lineno">  186</span>        std::terminate();</div>
-<div class="line"><span class="lineno">  187</span>    };</div>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00184">184</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  185</span>    {</div>
+<div class="line"><span class="lineno">  186</span>        <span class="comment">// Implementation is not provided</span></div>
+<div class="line"><span class="lineno">  187</span>        std::terminate();</div>
+<div class="line"><span class="lineno">  188</span>    };</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -662,10 +662,10 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriter.html#ae81638409e16ea858ae5ccdc644c39a8">mxl::lib::FlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00169">169</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  170</span>    {</div>
-<div class="line"><span class="lineno">  171</span>        <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
-<div class="line"><span class="lineno">  172</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00170">170</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  171</span>    {</div>
+<div class="line"><span class="lineno">  172</span>        <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><span class="lineno">  173</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -695,10 +695,10 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriter.html#ab4a60907bc71d906ebccbfaffd3061fd">mxl::lib::FlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00174">174</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  175</span>    {</div>
-<div class="line"><span class="lineno">  176</span>        <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
-<div class="line"><span class="lineno">  177</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00175">175</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  176</span>    {</div>
+<div class="line"><span class="lineno">  177</span>        <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><span class="lineno">  178</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -744,10 +744,10 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowWriter.html#af15e4515d7497216d9ab6eacc9b01e74">mxl::lib::DiscreteFlowWriter</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00189">189</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  190</span>    {</div>
-<div class="line"><span class="lineno">  191</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
-<div class="line"><span class="lineno">  192</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00190">190</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  191</span>    {</div>
+<div class="line"><span class="lineno">  192</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
+<div class="line"><span class="lineno">  193</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -764,7 +764,7 @@ Additional Inherited Members</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00217">217</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00218">218</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
 
 </div>
 </div>
@@ -780,7 +780,7 @@ Additional Inherited Members</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00216">216</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00217">217</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
 
 </div>
 </div>
@@ -796,7 +796,7 @@ Additional Inherited Members</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00212">212</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00213">213</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
 
 </div>
 </div>
@@ -812,7 +812,7 @@ Additional Inherited Members</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00211">211</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00212">212</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
 
 </div>
 </div>
@@ -828,7 +828,7 @@ Additional Inherited Members</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00215">215</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00216">216</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
 
 </div>
 </div>
@@ -844,7 +844,7 @@ Additional Inherited Members</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00213">213</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00214">214</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
 
 </div>
 </div>

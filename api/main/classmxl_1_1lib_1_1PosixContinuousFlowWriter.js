@@ -18,6 +18,7 @@ var classmxl_1_1lib_1_1PosixContinuousFlowWriter =
     [ "_currentIndex", "classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a70f2a79aa1b04a400e104592106617b9", null ],
     [ "_earlySyncThreshold", "classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a7737f209a829764cdf899175d449d3c9", null ],
     [ "_flowData", "classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ad51f16d4a677a962143ba42ebf04b11a", null ],
+    [ "_lastCommittedIndex", "classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a46d8ec3049a3616280b820a72172c006", null ],
     [ "_lastSyncSampleBatch", "classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#ae9f0adae55d0834f76fc9e9bc57ed1fb", null ],
     [ "_syncBatchSize", "classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a82827f34d32176dea3eae591e42d64c1", null ]
 ];

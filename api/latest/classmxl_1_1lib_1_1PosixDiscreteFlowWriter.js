@@ -15,5 +15,6 @@ var classmxl_1_1lib_1_1PosixDiscreteFlowWriter =
     [ "openGrain", "classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2e982b82654d300ae76b5c34a9b9d79a", null ],
     [ "_currentIndex", "classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#ab641fa25cabf4a5e80acd9128c237150", null ],
     [ "_flowData", "classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2bbdf95167de78174ef17126e3f87301", null ],
+    [ "_lastCommittedIndex", "classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a1a35bb17d4a79583ce5ee8f1b5c38a4a", null ],
     [ "_watcher", "classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a8b949deef80f7611d03e2124f6235797", null ]
 ];

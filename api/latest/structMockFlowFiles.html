@@ -128,7 +128,7 @@ Public Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00033">33</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00034">34</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ae5d0b23dd79e0340c4c351aa5cfe2c56" name="ae5d0b23dd79e0340c4c351aa5cfe2c56"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae5d0b23dd79e0340c4c351aa5cfe2c56">&#9670;&#160;</a></span>MockFlowFiles()</h2>
@@ -164,44 +164,44 @@ Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00035">35</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   36</span>        : <a class="code hl_variable" href="structMockFlowFiles.html#a189f11c8f72f6e35c339ac4fb134ed78">_domain</a>{std::move(domain)}</div>
-<div class="line"><span class="lineno">   37</span>        , <a class="code hl_variable" href="structMockFlowFiles.html#a01c6767ccbf3a87a2d64e6f70141ac75">_id</a>{<span class="keywordtype">id</span>}</div>
-<div class="line"><span class="lineno">   38</span>        , <a class="code hl_variable" href="structMockFlowFiles.html#a0b74bc970bb562225e73b76dd310c937">_accessFileFd</a>{-1}</div>
-<div class="line"><span class="lineno">   39</span>    {</div>
-<div class="line"><span class="lineno">   40</span>        <span class="keyword">auto</span> flowDir = <a class="code hl_function" href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">makeFlowDirectoryName</a>(<a class="code hl_variable" href="structMockFlowFiles.html#a189f11c8f72f6e35c339ac4fb134ed78">_domain</a>, uuids::to_string(<a class="code hl_variable" href="structMockFlowFiles.html#a01c6767ccbf3a87a2d64e6f70141ac75">_id</a>));</div>
-<div class="line"><span class="lineno">   41</span>        std::filesystem::create_directories(flowDir);</div>
-<div class="line"><span class="lineno">   42</span>        <span class="keyword">auto</span> accessFilePath = <a class="code hl_function" href="namespacemxl_1_1lib.html#a57c0a4f52e26a828deedc371ec79d6ef">makeFlowAccessFilePath</a>(flowDir);</div>
-<div class="line"><span class="lineno">   43</span>        <span class="keyword">auto</span> dataFilePath = <a class="code hl_function" href="namespacemxl_1_1lib.html#a70469f14e75438e90bdf85253ad817f9">makeFlowDataFilePath</a>(flowDir);</div>
-<div class="line"><span class="lineno">   44</span> </div>
-<div class="line"><span class="lineno">   45</span>        <a class="code hl_variable" href="structMockFlowFiles.html#a0b74bc970bb562225e73b76dd310c937">_accessFileFd</a> = ::open(accessFilePath.c_str(), O_CREAT | O_WRONLY | O_TRUNC | O_CLOEXEC, 0644);</div>
-<div class="line"><span class="lineno">   46</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="structMockFlowFiles.html#a0b74bc970bb562225e73b76dd310c937">_accessFileFd</a> &lt; 0)</div>
-<div class="line"><span class="lineno">   47</span>        {</div>
-<div class="line"><span class="lineno">   48</span>            <span class="keyword">auto</span> <span class="keyword">const</span> error = errno;</div>
-<div class="line"><span class="lineno">   49</span>            <span class="keywordflow">throw</span> std::system_error{error, std::system_category(), <span class="stringliteral">&quot;Failed to open access file&quot;</span>};</div>
-<div class="line"><span class="lineno">   50</span>        }</div>
-<div class="line"><span class="lineno">   51</span> </div>
-<div class="line"><span class="lineno">   52</span>        <a class="code hl_variable" href="structMockFlowFiles.html#a4f1c2dbe67c81d0c3784cafcc05db1e3">_dataFileFd</a> = ::open(dataFilePath.c_str(), O_CREAT | O_WRONLY | O_TRUNC | O_CLOEXEC, 0644);</div>
-<div class="line"><span class="lineno">   53</span> </div>
-<div class="line"><span class="lineno">   54</span>        <span class="keywordflow">if</span> (::ftruncate(<a class="code hl_variable" href="structMockFlowFiles.html#a0b74bc970bb562225e73b76dd310c937">_accessFileFd</a>, <span class="keyword">sizeof</span>(<a class="code hl_struct" href="structmxl_1_1lib_1_1Grain.html">Grain</a>)) &lt; 0)</div>
-<div class="line"><span class="lineno">   55</span>        {</div>
-<div class="line"><span class="lineno">   56</span>            <span class="keyword">auto</span> <span class="keyword">const</span> error = errno;</div>
-<div class="line"><span class="lineno">   57</span>            <span class="keywordflow">throw</span> std::system_error{error, std::system_category(), <span class="stringliteral">&quot;Failed truncate access file&quot;</span>};</div>
-<div class="line"><span class="lineno">   58</span>        }</div>
-<div class="line"><span class="lineno">   59</span> </div>
-<div class="line"><span class="lineno">   60</span>        <span class="keywordflow">if</span> (::ftruncate(<a class="code hl_variable" href="structMockFlowFiles.html#a4f1c2dbe67c81d0c3784cafcc05db1e3">_dataFileFd</a>, <span class="keyword">sizeof</span>(<a class="code hl_struct" href="structmxl_1_1lib_1_1Flow.html">Flow</a>)) &lt; 0)</div>
-<div class="line"><span class="lineno">   61</span>        {</div>
-<div class="line"><span class="lineno">   62</span>            <span class="keyword">auto</span> <span class="keyword">const</span> error = errno;</div>
-<div class="line"><span class="lineno">   63</span>            <span class="keywordflow">throw</span> std::system_error{error, std::system_category(), <span class="stringliteral">&quot;Failed truncate access file&quot;</span>};</div>
-<div class="line"><span class="lineno">   64</span>        }</div>
-<div class="line"><span class="lineno">   65</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00036">36</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   37</span>        : <a class="code hl_variable" href="structMockFlowFiles.html#a189f11c8f72f6e35c339ac4fb134ed78">_domain</a>{std::move(domain)}</div>
+<div class="line"><span class="lineno">   38</span>        , <a class="code hl_variable" href="structMockFlowFiles.html#a01c6767ccbf3a87a2d64e6f70141ac75">_id</a>{<span class="keywordtype">id</span>}</div>
+<div class="line"><span class="lineno">   39</span>        , <a class="code hl_variable" href="structMockFlowFiles.html#a0b74bc970bb562225e73b76dd310c937">_accessFileFd</a>{-1}</div>
+<div class="line"><span class="lineno">   40</span>    {</div>
+<div class="line"><span class="lineno">   41</span>        <span class="keyword">auto</span> flowDir = <a class="code hl_function" href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">makeFlowDirectoryName</a>(<a class="code hl_variable" href="structMockFlowFiles.html#a189f11c8f72f6e35c339ac4fb134ed78">_domain</a>, uuids::to_string(<a class="code hl_variable" href="structMockFlowFiles.html#a01c6767ccbf3a87a2d64e6f70141ac75">_id</a>));</div>
+<div class="line"><span class="lineno">   42</span>        std::filesystem::create_directories(flowDir);</div>
+<div class="line"><span class="lineno">   43</span>        <span class="keyword">auto</span> accessFilePath = <a class="code hl_function" href="namespacemxl_1_1lib.html#a57c0a4f52e26a828deedc371ec79d6ef">makeFlowAccessFilePath</a>(flowDir);</div>
+<div class="line"><span class="lineno">   44</span>        <span class="keyword">auto</span> dataFilePath = <a class="code hl_function" href="namespacemxl_1_1lib.html#a70469f14e75438e90bdf85253ad817f9">makeFlowDataFilePath</a>(flowDir);</div>
+<div class="line"><span class="lineno">   45</span> </div>
+<div class="line"><span class="lineno">   46</span>        <a class="code hl_variable" href="structMockFlowFiles.html#a0b74bc970bb562225e73b76dd310c937">_accessFileFd</a> = ::open(accessFilePath.c_str(), O_CREAT | O_WRONLY | O_TRUNC | O_CLOEXEC, 0644);</div>
+<div class="line"><span class="lineno">   47</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="structMockFlowFiles.html#a0b74bc970bb562225e73b76dd310c937">_accessFileFd</a> &lt; 0)</div>
+<div class="line"><span class="lineno">   48</span>        {</div>
+<div class="line"><span class="lineno">   49</span>            <span class="keyword">auto</span> <span class="keyword">const</span> error = errno;</div>
+<div class="line"><span class="lineno">   50</span>            <span class="keywordflow">throw</span> std::system_error{error, std::system_category(), <span class="stringliteral">&quot;Failed to open access file&quot;</span>};</div>
+<div class="line"><span class="lineno">   51</span>        }</div>
+<div class="line"><span class="lineno">   52</span> </div>
+<div class="line"><span class="lineno">   53</span>        <a class="code hl_variable" href="structMockFlowFiles.html#a4f1c2dbe67c81d0c3784cafcc05db1e3">_dataFileFd</a> = ::open(dataFilePath.c_str(), O_CREAT | O_WRONLY | O_TRUNC | O_CLOEXEC, 0644);</div>
+<div class="line"><span class="lineno">   54</span> </div>
+<div class="line"><span class="lineno">   55</span>        <span class="keywordflow">if</span> (::ftruncate(<a class="code hl_variable" href="structMockFlowFiles.html#a0b74bc970bb562225e73b76dd310c937">_accessFileFd</a>, <span class="keyword">sizeof</span>(<a class="code hl_struct" href="structmxl_1_1lib_1_1Grain.html">Grain</a>)) &lt; 0)</div>
+<div class="line"><span class="lineno">   56</span>        {</div>
+<div class="line"><span class="lineno">   57</span>            <span class="keyword">auto</span> <span class="keyword">const</span> error = errno;</div>
+<div class="line"><span class="lineno">   58</span>            <span class="keywordflow">throw</span> std::system_error{error, std::system_category(), <span class="stringliteral">&quot;Failed truncate access file&quot;</span>};</div>
+<div class="line"><span class="lineno">   59</span>        }</div>
+<div class="line"><span class="lineno">   60</span> </div>
+<div class="line"><span class="lineno">   61</span>        <span class="keywordflow">if</span> (::ftruncate(<a class="code hl_variable" href="structMockFlowFiles.html#a4f1c2dbe67c81d0c3784cafcc05db1e3">_dataFileFd</a>, <span class="keyword">sizeof</span>(<a class="code hl_struct" href="structmxl_1_1lib_1_1Flow.html">Flow</a>)) &lt; 0)</div>
+<div class="line"><span class="lineno">   62</span>        {</div>
+<div class="line"><span class="lineno">   63</span>            <span class="keyword">auto</span> <span class="keyword">const</span> error = errno;</div>
+<div class="line"><span class="lineno">   64</span>            <span class="keywordflow">throw</span> std::system_error{error, std::system_category(), <span class="stringliteral">&quot;Failed truncate access file&quot;</span>};</div>
+<div class="line"><span class="lineno">   65</span>        }</div>
+<div class="line"><span class="lineno">   66</span>    }</div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_a57c0a4f52e26a828deedc371ec79d6ef"><div class="ttname"><a href="namespacemxl_1_1lib.html#a57c0a4f52e26a828deedc371ec79d6ef">mxl::lib::makeFlowAccessFilePath</a></div><div class="ttdeci">std::filesystem::path makeFlowAccessFilePath(std::filesystem::path const &amp;flowDirectory)</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8cpp_source.html#l00029">PathUtils.cpp:29</a></div></div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_a70469f14e75438e90bdf85253ad817f9"><div class="ttname"><a href="namespacemxl_1_1lib.html#a70469f14e75438e90bdf85253ad817f9">mxl::lib::makeFlowDataFilePath</a></div><div class="ttdeci">std::filesystem::path makeFlowDataFilePath(std::filesystem::path const &amp;flowDirectory)</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8cpp_source.html#l00017">PathUtils.cpp:17</a></div></div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_aeeacfdf05a4fd16afc20501015b3413b"><div class="ttname"><a href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">mxl::lib::makeFlowDirectoryName</a></div><div class="ttdeci">std::filesystem::path makeFlowDirectoryName(std::filesystem::path const &amp;domain, std::string const &amp;uuid)</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8cpp_source.html#l00011">PathUtils.cpp:11</a></div></div>
-<div class="ttc" id="astructMockFlowFiles_html_a01c6767ccbf3a87a2d64e6f70141ac75"><div class="ttname"><a href="structMockFlowFiles.html#a01c6767ccbf3a87a2d64e6f70141ac75">MockFlowFiles::_id</a></div><div class="ttdeci">uuids::uuid _id</div><div class="ttdef"><b>Definition</b> <a href="test__domainwatcher_8cpp_source.html#l00097">test_domainwatcher.cpp:97</a></div></div>
-<div class="ttc" id="astructMockFlowFiles_html_a0b74bc970bb562225e73b76dd310c937"><div class="ttname"><a href="structMockFlowFiles.html#a0b74bc970bb562225e73b76dd310c937">MockFlowFiles::_accessFileFd</a></div><div class="ttdeci">int _accessFileFd</div><div class="ttdef"><b>Definition</b> <a href="test__domainwatcher_8cpp_source.html#l00098">test_domainwatcher.cpp:98</a></div></div>
-<div class="ttc" id="astructMockFlowFiles_html_a189f11c8f72f6e35c339ac4fb134ed78"><div class="ttname"><a href="structMockFlowFiles.html#a189f11c8f72f6e35c339ac4fb134ed78">MockFlowFiles::_domain</a></div><div class="ttdeci">fs::path _domain</div><div class="ttdef"><b>Definition</b> <a href="test__domainwatcher_8cpp_source.html#l00096">test_domainwatcher.cpp:96</a></div></div>
-<div class="ttc" id="astructMockFlowFiles_html_a4f1c2dbe67c81d0c3784cafcc05db1e3"><div class="ttname"><a href="structMockFlowFiles.html#a4f1c2dbe67c81d0c3784cafcc05db1e3">MockFlowFiles::_dataFileFd</a></div><div class="ttdeci">int _dataFileFd</div><div class="ttdef"><b>Definition</b> <a href="test__domainwatcher_8cpp_source.html#l00099">test_domainwatcher.cpp:99</a></div></div>
+<div class="ttc" id="astructMockFlowFiles_html_a01c6767ccbf3a87a2d64e6f70141ac75"><div class="ttname"><a href="structMockFlowFiles.html#a01c6767ccbf3a87a2d64e6f70141ac75">MockFlowFiles::_id</a></div><div class="ttdeci">uuids::uuid _id</div><div class="ttdef"><b>Definition</b> <a href="test__domainwatcher_8cpp_source.html#l00098">test_domainwatcher.cpp:98</a></div></div>
+<div class="ttc" id="astructMockFlowFiles_html_a0b74bc970bb562225e73b76dd310c937"><div class="ttname"><a href="structMockFlowFiles.html#a0b74bc970bb562225e73b76dd310c937">MockFlowFiles::_accessFileFd</a></div><div class="ttdeci">int _accessFileFd</div><div class="ttdef"><b>Definition</b> <a href="test__domainwatcher_8cpp_source.html#l00099">test_domainwatcher.cpp:99</a></div></div>
+<div class="ttc" id="astructMockFlowFiles_html_a189f11c8f72f6e35c339ac4fb134ed78"><div class="ttname"><a href="structMockFlowFiles.html#a189f11c8f72f6e35c339ac4fb134ed78">MockFlowFiles::_domain</a></div><div class="ttdeci">fs::path _domain</div><div class="ttdef"><b>Definition</b> <a href="test__domainwatcher_8cpp_source.html#l00097">test_domainwatcher.cpp:97</a></div></div>
+<div class="ttc" id="astructMockFlowFiles_html_a4f1c2dbe67c81d0c3784cafcc05db1e3"><div class="ttname"><a href="structMockFlowFiles.html#a4f1c2dbe67c81d0c3784cafcc05db1e3">MockFlowFiles::_dataFileFd</a></div><div class="ttdeci">int _dataFileFd</div><div class="ttdef"><b>Definition</b> <a href="test__domainwatcher_8cpp_source.html#l00100">test_domainwatcher.cpp:100</a></div></div>
 <div class="ttc" id="astructmxl_1_1lib_1_1Flow_html"><div class="ttname"><a href="structmxl_1_1lib_1_1Flow.html">mxl::lib::Flow</a></div><div class="ttdef"><b>Definition</b> <a href="Flow_8hpp_source.html#l00026">Flow.hpp:27</a></div></div>
 <div class="ttc" id="astructmxl_1_1lib_1_1Grain_html"><div class="ttname"><a href="structmxl_1_1lib_1_1Grain.html">mxl::lib::Grain</a></div><div class="ttdef"><b>Definition</b> <a href="Flow_8hpp_source.html#l00051">Flow.hpp:52</a></div></div>
 </div><!-- fragment -->
@@ -230,21 +230,21 @@ Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00067">67</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   68</span>    {</div>
-<div class="line"><span class="lineno">   69</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="structMockFlowFiles.html#a0b74bc970bb562225e73b76dd310c937">_accessFileFd</a> &gt; -1)</div>
-<div class="line"><span class="lineno">   70</span>        {</div>
-<div class="line"><span class="lineno">   71</span>            (void)::close(<a class="code hl_variable" href="structMockFlowFiles.html#a0b74bc970bb562225e73b76dd310c937">_accessFileFd</a>);</div>
-<div class="line"><span class="lineno">   72</span>        }</div>
-<div class="line"><span class="lineno">   73</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="structMockFlowFiles.html#a4f1c2dbe67c81d0c3784cafcc05db1e3">_dataFileFd</a> &gt; -1)</div>
-<div class="line"><span class="lineno">   74</span>        {</div>
-<div class="line"><span class="lineno">   75</span>            (void)::close(<a class="code hl_variable" href="structMockFlowFiles.html#a4f1c2dbe67c81d0c3784cafcc05db1e3">_dataFileFd</a>);</div>
-<div class="line"><span class="lineno">   76</span>        }</div>
-<div class="line"><span class="lineno">   77</span> </div>
-<div class="line"><span class="lineno">   78</span>        <span class="keyword">auto</span> flowDir = <a class="code hl_function" href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">makeFlowDirectoryName</a>(<a class="code hl_variable" href="structMockFlowFiles.html#a189f11c8f72f6e35c339ac4fb134ed78">_domain</a>, uuids::to_string(<a class="code hl_variable" href="structMockFlowFiles.html#a01c6767ccbf3a87a2d64e6f70141ac75">_id</a>));</div>
-<div class="line"><span class="lineno">   79</span>        fs::remove(<a class="code hl_function" href="namespacemxl_1_1lib.html#a57c0a4f52e26a828deedc371ec79d6ef">makeFlowAccessFilePath</a>(flowDir));</div>
-<div class="line"><span class="lineno">   80</span>        fs::remove(<a class="code hl_function" href="namespacemxl_1_1lib.html#a70469f14e75438e90bdf85253ad817f9">makeFlowDataFilePath</a>(flowDir));</div>
-<div class="line"><span class="lineno">   81</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00068">68</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   69</span>    {</div>
+<div class="line"><span class="lineno">   70</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="structMockFlowFiles.html#a0b74bc970bb562225e73b76dd310c937">_accessFileFd</a> &gt; -1)</div>
+<div class="line"><span class="lineno">   71</span>        {</div>
+<div class="line"><span class="lineno">   72</span>            (void)::close(<a class="code hl_variable" href="structMockFlowFiles.html#a0b74bc970bb562225e73b76dd310c937">_accessFileFd</a>);</div>
+<div class="line"><span class="lineno">   73</span>        }</div>
+<div class="line"><span class="lineno">   74</span>        <span class="keywordflow">if</span> (<a class="code hl_variable" href="structMockFlowFiles.html#a4f1c2dbe67c81d0c3784cafcc05db1e3">_dataFileFd</a> &gt; -1)</div>
+<div class="line"><span class="lineno">   75</span>        {</div>
+<div class="line"><span class="lineno">   76</span>            (void)::close(<a class="code hl_variable" href="structMockFlowFiles.html#a4f1c2dbe67c81d0c3784cafcc05db1e3">_dataFileFd</a>);</div>
+<div class="line"><span class="lineno">   77</span>        }</div>
+<div class="line"><span class="lineno">   78</span> </div>
+<div class="line"><span class="lineno">   79</span>        <span class="keyword">auto</span> flowDir = <a class="code hl_function" href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">makeFlowDirectoryName</a>(<a class="code hl_variable" href="structMockFlowFiles.html#a189f11c8f72f6e35c339ac4fb134ed78">_domain</a>, uuids::to_string(<a class="code hl_variable" href="structMockFlowFiles.html#a01c6767ccbf3a87a2d64e6f70141ac75">_id</a>));</div>
+<div class="line"><span class="lineno">   80</span>        fs::remove(<a class="code hl_function" href="namespacemxl_1_1lib.html#a57c0a4f52e26a828deedc371ec79d6ef">makeFlowAccessFilePath</a>(flowDir));</div>
+<div class="line"><span class="lineno">   81</span>        fs::remove(<a class="code hl_function" href="namespacemxl_1_1lib.html#a70469f14e75438e90bdf85253ad817f9">makeFlowDataFilePath</a>(flowDir));</div>
+<div class="line"><span class="lineno">   82</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -272,18 +272,18 @@ Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00083">83</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   84</span>    {</div>
-<div class="line"><span class="lineno">   85</span>        <span class="keyword">auto</span> times = std::array&lt;::timespec, 2&gt;{</div>
-<div class="line"><span class="lineno">   86</span>            timespec{.tv_sec = 0, .tv_nsec = UTIME_NOW },</div>
-<div class="line"><span class="lineno">   87</span>            timespec{.tv_sec = 0, .tv_nsec = UTIME_OMIT}</div>
-<div class="line"><span class="lineno">   88</span>        };</div>
-<div class="line"><span class="lineno">   89</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> ret = ::futimens(<a class="code hl_variable" href="structMockFlowFiles.html#a0b74bc970bb562225e73b76dd310c937">_accessFileFd</a>, times.data()); ret &lt; 0)</div>
-<div class="line"><span class="lineno">   90</span>        {</div>
-<div class="line"><span class="lineno">   91</span>            <span class="keyword">auto</span> <span class="keyword">const</span> error = errno;</div>
-<div class="line"><span class="lineno">   92</span>            <span class="keywordflow">throw</span> std::system_error(error, std::system_category(), <span class="stringliteral">&quot;Failed to update flow access time&quot;</span>);</div>
-<div class="line"><span class="lineno">   93</span>        }</div>
-<div class="line"><span class="lineno">   94</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00084">84</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   85</span>    {</div>
+<div class="line"><span class="lineno">   86</span>        <span class="keyword">auto</span> times = std::array&lt;::timespec, 2&gt;{</div>
+<div class="line"><span class="lineno">   87</span>            timespec{.tv_sec = 0, .tv_nsec = UTIME_NOW },</div>
+<div class="line"><span class="lineno">   88</span>            timespec{.tv_sec = 0, .tv_nsec = UTIME_OMIT}</div>
+<div class="line"><span class="lineno">   89</span>        };</div>
+<div class="line"><span class="lineno">   90</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> ret = ::futimens(<a class="code hl_variable" href="structMockFlowFiles.html#a0b74bc970bb562225e73b76dd310c937">_accessFileFd</a>, times.data()); ret &lt; 0)</div>
+<div class="line"><span class="lineno">   91</span>        {</div>
+<div class="line"><span class="lineno">   92</span>            <span class="keyword">auto</span> <span class="keyword">const</span> error = errno;</div>
+<div class="line"><span class="lineno">   93</span>            <span class="keywordflow">throw</span> std::system_error(error, std::system_category(), <span class="stringliteral">&quot;Failed to update flow access time&quot;</span>);</div>
+<div class="line"><span class="lineno">   94</span>        }</div>
+<div class="line"><span class="lineno">   95</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -300,7 +300,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00098">98</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00099">99</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
 
 </div>
 </div>
@@ -316,7 +316,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00099">99</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00100">100</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
 
 </div>
 </div>
@@ -332,7 +332,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00096">96</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00097">97</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
 
 </div>
 </div>
@@ -348,7 +348,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00097">97</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="test__domainwatcher_8cpp_source.html#l00098">98</a> of file <a class="el" href="test__domainwatcher_8cpp_source.html">test_domainwatcher.cpp</a>.</p>
 
 </div>
 </div>

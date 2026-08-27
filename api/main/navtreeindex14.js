@@ -1,5 +1,9 @@
 var NAVTREEINDEX14 =
 {
+"structmxl_1_1lib_1_1DomainWatcherRecord.html#ade2f37e4d420199c0da8bf76d6f62ea6":[1,0,1,0,11,1],
+"structmxl_1_1lib_1_1DomainWatcherRecord.html#ade2f37e4d420199c0da8bf76d6f62ea6":[2,0,1,0,9,1],
+"structmxl_1_1lib_1_1DomainWatcherRecord.html#ae41c888c9bcdcdbbe2362ca08a4e6cc9":[1,0,1,0,11,0],
+"structmxl_1_1lib_1_1DomainWatcherRecord.html#ae41c888c9bcdcdbbe2362ca08a4e6cc9":[2,0,1,0,9,0],
 "structmxl_1_1lib_1_1Duration.html":[2,0,1,0,10],
 "structmxl_1_1lib_1_1Duration.html":[1,0,1,0,12],
 "structmxl_1_1lib_1_1Duration.html#a142161f9683234799e831cc0410e8eff":[2,0,1,0,10,0],
@@ -245,9 +249,5 @@ var NAVTREEINDEX14 =
 "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1ProviderConfigValues.html#ac8e1a7221ee0b50b9a1d989578d00cae":[2,0,1,0,0,0,39,7],
 "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1ProviderConfigValues.html#ac8e1a7221ee0b50b9a1d989578d00cae":[1,0,1,0,1,0,39,7],
 "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Connected.html":[1,0,1,0,1,0,42,0],
-"structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Connected.html":[2,0,1,0,0,0,42,0],
-"structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Connected.html#aef71b7e6db474fafb58d5c7481a862e1":[1,0,1,0,1,0,42,0,0],
-"structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Connected.html#aef71b7e6db474fafb58d5c7481a862e1":[2,0,1,0,0,0,42,0,0],
-"structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Connecting.html":[2,0,1,0,0,0,42,1],
-"structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Connecting.html":[1,0,1,0,1,0,42,1]
+"structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Connected.html":[2,0,1,0,0,0,42,0]
 };
