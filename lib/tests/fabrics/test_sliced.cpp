@@ -224,12 +224,11 @@ namespace
             fillGrainWithZeros(_targetWriter, index);
         }
 
-        // Get the grain header on the targe side
         mxlGrainInfo getTargetGrainInfo(std::uint64_t index)
         {
             auto payload = std::add_pointer_t<std::uint8_t>{nullptr};
             auto grainInfo = mxlGrainInfo{};
-            REQUIRE(mxlFlowReaderGetGrainNonBlocking(_targetReader, index, &grainInfo, &payload) == MXL_STATUS_OK);
+            REQUIRE(mxlFlowReaderGetGrainSliceNonBlocking(_targetReader, index, MXL_GRAIN_VALID_SLICES_ANY, &grainInfo, &payload) == MXL_STATUS_OK);
             return grainInfo;
         }
 
@@ -238,7 +237,8 @@ namespace
         {
             auto payload = std::add_pointer_t<std::uint8_t>{nullptr};
             auto grainInfo = mxlGrainInfo{};
-            REQUIRE(mxlFlowReaderGetGrainNonBlocking(_initiatorReader, index, &grainInfo, &payload) == MXL_STATUS_OK);
+            REQUIRE(
+                mxlFlowReaderGetGrainSliceNonBlocking(_initiatorReader, index, MXL_GRAIN_VALID_SLICES_ANY, &grainInfo, &payload) == MXL_STATUS_OK);
             return grainInfo;
         }
 
@@ -333,13 +333,11 @@ namespace
             return readIndex;
         }
 
-        // Read the first byte of a slice in the key and fill buffer
-        std::pair<std::uint8_t, std::uint8_t> readTargetGrainSlice(std::uint64_t index, std::uint32_t sliceIndex)
+        std::pair<std::uint8_t, std::uint8_t> readTargetGrainSlice(std::uint64_t index, std::uint32_t sliceIndex, std::uint16_t minValidSlices)
         {
             auto grainInfo = mxlGrainInfo{};
             auto payload = static_cast<std::uint8_t*>(nullptr);
-            REQUIRE(mxlFlowReaderGetGrainSliceNonBlocking(_targetReader, index, static_cast<std::uint16_t>(sliceIndex + 1), &grainInfo, &payload) ==
-                    MXL_STATUS_OK);
+            REQUIRE(mxlFlowReaderGetGrainSliceNonBlocking(_targetReader, index, minValidSlices, &grainInfo, &payload) == MXL_STATUS_OK);
 
             auto result = std::pair<std::uint8_t, std::uint8_t>{0, 0};
             auto planeOffset = std::uint32_t{0};
@@ -389,7 +387,7 @@ namespace
             }
 
             grainInfo.validSlices = 0;
-            grainInfo.flags = MXL_GRAIN_FLAG_INVALID;
+            grainInfo.flags = 0;
             REQUIRE(mxlFlowWriterCommitGrain(writer, &grainInfo) == MXL_STATUS_OK);
         }
 
@@ -451,7 +449,7 @@ TEMPLATE_TEST_CASE_METHOD(FabricsTestFixture, "Slice transfer single", "[sliced]
         for (auto slice = std::uint16_t{0}; slice < info.totalSlices; ++slice)
         {
             // check that the target slice is zeroed
-            auto [fillBefore, keyBefore] = this->readTargetGrainSlice(grainIndex, slice);
+            auto [fillBefore, keyBefore] = this->readTargetGrainSlice(grainIndex, slice, MXL_GRAIN_VALID_SLICES_ANY);
             REQUIRE(fillBefore == 0x00);
             if (this->hasAlphaChannel())
             {
@@ -464,10 +462,9 @@ TEMPLATE_TEST_CASE_METHOD(FabricsTestFixture, "Slice transfer single", "[sliced]
             // write pattern to initiator grain buffer
             this->writeInitiatorGrainSlice(grainIndex, slice, fillValue, keyValue);
             REQUIRE(this->transferGrainSlices(grainIndex, lastSlice, slice + 1) == grainIndex);
-            this->readTargetGrainSlice(grainIndex, slice);
 
-            // read after transfer
-            auto [fillAfter, keyAfter] = this->readTargetGrainSlice(grainIndex, slice);
+            // read after transfer, the transferred slice must now be valid
+            auto [fillAfter, keyAfter] = this->readTargetGrainSlice(grainIndex, slice, static_cast<std::uint16_t>(slice + 1));
             REQUIRE(fillAfter == fillValue);
             if (this->hasAlphaChannel())
             {
@@ -507,7 +504,7 @@ TEMPLATE_TEST_CASE_METHOD(FabricsTestFixture, "Slice transfer blocks", "[sliced]
 
                 // find a slice in the middle of the block <= (endSlice - 1)
                 auto middleSlice = std::min(startSlice + (blockSize / 2), endSlice - 1);
-                auto [fillValueBefore, keyValueBefore] = this->readTargetGrainSlice(grainIndex, middleSlice);
+                auto [fillValueBefore, keyValueBefore] = this->readTargetGrainSlice(grainIndex, middleSlice, MXL_GRAIN_VALID_SLICES_ANY);
                 REQUIRE(fillValueBefore == 0x00);
                 if (this->hasAlphaChannel())
                 {
@@ -524,8 +521,10 @@ TEMPLATE_TEST_CASE_METHOD(FabricsTestFixture, "Slice transfer blocks", "[sliced]
                 // transfer the slices
                 REQUIRE(this->transferGrainSlices(grainIndex, lastSlice, endSlice) == grainIndex);
 
-                // check that the payload is correct
-                auto [fillValueAfter, keyValueAfter] = this->readTargetGrainSlice(grainIndex, middleSlice);
+                // check that the payload is correct. the whole block up to endSlice has been transferred, so the slice
+                // in the middle of it must be valid.
+                auto [fillValueAfter,
+                    keyValueAfter] = this->readTargetGrainSlice(grainIndex, middleSlice, static_cast<std::uint16_t>(middleSlice + 1));
                 REQUIRE(fillValueAfter == fillValue);
                 if (this->hasAlphaChannel())
                 {
