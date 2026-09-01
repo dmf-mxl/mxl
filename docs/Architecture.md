@@ -49,6 +49,12 @@ See [timing model](./Timing.md)
 
 The MXL SDK provides two ringbuffer types: Discrete and Continuous.  Discrete ringbuffers are used for granular data types such as video and ancillary data.  Continuous ringbuffers are used for audio. 
 
+### Ring buffer access model
+
+Continuous: the tail half of the ring buffer is reserved for the writer, and readers can access the remaining half.
+
+Discrete: the tail entry of the ring buffer is reserved for the writer, and readers can access the remaining entries.
+
 ## Discrete Grain I/O
 
 Grain I/O can be 'partial'. In other words, a FlowWriter can write the bytes of a grain progressively (as slices for example).
