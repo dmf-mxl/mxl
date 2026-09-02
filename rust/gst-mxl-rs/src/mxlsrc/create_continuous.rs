@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025-2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use crate::mxlsrc::imp::{CreateState, MxlSrc};
 use crate::mxlsrc::mxl_helper::pts_subtrahend;
@@ -9,11 +9,10 @@ use crate::mxlsrc::state::{ContinuousState, FlowState, State};
 use crate::mxlsrc::timing::pts_for_index;
 use gst::{Buffer, ClockTime};
 use gstreamer as gst;
-use mxl::{FlowInfo, SamplesData};
+use mxl::{FlowInfo, SamplesData, SamplesReader};
 use tracing::trace;
 
-const GET_SAMPLE_TIMEOUT: Duration = Duration::from_secs(2);
-const PRODUCER_TIMEOUT: Duration = Duration::from_millis(100);
+const GET_SAMPLE_TIMEOUT: Duration = Duration::from_millis(100);
 const DEFAULT_BATCH_SIZE: u32 = 48;
 
 pub(crate) fn create_continuous(
@@ -52,23 +51,16 @@ pub(crate) fn create_continuous(
     continuous_state_init(batch, &reader_info, continuous_state);
 
     let head = reader_info.runtime.head_index();
-    wait_for_sample(head, batch, continuous_state)?;
 
     if is_reader_late(head, batch, ring, continuous_state)? {
         resync_state(continuous_state);
     }
 
-    // `get_samples(end, count)` returns the `count` samples at absolute indices
-    // `[end - count, end)` (last is `end - 1`). `continuous_state.index` is the first
-    // sample we want, so pass `index + batch` as the end; `pts_for_index(index)`
-    // then stamps that first returned sample.
-    let read_once = |idx: u64| {
-        continuous_state
-            .samples_reader
-            .get_samples(idx + batch, batch as usize, GET_SAMPLE_TIMEOUT)
-    };
-
-    let samples = match read_once(continuous_state.index) {
+    let samples = match read_samples(
+        &continuous_state.samples_reader,
+        continuous_state.index,
+        batch,
+    ) {
         Ok(s) => s,
         Err(_) => {
             return Ok(CreateState::NoDataCreated);
@@ -127,37 +119,18 @@ fn resync_state(continuous_state: &mut ContinuousState) {
     continuous_state.next_discont = true;
 }
 
-fn wait_for_sample(
-    mut head: u64,
+/// Read the next `batch` samples, waiting for the producer if they are not committed yet.
+fn read_samples(
+    samples_reader: &SamplesReader,
+    index: u64,
     batch: u64,
-    continuous_state: &ContinuousState,
-) -> Result<(), gst::FlowError> {
-    let start = Instant::now();
-    while continuous_state.index + batch > head {
-        if start.elapsed() > PRODUCER_TIMEOUT {
-            return Ok(());
-        }
-        head = wait_for_producer(head, batch, continuous_state)?;
-    }
-    Ok(())
+) -> mxl::Result<SamplesData<'_>> {
+    samples_reader.get_samples(index + batch, batch as usize, GET_SAMPLE_TIMEOUT)
 }
 
-fn wait_for_producer(
-    mut head: u64,
-    batch: u64,
-    continuous_state: &ContinuousState,
-) -> Result<u64, gst::FlowError> {
-    trace!(
-        "Reader ahead: index {} + batch {} > head {} (waiting for producer)",
-        continuous_state.index, batch, head
-    );
-    head = continuous_state
-        .reader
-        .get_info()
-        .map_err(|_| gst::FlowError::Error)?
-        .runtime
-        .head_index();
-    Ok(head)
+/// Oldest absolute sample index the SDK will still hand out.
+fn oldest_readable_index(head: u64, ring: u64) -> u64 {
+    head.saturating_sub(ring / 2)
 }
 
 fn is_reader_late(
@@ -166,7 +139,7 @@ fn is_reader_late(
     ring: u64,
     continuous_state: &mut ContinuousState,
 ) -> Result<bool, gst::FlowError> {
-    let oldest_valid = head.saturating_sub(ring.saturating_sub(batch));
+    let oldest_valid = oldest_readable_index(head, ring);
     if continuous_state.index < oldest_valid {
         catch_up(head, batch, continuous_state, oldest_valid);
         Ok(true)
@@ -247,7 +220,7 @@ fn interleave_audio(samples: &SamplesData<'_>) -> Result<Vec<u8>, gst::FlowError
 
 #[cfg(test)]
 mod ring_tests {
-    use super::define_cushion;
+    use super::{define_cushion, oldest_readable_index};
 
     #[test]
     fn define_cushion_leaves_two_batches_of_headroom() {
@@ -256,11 +229,16 @@ mod ring_tests {
     }
 
     #[test]
-    fn oldest_valid_sample_index_formula() {
-        let ring = 480u64;
+    fn oldest_readable_index_is_half_the_ring_behind_head() {
+        assert_eq!(oldest_readable_index(500, 480), 260);
+        assert_eq!(oldest_readable_index(100, 480), 0);
+    }
+
+    #[test]
+    fn cushion_target_is_readable() {
+        let ring = 19456u64;
         let batch = 48u64;
-        let head = 500u64;
-        let oldest_valid = head.saturating_sub(ring.saturating_sub(batch));
-        assert_eq!(oldest_valid, 68);
+        let head = 1_000_000u64;
+        assert!(define_cushion(head, batch) >= oldest_readable_index(head, ring));
     }
 }
