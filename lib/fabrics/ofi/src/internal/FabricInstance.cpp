@@ -14,7 +14,8 @@
 namespace mxl::lib::fabrics::ofi
 {
     FabricsInstance::FabricsInstance(mxl::lib::Instance* instance)
-        : _mxlInstance(instance)
+        : _mu{}
+        , _mxlInstance(instance)
     {
         // Disable memory registration cache: Since we only perform memory registration during initialization rather than runtime, the cache provides
         // no benefit for our use case.
@@ -35,16 +36,19 @@ namespace mxl::lib::fabrics::ofi
 
     TargetWrapper* FabricsInstance::createTarget()
     {
+        auto lock = std::unique_lock{_mu};
         return &_targets.emplace_back();
     }
 
     InitiatorWrapper* FabricsInstance::createInitiator()
     {
+        auto lock = std::unique_lock{_mu};
         return &_initiators.emplace_back();
     }
 
     void FabricsInstance::destroyTarget(TargetWrapper* wrapper)
     {
+        auto lock = std::unique_lock{_mu};
         if (!_targets.remove_if([&](TargetWrapper const& lhs) { return &lhs == wrapper; }))
         {
             throw Exception::make(MXL_ERR_INVALID_ARG, "Target to remove is not known to instance");
@@ -53,6 +57,7 @@ namespace mxl::lib::fabrics::ofi
 
     void FabricsInstance::destroyInitiator(InitiatorWrapper* initiator)
     {
+        auto lock = std::unique_lock{_mu};
         if (!_initiators.remove_if([&](InitiatorWrapper const& lhs) { return &lhs == initiator; }))
         {
             throw Exception::make(MXL_ERR_INVALID_ARG, "Initiator to remove is not known to instance");
