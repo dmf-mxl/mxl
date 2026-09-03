@@ -10,11 +10,12 @@ use crate::{
         reader::{get_config_info, get_flow_info, get_runtime_info},
     },
     instance::InstanceContext,
+    reader::FlowReaderInstance,
 };
 
 pub struct GrainReader {
     context: Arc<InstanceContext>,
-    reader: mxl_sys::FlowReader,
+    reader: Arc<FlowReaderInstance>,
 }
 
 /// The MXL readers and writers are not thread-safe, so we do not implement `Sync` for them, but
@@ -22,26 +23,30 @@ pub struct GrainReader {
 unsafe impl Send for GrainReader {}
 
 impl GrainReader {
-    pub(crate) fn new(context: Arc<InstanceContext>, reader: mxl_sys::FlowReader) -> Self {
+    pub(crate) fn new(context: Arc<InstanceContext>, reader: Arc<FlowReaderInstance>) -> Self {
         Self { context, reader }
     }
 
-    pub fn destroy(mut self) -> Result<()> {
-        self.destroy_inner()
+    #[deprecated(
+        since = "0.2.0",
+        note = "The MXL FlowWriter lifetime is now automatically managed internally. You should not be calling destroy() on it anymore. This function is a no-op and will be removed in a future version."
+    )]
+    pub fn destroy(self) -> Result<()> {
+        Ok(())
     }
 
     /// The whole FlowInfo is quite a chunk of data. Go for `get_config_info` or `get_runtime_info`
     /// if they contain what you need.
     pub fn get_info(&self) -> Result<FlowInfo> {
-        get_flow_info(&self.context, self.reader)
+        get_flow_info(&self.context, self.reader.as_ptr())
     }
 
     pub fn get_config_info(&self) -> Result<FlowConfigInfo> {
-        get_config_info(&self.context, self.reader)
+        get_config_info(&self.context, self.reader.as_ptr())
     }
 
     pub fn get_runtime_info(&self) -> Result<mxl_sys::FlowRuntimeInfo> {
-        get_runtime_info(&self.context, self.reader)
+        get_runtime_info(&self.context, self.reader.as_ptr())
     }
 
     pub fn get_complete_grain<'a>(
@@ -55,7 +60,7 @@ impl GrainReader {
         loop {
             unsafe {
                 Error::from_status(self.context.api.flow_reader_get_grain(
-                    self.reader,
+                    self.reader.as_ptr(),
                     index,
                     timeout_ns,
                     &mut grain_info,
@@ -95,7 +100,7 @@ impl GrainReader {
         let mut payload_ptr: *mut u8 = std::ptr::null_mut();
         unsafe {
             Error::from_status(self.context.api.flow_reader_get_grain_non_blocking(
-                self.reader,
+                self.reader.as_ptr(),
                 index,
                 &mut grain_info,
                 &mut payload_ptr,
@@ -120,30 +125,5 @@ impl GrainReader {
             flags: grain_info.flags,
             index: grain_info.index,
         })
-    }
-
-    fn destroy_inner(&mut self) -> Result<()> {
-        if self.reader.is_null() {
-            return Err(Error::InvalidArg);
-        }
-
-        let mut reader = std::ptr::null_mut();
-        std::mem::swap(&mut self.reader, &mut reader);
-
-        Error::from_status(unsafe {
-            self.context
-                .api
-                .release_flow_reader(self.context.instance, reader)
-        })
-    }
-}
-
-impl Drop for GrainReader {
-    fn drop(&mut self) {
-        if !self.reader.is_null()
-            && let Err(err) = self.destroy_inner()
-        {
-            tracing::error!("Failed to release MXL flow reader (discrete): {:?}", err);
-        }
     }
 }
