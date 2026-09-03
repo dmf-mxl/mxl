@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{marker::PhantomData, sync::Arc};
+use std::sync::Arc;
 
 use tracing::error;
 
-use crate::{Error, instance::InstanceContext};
+use crate::{Error, instance::InstanceContext, writer::FlowWriterInstance};
 
 /// RAII samples writing session
 ///
@@ -15,17 +15,16 @@ use crate::{Error, instance::InstanceContext};
 /// either directly to the slices or to individual samples by index inside the batch.
 pub struct SamplesWriteAccess<'a> {
     context: Arc<InstanceContext>,
-    writer: mxl_sys::FlowWriter,
+    writer: &'a FlowWriterInstance,
     buffer_slice: mxl_sys::MutableWrappedMultiBufferSlice,
     /// Serves as a flag to know whether to cancel the samples on drop.
     committed_or_canceled: bool,
-    phantom: PhantomData<&'a ()>,
 }
 
 impl<'a> SamplesWriteAccess<'a> {
     pub(crate) fn new(
         context: Arc<InstanceContext>,
-        writer: mxl_sys::FlowWriter,
+        writer: &'a FlowWriterInstance,
         buffer_slice: mxl_sys::MutableWrappedMultiBufferSlice,
     ) -> Self {
         Self {
@@ -33,14 +32,19 @@ impl<'a> SamplesWriteAccess<'a> {
             writer,
             buffer_slice,
             committed_or_canceled: false,
-            phantom: PhantomData,
         }
     }
 
     pub fn commit(mut self) -> crate::Result<()> {
         self.committed_or_canceled = true;
 
-        unsafe { Error::from_status(self.context.api.flow_writer_commit_samples(self.writer)) }
+        unsafe {
+            Error::from_status(
+                self.context
+                    .api
+                    .flow_writer_commit_samples(self.writer.as_ptr()),
+            )
+        }
     }
 
     /// Please note that the behavior of canceling samples writing is dependent on the behavior
@@ -50,7 +54,13 @@ impl<'a> SamplesWriteAccess<'a> {
     pub fn cancel(mut self) -> crate::Result<()> {
         self.committed_or_canceled = true;
 
-        unsafe { Error::from_status(self.context.api.flow_writer_cancel_samples(self.writer)) }
+        unsafe {
+            Error::from_status(
+                self.context
+                    .api
+                    .flow_writer_cancel_samples(self.writer.as_ptr()),
+            )
+        }
     }
 
     pub fn channels(&self) -> usize {
@@ -87,7 +97,11 @@ impl<'a> Drop for SamplesWriteAccess<'a> {
     fn drop(&mut self) {
         if !self.committed_or_canceled
             && let Err(error) = unsafe {
-                Error::from_status(self.context.api.flow_writer_cancel_samples(self.writer))
+                Error::from_status(
+                    self.context
+                        .api
+                        .flow_writer_cancel_samples(self.writer.as_ptr()),
+                )
             }
         {
             error!("Failed to cancel grain write on drop: {:?}", error);

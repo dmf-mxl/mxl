@@ -349,27 +349,7 @@ impl BaseSinkImpl for MxlSink {
 
         // Destroy the flow writers before dropping the MXL instance they belong
         // to, then release the instance and clock.
-        if let Some(mut state) = context.state.take() {
-            match state.flow_state.take() {
-                Some(FlowState::Discrete(discrete)) => {
-                    discrete.writer.destroy().map_err(|e| {
-                        gst::error_msg!(
-                            gst::CoreError::Failed,
-                            ["Failed to destroy discrete writer: {}", e]
-                        )
-                    })?;
-                }
-                Some(FlowState::Continuous(continuous)) => {
-                    continuous.writer.destroy().map_err(|e| {
-                        gst::error_msg!(
-                            gst::CoreError::Failed,
-                            ["Failed to destroy continuous writer: {}", e]
-                        )
-                    })?;
-                }
-                None => {}
-            }
-        }
+        context.state.take();
 
         gst::info!(CAT, imp = self, "Stopped");
         Ok(())

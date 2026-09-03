@@ -1,29 +1,28 @@
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{marker::PhantomData, sync::Arc};
+use std::sync::Arc;
 
 use tracing::error;
 
-use crate::{Error, Result, instance::InstanceContext};
+use crate::{Error, Result, instance::InstanceContext, writer::FlowWriterInstance};
 
 /// RAII grain writing session
 ///
 /// Automatically cancels the grain if not explicitly committed.
 pub struct GrainWriteAccess<'a> {
     context: Arc<InstanceContext>,
-    writer: mxl_sys::FlowWriter,
+    writer: &'a FlowWriterInstance,
     grain_info: mxl_sys::GrainInfo,
     payload_ptr: *mut u8,
     /// Serves as a flag to know whether to cancel the grain on drop.
     committed_or_canceled: bool,
-    phantom: PhantomData<&'a ()>,
 }
 
 impl<'a> GrainWriteAccess<'a> {
     pub(crate) fn new(
         context: Arc<InstanceContext>,
-        writer: mxl_sys::FlowWriter,
+        writer: &'a FlowWriterInstance,
         grain_info: mxl_sys::GrainInfo,
         payload_ptr: *mut u8,
     ) -> Self {
@@ -33,7 +32,6 @@ impl<'a> GrainWriteAccess<'a> {
             grain_info,
             payload_ptr,
             committed_or_canceled: false,
-            phantom: Default::default(),
         }
     }
 
@@ -66,7 +64,7 @@ impl<'a> GrainWriteAccess<'a> {
             Error::from_status(
                 self.context
                     .api
-                    .flow_writer_commit_grain(self.writer, &self.grain_info),
+                    .flow_writer_commit_grain(self.writer.as_ptr(), &self.grain_info),
             )
         }
     }
@@ -78,7 +76,13 @@ impl<'a> GrainWriteAccess<'a> {
     pub fn cancel(mut self) -> Result<()> {
         self.committed_or_canceled = true;
 
-        unsafe { Error::from_status(self.context.api.flow_writer_cancel_grain(self.writer)) }
+        unsafe {
+            Error::from_status(
+                self.context
+                    .api
+                    .flow_writer_cancel_grain(self.writer.as_ptr()),
+            )
+        }
     }
 }
 
@@ -86,7 +90,11 @@ impl<'a> Drop for GrainWriteAccess<'a> {
     fn drop(&mut self) {
         if !self.committed_or_canceled
             && let Err(error) = unsafe {
-                Error::from_status(self.context.api.flow_writer_cancel_grain(self.writer))
+                Error::from_status(
+                    self.context
+                        .api
+                        .flow_writer_cancel_grain(self.writer.as_ptr()),
+                )
             }
         {
             error!("Failed to cancel grain write on drop: {:?}", error);
