@@ -85,7 +85,7 @@ var searchData=
   ['flowreader_2ehpp_82',['FlowReader.hpp',['../FlowReader_8hpp.html',1,'']]],
   ['flowreaderfactory_83',['FlowReaderFactory',['../classmxl_1_1lib_1_1FlowReaderFactory.html',1,'mxl::lib']]],
   ['flowreaderfactory_2ehpp_84',['FlowReaderFactory.hpp',['../FlowReaderFactory_8hpp.html',1,'']]],
-  ['flowstate_85',['flowstate',['../classmxl_1_1lib_1_1FlowData.html#a457a62112da22e4fcf5d812c814d2707',1,'mxl::lib::FlowData::flowState() noexcept'],['../classmxl_1_1lib_1_1FlowData.html#a1c156c6a3dd58399cff3c34acc00d680',1,'mxl::lib::FlowData::flowState() const noexcept'],['../structmxl_1_1lib_1_1FlowState.html#ad070c0d664fd0f9c0482d9e0d8c54761',1,'mxl::lib::FlowState::FlowState()'],['../structmxl_1_1lib_1_1FlowState.html',1,'mxl::lib::FlowState']]],
+  ['flowstate_85',['flowstate',['../structmxl_1_1lib_1_1FlowState.html#ad070c0d664fd0f9c0482d9e0d8c54761',1,'mxl::lib::FlowState::FlowState()'],['../classmxl_1_1lib_1_1FlowData.html#a457a62112da22e4fcf5d812c814d2707',1,'mxl::lib::FlowData::flowState() noexcept'],['../classmxl_1_1lib_1_1FlowData.html#a1c156c6a3dd58399cff3c34acc00d680',1,'mxl::lib::FlowData::flowState() const noexcept'],['../structmxl_1_1lib_1_1FlowState.html',1,'mxl::lib::FlowState']]],
   ['flowstate_2ehpp_86',['FlowState.hpp',['../FlowState_8hpp.html',1,'']]],
   ['flowsynchronizationgroup_87',['FlowSynchronizationGroup',['../classmxl_1_1lib_1_1FlowSynchronizationGroup.html',1,'mxl::lib']]],
   ['flowsynchronizationgroup_2ecpp_88',['FlowSynchronizationGroup.cpp',['../FlowSynchronizationGroup_8cpp.html',1,'']]],

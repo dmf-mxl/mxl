@@ -1382,32 +1382,32 @@ Variables</h2></td></tr>
 <div class="line"><span class="lineno"> 1107</span><span class="stringliteral">        return ((groupIndex + 1U) * samplesPerCommit) - 1U;</span></div>
 <div class="line"><span class="lineno"> 1108</span><span class="stringliteral">    };</span></div>
 <div class="line"><span class="lineno"> 1109</span><span class="stringliteral"></span> </div>
-<div class="line"><span class="lineno"> 1110</span><span class="stringliteral">    for (std::uint64_t writerGroupIndex = 42; writerGroupIndex &lt;= 46; ++writerGroupIndex)</span></div>
-<div class="line"><span class="lineno"> 1111</span><span class="stringliteral">    {</span></div>
-<div class="line"><span class="lineno"> 1112</span><span class="stringliteral">        auto const writerSampleIndex = groupToSampleIndex(writerGroupIndex);</span></div>
-<div class="line"><span class="lineno"> 1113</span><span class="stringliteral">        REQUIRE(mxlFlowWriterOpenSamples(writer, writerSampleIndex, samplesPerCommit, &amp;writeSlices) == MXL_STATUS_OK);</span></div>
-<div class="line"><span class="lineno"> 1114</span><span class="stringliteral">        auto const firstSamples = writeSlices.base.fragments[0].size / sizeof(std::uint32_t);</span></div>
-<div class="line"><span class="lineno"> 1115</span><span class="stringliteral">        for (std::size_t i = 0U; i &lt; firstSamples; ++i)</span></div>
-<div class="line"><span class="lineno"> 1116</span><span class="stringliteral">        {</span></div>
-<div class="line"><span class="lineno"> 1117</span><span class="stringliteral">            static_cast&lt;std::uint32_t*&gt;(writeSlices.base.fragments[0].pointer)[i] = static_cast&lt;std::uint32_t&gt;(writerGroupIndex);</span></div>
-<div class="line"><span class="lineno"> 1118</span><span class="stringliteral">        }</span></div>
-<div class="line"><span class="lineno"> 1119</span><span class="stringliteral">        auto const secondSamples = writeSlices.base.fragments[1].size / sizeof(std::uint32_t);</span></div>
-<div class="line"><span class="lineno"> 1120</span><span class="stringliteral">        for (std::size_t i = 0U; i &lt; secondSamples; ++i)</span></div>
-<div class="line"><span class="lineno"> 1121</span><span class="stringliteral">        {</span></div>
-<div class="line"><span class="lineno"> 1122</span><span class="stringliteral">            static_cast&lt;std::uint32_t*&gt;(writeSlices.base.fragments[1].pointer)[i] = static_cast&lt;std::uint32_t&gt;(writerGroupIndex);</span></div>
-<div class="line"><span class="lineno"> 1123</span><span class="stringliteral">        }</span></div>
-<div class="line"><span class="lineno"> 1124</span><span class="stringliteral">        REQUIRE(mxlFlowWriterCommitSamples(writer) == MXL_STATUS_OK);</span></div>
-<div class="line"><span class="lineno"> 1125</span><span class="stringliteral">    }</span></div>
-<div class="line"><span class="lineno"> 1126</span><span class="stringliteral"></span> </div>
-<div class="line"><span class="lineno"> 1127</span><span class="stringliteral">    // Jump forward to group 100, skipping groups 47-99.</span></div>
-<div class="line"><span class="lineno"> 1128</span><span class="stringliteral">    std::uint64_t writerGroupIndex = 100;</span></div>
-<div class="line"><span class="lineno"> 1129</span><span class="stringliteral">    std::uint64_t writerSampleIndex = groupToSampleIndex(writerGroupIndex);</span></div>
-<div class="line"><span class="lineno"> 1130</span><span class="stringliteral">    REQUIRE(mxlFlowWriterOpenSamples(writer, writerSampleIndex, samplesPerCommit, &amp;writeSlices) == MXL_STATUS_OK);</span></div>
-<div class="line"><span class="lineno"> 1131</span><span class="stringliteral"></span> </div>
-<div class="line"><span class="lineno"> 1132</span><span class="stringliteral">    // From the moment we open sample 100, the whole ring buffer should be invalidated. The head does not move until</span></div>
-<div class="line"><span class="lineno"> 1133</span><span class="stringliteral">    // group 100 is committed though, so we have to check group endpoints 46 and earlier.</span></div>
+<div class="line"><span class="lineno"> 1110</span><span class="stringliteral">    // Write initial groups 42-46.</span></div>
+<div class="line"><span class="lineno"> 1111</span><span class="stringliteral">    for (auto writerGroupIndex = std::uint64_t{42}; writerGroupIndex &lt;= std::uint64_t{46}; ++writerGroupIndex)</span></div>
+<div class="line"><span class="lineno"> 1112</span><span class="stringliteral">    {</span></div>
+<div class="line"><span class="lineno"> 1113</span><span class="stringliteral">        auto const writerSampleIndex = groupToSampleIndex(writerGroupIndex);</span></div>
+<div class="line"><span class="lineno"> 1114</span><span class="stringliteral">        REQUIRE(mxlFlowWriterOpenSamples(writer, writerSampleIndex, samplesPerCommit, &amp;writeSlices) == MXL_STATUS_OK);</span></div>
+<div class="line"><span class="lineno"> 1115</span><span class="stringliteral">        auto const firstSamples = writeSlices.base.fragments[0].size / sizeof(std::uint32_t);</span></div>
+<div class="line"><span class="lineno"> 1116</span><span class="stringliteral">        for (std::size_t i = 0U; i &lt; firstSamples; ++i)</span></div>
+<div class="line"><span class="lineno"> 1117</span><span class="stringliteral">        {</span></div>
+<div class="line"><span class="lineno"> 1118</span><span class="stringliteral">            static_cast&lt;std::uint32_t*&gt;(writeSlices.base.fragments[0].pointer)[i] = static_cast&lt;std::uint32_t&gt;(writerGroupIndex);</span></div>
+<div class="line"><span class="lineno"> 1119</span><span class="stringliteral">        }</span></div>
+<div class="line"><span class="lineno"> 1120</span><span class="stringliteral">        auto const secondSamples = writeSlices.base.fragments[1].size / sizeof(std::uint32_t);</span></div>
+<div class="line"><span class="lineno"> 1121</span><span class="stringliteral">        for (std::size_t i = 0U; i &lt; secondSamples; ++i)</span></div>
+<div class="line"><span class="lineno"> 1122</span><span class="stringliteral">        {</span></div>
+<div class="line"><span class="lineno"> 1123</span><span class="stringliteral">            static_cast&lt;std::uint32_t*&gt;(writeSlices.base.fragments[1].pointer)[i] = static_cast&lt;std::uint32_t&gt;(writerGroupIndex);</span></div>
+<div class="line"><span class="lineno"> 1124</span><span class="stringliteral">        }</span></div>
+<div class="line"><span class="lineno"> 1125</span><span class="stringliteral">        REQUIRE(mxlFlowWriterCommitSamples(writer) == MXL_STATUS_OK);</span></div>
+<div class="line"><span class="lineno"> 1126</span><span class="stringliteral">    }</span></div>
+<div class="line"><span class="lineno"> 1127</span><span class="stringliteral"></span> </div>
+<div class="line"><span class="lineno"> 1128</span><span class="stringliteral">    // Jump forward to group 100, skipping groups 47-99.</span></div>
+<div class="line"><span class="lineno"> 1129</span><span class="stringliteral">    std::uint64_t writerGroupIndex = 100;</span></div>
+<div class="line"><span class="lineno"> 1130</span><span class="stringliteral">    std::uint64_t writerSampleIndex = groupToSampleIndex(writerGroupIndex);</span></div>
+<div class="line"><span class="lineno"> 1131</span><span class="stringliteral">    REQUIRE(mxlFlowWriterOpenSamples(writer, writerSampleIndex, samplesPerCommit, &amp;writeSlices) == MXL_STATUS_OK);</span></div>
+<div class="line"><span class="lineno"> 1132</span><span class="stringliteral"></span> </div>
+<div class="line"><span class="lineno"> 1133</span><span class="stringliteral">    // Before commit, the earlier groups should still have their original values because invalidation happens on commit.</span></div>
 <div class="line"><span class="lineno"> 1134</span><span class="stringliteral">    mxlWrappedMultiBufferSlice readSlices{};</span></div>
-<div class="line"><span class="lineno"> 1135</span><span class="stringliteral">    for (std::uint64_t readGroupIndex = 42; readGroupIndex &lt;= 46; ++readGroupIndex)</span></div>
+<div class="line"><span class="lineno"> 1135</span><span class="stringliteral">    for (auto readGroupIndex = std::uint64_t{42}; readGroupIndex &lt;= std::uint64_t{46}; ++readGroupIndex)</span></div>
 <div class="line"><span class="lineno"> 1136</span><span class="stringliteral">    {</span></div>
 <div class="line"><span class="lineno"> 1137</span><span class="stringliteral">        auto const sampleIndex = groupToSampleIndex(readGroupIndex);</span></div>
 <div class="line"><span class="lineno"> 1138</span><span class="stringliteral">        auto const returnCode = mxlFlowReaderGetSamplesNonBlocking(reader, sampleIndex, 1U, &amp;readSlices);</span></div>
@@ -1419,38 +1419,52 @@ Variables</h2></td></tr>
 <div class="line"><span class="lineno"> 1144</span><span class="stringliteral">        else</span></div>
 <div class="line"><span class="lineno"> 1145</span><span class="stringliteral">        {</span></div>
 <div class="line"><span class="lineno"> 1146</span><span class="stringliteral">            REQUIRE(returnCode == MXL_STATUS_OK);</span></div>
-<div class="line"><span class="lineno"> 1147</span><span class="stringliteral">            if (readSlices.base.fragments[0].size &gt; 0U)</span></div>
-<div class="line"><span class="lineno"> 1148</span><span class="stringliteral">            {</span></div>
-<div class="line"><span class="lineno"> 1149</span><span class="stringliteral">                REQUIRE(static_cast&lt;std::uint32_t const*&gt;(readSlices.base.fragments[0].pointer)[0] == 0U);</span></div>
-<div class="line"><span class="lineno"> 1150</span><span class="stringliteral">            }</span></div>
-<div class="line"><span class="lineno"> 1151</span><span class="stringliteral">            if (readSlices.base.fragments[1].size &gt; 0U)</span></div>
-<div class="line"><span class="lineno"> 1152</span><span class="stringliteral">            {</span></div>
-<div class="line"><span class="lineno"> 1153</span><span class="stringliteral">                REQUIRE(static_cast&lt;std::uint32_t const*&gt;(readSlices.base.fragments[1].pointer)[0] == 0U);</span></div>
-<div class="line"><span class="lineno"> 1154</span><span class="stringliteral">            }</span></div>
-<div class="line"><span class="lineno"> 1155</span><span class="stringliteral">        }</span></div>
-<div class="line"><span class="lineno"> 1156</span><span class="stringliteral">    }</span></div>
-<div class="line"><span class="lineno"> 1157</span><span class="stringliteral"></span> </div>
-<div class="line"><span class="lineno"> 1158</span><span class="stringliteral">    auto const firstSamples = writeSlices.base.fragments[0].size / sizeof(std::uint32_t);</span></div>
-<div class="line"><span class="lineno"> 1159</span><span class="stringliteral">    for (std::size_t i = 0U; i &lt; firstSamples; ++i)</span></div>
-<div class="line"><span class="lineno"> 1160</span><span class="stringliteral">    {</span></div>
-<div class="line"><span class="lineno"> 1161</span><span class="stringliteral">        static_cast&lt;std::uint32_t*&gt;(writeSlices.base.fragments[0].pointer)[i] = static_cast&lt;std::uint32_t&gt;(writerGroupIndex);</span></div>
-<div class="line"><span class="lineno"> 1162</span><span class="stringliteral">    }</span></div>
-<div class="line"><span class="lineno"> 1163</span><span class="stringliteral">    auto const secondSamples = writeSlices.base.fragments[1].size / sizeof(std::uint32_t);</span></div>
-<div class="line"><span class="lineno"> 1164</span><span class="stringliteral">    for (std::size_t i = 0U; i &lt; secondSamples; ++i)</span></div>
-<div class="line"><span class="lineno"> 1165</span><span class="stringliteral">    {</span></div>
-<div class="line"><span class="lineno"> 1166</span><span class="stringliteral">        static_cast&lt;std::uint32_t*&gt;(writeSlices.base.fragments[1].pointer)[i] = static_cast&lt;std::uint32_t&gt;(writerGroupIndex);</span></div>
-<div class="line"><span class="lineno"> 1167</span><span class="stringliteral">    }</span></div>
-<div class="line"><span class="lineno"> 1168</span><span class="stringliteral">    REQUIRE(mxlFlowWriterCommitSamples(writer) == MXL_STATUS_OK);</span></div>
-<div class="line"><span class="lineno"> 1169</span><span class="stringliteral"></span> </div>
-<div class="line"><span class="lineno"> 1170</span><span class="stringliteral">    // Group 100 endpoint should contain the latest write after commit.</span></div>
-<div class="line"><span class="lineno"> 1171</span><span class="stringliteral">    REQUIRE(mxlFlowReaderGetSamplesNonBlocking(reader, writerSampleIndex, 1U, &amp;readSlices) == MXL_STATUS_OK);</span></div>
-<div class="line"><span class="lineno"> 1172</span><span class="stringliteral">    REQUIRE(static_cast&lt;std::uint32_t const*&gt;(readSlices.base.fragments[0].pointer)[0] == 100U);</span></div>
-<div class="line"><span class="lineno"> 1173</span><span class="stringliteral"></span> </div>
-<div class="line"><span class="lineno"> 1174</span><span class="stringliteral">    REQUIRE(mxlReleaseFlowReader(instanceReader, reader) == MXL_STATUS_OK);</span></div>
-<div class="line"><span class="lineno"> 1175</span><span class="stringliteral">    REQUIRE(mxlReleaseFlowWriter(instanceWriter, writer) == MXL_STATUS_OK);</span></div>
-<div class="line"><span class="lineno"> 1176</span><span class="stringliteral">    REQUIRE(mxlDestroyInstance(instanceReader) == MXL_STATUS_OK);</span></div>
-<div class="line"><span class="lineno"> 1177</span><span class="stringliteral">    REQUIRE(mxlDestroyInstance(instanceWriter) == MXL_STATUS_OK);</span></div>
-<div class="line"><span class="lineno"> 1178</span><span class="stringliteral">}</span></div>
+<div class="line"><span class="lineno"> 1147</span><span class="stringliteral">            // Before commit, data should still have original values (group index).</span></div>
+<div class="line"><span class="lineno"> 1148</span><span class="stringliteral">            if (readSlices.base.fragments[0].size &gt; 0U)</span></div>
+<div class="line"><span class="lineno"> 1149</span><span class="stringliteral">            {</span></div>
+<div class="line"><span class="lineno"> 1150</span><span class="stringliteral">                REQUIRE(static_cast&lt;std::uint32_t const*&gt;(readSlices.base.fragments[0].pointer)[0] == readGroupIndex);</span></div>
+<div class="line"><span class="lineno"> 1151</span><span class="stringliteral">            }</span></div>
+<div class="line"><span class="lineno"> 1152</span><span class="stringliteral">            if (readSlices.base.fragments[1].size &gt; 0U)</span></div>
+<div class="line"><span class="lineno"> 1153</span><span class="stringliteral">            {</span></div>
+<div class="line"><span class="lineno"> 1154</span><span class="stringliteral">                REQUIRE(static_cast&lt;std::uint32_t const*&gt;(readSlices.base.fragments[1].pointer)[0] == readGroupIndex);</span></div>
+<div class="line"><span class="lineno"> 1155</span><span class="stringliteral">            }</span></div>
+<div class="line"><span class="lineno"> 1156</span><span class="stringliteral">        }</span></div>
+<div class="line"><span class="lineno"> 1157</span><span class="stringliteral">    }</span></div>
+<div class="line"><span class="lineno"> 1158</span><span class="stringliteral"></span> </div>
+<div class="line"><span class="lineno"> 1159</span><span class="stringliteral">    auto const firstSamples = writeSlices.base.fragments[0].size / sizeof(std::uint32_t);</span></div>
+<div class="line"><span class="lineno"> 1160</span><span class="stringliteral">    for (std::size_t i = 0U; i &lt; firstSamples; ++i)</span></div>
+<div class="line"><span class="lineno"> 1161</span><span class="stringliteral">    {</span></div>
+<div class="line"><span class="lineno"> 1162</span><span class="stringliteral">        static_cast&lt;std::uint32_t*&gt;(writeSlices.base.fragments[0].pointer)[i] = static_cast&lt;std::uint32_t&gt;(writerGroupIndex);</span></div>
+<div class="line"><span class="lineno"> 1163</span><span class="stringliteral">    }</span></div>
+<div class="line"><span class="lineno"> 1164</span><span class="stringliteral">    auto const secondSamples = writeSlices.base.fragments[1].size / sizeof(std::uint32_t);</span></div>
+<div class="line"><span class="lineno"> 1165</span><span class="stringliteral">    for (std::size_t i = 0U; i &lt; secondSamples; ++i)</span></div>
+<div class="line"><span class="lineno"> 1166</span><span class="stringliteral">    {</span></div>
+<div class="line"><span class="lineno"> 1167</span><span class="stringliteral">        static_cast&lt;std::uint32_t*&gt;(writeSlices.base.fragments[1].pointer)[i] = static_cast&lt;std::uint32_t&gt;(writerGroupIndex);</span></div>
+<div class="line"><span class="lineno"> 1168</span><span class="stringliteral">    }</span></div>
+<div class="line"><span class="lineno"> 1169</span><span class="stringliteral">    REQUIRE(mxlFlowWriterCommitSamples(writer) == MXL_STATUS_OK);</span></div>
+<div class="line"><span class="lineno"> 1170</span><span class="stringliteral"></span> </div>
+<div class="line"><span class="lineno"> 1171</span><span class="stringliteral">    // After commit, the gap between group 46 and 100 should be invalidated (zeroed out).</span></div>
+<div class="line"><span class="lineno"> 1172</span><span class="stringliteral">    // Check a sample right before group 100 to verify the gap was cleared.</span></div>
+<div class="line"><span class="lineno"> 1173</span><span class="stringliteral">    auto const gapSampleIndex = groupToSampleIndex(99U);</span></div>
+<div class="line"><span class="lineno"> 1174</span><span class="stringliteral">    REQUIRE(mxlFlowReaderGetSamplesNonBlocking(reader, gapSampleIndex, 1U, &amp;readSlices) == MXL_STATUS_OK);</span></div>
+<div class="line"><span class="lineno"> 1175</span><span class="stringliteral">    if (readSlices.base.fragments[0].size &gt; 0U)</span></div>
+<div class="line"><span class="lineno"> 1176</span><span class="stringliteral">    {</span></div>
+<div class="line"><span class="lineno"> 1177</span><span class="stringliteral">        REQUIRE(static_cast&lt;std::uint32_t const*&gt;(readSlices.base.fragments[0].pointer)[0] == 0U);</span></div>
+<div class="line"><span class="lineno"> 1178</span><span class="stringliteral">    }</span></div>
+<div class="line"><span class="lineno"> 1179</span><span class="stringliteral">    if (readSlices.base.fragments[1].size &gt; 0U)</span></div>
+<div class="line"><span class="lineno"> 1180</span><span class="stringliteral">    {</span></div>
+<div class="line"><span class="lineno"> 1181</span><span class="stringliteral">        REQUIRE(static_cast&lt;std::uint32_t const*&gt;(readSlices.base.fragments[1].pointer)[0] == 0U);</span></div>
+<div class="line"><span class="lineno"> 1182</span><span class="stringliteral">    }</span></div>
+<div class="line"><span class="lineno"> 1183</span><span class="stringliteral"></span> </div>
+<div class="line"><span class="lineno"> 1184</span><span class="stringliteral">    // Group 100 endpoint should contain the latest write after commit</span></div>
+<div class="line"><span class="lineno"> 1185</span><span class="stringliteral">    REQUIRE(mxlFlowReaderGetSamplesNonBlocking(reader, writerSampleIndex, 1U, &amp;readSlices) == MXL_STATUS_OK);</span></div>
+<div class="line"><span class="lineno"> 1186</span><span class="stringliteral">    REQUIRE(static_cast&lt;std::uint32_t const*&gt;(readSlices.base.fragments[0].pointer)[0] == 100U);</span></div>
+<div class="line"><span class="lineno"> 1187</span><span class="stringliteral"></span> </div>
+<div class="line"><span class="lineno"> 1188</span><span class="stringliteral">    REQUIRE(mxlReleaseFlowReader(instanceReader, reader) == MXL_STATUS_OK);</span></div>
+<div class="line"><span class="lineno"> 1189</span><span class="stringliteral">    REQUIRE(mxlReleaseFlowWriter(instanceWriter, writer) == MXL_STATUS_OK);</span></div>
+<div class="line"><span class="lineno"> 1190</span><span class="stringliteral">    REQUIRE(mxlDestroyInstance(instanceReader) == MXL_STATUS_OK);</span></div>
+<div class="line"><span class="lineno"> 1191</span><span class="stringliteral">    REQUIRE(mxlDestroyInstance(instanceWriter) == MXL_STATUS_OK);</span></div>
+<div class="line"><span class="lineno"> 1192</span><span class="stringliteral">}</span></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -2246,73 +2260,75 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="test__flows_8cpp_source.html#l01180">1180</a> of file <a class="el" href="test__flows_8cpp_source.html">test_flows.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno"> 1180</span>                                                                   : Jump forward<span class="stringliteral">&quot;, &quot;</span>[<a class="code hl_namespace" href="namespacemxl.html">mxl</a> flows]<span class="stringliteral">&quot;)</span></div>
-<div class="line"><span class="lineno"> 1181</span><span class="stringliteral">{</span></div>
-<div class="line"><span class="lineno"> 1182</span><span class="stringliteral">    auto const opts = &quot;</span>{}<span class="stringliteral">&quot;;</span></div>
-<div class="line"><span class="lineno"> 1183</span><span class="stringliteral">    auto instanceReader = mxlCreateInstance(domain.string().c_str(), opts);</span></div>
-<div class="line"><span class="lineno"> 1184</span><span class="stringliteral">    REQUIRE(instanceReader != nullptr);</span></div>
-<div class="line"><span class="lineno"> 1185</span><span class="stringliteral"></span> </div>
-<div class="line"><span class="lineno"> 1186</span><span class="stringliteral">    auto instanceWriter = mxlCreateInstance(domain.string().c_str(), opts);</span></div>
-<div class="line"><span class="lineno"> 1187</span><span class="stringliteral">    REQUIRE(instanceWriter != nullptr);</span></div>
-<div class="line"><span class="lineno"> 1188</span><span class="stringliteral"></span> </div>
-<div class="line"><span class="lineno"> 1189</span><span class="stringliteral">    auto flowDef = mxl::tests::readFile(&quot;</span>data/v210_flow.json<span class="stringliteral">&quot;);</span></div>
-<div class="line"><span class="lineno"> 1190</span><span class="stringliteral">    mxlFlowWriter writer;</span></div>
-<div class="line"><span class="lineno"> 1191</span><span class="stringliteral">    mxlFlowConfigInfo configInfo;</span></div>
-<div class="line"><span class="lineno"> 1192</span><span class="stringliteral">    bool flowWasCreated = false;</span></div>
-<div class="line"><span class="lineno"> 1193</span><span class="stringliteral">    REQUIRE(mxlCreateFlowWriter(instanceWriter, flowDef.c_str(), opts, &amp;writer, &amp;configInfo, &amp;flowWasCreated) == MXL_STATUS_OK);</span></div>
-<div class="line"><span class="lineno"> 1194</span><span class="stringliteral">    REQUIRE(flowWasCreated);</span></div>
-<div class="line"><span class="lineno"> 1195</span><span class="stringliteral"></span> </div>
-<div class="line"><span class="lineno"> 1196</span><span class="stringliteral">    mxlFlowReader reader;</span></div>
-<div class="line"><span class="lineno"> 1197</span><span class="stringliteral">    auto const flowId = uuids::to_string(configInfo.common.id);</span></div>
-<div class="line"><span class="lineno"> 1198</span><span class="stringliteral">    REQUIRE(mxlCreateFlowReader(instanceReader, flowId.c_str(), &quot;</span><span class="stringliteral">&quot;, &amp;reader) == MXL_STATUS_OK);</span></div>
+<p class="definition">Definition at line <a class="el" href="test__flows_8cpp_source.html#l01194">1194</a> of file <a class="el" href="test__flows_8cpp_source.html">test_flows.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno"> 1194</span>                                                                   : Jump forward<span class="stringliteral">&quot;, &quot;</span>[<a class="code hl_namespace" href="namespacemxl.html">mxl</a> flows]<span class="stringliteral">&quot;)</span></div>
+<div class="line"><span class="lineno"> 1195</span><span class="stringliteral">{</span></div>
+<div class="line"><span class="lineno"> 1196</span><span class="stringliteral">    auto const opts = &quot;</span>{}<span class="stringliteral">&quot;;</span></div>
+<div class="line"><span class="lineno"> 1197</span><span class="stringliteral">    auto instanceReader = mxlCreateInstance(domain.string().c_str(), opts);</span></div>
+<div class="line"><span class="lineno"> 1198</span><span class="stringliteral">    REQUIRE(instanceReader != nullptr);</span></div>
 <div class="line"><span class="lineno"> 1199</span><span class="stringliteral"></span> </div>
-<div class="line"><span class="lineno"> 1200</span><span class="stringliteral">    mxlGrainInfo gInfo;</span></div>
-<div class="line"><span class="lineno"> 1201</span><span class="stringliteral">    std::uint8_t* buffer = nullptr;</span></div>
-<div class="line"><span class="lineno"> 1202</span><span class="stringliteral">    for (std::uint64_t writerGrainIndex = 42; writerGrainIndex &lt;= 46; ++writerGrainIndex)</span></div>
-<div class="line"><span class="lineno"> 1203</span><span class="stringliteral">    {</span></div>
-<div class="line"><span class="lineno"> 1204</span><span class="stringliteral">        REQUIRE(mxlFlowWriterOpenGrain(writer, writerGrainIndex, &amp;gInfo, &amp;buffer) == MXL_STATUS_OK);</span></div>
-<div class="line"><span class="lineno"> 1205</span><span class="stringliteral">        REQUIRE(buffer != nullptr);</span></div>
-<div class="line"><span class="lineno"> 1206</span><span class="stringliteral">        memcpy(buffer, &amp;writerGrainIndex, sizeof(std::uint64_t));</span></div>
-<div class="line"><span class="lineno"> 1207</span><span class="stringliteral">        gInfo.validSlices = gInfo.totalSlices;</span></div>
-<div class="line"><span class="lineno"> 1208</span><span class="stringliteral">        REQUIRE(mxlFlowWriterCommitGrain(writer, &amp;gInfo) == MXL_STATUS_OK);</span></div>
-<div class="line"><span class="lineno"> 1209</span><span class="stringliteral">    }</span></div>
-<div class="line"><span class="lineno"> 1210</span><span class="stringliteral"></span> </div>
-<div class="line"><span class="lineno"> 1211</span><span class="stringliteral">    // Jump forward to grain 100, skipping grains 47-99</span></div>
-<div class="line"><span class="lineno"> 1212</span><span class="stringliteral">    std::uint64_t writerGrainIndex = 100;</span></div>
-<div class="line"><span class="lineno"> 1213</span><span class="stringliteral">    REQUIRE(mxlFlowWriterOpenGrain(writer, writerGrainIndex, &amp;gInfo, &amp;buffer) == MXL_STATUS_OK);</span></div>
-<div class="line"><span class="lineno"> 1214</span><span class="stringliteral"></span> </div>
-<div class="line"><span class="lineno"> 1215</span><span class="stringliteral">    // From the moment we open grain 100, the whole ring buffer should be invalidated. The head does not move until grain 100 is committed though, so</span></div>
-<div class="line"><span class="lineno"> 1216</span><span class="stringliteral">    // we have to check grains 46 and earlier.</span></div>
-<div class="line"><span class="lineno"> 1217</span><span class="stringliteral">    for (std::uint64_t grainIndex = std::max(std::uint64_t(46) - configInfo.discrete.grainCount + 2, std::uint64_t(42)); grainIndex &lt;= 46;</span></div>
-<div class="line"><span class="lineno"> 1218</span><span class="stringliteral">        ++grainIndex)</span></div>
-<div class="line"><span class="lineno"> 1219</span><span class="stringliteral">    {</span></div>
-<div class="line"><span class="lineno"> 1220</span><span class="stringliteral">        mxlGrainInfo readGrainInfo;</span></div>
-<div class="line"><span class="lineno"> 1221</span><span class="stringliteral">        std::uint8_t* readBuffer = nullptr;</span></div>
-<div class="line"><span class="lineno"> 1222</span><span class="stringliteral">        auto returnCode = mxlFlowReaderGetGrain(reader, grainIndex, 0, &amp;readGrainInfo, &amp;readBuffer);</span></div>
-<div class="line"><span class="lineno"> 1223</span><span class="stringliteral">        if (grainIndex % configInfo.discrete.grainCount == writerGrainIndex % configInfo.discrete.grainCount)</span></div>
-<div class="line"><span class="lineno"> 1224</span><span class="stringliteral">        {</span></div>
-<div class="line"><span class="lineno"> 1225</span><span class="stringliteral">            REQUIRE(returnCode == MXL_ERR_OUT_OF_RANGE_TOO_EARLY);</span></div>
-<div class="line"><span class="lineno"> 1226</span><span class="stringliteral">        }</span></div>
-<div class="line"><span class="lineno"> 1227</span><span class="stringliteral">        else</span></div>
-<div class="line"><span class="lineno"> 1228</span><span class="stringliteral">        {</span></div>
-<div class="line"><span class="lineno"> 1229</span><span class="stringliteral">            REQUIRE(returnCode == MXL_STATUS_OK);</span></div>
-<div class="line"><span class="lineno"> 1230</span><span class="stringliteral">        }</span></div>
-<div class="line"><span class="lineno"> 1231</span><span class="stringliteral">        REQUIRE((readGrainInfo.flags &amp; MXL_GRAIN_FLAG_INVALID) != 0);</span></div>
-<div class="line"><span class="lineno"> 1232</span><span class="stringliteral">    }</span></div>
-<div class="line"><span class="lineno"> 1233</span><span class="stringliteral"></span> </div>
-<div class="line"><span class="lineno"> 1234</span><span class="stringliteral">    // Commit grain 100 and verify that it is readable.</span></div>
-<div class="line"><span class="lineno"> 1235</span><span class="stringliteral">    memcpy(buffer, &amp;writerGrainIndex, sizeof(std::uint64_t));</span></div>
-<div class="line"><span class="lineno"> 1236</span><span class="stringliteral">    gInfo.validSlices = gInfo.totalSlices;</span></div>
-<div class="line"><span class="lineno"> 1237</span><span class="stringliteral">    REQUIRE(mxlFlowWriterCommitGrain(writer, &amp;gInfo) == MXL_STATUS_OK);</span></div>
-<div class="line"><span class="lineno"> 1238</span><span class="stringliteral">    REQUIRE(mxlFlowReaderGetGrain(reader, writerGrainIndex, 0, &amp;gInfo, &amp;buffer) == MXL_STATUS_OK);</span></div>
-<div class="line"><span class="lineno"> 1239</span><span class="stringliteral">    REQUIRE(reinterpret_cast&lt;std::uint64_t*&gt;(buffer)[0] == writerGrainIndex);</span></div>
-<div class="line"><span class="lineno"> 1240</span><span class="stringliteral"></span> </div>
-<div class="line"><span class="lineno"> 1241</span><span class="stringliteral">    REQUIRE(mxlReleaseFlowReader(instanceReader, reader) == MXL_STATUS_OK);</span></div>
-<div class="line"><span class="lineno"> 1242</span><span class="stringliteral">    REQUIRE(mxlReleaseFlowWriter(instanceWriter, writer) == MXL_STATUS_OK);</span></div>
-<div class="line"><span class="lineno"> 1243</span><span class="stringliteral">    REQUIRE(mxlDestroyInstance(instanceReader) == MXL_STATUS_OK);</span></div>
-<div class="line"><span class="lineno"> 1244</span><span class="stringliteral">    REQUIRE(mxlDestroyInstance(instanceWriter) == MXL_STATUS_OK);</span></div>
-<div class="line"><span class="lineno"> 1245</span><span class="stringliteral">}</span></div>
+<div class="line"><span class="lineno"> 1200</span><span class="stringliteral">    auto instanceWriter = mxlCreateInstance(domain.string().c_str(), opts);</span></div>
+<div class="line"><span class="lineno"> 1201</span><span class="stringliteral">    REQUIRE(instanceWriter != nullptr);</span></div>
+<div class="line"><span class="lineno"> 1202</span><span class="stringliteral"></span> </div>
+<div class="line"><span class="lineno"> 1203</span><span class="stringliteral">    auto flowDef = mxl::tests::readFile(&quot;</span>data/v210_flow.json<span class="stringliteral">&quot;);</span></div>
+<div class="line"><span class="lineno"> 1204</span><span class="stringliteral">    mxlFlowWriter writer;</span></div>
+<div class="line"><span class="lineno"> 1205</span><span class="stringliteral">    mxlFlowConfigInfo configInfo;</span></div>
+<div class="line"><span class="lineno"> 1206</span><span class="stringliteral">    bool flowWasCreated = false;</span></div>
+<div class="line"><span class="lineno"> 1207</span><span class="stringliteral">    REQUIRE(mxlCreateFlowWriter(instanceWriter, flowDef.c_str(), opts, &amp;writer, &amp;configInfo, &amp;flowWasCreated) == MXL_STATUS_OK);</span></div>
+<div class="line"><span class="lineno"> 1208</span><span class="stringliteral">    REQUIRE(flowWasCreated);</span></div>
+<div class="line"><span class="lineno"> 1209</span><span class="stringliteral"></span> </div>
+<div class="line"><span class="lineno"> 1210</span><span class="stringliteral">    mxlFlowReader reader;</span></div>
+<div class="line"><span class="lineno"> 1211</span><span class="stringliteral">    auto const flowId = uuids::to_string(configInfo.common.id);</span></div>
+<div class="line"><span class="lineno"> 1212</span><span class="stringliteral">    REQUIRE(mxlCreateFlowReader(instanceReader, flowId.c_str(), &quot;</span><span class="stringliteral">&quot;, &amp;reader) == MXL_STATUS_OK);</span></div>
+<div class="line"><span class="lineno"> 1213</span><span class="stringliteral"></span> </div>
+<div class="line"><span class="lineno"> 1214</span><span class="stringliteral">    mxlGrainInfo gInfo;</span></div>
+<div class="line"><span class="lineno"> 1215</span><span class="stringliteral">    std::uint8_t* buffer = nullptr;</span></div>
+<div class="line"><span class="lineno"> 1216</span><span class="stringliteral">    // Write initial grains 42-46.</span></div>
+<div class="line"><span class="lineno"> 1217</span><span class="stringliteral">    for (auto writerGrainIndex = std::uint64_t{42}; writerGrainIndex &lt;= std::uint64_t{46}; ++writerGrainIndex)</span></div>
+<div class="line"><span class="lineno"> 1218</span><span class="stringliteral">    {</span></div>
+<div class="line"><span class="lineno"> 1219</span><span class="stringliteral">        REQUIRE(mxlFlowWriterOpenGrain(writer, writerGrainIndex, &amp;gInfo, &amp;buffer) == MXL_STATUS_OK);</span></div>
+<div class="line"><span class="lineno"> 1220</span><span class="stringliteral">        REQUIRE(buffer != nullptr);</span></div>
+<div class="line"><span class="lineno"> 1221</span><span class="stringliteral">        std::memcpy(buffer, &amp;writerGrainIndex, sizeof(std::uint64_t));</span></div>
+<div class="line"><span class="lineno"> 1222</span><span class="stringliteral">        gInfo.validSlices = gInfo.totalSlices;</span></div>
+<div class="line"><span class="lineno"> 1223</span><span class="stringliteral">        REQUIRE(mxlFlowWriterCommitGrain(writer, &amp;gInfo) == MXL_STATUS_OK);</span></div>
+<div class="line"><span class="lineno"> 1224</span><span class="stringliteral">    }</span></div>
+<div class="line"><span class="lineno"> 1225</span><span class="stringliteral"></span> </div>
+<div class="line"><span class="lineno"> 1226</span><span class="stringliteral">    // Jump forward to grain 100, skipping grains 47-99</span></div>
+<div class="line"><span class="lineno"> 1227</span><span class="stringliteral">    auto writerGrainIndex = std::uint64_t{100};</span></div>
+<div class="line"><span class="lineno"> 1228</span><span class="stringliteral">    REQUIRE(mxlFlowWriterOpenGrain(writer, writerGrainIndex, &amp;gInfo, &amp;buffer) == MXL_STATUS_OK);</span></div>
+<div class="line"><span class="lineno"> 1229</span><span class="stringliteral"></span> </div>
+<div class="line"><span class="lineno"> 1230</span><span class="stringliteral">    // From the moment we open grain 100, the whole ring buffer should be invalidated. The head does not move until grain 100 is committed though, so</span></div>
+<div class="line"><span class="lineno"> 1231</span><span class="stringliteral">    // we have to check grains 46 and earlier.</span></div>
+<div class="line"><span class="lineno"> 1232</span><span class="stringliteral">    for (auto grainIndex = std::max(std::uint64_t{46} - configInfo.discrete.grainCount + 2, std::uint64_t{42}); grainIndex &lt;= std::uint64_t{46};</span></div>
+<div class="line"><span class="lineno"> 1233</span><span class="stringliteral">        ++grainIndex)</span></div>
+<div class="line"><span class="lineno"> 1234</span><span class="stringliteral">    {</span></div>
+<div class="line"><span class="lineno"> 1235</span><span class="stringliteral">        mxlGrainInfo readGrainInfo;</span></div>
+<div class="line"><span class="lineno"> 1236</span><span class="stringliteral">        std::uint8_t* readBuffer = nullptr;</span></div>
+<div class="line"><span class="lineno"> 1237</span><span class="stringliteral"></span> </div>
+<div class="line"><span class="lineno"> 1238</span><span class="stringliteral">        auto returnCode = mxlFlowReaderGetGrain(reader, grainIndex, 0, &amp;readGrainInfo, &amp;readBuffer);</span></div>
+<div class="line"><span class="lineno"> 1239</span><span class="stringliteral">        if (grainIndex % configInfo.discrete.grainCount == writerGrainIndex % configInfo.discrete.grainCount)</span></div>
+<div class="line"><span class="lineno"> 1240</span><span class="stringliteral">        {</span></div>
+<div class="line"><span class="lineno"> 1241</span><span class="stringliteral">            REQUIRE(returnCode == MXL_ERR_OUT_OF_RANGE_TOO_EARLY);</span></div>
+<div class="line"><span class="lineno"> 1242</span><span class="stringliteral">        }</span></div>
+<div class="line"><span class="lineno"> 1243</span><span class="stringliteral">        else</span></div>
+<div class="line"><span class="lineno"> 1244</span><span class="stringliteral">        {</span></div>
+<div class="line"><span class="lineno"> 1245</span><span class="stringliteral">            REQUIRE(returnCode == MXL_STATUS_OK);</span></div>
+<div class="line"><span class="lineno"> 1246</span><span class="stringliteral">        }</span></div>
+<div class="line"><span class="lineno"> 1247</span><span class="stringliteral">        REQUIRE((readGrainInfo.flags &amp; MXL_GRAIN_FLAG_INVALID) != 0);</span></div>
+<div class="line"><span class="lineno"> 1248</span><span class="stringliteral">    }</span></div>
+<div class="line"><span class="lineno"> 1249</span><span class="stringliteral"></span> </div>
+<div class="line"><span class="lineno"> 1250</span><span class="stringliteral">    // Commit grain 100 and verify that it is readable.</span></div>
+<div class="line"><span class="lineno"> 1251</span><span class="stringliteral">    std::memcpy(buffer, &amp;writerGrainIndex, sizeof(std::uint64_t));</span></div>
+<div class="line"><span class="lineno"> 1252</span><span class="stringliteral">    gInfo.validSlices = gInfo.totalSlices;</span></div>
+<div class="line"><span class="lineno"> 1253</span><span class="stringliteral">    REQUIRE(mxlFlowWriterCommitGrain(writer, &amp;gInfo) == MXL_STATUS_OK);</span></div>
+<div class="line"><span class="lineno"> 1254</span><span class="stringliteral">    REQUIRE(mxlFlowReaderGetGrain(reader, writerGrainIndex, 0, &amp;gInfo, &amp;buffer) == MXL_STATUS_OK);</span></div>
+<div class="line"><span class="lineno"> 1255</span><span class="stringliteral">    REQUIRE(reinterpret_cast&lt;std::uint64_t*&gt;(buffer)[0] == writerGrainIndex);</span></div>
+<div class="line"><span class="lineno"> 1256</span><span class="stringliteral"></span> </div>
+<div class="line"><span class="lineno"> 1257</span><span class="stringliteral">    REQUIRE(mxlReleaseFlowReader(instanceReader, reader) == MXL_STATUS_OK);</span></div>
+<div class="line"><span class="lineno"> 1258</span><span class="stringliteral">    REQUIRE(mxlReleaseFlowWriter(instanceWriter, writer) == MXL_STATUS_OK);</span></div>
+<div class="line"><span class="lineno"> 1259</span><span class="stringliteral">    REQUIRE(mxlDestroyInstance(instanceReader) == MXL_STATUS_OK);</span></div>
+<div class="line"><span class="lineno"> 1260</span><span class="stringliteral">    REQUIRE(mxlDestroyInstance(instanceWriter) == MXL_STATUS_OK);</span></div>
+<div class="line"><span class="lineno"> 1261</span><span class="stringliteral">}</span></div>
 </div><!-- fragment -->
 </div>
 </div>
