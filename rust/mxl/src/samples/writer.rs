@@ -3,13 +3,10 @@
 
 use std::sync::Arc;
 
-use crate::{
-    Error, Result, SamplesWriteAccess, instance::InstanceContext, writer::FlowWriterInstance,
-};
+use crate::{Error, Result, SamplesWriteAccess, writer::FlowWriterInstance};
 
 /// MXL Flow Writer for continuous flows (samples-based data like audio)
 pub struct SamplesWriter {
-    context: Arc<InstanceContext>,
     writer: Arc<FlowWriterInstance>,
 }
 
@@ -18,12 +15,12 @@ pub struct SamplesWriter {
 unsafe impl Send for SamplesWriter {}
 
 impl SamplesWriter {
-    pub(crate) fn new(context: Arc<InstanceContext>, writer: Arc<FlowWriterInstance>) -> Self {
-        Self { context, writer }
+    pub(crate) fn new(writer: Arc<FlowWriterInstance>) -> Self {
+        Self { writer }
     }
     #[deprecated(
         since = "0.2.0",
-        note = "The MXL FlowWriter lifetime is now automatically managed internally. You should not be calling destroy() on it anymore. This function is a no-op and will be removed in a future version."
+        note = "Flow writer lifetimes are now managed automatically. This method only consumes the handle and always returns `Ok(())`; the underlying writer is released when the last related handle is dropped."
     )]
     pub fn destroy(self) -> Result<()> {
         Ok(())
@@ -33,17 +30,13 @@ impl SamplesWriter {
         let mut buffer_slice: mxl_sys::MutableWrappedMultiBufferSlice =
             unsafe { std::mem::zeroed() };
         unsafe {
-            Error::from_status(self.context.api.flow_writer_open_samples(
+            Error::from_status(self.writer.context.api.flow_writer_open_samples(
                 self.writer.as_ptr(),
                 index,
                 count,
                 &mut buffer_slice,
             ))?;
         }
-        Ok(SamplesWriteAccess::new(
-            self.context.clone(),
-            self.writer.as_ref(),
-            buffer_slice,
-        ))
+        Ok(SamplesWriteAccess::new(self.writer.as_ref(), buffer_slice))
     }
 }

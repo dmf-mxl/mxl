@@ -9,12 +9,10 @@ use crate::{
         FlowConfigInfo, FlowInfo,
         reader::{get_config_info, get_flow_info, get_runtime_info},
     },
-    instance::InstanceContext,
     reader::FlowReaderInstance,
 };
 
 pub struct SamplesReader {
-    context: Arc<InstanceContext>,
     reader: Arc<FlowReaderInstance>,
 }
 
@@ -23,13 +21,13 @@ pub struct SamplesReader {
 unsafe impl Send for SamplesReader {}
 
 impl SamplesReader {
-    pub(crate) fn new(context: Arc<InstanceContext>, reader: Arc<FlowReaderInstance>) -> Self {
-        Self { context, reader }
+    pub(crate) fn new(reader: Arc<FlowReaderInstance>) -> Self {
+        Self { reader }
     }
 
     #[deprecated(
         since = "0.2.0",
-        note = "The MXL FlowWriter lifetime is now automatically managed internally. You should not be calling destroy() on it anymore. This function is a no-op and will be removed in a future version."
+        note = "Flow reader lifetimes are now managed automatically. This method only consumes the handle and always returns `Ok(())`; the underlying reader is released when the last related handle is dropped."
     )]
     pub fn destroy(self) -> Result<()> {
         Ok(())
@@ -38,15 +36,15 @@ impl SamplesReader {
     /// The whole FlowInfo is quite a chunk of data. Go for `get_config_info` or `get_runtime_info`
     /// if they contain what you need.
     pub fn get_info(&self) -> Result<FlowInfo> {
-        get_flow_info(&self.context, self.reader.as_ptr())
+        get_flow_info(&self.reader.context, self.reader.as_ptr())
     }
 
     pub fn get_config_info(&self) -> Result<FlowConfigInfo> {
-        get_config_info(&self.context, self.reader.as_ptr())
+        get_config_info(&self.reader.context, self.reader.as_ptr())
     }
 
     pub fn get_runtime_info(&self) -> Result<mxl_sys::FlowRuntimeInfo> {
-        get_runtime_info(&self.context, self.reader.as_ptr())
+        get_runtime_info(&self.reader.context, self.reader.as_ptr())
     }
 
     pub fn get_samples(
@@ -58,7 +56,7 @@ impl SamplesReader {
         let timeout_ns = timeout.as_nanos() as u64;
         let mut buffer_slice: mxl_sys::WrappedMultiBufferSlice = unsafe { std::mem::zeroed() };
         unsafe {
-            Error::from_status(self.context.api.flow_reader_get_samples(
+            Error::from_status(self.reader.context.api.flow_reader_get_samples(
                 self.reader.as_ptr(),
                 index,
                 count,
@@ -72,12 +70,17 @@ impl SamplesReader {
     pub fn get_samples_non_blocking(&self, index: u64, count: usize) -> Result<SamplesData<'_>> {
         let mut buffer_slice: mxl_sys::WrappedMultiBufferSlice = unsafe { std::mem::zeroed() };
         unsafe {
-            Error::from_status(self.context.api.flow_reader_get_samples_non_blocking(
-                self.reader.as_ptr(),
-                index,
-                count,
-                &mut buffer_slice,
-            ))?;
+            Error::from_status(
+                self.reader
+                    .context
+                    .api
+                    .flow_reader_get_samples_non_blocking(
+                        self.reader.as_ptr(),
+                        index,
+                        count,
+                        &mut buffer_slice,
+                    ),
+            )?;
         }
         Ok(SamplesData::new(buffer_slice))
     }

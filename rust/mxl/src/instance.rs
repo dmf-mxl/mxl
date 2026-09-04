@@ -66,7 +66,7 @@ impl MxlInstance {
 
     pub fn create_flow_reader(&self, flow_id: &str) -> Result<FlowReader> {
         let reader = FlowReaderInstance::new(self.context.clone(), flow_id)?;
-        Ok(FlowReader::new(self.context.clone(), reader))
+        Ok(FlowReader::new(reader))
     }
 
     pub fn create_flow_writer(
@@ -77,11 +77,7 @@ impl MxlInstance {
         let (writer, info, was_created) =
             FlowWriterInstance::new(self.context.clone(), flow_def, options)?;
 
-        Ok((
-            FlowWriter::new(self.context.clone(), writer, info.clone()),
-            info,
-            was_created,
-        ))
+        Ok((FlowWriter::new(writer, info.clone()), info, was_created))
     }
 
     pub fn get_flow_def(&self, flow_id: &str) -> Result<String> {

@@ -11,7 +11,7 @@ use crate::{
 
 /// A wrapper around the MXL FlowReader instance to manage its lifetime and ensure proper cleanup.
 pub(crate) struct FlowReaderInstance {
-    context: Arc<InstanceContext>,
+    pub(crate) context: Arc<InstanceContext>,
     inner: NonNull<mxl_sys::FlowReader_t>,
 }
 impl FlowReaderInstance {
@@ -56,7 +56,6 @@ impl Drop for FlowReaderInstance {
 unsafe impl Send for FlowReaderInstance {}
 
 pub struct FlowReader {
-    context: Arc<InstanceContext>,
     reader: Arc<FlowReaderInstance>,
 }
 
@@ -111,9 +110,8 @@ pub(crate) fn get_runtime_info(
 }
 
 impl FlowReader {
-    pub(crate) fn new(context: Arc<InstanceContext>, reader: FlowReaderInstance) -> Self {
+    pub(crate) fn new(reader: FlowReaderInstance) -> Self {
         Self {
-            context,
             // Arc provides shared ownership for conversions without making the native
             // reader safe for concurrent access.
             #[allow(clippy::arc_with_non_send_sync)]
@@ -122,7 +120,7 @@ impl FlowReader {
     }
 
     pub fn get_info(&self) -> Result<FlowInfo> {
-        get_flow_info(&self.context, self.reader.as_ptr())
+        get_flow_info(&self.reader.context, self.reader.as_ptr())
     }
 
     pub fn to_grain_reader(self) -> Result<GrainReader> {
@@ -133,7 +131,7 @@ impl FlowReader {
                 config_info.common().data_format()
             )));
         }
-        let result = GrainReader::new(self.context.clone(), self.reader);
+        let result = GrainReader::new(self.reader);
         Ok(result)
     }
 
@@ -145,7 +143,7 @@ impl FlowReader {
                 DataFormat::from(flow_type)
             )));
         }
-        let result = SamplesReader::new(self.context.clone(), self.reader);
+        let result = SamplesReader::new(self.reader);
         Ok(result)
     }
 }

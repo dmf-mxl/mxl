@@ -7,7 +7,7 @@ use crate::{Error, FlowConfigInfo, GrainWriter, Result, SamplesWriter, instance:
 
 /// A wrapper around the MXL FlowWriter instance to manage its lifetime and ensure proper cleanup.
 pub(crate) struct FlowWriterInstance {
-    context: Arc<InstanceContext>,
+    pub(crate) context: Arc<InstanceContext>,
     inner: NonNull<mxl_sys::FlowWriter_t>,
 }
 impl FlowWriterInstance {
@@ -69,7 +69,6 @@ unsafe impl Send for FlowWriterInstance {}
 /// Generic MXL Flow Writer, which can be further used to build either the "discrete" (grain-based
 /// data like video frames or meta) or "continuous" (audio samples) flow writers in MXL terminology.
 pub struct FlowWriter {
-    context: Arc<InstanceContext>,
     writer: Arc<FlowWriterInstance>,
     info: FlowConfigInfo,
 }
@@ -79,13 +78,8 @@ pub struct FlowWriter {
 unsafe impl Send for FlowWriter {}
 
 impl FlowWriter {
-    pub(crate) fn new(
-        context: Arc<InstanceContext>,
-        writer: FlowWriterInstance,
-        info: FlowConfigInfo,
-    ) -> Self {
+    pub(crate) fn new(writer: FlowWriterInstance, info: FlowConfigInfo) -> Self {
         Self {
-            context,
             // Arc keeps write accesses alive without making the native writer safe
             // for concurrent access.
             #[allow(clippy::arc_with_non_send_sync)]
@@ -101,7 +95,7 @@ impl FlowWriter {
                 self.info.common().data_format()
             )));
         }
-        let result = GrainWriter::new(self.context.clone(), self.writer);
+        let result = GrainWriter::new(self.writer);
         Ok(result)
     }
 
@@ -112,7 +106,7 @@ impl FlowWriter {
                 self.info.common().data_format()
             )));
         }
-        let result = SamplesWriter::new(self.context.clone(), self.writer);
+        let result = SamplesWriter::new(self.writer);
         Ok(result)
     }
 }

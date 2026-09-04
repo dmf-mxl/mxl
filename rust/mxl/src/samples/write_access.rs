@@ -1,11 +1,9 @@
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::sync::Arc;
-
 use tracing::error;
 
-use crate::{Error, instance::InstanceContext, writer::FlowWriterInstance};
+use crate::{Error, writer::FlowWriterInstance};
 
 /// RAII samples writing session
 ///
@@ -14,7 +12,6 @@ use crate::{Error, instance::InstanceContext, writer::FlowWriterInstance};
 /// The data may be split into 2 different buffer slices in case of a wrapped ring. Provides access
 /// either directly to the slices or to individual samples by index inside the batch.
 pub struct SamplesWriteAccess<'a> {
-    context: Arc<InstanceContext>,
     writer: &'a FlowWriterInstance,
     buffer_slice: mxl_sys::MutableWrappedMultiBufferSlice,
     /// Serves as a flag to know whether to cancel the samples on drop.
@@ -23,12 +20,10 @@ pub struct SamplesWriteAccess<'a> {
 
 impl<'a> SamplesWriteAccess<'a> {
     pub(crate) fn new(
-        context: Arc<InstanceContext>,
         writer: &'a FlowWriterInstance,
         buffer_slice: mxl_sys::MutableWrappedMultiBufferSlice,
     ) -> Self {
         Self {
-            context,
             writer,
             buffer_slice,
             committed_or_canceled: false,
@@ -40,7 +35,8 @@ impl<'a> SamplesWriteAccess<'a> {
 
         unsafe {
             Error::from_status(
-                self.context
+                self.writer
+                    .context
                     .api
                     .flow_writer_commit_samples(self.writer.as_ptr()),
             )
@@ -56,7 +52,8 @@ impl<'a> SamplesWriteAccess<'a> {
 
         unsafe {
             Error::from_status(
-                self.context
+                self.writer
+                    .context
                     .api
                     .flow_writer_cancel_samples(self.writer.as_ptr()),
             )
@@ -98,7 +95,8 @@ impl<'a> Drop for SamplesWriteAccess<'a> {
         if !self.committed_or_canceled
             && let Err(error) = unsafe {
                 Error::from_status(
-                    self.context
+                    self.writer
+                        .context
                         .api
                         .flow_writer_cancel_samples(self.writer.as_ptr()),
                 )
