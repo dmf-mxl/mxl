@@ -88,12 +88,12 @@ namespace mxl::lib
             return MXL_ERR_UNKNOWN;
         }
 
-        if (_lastCommittedIndex != MXL_UNDEFINED_INDEX && in_index <= _lastCommittedIndex)
+        if ((_lastCommittedIndex != MXL_UNDEFINED_INDEX) && (in_index <= _lastCommittedIndex))
         {
             return MXL_ERR_INVALID_ARG;
         }
 
-        if (_lastCommittedIndex != MXL_UNDEFINED_INDEX && in_index > (_lastCommittedIndex + 1U))
+        if ((_lastCommittedIndex != MXL_UNDEFINED_INDEX) && (in_index > (_lastCommittedIndex + 1U)))
         {
             // We have to invalidate any grain that would've been written to if the write was continuous. This is to ensure that the reader doesn't
             // read stale data from a previous write.
