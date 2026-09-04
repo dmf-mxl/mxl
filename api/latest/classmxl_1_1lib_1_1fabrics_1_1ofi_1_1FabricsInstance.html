@@ -165,6 +165,8 @@ Static Public Member Functions</h2></td></tr>
 Private Attributes</h2></td></tr>
 <tr class="memitem:ae4b848496b6450e16ae9581f671816b2" id="r_ae4b848496b6450e16ae9581f671816b2"><td class="memItemLeft" align="right" valign="top">std::list&lt; <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html">InitiatorWrapper</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#ae4b848496b6450e16ae9581f671816b2">_initiators</a></td></tr>
 <tr class="separator:ae4b848496b6450e16ae9581f671816b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab7683f73ab73c2cd43175c9dfdc0c0e9" id="r_ab7683f73ab73c2cd43175c9dfdc0c0e9"><td class="memItemLeft" align="right" valign="top">std::mutex&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#ab7683f73ab73c2cd43175c9dfdc0c0e9">_mu</a></td></tr>
+<tr class="separator:ab7683f73ab73c2cd43175c9dfdc0c0e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2019c57030e6b9f51c4ab80ca1e31b76" id="r_a2019c57030e6b9f51c4ab80ca1e31b76"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classmxl_1_1lib_1_1Instance.html">mxl::lib::Instance</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#a2019c57030e6b9f51c4ab80ca1e31b76">_mxlInstance</a></td></tr>
 <tr class="separator:a2019c57030e6b9f51c4ab80ca1e31b76"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a527c7d48aa2fce4e468585e32b89c15a" id="r_a527c7d48aa2fce4e468585e32b89c15a"><td class="memItemLeft" align="right" valign="top">std::list&lt; <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html">TargetWrapper</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#a527c7d48aa2fce4e468585e32b89c15a">_targets</a></td></tr>
@@ -209,15 +211,17 @@ Private Attributes</h2></td></tr>
 </dl>
 
 <p class="definition">Definition at line <a class="el" href="FabricInstance_8cpp_source.html#l00016">16</a> of file <a class="el" href="FabricInstance_8cpp_source.html">FabricInstance.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   17</span>        : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#a2019c57030e6b9f51c4ab80ca1e31b76">_mxlInstance</a>(instance)</div>
-<div class="line"><span class="lineno">   18</span>    {</div>
-<div class="line"><span class="lineno">   19</span>        <span class="comment">// Disable memory registration cache: Since we only perform memory registration during initialization rather than runtime, the cache provides</span></div>
-<div class="line"><span class="lineno">   20</span>        <span class="comment">// no benefit for our use case.</span></div>
-<div class="line"><span class="lineno">   21</span>        ::setenv(<span class="stringliteral">&quot;FI_MR_CACHE_MONITOR&quot;</span>, <span class="stringliteral">&quot;disabled&quot;</span>, 1);</div>
-<div class="line"><span class="lineno">   22</span> </div>
-<div class="line"><span class="lineno">   23</span>        <a class="code hl_function" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a1c5cd214f348eb10c82e7934203d7929">fiInitLogging</a>();</div>
-<div class="line"><span class="lineno">   24</span>    }</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance_html_a2019c57030e6b9f51c4ab80ca1e31b76"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#a2019c57030e6b9f51c4ab80ca1e31b76">mxl::lib::fabrics::ofi::FabricsInstance::_mxlInstance</a></div><div class="ttdeci">mxl::lib::Instance * _mxlInstance</div><div class="ttdef"><b>Definition</b> <a href="FabricInstance_8hpp_source.html#l00070">FabricInstance.hpp:70</a></div></div>
+<div class="fragment"><div class="line"><span class="lineno">   17</span>        : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#ab7683f73ab73c2cd43175c9dfdc0c0e9">_mu</a>{}</div>
+<div class="line"><span class="lineno">   18</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#a2019c57030e6b9f51c4ab80ca1e31b76">_mxlInstance</a>(instance)</div>
+<div class="line"><span class="lineno">   19</span>    {</div>
+<div class="line"><span class="lineno">   20</span>        <span class="comment">// Disable memory registration cache: Since we only perform memory registration during initialization rather than runtime, the cache provides</span></div>
+<div class="line"><span class="lineno">   21</span>        <span class="comment">// no benefit for our use case.</span></div>
+<div class="line"><span class="lineno">   22</span>        ::setenv(<span class="stringliteral">&quot;FI_MR_CACHE_MONITOR&quot;</span>, <span class="stringliteral">&quot;disabled&quot;</span>, 1);</div>
+<div class="line"><span class="lineno">   23</span> </div>
+<div class="line"><span class="lineno">   24</span>        <a class="code hl_function" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a1c5cd214f348eb10c82e7934203d7929">fiInitLogging</a>();</div>
+<div class="line"><span class="lineno">   25</span>    }</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance_html_a2019c57030e6b9f51c4ab80ca1e31b76"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#a2019c57030e6b9f51c4ab80ca1e31b76">mxl::lib::fabrics::ofi::FabricsInstance::_mxlInstance</a></div><div class="ttdeci">mxl::lib::Instance * _mxlInstance</div><div class="ttdef"><b>Definition</b> <a href="FabricInstance_8hpp_source.html#l00072">FabricInstance.hpp:72</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance_html_ab7683f73ab73c2cd43175c9dfdc0c0e9"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#ab7683f73ab73c2cd43175c9dfdc0c0e9">mxl::lib::fabrics::ofi::FabricsInstance::_mu</a></div><div class="ttdeci">std::mutex _mu</div><div class="ttdef"><b>Definition</b> <a href="FabricInstance_8hpp_source.html#l00070">FabricInstance.hpp:70</a></div></div>
 <div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_a1c5cd214f348eb10c82e7934203d7929"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a1c5cd214f348eb10c82e7934203d7929">mxl::lib::fabrics::ofi::fiInitLogging</a></div><div class="ttdeci">void fiInitLogging()</div><div class="ttdoc">Initalize logging for libfabric. After this call, all libfabric internal logs will be written to the ...</div><div class="ttdef"><b>Definition</b> <a href="FILogging_8cpp_source.html#l00160">FILogging.cpp:160</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -317,11 +321,12 @@ Private Attributes</h2></td></tr>
 
 <p>create an uninitialized <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Initiator.html" title="Abstract base class for Initiator implementations.">Initiator</a> associated with this instance. </p>
 
-<p class="definition">Definition at line <a class="el" href="FabricInstance_8cpp_source.html#l00041">41</a> of file <a class="el" href="FabricInstance_8cpp_source.html">FabricInstance.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   42</span>    {</div>
-<div class="line"><span class="lineno">   43</span>        <span class="keywordflow">return</span> &amp;<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#ae4b848496b6450e16ae9581f671816b2">_initiators</a>.emplace_back();</div>
-<div class="line"><span class="lineno">   44</span>    }</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance_html_ae4b848496b6450e16ae9581f671816b2"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#ae4b848496b6450e16ae9581f671816b2">mxl::lib::fabrics::ofi::FabricsInstance::_initiators</a></div><div class="ttdeci">std::list&lt; InitiatorWrapper &gt; _initiators</div><div class="ttdef"><b>Definition</b> <a href="FabricInstance_8hpp_source.html#l00072">FabricInstance.hpp:72</a></div></div>
+<p class="definition">Definition at line <a class="el" href="FabricInstance_8cpp_source.html#l00043">43</a> of file <a class="el" href="FabricInstance_8cpp_source.html">FabricInstance.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   44</span>    {</div>
+<div class="line"><span class="lineno">   45</span>        <span class="keyword">auto</span> lock = std::unique_lock{<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#ab7683f73ab73c2cd43175c9dfdc0c0e9">_mu</a>};</div>
+<div class="line"><span class="lineno">   46</span>        <span class="keywordflow">return</span> &amp;<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#ae4b848496b6450e16ae9581f671816b2">_initiators</a>.emplace_back();</div>
+<div class="line"><span class="lineno">   47</span>    }</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance_html_ae4b848496b6450e16ae9581f671816b2"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#ae4b848496b6450e16ae9581f671816b2">mxl::lib::fabrics::ofi::FabricsInstance::_initiators</a></div><div class="ttdeci">std::list&lt; InitiatorWrapper &gt; _initiators</div><div class="ttdef"><b>Definition</b> <a href="FabricInstance_8hpp_source.html#l00074">FabricInstance.hpp:74</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -342,11 +347,12 @@ Private Attributes</h2></td></tr>
 
 <p>Create an uninitialized <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html" title="Abstract base class for Target implementations.">Target</a> associated with this instance. </p>
 
-<p class="definition">Definition at line <a class="el" href="FabricInstance_8cpp_source.html#l00036">36</a> of file <a class="el" href="FabricInstance_8cpp_source.html">FabricInstance.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   37</span>    {</div>
-<div class="line"><span class="lineno">   38</span>        <span class="keywordflow">return</span> &amp;<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#a527c7d48aa2fce4e468585e32b89c15a">_targets</a>.emplace_back();</div>
-<div class="line"><span class="lineno">   39</span>    }</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance_html_a527c7d48aa2fce4e468585e32b89c15a"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#a527c7d48aa2fce4e468585e32b89c15a">mxl::lib::fabrics::ofi::FabricsInstance::_targets</a></div><div class="ttdeci">std::list&lt; TargetWrapper &gt; _targets</div><div class="ttdef"><b>Definition</b> <a href="FabricInstance_8hpp_source.html#l00071">FabricInstance.hpp:71</a></div></div>
+<p class="definition">Definition at line <a class="el" href="FabricInstance_8cpp_source.html#l00037">37</a> of file <a class="el" href="FabricInstance_8cpp_source.html">FabricInstance.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   38</span>    {</div>
+<div class="line"><span class="lineno">   39</span>        <span class="keyword">auto</span> lock = std::unique_lock{<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#ab7683f73ab73c2cd43175c9dfdc0c0e9">_mu</a>};</div>
+<div class="line"><span class="lineno">   40</span>        <span class="keywordflow">return</span> &amp;<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#a527c7d48aa2fce4e468585e32b89c15a">_targets</a>.emplace_back();</div>
+<div class="line"><span class="lineno">   41</span>    }</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance_html_a527c7d48aa2fce4e468585e32b89c15a"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#a527c7d48aa2fce4e468585e32b89c15a">mxl::lib::fabrics::ofi::FabricsInstance::_targets</a></div><div class="ttdeci">std::list&lt; TargetWrapper &gt; _targets</div><div class="ttdef"><b>Definition</b> <a href="FabricInstance_8hpp_source.html#l00073">FabricInstance.hpp:73</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -368,13 +374,14 @@ Private Attributes</h2></td></tr>
 
 <p>Destroy an <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Initiator.html" title="Abstract base class for Initiator implementations.">Initiator</a> associated with this instance. </p>
 
-<p class="definition">Definition at line <a class="el" href="FabricInstance_8cpp_source.html#l00054">54</a> of file <a class="el" href="FabricInstance_8cpp_source.html">FabricInstance.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   55</span>    {</div>
-<div class="line"><span class="lineno">   56</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#ae4b848496b6450e16ae9581f671816b2">_initiators</a>.remove_if([&amp;](InitiatorWrapper <span class="keyword">const</span>&amp; lhs) { return &amp;lhs == initiator; }))</div>
-<div class="line"><span class="lineno">   57</span>        {</div>
-<div class="line"><span class="lineno">   58</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a8f7cd8d4a320b184c955130ad1eb1a68">Exception::make</a>(<a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>, <span class="stringliteral">&quot;Initiator to remove is not known to instance&quot;</span>);</div>
-<div class="line"><span class="lineno">   59</span>        }</div>
-<div class="line"><span class="lineno">   60</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FabricInstance_8cpp_source.html#l00058">58</a> of file <a class="el" href="FabricInstance_8cpp_source.html">FabricInstance.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   59</span>    {</div>
+<div class="line"><span class="lineno">   60</span>        <span class="keyword">auto</span> lock = std::unique_lock{<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#ab7683f73ab73c2cd43175c9dfdc0c0e9">_mu</a>};</div>
+<div class="line"><span class="lineno">   61</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#ae4b848496b6450e16ae9581f671816b2">_initiators</a>.remove_if([&amp;](InitiatorWrapper <span class="keyword">const</span>&amp; lhs) { return &amp;lhs == initiator; }))</div>
+<div class="line"><span class="lineno">   62</span>        {</div>
+<div class="line"><span class="lineno">   63</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a8f7cd8d4a320b184c955130ad1eb1a68">Exception::make</a>(<a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>, <span class="stringliteral">&quot;Initiator to remove is not known to instance&quot;</span>);</div>
+<div class="line"><span class="lineno">   64</span>        }</div>
+<div class="line"><span class="lineno">   65</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception_html_a8f7cd8d4a320b184c955130ad1eb1a68"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a8f7cd8d4a320b184c955130ad1eb1a68">mxl::lib::fabrics::ofi::Exception::make</a></div><div class="ttdeci">static Exception make(mxlStatus status, fmt::format_string&lt; T... &gt; fmt, T &amp;&amp;... args)</div><div class="ttdoc">Make any type of exception.</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00035">Exception.hpp:35</a></div></div>
 <div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a></div><div class="ttdeci">@ MXL_ERR_INVALID_ARG</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00035">mxl.h:35</a></div></div>
 </div><!-- fragment -->
@@ -398,13 +405,14 @@ Private Attributes</h2></td></tr>
 
 <p>Destroy a <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html" title="Abstract base class for Target implementations.">Target</a> associated with this instance. </p>
 
-<p class="definition">Definition at line <a class="el" href="FabricInstance_8cpp_source.html#l00046">46</a> of file <a class="el" href="FabricInstance_8cpp_source.html">FabricInstance.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   47</span>    {</div>
-<div class="line"><span class="lineno">   48</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#a527c7d48aa2fce4e468585e32b89c15a">_targets</a>.remove_if([&amp;](TargetWrapper <span class="keyword">const</span>&amp; lhs) { return &amp;lhs == wrapper; }))</div>
-<div class="line"><span class="lineno">   49</span>        {</div>
-<div class="line"><span class="lineno">   50</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a8f7cd8d4a320b184c955130ad1eb1a68">Exception::make</a>(<a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>, <span class="stringliteral">&quot;Target to remove is not known to instance&quot;</span>);</div>
-<div class="line"><span class="lineno">   51</span>        }</div>
-<div class="line"><span class="lineno">   52</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FabricInstance_8cpp_source.html#l00049">49</a> of file <a class="el" href="FabricInstance_8cpp_source.html">FabricInstance.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   50</span>    {</div>
+<div class="line"><span class="lineno">   51</span>        <span class="keyword">auto</span> lock = std::unique_lock{<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#ab7683f73ab73c2cd43175c9dfdc0c0e9">_mu</a>};</div>
+<div class="line"><span class="lineno">   52</span>        <span class="keywordflow">if</span> (!<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#a527c7d48aa2fce4e468585e32b89c15a">_targets</a>.remove_if([&amp;](TargetWrapper <span class="keyword">const</span>&amp; lhs) { return &amp;lhs == wrapper; }))</div>
+<div class="line"><span class="lineno">   53</span>        {</div>
+<div class="line"><span class="lineno">   54</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a8f7cd8d4a320b184c955130ad1eb1a68">Exception::make</a>(<a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>, <span class="stringliteral">&quot;Target to remove is not known to instance&quot;</span>);</div>
+<div class="line"><span class="lineno">   55</span>        }</div>
+<div class="line"><span class="lineno">   56</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -441,10 +449,10 @@ Private Attributes</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html" title="The underlying implementation of an mxlFabricsInstance API object.">FabricsInstance</a> underlying the given mxlFabricsInstance. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="FabricInstance_8cpp_source.html#l00031">31</a> of file <a class="el" href="FabricInstance_8cpp_source.html">FabricInstance.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   32</span>    {</div>
-<div class="line"><span class="lineno">   33</span>        <span class="keywordflow">return</span> <span class="keyword">reinterpret_cast&lt;</span><a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#abdd56e0c56d9293b233630324312c0a2">FabricsInstance</a>*<span class="keyword">&gt;</span>(instance);</div>
-<div class="line"><span class="lineno">   34</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FabricInstance_8cpp_source.html#l00032">32</a> of file <a class="el" href="FabricInstance_8cpp_source.html">FabricInstance.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   33</span>    {</div>
+<div class="line"><span class="lineno">   34</span>        <span class="keywordflow">return</span> <span class="keyword">reinterpret_cast&lt;</span><a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#abdd56e0c56d9293b233630324312c0a2">FabricsInstance</a>*<span class="keyword">&gt;</span>(instance);</div>
+<div class="line"><span class="lineno">   35</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance_html_abdd56e0c56d9293b233630324312c0a2"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#abdd56e0c56d9293b233630324312c0a2">mxl::lib::fabrics::ofi::FabricsInstance::FabricsInstance</a></div><div class="ttdeci">FabricsInstance(mxl::lib::Instance *instance)</div><div class="ttdoc">Create a FabricsInstance associated with the given MXL Instance.</div><div class="ttdef"><b>Definition</b> <a href="FabricInstance_8cpp_source.html#l00016">FabricInstance.cpp:16</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -527,10 +535,10 @@ Private Attributes</h2></td></tr>
 <p>Convert this <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html" title="The underlying implementation of an mxlFabricsInstance API object.">FabricsInstance</a> to its API representation. </p>
 <dl class="section return"><dt>Returns</dt><dd>The mxlFabricsInstance representing this <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html" title="The underlying implementation of an mxlFabricsInstance API object.">FabricsInstance</a>. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="FabricInstance_8cpp_source.html#l00026">26</a> of file <a class="el" href="FabricInstance_8cpp_source.html">FabricInstance.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   27</span>    {</div>
-<div class="line"><span class="lineno">   28</span>        <span class="keywordflow">return</span> <span class="keyword">reinterpret_cast&lt;</span><a class="code hl_typedef" href="fabrics_8h.html#ae12b70019fe0095bfdd9b942d316d475">mxlFabricsInstance</a><span class="keyword">&gt;</span>(<span class="keyword">this</span>);</div>
-<div class="line"><span class="lineno">   29</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FabricInstance_8cpp_source.html#l00027">27</a> of file <a class="el" href="FabricInstance_8cpp_source.html">FabricInstance.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   28</span>    {</div>
+<div class="line"><span class="lineno">   29</span>        <span class="keywordflow">return</span> <span class="keyword">reinterpret_cast&lt;</span><a class="code hl_typedef" href="fabrics_8h.html#ae12b70019fe0095bfdd9b942d316d475">mxlFabricsInstance</a><span class="keyword">&gt;</span>(<span class="keyword">this</span>);</div>
+<div class="line"><span class="lineno">   30</span>    }</div>
 <div class="ttc" id="afabrics_8h_html_ae12b70019fe0095bfdd9b942d316d475"><div class="ttname"><a href="fabrics_8h.html#ae12b70019fe0095bfdd9b942d316d475">mxlFabricsInstance</a></div><div class="ttdeci">struct mxlFabricsInstance_t * mxlFabricsInstance</div><div class="ttdef"><b>Definition</b> <a href="fabrics_8h_source.html#l00029">fabrics.h:29</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -556,7 +564,31 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="FabricInstance_8hpp_source.html#l00072">72</a> of file <a class="el" href="FabricInstance_8hpp_source.html">FabricInstance.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="FabricInstance_8hpp_source.html#l00074">74</a> of file <a class="el" href="FabricInstance_8hpp_source.html">FabricInstance.hpp</a>.</p>
+
+</div>
+</div>
+<a id="ab7683f73ab73c2cd43175c9dfdc0c0e9" name="ab7683f73ab73c2cd43175c9dfdc0c0e9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab7683f73ab73c2cd43175c9dfdc0c0e9">&#9670;&#160;</a></span>_mu</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::mutex mxl::lib::fabrics::ofi::FabricsInstance::_mu</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="FabricInstance_8hpp_source.html#l00070">70</a> of file <a class="el" href="FabricInstance_8hpp_source.html">FabricInstance.hpp</a>.</p>
 
 </div>
 </div>
@@ -580,7 +612,7 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="FabricInstance_8hpp_source.html#l00070">70</a> of file <a class="el" href="FabricInstance_8hpp_source.html">FabricInstance.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="FabricInstance_8hpp_source.html#l00072">72</a> of file <a class="el" href="FabricInstance_8hpp_source.html">FabricInstance.hpp</a>.</p>
 
 </div>
 </div>
@@ -604,7 +636,7 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="FabricInstance_8hpp_source.html#l00071">71</a> of file <a class="el" href="FabricInstance_8hpp_source.html">FabricInstance.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="FabricInstance_8hpp_source.html#l00073">73</a> of file <a class="el" href="FabricInstance_8hpp_source.html">FabricInstance.hpp</a>.</p>
 
 </div>
 </div>

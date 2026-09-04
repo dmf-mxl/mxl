@@ -13,6 +13,7 @@ var classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance =
     [ "operator=", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#a8f8c3fa68ed85fed39d2a398b7c2fb3a", null ],
     [ "toAPI", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#aeb897e80a3377fabb50c4471b621b29b", null ],
     [ "_initiators", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#ae4b848496b6450e16ae9581f671816b2", null ],
+    [ "_mu", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#ab7683f73ab73c2cd43175c9dfdc0c0e9", null ],
     [ "_mxlInstance", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#a2019c57030e6b9f51c4ab80ca1e31b76", null ],
     [ "_targets", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricsInstance.html#a527c7d48aa2fce4e468585e32b89c15a", null ]
 ];
