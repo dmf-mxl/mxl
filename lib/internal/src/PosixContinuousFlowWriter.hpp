@@ -81,6 +81,8 @@ namespace mxl::lib
         std::size_t _bufferLength;
         /** The currently opened sample range head index. MXL_UNDEFINED_INDEX if no range is currently opened. */
         std::uint64_t _currentIndex;
+        /** The sample count for the currently opened range. 0 if no range is currently opened. */
+        std::size_t _currentCount;
         /** The last committed sample range head index. MXL_UNDEFINED_INDEX if no range has been committed yet. */
         std::uint64_t _lastCommittedIndex;
 
