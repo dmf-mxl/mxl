@@ -1,17 +1,14 @@
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::sync::Arc;
-
 use tracing::error;
 
-use crate::{Error, Result, instance::InstanceContext, writer::FlowWriterInstance};
+use crate::{Error, Result, writer::FlowWriterInstance};
 
 /// RAII grain writing session
 ///
 /// Automatically cancels the grain if not explicitly committed.
 pub struct GrainWriteAccess<'a> {
-    context: Arc<InstanceContext>,
     writer: &'a FlowWriterInstance,
     grain_info: mxl_sys::GrainInfo,
     payload_ptr: *mut u8,
@@ -21,13 +18,11 @@ pub struct GrainWriteAccess<'a> {
 
 impl<'a> GrainWriteAccess<'a> {
     pub(crate) fn new(
-        context: Arc<InstanceContext>,
         writer: &'a FlowWriterInstance,
         grain_info: mxl_sys::GrainInfo,
         payload_ptr: *mut u8,
     ) -> Self {
         Self {
-            context,
             writer,
             grain_info,
             payload_ptr,
@@ -62,7 +57,8 @@ impl<'a> GrainWriteAccess<'a> {
 
         unsafe {
             Error::from_status(
-                self.context
+                self.writer
+                    .context
                     .api
                     .flow_writer_commit_grain(self.writer.as_ptr(), &self.grain_info),
             )
@@ -78,7 +74,8 @@ impl<'a> GrainWriteAccess<'a> {
 
         unsafe {
             Error::from_status(
-                self.context
+                self.writer
+                    .context
                     .api
                     .flow_writer_cancel_grain(self.writer.as_ptr()),
             )
@@ -91,7 +88,8 @@ impl<'a> Drop for GrainWriteAccess<'a> {
         if !self.committed_or_canceled
             && let Err(error) = unsafe {
                 Error::from_status(
-                    self.context
+                    self.writer
+                        .context
                         .api
                         .flow_writer_cancel_grain(self.writer.as_ptr()),
                 )

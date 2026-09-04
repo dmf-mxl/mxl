@@ -5,11 +5,10 @@ use std::sync::Arc;
 
 use super::write_access::GrainWriteAccess;
 
-use crate::{Error, Result, instance::InstanceContext, writer::FlowWriterInstance};
+use crate::{Error, Result, writer::FlowWriterInstance};
 
 /// MXL Flow Writer for discrete flows (grain-based data like video frames)
 pub struct GrainWriter {
-    context: Arc<InstanceContext>,
     writer: Arc<FlowWriterInstance>,
 }
 
@@ -18,13 +17,13 @@ pub struct GrainWriter {
 unsafe impl Send for GrainWriter {}
 
 impl GrainWriter {
-    pub(crate) fn new(context: Arc<InstanceContext>, writer: Arc<FlowWriterInstance>) -> Self {
-        Self { context, writer }
+    pub(crate) fn new(writer: Arc<FlowWriterInstance>) -> Self {
+        Self { writer }
     }
 
     #[deprecated(
         since = "0.2.0",
-        note = "The MXL FlowWriter lifetime is now automatically managed internally. You should not be calling destroy() on it anymore. This function is now a no-op and will be removed in a future version."
+        note = "Flow writer lifetimes are now managed automatically. This method only consumes the handle and always returns `Ok(())`; the underlying writer is released when the last related handle is dropped."
     )]
     pub fn destroy(self) -> Result<()> {
         Ok(())
@@ -38,7 +37,7 @@ impl GrainWriter {
         let mut grain_info: mxl_sys::GrainInfo = unsafe { std::mem::zeroed() };
         let mut payload_ptr: *mut u8 = std::ptr::null_mut();
         unsafe {
-            Error::from_status(self.context.api.flow_writer_open_grain(
+            Error::from_status(self.writer.context.api.flow_writer_open_grain(
                 self.writer.as_ptr(),
                 index,
                 &mut grain_info,
@@ -53,7 +52,6 @@ impl GrainWriter {
         }
 
         Ok(GrainWriteAccess::new(
-            self.context.clone(),
             self.writer.as_ref(),
             grain_info,
             payload_ptr,
