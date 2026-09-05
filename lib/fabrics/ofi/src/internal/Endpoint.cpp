@@ -354,8 +354,15 @@ namespace mxl::lib::fabrics::ofi
     }
 
     std::size_t Endpoint::write(Completion::Token token, LocalRegionGroup const& localGroup, RemoteRegion const& remote, ::fi_addr_t destAddr,
-        std::optional<std::uint32_t> immData) const
+        std::optional<std::uint32_t> immData, std::size_t* posted) const
     {
+        // A group larger than the iov limit goes out as several messages
+        // and the call can fail part way through. A caller tracking
+        // outstanding work has to count what reached the provider.
+        if (posted != nullptr)
+        {
+            *posted = 0;
+        }
         auto remoteRmaIov = remote.toRmaIov();
         auto remoteOffset = std::size_t{0};
 
@@ -388,6 +395,11 @@ namespace mxl::lib::fabrics::ofi
                 &remoteRmaIov,
                 destAddr,
                 immDataForWrite);
+
+            if (posted != nullptr)
+            {
+                ++*posted;
+            }
 
             remoteOffset += localGroupSpan.byteSize();
         }

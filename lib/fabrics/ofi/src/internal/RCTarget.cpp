@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "RCTarget.hpp"
+
+#include <algorithm>
 #include <mxl-internal/Logging.hpp>
 #include <rdma/fabric.h>
 #include "Exception.hpp"
@@ -12,6 +14,7 @@
 #include "Format.hpp" // IWYU pragma: keep; Includes template specializations of fmt::formatter for our types
 #include "PassiveEndpoint.hpp"
 #include "Protocol.hpp"
+#include "ProtocolIngressRMA.hpp"
 #include "Provider.hpp"
 #include "Region.hpp"
 #include "VariantUtils.hpp"
@@ -96,7 +99,11 @@ namespace mxl::lib::fabrics::ofi
                             MXL_INFO("Accept connection from: {}", remoteAddr.toString());
 
                             auto cqAttr = CompletionQueue::Attributes::defaults();
-                            cqAttr.size = _setupOptions.cqDepth.value_or(CompletionQueue::Attributes::DEFAULT_SIZE);
+                            // The receive window can put that many completions in the queue
+                        // before anything reads it, so the queue must be able to
+                        // hold them however its depth was chosen.
+                        cqAttr.size = std::max(_setupOptions.cqDepth.value_or(CompletionQueue::Attributes::DEFAULT_SIZE),
+                            2 * DefaultReceiveDepth);
                             auto cq = CompletionQueue::open(_domain, cqAttr);
                             auto endpoint = Endpoint::create(_domain, state.pep.id(), event->connReq().info());
                             endpoint.bind(cq, FI_RECV);

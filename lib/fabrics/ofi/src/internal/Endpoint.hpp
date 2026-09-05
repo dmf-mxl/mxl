@@ -280,7 +280,8 @@ namespace mxl::lib::fabrics::ofi
          */
         [[nodiscard]]
         std::size_t write(Completion::Token token, LocalRegionGroup const& localGroup, RemoteRegion const& remote,
-            ::fi_addr_t destAddr = FI_ADDR_UNSPEC, std::optional<std::uint32_t> immData = std::nullopt) const;
+            ::fi_addr_t destAddr = FI_ADDR_UNSPEC, std::optional<std::uint32_t> immData = std::nullopt,
+            std::size_t* posted = nullptr) const;
 
         /** \brief Push a recv work request to the endpoint work queue.
          *

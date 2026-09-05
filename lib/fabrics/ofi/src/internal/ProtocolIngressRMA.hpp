@@ -4,12 +4,63 @@
 
 #pragma once
 
+#include <vector>
+
 #include "AudioBounceBuffer.hpp"
 #include "DataLayout.hpp"
 #include "Protocol.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
+    /** \brief A fixed pool of landing buffers for immediate data, with a
+     * round-robin cursor over them.
+     *
+     * A provider that reports FI_RX_CQ_DATA delivers the immediate data of
+     * an RDMA write with immediate only into a posted receive, and the
+     * write consumes that receive. Keeping a single one posted therefore
+     * lets an initiator have exactly one write in flight: the second write
+     * of any burst finds the receive queue empty and the transport falls
+     * back on RNR retry. No credit is exchanged that would tell the
+     * initiator to stop, so it keeps retrying -- on providers that leave
+     * the RNR retry count at its infinite sentinel, forever.
+     *
+     * Keeping a window posted is what lets a writer committing several
+     * batches between two transfer periods be mirrored at all. The buffers
+     * themselves are never read: the immediate data is taken from the
+     * completion, and they exist only because the provider requires
+     * somewhere to put it.
+     *
+     * The storage is sized once and never resized, because a posted
+     * receive holds the address of its buffer.
+     */
+    class ImmediateDataPool
+    {
+    public:
+        explicit ImmediateDataPool(std::size_t depth);
+
+        /** \brief The next buffer in the pool, as a region to post.
+         */
+        [[nodiscard]]
+        LocalRegion next() noexcept;
+
+        /** \brief How many receives are meant to be kept posted against it.
+         */
+        [[nodiscard]]
+        std::size_t depth() const noexcept;
+
+    private:
+        std::vector<Target::ImmediateDataLocation> _buffers;
+        std::size_t _cursor{0};
+    };
+
+    /** \brief Receives kept posted for immediate data.
+     *
+     * Large enough that a producer committing several batches between two
+     * transfer periods is absorbed without an RNR round trip, and far below
+     * the receive-queue size every provider we build against reports.
+     */
+    constexpr std::size_t DefaultReceiveDepth = 32;
+
     /** \brief Ingress protocol for RMA writer endpoint.
      *
      * Handles processing of completions when paired with an endpoint that does remote write to our buffers without bounce buffering.
@@ -54,12 +105,13 @@ namespace mxl::lib::fabrics::ofi
         virtual void reset() override;
 
     private:
-        LocalRegion immDataRegion();
+        void postReceives(Endpoint const& endpoint, std::size_t count);
+        bool tryPostOne(Endpoint const& endpoint);
 
     private:
         std::vector<Region> _regions;
         bool _isMemoryRegistered{false};
-        std::optional<Target::ImmediateDataLocation> _immDataBuffer{};
+        std::optional<ImmediateDataPool> _immData{};
     };
 
     /** \brief Ingress protocol for RMA writer endpoint for audio samples.
@@ -106,7 +158,8 @@ namespace mxl::lib::fabrics::ofi
         virtual void reset() override;
 
     private:
-        LocalRegion immDataRegion();
+        void postReceives(Endpoint const& endpoint, std::size_t count);
+        bool tryPostOne(Endpoint const& endpoint);
 
         /** \brief Helper function to create an AudioBounceBuffer based on the given audio data layout and maximum synchronous batch size.
          * Entries are as big as the maximum number of samples that can be transferred in a single batch, which is determined by maxSyncBatchSize.
@@ -118,6 +171,6 @@ namespace mxl::lib::fabrics::ofi
         AudioBounceBuffer _bounceBuffer;
         Region _region;
         bool _isMemoryRegistered = false;
-        std::optional<Target::ImmediateDataLocation> _immDataBuffer{};
+        std::optional<ImmediateDataPool> _immData{};
     };
 }

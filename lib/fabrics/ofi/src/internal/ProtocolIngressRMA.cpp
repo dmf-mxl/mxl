@@ -14,6 +14,22 @@ namespace mxl::lib::fabrics::ofi
 {
     //
     // RMAGrainIngressProtocol implementations below
+    ImmediateDataPool::ImmediateDataPool(std::size_t depth)
+        : _buffers(depth == 0 ? 1 : depth)
+    {}
+
+    LocalRegion ImmediateDataPool::next() noexcept
+    {
+        auto const& buf = _buffers[_cursor];
+        _cursor = (_cursor + 1) % _buffers.size();
+        return buf.toLocalRegion();
+    }
+
+    std::size_t ImmediateDataPool::depth() const noexcept
+    {
+        return _buffers.size();
+    }
+
     RMAGrainIngressProtocol::RMAGrainIngressProtocol(std::vector<Region> regions)
         : _regions{std::move(regions)}
     {}
@@ -40,7 +56,7 @@ namespace mxl::lib::fabrics::ofi
     {
         if (endpoint.domain()->usingRecvBufForCqData())
         {
-            endpoint.recv(immDataRegion());
+            postReceives(endpoint, DefaultReceiveDepth);
         }
     }
 
@@ -52,9 +68,11 @@ namespace mxl::lib::fabrics::ofi
             return {};
         }
 
-        if (_immDataBuffer)
+        // One receive back for the one this completion consumed, so the
+        // window stays open for as long as the connection lives.
+        if (_immData)
         {
-            endpoint.recv(_immDataBuffer->toLocalRegion());
+            static_cast<void>(tryPostOne(endpoint));
         }
 
         auto immData = completionData->data();
@@ -88,14 +106,50 @@ namespace mxl::lib::fabrics::ofi
     void RMAGrainIngressProtocol::reset()
     {}
 
-    LocalRegion RMAGrainIngressProtocol::immDataRegion()
+    void RMAGrainIngressProtocol::postReceives(Endpoint const& endpoint, std::size_t count)
     {
-        if (!_immDataBuffer)
+        if (!_immData)
         {
-            _immDataBuffer.emplace();
+            _immData.emplace(count);
         }
 
-        return _immDataBuffer->toLocalRegion();
+        // Post as many as the queue will take, not as many as were asked
+        // for. How deep it is was negotiated with the peer and can be
+        // shallower than the window; a refusal is that limit being
+        // reported, not a failure.
+        //
+        // Letting it throw would be worse than shallow. The caller runs
+        // inside a visit over a state that has already been moved from,
+        // so an exception leaves the state machine holding a moved-from
+        // endpoint, and the next read dereferences a null one.
+        auto posted = std::size_t{0};
+        for (auto i = std::size_t{0}; i < _immData->depth(); ++i)
+        {
+            if (!tryPostOne(endpoint))
+            {
+                break;
+            }
+            ++posted;
+        }
+
+        if (posted < _immData->depth())
+        {
+            MXL_INFO("Receive queue accepted {} of {} receives for immediate data", posted, _immData->depth());
+        }
+    }
+
+    bool RMAGrainIngressProtocol::tryPostOne(Endpoint const& endpoint)
+    {
+        try
+        {
+            endpoint.recv(_immData->next());
+            return true;
+        }
+        catch (FabricException const& e)
+        {
+            MXL_DEBUG("Could not post a receive for immediate data: {}", e.what());
+            return false;
+        }
     }
 
     //
@@ -130,7 +184,7 @@ namespace mxl::lib::fabrics::ofi
     {
         if (endpoint.domain()->usingRecvBufForCqData())
         {
-            endpoint.recv(immDataRegion());
+            postReceives(endpoint, DefaultReceiveDepth);
         }
     }
 
@@ -142,10 +196,14 @@ namespace mxl::lib::fabrics::ofi
             return {};
         }
 
-        if (_immDataBuffer)
+
+        // One receive back for the one this completion consumed, so the
+        // window stays open for as long as the connection lives.
+        if (_immData)
         {
-            endpoint.recv(immDataRegion());
+            static_cast<void>(tryPostOne(endpoint));
         }
+
 
         auto const immData = completionData->data();
         if (!immData)
@@ -170,14 +228,50 @@ namespace mxl::lib::fabrics::ofi
     void RMASampleIngressProtocol::reset()
     {}
 
-    LocalRegion RMASampleIngressProtocol::immDataRegion()
+    void RMASampleIngressProtocol::postReceives(Endpoint const& endpoint, std::size_t count)
     {
-        if (!_immDataBuffer)
+        if (!_immData)
         {
-            _immDataBuffer.emplace();
+            _immData.emplace(count);
         }
 
-        return _immDataBuffer->toLocalRegion();
+        // Post as many as the queue will take, not as many as were asked
+        // for. How deep it is was negotiated with the peer and can be
+        // shallower than the window; a refusal is that limit being
+        // reported, not a failure.
+        //
+        // Letting it throw would be worse than shallow. The caller runs
+        // inside a visit over a state that has already been moved from,
+        // so an exception leaves the state machine holding a moved-from
+        // endpoint, and the next read dereferences a null one.
+        auto posted = std::size_t{0};
+        for (auto i = std::size_t{0}; i < _immData->depth(); ++i)
+        {
+            if (!tryPostOne(endpoint))
+            {
+                break;
+            }
+            ++posted;
+        }
+
+        if (posted < _immData->depth())
+        {
+            MXL_INFO("Receive queue accepted {} of {} receives for immediate data", posted, _immData->depth());
+        }
+    }
+
+    bool RMASampleIngressProtocol::tryPostOne(Endpoint const& endpoint)
+    {
+        try
+        {
+            endpoint.recv(_immData->next());
+            return true;
+        }
+        catch (FabricException const& e)
+        {
+            MXL_DEBUG("Could not post a receive for immediate data: {}", e.what());
+            return false;
+        }
     }
 
     AudioBounceBuffer RMASampleIngressProtocol::makeAudioBounceBuffer(DataLayout::Continuous const& layout, std::uint32_t maxSyncBatchSize)

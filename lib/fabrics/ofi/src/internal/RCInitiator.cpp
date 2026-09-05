@@ -4,6 +4,7 @@
 
 #include "RCInitiator.hpp"
 #include <cassert>
+#include <exception>
 #include <chrono>
 #include <cstdint>
 #include <algorithm>
@@ -281,7 +282,17 @@ namespace mxl::lib::fabrics::ofi
         auto domain = Domain::open(fabric);
 
         auto eq = EventQueue::open(fabric);
+        // Size the completion queue to the send queue it serves.
+        //
+        // Every operation is signalled, so a full send queue means that
+        // many completions, and libfabric bounds outstanding sends by the
+        // send-queue depth rather than by the completion queue -- the verbs
+        // provider says as much in a comment where it creates the hardware
+        // queue. Leaving the completion queue at the small default let an
+        // initiator post far more than it could hold. An explicit cqDepth
+        // still wins, so a caller can size it deliberately.
         auto cqAttr = CompletionQueue::Attributes::defaults();
+        cqAttr.size = std::max(cqAttr.size, info.txSize());
         if (options.cqDepth)
         {
             cqAttr.size = *options.cqDepth;
@@ -338,9 +349,33 @@ namespace mxl::lib::fabrics::ofi
     {
         // Post a transfer work item to all targets. If the target is not in a connected state
         // this is a no-op.
+        // One target refusing the work is not a reason to withhold it from
+        // the others. A full send queue reports itself by throwing, and
+        // letting that escape the loop meant the targets after it in the
+        // map were silently skipped -- so a single backpressured peer
+        // stopped delivery to every other peer of the same initiator.
+        //
+        // The first failure is still reported to the caller once every
+        // target has been offered the transfer, so backpressure is not
+        // swallowed either.
+        auto failure = std::exception_ptr{};
         for (auto& [_, target] : _targets)
         {
-            target.transferGrain(grainIndex, grainIndex, MXL_GRAIN_PAYLOAD_OFFSET, SliceRange::make(startSlice, endSlice));
+            try
+            {
+                target.transferGrain(grainIndex, grainIndex, MXL_GRAIN_PAYLOAD_OFFSET, SliceRange::make(startSlice, endSlice));
+            }
+            catch (...)
+            {
+                if (!failure)
+                {
+                    failure = std::current_exception();
+                }
+            }
+        }
+        if (failure)
+        {
+            std::rethrow_exception(failure);
         }
     }
 
@@ -358,9 +393,33 @@ namespace mxl::lib::fabrics::ofi
 
     void RCInitiator::transferSamples(std::uint64_t headIndex, std::size_t count)
     {
+        // One target refusing the work is not a reason to withhold it from
+        // the others. A full send queue reports itself by throwing, and
+        // letting that escape the loop meant the targets after it in the
+        // map were silently skipped -- so a single backpressured peer
+        // stopped delivery to every other peer of the same initiator.
+        //
+        // The first failure is still reported to the caller once every
+        // target has been offered the transfer, so backpressure is not
+        // swallowed either.
+        auto failure = std::exception_ptr{};
         for (auto& [_, target] : _targets)
         {
-            target.transferSamples(headIndex, count);
+            try
+            {
+                target.transferSamples(headIndex, count);
+            }
+            catch (...)
+            {
+                if (!failure)
+                {
+                    failure = std::current_exception();
+                }
+            }
+        }
+        if (failure)
+        {
+            std::rethrow_exception(failure);
         }
     }
 
