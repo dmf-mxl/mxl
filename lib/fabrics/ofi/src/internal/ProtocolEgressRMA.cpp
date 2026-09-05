@@ -84,7 +84,10 @@ namespace mxl::lib::fabrics::ofi
 
     void RMAGrainEgressProtocol::processCompletion(Completion::Data const&)
     {
-        --_pending;
+        if (_pending > 0)
+        {
+            --_pending;
+        }
     }
 
     bool RMAGrainEgressProtocol::hasPendingWork() const
@@ -201,7 +204,21 @@ namespace mxl::lib::fabrics::ofi
         auto const remoteRegion = _remoteInfo.remoteRegions[_bounceBufferEntryIndex % _remoteInfo.remoteRegions.size()];
 
         // 3- Send the remote write
-        _pending += ep.write(_token, sgl, remoteRegion, destAddr, _bounceBufferEntryIndex);
+        // Count what reached the provider, not what was asked for. Crediting
+        // nothing on a part-way failure left completions arriving for writes
+        // this counter never knew about, and it is unsigned, so it wrapped
+        // and the protocol reported pending work for the rest of its life.
+        auto posted = std::size_t{0};
+        try
+        {
+            ep.write(_token, sgl, remoteRegion, destAddr, _bounceBufferEntryIndex, &posted);
+        }
+        catch (...)
+        {
+            _pending += posted;
+            throw;
+        }
+        _pending += posted;
 
         // 4- update bounce buffer entry index for the next transfer
         _bounceBufferEntryIndex = (_bounceBufferEntryIndex + 1) % _bounceBufferEntryCount;
@@ -209,7 +226,10 @@ namespace mxl::lib::fabrics::ofi
 
     void RMASampleEgressProtocol::processCompletion(Completion::Data const&)
     {
-        --_pending;
+        if (_pending > 0)
+        {
+            --_pending;
+        }
     }
 
     bool RMASampleEgressProtocol::hasPendingWork() const
