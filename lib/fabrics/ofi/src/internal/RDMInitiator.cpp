@@ -6,6 +6,7 @@
 #include <cassert>
 #include <chrono>
 #include <cstdint>
+#include <algorithm>
 #include <memory>
 #include <utility>
 #include <variant>
@@ -122,7 +123,11 @@ namespace mxl::lib::fabrics::ofi
     {
         requireCapability(info, FI_WRITE, "Interface is missing required remote write capability");
 
+        // Size the CQ to hold as many completions as the endpoint supports, to avoid
+        // CQ overflow. This assumes one CQ per endpoint; if CQs are ever shared,
+        // this sizing must be revisited. An explicit cqDepth still wins.
         auto cqAttr = CompletionQueue::Attributes::defaults();
+        cqAttr.size = std::max(cqAttr.size, info.txSize());
         if (options.cqDepth)
         {
             cqAttr.size = *options.cqDepth;
