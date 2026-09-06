@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "RDMInitiator.hpp"
+#include <algorithm>
 #include <cassert>
 #include <chrono>
 #include <cstdint>
@@ -122,7 +123,14 @@ namespace mxl::lib::fabrics::ofi
     {
         requireCapability(info, FI_WRITE, "Interface is missing required remote write capability");
 
+        // Room for a completion per operation the transmit queue can hold.
+        // A connectionless provider reports a far deeper queue than the
+        // connected ones -- EFA offers 4096 against the default of 8 -- and
+        // a completion queue that cannot hold what the endpoint accepts
+        // stops the provider taking work as soon as it is full. Every write
+        // then fails with EAGAIN and nothing ever completes to free it.
         auto cqAttr = CompletionQueue::Attributes::defaults();
+        cqAttr.size = std::max(cqAttr.size, info.txSize());
         if (options.cqDepth)
         {
             cqAttr.size = *options.cqDepth;
