@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 #include "ProviderConfig.hpp"
+
+#include <string>
 #include <algorithm>
 #include "Exception.hpp"
 
@@ -121,7 +123,24 @@ namespace mxl::lib::fabrics::ofi
             .supportedAddressFormats = {FI_ADDR_EFA},
             .supportedProtocols = {FI_PROTO_EFA},
             .requiredCaps = libfabricRequiredCaps(capabilities),
-            .filteredCaps = FI_HMEM | FI_TAGGED,
+            .filteredCaps = FI_HMEM,
+            // EFA publishes two RDM fabrics over the same device, and they
+            // are not interchangeable. "efa-direct" hands every data-path
+            // call straight to the device with no wire protocol, and pays
+            // for it in mode requirements: it asks for FI_CONTEXT2, and by
+            // declaring FI_RX_CQ_DATA it turns off the device's unsolicited
+            // write receive, so every write carrying immediate data has to
+            // consume a posted receive. It also requires the target to
+            // insert the initiator into its address vector before the first
+            // RMA, which nothing in this API lets a target do.
+            //
+            // "efa" carries a wire protocol that handles peer discovery,
+            // receive credit and retry itself, and asks only for
+            // FI_MSG_PREFIX, which does not reach an RMA-only data path.
+            // Name it explicitly rather than letting capability filtering
+            // decide: it was FI_TAGGED, advertised only by the fabric that
+            // works, that silently selected the one that does not.
+            .supportedFabricNames = {"efa"},
         };
         return ProviderConfig{std::move(values), capabilities};
     }
@@ -144,7 +163,15 @@ namespace mxl::lib::fabrics::ofi
         // Filters out all objects that are not the endpoint type that we are looking for with this provider.
         auto const unsupportedEndpointType = (view->ep_attr->type != _values.endpointType);
 
-        return !(protocolNotSupported || addressFormatNotSupported || containsFilteredCaps || missingRequiredCaps || unsupportedEndpointType);
+        // Filters out fabrics this provider publishes but cannot be used
+        // interchangeably with the one we are built against.
+        auto const unsupportedFabricName = !_values.supportedFabricNames.empty() &&
+                                           ((view->fabric_attr->name == nullptr) ||
+                                               std::ranges::find(_values.supportedFabricNames, std::string{view->fabric_attr->name}) ==
+                                                   _values.supportedFabricNames.end());
+
+        return !(protocolNotSupported || addressFormatNotSupported || containsFilteredCaps || missingRequiredCaps || unsupportedEndpointType ||
+                 unsupportedFabricName);
     }
 
     std::string ProviderConfig::getProviderName() const
