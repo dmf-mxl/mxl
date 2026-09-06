@@ -161,10 +161,23 @@ enum FlowKind {
     Data,
 }
 
+/// How long the `FlowNotFound` wait sleeps between attempts, and so how often
+/// it rechecks `is_flushing`.
+pub(crate) const FLOW_NOT_FOUND_RETRY: Duration = Duration::from_millis(50);
+
+/// Successful return of [`init`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Init {
+    /// Reader stored in `flow_state`.
+    Attached,
+    /// `is_flushing` became true during the `FlowNotFound` wait; no reader yet.
+    Flushing,
+}
+
 /// Blocks until `create_flow_reader` succeeds, sleeping briefly and retrying
 /// while MXL returns `FlowNotFound`.
 ///
-/// Before each attempt, checks `is_flushing` and returns an error if so, to
+/// Before each attempt, checks `is_flushing` and returns `Ok(None)` if so, to
 /// avoid blocking teardown via `unlock` if the flow has not yet been created.
 ///
 /// `flow_id` is passed in by the caller (typically cloned under a short
@@ -174,23 +187,31 @@ fn init_mxl_reader(
     mxlsrc: &MxlSrc,
     instance: &MxlInstance,
     flow_id: &str,
-) -> Result<FlowReader, gst::ErrorMessage> {
+) -> Result<Option<FlowReader>, gst::ErrorMessage> {
     let mut warned = false;
     loop {
         if is_flushing(mxlsrc) {
-            return Err(gst::error_msg!(
-                gst::CoreError::Failed,
-                ["Aborted waiting for flow"]
-            ));
+            gst::debug!(
+                CAT,
+                imp = mxlsrc,
+                "Flushing; stop waiting for flow {}",
+                flow_id
+            );
+            return Ok(None);
         }
         match instance.create_flow_reader(flow_id) {
-            Ok(reader) => break Ok(reader),
+            Ok(reader) => break Ok(Some(reader)),
             Err(mxl::Error::FlowNotFound) => {
                 if !warned {
-                    eprintln!("Waiting for flow to be created...");
+                    gst::info!(
+                        CAT,
+                        imp = mxlsrc,
+                        "Waiting for flow {} to be created",
+                        flow_id
+                    );
                     warned = true;
                 }
-                std::thread::sleep(Duration::from_millis(50));
+                std::thread::sleep(FLOW_NOT_FOUND_RETRY);
                 continue;
             }
             Err(err) => {
@@ -255,7 +276,9 @@ pub(crate) fn ensure_instance(mxlsrc: &MxlSrc) -> Result<MxlInstance, gst::Error
     Ok(instance)
 }
 
-pub(crate) fn init(mxlsrc: &MxlSrc) -> Result<(), gst::ErrorMessage> {
+/// Attach a flow reader. `Ok(Init::Flushing)` means `unlock()` broke the
+/// `FlowNotFound` wait; the caller should return `FlowError::Flushing`.
+pub(crate) fn init(mxlsrc: &MxlSrc) -> Result<Init, gst::ErrorMessage> {
     let (flow_kind, flow_id) = {
         let settings = mxlsrc
             .settings
@@ -279,7 +302,9 @@ pub(crate) fn init(mxlsrc: &MxlSrc) -> Result<(), gst::ErrorMessage> {
 
     // Wait for the flow to be created without holding `settings` or `context` mutexes
     // across the poll/sleep loop.
-    let reader = init_mxl_reader(mxlsrc, &instance, flow_id.as_str())?;
+    let Some(reader) = init_mxl_reader(mxlsrc, &instance, flow_id.as_str())? else {
+        return Ok(Init::Flushing);
+    };
     let binding = reader.get_info();
     let reader_info = binding.as_ref();
 
@@ -328,7 +353,9 @@ pub(crate) fn init(mxlsrc: &MxlSrc) -> Result<(), gst::ErrorMessage> {
             });
         }
         FlowKind::Audio => {
-            let reader_samples = init_mxl_reader(mxlsrc, &instance, flow_id.as_str())?;
+            let Some(reader_samples) = init_mxl_reader(mxlsrc, &instance, flow_id.as_str())? else {
+                return Ok(Init::Flushing);
+            };
             let samples_reader = reader_samples.to_samples_reader().map_err(|e| {
                 gst::error_msg!(
                     gst::CoreError::Failed,
@@ -383,7 +410,7 @@ pub(crate) fn init(mxlsrc: &MxlSrc) -> Result<(), gst::ErrorMessage> {
             });
         }
     }
-    Ok(())
+    Ok(Init::Attached)
 }
 
 fn init_mxl_instance(domain: &str) -> Result<MxlInstance, gst::ErrorMessage> {
