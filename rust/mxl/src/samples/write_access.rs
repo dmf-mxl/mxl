@@ -3,7 +3,7 @@
 
 use tracing::error;
 
-use crate::{Error, writer::FlowWriterInstance};
+use crate::{Error, writer::FlowWriterResource};
 
 /// RAII samples writing session
 ///
@@ -12,7 +12,7 @@ use crate::{Error, writer::FlowWriterInstance};
 /// The data may be split into 2 different buffer slices in case of a wrapped ring. Provides access
 /// either directly to the slices or to individual samples by index inside the batch.
 pub struct SamplesWriteAccess<'a> {
-    writer: &'a FlowWriterInstance,
+    writer: &'a FlowWriterResource,
     buffer_slice: mxl_sys::MutableWrappedMultiBufferSlice,
     /// Serves as a flag to know whether to cancel the samples on drop.
     committed_or_canceled: bool,
@@ -20,7 +20,7 @@ pub struct SamplesWriteAccess<'a> {
 
 impl<'a> SamplesWriteAccess<'a> {
     pub(crate) fn new(
-        writer: &'a FlowWriterInstance,
+        writer: &'a FlowWriterResource,
         buffer_slice: mxl_sys::MutableWrappedMultiBufferSlice,
     ) -> Self {
         Self {

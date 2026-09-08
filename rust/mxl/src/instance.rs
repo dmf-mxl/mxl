@@ -5,7 +5,7 @@ use std::{ffi::CString, sync::Arc};
 
 use crate::{
     Error, FlowConfigInfo, FlowReader, FlowWriter, Result, api::MxlApiHandle,
-    reader::FlowReaderInstance, writer::FlowWriterInstance,
+    reader::FlowReaderResource, writer::FlowWriterResource,
 };
 
 /// This struct stores the context that is shared by all objects.
@@ -65,7 +65,7 @@ impl MxlInstance {
     }
 
     pub fn create_flow_reader(&self, flow_id: &str) -> Result<FlowReader> {
-        let reader = FlowReaderInstance::new(self.context.clone(), flow_id)?;
+        let reader = FlowReaderResource::new(self.context.clone(), flow_id)?;
         Ok(FlowReader::new(reader))
     }
 
@@ -75,7 +75,7 @@ impl MxlInstance {
         options: Option<&str>,
     ) -> Result<(FlowWriter, FlowConfigInfo, bool)> {
         let (writer, info, was_created) =
-            FlowWriterInstance::new(self.context.clone(), flow_def, options)?;
+            FlowWriterResource::new(self.context.clone(), flow_def, options)?;
 
         Ok((FlowWriter::new(writer, info.clone()), info, was_created))
     }

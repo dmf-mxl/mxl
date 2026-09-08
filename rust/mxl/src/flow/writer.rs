@@ -1,16 +1,16 @@
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{ffi::CString, ptr::NonNull, sync::Arc};
+use std::{cell::Cell, ffi::CString, marker::PhantomData, ptr::NonNull, sync::Arc};
 
 use crate::{Error, FlowConfigInfo, GrainWriter, Result, SamplesWriter, instance::InstanceContext};
 
 /// A wrapper around the MXL FlowWriter instance to manage its lifetime and ensure proper cleanup.
-pub(crate) struct FlowWriterInstance {
+pub(crate) struct FlowWriterResource {
     pub(crate) context: Arc<InstanceContext>,
     inner: NonNull<mxl_sys::FlowWriter_t>,
 }
-impl FlowWriterInstance {
+impl FlowWriterResource {
     pub(crate) fn new(
         context: Arc<InstanceContext>,
         flow_def: &str,
@@ -46,11 +46,20 @@ impl FlowWriterInstance {
             was_created,
         ))
     }
-    pub(crate) fn as_ptr(&self) -> mxl_sys::FlowWriter {
+    /// # Safety
+    ///
+    /// This is only safe to be called by a single instance of FlowWriter, GrainWriter or SamplesWriter at a time.
+    /// The underlying MXL FlowWriter is not thread-safe.
+    pub(crate) unsafe fn as_ptr(&self) -> mxl_sys::FlowWriter {
         self.inner.as_ptr()
     }
+    pub(crate) fn keep_alive(self: &Arc<Self>) -> FlowWriterResourceKeepAlive {
+        FlowWriterResourceKeepAlive {
+            _instance: self.clone(),
+        }
+    }
 }
-impl Drop for FlowWriterInstance {
+impl Drop for FlowWriterResource {
     fn drop(&mut self) {
         if let Err(err) = Error::from_status(unsafe {
             self.context
@@ -62,30 +71,38 @@ impl Drop for FlowWriterInstance {
     }
 }
 
-// SAFETY: The native writer may be moved between threads, but must not be accessed
-// concurrently. Do not implement Sync for this type.
-unsafe impl Send for FlowWriterInstance {}
+// SAFETY:
+// This type is only used to manage the lifetime of the underlying MXL FlowWriter instance.
+// No operation can be done directly, thus the type itself is thread-safe.
+unsafe impl Send for FlowWriterResource {}
+unsafe impl Sync for FlowWriterResource {}
+
+/// A wrapper around FlowWriterResource to keep it alive. Users can't mutate the underlying pointer.
+pub(crate) struct FlowWriterResourceKeepAlive {
+    _instance: Arc<FlowWriterResource>,
+}
 
 /// Generic MXL Flow Writer, which can be further used to build either the "discrete" (grain-based
 /// data like video frames or meta) or "continuous" (audio samples) flow writers in MXL terminology.
 pub struct FlowWriter {
-    writer: Arc<FlowWriterInstance>,
+    writer: Arc<FlowWriterResource>,
     info: FlowConfigInfo,
+    _not_sync: PhantomData<Cell<()>>, // Prevent Sync implementation, as the underlying MXL writer
+                                      // is not thread-safe
 }
 
-/// The MXL readers and writers are not thread-safe, so we do not implement `Sync` for them, but
-/// there is no reason to not implement `Send`.
-unsafe impl Send for FlowWriter {}
-
 impl FlowWriter {
-    pub(crate) fn new(writer: FlowWriterInstance, info: FlowConfigInfo) -> Self {
+    pub(crate) fn new(writer: FlowWriterResource, info: FlowConfigInfo) -> Self {
         Self {
-            // Arc keeps write accesses alive without making the native writer safe
-            // for concurrent access.
-            #[allow(clippy::arc_with_non_send_sync)]
             writer: Arc::new(writer),
             info,
+            _not_sync: PhantomData,
         }
+    }
+
+    #[allow(dead_code)]
+    pub(crate) fn keep_alive(&self) -> FlowWriterResourceKeepAlive {
+        self.writer.keep_alive()
     }
 
     pub fn to_grain_writer(self) -> Result<GrainWriter> {

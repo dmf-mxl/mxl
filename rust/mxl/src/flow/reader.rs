@@ -1,20 +1,19 @@
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{ptr::NonNull, sync::Arc};
+use std::{cell::Cell, marker::PhantomData, ptr::NonNull, sync::Arc};
 
 use crate::{
-    DataFormat, Error, FlowConfigInfo, FlowRuntimeInfo, GrainReader, Result, SamplesReader,
-    flow::{FlowInfo, is_discrete_data_format},
+    Error, FlowConfigInfo, FlowRuntimeInfo, GrainReader, Result, SamplesReader, flow::FlowInfo,
     instance::InstanceContext,
 };
 
 /// A wrapper around the MXL FlowReader instance to manage its lifetime and ensure proper cleanup.
-pub(crate) struct FlowReaderInstance {
+pub(crate) struct FlowReaderResource {
     pub(crate) context: Arc<InstanceContext>,
     inner: NonNull<mxl_sys::FlowReader_t>,
 }
-impl FlowReaderInstance {
+impl FlowReaderResource {
     pub(crate) fn new(context: Arc<InstanceContext>, flow_id: &str) -> Result<Self> {
         let flow_id = std::ffi::CString::new(flow_id)?;
         let options = std::ffi::CString::new("")?;
@@ -35,11 +34,20 @@ impl FlowReaderInstance {
                 .ok_or_else(|| Error::Other("Failed to create flow reader.".to_string()))?,
         })
     }
-    pub(crate) fn as_ptr(&self) -> mxl_sys::FlowReader {
+    /// # Safety
+    ///
+    /// This is only safe to be called by a single instance of FlowReader, GrainReader or SamplesReader at a time.
+    /// The underlying MXL FlowReader is not thread-safe.
+    pub(crate) unsafe fn as_ptr(&self) -> mxl_sys::FlowReader {
         self.inner.as_ptr()
     }
+    pub(crate) fn keep_alive(self: &Arc<Self>) -> FlowReaderResourceKeepAlive {
+        FlowReaderResourceKeepAlive {
+            _instance: self.clone(),
+        }
+    }
 }
-impl Drop for FlowReaderInstance {
+impl Drop for FlowReaderResource {
     fn drop(&mut self) {
         if let Err(err) = Error::from_status(unsafe {
             self.context
@@ -51,17 +59,24 @@ impl Drop for FlowReaderInstance {
     }
 }
 
-// SAFETY: The native reader may be moved between threads, but must not be accessed
-// concurrently. Do not implement Sync for this type.
-unsafe impl Send for FlowReaderInstance {}
+// SAFETY:
+// This type is only used to manage the lifetime of the underlying MXL FlowReader instance.
+// No operation can be done directly, thus the type itself is thread-safe.
+unsafe impl Send for FlowReaderResource {}
+unsafe impl Sync for FlowReaderResource {}
 
-pub struct FlowReader {
-    reader: Arc<FlowReaderInstance>,
+/// A wrapper around FlowReaderResource to keep it alive. Users can't mutate the underlying pointer.
+pub(crate) struct FlowReaderResourceKeepAlive {
+    _instance: Arc<FlowReaderResource>,
 }
 
-/// The MXL readers and writers are not thread-safe, so we do not implement `Sync` for them, but
-/// there is no reason to not implement `Send`.
-unsafe impl Send for FlowReader {}
+/// Generic MXL Flow Reader, which can be further used to build either the "discrete" (grain-based
+/// data like video frames or meta) or "continuous" (audio samples) flow writers in MXL terminology.
+pub struct FlowReader {
+    reader: Arc<FlowReaderResource>,
+    _not_sync: PhantomData<Cell<()>>, // Prevent Sync implementation, as the underlying MXL reader
+                                      // is not thread-safe.
+}
 
 pub(crate) fn get_flow_info(
     context: &InstanceContext,
@@ -110,17 +125,20 @@ pub(crate) fn get_runtime_info(
 }
 
 impl FlowReader {
-    pub(crate) fn new(reader: FlowReaderInstance) -> Self {
+    pub(crate) fn new(reader: FlowReaderResource) -> Self {
         Self {
-            // Arc provides shared ownership for conversions without making the native
-            // reader safe for concurrent access.
-            #[allow(clippy::arc_with_non_send_sync)]
             reader: Arc::new(reader),
+            _not_sync: PhantomData,
         }
     }
 
+    #[allow(dead_code)]
+    pub(crate) fn keep_alive(&self) -> FlowReaderResourceKeepAlive {
+        self.reader.keep_alive()
+    }
+
     pub fn get_info(&self) -> Result<FlowInfo> {
-        get_flow_info(&self.reader.context, self.reader.as_ptr())
+        get_flow_info(&self.reader.context, unsafe { self.reader.as_ptr() })
     }
 
     pub fn to_grain_reader(self) -> Result<GrainReader> {
@@ -136,11 +154,11 @@ impl FlowReader {
     }
 
     pub fn to_samples_reader(self) -> Result<SamplesReader> {
-        let flow_type = self.get_info()?.config.value.common.format;
-        if is_discrete_data_format(flow_type) {
+        let config_info = self.get_info()?.config;
+        if config_info.is_discrete_flow() {
             return Err(Error::Other(format!(
                 "Cannot convert FlowReader to SamplesReader for discrete flow of type \"{:?}\".",
-                DataFormat::from(flow_type)
+                config_info.common().data_format()
             )));
         }
         let result = SamplesReader::new(self.reader);
