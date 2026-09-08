@@ -143,25 +143,6 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : tail re
         CHECK(readGrainInfo.index == NOT_CHANGED_INDEX_SENTINEL_VALUE);
     }
 
-    // REVIEW-ONLY (pre-fix diagnostic): Retained so running this test
-    // against the old implementation also exposes the inconsistent
-    // state returned when MXL_STATUS_OK is returned.
-    if (grainReadStatusInsideWrite == MXL_STATUS_OK)
-    {
-        INFO("The tailIndex read was permitted, therefore the returned grain "
-             "metadata must be internally consistent: the payload must be "
-             "available, the grain index must identify the requested tailIndex "
-             "grain, and the full-grain read must report all slices as valid.");
-        CAPTURE(readBuffer, readGrainInfo.index, tailIndex, headIndex + 1, readGrainInfo.validSlices, readGrainInfo.totalSlices);
-        CHECK(readBuffer != nullptr);
-        CHECK(readGrainInfo.validSlices == readGrainInfo.totalSlices);
-
-        // REVIEW-ONLY: Fails with the pre-fix read boundary.  The
-        // returned grain is headIndex+1 although tailIndex was
-        // requested.
-        CHECK(readGrainInfo.index == tailIndex);
-    }
-
     // Reading tailIndex through the slice API during an open write of
     // headIndex+1 should return TOO_LATE, should not return a payload,
     // and should not modify readGrainInfo.validSlices.
@@ -181,27 +162,6 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : tail re
              "it should not return a payload or modify validSlices.");
         CHECK(readBuffer == nullptr);
         CHECK(readGrainInfo.validSlices == NOT_CHANGED_SLICE_SENTINEL_VALUE);
-    }
-
-    // REVIEW-ONLY (pre-fix diagnostic): Retained so running this test
-    // against the old implementation also exposes the inconsistent
-    // state returned when MXL_STATUS_OK is returned.
-    if (sliceReadStatus == MXL_STATUS_OK)
-    {
-        INFO("The tailIndex slice read was permitted, therefore the returned "
-             "grain state must be internally consistent: the payload must be "
-             "available, the grain index must identify the requested tailIndex "
-             "grain, and the previously committed tail grain must still be "
-             "reported as fully valid.");
-
-        CAPTURE(readBuffer, readGrainInfo.index, tailIndex, headIndex + 1, readGrainInfo.validSlices, readGrainInfo.totalSlices);
-        CHECK(readBuffer != nullptr);
-        CHECK(readGrainInfo.validSlices == readGrainInfo.totalSlices);
-
-        // REVIEW-ONLY: Fails with the pre-fix read boundary.  The
-        // returned grain is headIndex+1 although tailIndex was
-        // requested.
-        CHECK(readGrainInfo.index == tailIndex);
     }
 
     // Commit the write and update local headIndex.
