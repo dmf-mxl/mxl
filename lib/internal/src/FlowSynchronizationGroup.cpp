@@ -76,6 +76,7 @@ namespace mxl::lib
 
     mxlStatus FlowSynchronizationGroup::waitForDataAt(Timepoint originTime, Timepoint deadline) const
     {
+        auto prev = _readers.before_begin();
         for (auto it = _readers.begin(); it != _readers.end(); /* Nothing */)
         {
             auto const current = it++;
@@ -99,7 +100,7 @@ namespace mxl::lib
 
                 if (result == MXL_STATUS_OK)
                 {
-                    // If the current source delay of this flow exceeds any previosuly observed source delay of
+                    // If the current source delay of this flow exceeds any previously observed source delay of
                     // this flow we update the cached maximum and if this new maximum turns out to be bigger than
                     // the maximum source delay observed for the flow at the head of the list, we move this flow
                     // to the front, hoping that we can save blocking waits in the future.
@@ -113,7 +114,9 @@ namespace mxl::lib
                             current->maxObservedSourceDelay = sourceDelay;
                             if (current->maxObservedSourceDelay > _readers.begin()->maxObservedSourceDelay)
                             {
-                                _readers.splice_after(_readers.before_begin(), _readers, current);
+                                // `splice_after` moves the element *following* the iterator it is given.
+                                _readers.splice_after(_readers.before_begin(), _readers, prev);
+                                continue; // `prev` already precedes `it` after the splice.
                             }
                         }
                     }
@@ -123,6 +126,7 @@ namespace mxl::lib
                     return result;
                 }
             }
+            prev = current;
         }
         return MXL_STATUS_OK;
     }
