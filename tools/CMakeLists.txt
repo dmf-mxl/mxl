@@ -20,5 +20,6 @@ add_subdirectory(mxl-gst)
 
 if (MXL_ENABLE_FABRICS_OFI)
     add_subdirectory(mxl-fabrics-demo)
+    add_subdirectory(mxl-fabrics-kairos)
     add_subdirectory(mxl-fabrics-info)
 endif ()
