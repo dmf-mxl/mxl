@@ -19,6 +19,7 @@ set_target_properties(mxl-tests
 
 target_sources(mxl-tests
         PRIVATE
+            test_flow_sync_groups.cpp
             test_flows.cpp
             test_flows_timing.cpp
             test_instance.cpp
