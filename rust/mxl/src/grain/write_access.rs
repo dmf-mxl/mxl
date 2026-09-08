@@ -3,13 +3,13 @@
 
 use tracing::error;
 
-use crate::{Error, Result, writer::FlowWriterInstance};
+use crate::{Error, Result, writer::FlowWriterResource};
 
 /// RAII grain writing session
 ///
 /// Automatically cancels the grain if not explicitly committed.
 pub struct GrainWriteAccess<'a> {
-    writer: &'a FlowWriterInstance,
+    writer: &'a FlowWriterResource,
     grain_info: mxl_sys::GrainInfo,
     payload_ptr: *mut u8,
     /// Serves as a flag to know whether to cancel the grain on drop.
@@ -18,7 +18,7 @@ pub struct GrainWriteAccess<'a> {
 
 impl<'a> GrainWriteAccess<'a> {
     pub(crate) fn new(
-        writer: &'a FlowWriterInstance,
+        writer: &'a FlowWriterResource,
         grain_info: mxl_sys::GrainInfo,
         payload_ptr: *mut u8,
     ) -> Self {

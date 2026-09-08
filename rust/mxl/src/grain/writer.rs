@@ -1,24 +1,32 @@
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::sync::Arc;
+use std::{cell::Cell, marker::PhantomData, sync::Arc};
 
 use super::write_access::GrainWriteAccess;
 
-use crate::{Error, Result, writer::FlowWriterInstance};
+use crate::{
+    Error, Result,
+    writer::{FlowWriterResource, FlowWriterResourceKeepAlive},
+};
 
 /// MXL Flow Writer for discrete flows (grain-based data like video frames)
 pub struct GrainWriter {
-    writer: Arc<FlowWriterInstance>,
+    writer: Arc<FlowWriterResource>,
+    _not_sync: PhantomData<Cell<()>>, // Prevent Sync implementation, as the underlying MXL writer
+                                      // is not thread-safe
 }
 
-/// The MXL readers and writers are not thread-safe, so we do not implement `Sync` for them, but
-/// there is no reason to not implement `Send`.
-unsafe impl Send for GrainWriter {}
-
 impl GrainWriter {
-    pub(crate) fn new(writer: Arc<FlowWriterInstance>) -> Self {
-        Self { writer }
+    pub(crate) fn new(writer: Arc<FlowWriterResource>) -> Self {
+        Self {
+            writer,
+            _not_sync: PhantomData,
+        }
+    }
+    #[allow(dead_code)]
+    pub(crate) fn keep_alive(&self) -> FlowWriterResourceKeepAlive {
+        self.writer.keep_alive()
     }
 
     #[deprecated(

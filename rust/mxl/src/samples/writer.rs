@@ -1,23 +1,33 @@
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::sync::Arc;
+use std::{cell::Cell, marker::PhantomData, sync::Arc};
 
-use crate::{Error, Result, SamplesWriteAccess, writer::FlowWriterInstance};
+use crate::{
+    Error, Result, SamplesWriteAccess,
+    writer::{FlowWriterResource, FlowWriterResourceKeepAlive},
+};
 
 /// MXL Flow Writer for continuous flows (samples-based data like audio)
 pub struct SamplesWriter {
-    writer: Arc<FlowWriterInstance>,
+    writer: Arc<FlowWriterResource>,
+    _not_sync: PhantomData<Cell<()>>, // Prevent Sync implementation, as the underlying MXL writer
+                                      // is not thread-safe
 }
 
-/// The MXL readers and writers are not thread-safe, so we do not implement `Sync` for them, but
-/// there is no reason to not implement `Send`.
-unsafe impl Send for SamplesWriter {}
-
 impl SamplesWriter {
-    pub(crate) fn new(writer: Arc<FlowWriterInstance>) -> Self {
-        Self { writer }
+    pub(crate) fn new(writer: Arc<FlowWriterResource>) -> Self {
+        Self {
+            writer,
+            _not_sync: PhantomData,
+        }
     }
+
+    #[allow(dead_code)]
+    pub(crate) fn keep_alive(&self) -> FlowWriterResourceKeepAlive {
+        self.writer.keep_alive()
+    }
+
     #[deprecated(
         since = "0.2.0",
         note = "Flow writer lifetimes are now managed automatically. This method only consumes the handle and always returns `Ok(())`; the underlying writer is released when the last related handle is dropped."

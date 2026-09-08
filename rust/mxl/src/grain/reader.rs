@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025-2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{sync::Arc, time::Duration};
+use std::{cell::Cell, marker::PhantomData, sync::Arc, time::Duration};
 
 use crate::{
     Error, FlowConfigInfo, GrainData, Result,
@@ -9,20 +9,26 @@ use crate::{
         FlowInfo,
         reader::{get_config_info, get_flow_info, get_runtime_info},
     },
-    reader::FlowReaderInstance,
+    reader::{FlowReaderResource, FlowReaderResourceKeepAlive},
 };
 
 pub struct GrainReader {
-    reader: Arc<FlowReaderInstance>,
+    reader: Arc<FlowReaderResource>,
+    _not_sync: PhantomData<Cell<()>>, // Prevent Sync implementation, as the underlying MXL reader
+                                      // is not thread-safe.
 }
 
-/// The MXL readers and writers are not thread-safe, so we do not implement `Sync` for them, but
-/// there is no reason to not implement `Send`.
-unsafe impl Send for GrainReader {}
-
 impl GrainReader {
-    pub(crate) fn new(reader: Arc<FlowReaderInstance>) -> Self {
-        Self { reader }
+    pub(crate) fn new(reader: Arc<FlowReaderResource>) -> Self {
+        Self {
+            reader,
+            _not_sync: PhantomData,
+        }
+    }
+
+    #[allow(dead_code)]
+    pub(crate) fn keep_alive(&self) -> FlowReaderResourceKeepAlive {
+        self.reader.keep_alive()
     }
 
     #[deprecated(
@@ -36,15 +42,15 @@ impl GrainReader {
     /// The whole FlowInfo is quite a chunk of data. Go for `get_config_info` or `get_runtime_info`
     /// if they contain what you need.
     pub fn get_info(&self) -> Result<FlowInfo> {
-        get_flow_info(&self.reader.context, self.reader.as_ptr())
+        get_flow_info(&self.reader.context, unsafe { self.reader.as_ptr() })
     }
 
     pub fn get_config_info(&self) -> Result<FlowConfigInfo> {
-        get_config_info(&self.reader.context, self.reader.as_ptr())
+        get_config_info(&self.reader.context, unsafe { self.reader.as_ptr() })
     }
 
     pub fn get_runtime_info(&self) -> Result<mxl_sys::FlowRuntimeInfo> {
-        get_runtime_info(&self.reader.context, self.reader.as_ptr())
+        get_runtime_info(&self.reader.context, unsafe { self.reader.as_ptr() })
     }
 
     pub fn get_complete_grain<'a>(

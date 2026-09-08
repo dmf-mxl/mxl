@@ -347,8 +347,6 @@ impl BaseSinkImpl for MxlSink {
             )
         })?;
 
-        // Destroy the flow writers before dropping the MXL instance they belong
-        // to, then release the instance and clock.
         context.state.take();
 
         gst::info!(CAT, imp = self, "Stopped");
