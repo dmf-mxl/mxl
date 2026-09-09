@@ -12,5 +12,8 @@ CMakeUserPresets.json
 
 site
 
+# Written by examples/bootstrap.sh after a tarball unpack
+.mxl-bootstrap-source
+
 # Generated from README.md by the docs workflow
 docs/index.md

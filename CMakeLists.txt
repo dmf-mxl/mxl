@@ -31,15 +31,26 @@ endif()
 
 find_package(Git QUIET)
 
+# Prefer git in a checkout. GitHub source tarballs and `git archive` have no
+# .git; cmake/git-hash.txt is expanded there via export-subst in .gitattributes.
+set(GIT_HASH "unknown")
 if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
     execute_process(
         COMMAND ${GIT_EXECUTABLE} rev-parse --short=12 HEAD
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         OUTPUT_VARIABLE GIT_HASH
         OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE _git_hash_rc
     )
-else()
-    set(GIT_HASH "unknown")
+    if(NOT _git_hash_rc EQUAL 0 OR GIT_HASH STREQUAL "")
+        set(GIT_HASH "unknown")
+    endif()
+elseif(EXISTS "${CMAKE_SOURCE_DIR}/cmake/git-hash.txt")
+    file(READ "${CMAKE_SOURCE_DIR}/cmake/git-hash.txt" _git_hash_raw)
+    string(STRIP "${_git_hash_raw}" _git_hash_raw)
+    if(NOT _git_hash_raw MATCHES "^\\$Format:")
+        string(SUBSTRING "${_git_hash_raw}" 0 12 GIT_HASH)
+    endif()
 endif()
 
 

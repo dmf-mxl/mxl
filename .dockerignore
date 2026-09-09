@@ -1,0 +1,20 @@
+# SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+# examples/Dockerfile copies the whole repository into the image. Host build
+# outputs must not come with it: a copied CMakeCache.txt records absolute host
+# paths and makes the in-container cmake preset fail, and a copied rust/target
+# can shadow the plugins built in the image.
+**/build
+**/target
+**/install
+**/.cache
+
+# Do not exclude .git: CMake sets GIT_HASH from it for MXL_VERSION_FULL.
+.mxl-bootstrap-source
+
+CMakeUserPresets.json
+
+.idea
+.vscode
+site
