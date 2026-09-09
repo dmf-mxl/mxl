@@ -16,7 +16,6 @@ permissions:
   issues: read
   checks: write
   pull-requests: write
-  packages: write
 
 jobs:
   compute_build_image_cache_key:
