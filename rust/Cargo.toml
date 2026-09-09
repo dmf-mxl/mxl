@@ -9,7 +9,7 @@ resolver = "2"
 [workspace.package]
 edition = "2024"
 publish = false
-version = "0.1.0"
+version = "0.2.0"
 rust-version = "1.87"
 license = "Apache-2.0"
 license-file = "../LICENSE.txt"
