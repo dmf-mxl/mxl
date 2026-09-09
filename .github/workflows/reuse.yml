@@ -1,0 +1,29 @@
+# SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+name: Check REUSE compliance
+
+on:
+  push:
+    branches:
+      - main
+      - release/**
+  pull_request:
+  workflow_dispatch:  # manual trigger support
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  check_reuse_compliance:
+    name: Check REUSE compliance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run REUSE Compliance Check
+        uses: fsfe/reuse-action@v5
+
+
