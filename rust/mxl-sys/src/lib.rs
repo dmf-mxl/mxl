@@ -16,4 +16,18 @@
 
 extern crate libloading;
 
-include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+pub mod types {
+    include!(concat!(env!("OUT_DIR"), "/types_bindings.rs"));
+}
+
+pub mod mxl {
+    include!(concat!(env!("OUT_DIR"), "/mxl_bindings.rs"));
+}
+
+#[cfg(feature = "mxl-fabrics-ofi")]
+pub mod fabrics {
+    include!(concat!(env!("OUT_DIR"), "/fabrics_bindings.rs"));
+}
+
+pub use mxl::libmxl;
+pub use types::*;

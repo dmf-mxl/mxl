@@ -317,7 +317,7 @@ jobs:
             -i mxl_build_container_with_source \
             bash -c "
               cd /workspace/mxl/rust && \
-              cargo build --release --all-targets --locked
+              cargo build --release --features mxl-fabrics-ofi --all-targets --locked
             "
 
       - name: Test the Rust bindings
@@ -336,7 +336,7 @@ jobs:
             -i mxl_build_container_with_source \
             bash -c "
               cd /workspace/mxl/rust && \
-              cargo test --release --all-targets --locked -- --test-threads=1 --show-output
+              cargo test --release --all-targets --features mxl-fabrics-ofi --locked -- --test-threads=1 --show-output
             " 2>&1 | tee test.log
           status=${PIPESTATUS[0]}
           set -e
@@ -354,3 +354,4 @@ jobs:
             } >> "$GITHUB_STEP_SUMMARY"
           fi
           exit "${status}"
+

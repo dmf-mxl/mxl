@@ -12,3 +12,24 @@ fn there_is_bindgen_generated_code() {
 
     println!("mxl_version: {:?}", mxl_version);
 }
+
+#[cfg(feature = "mxl-fabrics-ofi")]
+#[test]
+fn core_and_fabrics_bindings_share_handle_types() {
+    let instance: mxl_sys::Instance = std::ptr::null_mut();
+    let writer: mxl_sys::FlowWriter = std::ptr::null_mut();
+    let reader: mxl_sys::FlowReader = std::ptr::null_mut();
+
+    let _: mxl_sys::types::Instance = instance;
+    let target_config = mxl_sys::types::FabricsTargetConfig {
+        writer,
+        ..Default::default()
+    };
+    let initiator_config = mxl_sys::types::FabricsInitiatorConfig {
+        reader,
+        ..Default::default()
+    };
+
+    assert!(target_config.writer.is_null());
+    assert!(initiator_config.reader.is_null());
+}
