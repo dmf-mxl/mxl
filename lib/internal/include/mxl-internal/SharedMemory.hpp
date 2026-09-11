@@ -4,6 +4,7 @@
 #pragma once
 
 #include <cstddef>
+#include <limits>
 #include <new>
 #include <stdexcept>
 #include <utility>
@@ -76,9 +77,21 @@ namespace mxl::lib
          * \param path The memory mapping path
          * \param mode The memory mapping access mode
          * \param payloadSize The minimum expected size of the shared memory
+         * \param lockMode The advisory lock mode to apply to the underlying file.
+         * \param fixedAddr Optional target virtual address. When non-null, the
+         *      mapping is placed at exactly this address using `MAP_FIXED`,
+         *      which requires the caller to have previously reserved the address
+         *      range (see `ContiguousWindow`). In this case the mapping is
+         *      considered externally owned: the destructor will *not* unmap it
+         *      (the owner of the reservation is responsible for that), it only
+         *      releases the file descriptor and advisory lock.
+         * \param fixedMappingCapacity Maximum number of bytes available at
+         *      `fixedAddr`. Required for fixed mappings; the file is rejected
+         *      before `mmap` if it exceeds this capacity.
          * \throw If opening or creating the shared memory segment fails.
          */
-        SharedMemoryBase(char const* path, AccessMode mode, std::size_t payloadSize, LockMode lockMode);
+        SharedMemoryBase(char const* path, AccessMode mode, std::size_t payloadSize, LockMode lockMode, void* fixedAddr = nullptr,
+            std::size_t fixedMappingCapacity = 0U);
 
         /** Destructor. */
         ~SharedMemoryBase();
@@ -144,6 +157,13 @@ namespace mxl::lib
         std::size_t _mappedSize;
         /** The type of advisory lock that is held for the mapped file */
         LockType _lockType;
+        /**
+         * Whether this instance owns the virtual-memory mapping and must unmap
+         * it on destruction. False for fixed-address mappings placed into an
+         * externally reserved address window, whose lifetime is managed by the
+         * reservation owner.
+         */
+        bool _ownsMapping;
     };
 
     struct SharedMemorySegment : SharedMemoryBase
@@ -180,9 +200,14 @@ namespace mxl::lib
          * \param path The memory mapping path
          * \param mode The memory mapping access mode
          * \param extraSize Add this size to the shared memory in addition to sizeof(T)
+         * \param fixedAddr Optional target virtual address for the mapping. See
+         *      SharedMemoryBase for the ownership semantics of fixed-address
+         *      mappings.
+         * \param fixedMappingCapacity Maximum mapping size at `fixedAddr`.
          * \return true on success. false on conflicts or failure to create resources on disk.
          */
-        SharedMemoryInstance(char const* path, AccessMode mode, std::size_t payloadSize, LockMode lockMode);
+        SharedMemoryInstance(char const* path, AccessMode mode, std::size_t payloadSize, LockMode lockMode, void* fixedAddr = nullptr,
+            std::size_t fixedMappingCapacity = 0U);
 
         SharedMemoryInstance& operator=(SharedMemoryInstance other) noexcept;
 
@@ -204,6 +229,9 @@ namespace mxl::lib
 
         using SharedMemoryBase::isExclusive;
         using SharedMemoryBase::makeExclusive;
+
+    private:
+        static std::size_t mappedSizeForPayload(std::size_t payloadSize);
     };
 
     /** ADL compatible shwap function for SharedMemorySegment. */
@@ -220,6 +248,7 @@ namespace mxl::lib
         , _data{nullptr}
         , _mappedSize{0}
         , _lockType(LockType::None)
+        , _ownsMapping{true}
     {}
 
     constexpr SharedMemoryBase::SharedMemoryBase(SharedMemoryBase&& other) noexcept
@@ -268,6 +297,7 @@ namespace mxl::lib
         cx_swap(_data, other._data);
         cx_swap(_mappedSize, other._mappedSize);
         cx_swap(_lockType, other._lockType);
+        cx_swap(_ownsMapping, other._ownsMapping);
     }
 
     constexpr void* SharedMemoryBase::data() noexcept
@@ -329,8 +359,9 @@ namespace mxl::lib
     {}
 
     template<typename T>
-    inline SharedMemoryInstance<T>::SharedMemoryInstance(char const* path, AccessMode mode, std::size_t payloadSize, LockMode lockMode)
-        : SharedMemoryBase{path, mode, payloadSize + sizeof(T), lockMode}
+    inline SharedMemoryInstance<T>::SharedMemoryInstance(char const* path, AccessMode mode, std::size_t payloadSize, LockMode lockMode,
+        void* fixedAddr, std::size_t fixedMappingCapacity)
+        : SharedMemoryBase{path, mode, mappedSizeForPayload(payloadSize), lockMode, fixedAddr, fixedMappingCapacity}
     {
         if (created())
         {
@@ -341,6 +372,16 @@ namespace mxl::lib
 
             new (data()) T{};
         }
+    }
+
+    template<typename T>
+    inline std::size_t SharedMemoryInstance<T>::mappedSizeForPayload(std::size_t payloadSize)
+    {
+        if (payloadSize > (std::numeric_limits<std::size_t>::max() - sizeof(T)))
+        {
+            throw std::overflow_error("Shared memory instance size overflow.");
+        }
+        return payloadSize + sizeof(T);
     }
 
     template<typename T>

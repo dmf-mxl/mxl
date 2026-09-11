@@ -20,7 +20,8 @@
 namespace mxl::lib
 {
     MXL_EXPORT
-    SharedMemoryBase::SharedMemoryBase(char const* path, AccessMode mode, std::size_t payloadSize, LockMode lockMode)
+    SharedMemoryBase::SharedMemoryBase(char const* path, AccessMode mode, std::size_t payloadSize, LockMode lockMode, void* fixedAddr,
+        std::size_t fixedMappingCapacity)
         : SharedMemoryBase{}
     {
         constexpr auto const OMODE_CREATE = O_EXCL | O_CREAT | O_RDWR | O_CLOEXEC;
@@ -80,14 +81,32 @@ namespace mxl::lib
 
         if (struct stat statBuf; ::fstat(_fd, &statBuf) != -1)
         {
-            if (static_cast<std::size_t>(statBuf.st_size) >= payloadSize)
+            if (statBuf.st_size < 0)
             {
+                throw std::system_error(EINVAL, std::generic_category(), "Shared memory segment has an invalid size.");
+            }
+
+            auto const mappedSize = static_cast<std::size_t>(statBuf.st_size);
+            if ((fixedAddr != nullptr) && ((fixedMappingCapacity == 0U) || (mappedSize > fixedMappingCapacity)))
+            {
+                throw std::system_error(EFBIG, std::generic_category(), "Shared memory segment exceeds its fixed mapping capacity.");
+            }
+
+            if (mappedSize >= payloadSize)
+            {
+                // When a fixed target address is requested the caller has already
+                // reserved the address range (typically a PROT_NONE window), so we
+                // overlay it with MAP_FIXED. Such mappings are externally owned:
+                // the reservation owner unmaps the whole range, so this instance
+                // must not unmap its slice on destruction.
+                auto const flags = MAP_FILE | MAP_SHARED | ((fixedAddr != nullptr) ? MAP_FIXED : 0);
                 auto const shared_data_buffer = ::mmap(
-                    nullptr, statBuf.st_size, PROT_READ | ((mode != AccessMode::READ_ONLY) ? PROT_WRITE : 0), MAP_FILE | MAP_SHARED, _fd, 0);
+                    fixedAddr, mappedSize, PROT_READ | ((mode != AccessMode::READ_ONLY) ? PROT_WRITE : 0), flags, _fd, 0);
                 if (shared_data_buffer != MAP_FAILED)
                 {
                     _data = shared_data_buffer;
-                    _mappedSize = statBuf.st_size;
+                    _mappedSize = mappedSize;
+                    _ownsMapping = (fixedAddr == nullptr);
                 }
                 else
                 {
@@ -108,7 +127,7 @@ namespace mxl::lib
     MXL_EXPORT
     SharedMemoryBase::~SharedMemoryBase()
     {
-        if (_data != nullptr)
+        if (_data != nullptr && _ownsMapping)
         {
             (void)::munmap(_data, _mappedSize);
         }
