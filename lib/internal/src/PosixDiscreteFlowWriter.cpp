@@ -79,6 +79,8 @@ namespace mxl::lib
             return MXL_ERR_UNKNOWN;
         }
 
+        auto const reopening = (_currentIndex == in_index);
+
         if ((_lastCommittedIndex != MXL_UNDEFINED_INDEX) && (in_index <= _lastCommittedIndex))
         {
             return MXL_ERR_INVALID_ARG;
@@ -107,6 +109,10 @@ namespace mxl::lib
         auto const grain = _flowData->grainAt(offset);
         grain->header.info.index = in_index; // Set the absolute grain index associated to that ring buffer entry
         grain->header.info.flags &= ~MXL_GRAIN_FLAG_INVALID;
+        if (!reopening)
+        {
+            grain->header.info.validSlices = 0;
+        }
         *out_grainInfo = grain->header.info;
         *out_payload = reinterpret_cast<std::uint8_t*>(&grain->header + 1);
         _currentIndex = in_index;
