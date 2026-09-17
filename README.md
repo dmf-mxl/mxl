@@ -40,10 +40,17 @@ Enables memory sharing through controlled data movement.
 
 # Getting Started
 
-- A good hands-on way to start is with the [cbcrc/mxl-hands-on](https://github.com/cbcrc/mxl-hands-on) repo. This provides a guided workshop/tutorial tht helps the user set up and MXL hands-on through exercises.
-- The MXL SDK, can be built using a devcontainer or CMake. For more details see [here](docs/Building.md).
-- Information about example tools to work with MXL, including GStreamer pipelines, are [here](docs/Tools.md)
-- There are some examples of how to use MXL with Docker Compose and Kubernetes [here](examples/README.md).
+- To see MXL moving test video and audio between containers, without cloning the repo or installing a compiler on the host, run the command below on Linux (x86_64). It downloads sources, ensures Docker is installed, builds the example images from source, and starts the [Docker Compose example](examples/README.md). The first build compiles the SDK inside Docker and takes several minutes. If Docker is missing, the script uses `sudo` to install it from distro packages (`docker.io` on Ubuntu/Debian) where those exist (your password prompt is expected). This is not a tutorial, and it does not install MXL libraries on the host.
+
+  ```bash
+  curl -fsSL https://raw.githubusercontent.com/dmf-mxl/mxl/main/examples/bootstrap.sh | bash -s -- --yes --up
+  ```
+
+  From a checkout, run `./examples/bootstrap.sh --up` instead. When the stack is up, `docker logs mxl-example-video-flow-info-1` should show updating flow info. Stop with Ctrl+C, then `docker compose down` from the `examples` directory.
+- A guided workshop with exercises is in the [cbcrc/mxl-hands-on](https://github.com/cbcrc/mxl-hands-on) repo.
+- To build the SDK on the host (devcontainer or CMake), see [here](docs/Building.md).
+- Example tools and GStreamer pipelines are [here](docs/Tools.md).
+- Docker Compose details and a Kubernetes example are [here](examples/README.md).
 
 # Motivation
 
