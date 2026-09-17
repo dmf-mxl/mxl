@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -47,7 +49,7 @@ namespace
 
                 // Parse JSON
                 auto jsonText = buffer.str();
-                std::string err = picojson::parse(_doc, jsonText);
+                auto const err = picojson::parse(_doc, jsonText);
                 if (!err.empty())
                 {
                     throw std::runtime_error{"JSON parse error: " + err};
@@ -171,7 +173,12 @@ namespace
             }
         }
 
-        constexpr char const* getFormatString(int format) noexcept
+        /**
+         * @brief Describe a stored flow format without narrowing its numeric representation.
+         * @param format Unsigned format value from the common flow configuration.
+         * @return Format name, or UNKNOWN for an unrecognized value.
+         */
+        constexpr char const* getFormatString(std::uint32_t format) noexcept
         {
             switch (format)
             {
@@ -179,6 +186,7 @@ namespace
                 case MXL_DATA_FORMAT_VIDEO:       return "Video";
                 case MXL_DATA_FORMAT_AUDIO:       return "Audio";
                 case MXL_DATA_FORMAT_DATA:        return "Data";
+                case MXL_DATA_FORMAT_EVENT:       return "Event";
                 default:                          return "UNKNOWN";
             }
         }
@@ -211,11 +219,16 @@ namespace
                << '\t' << fmt::format("{: >20}: {}", "Device Index", info.config.common.deviceIndex) << '\n'
                << '\t' << fmt::format("{: >20}: {:0>8x}", "Flags", info.config.common.flags) << '\n';
 
-            if (mxlIsDiscreteDataFormat(info.config.common.format))
+            if (mxlIsDiscreteDataFormat(static_cast<int>(info.config.common.format)))
             {
                 os << '\t' << fmt::format("{: >20}: {}", "Grain count", info.config.discrete.grainCount) << '\n';
             }
-            else if (mxlIsContinuousDataFormat(info.config.common.format))
+            else if (mxlIsEventDataFormat(static_cast<int>(info.config.common.format)))
+            {
+                os << '\t' << fmt::format("{: >20}: {}", "Event count", info.config.event.eventCount) << '\n'
+                   << '\t' << fmt::format("{: >20}: {}", "Event capacity", info.config.event.eventPayloadSize) << '\n';
+            }
+            else if (mxlIsContinuousDataFormat(static_cast<int>(info.config.common.format)))
             {
                 os << '\t' << fmt::format("{: >20}: {}", "Channel count", info.config.continuous.channelCount) << '\n'
                    << '\t' << fmt::format("{: >20}: {}", "Buffer length", info.config.continuous.bufferLength) << '\n';
@@ -223,7 +236,7 @@ namespace
 
             os << '\n' << '\t' << fmt::format("{: >20}: {}", "Head index", info.runtime.headIndex) << '\n';
 
-            if (mxlIsDiscreteDataFormat(info.config.common.format))
+            if (mxlIsDiscreteDataFormat(static_cast<int>(info.config.common.format)))
             {
                 os << '\t' << fmt::format("{: >20}: {}", "Last write time", info.runtime.lastWriteTime) << '\n'
                    << '\t' << fmt::format("{: >20}: {}", "Last read time", info.runtime.lastReadTime) << '\n';
@@ -236,11 +249,11 @@ namespace
         {
             os << *lp.flowInfo;
 
-            if (::mxlIsDiscreteDataFormat(lp.flowInfo->config.common.format))
+            if (::mxlIsDiscreteDataFormat(static_cast<int>(lp.flowInfo->config.common.format)))
             {
                 outputLatency(os, lp.flowInfo->runtime.headIndex, lp.flowInfo->config.common.grainRate, lp.flowInfo->config.discrete.grainCount);
             }
-            else if (::mxlIsContinuousDataFormat(lp.flowInfo->config.common.format))
+            else if (::mxlIsContinuousDataFormat(static_cast<int>(lp.flowInfo->config.common.format)))
             {
                 outputLatency(os, lp.flowInfo->runtime.headIndex, lp.flowInfo->config.common.grainRate, lp.flowInfo->config.continuous.bufferLength);
             }
@@ -315,11 +328,12 @@ namespace
     /// Parse the flow definition JSON to extract detailed information.
     /// \param flowDef The flow definition JSON string.
     /// \return A tuple containing the flow label, group name, and role in group.
-    std::tuple<std::string, std::string, std::string> getFlowDetails(std::string const& flowDef) noexcept
+    /// \throws std::bad_alloc Allocating the returned strings fails.
+    std::tuple<std::string, std::string, std::string> getFlowDetails(std::string const& flowDef)
     {
         auto label = std::string{"n/a"};
-        auto groupName = std::string{""};
-        auto roleInGroup = std::string{""};
+        auto groupName = std::string{};
+        auto roleInGroup = std::string{};
 
         try
         {
@@ -362,7 +376,9 @@ namespace
             }
         }
         catch (...)
-        {}
+        {
+            (void)std::fputs("WARNING: Failed to parse flow details; displaying available fields.\n", stderr);
+        }
 
         return {label, groupName, roleInGroup};
     }
@@ -435,7 +451,7 @@ namespace
             auto seenRolesInGroup = std::set<std::string>{};
 
             // A group name is considered invalid if empty
-            bool invalidGroup = groupName.empty();
+            auto const invalidGroup = groupName.empty();
 
             // Print the group name and mxl address for the group.
             // Pretty print if we are in a terminal, otherwise just print plain text.
@@ -470,7 +486,7 @@ namespace
 
                 // A flow is considered to have issues if it has an invalid group, a role in group conflict, or an empty role in group (since that is
                 // not ideal for grouping).
-                bool flowHasIssues = invalidGroup || hasRoleInGroupConflicts || roleInGroup.empty();
+                auto const flowHasIssues = invalidGroup || hasRoleInGroupConflicts || roleInGroup.empty();
 
                 // Print the flow details, flagging any issues in red if we are in a terminal.
                 auto const style = (detail::isTerminal(std::cout) && flowHasIssues) ? fmt::text_style{fmt::fg(fmt::color::red)} : fmt::text_style{};
@@ -578,7 +594,14 @@ namespace
     }
 }
 
+/**
+ * @brief Run the command-line tool and report unexpected exceptions as failures.
+ * @param argc Number of command-line arguments, including the executable name.
+ * @param argv Command-line argument strings.
+ * @return EXIT_SUCCESS on success, a CLI parse status, or EXIT_FAILURE on an unexpected error.
+ */
 int main(int argc, char** argv)
+try
 {
     auto app = CLI::App{"mxl-info"};
     app.allow_extras();
@@ -688,4 +711,14 @@ int main(int argc, char** argv)
     }
 
     return status;
+}
+catch (std::exception const& ex)
+{
+    (void)std::fprintf(stderr, "ERROR: %s\n", ex.what());
+    return EXIT_FAILURE;
+}
+catch (...)
+{
+    (void)std::fputs("ERROR: Unexpected exception.\n", stderr);
+    return EXIT_FAILURE;
 }

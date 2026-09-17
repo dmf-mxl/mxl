@@ -39,7 +39,7 @@ namespace mxl::lib
 
         /**
          * Accessor for the 'grain_rate' field, which either contains the
-         * 'grain rate' for discrete flows, or the 'sample rate' for continuous
+         * 'grain rate' for discrete and event flows, or the 'sample rate' for continuous
          * flows.
          *
          * \return The grain rate or sample rate respectively if found and valid.
@@ -122,7 +122,7 @@ namespace mxl::lib
         else
         {
             auto msg = std::string{"Required '"} + field + "' not found.";
-            throw std::invalid_argument{std::move(msg)};
+            throw std::invalid_argument{msg};
         }
     }
 

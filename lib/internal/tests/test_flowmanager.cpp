@@ -27,7 +27,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow Manager : Creat
     REQUIRE_THROWS(
         [&]()
         {
-            std::make_shared<FlowManager>(domain);
+            (void)std::make_shared<FlowManager>(domain);
         }());
 
     // Create the mxl domain path.

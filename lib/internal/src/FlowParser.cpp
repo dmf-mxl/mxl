@@ -26,8 +26,8 @@ namespace mxl::lib
 
         // this are arbitrary limits, but we need to put a cap somewhere to prevent a bad json document
         // from allocating all the RAM on the system.
-        constexpr auto MAX_WIDTH = 7680u;  // 8K UHD
-        constexpr auto MAX_HEIGHT = 4320u; // 8K UHD
+        constexpr auto MAX_WIDTH = std::uint32_t{7680};  ///< Maximum supported video width in pixels (8K UHD).
+        constexpr auto MAX_HEIGHT = std::uint32_t{4320}; ///< Maximum supported video height in pixels (8K UHD).
 
         /**
          * Translate a NMOS IS-04 data format to a an mxlDataFormat enum.
@@ -44,7 +44,8 @@ namespace mxl::lib
             constexpr auto const FORMAT_PREFIX = "urn:x-nmos:format:"sv;
             if (format.starts_with(FORMAT_PREFIX))
             {
-                auto const tail = format.substr(FORMAT_PREFIX.length());
+                auto tail = format;
+                tail.remove_prefix(FORMAT_PREFIX.length());
                 if (tail == "video"sv)
                 {
                     return MXL_DATA_FORMAT_VIDEO;
@@ -52,6 +53,10 @@ namespace mxl::lib
                 if (tail == "audio"sv)
                 {
                     return MXL_DATA_FORMAT_AUDIO;
+                }
+                if (tail == "event"sv || tail == "data.event"sv)
+                {
+                    return MXL_DATA_FORMAT_EVENT;
                 }
                 if (tail == "data"sv)
                 {
@@ -75,7 +80,7 @@ namespace mxl::lib
             if (it == in_obj.end())
             {
                 auto msg = std::string{"Required '"} + in_field + "' not found.";
-                throw std::invalid_argument{std::move(msg)};
+                throw std::invalid_argument{msg};
             }
             return it;
         }
@@ -117,75 +122,68 @@ namespace mxl::lib
             return result;
         }
 
-        //
-        // Validates that the group hint tag is present and valid
-        // See https://specs.amwa.tv/nmos-parameter-registers/branches/main/tags/grouphint.html
-        //
+        /**
+         * @brief Validate one group hint's name, role and optional scope.
+         * @param value JSON value expected to contain a group hint string.
+         * @return True for a nonempty name and role with an optional device/node scope.
+         * @throws std::exception Allocation fails while splitting the hint.
+         */
+        bool validateGroupHintValue(picojson::value const& value)
+        {
+            if (!value.is<std::string>())
+            {
+                MXL_ERROR("Invalid group hint value. Not a string.");
+                return false;
+            }
+
+            auto const& hint = value.get<std::string>();
+            auto parts = std::vector<std::string_view>{};
+            for (auto part : hint | std::views::split(':'))
+            {
+                parts.emplace_back(std::ranges::data(part), std::ranges::size(part));
+            }
+            if (parts.size() < 2 || parts.size() > 3)
+            {
+                MXL_ERROR("Invalid group hint value '{}'. Expected format '<group-name>:<role-in-group>[:<group-scope>]'", hint);
+                return false;
+            }
+            if (parts[0].empty() || parts[1].empty())
+            {
+                MXL_ERROR("Invalid group hint value '{}'. Group name and role must not be empty.", hint);
+                return false;
+            }
+            if (parts.size() == 3 && parts[2] != "device" && parts[2] != "node")
+            {
+                MXL_ERROR("Invalid group hint value '{}'. Group scope must be either 'device' or 'node'.", hint);
+                return false;
+            }
+            return true;
+        }
+
+        /**
+         * @brief Validate the presence and contents of the flow's group hint tag.
+         * @param in_object Flow definition containing the tags object.
+         * @return True if at least one group hint exists and every hint is valid.
+         */
         bool validateGroupHint(picojson::object const& in_object)
         {
             try
             {
-                // obtain the tags object. Will throw if not found or not an object
                 auto const tags = fetchAs<picojson::object>(in_object, "tags");
-
-                // obtain the specific tag array from the tags object. Will throw if not found or not an array
-                auto const& groupHints = fetchAs<picojson::array>(tags, "urn:x-nmos:tag:grouphint/v1.0");
-
-                // we need at least a group hint
+                auto const groupHints = fetchAs<picojson::array>(tags, "urn:x-nmos:tag:grouphint/v1.0");
                 if (groupHints.empty())
                 {
                     MXL_ERROR("Group hint tag found but empty.");
                     return false;
                 }
-                else
+                for (auto const& value : groupHints)
                 {
-                    // iterate over the array and confirm that all values are strings and follow the
-                    // expected format.
-                    // "<group-name>:<role-in-group>[:<group-scope>]" where group-scope if present, is either device or node
-                    for (auto const& v : groupHints)
+                    if (!validateGroupHintValue(value))
                     {
-                        if (!v.is<std::string>())
-                        {
-                            MXL_ERROR("Invalid group hint value. Not a string.");
-                            return false;
-                        }
-
-                        // Get the array item
-                        auto const& s = v.get<std::string>();
-                        // Split the string into parts separated by ':'
-                        auto parts = s | std::views::split(':') |
-                                     std::views::transform([&](auto&& rng) { return std::string_view(&*rng.begin(), std::ranges::distance(rng)); });
-
-                        auto vec = std::vector<std::string_view>{parts.begin(), parts.end()};
-                        if ((vec.size() < 2) || (vec.size() > 3))
-                        {
-                            MXL_ERROR("Invalid group hint value '{}'. Expected format '<group-name>:<role-in-group>[:<group-scope>]'", s);
-                            return false;
-                        }
-
-                        // Validate the group name and role
-                        auto const& groupName = vec[0];
-                        auto const& role = vec[1];
-                        if (groupName.empty() || role.empty())
-                        {
-                            MXL_ERROR("Invalid group hint value '{}'. Group name and role must not be empty.", s);
-                            return false;
-                        }
-
-                        // Validate the group scope if present
-                        if (vec.size() == 3)
-                        {
-                            auto const& groupScope = vec[2];
-                            if (groupScope != "device" && groupScope != "node")
-                            {
-                                MXL_ERROR("Invalid group hint value '{}'. Group scope must be either 'device' or 'node'.", s);
-                                return false;
-                            }
-                        }
+                        return false;
                     }
-                    // all the tags passed validation
-                    return true;
                 }
+                return true;
             }
             catch (std::exception const& e)
             {
@@ -232,7 +230,7 @@ namespace mxl::lib
         _format = translateFlowFormat(fetchAs<std::string>(_root, "format"));
 
         // Read the grain rate if this is not an audio flow.
-        if (mxlIsDiscreteDataFormat(_format))
+        if (mxlIsDiscreteDataFormat(_format) || mxlIsEventDataFormat(_format))
         {
             _grainRate = extractRational(fetchAs<picojson::object>(_root, "grain_rate"));
         }
@@ -243,6 +241,11 @@ namespace mxl::lib
         else
         {
             throw std::domain_error{"Unsupported flow format."};
+        }
+
+        if (mxlIsEventDataFormat(_format) && (_grainRate.numerator <= 0 || _grainRate.denominator <= 0))
+        {
+            throw std::invalid_argument{"Event grain_rate must be positive."};
         }
 
         // Validate that we have a non empty label
@@ -268,7 +271,7 @@ namespace mxl::lib
             if ((width < 2) || (width > MAX_WIDTH) || (height < 1) || (height > MAX_HEIGHT))
             {
                 auto msg = fmt::format("Invalid video dimensions: {}x{}. range is 2x1 to {}x{}", width, height, MAX_WIDTH, MAX_HEIGHT);
-                throw std::invalid_argument{std::move(msg)};
+                throw std::invalid_argument{msg};
             }
 
             auto interlaceMode = std::string{};
@@ -284,11 +287,11 @@ namespace mxl::lib
             }
 
             constexpr auto validValues = std::array{"progressive", "interlaced_tff", "interlaced_bff"};
-            bool match = std::ranges::any_of(validValues, [&](auto v) { return interlaceMode == v; });
+            auto const match = std::ranges::any_of(validValues, [&](auto v) noexcept { return interlaceMode == v; });
             if (!match)
             {
                 auto msg = fmt::format("Invalid interlace_mode: {}", interlaceMode);
-                throw std::invalid_argument{std::move(msg)};
+                throw std::invalid_argument{msg};
             }
 
             if ((interlaceMode == "interlaced_tff") || (interlaceMode == "interlaced_bff"))
@@ -297,7 +300,7 @@ namespace mxl::lib
                 if ((_grainRate != mxlRational{30000, 1001}) && (_grainRate != mxlRational{25, 1}))
                 {
                     auto msg = std::string{"Invalid grain_rate for interlaced video. Expected 30000/1001 or 25/1."};
-                    throw std::invalid_argument{std::move(msg)};
+                    throw std::invalid_argument{msg};
                 }
 
                 // The grain rate is valid and we are in interlaced mode.  Double the grain rate to express a field rate.
@@ -343,7 +346,7 @@ namespace mxl::lib
                 else
                 {
                     auto msg = std::string{"Invalid video height for interlaced v210. Must be even."};
-                    throw std::invalid_argument{std::move(msg)};
+                    throw std::invalid_argument{msg};
                 }
             }
             else if (mediaType == "video/v210a")
@@ -366,13 +369,13 @@ namespace mxl::lib
                 else
                 {
                     auto msg = std::string{"Invalid video height for interlaced v210a. Must be even."};
-                    throw std::invalid_argument{std::move(msg)};
+                    throw std::invalid_argument{msg};
                 }
             }
             else
             {
                 auto msg = std::string{"Unsupported video media_type: "} + mediaType;
-                throw std::invalid_argument{std::move(msg)};
+                throw std::invalid_argument{msg};
             }
         }
         else if (_format == MXL_DATA_FORMAT_DATA)
@@ -385,8 +388,12 @@ namespace mxl::lib
             else
             {
                 auto msg = std::string{"Unsupported data media_type: "} + mediaType;
-                throw std::invalid_argument{std::move(msg)};
+                throw std::invalid_argument{msg};
             }
+        }
+        else if (_format == MXL_DATA_FORMAT_EVENT)
+        {
+            payloadSize = MXL_DATA_FORMAT_GRAIN_SIZE;
         }
         else if (_format == MXL_DATA_FORMAT_AUDIO)
         {
@@ -396,7 +403,7 @@ namespace mxl::lib
             if ((bitDepth != 32.0) && (bitDepth != 64.0))
             {
                 auto msg = fmt::format("Unsupported bit depth: {}", bitDepth);
-                throw std::invalid_argument{std::move(msg)};
+                throw std::invalid_argument{msg};
             }
 
             payloadSize = static_cast<std::size_t>(bitDepth) / 8U;
@@ -443,7 +450,7 @@ namespace mxl::lib
                 else
                 {
                     auto msg = std::string{"Unsupported video media_type: "} + mediaType;
-                    throw std::invalid_argument{std::move(msg)};
+                    throw std::invalid_argument{msg};
                 }
 
                 return sliceLengths;
@@ -472,7 +479,7 @@ namespace mxl::lib
                 if (auto const mediaType = fetchAs<std::string>(_root, "media_type"); mediaType != "video/v210" && mediaType != "video/v210a")
                 {
                     auto msg = std::string{"Unsupported video media_type: "} + mediaType;
-                    throw std::invalid_argument{std::move(msg)};
+                    throw std::invalid_argument{msg};
                 }
 
                 // For v210, the number of slices is always the number of video lines
@@ -503,7 +510,7 @@ namespace mxl::lib
                 }
             }
             auto msg = fmt::format("Unsupported channel count: {}", it->second.is<std::string>());
-            throw std::invalid_argument{std::move(msg)};
+            throw std::invalid_argument{msg};
         }
         return 1U;
     }

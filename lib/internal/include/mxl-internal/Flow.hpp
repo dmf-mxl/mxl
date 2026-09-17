@@ -1,6 +1,10 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+/** @file
+ * @brief Internal shared-memory headers for discrete grains and event slots.
+ */
+
 #pragma once
 
 #include <cstddef>
@@ -8,7 +12,6 @@
 #include <iosfwd>
 #include <mxl/flow.h>
 #include <mxl/platform.h>
-#include "FlowInfo.hpp"
 #include "FlowState.hpp"
 
 namespace mxl::lib
@@ -51,6 +54,24 @@ namespace mxl::lib
     struct Grain
     {
         GrainHeader header;
+    };
+
+    /// Version stored in the public mxlEventInfo metadata of every published entry.
+    constexpr auto EVENT_HEADER_VERSION = std::uint32_t{1};
+
+    /** @brief 640-byte slot header with layout fields, sequence and metadata on separate 64-byte boundaries. */
+    struct EventHeader
+    {
+        std::uint32_t version;              ///< Immutable EventRingBuffer storage version.
+        std::uint32_t size;                 ///< Immutable size of EventHeader in bytes.
+        alignas(64) std::uint64_t sequence; ///< Atomic tag: index shifted left one bit, low bit set after publication; EMPTY if unused.
+        alignas(64) std::uint64_t infoWords[sizeof(mxlEventInfo) / sizeof(std::uint64_t)]; ///< Public metadata accessed through atomic words.
+    };
+
+    /** @brief Fixed part of an event slot; its payload follows immediately in the mapping. */
+    struct Event
+    {
+        EventHeader header; ///< Sequence, layout and metadata fields for this slot.
     };
 
     std::ostream& operator<<(std::ostream& os, Grain const& obj);
