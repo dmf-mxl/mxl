@@ -52,7 +52,6 @@ CAM2: mxl:///dev/shm/mxl/?id=53c36c15-10c8-48a3-9ba1-41f31d557fba&id=20e6824e-44
         audio : 20e6824e-44b1-43ad-b198-99ebb7fa7092 - Camera 2
 ```
 
-
 Example 2a : Printing details about a specific flow using command line options.
 
 ```bash
@@ -77,7 +76,7 @@ Example 2a : Printing details about a specific flow using command line options.
                     Active: true
 ```
 
-Example 2a : Printing details about a specific flow using an MXL URI 
+Example 2a : Printing details about a specific flow using an MXL URI
 
 ```bash
 ./mxl-info mxl:///dev/shm/mxl?id=5fbec3b1-1b0f-417d-9059-8b94a47197ed
@@ -109,7 +108,11 @@ watch -n 1 -p ./mxl-info mxl:///dev/shm/mxl?id=5fbec3b1-1b0f-417d-9059-8b94a4719
 
 ## mxl-data-probe
 
-A tool that opens an MXL ancillary Data flow (`media_type: video/smpte291`), reads one or more grains starting at the current head index, and prints the RFC-8331 ANC elements found in each grain.
+A tool that opens an MXL ancillary Data flow (`media_type: video/smpte291`) or an Event flow (`urn:x-nmos:format:event`).
+For Data flows, it reads grains starting at the current head index and prints their RFC-8331 ANC elements.
+For Event flows, it reads in queue order starting at the oldest retained event and prints the timestamp, flags, registry, data item type, payload size, fragment offset, completion flag, and payload bytes in hexadecimal. Events do not require a `media_type`.
+
+`--count` counts individual stored entries, including fragments. Fragments are displayed separately without reassembly or continuity validation. The printed event number is a local read counter starting at zero. A read error (including a timeout or ring overrun) stops the probe with a nonzero exit status.
 
 ```bash
 ./mxl-data-probe [OPTIONS] [ADDRESS...]
@@ -122,9 +125,10 @@ OPTIONS:
           --version           Display program version information and exit
   -d,     --domain TEXT:DIR   The MXL domain directory
   -f,     --flow TEXT         The flow id to read
-  -c,     --count UINT [1]    Number of grains to read from the current head index
+  -c,     --count UINT [1]    Number of grains (from the head) or event entries
+                              (from the oldest retained) to read
   -t,     --timeout-ms UINT [1000]
-                              Timeout per grain read in milliseconds
+                              Timeout per grain or event read in milliseconds
 
 MXL URI format:
 mxl://[authority[:port]]/domain[?id=...]
@@ -143,12 +147,17 @@ Example using an MXL URI:
 ./mxl-data-probe mxl:///dev/shm/mxl?id=db3bd465-2772-484f-8fac-830b0471258b --count 3
 ```
 
+Example inspecting two event entries (such as a two-fragment event):
+
+```bash
+./mxl-data-probe -d /dev/shm/mxl -f cabbc00d-3860-4438-bc48-8ebdfe67305e --count 2
+```
+
 ## mxl-gst-testsrc
 
 A binary that uses the gstreamer 'videotestsrc' and 'audiotestsrc' elements to produce video grains and/or audio samples which will be pushed to a MXL Flow. The flow is configured from a NMOS Flow json file. Here's an example of such file :
 
 &emsp; **Note** Don't forget to provide valid description, label and grouphint tag.
-
 
 ```json
 {
@@ -193,11 +202,11 @@ A binary that uses the gstreamer 'videotestsrc' and 'audiotestsrc' elements to p
   ]
 }
 ```
+
 Below is an example of an **augmented NMOS Flow JSON** for audio.  
 &emsp; **Note 1:** The *channel_count* property is a mandatory MXL requirement (not found in standard NMOS definition). To adjust the number of audio channels, simply update the *channel_count* value.
 
 &emsp; **Note 2:** Don't forget to provide valid description, label and grouphint tag.
-
 
 ```json
 {

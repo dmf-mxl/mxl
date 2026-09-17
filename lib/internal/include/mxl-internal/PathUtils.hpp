@@ -1,6 +1,10 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+/** @file
+ * @brief Paths and filenames utilities used by the MXL SDK.
+ */
+
 #pragma once
 
 #include <filesystem>
@@ -14,6 +18,8 @@ namespace mxl::lib
     constexpr auto const GRAIN_DIRECTORY_NAME = "grains";
     constexpr auto const GRAIN_DATA_FILE_NAME_STEM = "data";
     constexpr auto const CHANNEL_DATA_FILE_NAME = "channels";
+    /// Filename of the single shared-memory event ring within a flow directory.
+    constexpr auto EVENT_DATA_FILE_NAME = "events";
     constexpr auto const DOMAIN_OPTIONS_FILE_NAME = "options.json";
 
     std::filesystem::path makeFlowDirectoryName(std::filesystem::path const& domain, std::string const& uuid);
@@ -35,6 +41,13 @@ namespace mxl::lib
 
     std::filesystem::path makeChannelDataFilePath(std::filesystem::path const& flowDirectory);
     std::filesystem::path makeChannelDataFilePath(std::filesystem::path const& domain, std::string const& uuid);
+
+    /**
+     * @brief Locate an event ring file within its flow directory.
+     * @param flowDirectory Fully resolved flow directory, including its flow ID component.
+     * @return Path to the events file; no filesystem access is performed.
+     */
+    std::filesystem::path makeEventDataFilePath(std::filesystem::path const& flowDirectory);
 
     std::filesystem::path makeDomainOptionsFilePath(std::filesystem::path const& domain);
 

@@ -28,6 +28,14 @@ namespace mxl::lib
         virtual std::unique_ptr<ContinuousFlowWriter> createContinuousFlowWriter(FlowManager const& manager, uuids::uuid const& flowId,
             std::unique_ptr<ContinuousFlowData>&& data) const override;
 
+        /** @copydoc FlowReaderFactory::createEventFlowReader */
+        std::unique_ptr<EventFlowReader> createEventFlowReader(FlowManager const& manager, uuids::uuid const& flowId,
+            std::unique_ptr<EventFlowData>&& data) const override;
+
+        /** @copydoc FlowWriterFactory::createEventFlowWriter */
+        std::unique_ptr<EventFlowWriter> createEventFlowWriter(FlowManager const& manager, uuids::uuid const& flowId,
+            std::unique_ptr<EventFlowData>&& data) const override;
+
         ~PosixFlowIoFactory();
 
     private:

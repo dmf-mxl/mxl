@@ -1,8 +1,13 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+/** @file
+ * @brief Command-line inspection of event entries and RFC-8331 ANC data.
+ */
+
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 #include <algorithm>
 #include <exception>
@@ -10,6 +15,7 @@
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 #include <ada.h>
@@ -346,6 +352,102 @@ namespace
         return size;
     }
 
+    /**
+     * @brief Select a printable name for an event registry identifier.
+     * @param registry Registry value from event metadata.
+     * @return MXL, SMPTE, or Unknown for an unrecognized identifier.
+     */
+    constexpr char const* describeEventRegistry(::mxlEventRegistryType registry) noexcept
+    {
+        switch (registry)
+        {
+            case MXL_EVENT_REGISTRY_TYPE_MXL:   return "DMF MXL";
+            case MXL_EVENT_REGISTRY_TYPE_SMPTE: return "SMPTE";
+            default:                            return "Unknown";
+        }
+    }
+
+    /**
+     * @brief Describe fragmentation from one entry's offset and completion flag.
+     * @param eventInfo Metadata to inspect.
+     * @return Fragment role, or an invalid-flag description when complete exceeds one.
+     * @note This does not validate continuity against previously read entries.
+     */
+    constexpr char const* describeEventFragment(::mxlEventInfo const& eventInfo) noexcept
+    {
+        if (eventInfo.complete > 1)
+        {
+            return "invalid completion flag";
+        }
+        if (eventInfo.offset == 0)
+        {
+            return eventInfo.complete ? "unfragmented" : "first fragment";
+        }
+        return eventInfo.complete ? "last fragment" : "continuation fragment";
+    }
+
+    /**
+     * @brief Print entry metadata and a hexadecimal payload dump to standard output.
+     * @param ordinal Local zero-based read counter, not a ring index.
+     * @param eventInfo Metadata whose DIT string is bounded to its fixed array.
+     * @param payload Snapshot bytes for this entry, possibly empty.
+     */
+    void printEvent(std::uint64_t ordinal, ::mxlEventInfo const& eventInfo, std::span<std::uint8_t const> payload)
+    {
+        // A producer can fill all 256 bytes without a terminating NUL.
+        auto const typeBytes = std::span{eventInfo.dataItemType};
+        auto const typeEnd = std::ranges::find(typeBytes, '\0');
+        auto const dataItemType = std::string_view{typeBytes.data(), static_cast<std::size_t>(typeEnd - typeBytes.begin())};
+
+        fmt::print("Event {}\n", ordinal);
+        fmt::print("  timestamp: {} TAI ns\n", eventInfo.timestamp);
+        fmt::print("  flags: 0x{:X}\n", eventInfo.flags);
+        fmt::print("  registry: {} ({})\n", describeEventRegistry(eventInfo.registryType), static_cast<std::uint32_t>(eventInfo.registryType));
+        fmt::print("  data item type: {}\n", dataItemType.empty() ? "<empty>" : dataItemType);
+        fmt::print("  event size: {} bytes\n", eventInfo.eventSize);
+        fmt::print("  offset: {} bytes\n", eventInfo.offset);
+        fmt::print("  complete: {}\n", eventInfo.complete);
+        fmt::print("  fragmentation: {}\n", describeEventFragment(eventInfo));
+        fmt::print("  payload:");
+        if (payload.empty())
+        {
+            fmt::print(" <empty>");
+        }
+        for (auto offset = std::size_t{0}; offset < payload.size(); ++offset)
+        {
+            if (offset % 16 == 0)
+            {
+                fmt::print("\n    {:04X}:", offset);
+            }
+            fmt::print(" {}", formatHexByte(payload[offset]));
+        }
+        fmt::print("\n");
+    }
+
+    /**
+     * @brief Read and display event entries using the reader's queue cursor.
+     * @param reader Existing event reader; ownership stays with the caller.
+     * @param flowId Identifier displayed in the output heading.
+     * @param count Number of entries to read, counting fragments separately.
+     * @param timeoutNs Maximum wait in nanoseconds for each read.
+     * @throws std::runtime_error Any read returns an error, including timeout or overrun.
+     */
+    void readEventFlow(::mxlFlowReader reader, std::string const& flowId, std::uint64_t count, std::uint64_t timeoutNs)
+    {
+        fmt::print("Reading Event flow {} from the oldest retained event\n", flowId);
+        for (auto readCount = std::uint64_t{0}; readCount < count; ++readCount)
+        {
+            auto eventInfo = ::mxlEventInfo{};
+            auto payload = static_cast<std::uint8_t*>(nullptr);
+            auto const status = ::mxlFlowReaderGetEvent(reader, timeoutNs, &eventInfo, &payload);
+            if (status != MXL_STATUS_OK)
+            {
+                throw std::runtime_error{fmt::format("Failed to read event {}: {}", readCount, statusToString(status))};
+            }
+            printEvent(readCount, eventInfo, std::span<std::uint8_t const>{payload, eventInfo.eventSize});
+        }
+    }
+
     std::string getMediaType(::mxlInstance instance, std::string const& flowId)
     {
         auto buffer = std::vector<char>(4096);
@@ -384,7 +486,15 @@ namespace
         return iter->second.get<std::string>();
     }
 
-    void readDataFlow(std::string const& domain, std::string const& flowId, std::uint64_t count, std::uint64_t timeoutNs)
+    /**
+     * @brief Open a flow and select event inspection or RFC-8331 ANC decoding.
+     * @param domain Domain directory containing the flow.
+     * @param flowId Identifier of the flow to inspect.
+     * @param count Number of event entries or ANC grains to print.
+     * @param timeoutNs Maximum wait in nanoseconds for each read.
+     * @throws std::runtime_error Opening, format validation, reading or ANC decoding fails.
+     */
+    void readFlow(std::string const& domain, std::string const& flowId, std::uint64_t count, std::uint64_t timeoutNs)
     {
         auto instance = ScopedMxlInstance{domain};
         auto reader = ScopedFlowReader{instance.get(), flowId};
@@ -396,9 +506,14 @@ namespace
             throw std::runtime_error{fmt::format("Failed to get flow info: {}", statusToString(status))};
         }
 
+        if (flowInfo.config.common.format == MXL_DATA_FORMAT_EVENT)
+        {
+            readEventFlow(reader.get(), flowId, count, timeoutNs);
+            return;
+        }
         if (flowInfo.config.common.format != MXL_DATA_FORMAT_DATA)
         {
-            throw std::runtime_error{"Flow is not a Data flow."};
+            throw std::runtime_error{"Flow is not a Data or Event flow."};
         }
 
         auto const mediaType = getMediaType(instance.get(), flowId);
@@ -415,7 +530,7 @@ namespace
         auto index = flowInfo.runtime.headIndex;
         fmt::print("Reading Data flow {} from head index {}\n", flowId, index);
 
-        for (std::uint64_t readCount = 0; readCount < count; ++readCount, ++index)
+        for (auto readCount = std::uint64_t{0}; readCount < count; ++readCount, ++index)
         {
             auto grainInfo = ::mxlGrainInfo{};
             auto* payload = static_cast<std::uint8_t*>(nullptr);
@@ -439,9 +554,16 @@ namespace
     }
 }
 
+/**
+ * @brief Run the command-line tool and report unexpected exceptions as failures.
+ * @param argc Number of command-line arguments, including the executable name.
+ * @param argv Command-line argument strings.
+ * @return EXIT_SUCCESS on success, a CLI parse status, or EXIT_FAILURE on an unexpected error.
+ */
 int main(int argc, char** argv)
+try
 {
-    auto app = CLI::App{"Read RFC-8331 ANC elements from an MXL Data flow."};
+    auto app = CLI::App{"Read RFC-8331 ANC elements from an MXL Data flow or inspect an MXL Event flow."};
     app.footer("MXL URI format:\n"
                "    mxl://[authority[:port]]/domain[?id=...]\n"
                "    See: https://github.com/dmf-mxl/mxl/docs/Addressability.md");
@@ -458,11 +580,11 @@ int main(int argc, char** argv)
     app.add_option("-f,--flow", flowId, "The flow id to read");
 
     auto count = std::uint64_t{1};
-    app.add_option("-c,--count", count, "Number of grains to read from the current head index")
+    app.add_option("-c,--count", count, "Number of grains (from the head) or event entries (from the oldest retained) to read")
         ->check(CLI::Range(std::uint64_t{1}, std::numeric_limits<std::uint64_t>::max()));
 
     auto timeoutMs = std::uint64_t{1000};
-    app.add_option("-t,--timeout-ms", timeoutMs, "Timeout per grain read in milliseconds");
+    app.add_option("-t,--timeout-ms", timeoutMs, "Timeout per grain or event read in milliseconds");
 
     auto address = std::vector<std::string>{};
     app.add_option("ADDRESS", address, "MXL URI")->expected(-1);
@@ -515,7 +637,7 @@ int main(int argc, char** argv)
 
     try
     {
-        readDataFlow(domain, flowId, count, timeoutMs * 1000U * 1000U);
+        readFlow(domain, flowId, count, timeoutMs * 1000U * 1000U);
         return EXIT_SUCCESS;
     }
     catch (std::exception const& ex)
@@ -523,4 +645,14 @@ int main(int argc, char** argv)
         fmt::print(stderr, "ERROR: {}\n", ex.what());
         return EXIT_FAILURE;
     }
+}
+catch (std::exception const& ex)
+{
+    (void)std::fprintf(stderr, "ERROR: %s\n", ex.what());
+    return EXIT_FAILURE;
+}
+catch (...)
+{
+    (void)std::fputs("ERROR: Unexpected exception.\n", stderr);
+    return EXIT_FAILURE;
 }

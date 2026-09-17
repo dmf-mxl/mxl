@@ -58,7 +58,7 @@ namespace mxl::lib
                     std::filesystem::perms::others_exec,
                 std::filesystem::perm_options::add);
 
-#if defined __linux__
+#ifdef __linux__
             if (::renameat2(AT_FDCWD, source.c_str(), AT_FDCWD, dest.c_str(), RENAME_NOREPLACE) < 0)
 #elif defined __APPLE__
             if (::renamex_np(source.c_str(), dest.c_str(), RENAME_EXCL) < 0)
@@ -67,7 +67,7 @@ namespace mxl::lib
                 auto const error = errno;
                 switch (error)
                 {
-                    case EEXIST:    return false;
+                    case EEXIST:
                     case ENOTEMPTY: return false;
                     default:
                         throw std::system_error{error, std::system_category(), "Failed to publish flow directory by renaming it to its public name."};
@@ -171,7 +171,7 @@ namespace mxl::lib
         MXL_DEBUG("Create discrete flow. id: {}, grainCount: {}, grain payload size: {}", uuidString, grainCount, grainPayloadSize);
 
         flowFormat = sanitizeFlowFormat(flowFormat);
-        if (!mxlIsDiscreteDataFormat(flowFormat))
+        if (!mxlIsDiscreteDataFormat(static_cast<int>(flowFormat)))
         {
             throw std::runtime_error{"Attempt to create discrete flow with unsupported or non matching format."};
         }
@@ -208,7 +208,7 @@ namespace mxl::lib
         info.config.common = initCommonFlowConfigInfo(flowId, flowFormat, grainRate, maxSyncBatchSizeHintOpt, maxCommitBatchSizeHintOpt);
         info.config.discrete = {};
         info.config.discrete.grainCount = grainCount;
-        std::copy(grainSliceLengths.begin(), grainSliceLengths.end(), info.config.discrete.sliceSizes);
+        std::ranges::copy(grainSliceLengths, info.config.discrete.sliceSizes);
 
         info.runtime = initFlowRuntimeInfo();
 
@@ -253,6 +253,77 @@ namespace mxl::lib
         }
     }
 
+    std::pair<bool, std::unique_ptr<EventFlowData>> FlowManager::createOrOpenEventFlow(uuids::uuid const& flowId, std::string const& flowDef,
+        std::size_t eventCount, mxlRational const& grainRate, std::size_t eventPayloadSize)
+    {
+        auto const uuidString = uuids::to_string(flowId);
+        MXL_DEBUG("Create event flow. id: {}, eventCount: {}, event payload size: {}", uuidString, eventCount, eventPayloadSize);
+
+        auto const flowFormat = mxlDataFormat{MXL_DATA_FORMAT_EVENT};
+        if (eventCount < 2 || eventCount > 65536 || eventPayloadSize == 0 || eventPayloadSize > 1048576)
+        {
+            throw std::invalid_argument{"Invalid event buffer dimensions."};
+        }
+
+        auto const tempDirectory = createTemporaryFlowDirectory(_mxlDomain);
+        auto _ = defer(
+            [&]() noexcept
+            {
+                auto ec = std::error_code{};
+                std::filesystem::remove_all(tempDirectory, ec);
+                if (ec)
+                {
+                    MXL_WARN("Failed to remove temporary flow directory: {}", ec.message());
+                }
+            });
+
+        // Write the json file to disk.
+        writeFlowDescriptor(tempDirectory, flowDef);
+
+        // Create the dummy file.
+        auto readAccessFile = makeFlowAccessFilePath(tempDirectory);
+        if (auto out = std::ofstream{readAccessFile, std::ios::out | std::ios::trunc}; !out)
+        {
+            throw std::filesystem::filesystem_error{
+                "Failed to create flow access file.", readAccessFile, std::make_error_code(std::errc::file_exists)};
+        }
+
+        auto const flowDataPath = makeFlowDataFilePath(tempDirectory);
+        auto flowData = std::make_unique<EventFlowData>(flowDataPath.string().c_str(), AccessMode::CREATE_READ_WRITE, LockMode::Shared);
+
+        auto& info = *flowData->flowInfo();
+        info.version = FLOW_DATA_VERSION;
+        info.size = sizeof info;
+        info.config.common = initCommonFlowConfigInfo(flowId, flowFormat, grainRate, 1, 1);
+        info.config.event = {};
+        info.config.event.eventCount = eventCount;
+        info.config.event.eventPayloadSize = eventPayloadSize;
+
+        info.runtime = initFlowRuntimeInfo();
+        info.runtime.headIndex = MXL_UNDEFINED_INDEX;
+
+        auto& state = *flowData->flowState();
+        state = initFlowState(flowDataPath);
+
+        flowData->openEventBuffer(makeEventDataFilePath(tempDirectory).string().c_str());
+
+        auto const finalDir = makeFlowDirectoryName(_mxlDomain, uuidString);
+        if (publishFlowDirectory(tempDirectory, finalDir))
+        {
+            return {true, std::move(flowData)};
+        }
+        else
+        {
+            auto existingFlowData = dynamic_pointer_cast<EventFlowData>(openFlow(flowId, AccessMode::READ_WRITE));
+            if (!existingFlowData)
+            {
+                throw std::runtime_error("Could not open existing flow because it is of a different format");
+            }
+
+            return {false, std::move(existingFlowData)};
+        }
+    }
+
     std::pair<bool, std::unique_ptr<ContinuousFlowData>> FlowManager::createOrOpenContinuousFlow(uuids::uuid const& flowId,
         std::string const& flowDef, mxlDataFormat flowFormat, mxlRational const& sampleRate, std::size_t channelCount, std::size_t sampleWordSize,
         std::size_t bufferLength, std::uint32_t maxSyncBatchSizeHintOpt, std::uint32_t maxCommitBatchSizeHintOpt)
@@ -265,7 +336,7 @@ namespace mxl::lib
             bufferLength);
 
         flowFormat = sanitizeFlowFormat(flowFormat);
-        if (!mxlIsContinuousDataFormat(flowFormat))
+        if (!mxlIsContinuousDataFormat(static_cast<int>(flowFormat)))
         {
             throw std::runtime_error{"Attempt to create continuous flow with unsupported or non matching format."};
         }
@@ -338,11 +409,17 @@ namespace mxl::lib
                     fmt::format("Unsupported flow data version: {}, supported is: {}", flowSegment.get()->info.version, FLOW_DATA_VERSION)};
             }
 
-            if (auto const flowFormat = flowSegment.get()->info.config.common.format; mxlIsDiscreteDataFormat(flowFormat))
+            if (auto const flowFormat = flowSegment.get()->info.config.common.format; mxlIsDiscreteDataFormat(static_cast<int>(flowFormat)))
             {
                 return openDiscreteFlow(base, std::move(flowSegment));
             }
-            else if (mxlIsContinuousDataFormat(flowFormat))
+            else if (flowFormat == MXL_DATA_FORMAT_EVENT)
+            {
+                auto data = std::make_unique<EventFlowData>(std::move(flowSegment));
+                data->openEventBuffer(makeEventDataFilePath(base).string().c_str());
+                return data;
+            }
+            else if (mxlIsContinuousDataFormat(static_cast<int>(flowFormat)))
             {
                 return openContinuousFlow(base, std::move(flowSegment));
             }
@@ -375,7 +452,7 @@ namespace mxl::lib
                     auto const grainPath = makeGrainDataFilePath(grainDir, i).string();
                     MXL_TRACE("Opening grain: {}", grainPath);
 
-                    flowData->emplaceGrain(grainPath.c_str(), /*payloadSize=*/0U);
+                    flowData->emplaceGrain(grainPath.c_str(), /*grainPayloadSize=*/0U);
                 }
             }
             else
@@ -393,7 +470,7 @@ namespace mxl::lib
     {
         auto flowData = std::make_unique<ContinuousFlowData>(std::move(sharedFlowInstance));
 
-        flowData->openChannelBuffers(makeChannelDataFilePath(flowDir).string().c_str(), /*payloadSize=*/0U);
+        flowData->openChannelBuffers(makeChannelDataFilePath(flowDir).string().c_str(), /*sampleWordSize=*/0U);
 
         return flowData;
     }
