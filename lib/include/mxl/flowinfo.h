@@ -3,6 +3,10 @@
 
 #pragma once
 
+/** @file
+ * @brief Public configuration and runtime metadata for MXL flows.
+ */
+
 #ifdef __cplusplus
 #   include <cstdint>
 #else
@@ -56,8 +60,9 @@ extern "C"
 
         /**
          * The number of grains per second expressed as a rational.
-         * For VIDEO and DATA this value must match the 'grain_rate' found in the flow descriptor.
+         * For VIDEO, DATA and EVENT this value must match the 'grain_rate' found in the flow descriptor.
          * For AUDIO flows this value must match the 'sample_rate' found in the flow descriptor.
+         * For EVENT flows this controls buffer capacity; queue positions are independent of time.
          */
         mxlRational grainRate;
 
@@ -117,6 +122,30 @@ extern "C"
     } mxlDiscreteFlowConfigInfo;
 
     /**
+     * The type of event registry associated with the event flow.
+     * Refer to <a href="https://smpte-ra.org/smpte-st2110-41-ar">SMPTE ST 2110-41 AR</a> for SMPTE registry information.
+     */
+    typedef enum mxlEventRegistryType
+    {
+        MXL_EVENT_REGISTRY_TYPE_MXL = 0,  ///< Namespaced application DIT strings, such as `x-mxl:example`.
+        MXL_EVENT_REGISTRY_TYPE_SMPTE = 1 ///< SMPTE registry DIT strings without the 0x prefix.
+    } mxlEventRegistryType;
+
+    /**
+     * @brief Immutable event queue capacity and entry payload geometry (64 bytes).
+     * This is the event member of mxlFlowConfigInfo for MXL_DATA_FORMAT_EVENT.
+     */
+    typedef struct mxlEventFlowConfigInfo_t
+    {
+        /** Number of ring slots available for committed event entries, including fragments. */
+        uint32_t eventCount;
+        /** Maximum payload size of one event entry (a complete event or one fragment), in bytes. */
+        uint32_t eventPayloadSize;
+        /** @brief Reserved bytes that pad this configuration to 64 bytes; leave zero. */
+        uint8_t reserved[56];
+    } mxlEventFlowConfigInfo;
+
+    /**
      * Immutable metadata about an AUDIO flow.
      */
     typedef struct mxlContinuousFlowConfigInfo_t
@@ -153,6 +182,7 @@ extern "C"
         {
             mxlDiscreteFlowConfigInfo discrete;
             mxlContinuousFlowConfigInfo continuous;
+            mxlEventFlowConfigInfo event; ///< Event queue geometry when common.format is MXL_DATA_FORMAT_EVENT.
         };
 
     } mxlFlowConfigInfo;
@@ -163,7 +193,9 @@ extern "C"
      */
     typedef struct mxlFlowRuntimeInfo_t
     {
-        /** The current head index of the ringbuffer(s) of this flow. */
+        /** The last committed index of the ringbuffer(s) of this flow.
+         * For event flows, MXL_UNDEFINED_INDEX until the first event is committed at index zero.
+         */
         uint64_t headIndex;
 
         /** The last time a producer wrote to the flow in nanoseconds since the epoch. */

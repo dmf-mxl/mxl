@@ -8,6 +8,8 @@
 #include "ContinuousFlowReader.hpp"
 #include "DiscreteFlowData.hpp"
 #include "DiscreteFlowReader.hpp"
+#include "EventFlowData.hpp"
+#include "EventFlowReader.hpp"
 
 namespace mxl::lib
 {
@@ -20,6 +22,8 @@ namespace mxl::lib
             std::unique_ptr<DiscreteFlowData>&& data) const = 0;
         virtual std::unique_ptr<ContinuousFlowReader> createContinuousFlowReader(FlowManager const& manager, uuids::uuid const& flowId,
             std::unique_ptr<ContinuousFlowData>&& data) const = 0;
+        virtual std::unique_ptr<EventFlowReader> createEventFlowReader(FlowManager const& manager, uuids::uuid const& flowId,
+            std::unique_ptr<EventFlowData>&& data) const = 0;
 
     protected:
         ~FlowReaderFactory() = default;
