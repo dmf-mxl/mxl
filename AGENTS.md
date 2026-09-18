@@ -48,6 +48,13 @@ The contributor must review and understand AI-assisted changes as required by
 
 Commiting code must be initiated by the contributor, not a coding agent. Signing off a commit implies that the contributor has reviewed and understands every line of the commit, including AI-assisted ones.
 
+## Programming Languages
+
+- C++ code shall conform to the ISO C++20 standard.
+- Compiler-specific extensions and non-standard language features shall not be used.
+- C++20 modules are explicitly excluded from the supported language features.
+- C code shall conform to the ISO C17 standard.
+
 ## Variable initialization
 
 For new or modified C++ local variables, use `auto name = Type{...}`. Use

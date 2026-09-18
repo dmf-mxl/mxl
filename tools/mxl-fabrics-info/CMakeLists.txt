@@ -4,10 +4,6 @@
 include(GNUInstallDirs)
 
 add_executable(mxl-fabrics-info)
-target_compile_features(mxl-fabrics-info
-        PRIVATE
-            cxx_std_20
-    )
 set_target_properties(mxl-fabrics-info
         PROPERTIES
             POSITION_INDEPENDENT_CODE    ON
@@ -16,6 +12,8 @@ set_target_properties(mxl-fabrics-info
             CXX_VISIBILITY_PRESET        hidden
             C_EXTENSIONS                 OFF
             CXX_EXTENSIONS               OFF
+            C_STANDARD                   ${MXL_C_STANDARD}
+            CXX_STANDARD                 ${MXL_CXX_STANDARD}
     )
 target_sources(mxl-fabrics-info
         PRIVATE
