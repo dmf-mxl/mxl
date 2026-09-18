@@ -4,7 +4,9 @@
 # Instructions for coding agents
 
 These instructions apply throughout this repository. Read [CONTRIBUTING.md](CONTRIBUTING.md)
-and preserve existing user changes. Keep edits focused on the requested work.
+and preserve existing user changes. Keep edits focused on the requested work.  The policies
+and guidelines in this document apply to all agent-generated contributions such as code,
+documentation, build files, etc.
 
 ## SPDX notices
 
