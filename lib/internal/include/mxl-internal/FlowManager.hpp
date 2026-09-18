@@ -62,13 +62,14 @@ namespace mxl::lib
         /// \param[in] grainSliceLengths Length of each slice in bytes.
         /// \param[in] maxSyncBatchSizeHintOpt Optional max sync batch size hint.
         /// \param[in] maxCommitBatchSizeHintOpt Optional max commit batch size hint
+        /// \param[in] useContiguousGrains Map the per-grain files contiguously in virtual memory (single device/RDMA registration).
         /// \return (created, flowData) If the flow was created, the first returnd value is true. If the flow was opened instead, false will be
         /// returned. The second returned value is the flow data of the opened or created flow.
         ///
         std::pair<bool, std::unique_ptr<DiscreteFlowData>> createOrOpenDiscreteFlow(uuids::uuid const& flowId, std::string const& flowDef,
             mxlDataFormat flowFormat, std::size_t grainCount, mxlRational const& grainRate, std::size_t grainPayloadSize,
             std::size_t grainNumOfSlices, std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN> grainSliceLengths,
-            std::uint32_t maxSyncBatchSizeHintOpt = 1, std::uint32_t maxCommitBatchSizeHintOpt = 1);
+            std::uint32_t maxSyncBatchSizeHintOpt = 1, std::uint32_t maxCommitBatchSizeHintOpt = 1, bool useContiguousGrains = false);
 
         ///
         /// Create a new continuous flow together with its associated channel store and open it in read-write mode.
