@@ -61,6 +61,27 @@ auto const capacity = std::size_t{4096};
 constexpr auto alignment = std::size_t{64};
 ```
 
+Use right-hand qualifier:
+
+```cpp
+auto const w = ...;
+int* const x = ...;
+float const* y = ...;
+char const* const z = ....;
+```
+
+Use strongly typed literals (if available for the needed type) to deduce the correct variable type:
+
+```cpp
+auto w = 7U;    // unsigned int
+auto x = 13L;   // long
+auto y = 17ULL; // unsigned long long
+auto z = 2Z;    // std::size_t if target standard is C++23
+auto h = 1.5f;  // float
+auto i = 2.0;   // double
+auto c = '5';   // char
+```
+
 - Value-initialize variables; do not introduce uninitialized local storage.
 - Avoid forms such as `Type name;`, `Type name{}`, and `Type name(args)` for
   local variables when the `auto name = Type{...}` form applies.
@@ -69,7 +90,8 @@ constexpr auto alignment = std::size_t{64};
   `auto const result = ring.read(index, info, payload);` or `auto& slot = slots[index];`.
 - Preserve constructor semantics. For example, `std::vector<std::uint8_t>{count}`
   can select an initializer-list constructor instead of allocating `count`
-  elements. Initialize an empty vector and call `resize(count)` when appropriate.
+  elements. Initialize an empty vector and call `resize(count)` when appropriate or
+  explicitly use parentheses in this case as an exception.
 - C declarations, function signatures, and non-static data members require
   explicit types. Use brace initialization for C++ members where applicable;
   keep public C headers valid C.
@@ -79,6 +101,8 @@ An exception to these rules is simple initialisation of pointers with a default 
 ```cpp
 Type *ptr = nullptr;
 ```
+
+- Contructors and initialization: default constructor initializer lists should be used over default member initializers, except in cases of small trivial, standard layout structs used in ad-hoc contexts.
 
 ## Formatting with clang-format
 
