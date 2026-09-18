@@ -6,10 +6,14 @@ include(GNUInstallDirs)
 # Interface library for all targets that need to consume
 # internal symbols from the mxl-internal/*.h header files
 add_library(mxl-internal-headers INTERFACE)
-target_compile_features(mxl-internal-headers
-        INTERFACE
-            cxx_std_20
+set_target_properties(mxl-internal-headers
+        PROPERTIES 
+            C_EXTENSIONS              OFF
+            CXX_EXTENSIONS            OFF
+            C_STANDARD                ${MXL_C_STANDARD}
+            CXX_STANDARD              ${MXL_CXX_STANDARD}
     )
+
 target_include_directories(mxl-internal-headers
         INTERFACE
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -46,10 +50,6 @@ endif()
 # Internal implementation objects. These are consumed by libmxl and by internal
 # tests, but are not installed or exported as a user-visible library.
 add_library(mxl-internal-objects OBJECT)
-target_compile_features(mxl-internal-objects
-        PUBLIC
-            cxx_std_20
-    )
 set_target_properties(mxl-internal-objects
         PROPERTIES 
             POSITION_INDEPENDENT_CODE ${MXL_POSITION_INDEPENDENT_CODE}
@@ -58,6 +58,8 @@ set_target_properties(mxl-internal-objects
             CXX_VISIBILITY_PRESET     hidden
             C_EXTENSIONS              OFF
             CXX_EXTENSIONS            OFF
+            C_STANDARD                ${MXL_C_STANDARD}
+            CXX_STANDARD              ${MXL_CXX_STANDARD}
     )
 target_sources(mxl-internal-objects
         PRIVATE

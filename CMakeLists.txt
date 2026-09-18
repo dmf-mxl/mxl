@@ -56,7 +56,6 @@ project(mxl
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
 
-
 # Enable testing for the project
 enable_testing()
 
@@ -80,6 +79,9 @@ if(NOT BUILD_SHARED_LIBS)
 else()
     set(MXL_POSITION_INDEPENDENT_CODE ON)
 endif()
+
+set(MXL_C_STANDARD 17)
+set(MXL_CXX_STANDARD 20)
 
 #-------------------------------------------------------------------------------
 # Helper to conditionally add flags supported by the current compiler
