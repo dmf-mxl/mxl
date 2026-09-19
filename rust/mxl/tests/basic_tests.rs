@@ -107,9 +107,6 @@ fn basic_mxl_grain_writing_reading() {
         .unwrap();
     let grain_data: OwnedGrainData = grain_data.into();
     info!("Grain data len: {:?}", grain_data.payload.len());
-    grain_reader.destroy().unwrap();
-    grain_writer.destroy().unwrap();
-    mxl_instance.destroy().unwrap();
 }
 
 #[test]
@@ -139,9 +136,6 @@ fn basic_mxl_samples_writing_reading() {
         samples_data.payload.len(),
         samples_data.payload[0].len()
     );
-    samples_reader.destroy().unwrap();
-    samples_writer.destroy().unwrap();
-    mxl_instance.destroy().unwrap();
 }
 
 #[test]
@@ -156,7 +150,6 @@ fn get_flow_def() {
     let retrieved_flow_def = mxl_instance.get_flow_def(flow_id.as_str()).unwrap();
     assert_eq!(flow_def, retrieved_flow_def);
     drop(flow_writer);
-    mxl_instance.destroy().unwrap();
 }
 
 #[test]
@@ -167,5 +160,4 @@ fn garbage_collect_flows_succeeds() {
     // without crashing and propagates a successful status.
     let (mxl_instance, _domain_guard) = setup_test("garbage_collect_flows");
     mxl_instance.garbage_collect_flows().unwrap();
-    mxl_instance.destroy().unwrap();
 }

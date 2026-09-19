@@ -39,6 +39,7 @@ pub struct FlowInfo {
     pub runtime: FlowRuntimeInfo,
 }
 
+#[derive(Clone)]
 pub struct FlowConfigInfo {
     pub(crate) value: mxl_sys::FlowConfigInfo,
 }
