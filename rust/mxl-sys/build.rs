@@ -31,6 +31,16 @@ fn get_bindgen_specs() -> BindgenSpecs {
             .to_string_lossy()
             .to_string(),
     ];
+    if cfg!(feature = "mxl-fabrics-ofi") {
+        includes_dirs.push(
+            repo_root
+                .join("lib")
+                .join("fabrics")
+                .join("include")
+                .to_string_lossy()
+                .to_string(),
+        );
+    }
     if cfg!(not(feature = "mxl-not-built")) {
         let out_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap());
         let build_version_dir = out_dir.join("include").to_string_lossy().to_string();
@@ -41,7 +51,8 @@ fn get_bindgen_specs() -> BindgenSpecs {
         let lib_root = repo_root.join("lib");
         println!("cargo:rerun-if-changed={}", lib_root.display());
 
-        let dst = cmake::Config::new(repo_root)
+        let mut config = cmake::Config::new(repo_root);
+        config
             .generator("Ninja")
             .configure_arg("--preset")
             .configure_arg(BUILD_VARIANT)
@@ -50,11 +61,21 @@ fn get_bindgen_specs() -> BindgenSpecs {
             .define("BUILD_DOCS", "OFF")
             .define("BUILD_TESTS", "OFF")
             .define("BUILD_TOOLS", "OFF")
-            .define("CMAKE_INSTALL_LIBDIR", "lib")
-            .build();
+            .define("CMAKE_INSTALL_LIBDIR", "lib");
+        if cfg!(feature = "mxl-fabrics-ofi") {
+            config.define("MXL_ENABLE_FABRICS_OFI", "ON");
+        }
+        let dst = config.build();
 
         println!("cargo:rustc-link-search={}", dst.join("lib").display());
         println!("cargo:rustc-link-lib=mxl");
+        if cfg!(feature = "mxl-fabrics-ofi") {
+            println!(
+                "cargo:rustc-link-search={}",
+                dst.join("lib/fabrics/ofi").display()
+            );
+            println!("cargo:rustc-link-lib=mxl-fabrics");
+        }
     }
 
     BindgenSpecs {
@@ -69,7 +90,32 @@ fn main() {
         println!("cargo:include={include_dir}");
     }
 
-    let bindings = bindgen::builder()
+    let mut types_builder = bindgen::builder()
+        .clang_args(
+            bindgen_specs
+                .includes_dirs
+                .iter()
+                .map(|dir| format!("-I{dir}")),
+        )
+        .header(bindgen_specs.header.clone())
+        .derive_default(true)
+        .derive_debug(true)
+        .prepend_enum_name(false)
+        .blocklist_function(".*")
+        .parse_callbacks(Box::new(CB));
+    if cfg!(feature = "mxl-fabrics-ofi") {
+        types_builder = types_builder.header("wrapper-fabrics.h");
+    }
+    let types_bindings = types_builder
+        .generate()
+        .expect("Could not generate shared type bindings");
+
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+    types_bindings
+        .write_to_file(out_path.join("types_bindings.rs"))
+        .expect("Could not write shared type bindings");
+
+    let mxl_bindings = bindgen::builder()
         .clang_args(
             bindgen_specs
                 .includes_dirs
@@ -77,19 +123,42 @@ fn main() {
                 .map(|dir| format!("-I{dir}")),
         )
         .header(bindgen_specs.header)
-        .derive_default(true)
-        .derive_debug(true)
-        .prepend_enum_name(false)
+        .allowlist_function("mxl.*")
+        .blocklist_type(".*")
+        .blocklist_var(".*")
+        .raw_line("use crate::types::*;")
         .dynamic_library_name("libmxl")
         .dynamic_link_require_all(true)
         .parse_callbacks(Box::new(CB))
         .generate()
-        .unwrap();
+        .expect("Could not generate libmxl function bindings");
 
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    bindings
-        .write_to_file(out_path.join("bindings.rs"))
-        .expect("Could not write bindings");
+    mxl_bindings
+        .write_to_file(out_path.join("mxl_bindings.rs"))
+        .expect("Could not write libmxl function bindings");
+
+    if cfg!(feature = "mxl-fabrics-ofi") {
+        let fabrics_bindings = bindgen::builder()
+            .clang_args(
+                bindgen_specs
+                    .includes_dirs
+                    .iter()
+                    .map(|dir| format!("-I{dir}")),
+            )
+            .header("wrapper-fabrics.h")
+            .allowlist_function("mxlFabrics.*")
+            .blocklist_type(".*")
+            .blocklist_var(".*")
+            .raw_line("use crate::types::*;")
+            .dynamic_library_name("libmxlfabrics")
+            .dynamic_link_require_all(true)
+            .parse_callbacks(Box::new(CB))
+            .generate()
+            .unwrap();
+        fabrics_bindings
+            .write_to_file(out_path.join("fabrics_bindings.rs"))
+            .expect("Could not write fabrics bindings");
+    }
 }
 
 #[derive(Debug)]
