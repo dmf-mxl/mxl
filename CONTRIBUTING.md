@@ -140,3 +140,7 @@ This library uses [spdlog](https://github.com/gabime/spdlog) for internal loggin
 At the moment the logs are going to stdout.
 
 _Note: the debug and trace log statements are statically excluded from the library at compilation time in release mode._
+
+## Coding standards
+
+Additional (machine-readable) details about the project coding standards and policies can be found in the [AGENTS.md](./AGENTS.md) file.
