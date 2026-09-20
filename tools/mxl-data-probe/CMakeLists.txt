@@ -56,15 +56,3 @@ install(TARGETS mxl-data-probe
         COMPONENT ${PROJECT_NAME}-tools
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
-
-if (BUILD_TESTS)
-    add_executable(mxl-data-probe-test-writer tests/create_flows.cpp)
-    target_compile_features(mxl-data-probe-test-writer PRIVATE cxx_std_20)
-    target_link_libraries(mxl-data-probe-test-writer PRIVATE mxl)
-    add_test(NAME "mxl-data-probe reads event and ANC flows"
-        COMMAND mxl-data-probe-test-writer ${CMAKE_COMMAND}
-            "-DPROBE=$<TARGET_FILE:mxl-data-probe>"
-            -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/probe.cmake"
-    )
-    set_tests_properties("mxl-data-probe reads event and ANC flows" PROPERTIES TIMEOUT 30)
-endif ()

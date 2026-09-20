@@ -4,20 +4,16 @@
 #pragma once
 
 #include <cstdint>
-#include <atomic>
 #include <filesystem>
 #include <memory>
-#include <mutex>
 #include <string>
-#include <thread>
-#include <unordered_map>
 #include <unistd.h>
 #include <uuid.h>
 #include <mxl/platform.h>
 #include "mxl-internal/Flow.hpp"
 #include "mxl-internal/SharedMemory.hpp"
 
-#ifdef __linux__
+#if defined __linux__
 #   include <sys/eventfd.h>
 #   include <sys/inotify.h>
 #elif defined __APPLE__
@@ -26,7 +22,7 @@
 
 namespace mxl::lib
 {
-#ifdef __APPLE__
+#if defined __APPLE__
     constexpr static std::uintptr_t USER_IDENT = 0x13acab2142;
 #endif
 
@@ -99,14 +95,14 @@ namespace mxl::lib
             _running = false;
             if (_watchThread.joinable())
             {
-#ifdef __linux__
+#if defined __linux__
                 auto value = ::eventfd_t{1};
                 if (::write(_eventFd, &value, sizeof(::eventfd_t)) < 0)
                 {
                     auto const error = errno;
                     MXL_ERROR("Failed to signal DomainWatcher stop request: {}", ::strerror(error));
                 }
-#elif __APPLE__
+#elif defined __APPLE__
                 struct kevent kev{};
                 EV_SET(&kev, USER_IDENT, EVFILT_USER, 0, NOTE_TRIGGER, 0, nullptr);
                 if (::kevent(_kq, &kev, 1, nullptr, 0, nullptr) < 0)
@@ -135,7 +131,7 @@ namespace mxl::lib
         /// (invokes the callback)
         void processEvents();
 
-#ifdef __linux__
+#if defined __linux__
         void processEventBuffer(struct ::inotify_event const* buffer, std::size_t count);
 #elif defined __APPLE__
         void setWatch();
@@ -145,7 +141,7 @@ namespace mxl::lib
         /// The monitored domain
         std::filesystem::path _domain;
 
-#ifdef __APPLE__
+#if defined __APPLE__
         int _kq;
         std::vector<struct ::kevent> _eventsToMonitor;
         std::vector<struct ::kevent> _eventData;

@@ -242,8 +242,13 @@ namespace mxl::lib
         else if (format == MXL_DATA_FORMAT_EVENT)
         {
             auto const grainRate = parser.getGrainRate();
-            auto const eventCount = _historyDuration * grainRate.numerator / (1'000'000'000ULL * grainRate.denominator);
-            auto [wasCreated, data] = _flowManager.createOrOpenEventFlow(parser.getId(), flowDef, eventCount, grainRate, parser.getPayloadSize());
+            auto const eventCount = _historyDuration * __int128_t{grainRate.numerator} / (1'000'000'000 * __int128_t{grainRate.denominator});
+            if (eventCount < 2 || eventCount > 65536)
+            {
+                throw std::invalid_argument("Invalid event count.");
+            }
+            auto [wasCreated, data] = _flowManager.createOrOpenEventFlow(
+                parser.getId(), flowDef, static_cast<std::size_t>(eventCount), grainRate, parser.getPayloadSize());
             flowData = std::move(data);
             created = wasCreated;
         }

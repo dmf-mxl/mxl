@@ -3,11 +3,6 @@
 
 # Add the test executable
 add_executable(mxl-tests)
-add_executable(mxl-event-ipc-worker event_ipc_worker.cpp)
-target_compile_features(mxl-event-ipc-worker PRIVATE cxx_std_20)
-target_link_libraries(mxl-event-ipc-worker PRIVATE mxl)
-add_dependencies(mxl-tests mxl-event-ipc-worker)
-target_compile_definitions(mxl-tests PRIVATE MXL_EVENT_IPC_WORKER="$<TARGET_FILE:mxl-event-ipc-worker>")
 target_compile_features(mxl-tests
         PRIVATE
             cxx_std_20
@@ -65,6 +60,13 @@ target_link_libraries(mxl-tests
             Catch2::Catch2WithMain
             PcapPlusPlus::Pcap++
     )
+
+# Helper process for event IPC tests.
+add_executable(mxl-event-ipc-worker event_ipc_worker.cpp)
+target_compile_features(mxl-event-ipc-worker PRIVATE cxx_std_20)
+target_link_libraries(mxl-event-ipc-worker PRIVATE mxl)
+add_dependencies(mxl-tests mxl-event-ipc-worker)
+target_compile_definitions(mxl-tests PRIVATE MXL_EVENT_IPC_WORKER="$<TARGET_FILE:mxl-event-ipc-worker>")
 
 # Enable testing using CTest
 include(CTest)

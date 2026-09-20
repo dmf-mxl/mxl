@@ -15,6 +15,7 @@ pub enum DataFormat {
     Video,
     Audio,
     Data,
+    Event,
 }
 
 impl From<u32> for DataFormat {
@@ -24,6 +25,7 @@ impl From<u32> for DataFormat {
             mxl_sys::MXL_DATA_FORMAT_VIDEO => DataFormat::Video,
             mxl_sys::MXL_DATA_FORMAT_AUDIO => DataFormat::Audio,
             mxl_sys::MXL_DATA_FORMAT_DATA => DataFormat::Data,
+            mxl_sys::MXL_DATA_FORMAT_EVENT => DataFormat::Event,
             _ => DataFormat::Unspecified,
         }
     }
@@ -55,13 +57,23 @@ impl FlowConfigInfo {
     }
 
     pub fn continuous(&self) -> Result<&mxl_sys::ContinuousFlowConfigInfo> {
-        if is_discrete_data_format(self.value.common.format) {
+        if self.value.common.format != mxl_sys::MXL_DATA_FORMAT_AUDIO {
             return Err(Error::Other(format!(
                 "Flow format is {}, audio required.",
                 self.value.common.format
             )));
         }
         Ok(unsafe { &self.value.__bindgen_anon_1.continuous })
+    }
+
+    pub fn event(&self) -> Result<&mxl_sys::EventFlowConfigInfo> {
+        if self.value.common.format != mxl_sys::MXL_DATA_FORMAT_EVENT {
+            return Err(Error::Other(format!(
+                "Flow format is {}, event required.",
+                self.value.common.format
+            )));
+        }
+        Ok(unsafe { &self.value.__bindgen_anon_1.event })
     }
 
     pub fn common(&self) -> CommonFlowConfigInfo<'_> {

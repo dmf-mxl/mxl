@@ -79,7 +79,7 @@ impl FlowReader {
         let flow_type = self.get_info()?.config.value.common.format;
         if !is_discrete_data_format(flow_type) {
             return Err(Error::Other(format!(
-                "Cannot convert FlowReader to GrainReader for continuous flow of type \"{:?}\".",
+                "Cannot convert FlowReader to GrainReader for flow of type \"{:?}\".",
                 DataFormat::from(flow_type)
             )));
         }
@@ -90,9 +90,9 @@ impl FlowReader {
 
     pub fn to_samples_reader(mut self) -> Result<SamplesReader> {
         let flow_type = self.get_info()?.config.value.common.format;
-        if is_discrete_data_format(flow_type) {
+        if flow_type != mxl_sys::MXL_DATA_FORMAT_AUDIO {
             return Err(Error::Other(format!(
-                "Cannot convert FlowReader to SamplesReader for discrete flow of type \"{:?}\".",
+                "Cannot convert FlowReader to SamplesReader for flow of type \"{:?}\".",
                 DataFormat::from(flow_type)
             )));
         }

@@ -377,7 +377,7 @@ namespace
         }
         catch (...)
         {
-            (void)std::fputs("WARNING: Failed to parse flow details; displaying available fields.\n", stderr);
+            (void)std::fprintf(stderr, "WARNING: Failed to parse flow details; displaying available fields.\n");
         }
 
         return {label, groupName, roleInGroup};
@@ -719,6 +719,6 @@ catch (std::exception const& ex)
 }
 catch (...)
 {
-    (void)std::fputs("ERROR: Unexpected exception.\n", stderr);
+    (void)std::fprintf(stderr, "ERROR: Unexpected exception.\n");
     return EXIT_FAILURE;
 }
