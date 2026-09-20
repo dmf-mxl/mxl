@@ -1,28 +1,7 @@
 # SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 # SPDX-License-Identifier: Apache-2.0
 
-cmake_minimum_required(VERSION 3.24 FATAL_ERROR)
-
-# Allow version in project definition
-cmake_policy(SET CMP0048 NEW)
-# Only interpret if arguments as variables or keywords when unquoted.
-cmake_policy(SET CMP0054 NEW)
-# Allow visibility definitions
-cmake_policy(SET CMP0063 NEW)
-# Interpret target_sources paths as relative to the current source dir
-cmake_policy(SET CMP0076 NEW)
-# Set the timestamps of all extracted contents to the time of the extraction
-cmake_policy(SET CMP0135 NEW)
-
-# Deduplicate libraries when supported by the linker.
-if(POLICY CMP0156)
-    cmake_policy(SET CMP0156 NEW)
-endif()
-
-# Preserve the first occurrence of each static library.
-if(POLICY CMP0179)
-    cmake_policy(SET CMP0179 NEW)
-endif()
+cmake_minimum_required(VERSION 3.24...4.3)
 
 option(MXL_ENABLE_FABRICS_OFI "Enable building the fabrics library with libfabric" OFF)
 

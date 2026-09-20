@@ -17,10 +17,10 @@
 namespace mxl::lib
 {
     /// The version of the flow data structs in shared memory that we expect and support.
-    constexpr auto FLOW_DATA_VERSION = 1U;
+    inline constexpr auto FLOW_DATA_VERSION = 1U;
 
     /// The version of the grain header structs in shared memory that we expect an support.
-    constexpr auto GRAIN_HEADER_VERSION = 1U;
+    inline constexpr auto GRAIN_HEADER_VERSION = 1U;
 
     ///
     /// Internal Flow structure stored in shared memory
@@ -34,7 +34,7 @@ namespace mxl::lib
 
     /// The first 8KiB of a grain are reserved for the mxlGrainInfo structure, including user data.  Ample padding is provided
     /// between the header and the payload.  Payload is page aligned AND AVX512 (64 bytes) aligned.
-    constexpr auto const MXL_GRAIN_PAYLOAD_OFFSET = std::size_t{8192};
+    inline constexpr auto const MXL_GRAIN_PAYLOAD_OFFSET = std::size_t{8192};
 
     struct GrainHeader
     {
@@ -57,7 +57,7 @@ namespace mxl::lib
     };
 
     /// Version stored in the public mxlEventInfo metadata of every published entry.
-    constexpr auto EVENT_HEADER_VERSION = std::uint32_t{1};
+    inline constexpr auto EVENT_HEADER_VERSION = std::uint32_t{1};
 
     /** @brief 640-byte slot header with layout fields, sequence and metadata on separate 64-byte boundaries. */
     struct EventHeader

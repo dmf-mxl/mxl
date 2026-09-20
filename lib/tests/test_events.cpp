@@ -885,6 +885,12 @@ TEST_CASE("Event capacity follows grain rate and history duration", "[events]")
         REQUIRE(fixture.config.common.grainRate.numerator == 45);
         REQUIRE(fixture.config.common.grainRate.denominator == 2);
     }
+    SECTION("Large rational components do not overflow intermediate products")
+    {
+        // Just over 20 entries/s; coprime components keep both products wider than 64 bits.
+        auto fixture = EventFixture{definitionWithRate(R"({"numerator":2000000000001,"denominator":100000000000})")};
+        REQUIRE(fixture.config.event.eventCount == 4);
+    }
     SECTION("Domain history duration changes capacity")
     {
         // Holding the rate at 20 entries/s and extending history to 0.5 s produces ten slots.
@@ -903,6 +909,25 @@ TEST_CASE_METHOD(EventFixture, "Event capacity rejects too little or excessive h
         auto rejected = mxlFlowWriter{};
         REQUIRE(mxlCreateFlowWriter(producer, flowDef.c_str(), nullptr, &rejected, nullptr, nullptr) != MXL_STATUS_OK);
     }
+}
+
+/** @test Reject capacities wider than size_t before narrowing to the ring geometry. */
+TEST_CASE("Event capacity rejects overflow before narrowing", "[events]")
+{
+    auto domain = mxl::tests::makeTempDomain();
+    {
+        auto options = std::ofstream{mxl::lib::makeDomainOptionsFilePath(domain)};
+        options << R"({"urn:x-mxl:option:history_duration/v1.0":9223372036854775808})";
+    }
+    auto instance = mxlCreateInstance(domain.c_str(), nullptr);
+    REQUIRE(instance != nullptr);
+    auto writer = mxlFlowWriter{};
+    // The capacity exceeds 2^64; narrowing first would incorrectly accept 2,361 slots.
+    auto flowDef = definitionWithRate(R"({"numerator":4000000000000000512,"denominator":2000000000})");
+    auto status = mxlCreateFlowWriter(instance, flowDef.c_str(), nullptr, &writer, nullptr, nullptr);
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+    std::filesystem::remove_all(domain);
+    REQUIRE(status != MXL_STATUS_OK);
 }
 
 /** @test Late event reader starts at oldest retained event and detects deleted flow. */
