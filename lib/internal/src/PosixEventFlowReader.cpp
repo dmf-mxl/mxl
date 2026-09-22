@@ -65,7 +65,7 @@ namespace mxl::lib
             if (::close(_accessFileFd) != 0)
             {
                 auto const error = errno;
-                MXL_ERROR("Failed to close access file fd: {}", ::strerror(error));
+                MXL_ERROR("Failed to close access file fd: {}", std::strerror(error));
             }
             _accessFileFd = -1;
         }
@@ -77,7 +77,7 @@ namespace mxl::lib
         {
             return *_flowData;
         }
-        throw std::runtime_error("No open flow.");
+        throw std::runtime_error{"No open flow."};
     }
 
     mxlFlowInfo PosixEventFlowReader::getFlowInfo() const
@@ -116,7 +116,7 @@ namespace mxl::lib
         {
             // Bound retries when other threads repeatedly win the cursor CAS.
             // A nonblocking call still gets one attempt even with an expired deadline.
-            if (retry && currentTime(Clock::Realtime) >= deadline)
+            if (retry && (currentTime(Clock::Realtime) >= deadline))
             {
                 return MXL_ERR_OUT_OF_RANGE_TOO_EARLY;
             }

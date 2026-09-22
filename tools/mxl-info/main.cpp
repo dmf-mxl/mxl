@@ -223,7 +223,7 @@ namespace
             {
                 os << '\t' << fmt::format("{: >20}: {}", "Grain count", info.config.discrete.grainCount) << '\n';
             }
-            else if (mxlIsEventDataFormat(static_cast<int>(info.config.common.format)))
+            else if (mxlIsEventDataFormat(info.config.common.format))
             {
                 os << '\t' << fmt::format("{: >20}: {}", "Event count", info.config.event.eventCount) << '\n'
                    << '\t' << fmt::format("{: >20}: {}", "Event capacity", info.config.event.eventPayloadSize) << '\n';
@@ -714,11 +714,11 @@ try
 }
 catch (std::exception const& ex)
 {
-    (void)std::fprintf(stderr, "ERROR: %s\n", ex.what());
+    std::cerr << "ERROR: " << ex.what() << '\n';
     return EXIT_FAILURE;
 }
 catch (...)
 {
-    (void)std::fprintf(stderr, "ERROR: Unexpected exception.\n");
+    std::cerr << "ERROR: Unexpected exception.\n";
     return EXIT_FAILURE;
 }

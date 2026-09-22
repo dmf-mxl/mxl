@@ -90,7 +90,11 @@ extern "C"
      */
     inline int mxlIsEventDataFormat(int format)
     {
-        return format == MXL_DATA_FORMAT_EVENT;
+        switch (format)
+        {
+            case MXL_DATA_FORMAT_EVENT: return 1;
+            default:                    return 0;
+        }
     }
 
     /**

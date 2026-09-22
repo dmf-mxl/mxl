@@ -11,7 +11,9 @@
 #include <algorithm>
 #include <atomic>
 #include <limits>
+#include <new>
 #include <stdexcept>
+#include <type_traits>
 #include "Flow.hpp"
 
 namespace mxl::lib
@@ -27,6 +29,7 @@ namespace mxl::lib
     };
 
     static_assert(sizeof(EventRingHeader) == 4096);
+    static_assert(std::has_unique_object_representations_v<EventRingHeader>);
     static_assert(std::atomic_ref<std::uint64_t>::is_always_lock_free);
     static_assert(std::atomic_ref<std::uint32_t>::is_always_lock_free);
     static_assert(std::atomic_ref<std::uint64_t>::required_alignment <= alignof(std::uint64_t));
@@ -78,8 +81,8 @@ namespace mxl::lib
          */
         static std::size_t bufferSize(std::uint32_t count, std::uint32_t payloadSize)
         {
-            if (count < 2 || count > 65536 || payloadSize == 0 || payloadSize > 1048576 ||
-                slotStride(payloadSize) > (std::numeric_limits<std::size_t>::max() - sizeof(EventRingHeader)) / count)
+            if ((count < 2) || (count > 65536) || (payloadSize == 0) || (payloadSize > 1048576) ||
+                (slotStride(payloadSize) > (std::numeric_limits<std::size_t>::max() - sizeof(EventRingHeader)) / count))
             {
                 throw std::invalid_argument{"Invalid event buffer dimensions."};
             }
@@ -128,8 +131,8 @@ namespace mxl::lib
             , _stride{slotStride(payloadSize)}
         {
             (void)bufferSize(count, payloadSize);
-            if (_header->version != STORAGE_VERSION || _header->size != sizeof(EventRingHeader) || _header->eventCount != count ||
-                _header->payloadSize != payloadSize)
+            if ((_header->version != STORAGE_VERSION) || (_header->size != sizeof(EventRingHeader)) || (_header->eventCount != count) ||
+                (_header->payloadSize != payloadSize))
             {
                 throw std::invalid_argument{"Invalid event ring header."};
             }
@@ -137,7 +140,7 @@ namespace mxl::lib
             for (auto i = std::size_t{0}; i < count; ++i)
             {
                 auto const& header = slot(i).header;
-                if (header.version != STORAGE_VERSION || header.size != sizeof(EventHeader))
+                if ((header.version != STORAGE_VERSION) || (header.size != sizeof(EventHeader)))
                 {
                     throw std::invalid_argument{"Invalid event slot header."};
                 }
@@ -164,7 +167,7 @@ namespace mxl::lib
             auto& event = slot(index);
             auto sequence = std::atomic_ref{event.header.sequence};
             auto const previous = sequence.load(std::memory_order_relaxed);
-            if (previous != EMPTY && (previous >> 1) >= index)
+            if ((previous != EMPTY) && ((previous >> 1) >= index))
             {
                 // A previous producer may have died before updating headIndex.
                 // Reusing its tag could make readers accept an inconsistent copy.
@@ -191,12 +194,12 @@ namespace mxl::lib
             {
                 return ReadResult::Pending;
             }
-            auto const& event = slot(index);
+            auto& event = slot(index);
             auto const expected = (index << 1) | 1;
             auto const before = load(event.header.sequence);
             if (before != expected)
             {
-                return before != EMPTY && (before >> 1) > index ? ReadResult::Overwritten : ReadResult::Pending;
+                return (before != EMPTY) && ((before >> 1) > index) ? ReadResult::Overwritten : ReadResult::Pending;
             }
             loadBytes(&info, event.header.infoWords, sizeof info);
             // Metadata may be an inconsistent snapshot until the final sequence check.
@@ -208,7 +211,7 @@ namespace mxl::lib
             {
                 return ReadResult::Overwritten;
             }
-            if (info.version != EVENT_HEADER_VERSION || info.size != sizeof info || info.flags != 0 || info.eventSize > _payloadSize)
+            if ((info.version != EVENT_HEADER_VERSION) || (info.size != sizeof info) || (info.flags != 0) || (info.eventSize > _payloadSize))
             {
                 return ReadResult::Invalid;
             }
@@ -243,9 +246,9 @@ namespace mxl::lib
          * @param event Slot header inside a live mapping.
          * @return Payload word address; callers respect mapping permissions and use atomic access.
          */
-        static std::uint64_t* payloadWords(Event const& event) noexcept
+        static std::uint64_t* payloadWords(Event& event) noexcept
         {
-            return reinterpret_cast<std::uint64_t*>(reinterpret_cast<std::uint8_t*>(const_cast<Event*>(&event)) + sizeof(Event));
+            return reinterpret_cast<std::uint64_t*>(reinterpret_cast<std::uint8_t*>(&event) + sizeof(Event));
         }
 
         /**
@@ -283,6 +286,7 @@ namespace mxl::lib
             }
         }
 
+    private:
         EventRingHeader* _header;   ///< Borrowed address of the mapping's immutable ring header.
         std::uint32_t _count;       ///< Validated physical slot count.
         std::uint32_t _payloadSize; ///< Validated per-entry payload capacity in bytes.

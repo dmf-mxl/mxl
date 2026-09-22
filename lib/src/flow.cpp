@@ -800,13 +800,13 @@ extern "C"
 MXL_EXPORT
 mxlStatus mxlFlowWriterOpenEvent(mxlFlowWriter handle, mxlEventInfo* info, uint8_t** payload)
 {
-    if (!(info && payload))
+    if ((info == nullptr) || (payload == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
     try
     {
-        if (auto object = dynamic_cast<EventFlowWriter*>(to_FlowWriter(handle)))
+        if (auto object = dynamic_cast<EventFlowWriter*>(to_FlowWriter(handle)); object != nullptr)
         {
             return object->openEvent(info, payload);
         }
@@ -822,13 +822,13 @@ extern "C"
 MXL_EXPORT
 mxlStatus mxlFlowWriterCommitEvent(mxlFlowWriter handle, mxlEventInfo const* info)
 {
-    if (!info)
+    if (info == nullptr)
     {
         return MXL_ERR_INVALID_ARG;
     }
     try
     {
-        if (auto object = dynamic_cast<EventFlowWriter*>(to_FlowWriter(handle)))
+        if (auto object = dynamic_cast<EventFlowWriter*>(to_FlowWriter(handle)); object != nullptr)
         {
             return object->commit(*info);
         }
@@ -846,7 +846,7 @@ mxlStatus mxlFlowWriterCancelEvent(mxlFlowWriter handle)
 {
     try
     {
-        if (auto object = dynamic_cast<EventFlowWriter*>(to_FlowWriter(handle)))
+        if (auto object = dynamic_cast<EventFlowWriter*>(to_FlowWriter(handle)); object != nullptr)
         {
             return object->cancel();
         }
@@ -862,13 +862,13 @@ extern "C"
 MXL_EXPORT
 mxlStatus mxlFlowReaderGetEvent(mxlFlowReader handle, uint64_t timeoutNs, mxlEventInfo* info, uint8_t** payload)
 {
-    if (!(info && payload))
+    if ((info == nullptr) || (payload == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
     try
     {
-        if (auto object = dynamic_cast<EventFlowReader*>(to_FlowReader(handle)))
+        if (auto object = dynamic_cast<EventFlowReader*>(to_FlowReader(handle)); object != nullptr)
         {
             return object->getEvent(toDeadline(timeoutNs), info, payload);
         }
@@ -884,13 +884,13 @@ extern "C"
 MXL_EXPORT
 mxlStatus mxlFlowReaderGetEventNonBlocking(mxlFlowReader handle, mxlEventInfo* info, uint8_t** payload)
 {
-    if (!(info && payload))
+    if ((info == nullptr) || (payload == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
     }
     try
     {
-        if (auto object = dynamic_cast<EventFlowReader*>(to_FlowReader(handle)))
+        if (auto object = dynamic_cast<EventFlowReader*>(to_FlowReader(handle)); object != nullptr)
         {
             return object->getEvent(toDeadline(0), info, payload);
         }

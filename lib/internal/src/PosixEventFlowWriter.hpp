@@ -34,33 +34,33 @@ namespace mxl::lib
         PosixEventFlowWriter(FlowManager const& manager, uuids::uuid const& flowId, std::unique_ptr<EventFlowData>&& data,
             std::shared_ptr<DomainWatcher> const& watcher);
         /// Unregister from the watcher and release mappings and the common flow lock.
-        ~PosixEventFlowWriter() override;
+        virtual ~PosixEventFlowWriter() override;
         /** @return The owned common and event mappings. */
-        FlowData const& getFlowData() const override;
+        virtual FlowData const& getFlowData() const override;
         /** @return Flow configuration and individually loaded atomic runtime fields. */
-        mxlFlowInfo getFlowInfo() const override;
+        virtual mxlFlowInfo getFlowInfo() const override;
         /** @return Immutable event flow configuration. */
-        mxlFlowConfigInfo getFlowConfigInfo() const override;
+        virtual mxlFlowConfigInfo getFlowConfigInfo() const override;
         /** @return Runtime fields loaded atomically, without a combined transaction. */
-        mxlFlowRuntimeInfo getFlowRuntimeInfo() const override;
+        virtual mxlFlowRuntimeInfo getFlowRuntimeInfo() const override;
         /** @return Mutable access to the owned common and event mappings. */
-        FlowData& getFlowData() override;
+        virtual FlowData& getFlowData() override;
         /** @copydoc EventFlowWriter::openEvent */
-        mxlStatus openEvent(mxlEventInfo* info, std::uint8_t** payload) override;
+        virtual mxlStatus openEvent(mxlEventInfo* info, std::uint8_t** payload) override;
         /** @copydoc EventFlowWriter::commit */
-        mxlStatus commit(mxlEventInfo const& info) override;
+        virtual mxlStatus commit(mxlEventInfo const& info) override;
         /** @copydoc EventFlowWriter::cancel */
-        mxlStatus cancel() override;
+        virtual mxlStatus cancel() override;
         /** @return True if the common flow metadata file is exclusively locked by this mapping. */
-        bool isExclusive() const override;
+        virtual bool isExclusive() const override;
         /** @return True if exclusive common-metadata ownership is acquired, allowing flow deletion. */
-        bool makeExclusive() override;
+        virtual bool makeExclusive() override;
 
     private:
         std::unique_ptr<EventFlowData> _flowData; ///< Owns common metadata, ring mappings and the common flow lock.
 
-        bool _open{};                             ///< True while one caller-owned write transaction is open.
-        std::uint64_t _lastTimestamp{};           ///< Last committed timestamp, restored from the ring on attachment.
+        bool _open;                               ///< True while one caller-owned write transaction is open.
+        std::uint64_t _lastTimestamp;             ///< Last committed timestamp, restored from the ring on attachment.
         std::vector<std::uint8_t> _payload;       ///< Private staging buffer; publication copies only eventSize bytes.
         std::shared_ptr<DomainWatcher> _watcher;  ///< Watcher kept alive while the writer is registered.
     };

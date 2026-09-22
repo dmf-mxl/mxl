@@ -23,6 +23,8 @@ namespace mxl::lib
         std::shared_ptr<DomainWatcher> const& watcher)
         : EventFlowWriter{flowId, manager.getDomain()}
         , _flowData{std::move(data)}
+        , _open{false}
+        , _lastTimestamp{0}
         , _payload(_flowData->flowInfo()->config.event.eventPayloadSize)
         , _watcher{watcher}
     {
@@ -59,7 +61,7 @@ namespace mxl::lib
         {
             return *_flowData;
         }
-        throw std::runtime_error("No open flow.");
+        throw std::runtime_error{"No open flow."};
     }
 
     FlowData const& PosixEventFlowWriter::getFlowData() const
@@ -68,7 +70,7 @@ namespace mxl::lib
         {
             return *_flowData;
         }
-        throw std::runtime_error("No open flow.");
+        throw std::runtime_error{"No open flow."};
     }
 
     mxlFlowInfo PosixEventFlowWriter::getFlowInfo() const

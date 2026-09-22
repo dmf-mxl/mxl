@@ -260,7 +260,7 @@ namespace mxl::lib
         MXL_DEBUG("Create event flow. id: {}, eventCount: {}, event payload size: {}", uuidString, eventCount, eventPayloadSize);
 
         auto const flowFormat = mxlDataFormat{MXL_DATA_FORMAT_EVENT};
-        if (eventCount < 2 || eventCount > 65536 || eventPayloadSize == 0 || eventPayloadSize > 1048576)
+        if ((eventCount < 2) || (eventCount > 65536) || (eventPayloadSize == 0) || (eventPayloadSize > 1048576))
         {
             throw std::invalid_argument{"Invalid event buffer dimensions."};
         }

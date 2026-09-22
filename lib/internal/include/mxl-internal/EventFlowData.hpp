@@ -69,7 +69,7 @@ namespace mxl::lib
         std::uint64_t oldestIndex() const noexcept
         {
             auto const head = EventRingBuffer::load(flowInfo()->runtime.headIndex);
-            return head != MXL_UNDEFINED_INDEX && head >= eventCount() ? head - (eventCount() - 1) : 0;
+            return (head != MXL_UNDEFINED_INDEX) && (head >= eventCount()) ? head - (eventCount() - 1) : 0;
         }
 
         /** @return Mutable ring view; openEventBuffer must have succeeded. */
