@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "mxl-internal/Instance.hpp"
+#include <cerrno>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -81,14 +82,14 @@ namespace mxl::lib
          */
         std::uint64_t readDomainHistoryDuration(std::filesystem::path const& path, std::uint64_t fallback)
         {
-            if (!exists(path))
-            {
-                return fallback;
-            }
             auto const file = std::ifstream{path};
             if (!file)
             {
-                MXL_ERROR("Failed to open domain options file: {}", path.string());
+                // Missing options are expected; report other open failures.
+                if (errno != ENOENT)
+                {
+                    MXL_ERROR("Failed to open domain options file: {}", path.string());
+                }
                 return fallback;
             }
             auto buffer = std::stringstream{};
@@ -101,7 +102,7 @@ namespace mxl::lib
                 return fallback;
             }
             auto const it = config.find(MXL_HISTORY_DURATION_OPTION);
-            if (it == config.end() || !it->second.is<double>())
+            if ((it == config.end()) || !it->second.is<double>())
             {
                 return fallback;
             }
@@ -356,14 +357,14 @@ namespace mxl::lib
         try
         {
             auto const base = std::filesystem::path{_flowManager.getDomain()};
-            if (!exists(base) || !is_directory(base))
+            if (!is_directory(base))
             {
                 MXL_DEBUG("MXL domain {} does not exist or is not a directory", base.string());
                 return count;
             }
             for (auto const& entry : std::filesystem::directory_iterator{base})
             {
-                if (!is_directory(entry) || entry.path().extension() != mxl::lib::FLOW_DIRECTORY_NAME_SUFFIX)
+                if (!is_directory(entry) || (entry.path().extension() != mxl::lib::FLOW_DIRECTORY_NAME_SUFFIX))
                 {
                     continue;
                 }

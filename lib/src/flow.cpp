@@ -44,7 +44,7 @@ mxlStatus mxlIsFlowActive(mxlInstance instance, char const* flowId, bool* isActi
                         // other process is writing to the flow.
                         auto flowDataFile = mxl::lib::makeFlowDataFilePath(domain, flowId);
 
-                        auto const fd = open(flowDataFile.c_str(), O_RDONLY | O_CLOEXEC);
+                        auto const fd = ::open(flowDataFile.c_str(), O_RDONLY | O_CLOEXEC);
                         if (fd < 0)
                         {
                             auto const error = errno;
@@ -58,7 +58,7 @@ mxlStatus mxlIsFlowActive(mxlInstance instance, char const* flowId, bool* isActi
                         }
 
                         // Try to obtain an exclusive lock on the file descriptor. Do not block if the lock cannot be obtained.
-                        auto const active = flock(fd, LOCK_EX | LOCK_NB) < 0;
+                        auto const active = ::flock(fd, LOCK_EX | LOCK_NB) < 0;
                         close(fd);
 
                         *isActive = active;

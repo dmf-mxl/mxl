@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <cstdint>
-#include <cstdio>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -219,7 +218,7 @@ namespace
                << '\t' << fmt::format("{: >20}: {}", "Device Index", info.config.common.deviceIndex) << '\n'
                << '\t' << fmt::format("{: >20}: {:0>8x}", "Flags", info.config.common.flags) << '\n';
 
-            if (mxlIsDiscreteDataFormat(static_cast<int>(info.config.common.format)))
+            if (mxlIsDiscreteDataFormat(info.config.common.format))
             {
                 os << '\t' << fmt::format("{: >20}: {}", "Grain count", info.config.discrete.grainCount) << '\n';
             }
@@ -228,7 +227,7 @@ namespace
                 os << '\t' << fmt::format("{: >20}: {}", "Event count", info.config.event.eventCount) << '\n'
                    << '\t' << fmt::format("{: >20}: {}", "Event capacity", info.config.event.eventPayloadSize) << '\n';
             }
-            else if (mxlIsContinuousDataFormat(static_cast<int>(info.config.common.format)))
+            else if (mxlIsContinuousDataFormat(info.config.common.format))
             {
                 os << '\t' << fmt::format("{: >20}: {}", "Channel count", info.config.continuous.channelCount) << '\n'
                    << '\t' << fmt::format("{: >20}: {}", "Buffer length", info.config.continuous.bufferLength) << '\n';
@@ -236,7 +235,7 @@ namespace
 
             os << '\n' << '\t' << fmt::format("{: >20}: {}", "Head index", info.runtime.headIndex) << '\n';
 
-            if (mxlIsDiscreteDataFormat(static_cast<int>(info.config.common.format)))
+            if (mxlIsDiscreteDataFormat(info.config.common.format))
             {
                 os << '\t' << fmt::format("{: >20}: {}", "Last write time", info.runtime.lastWriteTime) << '\n'
                    << '\t' << fmt::format("{: >20}: {}", "Last read time", info.runtime.lastReadTime) << '\n';
@@ -249,11 +248,11 @@ namespace
         {
             os << *lp.flowInfo;
 
-            if (::mxlIsDiscreteDataFormat(static_cast<int>(lp.flowInfo->config.common.format)))
+            if (::mxlIsDiscreteDataFormat(lp.flowInfo->config.common.format))
             {
                 outputLatency(os, lp.flowInfo->runtime.headIndex, lp.flowInfo->config.common.grainRate, lp.flowInfo->config.discrete.grainCount);
             }
-            else if (::mxlIsContinuousDataFormat(static_cast<int>(lp.flowInfo->config.common.format)))
+            else if (::mxlIsContinuousDataFormat(lp.flowInfo->config.common.format))
             {
                 outputLatency(os, lp.flowInfo->runtime.headIndex, lp.flowInfo->config.common.grainRate, lp.flowInfo->config.continuous.bufferLength);
             }
@@ -377,7 +376,7 @@ namespace
         }
         catch (...)
         {
-            (void)std::fprintf(stderr, "WARNING: Failed to parse flow details; displaying available fields.\n");
+            std::cerr << "WARNING: Failed to parse flow details; displaying available fields.\n";
         }
 
         return {label, groupName, roleInGroup};
@@ -486,7 +485,7 @@ namespace
 
                 // A flow is considered to have issues if it has an invalid group, a role in group conflict, or an empty role in group (since that is
                 // not ideal for grouping).
-                auto const flowHasIssues = invalidGroup || hasRoleInGroupConflicts || roleInGroup.empty();
+                auto const flowHasIssues = (invalidGroup || hasRoleInGroupConflicts) || roleInGroup.empty();
 
                 // Print the flow details, flagging any issues in red if we are in a terminal.
                 auto const style = (detail::isTerminal(std::cout) && flowHasIssues) ? fmt::text_style{fmt::fg(fmt::color::red)} : fmt::text_style{};

@@ -44,8 +44,7 @@ namespace mxl::lib
             constexpr auto const FORMAT_PREFIX = "urn:x-nmos:format:"sv;
             if (format.starts_with(FORMAT_PREFIX))
             {
-                auto tail = format;
-                tail.remove_prefix(FORMAT_PREFIX.length());
+                auto const tail = format.substr(FORMAT_PREFIX.length());
                 if (tail == "video"sv)
                 {
                     return MXL_DATA_FORMAT_VIDEO;
@@ -80,7 +79,7 @@ namespace mxl::lib
             if (it == in_obj.end())
             {
                 auto msg = std::string{"Required '"} + in_field + "' not found.";
-                throw std::invalid_argument{msg};
+                throw std::invalid_argument{std::move(msg)};
             }
             return it;
         }
@@ -142,7 +141,7 @@ namespace mxl::lib
             {
                 parts.emplace_back(std::ranges::data(part), std::ranges::size(part));
             }
-            if (parts.size() < 2 || parts.size() > 3)
+            if ((parts.size() < 2) || (parts.size() > 3))
             {
                 MXL_ERROR("Invalid group hint value '{}'. Expected format '<group-name>:<role-in-group>[:<group-scope>]'", hint);
                 return false;
@@ -152,7 +151,7 @@ namespace mxl::lib
                 MXL_ERROR("Invalid group hint value '{}'. Group name and role must not be empty.", hint);
                 return false;
             }
-            if (parts.size() == 3 && parts[2] != "device" && parts[2] != "node")
+            if ((parts.size() == 3) && (parts[2] != "device") && (parts[2] != "node"))
             {
                 MXL_ERROR("Invalid group hint value '{}'. Group scope must be either 'device' or 'node'.", hint);
                 return false;

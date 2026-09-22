@@ -66,10 +66,10 @@ namespace mxl::lib
          * @param payloadSize Maximum payload bytes per entry.
          * @return Slot header plus payload capacity, rounded up to the 64-byte Event alignment.
          */
-        static std::size_t slotStride(std::uint32_t payloadSize) noexcept
+        constexpr static std::size_t slotStride(std::uint32_t payloadSize) noexcept
         {
             constexpr auto alignment = std::size_t{alignof(Event)};
-            return (sizeof(Event) + payloadSize + alignment - 1) / alignment * alignment;
+            return (sizeof(Event) + payloadSize + alignment - 1) & ~(alignment - 1U);
         }
 
         /**
@@ -81,11 +81,7 @@ namespace mxl::lib
          */
         static std::size_t bufferSize(std::uint32_t count, std::uint32_t payloadSize)
         {
-            if ((count < 2) || (count > 65536) || (payloadSize == 0) || (payloadSize > 1048576) ||
-                (slotStride(payloadSize) > (std::numeric_limits<std::size_t>::max() - sizeof(EventRingHeader)) / count))
-            {
-                throw std::invalid_argument{"Invalid event buffer dimensions."};
-            }
+            validateGeometry(count, payloadSize);
             return sizeof(EventRingHeader) + (slotStride(payloadSize) * count);
         }
 
@@ -99,10 +95,10 @@ namespace mxl::lib
          */
         static void initialize(void* memory, std::uint32_t count, std::uint32_t payloadSize)
         {
-            (void)bufferSize(count, payloadSize);
+            validateGeometry(count, payloadSize);
             auto header = new (memory) EventRingHeader{};
             header->version = STORAGE_VERSION;
-            header->size = sizeof(EventRingHeader);
+            header->size = sizeof *header;
             header->eventCount = count;
             header->payloadSize = payloadSize;
             for (auto i = std::size_t{0}; i < count; ++i)
@@ -110,9 +106,9 @@ namespace mxl::lib
                 auto bytes = static_cast<std::uint8_t*>(memory) + sizeof(EventRingHeader) + (i * slotStride(payloadSize));
                 auto event = new (bytes) Event{};
                 event->header.version = STORAGE_VERSION;
-                event->header.size = sizeof(EventHeader);
+                event->header.size = sizeof event->header;
                 event->header.sequence = EMPTY;
-                new (bytes + sizeof(Event)) std::uint64_t[(payloadSize + 7) / 8]{};
+                new (event + 1) std::uint64_t[(payloadSize + 7) / 8]{};
             }
         }
 
@@ -130,8 +126,8 @@ namespace mxl::lib
             , _payloadSize{payloadSize}
             , _stride{slotStride(payloadSize)}
         {
-            (void)bufferSize(count, payloadSize);
-            if ((_header->version != STORAGE_VERSION) || (_header->size != sizeof(EventRingHeader)) || (_header->eventCount != count) ||
+            validateGeometry(count, payloadSize);
+            if ((_header->version != STORAGE_VERSION) || (_header->size != sizeof *_header) || (_header->eventCount != count) ||
                 (_header->payloadSize != payloadSize))
             {
                 throw std::invalid_argument{"Invalid event ring header."};
@@ -140,7 +136,7 @@ namespace mxl::lib
             for (auto i = std::size_t{0}; i < count; ++i)
             {
                 auto const& header = slot(i).header;
-                if ((header.version != STORAGE_VERSION) || (header.size != sizeof(EventHeader)))
+                if ((header.version != STORAGE_VERSION) || (header.size != sizeof header))
                 {
                     throw std::invalid_argument{"Invalid event slot header."};
                 }
@@ -232,6 +228,19 @@ namespace mxl::lib
 
     private:
         /**
+         * @brief Validate slot count, payload capacity and mapping-size limits.
+         * @throws std::invalid_argument Geometry is unsupported or its byte count overflows.
+         */
+        static void validateGeometry(std::uint32_t count, std::uint32_t payloadSize)
+        {
+            if ((count < 2) || (count > 65536) || (payloadSize == 0) || (payloadSize > 1048576) ||
+                (slotStride(payloadSize) > (std::numeric_limits<std::size_t>::max() - sizeof(EventRingHeader)) / count))
+            {
+                throw std::invalid_argument{"Invalid event buffer dimensions."};
+            }
+        }
+
+        /**
          * @brief Resolve a logical queue index to a physical slot modulo capacity.
          * @param index Queue index whose slot is needed.
          * @return Slot header in the borrowed mapping; access must obey the atomic protocol.
@@ -260,7 +269,7 @@ namespace mxl::lib
         static void storeBytes(std::uint64_t* destination, void const* source, std::size_t size) noexcept
         {
             auto const bytes = static_cast<std::uint8_t const*>(source);
-            for (auto offset = std::size_t{0}; offset < size; offset += sizeof(std::uint64_t))
+            for (auto offset = std::size_t{0}; offset < size; offset += sizeof *destination)
             {
                 auto word = std::uint64_t{};
                 std::memcpy(&word, bytes + offset, std::min(sizeof word, size - offset));
@@ -279,7 +288,7 @@ namespace mxl::lib
         static void loadBytes(void* destination, std::uint64_t const* source, std::size_t size) noexcept
         {
             auto bytes = static_cast<std::uint8_t*>(destination);
-            for (auto offset = std::size_t{0}; offset < size; offset += sizeof(std::uint64_t))
+            for (auto offset = std::size_t{0}; offset < size; offset += sizeof *source)
             {
                 auto const word = load(source[offset / sizeof(std::uint64_t)]);
                 std::memcpy(bytes + offset, &word, std::min(sizeof word, size - offset));

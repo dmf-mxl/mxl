@@ -122,7 +122,7 @@ namespace mxl::lib
         else
         {
             auto msg = std::string{"Required '"} + field + "' not found.";
-            throw std::invalid_argument{msg};
+            throw std::invalid_argument{std::move(msg)};
         }
     }
 

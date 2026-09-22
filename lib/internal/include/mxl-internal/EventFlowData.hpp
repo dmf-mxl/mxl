@@ -37,7 +37,7 @@ namespace mxl::lib
         {}
 
         /** @return Configured number of slots, or zero before the ring file is open. */
-        std::size_t eventCount() const noexcept
+        constexpr std::size_t eventCount() const noexcept
         {
             return _events ? flowInfo()->config.event.eventCount : 0;
         }
@@ -66,20 +66,20 @@ namespace mxl::lib
          * @return Oldest nominally retained index, or zero before the first commit.
          * @note A producer overwriting a slot can make it unavailable before the head advances.
          */
-        std::uint64_t oldestIndex() const noexcept
+        constexpr std::uint64_t oldestIndex() const noexcept
         {
             auto const head = EventRingBuffer::load(flowInfo()->runtime.headIndex);
             return (head != MXL_UNDEFINED_INDEX) && (head >= eventCount()) ? head - (eventCount() - 1) : 0;
         }
 
         /** @return Mutable ring view; openEventBuffer must have succeeded. */
-        EventRingBuffer& ring() noexcept
+        constexpr EventRingBuffer& ring() noexcept
         {
             return *_ring;
         }
 
         /** @return Read-only ring view; openEventBuffer must have succeeded. */
-        EventRingBuffer const& ring() const noexcept
+        constexpr EventRingBuffer const& ring() const noexcept
         {
             return *_ring;
         }
