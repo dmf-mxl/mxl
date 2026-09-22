@@ -84,31 +84,6 @@ namespace mxl::lib
             return *_ring;
         }
 
-        /**
-         * @brief Copy runtime fields using individual atomic loads.
-         * @return Runtime values that need not represent one simultaneous state.
-         */
-        mxlFlowRuntimeInfo runtimeSnapshot() const noexcept
-        {
-            auto const& runtime = flowInfo()->runtime;
-            auto result = mxlFlowRuntimeInfo{};
-            result.headIndex = EventRingBuffer::load(runtime.headIndex);
-            result.lastWriteTime = EventRingBuffer::load(runtime.lastWriteTime);
-            result.lastReadTime = EventRingBuffer::load(runtime.lastReadTime);
-            return result;
-        }
-
-        /** @return Immutable configuration combined with individually loaded runtime fields. */
-        mxlFlowInfo infoSnapshot() const noexcept
-        {
-            auto result = mxlFlowInfo{};
-            result.version = flowInfo()->version;
-            result.size = flowInfo()->size;
-            result.config = flowInfo()->config;
-            result.runtime = runtimeSnapshot();
-            return result;
-        }
-
     private:
         SharedMemorySegment _events;            ///< Owner of the single events mapping.
         std::unique_ptr<EventRingBuffer> _ring; ///< Non-owning ring view whose lifetime is bounded by _events.

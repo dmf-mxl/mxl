@@ -82,7 +82,7 @@ namespace mxl::lib
 
     mxlFlowInfo PosixEventFlowReader::getFlowInfo() const
     {
-        return _flowData->infoSnapshot();
+        return *getFlowData().flowInfo();
     }
 
     mxlFlowConfigInfo PosixEventFlowReader::getFlowConfigInfo() const
@@ -92,7 +92,7 @@ namespace mxl::lib
 
     mxlFlowRuntimeInfo PosixEventFlowReader::getFlowRuntimeInfo() const
     {
-        return _flowData->runtimeSnapshot();
+        return getFlowData().flowInfo()->runtime;
     }
 
     std::vector<std::uint8_t>& PosixEventFlowReader::threadSnapshot()
