@@ -58,7 +58,7 @@ namespace mxl::lib
                     std::filesystem::perms::others_exec,
                 std::filesystem::perm_options::add);
 
-#ifdef __linux__
+#if defined __linux__
             if (::renameat2(AT_FDCWD, source.c_str(), AT_FDCWD, dest.c_str(), RENAME_NOREPLACE) < 0)
 #elif defined __APPLE__
             if (::renamex_np(source.c_str(), dest.c_str(), RENAME_EXCL) < 0)
@@ -171,7 +171,7 @@ namespace mxl::lib
         MXL_DEBUG("Create discrete flow. id: {}, grainCount: {}, grain payload size: {}", uuidString, grainCount, grainPayloadSize);
 
         flowFormat = sanitizeFlowFormat(flowFormat);
-        if (!mxlIsDiscreteDataFormat(static_cast<int>(flowFormat)))
+        if (!mxlIsDiscreteDataFormat(flowFormat))
         {
             throw std::runtime_error{"Attempt to create discrete flow with unsupported or non matching format."};
         }
@@ -336,7 +336,7 @@ namespace mxl::lib
             bufferLength);
 
         flowFormat = sanitizeFlowFormat(flowFormat);
-        if (!mxlIsContinuousDataFormat(static_cast<int>(flowFormat)))
+        if (!mxlIsContinuousDataFormat(flowFormat))
         {
             throw std::runtime_error{"Attempt to create continuous flow with unsupported or non matching format."};
         }
@@ -409,7 +409,7 @@ namespace mxl::lib
                     fmt::format("Unsupported flow data version: {}, supported is: {}", flowSegment.get()->info.version, FLOW_DATA_VERSION)};
             }
 
-            if (auto const flowFormat = flowSegment.get()->info.config.common.format; mxlIsDiscreteDataFormat(static_cast<int>(flowFormat)))
+            if (auto const flowFormat = flowSegment.get()->info.config.common.format; mxlIsDiscreteDataFormat(flowFormat))
             {
                 return openDiscreteFlow(base, std::move(flowSegment));
             }
@@ -419,7 +419,7 @@ namespace mxl::lib
                 data->openEventBuffer(makeEventDataFilePath(base).string().c_str());
                 return data;
             }
-            else if (mxlIsContinuousDataFormat(static_cast<int>(flowFormat)))
+            else if (mxlIsContinuousDataFormat(flowFormat))
             {
                 return openContinuousFlow(base, std::move(flowSegment));
             }
