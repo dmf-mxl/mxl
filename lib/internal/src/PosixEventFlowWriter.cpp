@@ -75,7 +75,7 @@ namespace mxl::lib
 
     mxlFlowInfo PosixEventFlowWriter::getFlowInfo() const
     {
-        return _flowData->infoSnapshot();
+        return *getFlowData().flowInfo();
     }
 
     mxlFlowConfigInfo PosixEventFlowWriter::getFlowConfigInfo() const
@@ -85,7 +85,7 @@ namespace mxl::lib
 
     mxlFlowRuntimeInfo PosixEventFlowWriter::getFlowRuntimeInfo() const
     {
-        return _flowData->runtimeSnapshot();
+        return getFlowData().flowInfo()->runtime;
     }
 
     mxlStatus PosixEventFlowWriter::openEvent(mxlEventInfo* info, std::uint8_t** payload)
