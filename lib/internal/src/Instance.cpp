@@ -243,7 +243,7 @@ namespace mxl::lib
         {
             auto const grainRate = parser.getGrainRate();
             auto const eventCount = _historyDuration * __int128_t{grainRate.numerator} / (1'000'000'000 * __int128_t{grainRate.denominator});
-            if (eventCount < 2 || eventCount > 65536)
+            if ((eventCount < 2) || (eventCount > 65536))
             {
                 throw std::invalid_argument("Invalid event count.");
             }

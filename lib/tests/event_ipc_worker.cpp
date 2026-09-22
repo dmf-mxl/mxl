@@ -26,13 +26,12 @@ int main(int argc, char** argv)
     auto const count = std::stoull(argv[4]);
     auto instance = mxlCreateInstance(argv[1], "{}");
     auto reader = mxlFlowReader{};
-    if (!instance || mxlCreateFlowReader(instance, argv[2], "", &reader) != MXL_STATUS_OK)
+    if ((instance == nullptr) || (mxlCreateFlowReader(instance, argv[2], "", &reader) != MXL_STATUS_OK))
     {
         return 2;
     }
-    auto ready = char{};
-    ready = 'R';
-    if (::write(std::stoi(argv[5]), &ready, 1) != 1 || ::read(std::stoi(argv[6]), &ready, 1) != 1)
+    auto ready = 'R';
+    if ((::write(std::stoi(argv[5]), &ready, 1) != 1) || (::read(std::stoi(argv[6]), &ready, 1) != 1))
     {
         return 3;
     }
@@ -40,8 +39,8 @@ int main(int argc, char** argv)
     {
         auto info = mxlEventInfo{};
         auto payload = static_cast<std::uint8_t*>(nullptr);
-        if (mxlFlowReaderGetEvent(reader, 5000000000ULL, &info, &payload) != MXL_STATUS_OK || info.timestamp != offset + i || info.offset != 0 ||
-            info.complete != 1 || info.eventSize != info.timestamp % (MXL_DATA_FORMAT_GRAIN_SIZE + 1))
+        if ((mxlFlowReaderGetEvent(reader, 5000000000ULL, &info, &payload) != MXL_STATUS_OK) || (info.timestamp != offset + i) ||
+            (info.offset != 0) || (info.complete != 1) || (info.eventSize != info.timestamp % (MXL_DATA_FORMAT_GRAIN_SIZE + 1)))
         {
             return 4;
         }
@@ -53,7 +52,7 @@ int main(int argc, char** argv)
             }
         }
     }
-    if (mxlReleaseFlowReader(instance, reader) != MXL_STATUS_OK || mxlDestroyInstance(instance) != MXL_STATUS_OK)
+    if ((mxlReleaseFlowReader(instance, reader) != MXL_STATUS_OK) || (mxlDestroyInstance(instance) != MXL_STATUS_OK))
     {
         return 6;
     }

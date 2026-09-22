@@ -54,7 +54,7 @@ namespace mxl::lib
                 {
                     return MXL_DATA_FORMAT_AUDIO;
                 }
-                if (tail == "event"sv || tail == "data.event"sv)
+                if ((tail == "event"sv) || (tail == "data.event"sv))
                 {
                     return MXL_DATA_FORMAT_EVENT;
                 }
@@ -243,7 +243,7 @@ namespace mxl::lib
             throw std::domain_error{"Unsupported flow format."};
         }
 
-        if (mxlIsEventDataFormat(_format) && (_grainRate.numerator <= 0 || _grainRate.denominator <= 0))
+        if (mxlIsEventDataFormat(_format) && ((_grainRate.numerator <= 0) || (_grainRate.denominator <= 0)))
         {
             throw std::invalid_argument{"Event grain_rate must be positive."};
         }

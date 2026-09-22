@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <exception>
+#include <iostream>
 #include <limits>
 #include <span>
 #include <stdexcept>
@@ -648,11 +649,11 @@ try
 }
 catch (std::exception const& ex)
 {
-    (void)std::fprintf(stderr, "ERROR: %s\n", ex.what());
+    std::cerr << "ERROR: " << ex.what() << '\n';
     return EXIT_FAILURE;
 }
 catch (...)
 {
-    (void)std::fputs("ERROR: Unexpected exception.\n", stderr);
+    std::cerr << "ERROR: Unexpected exception.\n";
     return EXIT_FAILURE;
 }

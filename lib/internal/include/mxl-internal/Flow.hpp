@@ -10,6 +10,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iosfwd>
+#include <type_traits>
 #include <mxl/flow.h>
 #include <mxl/platform.h>
 #include "FlowState.hpp"
@@ -59,14 +60,30 @@ namespace mxl::lib
     /// Version stored in the public mxlEventInfo metadata of every published entry.
     constexpr inline auto EVENT_HEADER_VERSION = std::uint32_t{1};
 
-    /** @brief 640-byte slot header with layout fields, sequence and metadata on separate 64-byte boundaries. */
+    /**
+     * @brief 640-byte slot header with layout fields, sequence and metadata on separate 64-byte boundaries.
+     * The fixed alignment is part of the shared-memory ABI and must not depend on compiler CPU tuning.
+     */
     struct EventHeader
     {
-        std::uint32_t version;              ///< Immutable EventRingBuffer storage version.
-        std::uint32_t size;                 ///< Immutable size of EventHeader in bytes.
-        alignas(64) std::uint64_t sequence; ///< Atomic tag: index shifted left one bit, low bit set after publication; EMPTY if unused.
-        alignas(64) std::uint64_t infoWords[sizeof(mxlEventInfo) / sizeof(std::uint64_t)]; ///< Public metadata accessed through atomic words.
+        /// Immutable EventRingBuffer storage version.
+        std::uint32_t version;
+        /// Immutable size of EventHeader in bytes.
+        std::uint32_t size;
+        /// Explicit padding to the sequence cache line.
+        std::uint8_t layoutPadding[64 - 2 * sizeof(std::uint32_t)];
+        /// Atomic tag: index shifted left one bit, low bit set after publication; EMPTY if unused.
+        alignas(64) std::uint64_t sequence;
+        /// Explicit padding to the metadata cache line.
+        std::uint8_t sequencePadding[64 - sizeof(std::uint64_t)];
+        /// Public metadata accessed through atomic words.
+        alignas(64) std::uint64_t infoWords[sizeof(mxlEventInfo) / sizeof(std::uint64_t)];
     };
+
+    static_assert(sizeof(EventHeader) == 640);
+    static_assert(offsetof(EventHeader, sequence) == 64);
+    static_assert(offsetof(EventHeader, infoWords) == 128);
+    static_assert(std::has_unique_object_representations_v<EventHeader>);
 
     /** @brief Fixed part of an event slot; its payload follows immediately in the mapping. */
     struct Event
