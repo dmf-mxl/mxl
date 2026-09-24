@@ -185,6 +185,21 @@ declarations, constructors, destructors, test helpers, and tool code.
   `@test` for new test cases.
 - Update documentation when behavior changes, including related Markdown
   guides and examples. Remove obsolete guarantees and descriptions.
+- Write comments and documentation in plain, direct language, using short sentences
+  and common words. Say what the code does and why, and note any constraint a
+  reader would not guess; don't repeat what the code already shows. Use "is" and
+  "has" instead of "serves as", "stands as", "boasts" or "features". Don't use
+  promotional or inflated words such as "robust", "seamless", "powerful",
+  "comprehensive", "crucial", "pivotal", "delve", "leverage", "enhance", "showcase",
+  "underscore" or "testament". Avoid metaphors and figurative phrasing, and name
+  the actual mechanism instead. Don't write "not just X, but Y" constructions, lists
+  of three items by habit, trailing "-ing" clauses that claim significance ("ensuring
+  reliability", "highlighting the importance of"), or closing sentences that summarize
+  or praise what came before. Keep formatting minimal: no emoji, no bold for emphasis,
+  no em dashes as general-purpose punctuation, and no headings or bullet lists where a
+  sentence would do.  Don't address the reader ("Let's", "Happy coding") or describe
+  your own editing choices in the text. If deleting a sentence would cost the reader
+  no information, delete it.
 
 Build the API documentation when adding or changing documented declarations:
 
