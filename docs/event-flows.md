@@ -1,9 +1,9 @@
-<!-- SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project. -->
+<!-- SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project. -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 # Event flows
 
-An event flow (`MXL_DATA_FORMAT_EVENT`) carries non-periodic, variable size timed events.  An event flow ring buffer behaves likes a double ended queue where timing information is carried in the payload itself.  Each ring buffer entry contains either a complete event or a fragment of a large event whose payload is fragmented across multiple events.  Event flows enable, amongst other things, bit accurate round trip of SMPTE ST 2110-41 packets (SMPTE ST 2110-41 RX -> MXL Write -> MXL Read -> SMPTE ST 2110-41 TX).
+An event flow (`MXL_DATA_FORMAT_EVENT`) carries non-periodic, variable size timed events.  An event flow ring buffer behaves like a double ended queue where timing information is carried in the payload itself.  Each ring buffer entry contains either a complete event or a fragment of a large event whose payload is fragmented across multiple events.  Event flows enable, amongst other things, bit accurate round trip of SMPTE ST 2110-41 packets (SMPTE ST 2110-41 RX -> MXL Write -> MXL Read -> SMPTE ST 2110-41 TX).
 
 Each event is identified using a data item type (DIT).  This data item type refers to an external registry, which itself is configurable. Two registry types are currently supported: [SMPTE ST 2110-41 Administrative Register](https://smpte-ra.org/smpte-st2110-41-ar) and the DMF MXL DIT labelling scheme based on URNs. (TODO)
 
@@ -47,12 +47,15 @@ The default history is 200 ms, so the example above creates 200 slots. The resul
 | `flags` | `0` | Reserved; must remain zero. |
 | `registryType` | `MXL_EVENT_REGISTRY_TYPE_MXL` | Registry for the data item type. |
 | `dataItemType[256]` | All bytes zero | Data item type (DIT). |
-| `eventSize` | Payload capacity, currently `4096` | Actual byte count to publish in this entry. |
+| `eventSize` | `0` | Actual byte count to publish in this entry. |
 | `offset` | `0` | Logical byte offset within a fragmented event. |
 | `complete` | `1` | Unfragmented event or final fragment. |
-| `reserved[223]` | All bytes zero | Reserved; leave untouched. |
+| `reserved[215]` | All bytes zero | Reserved; leave untouched. |
+| `index` | `MXL_UNDEFINED_INDEX` | Library-assigned queue position on a successful read; ignored on commit. |
 
-An applucation must set `timestamp` and the actual `eventSize` before committing.
+An application must set `timestamp` and the actual `eventSize` before committing.
+A zero size publishes an empty event. Payload capacity comes from
+`config.event.eventPayloadSize`; opening an event does not clear the staging buffer.
 
 For the SMPTE registry, set `registryType = MXL_EVENT_REGISTRY_TYPE_SMPTE` and
 store the DIT string without an `0x` prefix. For the DMF MXL registry use URN formatted strings such as `x-example:message`. The field has a capacity of 256 bytes; readers must bound string access to that array because a producer
@@ -81,7 +84,7 @@ the flow's ordering requirement.
 #include <span>
 #include <mxl/flow.h>
 
-mxlStatus writeEvent(mxlFlowWriter writer, std::uint64_t timestamp,
+mxlStatus writeEvent(mxlFlowWriter writer, mxlFlowConfigInfo const& config, std::uint64_t timestamp,
     std::span<std::uint8_t const> message)
 {
     auto event = mxlEventInfo{};
@@ -91,7 +94,7 @@ mxlStatus writeEvent(mxlFlowWriter writer, std::uint64_t timestamp,
     {
         return status;
     }
-    if (message.size() > event.eventSize)
+    if (message.size() > config.event.eventPayloadSize)
     {
         (void)mxlFlowWriterCancelEvent(writer);
         return MXL_ERR_INVALID_ARG;
@@ -148,12 +151,22 @@ next entry if they are needed for reassembly.
 Create a reader with `mxlCreateFlowReader`, then call
 `mxlFlowReaderGetEvent(reader, timeoutNs, &event, &payload)` or
 `mxlFlowReaderGetEventNonBlocking(reader, &event, &payload)`. Readers start at the
-oldest retained entry and consume entries in queue order.
+oldest retained entry and consume entries in queue order. On success, `event.index`
+is the zero-based queue position, independent of the timestamp. For consecutive
+successful reads, `current.index - previous.index - 1` counts skipped entries.
+Compare with `runtime.headIndex` to estimate lag. If the head is
+`MXL_UNDEFINED_INDEX` or less than the received index, sample it again: a reader
+can observe a published slot before the writer advances the head. Output
+arguments remain unchanged on an error.
 
-**Each `mxlFlowReader` handle must be accessed by a single thread.** Concurrent
+The payload snapshot remains valid until the next read attempt on that handle or
+reader release. Copy any bytes needed beyond that point.
+
+**Each `mxlFlowReader` handle must be accessed by a single thread at a time.** Concurrent
 consumers in multiple threads or processes must use separate flow readers, each
-with its own cursor. Keep fragment reassembly state with the consumer that owns
-the reader. Reader handles are process-local; each process must create its own
+with its own cursor. Reader acquisition is cached within an instance, so use a
+separate instance for each independent reader of the same flow. Keep fragment
+reassembly state with the consumer that owns the reader. Reader handles are process-local; each process must create its own
 instance and reader handles.
 
 | Read result | Meaning and next action |
@@ -173,6 +186,13 @@ the writer's entire open/edit/commit-or-cancel transaction. Repeated writer
 acquisition in one instance reuses its handle.
 Coordinate handle release and instance destruction with all active operations.
 
+After a writer crash, a replacement writer may retry a slot whose copy was never
+published. If the previous writer completed a slot but died before advancing the
+head, reopening adopts that publication, restores its timestamp ordering, and
+notifies readers. The next commit uses the following index; an already-published
+sequence tag is never reused. This requires the previous writer to have stopped
+and the replacement to have sole producer ownership.
+
 ## Inspecting events
 
 With the producer running, use `mxl-data-probe`:
@@ -182,10 +202,11 @@ mxl-data-probe --domain /dev/shm/mxl \
     --flow cabbc00d-3860-4438-bc48-8ebdfe67305e --count 3 --timeout-ms 1000
 ```
 
-The probe prints timestamps, flags, registry/DIT, payload size, fragment offset,
+The probe prints queue indices, timestamps, flags, registry/DIT, payload size, fragment offset,
 completion state and payload bytes in hexadecimal. `--count` counts entries,
 including individual fragments, starting with the oldest retained entry. The
-printed event number is a local read counter starting at zero. The probe displays
+printed event number is a local read counter starting at zero; the separate
+queue index is the position shared with `headIndex`. The probe displays
 fragments separately and does not validate continuity or reassemble them. A
 read error, including timeout or overrun, stops it with a nonzero exit status.
 `--timeout-ms` applies separately to each read; `--count` defaults to 1 and

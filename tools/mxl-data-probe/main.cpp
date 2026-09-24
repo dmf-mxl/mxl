@@ -358,7 +358,7 @@ namespace
      * @param registry Registry value from event metadata.
      * @return MXL, SMPTE, or Unknown for an unrecognized identifier.
      */
-    constexpr char const* describeEventRegistry(::mxlEventRegistryType registry) noexcept
+    constexpr char const* describeEventRegistry(std::uint32_t registry) noexcept
     {
         switch (registry)
         {
@@ -401,6 +401,7 @@ namespace
         auto const dataItemType = std::string_view{typeBytes.data(), static_cast<std::size_t>(typeEnd - typeBytes.begin())};
 
         fmt::print("Event {}\n", ordinal);
+        fmt::print("  queue index: {}\n", eventInfo.index);
         fmt::print("  timestamp: {} TAI ns\n", eventInfo.timestamp);
         fmt::print("  flags: 0x{:X}\n", eventInfo.flags);
         fmt::print("  registry: {} ({})\n", describeEventRegistry(eventInfo.registryType), static_cast<std::uint32_t>(eventInfo.registryType));
