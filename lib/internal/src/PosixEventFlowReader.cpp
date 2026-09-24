@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
 /** @file
@@ -48,6 +48,7 @@ namespace mxl::lib
         , _flowData{std::move(data)}
         , _accessFileFd{-1}
         , _nextIndex{0}
+        , _snapshot(_flowData->flowInfo()->config.event.eventPayloadSize)
     {
         _nextIndex = _flowData->oldestIndex();
         auto const accessFile = makeFlowAccessFilePath(manager.getDomain(), to_string(flowId));
@@ -95,64 +96,33 @@ namespace mxl::lib
         return getFlowData().flowInfo()->runtime;
     }
 
-    std::vector<std::uint8_t>& PosixEventFlowReader::threadSnapshot()
-    {
-        auto lock = std::scoped_lock{_snapshotMutex};
-        auto& snapshot = _snapshots[std::this_thread::get_id()];
-        if (snapshot.empty())
-        {
-            snapshot.resize(_flowData->flowInfo()->config.event.eventPayloadSize);
-        }
-        return snapshot;
-    }
-
     mxlStatus PosixEventFlowReader::getEvent(Timepoint deadline, mxlEventInfo* info, std::uint8_t** payload)
     {
         auto flow = _flowData->flow();
         auto sync = std::atomic_ref{flow->state.syncCounter};
-        auto& snapshot = threadSnapshot();
-        auto retry = bool{};
         while (true)
         {
-            // Bound retries when other threads repeatedly win the cursor CAS.
-            // A nonblocking call still gets one attempt even with an expired deadline.
-            if (retry && (currentTime(Clock::Realtime) >= deadline))
-            {
-                return MXL_ERR_OUT_OF_RANGE_TOO_EARLY;
-            }
-            retry = true;
             auto const previous = sync.load(std::memory_order_acquire);
-            auto next = _nextIndex.load(std::memory_order_acquire);
             auto const oldest = _flowData->oldestIndex();
-            if (next < oldest)
+            if (_nextIndex < oldest)
             {
-                if (_nextIndex.compare_exchange_weak(next, oldest, std::memory_order_acq_rel))
-                {
-                    return MXL_ERR_OUT_OF_RANGE_TOO_LATE;
-                }
-                continue;
+                _nextIndex = oldest;
+                return MXL_ERR_OUT_OF_RANGE_TOO_LATE;
             }
             auto received = mxlEventInfo{};
-            auto const result = _flowData->ring().read(next, received, snapshot.data());
+            auto const result = _flowData->ring().read(_nextIndex, received, _snapshot.data());
             if (result == EventRingBuffer::ReadResult::Ready)
             {
-                if (!_nextIndex.compare_exchange_weak(next, next + 1, std::memory_order_acq_rel))
-                {
-                    continue; // Another thread consumed this event through our handle.
-                }
+                ++_nextIndex;
                 *info = received;
-                *payload = snapshot.data();
+                *payload = _snapshot.data();
                 (void)updateFileAccessTime(_accessFileFd);
                 return MXL_STATUS_OK;
             }
             if (result == EventRingBuffer::ReadResult::Overwritten)
             {
-                auto const resume = std::max(next + 1, _flowData->oldestIndex());
-                if (_nextIndex.compare_exchange_weak(next, resume, std::memory_order_acq_rel))
-                {
-                    return MXL_ERR_OUT_OF_RANGE_TOO_LATE;
-                }
-                continue;
+                _nextIndex = std::max(_nextIndex + 1, _flowData->oldestIndex());
+                return MXL_ERR_OUT_OF_RANGE_TOO_LATE;
             }
             if (result == EventRingBuffer::ReadResult::Invalid)
             {
@@ -162,11 +132,10 @@ namespace mxl::lib
             {
                 return MXL_ERR_FLOW_INVALID;
             }
-            if (!waitUntilChanged(&flow->state.syncCounter, previous, deadline))
+            if ((currentTime(Clock::Realtime) >= deadline) || !waitUntilChanged(&flow->state.syncCounter, previous, deadline))
             {
                 return MXL_ERR_OUT_OF_RANGE_TOO_EARLY;
             }
-            retry = false; // Inspect a notification before deciding it timed out.
         }
     }
 

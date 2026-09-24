@@ -157,11 +157,11 @@ extern "C"
      */
     typedef struct mxlEventInfo_t
     {
-        uint32_t version;                  ///< Structure version, currently 1.
-        uint32_t size;                     ///< Size of this structure.
-        uint64_t timestamp;                ///< Application supplied TAI timestamp in nanoseconds since the epoch; must not decrease within a flow.
-        uint32_t flags;                    ///< Reserved; must be zero.
-        mxlEventRegistryType registryType; ///< Registry that determines the interpretation of dataItemType.
+        uint32_t version;      ///< Structure version, currently 1.
+        uint32_t size;         ///< Size of this structure.
+        uint64_t timestamp;    ///< Application supplied TAI timestamp in nanoseconds since the epoch; must not decrease within a flow.
+        uint32_t flags;        ///< Reserved; must be zero.
+        uint32_t registryType; ///< Registry that determines the interpretation of dataItemType; a mxlEventRegistryType value.
 
         /**
          * @brief Data item type (DIT) interpreted according to registryType.
@@ -188,8 +188,16 @@ extern "C"
         /** @brief 1 for an unfragmented event or final fragment; 0 if more fragments follow. */
         uint8_t complete;
 
-        /** @brief Reserved bytes that pad the structure to 512 bytes; leave zero. */
-        uint8_t reserved[223];
+        /** @brief Reserved bytes; leave zero. */
+        uint8_t reserved[215];
+
+        /**
+         * @brief Zero-based queue position, assigned by the library on a successful read.
+         * Compare with mxlFlowRuntimeInfo.headIndex to measure reader lag, or with the
+         * previous received index to count skipped entries. Open initializes this to
+         * MXL_UNDEFINED_INDEX; commit ignores the supplied value.
+         */
+        uint64_t index;
     } mxlEventInfo;
 
     typedef struct mxlFlowReader_t* mxlFlowReader;
@@ -202,7 +210,8 @@ extern "C"
      * @param[in] writer Event flow writer acquired with mxlCreateFlowWriter.
      * @param[out] event Receives initialized metadata; must not be NULL.
      * @param[out] payload Receives the private writable buffer; must not be NULL.
-     * The buffer contents are not cleared on open.
+     * The buffer contents are not cleared on open. eventSize starts at zero; obtain
+     * capacity from mxlFlowConfigInfo.event.eventPayloadSize and set the actual size before commit.
      * @retval MXL_STATUS_OK The event is open for editing.
      * @retval MXL_ERR_INVALID_ARG An output pointer is NULL or an event is already open.
      * @retval MXL_ERR_INVALID_FLOW_WRITER The handle is NULL or is not an event writer.
@@ -224,7 +233,7 @@ extern "C"
      * @retval MXL_ERR_INVALID_ARG No event is open, metadata is invalid, the timestamp
      * decreases, the payload exceeds capacity, or event is NULL.
      * @retval MXL_ERR_INVALID_FLOW_WRITER The handle is NULL or is not an event writer.
-     * @retval MXL_ERR_FLOW_INVALID Publication would reuse an interrupted sequence tag.
+     * @retval MXL_ERR_FLOW_INVALID Publication would overwrite an already-published or newer sequence tag.
      * @retval MXL_ERR_OUT_OF_RANGE_TOO_LATE The queue sequence index is exhausted.
      * @retval MXL_ERR_UNKNOWN An internal exception occurred.
      */
@@ -244,8 +253,10 @@ extern "C"
 
     /** Read the next event using this reader's queue cursor, starting with the oldest retained event.
      * An overrun advances the cursor past lost entries; retry to resume reading.
-     * Payload is a private snapshot, valid until the next event read on this reader on the calling
-     * thread, thread exit, or reader release. Other threads and producers cannot overwrite it.
+     * Each reader handle must be accessed by a single thread at a time.
+     * Payload is a private snapshot, valid until the next read attempt on this reader or reader release.
+     * Producers and independent readers cannot overwrite it. Metadata includes the queue index on success;
+     * event and payload output arguments are unchanged on failure.
      *
      * @param[in] reader Event flow reader acquired with mxlCreateFlowReader.
      * @param[in] timeoutNs Maximum wait in nanoseconds; zero requests a nonblocking read.

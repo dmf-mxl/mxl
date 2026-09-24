@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "mxl-internal/Instance.hpp"
-#include <cerrno>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -86,7 +85,8 @@ namespace mxl::lib
             if (!file)
             {
                 // Missing options are expected; report other open failures.
-                if (errno != ENOENT)
+                auto error = std::error_code{};
+                if (std::filesystem::exists(path, error) || error)
                 {
                     MXL_ERROR("Failed to open domain options file: {}", path.string());
                 }

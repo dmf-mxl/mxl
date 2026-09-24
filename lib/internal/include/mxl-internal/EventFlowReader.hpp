@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
 /** @file
@@ -13,7 +13,7 @@ namespace mxl::lib
 {
     /**
      * @brief Backend contract for reading complete event entries or fragments in queue order.
-     * Implementations support concurrent calls through a shared reader cursor.
+     * Each reader has one owning thread; concurrent consumers must use independent readers.
      */
     class MXL_EXPORT EventFlowReader : public FlowReader
     {
@@ -25,8 +25,7 @@ namespace mxl::lib
          * @param[out] payload Receives private snapshot storage on success; must not be null.
          * @return MXL_STATUS_OK, TOO_EARLY if unavailable by the deadline, TOO_LATE on
          * overwrite, or FLOW_INVALID for corrupt metadata or a detected removed flow.
-         * @note Snapshot storage is reused by the next read attempt on this handle from
-         * the same thread. Release must be coordinated with callers.
+         * @note Snapshot storage is reused by the next read attempt on this handle. Release must be coordinated with callers.
          */
         virtual mxlStatus getEvent(Timepoint deadline, mxlEventInfo* info, std::uint8_t** payload) = 0;
 

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
 /** @file
@@ -22,13 +22,13 @@ namespace mxl::lib
     {
     public:
         /**
-         * @brief Attach the sole writer and restore any last committed timestamp.
+         * @brief Attach the sole writer, recover an interrupted publication and restore timestamp ordering.
          * @param manager Manager supplying the flow domain.
          * @param flowId Identifier of the mapped flow.
          * @param data Event mappings whose ownership transfers to this writer.
          * @param watcher Shared watcher used for reader access notifications.
          * @pre The caller guarantees that no other writer owns this flow.
-         * @throws std::runtime_error The retained head is invalid.
+         * @throws std::runtime_error The retained head or next published entry is invalid.
          * @throws std::exception Allocation or watcher registration fails.
          */
         PosixEventFlowWriter(FlowManager const& manager, uuids::uuid const& flowId, std::unique_ptr<EventFlowData>&& data,
@@ -37,11 +37,11 @@ namespace mxl::lib
         virtual ~PosixEventFlowWriter() override;
         /** @return The owned common and event mappings. */
         virtual FlowData const& getFlowData() const override;
-        /** @return Flow configuration and individually loaded atomic runtime fields. */
+        /** @return A copy of the flow configuration and runtime fields. */
         virtual mxlFlowInfo getFlowInfo() const override;
         /** @return Immutable event flow configuration. */
         virtual mxlFlowConfigInfo getFlowConfigInfo() const override;
-        /** @return Runtime fields loaded atomically, without a combined transaction. */
+        /** @return A copy of the runtime fields. */
         virtual mxlFlowRuntimeInfo getFlowRuntimeInfo() const override;
         /** @return Mutable access to the owned common and event mappings. */
         virtual FlowData& getFlowData() override;

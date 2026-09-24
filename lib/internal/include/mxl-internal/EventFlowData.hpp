@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
 /** @file
@@ -37,7 +37,7 @@ namespace mxl::lib
         {}
 
         /** @return Configured number of slots, or zero before the ring file is open. */
-        constexpr std::size_t eventCount() const noexcept
+        std::size_t eventCount() const noexcept
         {
             return _events ? flowInfo()->config.event.eventCount : 0;
         }
@@ -66,7 +66,7 @@ namespace mxl::lib
          * @return Oldest nominally retained index, or zero before the first commit.
          * @note A producer overwriting a slot can make it unavailable before the head advances.
          */
-        constexpr std::uint64_t oldestIndex() const noexcept
+        std::uint64_t oldestIndex() const noexcept
         {
             auto const head = EventRingBuffer::load(flowInfo()->runtime.headIndex);
             return (head != MXL_UNDEFINED_INDEX) && (head >= eventCount()) ? head - (eventCount() - 1) : 0;

@@ -270,7 +270,7 @@ namespace mxl::lib
             if ((width < 2) || (width > MAX_WIDTH) || (height < 1) || (height > MAX_HEIGHT))
             {
                 auto msg = fmt::format("Invalid video dimensions: {}x{}. range is 2x1 to {}x{}", width, height, MAX_WIDTH, MAX_HEIGHT);
-                throw std::invalid_argument{msg};
+                throw std::invalid_argument{std::move(msg)};
             }
 
             auto interlaceMode = std::string{};
@@ -290,7 +290,7 @@ namespace mxl::lib
             if (!match)
             {
                 auto msg = fmt::format("Invalid interlace_mode: {}", interlaceMode);
-                throw std::invalid_argument{msg};
+                throw std::invalid_argument{std::move(msg)};
             }
 
             if ((interlaceMode == "interlaced_tff") || (interlaceMode == "interlaced_bff"))
@@ -299,7 +299,7 @@ namespace mxl::lib
                 if ((_grainRate != mxlRational{30000, 1001}) && (_grainRate != mxlRational{25, 1}))
                 {
                     auto msg = std::string{"Invalid grain_rate for interlaced video. Expected 30000/1001 or 25/1."};
-                    throw std::invalid_argument{msg};
+                    throw std::invalid_argument{std::move(msg)};
                 }
 
                 // The grain rate is valid and we are in interlaced mode.  Double the grain rate to express a field rate.
@@ -345,7 +345,7 @@ namespace mxl::lib
                 else
                 {
                     auto msg = std::string{"Invalid video height for interlaced v210. Must be even."};
-                    throw std::invalid_argument{msg};
+                    throw std::invalid_argument{std::move(msg)};
                 }
             }
             else if (mediaType == "video/v210a")
@@ -368,13 +368,13 @@ namespace mxl::lib
                 else
                 {
                     auto msg = std::string{"Invalid video height for interlaced v210a. Must be even."};
-                    throw std::invalid_argument{msg};
+                    throw std::invalid_argument{std::move(msg)};
                 }
             }
             else
             {
                 auto msg = std::string{"Unsupported video media_type: "} + mediaType;
-                throw std::invalid_argument{msg};
+                throw std::invalid_argument{std::move(msg)};
             }
         }
         else if (_format == MXL_DATA_FORMAT_DATA)
@@ -387,7 +387,7 @@ namespace mxl::lib
             else
             {
                 auto msg = std::string{"Unsupported data media_type: "} + mediaType;
-                throw std::invalid_argument{msg};
+                throw std::invalid_argument{std::move(msg)};
             }
         }
         else if (_format == MXL_DATA_FORMAT_EVENT)
@@ -402,7 +402,7 @@ namespace mxl::lib
             if ((bitDepth != 32.0) && (bitDepth != 64.0))
             {
                 auto msg = fmt::format("Unsupported bit depth: {}", bitDepth);
-                throw std::invalid_argument{msg};
+                throw std::invalid_argument{std::move(msg)};
             }
 
             payloadSize = static_cast<std::size_t>(bitDepth) / 8U;
@@ -449,7 +449,7 @@ namespace mxl::lib
                 else
                 {
                     auto msg = std::string{"Unsupported video media_type: "} + mediaType;
-                    throw std::invalid_argument{msg};
+                    throw std::invalid_argument{std::move(msg)};
                 }
 
                 return sliceLengths;
@@ -478,7 +478,7 @@ namespace mxl::lib
                 if (auto const mediaType = fetchAs<std::string>(_root, "media_type"); mediaType != "video/v210" && mediaType != "video/v210a")
                 {
                     auto msg = std::string{"Unsupported video media_type: "} + mediaType;
-                    throw std::invalid_argument{msg};
+                    throw std::invalid_argument{std::move(msg)};
                 }
 
                 // For v210, the number of slices is always the number of video lines
@@ -509,7 +509,7 @@ namespace mxl::lib
                 }
             }
             auto msg = fmt::format("Unsupported channel count: {}", it->second.is<std::string>());
-            throw std::invalid_argument{msg};
+            throw std::invalid_argument{std::move(msg)};
         }
         return 1U;
     }

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
 /** @file
@@ -30,7 +30,9 @@ namespace mxl::lib
     {
         // The caller guarantees sole writer ownership, keeping the committed head
         // stable while we restore the timestamp from an existing flow.
-        auto const head = EventRingBuffer::load(_flowData->flowInfo()->runtime.headIndex);
+        auto flow = _flowData->flow();
+        auto& runtime = flow->info.runtime;
+        auto head = EventRingBuffer::load(runtime.headIndex);
         if (head != MXL_UNDEFINED_INDEX)
         {
             auto info = mxlEventInfo{};
@@ -40,7 +42,32 @@ namespace mxl::lib
             }
             _lastTimestamp = info.timestamp;
         }
+        // A crashed writer may have published the next slot without advancing the head.
+        auto const next = (head == MXL_UNDEFINED_INDEX) ? 0 : head + 1;
+        auto info = mxlEventInfo{};
+        auto const result = _flowData->ring().read(next, info, _payload.data());
+        if (result == EventRingBuffer::ReadResult::Ready)
+        {
+            if (info.timestamp < _lastTimestamp)
+            {
+                throw std::runtime_error{"Invalid recovered event timestamp."};
+            }
+            _lastTimestamp = info.timestamp;
+            std::atomic_ref{runtime.lastWriteTime}.store(currentTime(Clock::TAI).value, std::memory_order_release);
+            std::atomic_ref{runtime.headIndex}.store(next, std::memory_order_release);
+            head = next;
+        }
+        else if (result != EventRingBuffer::ReadResult::Pending)
+        {
+            throw std::runtime_error{"Invalid next event during writer recovery."};
+        }
         _watcher->addFlow(this, flowId);
+        if (head != MXL_UNDEFINED_INDEX)
+        {
+            // Also cover a crash after head advancement but before reader notification.
+            std::atomic_ref{flow->state.syncCounter}.fetch_add(1, std::memory_order_release);
+            wakeAll(&flow->state.syncCounter);
+        }
     }
 
     PosixEventFlowWriter::~PosixEventFlowWriter()
@@ -101,10 +128,11 @@ namespace mxl::lib
             .flags = 0,
             .registryType = MXL_EVENT_REGISTRY_TYPE_MXL,
             .dataItemType = {},
-            .eventSize = _flowData->flowInfo()->config.event.eventPayloadSize,
+            .eventSize = 0,
             .offset = 0,
             .complete = 1,
             .reserved = {},
+            .index = MXL_UNDEFINED_INDEX,
         };
         *payload = _payload.data();
         _open = true;

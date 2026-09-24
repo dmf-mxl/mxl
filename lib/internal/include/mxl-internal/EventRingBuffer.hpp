@@ -163,10 +163,10 @@ namespace mxl::lib
             auto& event = slot(index);
             auto sequence = std::atomic_ref{event.header.sequence};
             auto const previous = sequence.load(std::memory_order_relaxed);
-            if ((previous != EMPTY) && ((previous >> 1) >= index))
+            if ((previous != EMPTY) && (previous != (index << 1)) && ((previous >> 1) >= index))
             {
-                // A previous producer may have died before updating headIndex.
-                // Reusing its tag could make readers accept an inconsistent copy.
+                // An unpublished writing tag for this index is safe to retry after a crash.
+                // A completed tag must never be reused: readers may already have observed it.
                 return MXL_ERR_FLOW_INVALID;
             }
             sequence.store(index << 1, std::memory_order_release);
@@ -211,6 +211,7 @@ namespace mxl::lib
             {
                 return ReadResult::Invalid;
             }
+            info.index = index; // Queue position is library-owned, not producer metadata.
             return ReadResult::Ready;
         }
 

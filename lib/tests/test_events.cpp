@@ -14,7 +14,6 @@
 #include <fstream>
 #include <future>
 #include <limits>
-#include <set>
 #include <span>
 #include <thread>
 #include <vector>
@@ -36,6 +35,7 @@
 #include "mxl-internal/FlowManager.hpp"
 #include "mxl-internal/FlowParser.hpp"
 #include "mxl-internal/PosixFlowIoFactory.hpp"
+#include "mxl-internal/Sync.hpp"
 #include "Utils.hpp"
 
 namespace
@@ -63,6 +63,26 @@ namespace
         flow.get<picojson::object>()["grain_rate"] = rate;
         return flow.serialize();
     }
+
+    /** @brief Own an independent reader; one instance is required per cursor. */
+    struct IndependentEventReader
+    {
+        mxlInstance instance{};
+        mxlFlowReader reader{};
+
+        explicit IndependentEventReader(std::filesystem::path const& domain)
+            : instance{mxlCreateInstance(domain.c_str(), "{}")}
+        {
+            REQUIRE(instance);
+            REQUIRE(mxlCreateFlowReader(instance, id, "", &reader) == MXL_STATUS_OK);
+        }
+
+        ~IndependentEventReader()
+        {
+            mxlReleaseFlowReader(instance, reader);
+            mxlDestroyInstance(instance);
+        }
+    };
 
     /** @brief Isolated event flow with separate producer and consumer instances and automatic cleanup. */
     struct EventFixture
@@ -118,7 +138,7 @@ namespace
             auto info = mxlEventInfo{};
             auto payload = static_cast<uint8_t*>(nullptr);
             REQUIRE(mxlFlowWriterOpenEvent(writer, &info, &payload) == MXL_STATUS_OK);
-            REQUIRE(info.eventSize == MXL_DATA_FORMAT_GRAIN_SIZE);
+            REQUIRE(info.eventSize == 0);
             info.timestamp = timestamp;
             info.eventSize = sizeof timestamp;
             info.offset = 0;
@@ -159,7 +179,7 @@ namespace
             auto info = mxlEventInfo{};
             auto payload = static_cast<std::uint8_t*>(nullptr);
             REQUIRE(mxlFlowWriterOpenEvent(writer, &info, &payload) == MXL_STATUS_OK);
-            REQUIRE(bytes.size() <= info.eventSize);
+            REQUIRE(bytes.size() <= config.event.eventPayloadSize);
             info.timestamp = timestamp;
             info.registryType = MXL_EVENT_REGISTRY_TYPE_SMPTE;
             std::strcpy(info.dataItemType, "010203");
@@ -240,8 +260,9 @@ namespace
      * @param writer Open event flow writer owned by the test.
      * @param rtp Complete RTP packet bytes, excluding UDP headers.
      * @param taiEpoch Synthetic TAI nanosecond value corresponding to RTP timestamp zero.
+     * @param capacity Payload capacity returned in the event flow configuration.
      */
-    void writeSt2110Packet(mxlFlowWriter writer, std::span<std::uint8_t const> rtp, std::uint64_t taiEpoch)
+    void writeSt2110Packet(mxlFlowWriter writer, std::span<std::uint8_t const> rtp, std::uint64_t taiEpoch, std::uint32_t capacity)
     {
         REQUIRE(rtp.size() >= 20);
         // Validate the supported RTP header layout, zero marker bit, and dynamic payload type.
@@ -263,7 +284,7 @@ namespace
         auto buffer = static_cast<std::uint8_t*>(nullptr);
         REQUIRE(mxlFlowWriterOpenEvent(writer, &info, &buffer) == MXL_STATUS_OK);
         REQUIRE(buffer != nullptr);
-        REQUIRE(data.size() <= info.eventSize);
+        REQUIRE(data.size() <= capacity);
         info.timestamp = taiEpoch + (std::uint64_t{timestamp} * 1'000'000'000 / 48'000);
         info.registryType = MXL_EVENT_REGISTRY_TYPE_SMPTE;
         auto const dit = fmt::format("{:X}", itemHeader >> 10);
@@ -369,7 +390,7 @@ TEST_CASE("ST 2110-41 pcap packets round trip through the event ring", "[events]
 
         // Consume each entry before publishing the next to exercise slot reuse without an overrun.
         // Comparing against packet-owned storage also avoids using the writer buffer as the oracle.
-        writeSt2110Packet(fixture.writer, rtp, taiEpoch);
+        writeSt2110Packet(fixture.writer, rtp, taiEpoch, fixture.config.event.eventPayloadSize);
         fixture.checkHead(packetIndex);
         auto info = mxlEventInfo{};
         auto buffer = static_cast<std::uint8_t*>(nullptr);
@@ -437,7 +458,8 @@ TEST_CASE_METHOD(EventFixture, "Opening an event initializes every metadata fiel
                 // Every byte must be reset, including bytes that held metadata from a previous open.
                 return value == 0;
             }));
-        REQUIRE(info.eventSize == config.event.eventPayloadSize);
+        REQUIRE(info.eventSize == 0);
+        REQUIRE(info.index == MXL_UNDEFINED_INDEX);
         REQUIRE(info.offset == 0);
         REQUIRE(info.complete == 1);
         REQUIRE(std::ranges::all_of(info.reserved,
@@ -1051,7 +1073,7 @@ namespace
             return status;
         }
         info.timestamp = value;
-        info.eventSize = value % (info.eventSize + 1);
+        info.eventSize = value % (MXL_DATA_FORMAT_GRAIN_SIZE + 1);
         info.offset = 0;
         info.complete = 1;
         for (auto i = std::uint32_t{0}; i < info.eventSize; ++i)
@@ -1086,21 +1108,21 @@ namespace
     }
 }
 
-/** @test Event readers consume concurrently from one producer without duplicate delivery. */
-TEST_CASE("Event readers consume concurrently from one producer without duplicate delivery", "[events][concurrency]")
+/** @test Independent readers each consume every event without duplicate delivery. */
+TEST_CASE("Independent event readers each consume every publication", "[events][concurrency]")
 {
-    // Internal robustness test: deliberately share a reader to stress cursor claiming.
-    // This does not relax the public requirement for one owning thread per reader handle.
-    // The 512-slot ring holds all 256 entries, so any missing entry is a failure, not an overrun.
     auto fixture = EventFixture{definitionWithRate(R"({"numerator":2560})")};
     constexpr auto total = std::size_t{256};
+    auto consumers = std::vector<std::unique_ptr<IndependentEventReader>>{};
+    for (auto i = 0; i < 4; ++i)
+    {
+        consumers.push_back(std::make_unique<IndependentEventReader>(fixture.domain));
+    }
     auto start = std::barrier{6};
-    auto delivered = std::atomic<std::size_t>{0};
     auto failed = std::atomic<bool>{false};
     auto producer = std::async(std::launch::async,
         [&]
         {
-            // Start with the consumers and publish each expected timestamp exactly once.
             start.arrive_and_wait();
             for (auto i = std::size_t{0}; i < total; ++i)
             {
@@ -1113,31 +1135,28 @@ TEST_CASE("Event readers consume concurrently from one producer without duplicat
             return true;
         });
     auto readers = std::vector<std::future<std::vector<std::uint64_t>>>{};
-    for (auto thread = std::size_t{0}; thread < 4; ++thread)
+    for (auto const& consumer : consumers)
     {
         readers.emplace_back(std::async(std::launch::async,
-            [&]
+            [&, reader = consumer->reader]
             {
-                // Record claimed entries locally so the main thread can check for duplicate delivery.
                 auto values = std::vector<std::uint64_t>{};
                 start.arrive_and_wait();
                 auto const deadline = std::chrono::steady_clock::now() + std::chrono::seconds{5};
-                while (!failed && delivered < total && std::chrono::steady_clock::now() < deadline)
+                while (!failed && (values.size() < total) && (std::chrono::steady_clock::now() < deadline))
                 {
                     auto info = mxlEventInfo{};
                     auto payload = static_cast<std::uint8_t*>(nullptr);
-                    auto const status = mxlFlowReaderGetEvent(fixture.reader, 1000000, &info, &payload);
+                    auto const status = mxlFlowReaderGetEvent(reader, 1000000, &info, &payload);
                     if (status == MXL_STATUS_OK)
                     {
-                        // Allow other threads to read and write before using this snapshot.
                         std::this_thread::yield();
-                        if (!validPattern(info, payload))
+                        if (!validPattern(info, payload) || (info.index != values.size()))
                         {
                             failed = true;
                             break;
                         }
                         values.push_back(info.timestamp);
-                        ++delivered;
                     }
                     else if (status != MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
                     {
@@ -1150,36 +1169,43 @@ TEST_CASE("Event readers consume concurrently from one producer without duplicat
     }
     start.arrive_and_wait();
     auto const successfulWrites = producer.get();
-    auto seen = std::set<std::uint64_t>{};
-    auto readCount = std::size_t{0};
+    auto results = std::vector<std::vector<std::uint64_t>>{};
     for (auto& future : readers)
     {
-        auto const values = future.get();
-        readCount += values.size();
-        seen.insert(values.begin(), values.end());
+        results.push_back(future.get());
     }
     REQUIRE(successfulWrites);
     REQUIRE_FALSE(failed);
-    REQUIRE(delivered == total);
-    REQUIRE(readCount == total);
-    REQUIRE(seen.size() == total);
-    REQUIRE(*seen.begin() == 4000);
-    REQUIRE(*seen.rbegin() == 4000 + total - 1);
+    for (auto const& values : results)
+    {
+        REQUIRE(values.size() == total);
+        for (auto i = std::size_t{0}; i < total; ++i)
+        {
+            REQUIRE(values[i] == 4000 + i);
+        }
+    }
     fixture.checkHead(total - 1);
 }
 
-/** @test Event snapshots survive overwrite and reads from other threads. */
-TEST_CASE_METHOD(EventFixture, "Event snapshots survive overwrite and reads from other threads", "[events][concurrency]")
+/** @test Event snapshots survive overwrite and reads from independent readers. */
+TEST_CASE_METHOD(EventFixture, "Event snapshots survive overwrite and reads from independent readers", "[events][concurrency]")
 {
-    // Retain this thread's snapshot while another thread repeatedly reads and overwrites the ring.
+    // Retain this thread's snapshot while an independent reader repeatedly reads and overwrites the ring.
     REQUIRE(writePattern(writer, 4095) == MXL_STATUS_OK);
     auto info = mxlEventInfo{};
     auto payload = static_cast<std::uint8_t*>(nullptr);
     REQUIRE(mxlFlowReaderGetEventNonBlocking(reader, &info, &payload) == MXL_STATUS_OK);
+    auto other = IndependentEventReader{domain};
     auto future = std::async(std::launch::async,
         [&]
         {
             // Overwrite the ring repeatedly while the originating thread retains its earlier snapshot.
+            auto initialInfo = mxlEventInfo{};
+            auto initialPayload = static_cast<std::uint8_t*>(nullptr);
+            if (mxlFlowReaderGetEventNonBlocking(other.reader, &initialInfo, &initialPayload) != MXL_STATUS_OK)
+            {
+                return false;
+            }
             for (auto i = std::uint64_t{0}; i < 100; ++i)
             {
                 if (writePattern(writer, 4096 + i) != MXL_STATUS_OK)
@@ -1188,7 +1214,8 @@ TEST_CASE_METHOD(EventFixture, "Event snapshots survive overwrite and reads from
                 }
                 auto otherInfo = mxlEventInfo{};
                 auto otherPayload = static_cast<std::uint8_t*>(nullptr);
-                if (mxlFlowReaderGetEventNonBlocking(reader, &otherInfo, &otherPayload) != MXL_STATUS_OK || !validPattern(otherInfo, otherPayload))
+                if (mxlFlowReaderGetEventNonBlocking(other.reader, &otherInfo, &otherPayload) != MXL_STATUS_OK ||
+                    !validPattern(otherInfo, otherPayload))
                 {
                     return false;
                 }
@@ -1202,8 +1229,13 @@ TEST_CASE_METHOD(EventFixture, "Event snapshots survive overwrite and reads from
 /** @test Event readers never expose torn payloads during concurrent wraparound. */
 TEST_CASE_METHOD(EventFixture, "Event readers never expose torn payloads during concurrent wraparound", "[events][concurrency]")
 {
-    // Deliberate shared-handle stress with a tiny ring: overruns and empty reads are expected.
+    // Independent-reader stress with a tiny ring: overruns and empty reads are expected.
     // Every successful read must still contain matching metadata and timestamp-derived bytes.
+    auto consumers = std::vector<std::unique_ptr<IndependentEventReader>>{};
+    for (auto i = 0; i < 2; ++i)
+    {
+        consumers.push_back(std::make_unique<IndependentEventReader>(domain));
+    }
     auto start = std::barrier{4};
     auto finished = std::atomic<bool>{false};
     auto failures = std::atomic<unsigned>{0};
@@ -1227,7 +1259,7 @@ TEST_CASE_METHOD(EventFixture, "Event readers never expose torn payloads during 
     for (auto thread = unsigned{0}; thread < 2; ++thread)
     {
         workers.emplace_back(std::async(std::launch::async,
-            [&]
+            [&, eventReader = consumers[thread]->reader]
             {
                 // Accept missed entries but reject any successful read containing inconsistent bytes.
                 start.arrive_and_wait();
@@ -1236,7 +1268,7 @@ TEST_CASE_METHOD(EventFixture, "Event readers never expose torn payloads during 
                 {
                     auto info = mxlEventInfo{};
                     auto payload = static_cast<std::uint8_t*>(nullptr);
-                    auto const status = mxlFlowReaderGetEvent(reader, 1000000, &info, &payload);
+                    auto const status = mxlFlowReaderGetEvent(eventReader, 1000000, &info, &payload);
                     if (status == MXL_STATUS_OK)
                     {
                         std::this_thread::yield();
@@ -1566,34 +1598,184 @@ TEST_CASE("Event sequence exhaustion cannot alias an empty slot", "[events]")
     REQUIRE(ring.read(Ring::MAX_INDEX + 1, info, payload.data()) == Ring::ReadResult::Pending);
 }
 
-/** @test An interrupted event publication cannot reuse its sequence tag. */
-TEST_CASE("An interrupted event publication cannot reuse its sequence tag", "[events]")
+/** @test Interrupted copies may be retried, but completed sequence tags must never be reused. */
+TEST_CASE("Event publication retries only unpublished sequence tags", "[events][recovery]")
 {
-    // Simulate interrupted writes and ensure a retry cannot reuse a reader-visible sequence tag.
     using Ring = mxl::lib::EventRingBuffer;
 
-    /** @brief Page-aligned backing storage for an in-memory event ring test. */
     struct alignas(4096) Page
     {
-        std::uint8_t bytes[4096]; ///< One page of raw mapping storage.
+        std::uint8_t bytes[4096];
     };
 
     auto memory = std::vector<Page>{(Ring::bufferSize(2, 13) + sizeof(Page) - 1) / sizeof(Page)};
     Ring::initialize(memory.data(), 2, 13);
     auto ring = Ring{memory.data(), 2, 13};
     auto slot = reinterpret_cast<mxl::lib::Event*>(reinterpret_cast<std::uint8_t*>(memory.data()) + sizeof(mxl::lib::EventRingHeader));
-    SECTION("Producer died during the copy")
-    {
-        slot->header.sequence = 0; // Index zero, writing.
-    }
-    SECTION("Producer died after the copy but before updating the head")
-    {
-        slot->header.sequence = 1; // Index zero, complete.
-    }
     auto info = mxlEventInfo{};
     info.version = mxl::lib::EVENT_HEADER_VERSION;
     info.size = sizeof info;
     info.eventSize = 13;
     auto payload = std::array<std::uint8_t, 13>{};
-    REQUIRE(ring.publish(0, info, payload.data()) == MXL_ERR_FLOW_INVALID);
+    payload.fill(0xAB);
+    SECTION("Unpublished tag may be retried")
+    {
+        slot->header.sequence = 0;
+        REQUIRE(ring.read(0, info, payload.data()) == Ring::ReadResult::Pending);
+        REQUIRE(ring.publish(0, info, payload.data()) == MXL_STATUS_OK);
+        payload.fill(0);
+        REQUIRE(ring.read(0, info, payload.data()) == Ring::ReadResult::Ready);
+        REQUIRE(std::ranges::all_of(payload, [](auto byte) { return byte == 0xAB; }));
+        REQUIRE(ring.publish(0, info, payload.data()) == MXL_ERR_FLOW_INVALID);
+    }
+    SECTION("Completed tag may not be reused")
+    {
+        REQUIRE(ring.publish(0, info, payload.data()) == MXL_STATUS_OK);
+        REQUIRE(ring.publish(0, info, payload.data()) == MXL_ERR_FLOW_INVALID);
+    }
+    SECTION("Newer writing tag may not be overwritten")
+    {
+        slot->header.sequence = 2 << 1;
+        REQUIRE(ring.publish(0, info, payload.data()) == MXL_ERR_FLOW_INVALID);
+    }
+}
+
+/** @test Queue indices reveal lag and losses independently of timestamps. */
+TEST_CASE_METHOD(EventFixture, "Event indices identify queue position and skipped entries", "[events]")
+{
+    write(42);
+    auto info = mxlEventInfo{};
+    auto payload = static_cast<std::uint8_t*>(nullptr);
+    REQUIRE(mxlFlowReaderGetEventNonBlocking(reader, &info, &payload) == MXL_STATUS_OK);
+    REQUIRE(info.index == 0);
+    auto const previous = info.index;
+    for (auto i = 0; i < 6; ++i)
+    {
+        write(42); // Identical timestamps cannot identify queue position.
+    }
+    auto const before = info;
+    auto const beforePayload = payload;
+    REQUIRE(mxlFlowReaderGetEventNonBlocking(reader, &info, &payload) == MXL_ERR_OUT_OF_RANGE_TOO_LATE);
+    REQUIRE(std::memcmp(&before, &info, sizeof info) == 0);
+    REQUIRE(payload == beforePayload);
+    REQUIRE(mxlFlowReaderGetEventNonBlocking(reader, &info, &payload) == MXL_STATUS_OK);
+    REQUIRE(info.index == 3);
+    REQUIRE(info.index - previous - 1 == 2);
+    auto runtime = mxlFlowRuntimeInfo{};
+    REQUIRE(mxlFlowReaderGetRuntimeInfo(reader, &runtime) == MXL_STATUS_OK);
+    REQUIRE(runtime.headIndex - info.index == 3);
+    for (auto i = std::uint64_t{4}; i <= 6; ++i)
+    {
+        REQUIRE(mxlFlowReaderGetEventNonBlocking(reader, &info, &payload) == MXL_STATUS_OK);
+        REQUIRE(info.index == i);
+    }
+    REQUIRE(mxlFlowWriterOpenEvent(writer, &info, &payload) == MXL_STATUS_OK);
+    REQUIRE(info.eventSize == 0);
+    REQUIRE(info.index == MXL_UNDEFINED_INDEX);
+    info.timestamp = 42;
+    info.index = 999; // Producer-supplied queue positions are ignored.
+    REQUIRE(mxlFlowWriterCommitEvent(writer, &info) == MXL_STATUS_OK);
+    REQUIRE(mxlFlowReaderGetEventNonBlocking(reader, &info, &payload) == MXL_STATUS_OK);
+    REQUIRE(info.index == 7);
+    REQUIRE(info.eventSize == 0); // Reopening must not publish bytes left by the previous event.
+    auto const finalInfo = info;
+    REQUIRE(mxlFlowReaderGetEventNonBlocking(reader, &info, &payload) == MXL_ERR_OUT_OF_RANGE_TOO_EARLY);
+    REQUIRE(std::memcmp(&finalInfo, &info, sizeof info) == 0);
+}
+
+/** @test Recover each writer-crash stage both before the first entry and after wraparound. */
+TEST_CASE("Event writer recovery preserves publication and timestamp order", "[events][recovery]")
+{
+    using namespace mxl::lib;
+    using Ring = EventRingBuffer;
+    auto const initialCount = GENERATE(std::uint64_t{0}, std::uint64_t{6});
+    // 0: interrupted copy; 1: complete slot, stale head; 2: updated head, no notification.
+    auto const crashStage = GENERATE(0, 1, 2);
+    CAPTURE(initialCount, crashStage);
+
+    struct Domain
+    {
+        std::filesystem::path path = mxl::tests::makeTempDomain();
+
+        ~Domain()
+        {
+            auto error = std::error_code{};
+            std::filesystem::remove_all(path, error);
+        }
+    };
+
+    auto const domain = Domain{};
+    auto manager = FlowManager{domain.path};
+    auto watcher = std::make_shared<DomainWatcher>(domain.path);
+    auto factory = PosixFlowIoFactory{watcher};
+    auto const flowId = uuids::uuid::from_string(id).value();
+    auto [created, data] = manager.createOrOpenEventFlow(flowId, definition, 4, mxlRational{20, 1}, 13);
+    REQUIRE(created);
+    auto* flow = data->flow();
+    auto info = mxlEventInfo{};
+    info.version = EVENT_HEADER_VERSION;
+    info.size = sizeof info;
+    info.eventSize = 13;
+    info.complete = 1;
+    auto bytes = std::array<std::uint8_t, 13>{};
+    bytes.fill(0xAB);
+    for (auto i = std::uint64_t{0}; i < initialCount; ++i)
+    {
+        info.timestamp = 10 + i;
+        REQUIRE(data->ring().publish(i, info, bytes.data()) == MXL_STATUS_OK);
+        flow->info.runtime.headIndex = i;
+    }
+    auto const eventFile = makeEventDataFilePath(makeFlowDirectoryName(domain.path, id));
+    auto mapping = SharedMemorySegment{eventFile.c_str(), AccessMode::READ_WRITE, Ring::bufferSize(4, 13), LockMode::None};
+    auto* slot = reinterpret_cast<Event*>(
+        static_cast<std::uint8_t*>(mapping.data()) + sizeof(EventRingHeader) + ((initialCount % 4) * Ring::slotStride(13)));
+    info.timestamp = 100;
+    if (crashStage == 0)
+    {
+        slot->header.sequence = initialCount << 1;
+        std::memset(slot + 1, 0xCD, 13); // Partial stale payload that recovery must replace completely.
+    }
+    else
+    {
+        REQUIRE(data->ring().publish(initialCount, info, bytes.data()) == MXL_STATUS_OK);
+        if (crashStage == 2)
+        {
+            flow->info.runtime.headIndex = initialCount;
+        }
+    }
+    auto const previous = flow->state.syncCounter;
+    auto waiter = std::async(std::launch::async,
+        [flow, previous] { return waitUntilChanged(&flow->state.syncCounter, previous, mxl::lib::Duration{1'000'000'000}); });
+    auto writer = factory.createEventFlowWriter(manager, flowId, std::move(data));
+    auto payload = static_cast<std::uint8_t*>(nullptr);
+    REQUIRE(writer->openEvent(&info, &payload) == MXL_STATUS_OK);
+    if (crashStage == 0)
+    {
+        REQUIRE(writer->getFlowRuntimeInfo().headIndex == (initialCount == 0 ? MXL_UNDEFINED_INDEX : initialCount - 1));
+        info.timestamp = 100;
+        info.eventSize = 13;
+        std::memcpy(payload, bytes.data(), bytes.size());
+        REQUIRE(writer->commit(info) == MXL_STATUS_OK);
+    }
+    else
+    {
+        REQUIRE(writer->getFlowRuntimeInfo().headIndex == initialCount);
+        info.timestamp = 99;
+        REQUIRE(writer->commit(info) == MXL_ERR_INVALID_ARG);
+        REQUIRE(writer->cancel() == MXL_STATUS_OK);
+    }
+    REQUIRE(waiter.get());
+    REQUIRE(flow->state.syncCounter != previous);
+    auto ring = Ring{mapping.data(), 4, 13};
+    auto received = mxlEventInfo{};
+    auto copied = std::array<std::uint8_t, 13>{};
+    REQUIRE(ring.read(initialCount, received, copied.data()) == Ring::ReadResult::Ready);
+    REQUIRE(received.timestamp == 100);
+    REQUIRE(received.index == initialCount);
+    REQUIRE(copied == bytes);
+    REQUIRE(ring.publish(initialCount, received, bytes.data()) == MXL_ERR_FLOW_INVALID);
+    REQUIRE(writer->openEvent(&info, &payload) == MXL_STATUS_OK);
+    info.timestamp = 100;
+    REQUIRE(writer->commit(info) == MXL_STATUS_OK);
+    REQUIRE(writer->getFlowRuntimeInfo().headIndex == initialCount + 1);
 }
