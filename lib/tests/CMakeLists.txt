@@ -21,6 +21,7 @@ target_sources(mxl-tests
         PRIVATE
             test_flow_sync_groups.cpp
             test_flows.cpp
+            test_events.cpp
             test_flows_timing.cpp
             test_instance.cpp
             test_time.cpp
@@ -42,20 +43,12 @@ if (NOT TARGET stduuid)
     find_package(stduuid CONFIG REQUIRED)
 endif ()
 
-if (NOT TARGET spdlog::spdlog)
-    find_package(spdlog CONFIG REQUIRED)
-endif ()
-
-if (NOT TARGET fmt::fmt)
-    find_package(fmt CONFIG REQUIRED)
-endif()
-
 if (NOT TARGET picojson::picojson)
     find_package(picojson REQUIRED)
 endif()
 
 if (NOT TARGET PcapPlusPlus::Pcap++)
-    find_package(PcapPlusPlus CONFIG)
+    find_package(PcapPlusPlus CONFIG REQUIRED)
 endif()
 
 
@@ -63,18 +56,30 @@ target_link_libraries(mxl-tests
         PRIVATE
             mxl
             stduuid
-            spdlog::spdlog
-            fmt::fmt
             picojson::picojson
             Catch2::Catch2WithMain
+            PcapPlusPlus::Pcap++
     )
 
-if (TARGET PcapPlusPlus::Pcap++)
-    target_link_libraries(mxl-tests
-            PRIVATE
-                PcapPlusPlus::Pcap++
-        )
-endif()
+# Helper process for event IPC tests.
+add_executable(mxl-event-ipc-worker)
+target_sources(mxl-event-ipc-worker
+        PRIVATE
+            event_ipc_worker.cpp
+    )
+target_compile_features(mxl-event-ipc-worker
+        PRIVATE
+            cxx_std_20
+    )
+target_link_libraries(mxl-event-ipc-worker
+        PRIVATE
+            mxl
+    )
+add_dependencies(mxl-tests mxl-event-ipc-worker)
+target_compile_definitions(mxl-tests
+        PRIVATE
+            MXL_EVENT_IPC_WORKER="$<TARGET_FILE:mxl-event-ipc-worker>"
+    )
 
 # Enable testing using CTest
 include(CTest)

@@ -72,6 +72,44 @@ namespace mxl::lib
             return true;
         }
 
+        /**
+         * @brief Read the domain history duration, retaining the fallback when no valid option is present.
+         * @param path Domain options file to inspect.
+         * @param fallback History duration in nanoseconds used when the option is absent or unreadable.
+         * @return Configured history duration in nanoseconds, or fallback.
+         * @throws std::exception Filesystem access or allocation fails.
+         */
+        std::uint64_t readDomainHistoryDuration(std::filesystem::path const& path, std::uint64_t fallback)
+        {
+            auto const file = std::ifstream{path};
+            if (!file)
+            {
+                // Missing options are expected; report other open failures.
+                auto error = std::error_code{};
+                if (std::filesystem::exists(path, error) || error)
+                {
+                    MXL_ERROR("Failed to open domain options file: {}", path.string());
+                }
+                return fallback;
+            }
+            auto buffer = std::stringstream{};
+            buffer << file.rdbuf();
+            auto const json = buffer.str();
+            auto config = picojson::object{};
+            if (!parseOptionsJson(json, config))
+            {
+                MXL_ERROR("Failed to parse domain specific options: {}", json);
+                return fallback;
+            }
+            auto const it = config.find(MXL_HISTORY_DURATION_OPTION);
+            if ((it == config.end()) || !it->second.is<double>())
+            {
+                return fallback;
+            }
+            MXL_TRACE("Found history duration option in domain specific options: {}ns", it->second.get<double>());
+            return static_cast<std::uint64_t>(it->second.get<double>());
+        }
+
     }
 
     Instance::Instance(std::filesystem::path const& mxlDomain, std::string const& options, std::unique_ptr<FlowIoFactory>&& flowIoFactory,
@@ -121,9 +159,12 @@ namespace mxl::lib
     FlowReader* Instance::getFlowReader(std::string const& flowId)
     {
         auto const id = uuids::uuid::from_string(flowId);
-        // FIXME: Check result of the from_string operation.
+        if (!id.has_value())
+        {
+            throw std::invalid_argument{"Invalid flow UUID."};
+        }
 
-        auto const lock = std::lock_guard{_mutex};
+        auto const lock = std::scoped_lock{_mutex};
         if (auto const pos = _readers.find(*id); pos != _readers.end())
         {
             auto& v = (*pos).second;
@@ -145,7 +186,7 @@ namespace mxl::lib
         {
             auto const& id = reader->getId();
 
-            auto const lock = std::lock_guard{_mutex};
+            auto const lock = std::scoped_lock{_mutex};
             if (auto const pos = _readers.find(id); pos != _readers.end())
             {
                 if ((*pos).second.releaseReference())
@@ -167,7 +208,7 @@ namespace mxl::lib
         {
             auto const id = writer->getId();
             {
-                auto const lock = std::lock_guard{_mutex};
+                auto const lock = std::scoped_lock{_mutex};
                 if (auto const pos = _writers.find(id); pos != _writers.end())
                 {
                     if ((*pos).second.releaseReference())
@@ -187,18 +228,30 @@ namespace mxl::lib
 
     std::tuple<mxlFlowConfigInfo, FlowWriter*, bool> Instance::createFlowWriter(std::string const& flowDef, std::optional<std::string> options)
     {
-        auto const lock = std::lock_guard{_mutex};
+        auto const lock = std::scoped_lock{_mutex};
         auto const parser = FlowParser{flowDef};
         auto const optionsParser = (options) ? FlowOptionsParser{*options} : FlowOptionsParser{};
         auto created = false;
         auto flowData = std::unique_ptr<FlowData>{};
-        FlowWriter* flowWriter = nullptr;
 
         if (auto const format = parser.getFormat(); mxlIsDiscreteDataFormat(format))
         {
             auto [rFlowData, rCreated] = createOrOpenDiscreteFlowData(flowDef, parser, optionsParser);
             flowData = std::move(rFlowData);
             created = rCreated;
+        }
+        else if (format == MXL_DATA_FORMAT_EVENT)
+        {
+            auto const grainRate = parser.getGrainRate();
+            auto const eventCount = _historyDuration * __int128_t{grainRate.numerator} / (1'000'000'000 * __int128_t{grainRate.denominator});
+            if ((eventCount < 2) || (eventCount > 65536))
+            {
+                throw std::invalid_argument("Invalid event count.");
+            }
+            auto [wasCreated, data] = _flowManager.createOrOpenEventFlow(
+                parser.getId(), flowDef, static_cast<std::size_t>(eventCount), grainRate, parser.getPayloadSize());
+            flowData = std::move(data);
+            created = wasCreated;
         }
         else if (mxlIsContinuousDataFormat(format))
         {
@@ -218,16 +271,14 @@ namespace mxl::lib
         {
             auto& v = (*pos).second;
             v.addReference();
-            flowWriter = v.get();
+            return {flowConfigInfo, v.get(), created};
         }
         else
         {
             auto writer = _flowIoFactory->createFlowWriter(_flowManager, id, std::move(flowData));
 
-            flowWriter = (*_writers.try_emplace(pos, id, std::move(writer))).second.get();
+            return {flowConfigInfo, (*_writers.try_emplace(pos, id, std::move(writer))).second.get(), created};
         }
-
-        return {flowConfigInfo, flowWriter, created};
     }
 
     std::pair<std::unique_ptr<FlowData>, bool> Instance::createOrOpenDiscreteFlowData(std::string const& flowDef, FlowParser const& parser,
@@ -302,58 +353,49 @@ namespace mxl::lib
     // On error the function will return 0 and log the error
     std::size_t Instance::garbageCollect() const
     {
-        std::size_t count = 0;
-
+        auto count = std::size_t{};
         try
         {
-            auto base = std::filesystem::path{_flowManager.getDomain()};
-            if (exists(base) && is_directory(base))
-            {
-                for (auto const& entry : std::filesystem::directory_iterator{base})
-                {
-                    if (is_directory(entry) && (entry.path().extension() == mxl::lib::FLOW_DIRECTORY_NAME_SUFFIX))
-                    {
-                        // Try to obtain an exclusive lock on the flow data file.  If we can obtain one it means that no
-                        // other process is writing to the flow.
-                        auto const flowDataFile = mxl::lib::makeFlowDataFilePath(_flowManager.getDomain(), entry.path().stem().string());
-
-                        // Check if the flow data file exists
-                        if (!std::filesystem::exists(flowDataFile))
-                        {
-                            MXL_DEBUG("Flow data file {} does not exist", flowDataFile.string());
-                            continue;
-                        }
-
-                        // Open a file descriptor to the flow data file
-                        int flags = O_RDONLY | O_CLOEXEC;
-#ifndef __APPLE__
-                        flags |= O_NOATIME;
-#endif
-                        int fd = ::open(flowDataFile.c_str(), flags);
-                        // Try to obtain an exclusive lock on the file descriptor. Do not block if the lock cannot be obtained.
-                        bool active = ::flock(fd, LOCK_EX | LOCK_NB) < 0;
-                        ::close(fd);
-
-                        // The flow is not active.  remove it (the folder and everything in it)
-                        if (!active)
-                        {
-                            std::error_code ec;
-                            std::filesystem::remove_all(entry.path(), ec);
-                            if (ec)
-                            {
-                                MXL_DEBUG("Failed to remove '{}': {} (error code {})", entry.path().string(), ec.message(), ec.value());
-                            }
-                            else
-                            {
-                                count++;
-                            }
-                        }
-                    }
-                }
-            }
-            else
+            auto const base = std::filesystem::path{_flowManager.getDomain()};
+            if (!is_directory(base))
             {
                 MXL_DEBUG("MXL domain {} does not exist or is not a directory", base.string());
+                return count;
+            }
+            for (auto const& entry : std::filesystem::directory_iterator{base})
+            {
+                if (!is_directory(entry) || (entry.path().extension() != mxl::lib::FLOW_DIRECTORY_NAME_SUFFIX))
+                {
+                    continue;
+                }
+                auto const flowDataFile = mxl::lib::makeFlowDataFilePath(_flowManager.getDomain(), entry.path().stem().string());
+                if (!std::filesystem::exists(flowDataFile))
+                {
+                    MXL_DEBUG("Flow data file {} does not exist", flowDataFile.string());
+                    continue;
+                }
+
+#ifdef __APPLE__
+                constexpr auto flags = O_RDONLY | O_CLOEXEC;
+#else
+                constexpr auto flags = O_RDONLY | O_CLOEXEC | O_NOATIME;
+#endif
+                auto const fd = ::open(flowDataFile.c_str(), flags);
+                // An exclusive lock indicates that no producer is using the flow.
+                auto const active = ::flock(fd, LOCK_EX | LOCK_NB) < 0;
+                ::close(fd);
+                if (active)
+                {
+                    continue;
+                }
+                auto ec = std::error_code{};
+                std::filesystem::remove_all(entry.path(), ec);
+                if (ec)
+                {
+                    MXL_DEBUG("Failed to remove '{}': {} (error code {})", entry.path().string(), ec.message(), ec.value());
+                    continue;
+                }
+                ++count;
             }
         }
         catch (std::exception const& e)
@@ -369,63 +411,18 @@ namespace mxl::lib
 
     void Instance::parseOptions(std::string const& options)
     {
-        // This could be way more sophisticated, but for now we just parse the options and extract the history_duration value if it is present.
-        // A full configuration framework with validation, defaults, etc. could be implemented at a later point.
+        _historyDuration = readDomainHistoryDuration(makeDomainOptionsFilePath(_flowManager.getDomain()), _historyDuration);
 
-        // Start with the default history duration
-        std::uint64_t historyDuration = _historyDuration;
-
-        //
-        // Try to parse the options.json file found in the MXL domain directory.
-        // If found and configured, it will override the default history duration.
-        //
-        auto domainOptionsFile = makeDomainOptionsFilePath(_flowManager.getDomain());
-        if (exists(domainOptionsFile))
-        {
-            std::ifstream ifs(domainOptionsFile);
-            if (!ifs)
-            {
-                MXL_ERROR("Failed to open domain options file: {}", domainOptionsFile.string());
-            }
-            else
-            {
-                std::stringstream buffer;
-                buffer << ifs.rdbuf();
-                std::string json_content = buffer.str();
-                picojson::object config;
-                if (parseOptionsJson(json_content, config))
-                {
-                    if (auto it = config.find(MXL_HISTORY_DURATION_OPTION); it != config.end() && it->second.is<double>())
-                    {
-                        MXL_TRACE("Found history duration option in domain specific options: {}ns", it->second.get<double>());
-                        historyDuration = static_cast<std::uint64_t>(it->second.get<double>());
-                    }
-                }
-                else
-                {
-                    MXL_ERROR("Failed to parse domain specific options: {}", options);
-                }
-            }
-        }
-
-        // If we have an instance level options string, parse it as well.
+        // Instance options are validated but do not override domain history duration.
         if (!options.empty())
         {
-            picojson::object config;
-            if (parseOptionsJson(options, config))
-            {
-                // We are not considering MXL_HISTORY_DURATION_TAG here. we don't want per-instance history durations.
-                // In the future we might want to use this mecanism to set other options that would be instance specific.
-            }
-            else
+            auto config = picojson::object{};
+            if (!parseOptionsJson(options, config))
             {
                 MXL_ERROR("Failed to parse instance specific options: {}", options);
             }
         }
-
-        // Set the history duration
-        _historyDuration = historyDuration;
-        MXL_DEBUG("History duration set to {} ns", historyDuration);
+        MXL_DEBUG("History duration set to {} ns", _historyDuration);
     }
 
     std::uint64_t Instance::getHistoryDurationNs() const

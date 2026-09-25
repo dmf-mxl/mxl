@@ -3,6 +3,10 @@
 
 #pragma once
 
+/** @file
+ * @brief Public flow reader, writer, payload and synchronization APIs.
+ */
+
 #ifdef __cplusplus
 #   include <cstddef>
 #   include <cstdint>
@@ -147,10 +151,144 @@ extern "C"
         uint8_t reserved[4068];
     } mxlGrainInfo;
 
+    /**
+     * @brief Metadata for one event queue entry, either a complete event or a fragment.
+     *
+     */
+    typedef struct mxlEventInfo_t
+    {
+        uint32_t version;      ///< Structure version, currently 1.
+        uint32_t size;         ///< Size of this structure.
+        uint64_t timestamp;    ///< Application supplied TAI timestamp in nanoseconds since the epoch; must not decrease within a flow.
+        uint32_t flags;        ///< Reserved; must be zero.
+        uint32_t registryType; ///< Registry that determines the interpretation of dataItemType; a mxlEventRegistryType value.
+
+        /**
+         * @brief Data item type (DIT) interpreted according to registryType.
+         * SMPTE DIT strings omit the 0x prefix. MXL DIT strings use a namespace
+         * such as `x-mxl:example` or `x-company:example`. Readers must bound string
+         * access to 256 bytes; a full array need not contain a terminating NUL.
+         */
+        char dataItemType[256];
+
+        /**
+         * @brief Number of payload bytes published in this entry, possibly zero.
+         * For fragments this is the fragment size, not the total logical event
+         * size. It must not exceed the flow's eventPayloadSize.
+         */
+        uint32_t eventSize;
+
+        /**
+         * @brief Logical byte offset within a fragmented event.
+         * Zero for unfragmented events and first fragments. Consumers validate
+         * continuity and assemble the complete payload. Fragments of one logical
+         * event must occupy consecutive queue entries; interleaving un related events
+         * is not allowed.
+         */
+        uint32_t offset;
+
+        /** @brief 1 for an unfragmented event or final fragment; 0 if more fragments follow. */
+        uint8_t complete;
+
+        /** @brief Reserved bytes; leave zero. */
+        uint8_t reserved[215];
+
+        /**
+         * @brief Zero-based queue position, assigned by the library on a successful read.
+         * Compare with mxlFlowRuntimeInfo.headIndex to measure reader lag, or with the
+         * previous received index to count skipped entries. Open initializes this to
+         * MXL_UNDEFINED_INDEX; commit ignores the supplied value.
+         */
+        uint64_t index;
+    } mxlEventInfo;
+
     typedef struct mxlFlowReader_t* mxlFlowReader;
     typedef struct mxlFlowWriter_t* mxlFlowWriter;
 
     typedef struct mxlFlowSynchronizationGroup_t* mxlFlowSynchronizationGroup;
+
+    /**
+     * Open an event for writing
+     * @param[in] writer Event flow writer acquired with mxlCreateFlowWriter.
+     * @param[out] event Receives initialized metadata; must not be NULL.
+     * @param[out] payload Receives the private writable buffer; must not be NULL.
+     * The buffer contents are not cleared on open. eventSize starts at zero; obtain
+     * capacity from mxlFlowConfigInfo.event.eventPayloadSize and set the actual size before commit.
+     * @retval MXL_STATUS_OK The event is open for editing.
+     * @retval MXL_ERR_INVALID_ARG An output pointer is NULL or an event is already open.
+     * @retval MXL_ERR_INVALID_FLOW_WRITER The handle is NULL or is not an event writer.
+     * @retval MXL_ERR_UNKNOWN An internal exception occurred.
+     */ 
+    MXL_EXPORT
+    mxlStatus mxlFlowWriterOpenEvent(mxlFlowWriter writer, mxlEventInfo* event, uint8_t** payload);
+
+    /** Publish one event entry (a complete event or one fragment) and wake waiting readers.
+     * Timestamps must be nondecreasing relative to the last committed event in this flow.
+     * Equal timestamps are allowed, including for fragments of the same event.
+     * An earlier timestamp returns MXL_ERR_INVALID_ARG without publishing or advancing the queue.
+     * A failed commit leaves the event open for correction or cancellation.
+     * Queue positions advance in commit order, independently of timestamps.
+     * The producer must commit all fragments of one logical event consecutively,
+     * ending with complete = 1 before starting any other event in this flow.
+     * Interleaving is forbidden even when events have different timestamps or DITs.
+     * This is a producer requirement; the API does not enforce fragment continuity
+     * or detect interleaving. Queue indices identify entries, not logical events.
+     *
+     * @param[in] writer Writer that owns the open event.
+     * @param[in] event Metadata to publish with the staged payload; must not be NULL.
+     * @retval MXL_STATUS_OK The entry was published and the write transaction closed.
+     * @retval MXL_ERR_INVALID_ARG No event is open, metadata is invalid, the timestamp
+     * decreases, the payload exceeds capacity, or event is NULL.
+     * @retval MXL_ERR_INVALID_FLOW_WRITER The handle is NULL or is not an event writer.
+     * @retval MXL_ERR_FLOW_INVALID Publication would overwrite an already-published or newer sequence tag.
+     * @retval MXL_ERR_OUT_OF_RANGE_TOO_LATE The queue sequence index is exhausted.
+     * @retval MXL_ERR_UNKNOWN An internal exception occurred.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowWriterCommitEvent(mxlFlowWriter writer, mxlEventInfo const* event);
+
+    /**
+     * @brief Cancel the open event without publishing or changing timestamp ordering.
+     * @param[in] writer Writer whose open event is to be discarded.
+     * @retval MXL_STATUS_OK The write transaction was closed.
+     * @retval MXL_ERR_INVALID_ARG No event is open.
+     * @retval MXL_ERR_INVALID_FLOW_WRITER The handle is NULL or is not an event writer.
+     * @retval MXL_ERR_UNKNOWN An internal exception occurred.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowWriterCancelEvent(mxlFlowWriter writer);
+
+    /** Read the next event using this reader's queue cursor, starting with the oldest retained event.
+     * An overrun advances the cursor past lost entries; retry to resume reading.
+     * Each reader handle must be accessed by a single thread at a time.
+     * Payload is a private snapshot, valid until the next read attempt on this reader or reader release.
+     * Producers and independent readers cannot overwrite it. Metadata includes the queue index on success;
+     * event and payload output arguments are unchanged on failure.
+     *
+     * @param[in] reader Event flow reader acquired with mxlCreateFlowReader.
+     * @param[in] timeoutNs Maximum wait in nanoseconds; zero requests a nonblocking read.
+     * @param[out] event Receives metadata on success; must not be NULL.
+     * @param[out] payload Receives the private payload snapshot on success; must not be NULL.
+     * @retval MXL_STATUS_OK One entry was copied and the cursor advanced.
+     * @retval MXL_ERR_OUT_OF_RANGE_TOO_EARLY No entry was available before the deadline.
+     * @retval MXL_ERR_OUT_OF_RANGE_TOO_LATE An entry was lost to ring overwrite.
+     * @retval MXL_ERR_FLOW_INVALID Stored metadata is invalid or a removed/replaced flow was detected.
+     * @retval MXL_ERR_INVALID_ARG An output pointer is NULL.
+     * @retval MXL_ERR_INVALID_FLOW_READER The handle is NULL or is not an event reader.
+     * @retval MXL_ERR_UNKNOWN An internal exception occurred.
+     */    
+    MXL_EXPORT
+    mxlStatus mxlFlowReaderGetEvent(mxlFlowReader reader, uint64_t timeoutNs, mxlEventInfo* event, uint8_t** payload);
+
+    /**
+     * @brief Attempt to read one event entry without waiting for publication.
+     * @param[in] reader Event flow reader to advance.
+     * @param[out] event Receives metadata on success; must not be NULL.
+     * @param[out] payload Receives a private payload snapshot on success; must not be NULL.
+     * @return The same statuses as mxlFlowReaderGetEvent with timeoutNs equal to zero.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowReaderGetEventNonBlocking(mxlFlowReader reader, mxlEventInfo* event, uint8_t** payload);
 
     /**
      * Attempts to create a flow writer for a given flow definition. If the flow does not exist already, it is created and 'created' will be set to
