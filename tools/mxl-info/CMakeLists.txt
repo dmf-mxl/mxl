@@ -5,10 +5,6 @@ include(GNUInstallDirs)
 
 
 add_executable(mxl-info)
-target_compile_features(mxl-info
-        PRIVATE
-            cxx_std_20
-    )
 set_target_properties(mxl-info
         PROPERTIES
             POSITION_INDEPENDENT_CODE    ON
@@ -17,12 +13,14 @@ set_target_properties(mxl-info
             CXX_VISIBILITY_PRESET        hidden
             C_EXTENSIONS                 OFF
             CXX_EXTENSIONS               OFF
+            C_STANDARD                   ${MXL_C_STANDARD}
+            CXX_STANDARD                 ${MXL_CXX_STANDARD}
     )
+
 target_sources(mxl-info
         PRIVATE
             main.cpp
     )
-
 
 if (NOT TARGET CLI11::CLI11)
     find_package(CLI11 CONFIG REQUIRED)
