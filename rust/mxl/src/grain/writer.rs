@@ -1,29 +1,40 @@
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::sync::Arc;
+use std::{cell::Cell, marker::PhantomData, sync::Arc};
 
 use super::write_access::GrainWriteAccess;
 
-use crate::{Error, Result, instance::InstanceContext};
+use crate::{
+    Error, Result,
+    writer::{FlowWriterResource, FlowWriterResourceKeepAlive},
+};
 
 /// MXL Flow Writer for discrete flows (grain-based data like video frames)
 pub struct GrainWriter {
-    context: Arc<InstanceContext>,
-    writer: mxl_sys::FlowWriter,
+    writer: Arc<FlowWriterResource>,
+    _not_sync: PhantomData<Cell<()>>, // Prevent Sync implementation, as the underlying MXL writer
+                                      // is not thread-safe
 }
 
-/// The MXL readers and writers are not thread-safe, so we do not implement `Sync` for them, but
-/// there is no reason to not implement `Send`.
-unsafe impl Send for GrainWriter {}
-
 impl GrainWriter {
-    pub(crate) fn new(context: Arc<InstanceContext>, writer: mxl_sys::FlowWriter) -> Self {
-        Self { context, writer }
+    pub(crate) fn new(writer: Arc<FlowWriterResource>) -> Self {
+        Self {
+            writer,
+            _not_sync: PhantomData,
+        }
+    }
+    #[allow(dead_code)]
+    pub(crate) fn keep_alive(&self) -> FlowWriterResourceKeepAlive {
+        self.writer.keep_alive()
     }
 
-    pub fn destroy(mut self) -> Result<()> {
-        self.destroy_inner()
+    #[deprecated(
+        since = "0.2.0",
+        note = "Flow writer lifetimes are now managed automatically. This method only consumes the handle and always returns `Ok(())`; the underlying writer is released when the last related handle is dropped."
+    )]
+    pub fn destroy(self) -> Result<()> {
+        Ok(())
     }
 
     /// The current MXL implementation states a TODO to allow multiple grains to be edited at the
@@ -34,8 +45,8 @@ impl GrainWriter {
         let mut grain_info: mxl_sys::GrainInfo = unsafe { std::mem::zeroed() };
         let mut payload_ptr: *mut u8 = std::ptr::null_mut();
         unsafe {
-            Error::from_status(self.context.api.flow_writer_open_grain(
-                self.writer,
+            Error::from_status(self.writer.context.api.flow_writer_open_grain(
+                self.writer.as_ptr(),
                 index,
                 &mut grain_info,
                 &mut payload_ptr,
@@ -49,35 +60,9 @@ impl GrainWriter {
         }
 
         Ok(GrainWriteAccess::new(
-            self.context.clone(),
-            self.writer,
+            self.writer.as_ref(),
             grain_info,
             payload_ptr,
         ))
-    }
-
-    fn destroy_inner(&mut self) -> Result<()> {
-        if self.writer.is_null() {
-            return Err(Error::InvalidArg);
-        }
-
-        let mut writer = std::ptr::null_mut();
-        std::mem::swap(&mut self.writer, &mut writer);
-
-        Error::from_status(unsafe {
-            self.context
-                .api
-                .release_flow_writer(self.context.instance, writer)
-        })
-    }
-}
-
-impl Drop for GrainWriter {
-    fn drop(&mut self) {
-        if !self.writer.is_null()
-            && let Err(err) = self.destroy_inner()
-        {
-            tracing::error!("Failed to release MXL flow writer (discrete): {:?}", err);
-        }
     }
 }

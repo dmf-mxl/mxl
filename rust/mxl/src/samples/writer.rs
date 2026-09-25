@@ -1,69 +1,52 @@
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::sync::Arc;
+use std::{cell::Cell, marker::PhantomData, sync::Arc};
 
-use crate::{Error, Result, SamplesWriteAccess, instance::InstanceContext};
+use crate::{
+    Error, Result, SamplesWriteAccess,
+    writer::{FlowWriterResource, FlowWriterResourceKeepAlive},
+};
 
 /// MXL Flow Writer for continuous flows (samples-based data like audio)
 pub struct SamplesWriter {
-    context: Arc<InstanceContext>,
-    writer: mxl_sys::FlowWriter,
+    writer: Arc<FlowWriterResource>,
+    _not_sync: PhantomData<Cell<()>>, // Prevent Sync implementation, as the underlying MXL writer
+                                      // is not thread-safe
 }
 
-/// The MXL readers and writers are not thread-safe, so we do not implement `Sync` for them, but
-/// there is no reason to not implement `Send`.
-unsafe impl Send for SamplesWriter {}
-
 impl SamplesWriter {
-    pub(crate) fn new(context: Arc<InstanceContext>, writer: mxl_sys::FlowWriter) -> Self {
-        Self { context, writer }
+    pub(crate) fn new(writer: Arc<FlowWriterResource>) -> Self {
+        Self {
+            writer,
+            _not_sync: PhantomData,
+        }
     }
 
-    pub fn destroy(mut self) -> Result<()> {
-        self.destroy_inner()
+    #[allow(dead_code)]
+    pub(crate) fn keep_alive(&self) -> FlowWriterResourceKeepAlive {
+        self.writer.keep_alive()
+    }
+
+    #[deprecated(
+        since = "0.2.0",
+        note = "Flow writer lifetimes are now managed automatically. This method only consumes the handle and always returns `Ok(())`; the underlying writer is released when the last related handle is dropped."
+    )]
+    pub fn destroy(self) -> Result<()> {
+        Ok(())
     }
 
     pub fn open_samples<'a>(&'a self, index: u64, count: usize) -> Result<SamplesWriteAccess<'a>> {
         let mut buffer_slice: mxl_sys::MutableWrappedMultiBufferSlice =
             unsafe { std::mem::zeroed() };
         unsafe {
-            Error::from_status(self.context.api.flow_writer_open_samples(
-                self.writer,
+            Error::from_status(self.writer.context.api.flow_writer_open_samples(
+                self.writer.as_ptr(),
                 index,
                 count,
                 &mut buffer_slice,
             ))?;
         }
-        Ok(SamplesWriteAccess::new(
-            self.context.clone(),
-            self.writer,
-            buffer_slice,
-        ))
-    }
-
-    fn destroy_inner(&mut self) -> Result<()> {
-        if self.writer.is_null() {
-            return Err(Error::InvalidArg);
-        }
-
-        let mut writer = std::ptr::null_mut();
-        std::mem::swap(&mut self.writer, &mut writer);
-
-        Error::from_status(unsafe {
-            self.context
-                .api
-                .release_flow_writer(self.context.instance, writer)
-        })
-    }
-}
-
-impl Drop for SamplesWriter {
-    fn drop(&mut self) {
-        if !self.writer.is_null()
-            && let Err(err) = self.destroy_inner()
-        {
-            tracing::error!("Failed to release MXL flow writer (continuous): {:?}", err);
-        }
+        Ok(SamplesWriteAccess::new(self.writer.as_ref(), buffer_slice))
     }
 }
