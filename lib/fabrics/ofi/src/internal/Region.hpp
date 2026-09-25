@@ -94,11 +94,14 @@ namespace mxl::lib::fabrics::ofi
          * \param base The base address of the memory region.
          * \param size The size of the memory region in bytes.
          * \param loc The location of the memory region \see Location.
+         * \param registrationSize The mapped span available for memory
+         *        registration. A value of zero uses `size`.
          */
         explicit Region(std::uintptr_t base, std::size_t size, std::uint64_t const* grainIndexPtr, std::uint16_t* validSlicesPtr,
-            Location loc = Location::host()) noexcept
+            Location loc = Location::host(), std::size_t registrationSize = 0U) noexcept
             : base(base)
             , size(size)
+            , registrationSize(registrationSize == 0U ? size : registrationSize)
             , grainIndexPtr(grainIndexPtr)
             , validSlicesPtr(validSlicesPtr)
             , loc(loc)
@@ -119,6 +122,7 @@ namespace mxl::lib::fabrics::ofi
     public:
         std::uintptr_t base;
         std::size_t size;
+        std::size_t registrationSize;
         std::uint64_t const* grainIndexPtr;
         std::uint16_t* validSlicesPtr;
         Location loc;

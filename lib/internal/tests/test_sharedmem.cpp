@@ -4,7 +4,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
+#include <limits>
 #include <string>
+#include <sys/mman.h>
 #include <catch2/catch_test_macros.hpp>
 #include "mxl-internal/SharedMemory.hpp"
 
@@ -139,4 +141,32 @@ TEST_CASE("Create", "[shared mem]")
     {
         remove(p);
     }
+}
+
+TEST_CASE("Fixed mapping enforces capacity", "[shared mem]")
+{
+    auto const path = std::filesystem::path{"./mxl_shmtest_capacity.bin"};
+    remove(path);
+
+    {
+        auto writer = mxl::lib::SharedMemoryInstance<Payload>{
+            path.string().c_str(), mxl::lib::AccessMode::CREATE_READ_WRITE, EXTRA_SIZE, mxl::lib::LockMode::Shared};
+        REQUIRE(writer.mappedSize() == TOTAL_SIZE);
+    }
+
+    auto* const reservation = ::mmap(nullptr, TOTAL_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    REQUIRE(reservation != MAP_FAILED);
+
+    REQUIRE_THROWS(mxl::lib::SharedMemoryInstance<Payload>{
+        path.string().c_str(), mxl::lib::AccessMode::READ_ONLY, 0U, mxl::lib::LockMode::Shared, reservation, TOTAL_SIZE - 1U});
+
+    REQUIRE(::munmap(reservation, TOTAL_SIZE) == 0);
+    remove(path);
+}
+
+TEST_CASE("Shared memory instance rejects size overflow", "[shared mem]")
+{
+    REQUIRE_THROWS_AS((mxl::lib::SharedMemoryInstance<Payload>{
+                          "unused", mxl::lib::AccessMode::READ_ONLY, std::numeric_limits<std::size_t>::max(), mxl::lib::LockMode::None}),
+        std::overflow_error);
 }

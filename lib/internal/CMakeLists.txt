@@ -63,6 +63,8 @@ set_target_properties(mxl-internal-objects
     )
 target_sources(mxl-internal-objects
         PRIVATE
+            src/ContiguousWindow.cpp
+            src/DiscreteFlowData.cpp
             src/DomainWatcher.cpp
             src/FlowData.cpp
             src/FlowInfo.cpp
