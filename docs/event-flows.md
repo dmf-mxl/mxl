@@ -135,16 +135,9 @@ An unfragmented entry has `offset = 0` and `complete = 1`. Intermediate fragment
 have `complete = 0`. The API publishes and reads each fragment separately; it
 does not automatically split, reassemble, or validate fragment continuity.
 
-The consumer tracks the expected next offset using a sufficiently wide integer:
-`expectedOffset = std::uint64_t{previous.offset} + previous.eventSize`. Widen
-before adding: both metadata fields are 32-bit integers. A first fragment of
-size 4096 followed by a fragment at offset 4097 has a gap; offsets 4095 or 0 also
-break continuity. Check the event identity as well as the offset. A final
-fragment with `complete = 1` only completes an assembly if the preceding
-fragments are present and contiguous. A reader may attach in the middle of a
-fragmented event or lose fragments to ring overwrite, so it must discard or
-otherwise handle incomplete assemblies. Copy fragment bytes before reading the
-next entry if they are needed for reassembly.
+**Interleaving logical events within a flow is not allowed.** Publish all fragments
+of one event in consecutive queue entries, ending with `complete = 1` before
+starting another event, including an unfragmented event.
 
 ## Reading and flow lifetime
 
