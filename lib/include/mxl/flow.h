@@ -181,7 +181,9 @@ extern "C"
         /**
          * @brief Logical byte offset within a fragmented event.
          * Zero for unfragmented events and first fragments. Consumers validate
-         * continuity and assemble the complete payload.
+         * continuity and assemble the complete payload. Fragments of one logical
+         * event must occupy consecutive queue entries; interleaving un related events
+         * is not allowed.
          */
         uint32_t offset;
 
@@ -226,6 +228,11 @@ extern "C"
      * An earlier timestamp returns MXL_ERR_INVALID_ARG without publishing or advancing the queue.
      * A failed commit leaves the event open for correction or cancellation.
      * Queue positions advance in commit order, independently of timestamps.
+     * The producer must commit all fragments of one logical event consecutively,
+     * ending with complete = 1 before starting any other event in this flow.
+     * Interleaving is forbidden even when events have different timestamps or DITs.
+     * This is a producer requirement; the API does not enforce fragment continuity
+     * or detect interleaving. Queue indices identify entries, not logical events.
      *
      * @param[in] writer Writer that owns the open event.
      * @param[in] event Metadata to publish with the staged payload; must not be NULL.
