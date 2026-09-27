@@ -61,6 +61,13 @@ namespace mxl::lib
         int32_t getDeviceIndex() const noexcept;
 
         /**
+         * Reader-only: extract payload.deviceIndex or deviceIndex without requiring location=device.
+         * Empty / omitted options yield std::nullopt (map payloads on the writer's GPU).
+         */
+        [[nodiscard]]
+        static std::optional<int32_t> parseLocalDeviceIndex(std::string const& options);
+
+        /**
          * Payload backend name from options (e.g. "host", "cuda-linear", "placeholder").
          * Empty when the caller did not specify a backend (factory applies defaults).
          */

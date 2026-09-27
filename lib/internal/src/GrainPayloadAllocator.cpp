@@ -182,7 +182,7 @@ namespace mxl::lib
             {
                 throw std::runtime_error{"payload backend \"cuda-linear\" requested but no CUDA device is available."};
             }
-            return std::make_unique<CudaLinearPayloadAllocator>(spec.deviceIndex);
+            return std::make_unique<CudaLinearPayloadAllocator>(spec.deviceIndex, spec.localDeviceIndex);
 #else
             throw std::runtime_error{"payload backend \"cuda-linear\" requested but MXL was built without CUDA support."};
 #endif

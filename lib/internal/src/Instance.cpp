@@ -118,10 +118,19 @@ namespace mxl::lib
         spdlog::default_logger()->flush();
     }
 
-    FlowReader* Instance::getFlowReader(std::string const& flowId)
+    FlowReader* Instance::getFlowReader(std::string const& flowId, char const* options)
     {
         auto const id = uuids::uuid::from_string(flowId);
         // FIXME: Check result of the from_string operation.
+
+        auto localDeviceIndex = int32_t{-1};
+        if ((options != nullptr) && (options[0] != '\0'))
+        {
+            if (auto parsed = FlowOptionsParser::parseLocalDeviceIndex(options); parsed.has_value())
+            {
+                localDeviceIndex = *parsed;
+            }
+        }
 
         auto const lock = std::lock_guard{_mutex};
         if (auto const pos = _readers.find(*id); pos != _readers.end())
@@ -132,7 +141,7 @@ namespace mxl::lib
         }
         else
         {
-            auto flowData = _flowManager.openFlow(*id, AccessMode::READ_ONLY);
+            auto flowData = _flowManager.openFlow(*id, AccessMode::READ_ONLY, localDeviceIndex);
             auto reader = _flowIoFactory->createFlowReader(_flowManager, *id, std::move(flowData));
 
             return (*_readers.try_emplace(pos, *id, std::move(reader))).second.get();

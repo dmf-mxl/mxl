@@ -19,7 +19,13 @@ namespace mxl::lib
     class MXL_EXPORT CudaLinearPayloadAllocator final : public GrainPayloadAllocator
     {
     public:
-        explicit CudaLinearPayloadAllocator(int32_t deviceIndex);
+        /**
+         * \param ownerDeviceIndex GPU that allocated (or will allocate) the grain buffers.
+         * \param localDeviceIndex GPU this process uses for kernels / memcpy. When it differs from
+         *        the owner, CUDA IPC is opened with peer access (same node, NVLink/P2P).
+         *        Pass -1 to use the owner device.
+         */
+        explicit CudaLinearPayloadAllocator(int32_t ownerDeviceIndex, int32_t localDeviceIndex = -1);
 
         ~CudaLinearPayloadAllocator() override;
 
@@ -50,7 +56,8 @@ namespace mxl::lib
         void writeDescriptor(GrainPayloadAttachContext const& context) const;
 
     private:
-        int32_t _deviceIndex;
+        int32_t _ownerDeviceIndex;
+        int32_t _localDeviceIndex;
         std::size_t _logicalPayloadSize{0};
         bool _ownsDeviceMemory{false};
         /** True when pointers came from the process-local registry (must not free/close). */

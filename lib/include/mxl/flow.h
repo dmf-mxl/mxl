@@ -206,6 +206,14 @@ extern "C"
     MXL_EXPORT
     mxlStatus mxlReleaseFlowWriter(mxlInstance instance, mxlFlowWriter writer);
 
+    /**
+     * Open a reader for an existing flow.
+     *
+     * \param[in] options Optional JSON. For CUDA payloads on the same node as the writer, set
+     *     \c deviceIndex (or \c payload.deviceIndex) to map grains onto this process's GPU via
+     *     CUDA IPC peer access. Omit to attach on the writer's GPU. Cross-node readers must not
+     *     share the domain; use fabrics instead.
+     */
     MXL_EXPORT
     mxlStatus mxlCreateFlowReader(mxlInstance instance, char const* flowId, char const* options, mxlFlowReader* reader);
 

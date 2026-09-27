@@ -763,6 +763,89 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : CudaLin
     REQUIRE(mxlDestroyInstance(instanceReader) == MXL_STATUS_OK);
     REQUIRE(mxlDestroyInstance(instanceWriter) == MXL_STATUS_OK);
 }
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : CudaLinear P2P two GPUs", "[mxl flows][cuda]")
+{
+    int deviceCount = 0;
+    if ((cudaGetDeviceCount(&deviceCount) != cudaSuccess) || (deviceCount < 2))
+    {
+        SKIP("Need at least two CUDA devices");
+    }
+
+    int canPeer = 0;
+    if ((cudaDeviceCanAccessPeer(&canPeer, 1, 0) != cudaSuccess) || (canPeer == 0))
+    {
+        SKIP("CUDA device 1 cannot peer-access device 0");
+    }
+
+    auto flowDef = mxl::tests::readFile("data/v210_flow.json");
+    char const* flowId = "5fbec3b1-1b0f-417d-9059-8b94a47197ed";
+
+    auto instanceWriter = mxlCreateInstance(domain.string().c_str(), "");
+    REQUIRE(instanceWriter != nullptr);
+    auto instanceReader = mxlCreateInstance(domain.string().c_str(), "");
+    REQUIRE(instanceReader != nullptr);
+
+    picojson::object payload;
+    payload["location"] = picojson::value{"device"};
+    payload["deviceIndex"] = picojson::value{0.0};
+    payload["backend"] = picojson::value{"cuda-linear"};
+    picojson::object optsObj;
+    optsObj["payload"] = picojson::value{payload};
+    auto const optsStr = picojson::value{optsObj}.serialize();
+
+    mxlFlowWriter writer;
+    mxlFlowConfigInfo configInfo;
+    bool flowWasCreated = false;
+    REQUIRE(mxlCreateFlowWriter(instanceWriter, flowDef.c_str(), optsStr.c_str(), &writer, &configInfo, &flowWasCreated) == MXL_STATUS_OK);
+    REQUIRE(flowWasCreated);
+    REQUIRE(configInfo.common.deviceIndex == 0);
+
+    auto const rate = mxlRational{60000, 1001};
+    auto const index = mxlTimestampToIndex(&rate, mxlGetTime());
+
+    mxlGrainInfo gInfo{};
+    mxlPayloadView writeView{};
+    REQUIRE(mxlFlowWriterOpenGrainEx(writer, index, &gInfo, &writeView) == MXL_STATUS_OK);
+    REQUIRE(writeView.deviceIndex == 0);
+
+    {
+        REQUIRE(cudaSetDevice(0) == cudaSuccess);
+        auto hostPattern = std::vector<std::uint8_t>(64, 0x5A);
+        REQUIRE(cudaMemcpy(reinterpret_cast<void*>(writeView.u.devicePtr),
+                    hostPattern.data(),
+                    hostPattern.size(),
+                    cudaMemcpyHostToDevice) == cudaSuccess);
+    }
+
+    gInfo.validSlices = gInfo.totalSlices;
+    REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_STATUS_OK);
+
+    mxlFlowReader reader;
+    REQUIRE(mxlCreateFlowReader(instanceReader, flowId, R"({"deviceIndex":1})", &reader) == MXL_STATUS_OK);
+
+    mxlPayloadView readView{};
+    REQUIRE(mxlFlowReaderGetGrainNonBlockingEx(reader, index, &gInfo, &readView) == MXL_STATUS_OK);
+    REQUIRE(readView.kind == MXL_PAYLOAD_KIND_DEVICE_PTR);
+    REQUIRE(readView.deviceIndex == 1);
+    REQUIRE(readView.u.devicePtr != 0);
+
+    {
+        REQUIRE(cudaSetDevice(1) == cudaSuccess);
+        auto hostBack = std::vector<std::uint8_t>(64, 0);
+        REQUIRE(cudaMemcpy(hostBack.data(),
+                    reinterpret_cast<void const*>(readView.u.devicePtr),
+                    hostBack.size(),
+                    cudaMemcpyDeviceToHost) == cudaSuccess);
+        REQUIRE(hostBack[0] == 0x5A);
+        REQUIRE(hostBack[63] == 0x5A);
+    }
+
+    REQUIRE(mxlReleaseFlowReader(instanceReader, reader) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowWriter(instanceWriter, writer) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instanceReader) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instanceWriter) == MXL_STATUS_OK);
+}
 #endif
 
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : Slices", "[mxl flows]")

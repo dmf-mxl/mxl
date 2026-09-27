@@ -151,6 +151,11 @@ namespace mxl::lib
         std::size_t logicalPayloadSize{0};
         /** Backend name: "host", "cuda-linear", "placeholder", or empty for defaults. */
         std::string backend;
+        /**
+         * Reader GPU for CUDA IPC peer mapping. -1 means the owner's deviceIndex.
+         * Ignored on flow create (writer always allocates on deviceIndex).
+         */
+        int32_t localDeviceIndex{-1};
     };
 
     /**

@@ -1,0 +1,120 @@
+# SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Skeleton: writer and reader on two GPUs of the SAME node, one MXL domain.
+# CUDA IPC + peer access (not fabrics). Both processes must see both GPUs
+# (nvidia.com/gpu: "2" in one container). Requires NVLink or P2P PCIe.
+#
+# Fill in:
+#   __HOSTNAME__
+#   image — CUDA MXL gst tools (device payloads)
+#
+#   kubectl apply after: sed "s/__HOSTNAME__/$(hostname)/g"
+#
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mxl-cuda-p2p-flow
+data:
+  flow.json: |
+    {
+      "$copyright": "SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.",
+      "$license": "SPDX-License-Identifier: Apache-2.0",
+      "description": "MXL Test Flow, 1080p29",
+      "id": "5fbec3b1-1b0f-417d-9059-8b94a47197ed",
+      "format": "urn:x-nmos:format:video",
+      "label": "MXL Test Flow, 1080p29",
+      "parents": [],
+      "media_type": "video/v210",
+      "grain_rate": { "numerator": 30000, "denominator": 1001 },
+      "frame_width": 1920,
+      "frame_height": 1080,
+      "interlace_mode": "progressive",
+      "colorspace": "BT709",
+      "components": [
+        { "name": "Y", "width": 1920, "height": 1080, "bit_depth": 10 },
+        { "name": "Cb", "width": 960, "height": 1080, "bit_depth": 10 },
+        { "name": "Cr", "width": 960, "height": 1080, "bit_depth": 10 }
+      ]
+    }
+  payload.json: |
+    {
+      "payload": {
+        "location": "device",
+        "deviceIndex": 0,
+        "backend": "cuda-linear"
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mxl-cuda-p2p-two-gpu
+  labels:
+    app.kubernetes.io/name: mxl-cuda-p2p-two-gpu
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mxl-cuda-p2p-two-gpu
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mxl-cuda-p2p-two-gpu
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: __HOSTNAME__ # !! CHANGEME
+      containers:
+        - name: writer-reader
+          image: docker.io/library/mxl-fabrics-cuda # !! CHANGEME: CUDA gst image
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            capabilities:
+              add: ["IPC_LOCK"]
+          env:
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: compute,utility
+            - name: SRC_GPU
+              value: "0"
+            - name: DST_GPU
+              value: "1"
+            - name: FLOW_ID
+              value: 5fbec3b1-1b0f-417d-9059-8b94a47197ed
+          resources:
+            limits:
+              nvidia.com/gpu: "2"
+          volumeMounts:
+            - name: domain
+              mountPath: /home/mxl/domain
+            - name: config
+              mountPath: /home/mxl/config
+          command: ["/usr/bin/dumb-init", "--"]
+          args:
+            - /bin/bash
+            - -c
+            - |
+              set -euo pipefail
+              mxl-gst-testsrc \
+                -d /home/mxl/domain \
+                -v /home/mxl/config/flow.json \
+                --video-options-file /home/mxl/config/payload.json \
+                -p ball &
+              writer_pid=$!
+              trap 'kill "${writer_pid}" 2>/dev/null || true' EXIT
+              until [[ -d /home/mxl/domain/"${FLOW_ID}".mxl-flow ]]; do
+                echo "Waiting for source flow"
+                sleep 1
+              done
+              exec mxl-gst-sink \
+                -d /home/mxl/domain \
+                -v "${FLOW_ID}" \
+                --device-index "${DST_GPU}"
+      volumes:
+        - name: domain
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi
+        - name: config
+          configMap:
+            name: mxl-cuda-p2p-flow

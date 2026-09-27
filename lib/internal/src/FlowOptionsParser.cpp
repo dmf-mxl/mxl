@@ -211,4 +211,40 @@ namespace mxl::lib
     {
         return _payloadBackend;
     }
+
+    std::optional<int32_t> FlowOptionsParser::parseLocalDeviceIndex(std::string const& options)
+    {
+        if (options.empty())
+        {
+            return std::nullopt;
+        }
+
+        auto jsonValue = picojson::value{};
+        auto const err = picojson::parse(jsonValue, options);
+        if (!err.empty() || !jsonValue.is<picojson::object>())
+        {
+            throw std::invalid_argument{"Invalid reader options JSON. " + err};
+        }
+        auto const& root = jsonValue.get<picojson::object>();
+
+        if (auto payloadIt = root.find("payload"); payloadIt != root.end())
+        {
+            if (!payloadIt->second.is<picojson::object>())
+            {
+                throw std::invalid_argument{"payload must be a JSON object."};
+            }
+            auto const& payloadObj = payloadIt->second.get<picojson::object>();
+            if (auto deviceIt = payloadObj.find("deviceIndex"); deviceIt != payloadObj.end())
+            {
+                return parseDeviceIndexValue(deviceIt->second);
+            }
+            return std::nullopt;
+        }
+
+        if (auto deviceIt = root.find("deviceIndex"); deviceIt != root.end())
+        {
+            return parseDeviceIndexValue(deviceIt->second);
+        }
+        return std::nullopt;
+    }
 } // namespace mxl::lib

@@ -68,7 +68,9 @@ namespace mxl::lib
         /// \note Please note that each successful call to this method must be
         ///     paired with a corresponding call to releaseReader().
         ///
-        FlowReader* getFlowReader(std::string const& flowId);
+        /// \param options Optional JSON; payload.deviceIndex / deviceIndex selects a local CUDA GPU
+        ///        for IPC peer mapping on the same node (writer GPU stays in payload.json).
+        FlowReader* getFlowReader(std::string const& flowId, char const* options = nullptr);
 
         ///
         /// Release a reference to a FlowReader in order to ultimately free all

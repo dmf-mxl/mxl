@@ -406,7 +406,7 @@ namespace
     class MxlReader
     {
     public:
-        MxlReader(std::string const& domain, std::string flowId)
+        MxlReader(std::string const& domain, std::string flowId, std::string const& readerOptions = {})
             // Delegate to the default ctor. See comment below on why we do that
             : MxlReader{}
         {
@@ -416,7 +416,9 @@ namespace
                 throw std::runtime_error{"Failed to create MXL instance"};
             }
 
-            if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), "", &_reader); ret != MXL_STATUS_OK)
+            _readerOptions = readerOptions;
+            auto const* const options = _readerOptions.empty() ? "" : _readerOptions.c_str();
+            if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), options, &_reader); ret != MXL_STATUS_OK)
             {
                 throw std::runtime_error{fmt::format("Failed to create flow reader with status code {}", static_cast<int>(ret))};
             }
@@ -428,7 +430,9 @@ namespace
 
             if (_configInfo.common.payloadLocation == MXL_PAYLOAD_LOCATION_DEVICE_MEMORY)
             {
-                MXL_INFO("Grain payload location: device (deviceIndex={})", _configInfo.common.deviceIndex);
+                MXL_INFO("Grain payload location: device (flow deviceIndex={}, reader options={})",
+                    _configInfo.common.deviceIndex,
+                    _readerOptions.empty() ? "<writer GPU>" : _readerOptions);
             }
             else
             {
@@ -574,7 +578,7 @@ namespace
                     {
                         // Create a new reader
                         auto const flowId = uuids::to_string(_configInfo.common.id);
-                        if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), "", &_reader); ret != MXL_STATUS_OK)
+                        if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), _readerOptions.c_str(), &_reader); ret != MXL_STATUS_OK)
                         {
                             MXL_TRACE("Failed to reopen video flow reader with status code {}.", static_cast<int>(ret));
                             // Arbitrary wait time before retrying to prevent busy looping
@@ -722,7 +726,7 @@ namespace
                     {
                         // Create a new reader
                         auto const flowId = uuids::to_string(_configInfo.common.id);
-                        if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), "", &_reader); ret != MXL_STATUS_OK)
+                        if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), _readerOptions.c_str(), &_reader); ret != MXL_STATUS_OK)
                         {
                             MXL_TRACE("Failed to reopen sound flow reader with status code {}.", static_cast<int>(ret));
                             // Arbitrary wait time before retrying.
@@ -769,11 +773,12 @@ namespace
          * which is what we need in order to clean up partially established
          * state.
          */
-        constexpr MxlReader() noexcept
+        MxlReader() noexcept
             : _instance{}
             , _reader{}
             , _configInfo{}
             , _highestLatencyNs{}
+            , _readerOptions{}
         {}
 
         struct Cursor
@@ -877,7 +882,7 @@ namespace
 
             // Create a new reader
             auto const flowId = uuids::to_string(_configInfo.common.id);
-            if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), "", &_reader); ret != MXL_STATUS_OK)
+            if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), _readerOptions.c_str(), &_reader); ret != MXL_STATUS_OK)
             {
                 MXL_TRACE("Failed to reopen sound flow reader with status code {}.", static_cast<int>(ret));
                 result = false;
@@ -908,6 +913,7 @@ namespace
         mxlFlowReader _reader;
         mxlFlowConfigInfo _configInfo;
         std::uint64_t _highestLatencyNs;
+        std::string _readerOptions;
     };
 
     std::string readFlowDescriptor(std::string const& domain, std::string const& flowID)
@@ -949,6 +955,12 @@ namespace
         domainOpt->required(true);
         domainOpt->check(CLI::ExistingDirectory);
 
+        auto deviceIndex = int{-1};
+        app.add_option("--device-index",
+            deviceIndex,
+            "CUDA device this process should map grain payloads onto (same node as the writer). "
+            "Requires P2P/NVLink when it differs from the writer's deviceIndex. Omit to use the writer's GPU.");
+
         auto listenChannels = std::vector<std::size_t>{};
         auto listenChanOpt = app.add_option("-l, --listen-channels", listenChannels, "Audio channels to listen.");
         listenChanOpt->default_val(std::vector<std::size_t>{0, 1});
@@ -980,6 +992,12 @@ namespace
 
         CLI11_PARSE(app, argc, argv);
 
+        auto readerOptions = std::string{};
+        if (deviceIndex >= 0)
+        {
+            readerOptions = fmt::format("{{\"deviceIndex\":{}}}", deviceIndex);
+        }
+
         ::gst_init(nullptr, nullptr);
 
         if (ptsOffset.has_value())
@@ -996,7 +1014,7 @@ namespace
                 {
                     try
                     {
-                        auto reader = MxlReader{domain, videoFlowID};
+                        auto reader = MxlReader{domain, videoFlowID, readerOptions};
 
                         auto const flowDescriptor = readFlowDescriptor(domain, videoFlowID);
                         auto const flowNmos = json_utils::parseBuffer(flowDescriptor);
@@ -1040,7 +1058,7 @@ namespace
                 {
                     try
                     {
-                        auto reader = MxlReader{domain, audioFlowID};
+                        auto reader = MxlReader{domain, audioFlowID, readerOptions};
                         auto const flowDescriptor = readFlowDescriptor(domain, audioFlowID);
                         auto flowNmos = json_utils::parseBuffer(flowDescriptor);
 

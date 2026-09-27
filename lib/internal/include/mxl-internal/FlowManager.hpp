@@ -104,7 +104,8 @@ namespace mxl::lib
         /// \param[in] flowId The flow to open
         /// \param[in] mode The flow access mode
         ///
-        std::unique_ptr<FlowData> openFlow(uuids::uuid const& flowId, AccessMode mode);
+        /// \param localDeviceIndex CUDA device this process should map payloads onto (-1 = owner's GPU).
+        std::unique_ptr<FlowData> openFlow(uuids::uuid const& flowId, AccessMode mode, int32_t localDeviceIndex = -1);
 
         ///
         /// Delete all resources associated to a flow
@@ -139,7 +140,8 @@ namespace mxl::lib
         std::filesystem::path const& getDomain() const;
 
     private:
-        std::unique_ptr<DiscreteFlowData> openDiscreteFlow(std::filesystem::path const& flowDir, SharedMemoryInstance<Flow>&& sharedFlowInstance);
+        std::unique_ptr<DiscreteFlowData> openDiscreteFlow(std::filesystem::path const& flowDir, SharedMemoryInstance<Flow>&& sharedFlowInstance,
+            int32_t localDeviceIndex = -1);
         std::unique_ptr<ContinuousFlowData> openContinuousFlow(std::filesystem::path const& flowDir, SharedMemoryInstance<Flow>&& sharedFlowInstance);
 
     private:

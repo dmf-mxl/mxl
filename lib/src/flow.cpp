@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <exception>
 #include <filesystem>
+#include <stdexcept>
 #include <string>
 #include <uuid.h>
 #include <sys/file.h>
@@ -133,7 +134,7 @@ mxlStatus mxlGetFlowDef(mxlInstance instance, char const* flowId, char* buffer, 
 
 extern "C"
 MXL_EXPORT
-mxlStatus mxlCreateFlowReader(mxlInstance instance, char const* flowId, char const* /*options*/, mxlFlowReader* reader)
+mxlStatus mxlCreateFlowReader(mxlInstance instance, char const* flowId, char const* options, mxlFlowReader* reader)
 {
     try
     {
@@ -143,7 +144,7 @@ mxlStatus mxlCreateFlowReader(mxlInstance instance, char const* flowId, char con
             {
                 if ((flowId != nullptr) && uuids::uuid::is_valid_uuid(flowId))
                 {
-                    *reader = reinterpret_cast<mxlFlowReader>(cppInstance->getFlowReader(flowId));
+                    *reader = reinterpret_cast<mxlFlowReader>(cppInstance->getFlowReader(flowId, options));
                     return MXL_STATUS_OK;
                 }
             }
@@ -158,6 +159,16 @@ mxlStatus mxlCreateFlowReader(mxlInstance instance, char const* flowId, char con
             return MXL_ERR_FLOW_NOT_FOUND;
         }
 
+        MXL_ERROR("Failed to create flow reader: {}", e.what());
+        return MXL_ERR_UNKNOWN;
+    }
+    catch (std::invalid_argument const& e)
+    {
+        MXL_ERROR("Failed to create flow reader: {}", e.what());
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (std::exception const& e)
+    {
         MXL_ERROR("Failed to create flow reader: {}", e.what());
         return MXL_ERR_UNKNOWN;
     }

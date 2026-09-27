@@ -1,0 +1,163 @@
+# SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Skeleton: two pods, SAME node, SAME GPU, one shared MXL domain.
+# CUDA IPC (not P2P, not fabrics). Grain buffers stay on the writer's cudaMalloc;
+# the reader opens the published IPC handles.
+#
+# Required:
+#   - Both pods scheduled on __HOSTNAME__
+#   - Shared hostPath domain (emptyDir is per-pod and will not work)
+#   - hostIPC: CUDA IPC across pod PID namespaces
+#   - GPU sharing: time-slicing, MPS, or equivalent so both pods attach to the
+#     same physical GPU. Exclusive nvidia.com/gpu:1 will leave one pod Pending
+#     (or give each pod a *different* GPU, which is not this path).
+#   - Each process uses CUDA deviceIndex 0 (the only device in the pod)
+#
+# Fill in __HOSTNAME__ and the CUDA gst image.
+#   examples/scripts/render-kube-cuda-ipc-template.sh my-node
+#
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mxl-cuda-ipc-flow
+data:
+  flow.json: |
+    {
+      "$copyright": "SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.",
+      "$license": "SPDX-License-Identifier: Apache-2.0",
+      "description": "MXL Test Flow, 1080p29",
+      "id": "5fbec3b1-1b0f-417d-9059-8b94a47197ed",
+      "format": "urn:x-nmos:format:video",
+      "label": "MXL Test Flow, 1080p29",
+      "parents": [],
+      "media_type": "video/v210",
+      "grain_rate": { "numerator": 30000, "denominator": 1001 },
+      "frame_width": 1920,
+      "frame_height": 1080,
+      "interlace_mode": "progressive",
+      "colorspace": "BT709",
+      "components": [
+        { "name": "Y", "width": 1920, "height": 1080, "bit_depth": 10 },
+        { "name": "Cb", "width": 960, "height": 1080, "bit_depth": 10 },
+        { "name": "Cr", "width": 960, "height": 1080, "bit_depth": 10 }
+      ]
+    }
+  payload.json: |
+    {
+      "payload": {
+        "location": "device",
+        "deviceIndex": 0,
+        "backend": "cuda-linear"
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mxl-cuda-ipc-writer
+  labels:
+    app.kubernetes.io/name: mxl-cuda-ipc-writer
+    app.kubernetes.io/part-of: mxl-cuda-ipc-two-pod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mxl-cuda-ipc-writer
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mxl-cuda-ipc-writer
+        app.kubernetes.io/part-of: mxl-cuda-ipc-two-pod
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: __HOSTNAME__ # !! CHANGEME
+      hostIPC: true
+      containers:
+        - name: gst-writer
+          image: docker.io/library/mxl-fabrics-cuda # !! CHANGEME: CUDA gst image
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: compute,utility
+          resources:
+            limits:
+              nvidia.com/gpu: "1"
+          volumeMounts:
+            - name: domain
+              mountPath: /home/mxl/domain
+            - name: config
+              mountPath: /home/mxl/config
+          command: ["/usr/bin/dumb-init", "--"]
+          args:
+            - mxl-gst-testsrc
+            - -d
+            - /home/mxl/domain
+            - -v
+            - /home/mxl/config/flow.json
+            - --video-options-file
+            - /home/mxl/config/payload.json
+            - -p
+            - ball
+      volumes:
+        - name: domain
+          hostPath:
+            path: /dev/shm/mxl-cuda-ipc
+            type: DirectoryOrCreate
+        - name: config
+          configMap:
+            name: mxl-cuda-ipc-flow
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mxl-cuda-ipc-reader
+  labels:
+    app.kubernetes.io/name: mxl-cuda-ipc-reader
+    app.kubernetes.io/part-of: mxl-cuda-ipc-two-pod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mxl-cuda-ipc-reader
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mxl-cuda-ipc-reader
+        app.kubernetes.io/part-of: mxl-cuda-ipc-two-pod
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: __HOSTNAME__ # !! CHANGEME
+      hostIPC: true
+      containers:
+        - name: gst-reader
+          image: docker.io/library/mxl-fabrics-cuda # !! CHANGEME
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: compute,utility
+            - name: FLOW_ID
+              value: 5fbec3b1-1b0f-417d-9059-8b94a47197ed
+          resources:
+            limits:
+              nvidia.com/gpu: "1"
+          volumeMounts:
+            - name: domain
+              mountPath: /home/mxl/domain
+          command: ["/usr/bin/dumb-init", "--"]
+          args:
+            - /bin/bash
+            - -c
+            - |
+              set -euo pipefail
+              until [[ -d /home/mxl/domain/"${FLOW_ID}".mxl-flow/payload ]]; do
+                echo "Waiting for writer flow ${FLOW_ID}"
+                sleep 1
+              done
+              exec mxl-gst-sink -d /home/mxl/domain -v "${FLOW_ID}"
+      volumes:
+        - name: domain
+          hostPath:
+            path: /dev/shm/mxl-cuda-ipc
+            type: DirectoryOrCreate

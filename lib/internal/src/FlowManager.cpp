@@ -344,7 +344,7 @@ namespace mxl::lib
         }
     }
 
-    std::unique_ptr<FlowData> FlowManager::openFlow(uuids::uuid const& in_flowId, AccessMode in_mode)
+    std::unique_ptr<FlowData> FlowManager::openFlow(uuids::uuid const& in_flowId, AccessMode in_mode, int32_t localDeviceIndex)
     {
         if (in_mode == AccessMode::CREATE_READ_WRITE)
         {
@@ -366,7 +366,7 @@ namespace mxl::lib
 
             if (auto const flowFormat = flowSegment.get()->info.config.common.format; mxlIsDiscreteDataFormat(flowFormat))
             {
-                return openDiscreteFlow(base, std::move(flowSegment));
+                return openDiscreteFlow(base, std::move(flowSegment), localDeviceIndex);
             }
             else if (mxlIsContinuousDataFormat(flowFormat))
             {
@@ -385,7 +385,7 @@ namespace mxl::lib
     }
 
     std::unique_ptr<DiscreteFlowData> FlowManager::openDiscreteFlow(std::filesystem::path const& flowDir,
-        SharedMemoryInstance<Flow>&& sharedFlowInstance)
+        SharedMemoryInstance<Flow>&& sharedFlowInstance, int32_t localDeviceIndex)
     {
         auto flowData = std::make_unique<DiscreteFlowData>(std::move(sharedFlowInstance));
 
@@ -425,6 +425,7 @@ namespace mxl::lib
                 .deviceIndex = common.deviceIndex,
                 .logicalPayloadSize = logicalPayloadSize,
                 .backend = {},
+                .localDeviceIndex = localDeviceIndex,
             });
         payloadAllocator->attach(GrainPayloadAttachContext{
             .flowDir = flowDir,

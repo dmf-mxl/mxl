@@ -45,6 +45,33 @@ namespace mxl::lib
             outView->u.devicePtr = devicePtr;
         }
 
+        void enablePeerAccess(int32_t localDevice, int32_t ownerDevice)
+        {
+            if (localDevice == ownerDevice)
+            {
+                return;
+            }
+
+            int canAccess = 0;
+            checkCuda("cudaDeviceCanAccessPeer", cudaDeviceCanAccessPeer(&canAccess, localDevice, ownerDevice));
+            if (canAccess == 0)
+            {
+                throw std::runtime_error{fmt::format(
+                    "CUDA device {} cannot peer-access device {} (need NVLink or a P2P-capable PCIe path). "
+                    "Use the writer's deviceIndex, or two domains plus fabrics RDMA.",
+                    localDevice,
+                    ownerDevice)};
+            }
+
+            checkCuda("cudaSetDevice", cudaSetDevice(localDevice));
+            auto const err = cudaDeviceEnablePeerAccess(ownerDevice, 0);
+            if ((err != cudaSuccess) && (err != cudaErrorPeerAccessAlreadyEnabled))
+            {
+                throwCuda("cudaDeviceEnablePeerAccess", err);
+            }
+            (void)cudaGetLastError();
+        }
+
         /**
          * CUDA IPC cannot open a handle inside the process that created it. Keep a process-local
          * registry so multiple MXL instances in the same process can share creator-owned pointers.
@@ -102,12 +129,17 @@ namespace mxl::lib
         return (err == cudaSuccess) && (deviceCount > 0);
     }
 
-    CudaLinearPayloadAllocator::CudaLinearPayloadAllocator(int32_t deviceIndex)
-        : _deviceIndex{deviceIndex}
+    CudaLinearPayloadAllocator::CudaLinearPayloadAllocator(int32_t ownerDeviceIndex, int32_t localDeviceIndex)
+        : _ownerDeviceIndex{ownerDeviceIndex}
+        , _localDeviceIndex{localDeviceIndex < 0 ? ownerDeviceIndex : localDeviceIndex}
     {
-        if (deviceIndex < 0)
+        if (ownerDeviceIndex < 0)
         {
             throw std::invalid_argument{"CudaLinearPayloadAllocator requires deviceIndex >= 0."};
+        }
+        if (_localDeviceIndex < 0)
+        {
+            throw std::invalid_argument{"CudaLinearPayloadAllocator requires localDeviceIndex >= 0."};
         }
     }
 
@@ -123,7 +155,7 @@ namespace mxl::lib
 
     int32_t CudaLinearPayloadAllocator::deviceIndex() const noexcept
     {
-        return _deviceIndex;
+        return _localDeviceIndex;
     }
 
     char const* CudaLinearPayloadAllocator::backendName() const noexcept
@@ -150,14 +182,16 @@ namespace mxl::lib
         }
 
         _logicalPayloadSize = context.logicalPayloadSize;
-        checkCuda("cudaSetDevice", cudaSetDevice(_deviceIndex));
 
         if (context.accessMode == AccessMode::CREATE_READ_WRITE)
         {
+            checkCuda("cudaSetDevice", cudaSetDevice(_ownerDeviceIndex));
             createPayloads(context);
         }
         else
         {
+            enablePeerAccess(_localDeviceIndex, _ownerDeviceIndex);
+            checkCuda("cudaSetDevice", cudaSetDevice(_localDeviceIndex));
             openPayloads(context);
         }
     }
@@ -173,7 +207,7 @@ namespace mxl::lib
             return MXL_ERR_INVALID_ARG;
         }
 
-        fillCommon(outView, grain, _deviceIndex, reinterpret_cast<std::uint64_t>(_devicePtrs[slotIndex]));
+        fillCommon(outView, grain, _localDeviceIndex, reinterpret_cast<std::uint64_t>(_devicePtrs[slotIndex]));
         return MXL_STATUS_OK;
     }
 
@@ -185,7 +219,7 @@ namespace mxl::lib
         }
 
         // Best-effort device selection; ignore failures during teardown.
-        (void)cudaSetDevice(_deviceIndex);
+        (void)cudaSetDevice(_localDeviceIndex);
 
         for (auto i = std::size_t{0}; i < _devicePtrs.size(); ++i)
         {
@@ -261,7 +295,7 @@ namespace mxl::lib
             MXL_DEBUG("CudaLinearPayloadAllocator created {} device buffers ({} bytes each) on device {}",
                 context.grainCount,
                 context.logicalPayloadSize,
-                _deviceIndex);
+                _ownerDeviceIndex);
         }
         catch (...)
         {
@@ -313,9 +347,17 @@ namespace mxl::lib
                 _devicePtrs[i] = ptr;
             }
 
-            MXL_DEBUG("CudaLinearPayloadAllocator imported {} device buffers on device {} (localRegistry={})",
+            if (_localDeviceIndex != _ownerDeviceIndex)
+            {
+                MXL_INFO("CudaLinearPayloadAllocator mapped {} buffers via CUDA IPC P2P (owner GPU {}, local GPU {})",
+                    context.grainCount,
+                    _ownerDeviceIndex,
+                    _localDeviceIndex);
+            }
+            MXL_DEBUG("CudaLinearPayloadAllocator imported {} device buffers on device {} (owner={}, localRegistry={})",
                 context.grainCount,
-                _deviceIndex,
+                _localDeviceIndex,
+                _ownerDeviceIndex,
                 _borrowedFromLocalRegistry);
         }
         catch (...)
@@ -331,7 +373,7 @@ namespace mxl::lib
         root["version"] = picojson::value{1.0};
         root["backend"] = picojson::value{std::string{PAYLOAD_BACKEND_CUDA_LINEAR}};
         root["location"] = picojson::value{std::string{"device"}};
-        root["deviceIndex"] = picojson::value{static_cast<double>(_deviceIndex)};
+        root["deviceIndex"] = picojson::value{static_cast<double>(_ownerDeviceIndex)};
         root["grainCount"] = picojson::value{static_cast<double>(context.grainCount)};
         root["grainSize"] = picojson::value{static_cast<double>(context.logicalPayloadSize)};
         root["export"] = picojson::value{std::string{"cuda-ipc"}};

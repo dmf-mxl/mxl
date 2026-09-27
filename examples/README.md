@@ -111,3 +111,40 @@ To check if the audio flow writer is producing samples:
 kubectl logs -f mxl-audio-flow-info-(...)
 ```
 
+# CUDA writer / reader topologies
+
+| Setup | Domain | How grains move |
+| --- | --- | --- |
+| Two pods, **same node, same GPU** | Shared `hostPath` (e.g. `/dev/shm/...`) | CUDA IPC |
+| Two processes, **same node, two GPUs** | Shared domain; both must see both GPUs | CUDA IPC + P2P |
+| Two pods, **different nodes** (or exclusive GPUs that cannot P2P) | One domain per pod; do not share | Fabrics RDMA / GPUDirect |
+
+## Same node, same GPU (two pods)
+
+This is the default CUDA-linear path: the writer `cudaMalloc`s, publishes IPC handles under the flow directory, and the reader `cudaIpcOpenMemHandle`s. Do not pass `--device-index` on the reader.
+
+Same-machine rehearsal:
+
+```bash
+./examples/scripts/cuda-ipc-same-gpu.sh
+```
+
+Kubernetes skeleton: `kube-cuda-ipc-two-pod.yaml`. Both pods must land on one node, mount the **same** host tmpfs domain, set `hostIPC: true`, and actually share the GPU (device-plugin time-slicing or MPS). Exclusive `nvidia.com/gpu: 1` without sharing either leaves a pod Pending or assigns two different GPUs — that is not CUDA IPC.
+
+```bash
+examples/scripts/render-kube-cuda-ipc-template.sh my-node > /tmp/mxl-cuda-ipc.yml
+kubectl apply -f /tmp/mxl-cuda-ipc.yml
+```
+
+## Same node, two GPUs (P2P)
+
+A reader on the **same node** can map those grains onto a **second GPU** with CUDA IPC peer access (NVLink or P2P-capable PCIe) — no second domain and no fabrics.
+
+```bash
+SRC_GPU=0 DST_GPU=1 ./examples/scripts/cuda-p2p-two-gpu.sh
+```
+
+`mxl-gst-sink --device-index 1` (or `mxlCreateFlowReader(..., "{\"deviceIndex\":1}", ...)`) selects the local GPU. Kubernetes: `kube-cuda-p2p-two-gpu.yaml` is one pod with **two** GPUs so both processes see device 0 and 1. Two pods that each get a single GPU cannot use this path (`CUDA_VISIBLE_DEVICES` hides the peer).
+
+Pods on different nodes must not share the domain. That path is two local domains plus fabrics RDMA.
+
