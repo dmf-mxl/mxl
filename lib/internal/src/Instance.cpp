@@ -30,6 +30,7 @@
 #include "mxl-internal/FlowParser.hpp"
 #include "mxl-internal/Logging.hpp"
 #include "mxl-internal/PathUtils.hpp"
+#include "mxl-internal/PayloadBackendRegistry.hpp"
 
 namespace mxl::lib
 {
@@ -89,6 +90,8 @@ namespace mxl::lib
     {
         std::call_once(loggingFlag, [&]() { initializeLogging(); });
         parseOptions(options);
+        PayloadBackendRegistry::instance().loadFromEnvironment();
+        PayloadBackendRegistry::instance().loadFromInstanceOptions(options);
         MXL_DEBUG("Instance created. MXL Domain: {}", mxlDomain.string());
     }
 

@@ -3,6 +3,7 @@
 
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
+#include <mxl/payload_plugin.h>
 #include <mxl/time.h>
 
 // Simple test to ensure all headers are valid according to the C17 standard

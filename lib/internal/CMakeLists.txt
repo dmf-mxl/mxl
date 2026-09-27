@@ -43,8 +43,6 @@ else()
         )
 endif()
 
-# Internal implementation objects. These are consumed by libmxl and by internal
-# tests, but are not installed or exported as a user-visible library.
 add_library(mxl-internal-objects OBJECT)
 target_compile_features(mxl-internal-objects
         PUBLIC
@@ -76,6 +74,7 @@ target_sources(mxl-internal-objects
             src/Logging.cpp
             src/MediaUtils.cpp
             src/PathUtils.cpp
+            src/PayloadBackendRegistry.cpp
             src/PosixContinuousFlowReader.cpp
             src/PosixContinuousFlowWriter.cpp
             src/PosixDiscreteFlowReader.cpp
@@ -88,27 +87,40 @@ target_sources(mxl-internal-objects
             src/Timing.cpp
     )
 
-option(MXL_ENABLE_CUDA "Enable CUDA linear grain payload allocator" ON)
+option(MXL_ENABLE_CUDA "Enable CUDA linear grain payload plugin" ON)
 if (MXL_ENABLE_CUDA)
     find_package(CUDAToolkit QUIET)
     if (CUDAToolkit_FOUND)
-        message(STATUS "CUDA toolkit found: enabling CudaLinearPayloadAllocator")
-        target_sources(mxl-internal-objects
-                PRIVATE
-                    src/CudaLinearPayloadAllocator.cpp
+        message(STATUS "CUDA toolkit found: building libmxl-payload-cuda")
+        add_library(mxl-payload-cuda SHARED
+                src/CudaLinearPayloadAllocator.cpp
+                src/CudaPayloadPlugin.cpp
+                src/PathUtils.cpp
             )
-        target_compile_definitions(mxl-internal-objects
-                PRIVATE
-                    MXL_HAS_CUDA=1
+        target_compile_features(mxl-payload-cuda PRIVATE cxx_std_20)
+        set_target_properties(mxl-payload-cuda
+                PROPERTIES
+                    OUTPUT_NAME "mxl-payload-cuda"
+                    POSITION_INDEPENDENT_CODE ON
+                    C_VISIBILITY_PRESET hidden
+                    CXX_VISIBILITY_PRESET hidden
+                    VISIBILITY_INLINES_HIDDEN ON
+                    C_EXTENSIONS OFF
+                    CXX_EXTENSIONS OFF
+                    SOVERSION "${PROJECT_VERSION_MAJOR}"
+                    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
             )
-        target_include_directories(mxl-internal-objects
+        target_compile_definitions(mxl-payload-cuda PRIVATE MXL_HAS_CUDA=1)
+        target_include_directories(mxl-payload-cuda PRIVATE ${CUDAToolkit_INCLUDE_DIRS})
+        target_link_libraries(mxl-payload-cuda
                 PRIVATE
-                    ${CUDAToolkit_INCLUDE_DIRS}
-            )
-        # PUBLIC so dependents that link mxl-internal-objects (libmxl) also link cudart.
-        target_link_libraries(mxl-internal-objects
-                PUBLIC
+                    mxl-internal-headers
                     CUDA::cudart
+            )
+        target_compile_definitions(mxl-internal-objects PRIVATE MXL_HAS_CUDA_PAYLOAD_PLUGIN=1)
+        install(TARGETS mxl-payload-cuda
+                LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
             )
         set(MXL_BUILT_WITH_CUDA ON CACHE INTERNAL "MXL was configured with CUDA payload support")
     else()
@@ -142,6 +154,10 @@ target_include_directories(mxl-internal-objects
 target_link_libraries(mxl-internal-objects
         PRIVATE
             mxl-internal-headers
+    )
+target_link_libraries(mxl-internal-objects
+        PUBLIC
+            ${CMAKE_DL_LIBS}
     )
 
 # Enable LTO/IPO on target if enabled and supported

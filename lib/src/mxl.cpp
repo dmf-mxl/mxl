@@ -5,10 +5,12 @@
 #include <exception>
 #include <memory>
 #include <string>
+#include <mxl/payload_plugin.h>
 #include <mxl/version.h>
 #include "mxl-internal/DomainWatcher.hpp"
 #include "mxl-internal/Instance.hpp"
 #include "mxl-internal/Logging.hpp"
+#include "mxl-internal/PayloadBackendRegistry.hpp"
 #include "mxl-internal/PosixFlowIoFactory.hpp"
 
 #ifdef __linux__
@@ -38,6 +40,29 @@ mxlStatus mxlGetVersion(mxlVersionType* out_version)
     else
     {
         return MXL_ERR_INVALID_ARG;
+    }
+}
+
+extern "C" MXL_EXPORT
+mxlStatus mxlLoadPayloadPlugin(mxlInstance instance, char const* path)
+{
+    if ((instance == nullptr) || (path == nullptr) || (path[0] == '\0'))
+    {
+        return MXL_ERR_INVALID_ARG;
+    }
+    try
+    {
+        mxl::lib::PayloadBackendRegistry::instance().loadLibrary(path);
+        return MXL_STATUS_OK;
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Failed to load payload plugin: {}", e.what());
+        return MXL_ERR_UNKNOWN;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
     }
 }
 

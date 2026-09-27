@@ -73,7 +73,9 @@ extern "C"
     /// Create a new MXL instance for a specific domain.
     ///
     /// \param in_mxlDomain The domain is the directory where the MXL ringbuffers files are stored.  It should live on a tmpfs filesystem.
-    /// \param in_options Optional JSON string containing additional SDK options. Currently not used.
+    /// \param in_options Optional JSON string. "payloadPlugins" is an array of
+    ///        shared-library paths loaded into the process-wide payload registry.
+    ///        MXL_PAYLOAD_PLUGIN_PATH is also searched (colon-separated).
     /// \return A pointer to the MXL instance or NULL if the instance could not be created.
     ///
     MXL_EXPORT

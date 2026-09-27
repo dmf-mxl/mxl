@@ -7,8 +7,8 @@
 #include <string>
 #include <picojson/picojson.h>
 #include <mxl/mxl.h>
-#include "mxl-internal/CudaLinearPayloadAllocator.hpp"
 #include "mxl-internal/PathUtils.hpp"
+#include "mxl-internal/PayloadBackendRegistry.hpp"
 
 namespace mxl::lib
 {
@@ -33,13 +33,11 @@ namespace mxl::lib
             {
                 return PAYLOAD_BACKEND_HOST;
             }
-#if defined(MXL_HAS_CUDA) && MXL_HAS_CUDA
-            if (isCudaRuntimeAvailable())
-            {
-                return PAYLOAD_BACKEND_CUDA_LINEAR;
-            }
-#endif
+#if defined(MXL_HAS_CUDA_PAYLOAD_PLUGIN) && MXL_HAS_CUDA_PAYLOAD_PLUGIN
+            return PAYLOAD_BACKEND_CUDA_LINEAR;
+#else
             return PAYLOAD_BACKEND_PLACEHOLDER;
+#endif
         }
 
         void writePlaceholderDescriptor(GrainPayloadAttachContext const& context, int32_t deviceIndex)
@@ -152,6 +150,27 @@ namespace mxl::lib
     std::unique_ptr<GrainPayloadAllocator> makeGrainPayloadAllocator(GrainPayloadAllocatorSpec const& spec)
     {
         auto const backend = normalizeBackend(spec.backend, spec.location);
+        auto& plugins = PayloadBackendRegistry::instance();
+        plugins.loadFromEnvironment();
+
+        if (plugins.isPluginBackend(backend))
+        {
+            if ((spec.location == MXL_PAYLOAD_LOCATION_HOST_MEMORY) && (spec.deviceIndex != -1))
+            {
+                throw std::invalid_argument{"deviceIndex must be -1 when payloadLocation is host memory."};
+            }
+            if ((spec.location == MXL_PAYLOAD_LOCATION_DEVICE_MEMORY) && (spec.deviceIndex < 0))
+            {
+                throw std::invalid_argument{"deviceIndex must be >= 0 when payloadLocation is device memory."};
+            }
+            if ((spec.location != MXL_PAYLOAD_LOCATION_HOST_MEMORY) && (spec.location != MXL_PAYLOAD_LOCATION_DEVICE_MEMORY))
+            {
+                throw std::invalid_argument{"Unsupported payloadLocation."};
+            }
+            auto resolved = spec;
+            resolved.backend = backend;
+            return plugins.createPlugin(resolved);
+        }
 
         if (spec.location == MXL_PAYLOAD_LOCATION_HOST_MEMORY)
         {
@@ -177,14 +196,13 @@ namespace mxl::lib
 
         if (backend == PAYLOAD_BACKEND_CUDA_LINEAR)
         {
-#if defined(MXL_HAS_CUDA) && MXL_HAS_CUDA
-            if (!isCudaRuntimeAvailable())
-            {
-                throw std::runtime_error{"payload backend \"cuda-linear\" requested but no CUDA device is available."};
-            }
-            return std::make_unique<CudaLinearPayloadAllocator>(spec.deviceIndex, spec.localDeviceIndex);
+#if defined(MXL_HAS_CUDA_PAYLOAD_PLUGIN) && MXL_HAS_CUDA_PAYLOAD_PLUGIN
+            plugins.loadCudaLinearPlugin();
+            auto resolved = spec;
+            resolved.backend = backend;
+            return plugins.createPlugin(resolved);
 #else
-            throw std::runtime_error{"payload backend \"cuda-linear\" requested but MXL was built without CUDA support."};
+            throw std::runtime_error{"payload backend \"cuda-linear\" requested but MXL was built without the CUDA payload plugin."};
 #endif
         }
 

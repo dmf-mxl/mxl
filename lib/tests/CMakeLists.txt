@@ -22,6 +22,7 @@ target_sources(mxl-tests
             test_flows.cpp
             test_flows_timing.cpp
             test_instance.cpp
+            test_payload_plugin.cpp
             test_time.cpp
     )
 
@@ -141,3 +142,24 @@ target_compile_options(mxl-all-headers PRIVATE
 if (MXL_ENABLE_FABRICS_OFI)
     add_subdirectory(fabrics)
 endif ()
+
+add_library(mxl-test-payload-plugin MODULE payload_plugin/test_payload_plugin.c)
+target_link_libraries(mxl-test-payload-plugin
+        PRIVATE
+            mxl-headers
+    )
+set_target_properties(mxl-test-payload-plugin
+        PROPERTIES
+            PREFIX ""
+            OUTPUT_NAME "mxl-test-payload-plugin"
+            C_STANDARD 17
+            C_STANDARD_REQUIRED ON
+            C_EXTENSIONS OFF
+            POSITION_INDEPENDENT_CODE ON
+            C_VISIBILITY_PRESET default
+    )
+target_compile_definitions(mxl-tests
+        PRIVATE
+"MXL_TEST_PAYLOAD_PLUGIN_PATH=\"$<TARGET_FILE:mxl-test-payload-plugin>\""
+    )
+add_dependencies(mxl-tests mxl-test-payload-plugin)
