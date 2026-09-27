@@ -146,5 +146,35 @@ SRC_GPU=0 DST_GPU=1 ./examples/scripts/cuda-p2p-two-gpu.sh
 
 `mxl-gst-sink --device-index 1` (or `mxlCreateFlowReader(..., "{\"deviceIndex\":1}", ...)`) selects the local GPU. Kubernetes: `kube-cuda-p2p-two-gpu.yaml` is one pod with **two** GPUs so both processes see device 0 and 1. Two pods that each get a single GPU cannot use this path (`CUDA_VISIBLE_DEVICES` hides the peer).
 
-Pods on different nodes must not share the domain. That path is two local domains plus fabrics RDMA.
+## Cross-node CUDA fabrics
+
+Writer and reader pods on **different nodes** must **not** share the MXL domain. Use two local domains (tmpfs / emptyDir memory) and copy grains with fabrics RDMA (GPUDirect / `FI_HMEM`):
+
+1. **Target pod** creates a local CUDA flow on *its* GPU and listens:
+   `mxl-fabrics-demo -d /dev/shm/mxl-dst ... --device-index <dst-gpu> -p verbs --target-info ...`
+2. **Writer pod** publishes into a *different* local domain on *its* GPU (`mxl-gst-testsrc --video-options-file ...`).
+3. **Initiator** (same node as the writer) reads that source domain and RDMA-writes into the target’s buffers.
+   Same NMOS flow JSON (grain geometry); `deviceIndex` is local to each domain.
+
+Same-machine rehearsal:
+
+```bash
+SRC_GPU=0 DST_GPU=0 ./examples/scripts/fabrics-cuda-two-domain.sh
+# or DST_GPU=1 if a second GPU is present
+```
+
+Do not put CUDA payload flows on a shared PVC. The in-tree `kube-example.yaml` still uses one node-local `/dev/shm` domain for host-mapped compose-style flows.
+
+A two-pod **skeleton** is in `kube-fabrics-cuda-two-domain.yaml`: separate `emptyDir` memory domains, one GPU per pod, `hostNetwork` + `/dev/infiniband`, and a ConfigMap for fabrics target-info. It will not run on a stock k3s node. You need an image built with CUDA, libfabric verbs, and `MXL_ENABLE_FABRICS_OFI` (the compose `examples/Dockerfile` does not), plus the NVIDIA device plugin, GPUDirect (`nvidia_peermem` or DMA-BUF), and an RDMA-capable fabric.
+
+```bash
+examples/scripts/render-kube-fabrics-template.sh src-node dst-node > /tmp/mxl-fabrics-cuda.yml
+kubectl apply -f /tmp/mxl-fabrics-cuda.yml
+# After the target prints "Target info: <base64>":
+kubectl create configmap mxl-fabrics-target-info \
+  --from-literal=target-info.b64='<paste-base64>' \
+  -o yaml --dry-run=client | kubectl apply -f -
+```
+
+Same-node rehearsal (no Kubernetes): `SRC_GPU=0 DST_GPU=0 ./examples/scripts/fabrics-cuda-two-domain.sh`.
 

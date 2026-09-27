@@ -1,0 +1,286 @@
+# SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Skeleton: two independent CUDA MXL domains + fabrics RDMA (GPUDirect).
+# This is not a drop-in for kube-example.yaml. Do not share a domain PVC.
+#
+# Fill in:
+#   __SRC_HOSTNAME__ / __DST_HOSTNAME__  — or delete nodeSelector for GPU scheduling
+#   image                                — CUDA + libfabric verbs + MXL_ENABLE_FABRICS_OFI
+#                                          (the stock examples/Dockerfile does not build this)
+#   nvidia.com/gpu                       — NVIDIA device plugin
+#   /dev/infiniband                      — or an RDMA device-plugin resource
+#   peermem / DMA-BUF                    — on the node
+#   ConfigMap mxl-fabrics-target-info    — after the target prints "Target info:"
+#
+# Render hostnames:
+#   examples/scripts/render-kube-fabrics-template.sh src-node dst-node
+#
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mxl-fabrics-cuda-flow
+data:
+  flow.json: |
+    {
+      "$copyright": "SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.",
+      "$license": "SPDX-License-Identifier: Apache-2.0",
+      "description": "MXL Test Flow, 1080p29",
+      "id": "5fbec3b1-1b0f-417d-9059-8b94a47197ed",
+      "tags": {
+        "urn:x-nmos:tag:grouphint/v1.0": [
+          "Example Media Function:Video"
+        ]
+      },
+      "format": "urn:x-nmos:format:video",
+      "label": "MXL Test Flow, 1080p29",
+      "parents": [],
+      "media_type": "video/v210",
+      "grain_rate": {
+        "numerator": 30000,
+        "denominator": 1001
+      },
+      "frame_width": 1920,
+      "frame_height": 1080,
+      "interlace_mode": "progressive",
+      "colorspace": "BT709",
+      "components": [
+        {
+          "name": "Y",
+          "width": 1920,
+          "height": 1080,
+          "bit_depth": 10
+        },
+        {
+          "name": "Cb",
+          "width": 960,
+          "height": 1080,
+          "bit_depth": 10
+        },
+        {
+          "name": "Cr",
+          "width": 960,
+          "height": 1080,
+          "bit_depth": 10
+        }
+      ]
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mxl-fabrics-cuda-payload-src
+data:
+  payload.json: |
+    {
+      "payload": {
+        "location": "device",
+        "deviceIndex": 0,
+        "backend": "cuda-linear"
+      }
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mxl-fabrics-cuda-payload-dst
+data:
+  payload.json: |
+    {
+      "payload": {
+        "location": "device",
+        "deviceIndex": 0,
+        "backend": "cuda-linear"
+      }
+    }
+---
+# Replace target-info.b64 with the base64 blob from target logs ("Target info: ...").
+# Until then the initiator container waits.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mxl-fabrics-target-info
+data:
+  target-info.b64: "REPLACE_ME"
+---
+# Receiver: local CUDA domain on the destination GPU. Listens for fabrics RDMA.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mxl-fabrics-cuda-target
+  labels:
+    app.kubernetes.io/name: mxl-fabrics-cuda-target
+    app.kubernetes.io/part-of: mxl-fabrics-cuda-two-domain
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mxl-fabrics-cuda-target
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mxl-fabrics-cuda-target
+        app.kubernetes.io/part-of: mxl-fabrics-cuda-two-domain
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: __DST_HOSTNAME__ # !! CHANGEME
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: fabrics-target
+          image: docker.io/library/mxl-fabrics-cuda # !! CHANGEME: CUDA + fabrics image
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            capabilities:
+              add: ["IPC_LOCK"]
+          env:
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: compute,utility
+            - name: DST_GPU
+              value: "0"
+            - name: TARGET_PORT
+              value: "1234"
+          resources:
+            limits:
+              nvidia.com/gpu: "1"
+          volumeMounts:
+            - name: domain
+              mountPath: /home/mxl/domain
+            - name: flow-config
+              mountPath: /home/mxl/config
+            - name: payload-config
+              mountPath: /home/mxl/payload
+            - name: infiniband
+              mountPath: /dev/infiniband
+          command: ["/usr/bin/dumb-init", "--"]
+          args:
+            - /bin/bash
+            - -c
+            - |
+              set -euo pipefail
+              exec mxl-fabrics-demo \
+                -d /home/mxl/domain \
+                -f /home/mxl/config/flow.json \
+                --flow-options /home/mxl/payload/payload.json \
+                --device-index "${DST_GPU}" \
+                -p verbs \
+                -s "${TARGET_PORT}"
+      volumes:
+        - name: domain
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi
+        - name: flow-config
+          configMap:
+            name: mxl-fabrics-cuda-flow
+        - name: payload-config
+          configMap:
+            name: mxl-fabrics-cuda-payload-dst
+        - name: infiniband
+          hostPath:
+            path: /dev/infiniband
+            type: Directory
+---
+# Writer + initiator in one container so they share a single GPU and local domain.
+# Initiator RDMA-writes into the target's buffers; it does not import CUDA IPC from the target pod.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mxl-fabrics-cuda-source
+  labels:
+    app.kubernetes.io/name: mxl-fabrics-cuda-source
+    app.kubernetes.io/part-of: mxl-fabrics-cuda-two-domain
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mxl-fabrics-cuda-source
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mxl-fabrics-cuda-source
+        app.kubernetes.io/part-of: mxl-fabrics-cuda-two-domain
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: __SRC_HOSTNAME__ # !! CHANGEME
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: writer-initiator
+          image: docker.io/library/mxl-fabrics-cuda # !! CHANGEME: CUDA + fabrics image
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            capabilities:
+              add: ["IPC_LOCK"]
+          env:
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: compute,utility
+            - name: INITIATOR_PORT
+              value: "1235"
+            - name: FLOW_ID
+              value: 5fbec3b1-1b0f-417d-9059-8b94a47197ed
+          resources:
+            limits:
+              nvidia.com/gpu: "1"
+          volumeMounts:
+            - name: domain
+              mountPath: /home/mxl/domain
+            - name: flow-config
+              mountPath: /home/mxl/config
+            - name: payload-config
+              mountPath: /home/mxl/payload
+            - name: target-info
+              mountPath: /home/mxl/target-info
+            - name: infiniband
+              mountPath: /dev/infiniband
+          command: ["/usr/bin/dumb-init", "--"]
+          args:
+            - /bin/bash
+            - -c
+            - |
+              set -euo pipefail
+              mxl-gst-testsrc \
+                -d /home/mxl/domain \
+                -v /home/mxl/config/flow.json \
+                --video-options-file /home/mxl/payload/payload.json \
+                -p ball &
+              writer_pid=$!
+              trap 'kill "${writer_pid}" 2>/dev/null || true' EXIT
+              info=/home/mxl/target-info/target-info.b64
+              echo "Waiting for ConfigMap mxl-fabrics-target-info (replace REPLACE_ME with Target info base64)"
+              while true; do
+                if [[ -s "${info}" ]] && ! grep -qx 'REPLACE_ME' "${info}"; then
+                  break
+                fi
+                sleep 2
+              done
+              until [[ -d /home/mxl/domain/"${FLOW_ID}".mxl-flow ]]; do
+                echo "Waiting for local source flow ${FLOW_ID}"
+                sleep 1
+              done
+              exec mxl-fabrics-demo \
+                -i \
+                -d /home/mxl/domain \
+                -f "${FLOW_ID}" \
+                -p verbs \
+                -s "${INITIATOR_PORT}" \
+                --target-info "$(tr -d '[:space:]' < "${info}")"
+      volumes:
+        - name: domain
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi
+        - name: flow-config
+          configMap:
+            name: mxl-fabrics-cuda-flow
+        - name: payload-config
+          configMap:
+            name: mxl-fabrics-cuda-payload-src
+        - name: target-info
+          configMap:
+            name: mxl-fabrics-target-info
+        - name: infiniband
+          hostPath:
+            path: /dev/infiniband
+            type: Directory

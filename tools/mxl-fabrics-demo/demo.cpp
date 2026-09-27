@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <cctype>
 #include <chrono>
 #include <csignal>
 #include <cstdint>
@@ -9,6 +10,7 @@
 #include <fstream>
 #include <iterator>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <uuid.h>
@@ -26,15 +28,35 @@
 #include "../../lib/fabrics/ofi/src/internal/Base64.hpp"
 
 /*
-    Example how to use:
+    Same-node host example:
 
         1- Start a target: ./mxl-fabrics-demo -d <tmpfs folder> -f <NMOS JSON File> --service 1234
         2- Paste the target info that gets printed in stdout to the --target-info argument of the initiator.
-        3- Start a sender: ./mxl-fabrics-demo -i -d <tmpfs folder> -f <test source flow uuid> --service 1234 --target-info <targetInfo>
+        3- Start a sender: ./mxl-fabrics-demo -i -d <tmpfs folder> -f <flow uuid> --service 1235 --target-info <targetInfo>
+
+    Cross-GPU / cross-node CUDA (two independent MXL domains):
+
+        CUDA IPC is same-node only. Across pods or GPUs, each side owns local cudaMalloc
+        buffers; fabrics RDMA copies grains. Do not share the domain directory.
+
+        Target (receiver GPU, local domain B):
+          ./mxl-fabrics-demo -d /dev/shm/mxl-dst -f examples/flow-configs/flow-video-v210.json \
+            --flow-options examples/payload-options/cuda-payload-options.json \
+            --device-index 1 -p verbs -s 1234 --target-info /tmp/target-info.bin
+
+        Writer on the source node (local domain A, source GPU):
+          ./mxl-gst-testsrc -d /dev/shm/mxl-src -v examples/flow-configs/flow-video-v210.json \
+            --video-options-file examples/payload-options/cuda-payload-options.json
+
+        Initiator (reads domain A, RDMA-writes into the target's domain B buffers):
+          ./mxl-fabrics-demo -i -d /dev/shm/mxl-src -f <flow uuid> -p verbs -s 1235 \
+            --target-info @/tmp/target-info.bin
+
+        Use the same NMOS flow JSON (grain geometry) on both sides. Payload deviceIndex
+        is local to each domain and need not match.
 
     Device (CUDA) grain payloads:
-        Target: add --flow-options examples/payload-options/cuda-payload-options.json and prefer -p verbs
-        (HMEM-capable). The demo uses OpenGrainEx / GetGrain*Ex so device flows work; fabrics
+        Prefer -p verbs (HMEM). The demo uses OpenGrainEx / GetGrain*Ex; fabrics
         registers header + CUDA payload regions separately.
 
     The best available interface is selected automatically (EFA > VERBS > TCP > SHM).
@@ -207,6 +229,59 @@ bool existingFlowNeedsHmem(std::string const& domain, std::string const& flowId)
            (contents.find("\"location\":\"device\"") != std::string::npos);
 }
 
+[[nodiscard]]
+std::string applyLocalDeviceIndex(std::string flowOptions, int deviceIndex)
+{
+    auto const synthesized = fmt::format(
+        "{{\"payload\":{{\"location\":\"device\",\"deviceIndex\":{},\"backend\":\"cuda-linear\"}}}}", deviceIndex);
+    if (flowOptions.empty())
+    {
+        return synthesized;
+    }
+
+    auto const key = std::string{"\"deviceIndex\""};
+    auto const keyPos = flowOptions.find(key);
+    if (keyPos == std::string::npos)
+    {
+        throw std::runtime_error{
+            "--device-index requires --flow-options that already contain payload.deviceIndex, or omit --flow-options to use cuda-linear"};
+    }
+    auto colon = flowOptions.find(':', keyPos + key.size());
+    if (colon == std::string::npos)
+    {
+        throw std::runtime_error{"Invalid flow options: deviceIndex is not a JSON number"};
+    }
+    auto begin = colon + 1;
+    while (begin < flowOptions.size() && std::isspace(static_cast<unsigned char>(flowOptions[begin])))
+    {
+        ++begin;
+    }
+    auto end = begin;
+    if (end < flowOptions.size() && flowOptions[end] == '-')
+    {
+        ++end;
+    }
+    while (end < flowOptions.size() && std::isdigit(static_cast<unsigned char>(flowOptions[end])))
+    {
+        ++end;
+    }
+    if (begin == end)
+    {
+        throw std::runtime_error{"Invalid flow options: deviceIndex is not a JSON number"};
+    }
+    flowOptions.replace(begin, end - begin, std::to_string(deviceIndex));
+    return flowOptions;
+}
+
+void logLocalPayloadIndependence(std::uint32_t location, int32_t deviceIndex)
+{
+    if (location == MXL_PAYLOAD_LOCATION_DEVICE_MEMORY)
+    {
+        MXL_INFO("Local CUDA payloads on deviceIndex={} (this process/domain only; fabrics copies grains to the peer's own buffers)",
+            deviceIndex);
+    }
+}
+
 InterfaceSelection selectInterface(mxlFabricsInstance instance, std::optional<std::string> const& node, std::optional<std::string> const& service,
     std::optional<mxlFabricsProvider> provider = std::nullopt, bool preferHmem = false)
 {
@@ -372,6 +447,7 @@ public:
                 if (readerConfig.common.payloadLocation == MXL_PAYLOAD_LOCATION_DEVICE_MEMORY)
                 {
                     MXL_INFO("Grain payload location: device (deviceIndex={})", readerConfig.common.deviceIndex);
+                    logLocalPayloadIndependence(readerConfig.common.payloadLocation, readerConfig.common.deviceIndex);
                 }
                 else
                 {
@@ -770,6 +846,11 @@ public:
         if (_configInfo.common.payloadLocation == MXL_PAYLOAD_LOCATION_DEVICE_MEMORY)
         {
             MXL_INFO("Grain payload location: device (deviceIndex={})", _configInfo.common.deviceIndex);
+            logLocalPayloadIndependence(_configInfo.common.payloadLocation, _configInfo.common.deviceIndex);
+            if (!flowCreated)
+            {
+                MXL_WARN("Reusing existing flow CUDA buffers; --device-index / --flow-options are ignored until this .mxl-flow directory is removed");
+            }
         }
         else
         {
@@ -1030,6 +1111,12 @@ int main(int argc, char** argv)
     std::string flowOptionsFile;
     app.add_option("--flow-options", flowOptionsFile, "Flow options file. (Only used when invoking a Target)");
 
+    int deviceIndex = -1;
+    app.add_option("--device-index",
+        deviceIndex,
+        "Target only: CUDA device for this process's local grain payloads. Independent of the initiator GPU. "
+        "Implies cuda-linear when --flow-options is omitted.");
+
     bool runAsInitiator = false;
     auto runAsInitiatorOpt = app.add_flag("-i,--initiator",
         runAsInitiator,
@@ -1053,6 +1140,12 @@ int main(int argc, char** argv)
         "As initiator: base64-encoded target info, or a path prefixed with '@' to read raw target info from a file.");
 
     CLI11_PARSE(app, argc, argv);
+
+    if (runAsInitiator && (deviceIndex >= 0))
+    {
+        MXL_ERROR("--device-index is only valid on the target; the initiator uses the local source flow's payload deviceIndex");
+        return MXL_ERR_INVALID_ARG;
+    }
 
     auto* instance = mxlCreateInstance(domain.c_str(), "");
     if (instance == nullptr)
@@ -1097,6 +1190,21 @@ int main(int argc, char** argv)
     else if (runAsInitiator)
     {
         preferHmem = existingFlowNeedsHmem(domain, flowConf);
+    }
+    if (!runAsInitiator && (deviceIndex >= 0))
+    {
+        try
+        {
+            flowOptionsPreview = applyLocalDeviceIndex(std::move(flowOptionsPreview), deviceIndex);
+        }
+        catch (std::exception const& ex)
+        {
+            MXL_ERROR("{}", ex.what());
+            mxlFabricsDestroyInstance(fabricsInstance);
+            mxlDestroyInstance(instance);
+            return MXL_ERR_INVALID_ARG;
+        }
+        preferHmem = true;
     }
 
     if (preferHmem)
