@@ -16,6 +16,7 @@
 #include <mxl/mxl.h>
 #include "mxl-internal/Logging.hpp"
 #include "mxl-internal/PathUtils.hpp"
+#include "mxl-internal/PayloadStorage.hpp"
 #include "mxl-internal/SharedMemory.hpp"
 #include "mxl-internal/Timing.hpp"
 #include "Deferred.hpp"
@@ -233,6 +234,8 @@ namespace mxl::lib
             gInfo.version = GRAIN_HEADER_VERSION;
             gInfo.size = sizeof gInfo;
         }
+
+        flowData->setPayloadStorage(std::make_unique<HostPayloadStorage>(*flowData));
 
         auto const finalDir = makeFlowDirectoryName(_mxlDomain, uuidString);
         if (publishFlowDirectory(tempDirectory, finalDir))
@@ -466,6 +469,8 @@ namespace mxl::lib
                     "Grain directory not found.", grainDir, std::make_error_code(std::errc::no_such_file_or_directory)};
             }
         }
+
+        flowData->setPayloadStorage(std::make_unique<HostPayloadStorage>(*flowData));
 
         return flowData;
     }
