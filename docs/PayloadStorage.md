@@ -52,7 +52,7 @@ The descriptor sizes are checked at compile time, since they cannot change once 
 
 ### Internal backend interface and loader
 
-Storage types other than host memory are implemented by backend libraries. They are not part of libmxl. This change adds the interface between libmxl and those libraries, and the code that loads them. No backend is shipped yet.
+Storage types other than host memory are implemented by backend libraries. They are not part of libmxl. This change adds the interface between libmxl and those libraries, and the code that loads them. The SDK ships one backend so far, [cuda-linear](#the-cuda-linear-backend).
 
 - `lib/internal/include/mxl-internal/PayloadBackendAbi.h` defines the interface.
   - It is a versioned table of C functions: `prepare`, `open`, `destroy`, `slotStorage`, `describeLayout` and `mapSlots`. Capabilities add optional functions: `exportDescriptors` and `importDescriptors` for a backend that shares descriptors ([The descriptor channel](#the-descriptor-channel)), and `describeGeometry` for a backend that defines media types ([Media types a backend defines](#media-types-a-backend-defines)).
@@ -139,6 +139,40 @@ libmxl defines the media types `video/v210`, `video/v210a` and `video/smpte291`,
 - A media type names one layout of the bytes. Two backends that support the same media type report the same geometry, so that a reader, a converter or a fabrics target sees the same bytes whichever backend holds them. The storage type says how the bytes are held and shared, never what they mean ([The storage never defines the media format](#the-storage-never-defines-the-media-format)).
 
 The test-memfd backend of the tests defines `video/x-test-two-plane`, a made-up format of two planes, and claims a few media types whose geometry it describes wrongly, so that the tests cover the path without a GPU: the geometry of a progressive and an interlaced flow, the refusals, and the checks of the answer.
+
+### The cuda-linear backend
+
+`libmxl-payload-cuda-linear.so` keeps the payload of a video flow in linear CUDA device memory, and refuses flows of other formats. It is built when the CMake option `MXL_ENABLE_CUDA_PAYLOAD` is on, which needs the CUDA toolkit, and is installed next to libmxl. It links the static CUDA runtime, so on an installed system it only needs the NVIDIA driver. libmxl itself does not link against CUDA. It is based on the CUDA work by Thomas True in PR #653.
+
+A writer puts a flow's payload on a GPU with:
+
+```json
+{"payload": {"backend": "cuda-linear", "deviceUuid": "GPU-88064374-43da-caf5-b332-be5fb39bf2e6"}}
+```
+
+- `deviceUuid` is required for writers, in the format `nvidia-smi -L` prints, or as 32 hexadecimal digits. The backend accepts no device index.
+- Readers may pass `{"payload": {"deviceUuid": "..."}}` to access the payload on another GPU of the same machine. By default they use the GPU that holds it.
+- Slots have the storage type `"cuda-device-pointer"`, `MXL_PAYLOAD_STORAGE_CUDA_DEVICE_POINTER`. Its header, `mxl/storage/cuda_device_pointer.h`, is installed with the backend: libmxl's headers know nothing of CUDA. It defines what the storage type keeps in the reserved bytes of the layout and of the slot description, and functions that copy it out and in. `mxlGetCudaGrainStorage()` gives a slot's device address, valid in the calling process, on the device whose index in the calling process `mxlGetCudaGrainStorageLayout()` gives. The same function gives the UUID of the device that holds the payload, which is another device when the reader accesses it from another GPU through peer access. The pointer API returns `MXL_ERR_UNSUPPORTED_OPERATION`.
+
+How the memory is shared:
+
+- The writer makes one `cudaMalloc` for all slots, with each slot starting at a multiple of 256 bytes, and clears it. It exports the allocation once with `cudaIpcGetMemHandle`, and records the handle, the stride and the device UUID in `payload.cuda.json`, next to `payload.json`, before the flow is published. The file records the version of its format, and readers refuse other versions.
+- A reader in another process imports the allocation once, when the application calls `mxlFlowReaderMapSlots`, with `cudaIpcOpenMemHandle`. Opening the reader makes no CUDA call.
+- A reader on another GPU maps the allocation through peer access (`cudaIpcMemLazyEnablePeerAccess`), if `cudaDeviceCanAccessPeer` allows it. Otherwise mapping returns `MXL_ERR_UNSUPPORTED_OPERATION`.
+- CUDA IPC cannot open a handle in the process that exported it. A reader in the writer's own process therefore shares the writer's allocation through a registry inside the process. The allocation is reference counted, so it stays valid for such a reader after the writer is released.
+
+The commit contract: device work that writes a grain must be complete before the writer calls `mxlFlowWriterCommitGrain`, for example after `cudaStreamSynchronize` or `cudaEventSynchronize`. A reader can use a slot as soon as `mxlFlowReaderGetGrainSlot` returns it.
+
+Where writer and reader can run:
+
+| Writer and reader | Mechanism | Requirements |
+|---|---|---|
+| Same pod, same GPU | CUDA IPC | One MXL domain. |
+| Same pod, different GPUs | CUDA IPC and peer access | One MXL domain. The reader sees both GPUs, and they support peer access (NVLink or a PCIe path that allows it). |
+| Different pods, same node | CUDA IPC, with peer access for different GPUs | A shared MXL domain, and `hostIPC` for CUDA IPC across pods. The reader sees the writer's GPU. |
+| Different nodes | Fabrics | One MXL domain per node. RDMA from device memory is later work. |
+
+`lib/payload-backends/cuda-linear/tests` tests the backend through the public API: sharing in one process and between processes, memory staying valid after the writer is released, and option errors. The tests are skipped when no CUDA device is visible. Peer access between two GPUs is not tested yet.
 
 ## Principles
 
@@ -309,7 +343,7 @@ flowchart TB
     plugin["PluginPayloadStorage"]
     loader["PayloadBackendLoader<br/>dlopen by name from MXL_PAYLOAD_PLUGIN_PATH<br/>and the libmxl directory"]
     channel["DescriptorServer<br/>payload.sock"]
-    cuda["libmxl-payload-cuda-linear.so<br/>next step"]
+    cuda["libmxl-payload-cuda-linear.so<br/>CUDA device memory"]
     dmabuf["dma-buf and image backends<br/>later"]
     app --> ptr
     app --> desc
@@ -327,18 +361,7 @@ flowchart TB
 
 ## Future work
 
-The steps below complete the first pull request. They follow the design agreed with the CUDA work in PR #653.
-
-1. Add the `cuda-linear` backend, built only when a CMake option enables it.
-   - It makes one CUDA virtual-memory allocation for all slots of a flow, with each slot aligned to 256 bytes, and exports it once as a POSIX file descriptor, which libmxl serves on [the descriptor channel](#the-descriptor-channel). It records the export format and the device UUID in its own file in the flow directory. Each reader then imports the memory once. Legacy CUDA IPC handles, which are plain bytes, were the first plan, but they need a shared IPC namespace between containers, and cannot be opened in the process that created them.
-   - A reader on another GPU of the same machine maps the memory through peer access.
-   - Readers in the writer's own process share the allocation through a reference count.
-2. Document the commit contract: device work that writes a grain must be complete before `mxlFlowWriterCommitGrain`. Also document the ways to deploy it:
-   - Same pod, same GPU: the descriptor channel.
-   - Same pod, different GPU: the descriptor channel and peer access.
-   - Different pods on one node: the descriptor channel, with a shared domain.
-   - Different nodes: fabrics.
-3. Test the CUDA backend on machines with a GPU. CI keeps running the whole flow through the test backend.
+The first pull request is complete with the `cuda-linear` backend. The sections below describe later work.
 
 ## Worked example: a dma-buf backend
 
@@ -375,7 +398,7 @@ Each of these formats needs an MXL media type, which the backend defines togethe
 
 `prepare` checks that the flow's format has a DRM fourcc, then opens `/dev/dma_heap/<heap>` and allocates one buffer per slot with `DMA_HEAP_IOCTL_ALLOC`. All planes of a slot share its buffer: a P210 buffer holds the luma plane followed by the chroma plane.
 
-This differs from the planned CUDA backend, which makes one allocation for all slots. Importers of dma-buf take one memory object per frame: a V4L2 buffer, a DRM framebuffer or a `VkDeviceMemory`. With one buffer per slot, each slot can be imported on its own, and the plane offsets in the layout are the same for every slot.
+This differs from the `cuda-linear` backend, which makes one allocation for all slots. Importers of dma-buf take one memory object per frame: a V4L2 buffer, a DRM framebuffer or a `VkDeviceMemory`. With one buffer per slot, each slot can be imported on its own, and the plane offsets in the layout are the same for every slot.
 
 The backend writes no file of its own. After `prepare`, libmxl takes the descriptors from the backend and serves them on `payload.sock`.
 
