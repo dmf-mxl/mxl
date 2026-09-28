@@ -167,10 +167,13 @@ namespace mxl::lib::fabrics::ofi
          * as completion and event queues.
          *
          * \param config The configuration to use for setting up the target.
+         * \param info Fabric info already resolved from the interface config.
+         * \param options Optional tuning parameters (e.g. completion queue depth).
          * \return A newly setup RCInitiator object.
          */
         [[nodiscard]]
-        static std::unique_ptr<RCInitiator> setup(mxlFabricsInitiatorConfig const& config, FabricInfoView info);
+        static std::unique_ptr<RCInitiator> setup(mxlFabricsInitiatorConfig const& config, FabricInfoView info,
+            InitiatorSetupOptions const& options = {});
 
         /** \copydoc Initiator::addTarget()
          */
