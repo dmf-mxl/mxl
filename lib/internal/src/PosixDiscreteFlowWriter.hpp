@@ -62,6 +62,16 @@ namespace mxl::lib
         /** \see DiscreteFlowWriter::openGrain */
         virtual mxlStatus openGrain(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload) override;
 
+        /** \see DiscreteFlowWriter::openGrainSlot */
+        virtual mxlStatus openGrainSlot(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::uint32_t* out_slot) override;
+
+        /** \see DiscreteFlowWriter::getStorageLayout */
+        [[nodiscard]]
+        virtual mxlGrainStorageLayout getStorageLayout() const override;
+
+        /** \see DiscreteFlowWriter::mapSlots */
+        virtual mxlStatus mapSlots(std::uint32_t in_slotCount, mxlGrainStorage* out_slots) const override;
+
         /** \see DiscreteFlowWriter::commit */
         virtual mxlStatus commit(mxlGrainInfo const& mxlGrainInfo) override;
 
@@ -74,7 +84,7 @@ namespace mxl::lib
 
     private:
         /**
-         * Implementation of openGrain(). The caller must have checked that _flowData is
+         * Implementation of openGrain() and openGrainSlot(). The caller must have checked that _flowData is
          * a valid pointer.
          *
          * \param[in] in_index The grain index.
