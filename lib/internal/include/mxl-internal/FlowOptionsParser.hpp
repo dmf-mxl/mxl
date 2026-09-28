@@ -8,6 +8,7 @@
 #include <string>
 #include <picojson/wrapper.h>
 #include <mxl/platform.h>
+#include "PayloadStorage.hpp"
 
 namespace mxl::lib
 {
@@ -42,6 +43,30 @@ namespace mxl::lib
          */
         [[nodiscard]]
         std::optional<std::uint32_t> getMaxSyncBatchSizeHint() const;
+
+        /**
+         * The payload storage requested by a writer, from the optional "payload" object of the options.
+         *
+         * libmxl interprets one key. "backend" names the backend that holds the payload. It defaults to the built-in
+         * host storage, which "host" also names. All other keys belong to the backend, for example the device UUID of
+         * a CUDA backend, and are passed to it as a JSON object. The built-in host storage accepts no other keys.
+         *
+         * \return The requested storage.
+         * \throws PayloadStorageError with MXL_ERR_INVALID_ARG if the "payload" object is invalid.
+         */
+        [[nodiscard]]
+        PayloadStorageSpec getPayloadStorageSpec() const;
+
+        /**
+         * The options a reader passes to the backend of the flow, from the optional "payload" object of the reader
+         * options. Readers cannot select the storage, so "backend" is not accepted. All other keys
+         * are passed to the backend, which validates them. Flows with the built-in host storage ignore them.
+         *
+         * \return The options as JSON object text, or an empty string if there are none.
+         * \throws PayloadStorageError with MXL_ERR_INVALID_ARG if the "payload" object is invalid.
+         */
+        [[nodiscard]]
+        std::string getReaderPayloadOptions() const;
 
         /**
          * Generic accessor for json fields.

@@ -91,7 +91,8 @@ extern "C"
         /**
          * \deprecated MXL never used this field. Writers always set it to -1. A device index is only valid in the
          * process that reports it, so it cannot describe a flow shared between processes. The field is kept so that
-         * the layout of this structure does not change.
+         * the layout of this structure does not change. The storage type of mxlGrainStorageLayout describes the device
+         * that holds the payload, if any, in its reserved bytes, in the terms of the device API that storage uses.
          */
         int32_t deviceIndex;
 
