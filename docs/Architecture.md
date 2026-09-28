@@ -95,6 +95,19 @@ The following example demonstrates how a FlowWriter may write a grain as slices 
     }
 ```
 
+### Grain storage descriptors
+
+The grain headers of a discrete flow are always in host shared memory. The payload is held by a storage whose type is fixed when the flow is created. The type is reported by `mxlGrainStorageLayout.storageType`. The only type is `MXL_PAYLOAD_STORAGE_HOST_POINTER`: the payload of each grain follows its header in host shared memory.
+
+A slot is one entry of the ring buffer. The grain at index `i` is stored in slot `i % slotCount`. The storage of a flow is described in two parts, and neither changes for the lifetime of the flow:
+
+- `mxlFlowReaderGetStorageLayout()` and `mxlFlowWriterGetStorageLayout()` return the layout shared by all slots: the storage type, the device index and UUID, the slot count, and the offset, size and pitch of each plane. The pitch is the distance between the starts of two lines. Host storage adds no padding, so its pitch equals the slice size. A v210 grain has one plane. A v210a grain has two, the fill followed by the key.
+- `mxlFlowReaderMapSlots()` and `mxlFlowWriterMapSlots()` map the storage of every slot into the calling process and fill an array with the storage of each slot, indexed by slot. For host storage, an entry holds the host address of the first payload byte of the slot. Opening a reader maps nothing, so readers that only read metadata do not need the device that holds the payload.
+
+An application calls the map function once, before it reads or writes grains, and sets up any per slot resources from the array. Per grain, `mxlFlowReaderGetGrainSlot()` and `mxlFlowWriterOpenGrainSlot()` return the slot that holds the requested grain, which the application looks up in its array. Apart from that, they behave like `mxlFlowReaderGetGrainSlice()` and `mxlFlowWriterOpenGrain()`. A timeout of 0 makes `mxlFlowReaderGetGrainSlot()` return without waiting.
+
+The pointer based functions (`mxlFlowReaderGetGrain*()` and `mxlFlowWriterOpenGrain()`) return a payload pointer only for host storage. For any other storage type they return `MXL_ERR_UNSUPPORTED_OPERATION`, so that an application never dereferences memory that is not host memory.
+
 ## Continuous Ringbuffer I/O
 
 ### `mxlContinuousFlowConfigInfo` in context

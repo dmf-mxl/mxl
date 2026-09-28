@@ -87,14 +87,52 @@ namespace mxl::lib
         {
             return MXL_ERR_UNKNOWN;
         }
+        if (_flowData->payloadStorage().type() != MXL_PAYLOAD_STORAGE_HOST_POINTER)
+        {
+            return MXL_ERR_UNSUPPORTED_OPERATION;
+        }
 
         auto slot = std::size_t{0};
         auto const result = openGrainImpl(in_index, out_grainInfo, &slot);
         if (result == MXL_STATUS_OK)
         {
-            *out_payload = _flowData->payloadStorage().hostPayload(slot);
+            *out_payload = static_cast<std::uint8_t*>(_flowData->payloadStorage().slotStorage(slot).host.pointer);
         }
         return result;
+    }
+
+    mxlStatus PosixDiscreteFlowWriter::openGrainSlot(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::uint32_t* out_slot)
+    {
+        if (!_flowData)
+        {
+            return MXL_ERR_UNKNOWN;
+        }
+
+        auto slot = std::size_t{0};
+        auto const result = openGrainImpl(in_index, out_grainInfo, &slot);
+        if (result == MXL_STATUS_OK)
+        {
+            *out_slot = static_cast<std::uint32_t>(slot);
+        }
+        return result;
+    }
+
+    mxlGrainStorageLayout PosixDiscreteFlowWriter::getStorageLayout() const
+    {
+        if (!_flowData)
+        {
+            throw std::runtime_error("No open flow.");
+        }
+        return _flowData->storageLayout();
+    }
+
+    mxlStatus PosixDiscreteFlowWriter::mapSlots(std::uint32_t in_slotCount, mxlGrainStorage* out_slots) const
+    {
+        if (!_flowData)
+        {
+            return MXL_ERR_UNKNOWN;
+        }
+        return _flowData->mapSlots(in_slotCount, out_slots);
     }
 
     mxlStatus PosixDiscreteFlowWriter::openGrainImpl(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::size_t* out_slot)

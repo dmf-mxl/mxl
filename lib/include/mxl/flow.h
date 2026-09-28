@@ -147,6 +147,138 @@ extern "C"
         uint8_t reserved[4068];
     } mxlGrainInfo;
 
+    /**
+     * How the payload of the grains of a discrete flow is stored and addressed.
+     * The value is fixed when the flow is created.
+     */
+    typedef enum mxlPayloadStorageType
+    {
+        /**
+         * The payload is in host memory. A slot is addressed through a host pointer, which the pointer based
+         * functions such as mxlFlowWriterOpenGrain() and mxlFlowReaderGetGrain() also return.
+         */
+        MXL_PAYLOAD_STORAGE_HOST_POINTER = 0,
+    } mxlPayloadStorageType;
+
+    /**
+     * Position and geometry of one plane of a grain payload.
+     *
+     * The fields follow the plane model used by DRM, V4L2 and Vulkan: an offset and a pitch within the memory
+     * object that holds the plane. For pointer based storage types, all planes of a slot are in one memory
+     * object, and offset is relative to the address in the slot description. For storage types whose slot
+     * description carries one handle per plane, offset is relative to the start of that plane's object.
+     * The values are the same for every slot of a flow.
+     */
+    typedef struct mxlGrainPlaneLayout_t
+    {
+        /** Offset in bytes of the first byte of the plane within the memory object that holds it. */
+        uint64_t offset;
+        /** Size of the plane in bytes, from its first byte to the end of its last slice. */
+        uint64_t size;
+        /**
+         * Distance in bytes between the starts of two consecutive slices of the plane. For video, a slice is
+         * a line. At least mxlDiscreteFlowConfigInfo.sliceSizes for the plane. Storage that does not add
+         * padding between slices reports exactly that value.
+         */
+        uint64_t pitch;
+        /** Reserved. Always zero. */
+        uint64_t reserved;
+    } mxlGrainPlaneLayout;
+
+    /**
+     * Describes the storage of the payload of all the slots of a discrete flow.
+     *
+     * A slot is one entry of the ring buffer. The grain at index i is stored in slot (i % slotCount).
+     * The layout does not change for the lifetime of a flow, so it can be read once after the flow reader or
+     * writer is created.
+     *
+     * The library fills all fields, including version and size.
+     */
+    typedef struct mxlGrainStorageLayout_t
+    {
+        /** Version of this structure. The only currently supported value is 1. */
+        uint32_t version;
+        /** Size of this structure in bytes. */
+        uint32_t size;
+        /**
+         * How the payload of the slots is stored.
+         * \see mxlPayloadStorageType
+         */
+        uint32_t storageType;
+        /**
+         * Index, in the calling process, of the device on which this process accesses the payload, or -1 if the
+         * payload is in host memory or is not tied to a device. Device indices can differ between processes,
+         * for example when CUDA_VISIBLE_DEVICES differs. Use deviceUuid to identify a device across processes.
+         */
+        int32_t deviceIndex;
+        /** Number of slots in the ring buffer. Equal to mxlDiscreteFlowConfigInfo.grainCount. */
+        uint32_t slotCount;
+        /** Number of used entries in planes. Video v210 has 1 plane, v210a has 2 (fill, then key). Data has 1. */
+        uint32_t planeCount;
+        /**
+         * UUID of the device that holds the payload, as reported by the device API (for example the CUDA or
+         * Vulkan device UUID). All zeros if the payload is not tied to a device.
+         */
+        uint8_t deviceUuid[16];
+        /** Position and geometry of each plane. Only the first planeCount entries are valid. */
+        mxlGrainPlaneLayout planes[MXL_MAX_PLANES_PER_GRAIN];
+        /**
+         * Reserved for descriptions specific to a storage type, such as the pixel format and format modifier
+         * of each plane or the extent of an image. Always zero for the storage types defined so far. Pads the
+         * total size of this structure to 512 bytes.
+         */
+        uint8_t reserved[344];
+    } mxlGrainStorageLayout;
+
+    /**
+     * Storage of one slot when the storage type is MXL_PAYLOAD_STORAGE_HOST_POINTER.
+     */
+    typedef struct mxlHostGrainStorage_t
+    {
+        /** Host address of the first byte of the slot storage. */
+        void* pointer;
+    } mxlHostGrainStorage;
+
+    /**
+     * Describes the storage of the payload of one slot of a discrete flow.
+     *
+     * The description of a slot does not change for the lifetime of a flow. Applications can therefore set up
+     * any per slot resources once. The planes of the payload are located with mxlGrainStorageLayout.planes.
+     *
+     * Pointer based storage types describe a slot with one address. Storage types that share memory through
+     * handles, such as file descriptors, describe a slot with one handle per plane. The library owns such
+     * handles. An application that needs a handle beyond the lifetime of its reader or writer duplicates it.
+     *
+     * The library fills all fields, including version and size. Only the union member that matches storageType
+     * is valid.
+     */
+    typedef struct mxlGrainStorage_t
+    {
+        /** Version of this structure. The only currently supported value is 1. */
+        uint32_t version;
+        /** Size of this structure in bytes. */
+        uint32_t size;
+        /**
+         * How the payload of this slot is stored. Always equal to mxlGrainStorageLayout.storageType.
+         * \see mxlPayloadStorageType
+         */
+        uint32_t storageType;
+        /** The slot described by this structure. */
+        uint32_t slot;
+
+        union
+        {
+            /** Valid if storageType is MXL_PAYLOAD_STORAGE_HOST_POINTER. */
+            mxlHostGrainStorage host;
+
+            /**
+             * Reserved for future storage types, which need room for one handle per plane and a
+             * synchronization object. Pads the total size of this structure to 256 bytes.
+             */
+            uint8_t reserved[240];
+        };
+    } mxlGrainStorage;
+
     typedef struct mxlFlowReader_t* mxlFlowReader;
     typedef struct mxlFlowWriter_t* mxlFlowWriter;
 
@@ -293,6 +425,9 @@ extern "C"
      *      operate on discrete flows. Any attempt to call this function on a
      *      reader that operates on another type of flow will result in an
      *      error.
+     * \note The payload pointer is only available for flows whose storage type is
+     *      MXL_PAYLOAD_STORAGE_HOST_POINTER. For other storage types this function returns
+     *      MXL_ERR_UNSUPPORTED_OPERATION. \see mxlGrainStorageLayout
      */
     MXL_EXPORT
     mxlStatus mxlFlowReaderGetGrain(mxlFlowReader reader, uint64_t index, uint64_t timeoutNs, mxlGrainInfo* grain, uint8_t** payload);
@@ -311,6 +446,9 @@ extern "C"
      *      operate on discrete flows. Any attempt to call this function on a
      *      reader that operates on another type of flow will result in an
      *      error.
+     * \note The payload pointer is only available for flows whose storage type is
+     *      MXL_PAYLOAD_STORAGE_HOST_POINTER. For other storage types this function returns
+     *      MXL_ERR_UNSUPPORTED_OPERATION. \see mxlGrainStorageLayout
      */
     MXL_EXPORT
     mxlStatus mxlFlowReaderGetGrainSlice(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, uint64_t timeoutNs, mxlGrainInfo* grain,
@@ -328,6 +466,9 @@ extern "C"
      *      operate on discrete flows. Any attempt to call this function on a
      *      reader that operates on another type of flow will result in an
      *      error.
+     * \note The payload pointer is only available for flows whose storage type is
+     *      MXL_PAYLOAD_STORAGE_HOST_POINTER. For other storage types this function returns
+     *      MXL_ERR_UNSUPPORTED_OPERATION. \see mxlGrainStorageLayout
      */
     MXL_EXPORT
     mxlStatus mxlFlowReaderGetGrainNonBlocking(mxlFlowReader reader, uint64_t index, mxlGrainInfo* grain, uint8_t** payload);
@@ -345,10 +486,74 @@ extern "C"
      *      operate on discrete flows. Any attempt to call this function on a
      *      reader that operates on another type of flow will result in an
      *      error.
+     * \note The payload pointer is only available for flows whose storage type is
+     *      MXL_PAYLOAD_STORAGE_HOST_POINTER. For other storage types this function returns
+     *      MXL_ERR_UNSUPPORTED_OPERATION. \see mxlGrainStorageLayout
      */
     MXL_EXPORT
     mxlStatus mxlFlowReaderGetGrainSliceNonBlocking(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, mxlGrainInfo* grain,
         uint8_t** payload);
+
+    /**
+     * Get the storage layout of the grain payloads of a discrete flow.
+     *
+     * \param[in] reader A valid discrete flow reader.
+     * \param[out] layout A valid pointer to a structure that receives the layout.
+     * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if layout is NULL, or MXL_ERR_INVALID_FLOW_READER if
+     *      reader is not a valid discrete flow reader.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowReaderGetStorageLayout(mxlFlowReader reader, mxlGrainStorageLayout* layout);
+
+    /**
+     * Map the storage of every slot of a discrete flow into the calling process, and describe each slot.
+     *
+     * Call this once, after creating the reader and reading the layout, and before reading grains. It does all
+     * the work needed to access the payload in this process, such as importing device memory or receiving file
+     * descriptors, so that reading grains adds no latency later. Slot descriptions do not change for the
+     * lifetime of the reader. The application can therefore keep the array, set up its own per slot resources
+     * from it, and then look slots up by the value that mxlFlowReaderGetGrainSlot() returns.
+     *
+     * Opening a reader does not map anything, so a reader that only reads flow metadata does not need the device
+     * that holds the payload.
+     *
+     * If the flow becomes invalid (MXL_ERR_FLOW_INVALID), for example because its writer recreated it, the slot
+     * descriptions and any handles in them are stale. Release the reader, create a new one and map it again.
+     *
+     * \param[in] reader A valid discrete flow reader.
+     * \param[in] slotCount The number of entries in slots. Must be equal to mxlGrainStorageLayout.slotCount.
+     * \param[out] slots A valid pointer to an array of slotCount structures. Entry i receives the description of
+     *      slot i. Handles in the descriptions are owned by the library and stay valid until the reader is
+     *      released.
+     * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if slots is NULL or slotCount does not match the
+     *      layout, MXL_ERR_INVALID_FLOW_READER if reader is not a valid discrete flow reader, or another error
+     *      code if the storage cannot be mapped in this process.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowReaderMapSlots(mxlFlowReader reader, uint32_t slotCount, mxlGrainStorage* slots);
+
+    /**
+     * Wait for a grain at a specific index to have a minimum number of valid slices, and return the slot that
+     * holds it.
+     *
+     * This function works for every storage type. It behaves like mxlFlowReaderGetGrainSlice(), except that it
+     * returns a slot in place of a payload pointer. The application finds the storage of the slot in the array
+     * filled by mxlFlowReaderMapSlots(). This function does not access the payload storage itself.
+     *
+     * \param[in] reader A valid discrete flow reader.
+     * \param[in] index The index of the grain to obtain.
+     * \param[in] minValidSlices The minimum number of valid slices required in the returned grain.
+     *      MXL_GRAIN_VALID_SLICES_ALL waits for the complete grain.
+     * \param[in] timeoutNs How long to wait for the grain, in nanoseconds. 0 returns without waiting.
+     * \param[out] grain A valid pointer to a structure that receives a copy of the grain info.
+     * \param[out] slot A valid pointer that receives the slot holding the grain. Written only on success.
+     * \return The result code. \see mxlStatus
+     *      This function never returns MXL_ERR_TIMEOUT. If the grain is not available before the timeout, it
+     *      returns MXL_ERR_OUT_OF_RANGE_TOO_EARLY.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowReaderGetGrainSlot(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, uint64_t timeoutNs, mxlGrainInfo* grain,
+        uint32_t* slot);
 
     /**
      * Get grain info for a given index. This is used to inspect the grain info without opening the grain for mutation.
@@ -381,6 +586,9 @@ extern "C"
      *      operate on discrete flows. Any attempt to call this function on a
      *      writer that operates on another type of flow will result in an
      *      error.
+     * \note The payload pointer is only available for flows whose storage type is
+     *      MXL_PAYLOAD_STORAGE_HOST_POINTER. For other storage types this function returns
+     *      MXL_ERR_UNSUPPORTED_OPERATION. \see mxlGrainStorageLayout
      */
     MXL_EXPORT
     mxlStatus mxlFlowWriterOpenGrain(mxlFlowWriter writer, uint64_t index, mxlGrainInfo* mxlGrainInfo, uint8_t** payload);
@@ -402,6 +610,53 @@ extern "C"
      */
     MXL_EXPORT
     mxlStatus mxlFlowWriterCommitGrain(mxlFlowWriter writer, mxlGrainInfo const* grain);
+
+    /**
+     * Get the storage layout of the grain payloads of a discrete flow.
+     *
+     * \param[in] writer A valid discrete flow writer.
+     * \param[out] layout A valid pointer to a structure that receives the layout.
+     * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if layout is NULL, or MXL_ERR_INVALID_FLOW_WRITER if
+     *      writer is not a valid discrete flow writer.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowWriterGetStorageLayout(mxlFlowWriter writer, mxlGrainStorageLayout* layout);
+
+    /**
+     * Describe the storage of every slot of a discrete flow in the calling process.
+     *
+     * The writer that created the flow allocated its storage at creation time, so for that writer this call only
+     * fills the array. It exists so that readers and writers can set up their per slot resources the same way,
+     * and look slots up by the value that mxlFlowWriterOpenGrainSlot() returns.
+     *
+     * \param[in] writer A valid discrete flow writer.
+     * \param[in] slotCount The number of entries in slots. Must be equal to mxlGrainStorageLayout.slotCount.
+     * \param[out] slots A valid pointer to an array of slotCount structures. Entry i receives the description of
+     *      slot i. Handles in the descriptions are owned by the library and stay valid until the writer is
+     *      released.
+     * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if slots is NULL or slotCount does not match the
+     *      layout, MXL_ERR_INVALID_FLOW_WRITER if writer is not a valid discrete flow writer, or another error
+     *      code if the storage cannot be mapped in this process.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowWriterMapSlots(mxlFlowWriter writer, uint32_t slotCount, mxlGrainStorage* slots);
+
+    /**
+     * Open a grain for mutation and return the slot that holds it.
+     *
+     * This function works for every storage type. It behaves like mxlFlowWriterOpenGrain(), except that it
+     * returns a slot in place of a payload pointer. The application finds the storage of the slot in the array
+     * filled by mxlFlowWriterMapSlots(). The grain is then committed with mxlFlowWriterCommitGrain() or
+     * cancelled with mxlFlowWriterCancelGrain().
+     *
+     * \param[in] writer A valid discrete flow writer.
+     * \param[in] index The index of the grain to open.
+     * \param[out] grain A valid pointer to a structure that receives a copy of the grain info.
+     * \param[out] slot A valid pointer that receives the slot holding the grain. Written only on success.
+     * \return The result code. \see mxlStatus
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowWriterOpenGrainSlot(mxlFlowWriter writer, uint64_t index, mxlGrainInfo* grain, uint32_t* slot);
 
     /**
      * Return the absolute maximum number of samples a read operation may retrieve from a flow.

@@ -114,6 +114,11 @@ namespace mxl::lib
         {
             return MXL_ERR_UNKNOWN;
         }
+        if ((out_payload != nullptr) && !hasHostPayload())
+        {
+            return MXL_ERR_UNSUPPORTED_OPERATION;
+        }
+
         auto slot = std::size_t{0};
         auto const result = completeRead(getGrainImpl(in_index, in_minValidSlices, in_deadline, out_grainInfo, &slot));
         if ((result == MXL_STATUS_OK) && (out_payload != nullptr))
@@ -130,6 +135,11 @@ namespace mxl::lib
         {
             return MXL_ERR_UNKNOWN;
         }
+        if ((out_payload != nullptr) && !hasHostPayload())
+        {
+            return MXL_ERR_UNSUPPORTED_OPERATION;
+        }
+
         auto slot = std::size_t{0};
         auto const result = completeRead(getGrainImpl(in_index, in_minValidSlices, out_grainInfo, &slot));
         if ((result == MXL_STATUS_OK) && (out_payload != nullptr))
@@ -137,6 +147,41 @@ namespace mxl::lib
             *out_payload = hostPayloadAt(slot);
         }
         return result;
+    }
+
+    mxlStatus PosixDiscreteFlowReader::getGrainSlot(std::uint64_t in_index, std::uint16_t in_minValidSlices, Timepoint in_deadline,
+        mxlGrainInfo* out_grainInfo, std::uint32_t* out_slot)
+    {
+        if (!_flowData)
+        {
+            return MXL_ERR_UNKNOWN;
+        }
+
+        auto slot = std::size_t{0};
+        auto const result = completeRead(getGrainImpl(in_index, in_minValidSlices, in_deadline, out_grainInfo, &slot));
+        if ((result == MXL_STATUS_OK) && (out_slot != nullptr))
+        {
+            *out_slot = static_cast<std::uint32_t>(slot);
+        }
+        return result;
+    }
+
+    mxlGrainStorageLayout PosixDiscreteFlowReader::getStorageLayout() const
+    {
+        if (!_flowData)
+        {
+            throw std::runtime_error("No open flow.");
+        }
+        return _flowData->storageLayout();
+    }
+
+    mxlStatus PosixDiscreteFlowReader::mapSlots(std::uint32_t in_slotCount, mxlGrainStorage* out_slots) const
+    {
+        if (!_flowData)
+        {
+            return MXL_ERR_UNKNOWN;
+        }
+        return _flowData->mapSlots(in_slotCount, out_slots);
     }
 
     mxlStatus PosixDiscreteFlowReader::completeRead(mxlStatus in_result) const
@@ -155,9 +200,14 @@ namespace mxl::lib
         return in_result;
     }
 
+    bool PosixDiscreteFlowReader::hasHostPayload() const
+    {
+        return _flowData->payloadStorage().type() == MXL_PAYLOAD_STORAGE_HOST_POINTER;
+    }
+
     std::uint8_t* PosixDiscreteFlowReader::hostPayloadAt(std::size_t in_slot) const
     {
-        return _flowData->payloadStorage().hostPayload(in_slot);
+        return static_cast<std::uint8_t*>(_flowData->payloadStorage().slotStorage(in_slot).host.pointer);
     }
 
     mxlStatus PosixDiscreteFlowReader::getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo,

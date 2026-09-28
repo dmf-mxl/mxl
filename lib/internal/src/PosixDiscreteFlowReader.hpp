@@ -60,6 +60,17 @@ namespace mxl::lib
         virtual mxlStatus getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo,
             std::uint8_t** out_payload) override;
 
+        /** \see DiscreteFlowReader::getGrainSlot */
+        virtual mxlStatus getGrainSlot(std::uint64_t in_index, std::uint16_t in_minValidSlices, Timepoint in_deadline, mxlGrainInfo* out_grainInfo,
+            std::uint32_t* out_slot) override;
+
+        /** \see DiscreteFlowReader::getStorageLayout */
+        [[nodiscard]]
+        virtual mxlGrainStorageLayout getStorageLayout() const override;
+
+        /** \see DiscreteFlowReader::mapSlots */
+        virtual mxlStatus mapSlots(std::uint32_t in_slotCount, mxlGrainStorage* out_slots) const override;
+
     protected:
         /** \see FlowReader::isFlowValid */
         [[nodiscard]]
@@ -113,7 +124,14 @@ namespace mxl::lib
         mxlStatus completeRead(mxlStatus in_result) const;
 
         /**
-         * Host address of the payload of a slot.
+         * Check whether the payload of this flow can be returned as a host pointer.
+         * \return true if the payload storage type is MXL_PAYLOAD_STORAGE_HOST_POINTER.
+         */
+        [[nodiscard]]
+        bool hasHostPayload() const;
+
+        /**
+         * Host address of the payload of a slot. Only valid if hasHostPayload() returns true.
          * \param[in] in_slot The slot.
          * \return The host address of the first byte of the slot payload.
          */

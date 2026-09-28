@@ -414,6 +414,89 @@ mxlStatus mxlFlowReaderGetGrainSliceNonBlocking(mxlFlowReader reader, uint64_t i
 
 extern "C"
 MXL_EXPORT
+mxlStatus mxlFlowReaderGetStorageLayout(mxlFlowReader reader, mxlGrainStorageLayout* layout)
+{
+    try
+    {
+        if (layout != nullptr)
+        {
+            if (auto const cppReader = dynamic_cast<DiscreteFlowReader*>(to_FlowReader(reader)); cppReader != nullptr)
+            {
+                *layout = cppReader->getStorageLayout();
+                return MXL_STATUS_OK;
+            }
+            return MXL_ERR_INVALID_FLOW_READER;
+        }
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Failed to get storage layout: {}", e.what());
+    }
+    catch (...)
+    {
+        MXL_ERROR("Failed to get storage layout: {}", "An unknown error occured.");
+    }
+    return MXL_ERR_UNKNOWN;
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowReaderMapSlots(mxlFlowReader reader, uint32_t slotCount, mxlGrainStorage* slots)
+{
+    try
+    {
+        if (slots != nullptr)
+        {
+            if (auto const cppReader = dynamic_cast<DiscreteFlowReader*>(to_FlowReader(reader)); cppReader != nullptr)
+            {
+                return cppReader->mapSlots(slotCount, slots);
+            }
+            return MXL_ERR_INVALID_FLOW_READER;
+        }
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Failed to map slots: {}", e.what());
+    }
+    catch (...)
+    {
+        MXL_ERROR("Failed to map slots: {}", "An unknown error occured.");
+    }
+    return MXL_ERR_UNKNOWN;
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowReaderGetGrainSlot(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, uint64_t timeoutNs, mxlGrainInfo* grainInfo,
+    uint32_t* slot)
+{
+    try
+    {
+        if ((grainInfo != nullptr) && (slot != nullptr))
+        {
+            if (auto const cppReader = dynamic_cast<DiscreteFlowReader*>(to_FlowReader(reader)); cppReader != nullptr)
+            {
+                return cppReader->getGrainSlot(index, minValidSlices, toDeadline(timeoutNs), grainInfo, slot);
+            }
+            return MXL_ERR_INVALID_FLOW_READER;
+        }
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Failed to get grain slot: {}", e.what());
+    }
+    catch (...)
+    {
+        MXL_ERROR("Failed to get grain slot: {}", "An unknown error occured.");
+    }
+    return MXL_ERR_UNKNOWN;
+}
+
+extern "C"
+MXL_EXPORT
 mxlStatus mxlFlowWriterGetGrainInfo(mxlFlowWriter writer, uint64_t index, mxlGrainInfo* grainInfo)
 {
     try
@@ -498,6 +581,88 @@ mxlStatus mxlFlowWriterCommitGrain(mxlFlowWriter writer, mxlGrainInfo const* gra
     {
         return MXL_ERR_UNKNOWN;
     }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowWriterGetStorageLayout(mxlFlowWriter writer, mxlGrainStorageLayout* layout)
+{
+    try
+    {
+        if (layout != nullptr)
+        {
+            if (auto const cppWriter = dynamic_cast<DiscreteFlowWriter*>(to_FlowWriter(writer)); cppWriter != nullptr)
+            {
+                *layout = cppWriter->getStorageLayout();
+                return MXL_STATUS_OK;
+            }
+            return MXL_ERR_INVALID_FLOW_WRITER;
+        }
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Failed to get storage layout: {}", e.what());
+    }
+    catch (...)
+    {
+        MXL_ERROR("Failed to get storage layout: {}", "An unknown error occured.");
+    }
+    return MXL_ERR_UNKNOWN;
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowWriterMapSlots(mxlFlowWriter writer, uint32_t slotCount, mxlGrainStorage* slots)
+{
+    try
+    {
+        if (slots != nullptr)
+        {
+            if (auto const cppWriter = dynamic_cast<DiscreteFlowWriter*>(to_FlowWriter(writer)); cppWriter != nullptr)
+            {
+                return cppWriter->mapSlots(slotCount, slots);
+            }
+            return MXL_ERR_INVALID_FLOW_WRITER;
+        }
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Failed to map slots: {}", e.what());
+    }
+    catch (...)
+    {
+        MXL_ERROR("Failed to map slots: {}", "An unknown error occured.");
+    }
+    return MXL_ERR_UNKNOWN;
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowWriterOpenGrainSlot(mxlFlowWriter writer, uint64_t index, mxlGrainInfo* grainInfo, uint32_t* slot)
+{
+    try
+    {
+        if ((grainInfo != nullptr) && (slot != nullptr))
+        {
+            if (auto const cppWriter = dynamic_cast<DiscreteFlowWriter*>(to_FlowWriter(writer)); cppWriter != nullptr)
+            {
+                return cppWriter->openGrainSlot(index, grainInfo, slot);
+            }
+            return MXL_ERR_INVALID_FLOW_WRITER;
+        }
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Failed to open grain slot: {}", e.what());
+    }
+    catch (...)
+    {
+        MXL_ERROR("Failed to open grain slot: {}", "An unknown error occured.");
+    }
+    return MXL_ERR_UNKNOWN;
 }
 
 extern "C"

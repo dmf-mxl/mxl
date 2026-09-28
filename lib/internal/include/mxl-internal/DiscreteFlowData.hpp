@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <stdexcept>
 #include <vector>
@@ -46,6 +47,24 @@ namespace mxl::lib
          */
         [[nodiscard]]
         PayloadStorage const& payloadStorage() const;
+
+        /**
+         * Compute the storage layout of the grain payloads.
+         * \return The storage layout.
+         * \throws std::logic_error if no storage was set.
+         */
+        [[nodiscard]]
+        mxlGrainStorageLayout storageLayout() const;
+
+        /**
+         * Map the storage of every slot into this process and describe each slot.
+         * \param[in] slotCount The number of entries in out_slots. Must be equal to the slot count of the storage.
+         * \param[out] out_slots A valid pointer to slotCount structures. Entry i receives the description of slot i.
+         * \return MXL_STATUS_OK on success, or MXL_ERR_INVALID_ARG if out_slots is null or slotCount does not match.
+         * \throws std::logic_error if no storage was set.
+         * \throws std::exception if the storage cannot be mapped in this process.
+         */
+        mxlStatus mapSlots(std::uint32_t slotCount, mxlGrainStorage* out_slots) const;
 
     private:
         std::vector<SharedMemoryInstance<Grain>> _grains;
@@ -139,5 +158,29 @@ namespace mxl::lib
             throw std::logic_error{"No payload storage set for this flow."};
         }
         return *_payloadStorage;
+    }
+
+    inline mxlStatus DiscreteFlowData::mapSlots(std::uint32_t slotCount, mxlGrainStorage* out_slots) const
+    {
+        auto const& storage = payloadStorage();
+        if ((out_slots == nullptr) || (slotCount != storage.slotCount()))
+        {
+            return MXL_ERR_INVALID_ARG;
+        }
+
+        storage.mapSlots();
+        for (auto slot = std::uint32_t{0}; slot < slotCount; ++slot)
+        {
+            out_slots[slot] = storage.slotStorage(slot);
+        }
+        return MXL_STATUS_OK;
+    }
+
+    inline mxlGrainStorageLayout DiscreteFlowData::storageLayout() const
+    {
+        // All grains of a flow have the same number of slices.
+        auto const firstGrain = grainInfoAt(0);
+        auto const totalSlices = (firstGrain != nullptr) ? firstGrain->totalSlices : std::uint16_t{0};
+        return makeGrainStorageLayout(flowInfo()->config.discrete, totalSlices, payloadStorage());
     }
 }
