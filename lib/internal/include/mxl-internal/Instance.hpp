@@ -65,6 +65,7 @@ namespace mxl::lib
         /// \return A pointer to the created flow reader.
         /// \note Please note that each successful call to this method must be
         ///     paired with a corresponding call to releaseReader().
+        /// \throws std::invalid_argument if flowId is not a valid UUID.
         ///
         FlowReader* getFlowReader(std::string const& flowId);
 

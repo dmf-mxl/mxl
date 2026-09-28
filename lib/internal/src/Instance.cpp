@@ -120,7 +120,10 @@ namespace mxl::lib
     FlowReader* Instance::getFlowReader(std::string const& flowId)
     {
         auto const id = uuids::uuid::from_string(flowId);
-        // FIXME: Check result of the from_string operation.
+        if (!id.has_value())
+        {
+            throw std::invalid_argument{"Invalid flow id: '" + flowId + "'."};
+        }
 
         auto const lock = std::lock_guard{_mutex};
         if (auto const pos = _readers.find(*id); pos != _readers.end())
