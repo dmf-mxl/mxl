@@ -21,6 +21,7 @@ target_sources(mxl-internal-tests
             test_flowmanager.cpp
             test_instance.cpp
             test_options.cpp
+            test_payload_backend.cpp
             test_sharedmem.cpp
     )
 
@@ -70,6 +71,56 @@ if (TARGET PcapPlusPlus::Pcap++)
                 PcapPlusPlus::Pcap++
         )
 endif()
+
+# Payload backends used by test_payload_backend.cpp. They are built into one directory, which the tests pass to their
+# own PayloadBackendLoader. The file names follow the libmxl-payload-<name>.so convention that libmxl expects. These
+# libraries are never installed.
+function(mxl_add_test_payload_backend backendName sourceFile)
+    set(target mxl-test-payload-${backendName})
+    add_library(${target} MODULE ${sourceFile})
+    set_target_properties(${target}
+            PROPERTIES
+                OUTPUT_NAME                 mxl-payload-${backendName}
+                PREFIX                      lib
+                SUFFIX                      .so
+                LIBRARY_OUTPUT_DIRECTORY    ${CMAKE_CURRENT_BINARY_DIR}/payload_backends
+                VISIBILITY_INLINES_HIDDEN   ON
+                CXX_VISIBILITY_PRESET       hidden
+                CXX_EXTENSIONS              OFF
+                CXX_STANDARD                ${MXL_CXX_STANDARD}
+        )
+    target_include_directories(${target}
+            PRIVATE
+                ${CMAKE_CURRENT_SOURCE_DIR}/../include
+        )
+    # picojson::picojson only carries the wrapper directory, whose header includes picojson.h from picojson's own
+    # include directory.
+    target_include_directories(${target}
+            SYSTEM PRIVATE
+                ${picojson_INCLUDE_DIR}
+        )
+    target_link_libraries(${target}
+            PRIVATE
+                mxl-headers
+                picojson::picojson
+        )
+    add_dependencies(mxl-internal-tests ${target})
+endfunction()
+
+mxl_add_test_payload_backend(test-file payload_backends/TestFileBackend.cpp)
+target_compile_definitions(mxl-test-payload-test-file PRIVATE MXL_TEST_BACKEND_NAME="test-file")
+
+# Same backend in a library whose name does not match the name the backend reports.
+mxl_add_test_payload_backend(test-bad-name payload_backends/TestFileBackend.cpp)
+target_compile_definitions(mxl-test-payload-test-bad-name PRIVATE MXL_TEST_BACKEND_NAME="some-other-name")
+
+# A library without the backend entry point.
+mxl_add_test_payload_backend(test-no-entry payload_backends/NoEntryPointBackend.cpp)
+
+target_compile_definitions(mxl-internal-tests
+        PRIVATE
+            MXL_TEST_PAYLOAD_BACKEND_DIR="$<TARGET_FILE_DIR:mxl-test-payload-test-file>"
+    )
 
 # Enable testing using CTest
 include(CTest)

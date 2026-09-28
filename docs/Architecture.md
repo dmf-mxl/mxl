@@ -106,6 +106,8 @@ A slot is one entry of the ring buffer. The grain at index `i` is stored in slot
 
 An application calls the map function once, before it reads or writes grains, and sets up any per slot resources from the array. Per grain, `mxlFlowReaderGetGrainSlot()` and `mxlFlowWriterOpenGrainSlot()` return the slot that holds the requested grain, which the application looks up in its array. Apart from that, they behave like `mxlFlowReaderGetGrainSlice()` and `mxlFlowWriterOpenGrain()`. A timeout of 0 makes `mxlFlowReaderGetGrainSlot()` return without waiting.
 
+Storage types other than host memory are implemented by backend libraries that ship with the SDK and that libmxl loads by name from its own directory. The interface between libmxl and these libraries is internal.
+
 The pointer based functions (`mxlFlowReaderGetGrain*()` and `mxlFlowWriterOpenGrain()`) return a payload pointer only for host storage. For any other storage type they return `MXL_ERR_UNSUPPORTED_OPERATION`, so that an application never dereferences memory that is not host memory.
 
 ## Continuous Ringbuffer I/O

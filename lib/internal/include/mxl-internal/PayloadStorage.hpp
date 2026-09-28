@@ -18,6 +18,30 @@ namespace mxl::lib
     class DiscreteFlowData;
 
     /**
+     * Error in payload storage: invalid storage options, a backend that is not available, or a failure reported by
+     * a backend. Carries the status code that the C API returns for it.
+     */
+    class MXL_EXPORT PayloadStorageError : public std::runtime_error
+    {
+    public:
+        /**
+         * \param[in] status The status code for the C API.
+         * \param[in] what A description of the operation that failed.
+         */
+        PayloadStorageError(mxlStatus status, std::string const& what);
+
+        /**
+         * \return The status code for the C API.
+         */
+        [[nodiscard]]
+        mxlStatus status() const noexcept;
+
+    private:
+        /** The status code for the C API. */
+        mxlStatus _status;
+    };
+
+    /**
      * Holds the payload of the ring buffer slots of a discrete flow.
      *
      * The grain headers always stay in host shared memory. Only the payload is delegated to a storage object,

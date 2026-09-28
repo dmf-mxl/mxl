@@ -40,6 +40,16 @@ namespace mxl::lib
     static_assert(sizeof(mxlGrainStorage) == 256, "mxlGrainStorage must be 256 bytes.");
     static_assert(std::has_unique_object_representations_v<mxlGrainStorageLayout>, "mxlGrainStorageLayout must not contain padding.");
 
+    PayloadStorageError::PayloadStorageError(mxlStatus status, std::string const& what)
+        : std::runtime_error{what}
+        , _status{status}
+    {}
+
+    mxlStatus PayloadStorageError::status() const noexcept
+    {
+        return _status;
+    }
+
     PayloadStorage::~PayloadStorage() = default;
 
     HostPayloadStorage::HostPayloadStorage(DiscreteFlowData& flowData)

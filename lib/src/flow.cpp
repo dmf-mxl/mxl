@@ -12,6 +12,7 @@
 #include "mxl-internal/Instance.hpp"
 #include "mxl-internal/Logging.hpp"
 #include "mxl-internal/PathUtils.hpp"
+#include "mxl-internal/PayloadBackend.hpp"
 
 namespace
 {
@@ -456,6 +457,11 @@ mxlStatus mxlFlowReaderMapSlots(mxlFlowReader reader, uint32_t slotCount, mxlGra
         }
         return MXL_ERR_INVALID_ARG;
     }
+    catch (PayloadStorageError const& e)
+    {
+        MXL_ERROR("Failed to map slots: {}", e.what());
+        return e.status();
+    }
     catch (std::exception const& e)
     {
         MXL_ERROR("Failed to map slots: {}", e.what());
@@ -626,6 +632,11 @@ mxlStatus mxlFlowWriterMapSlots(mxlFlowWriter writer, uint32_t slotCount, mxlGra
             return MXL_ERR_INVALID_FLOW_WRITER;
         }
         return MXL_ERR_INVALID_ARG;
+    }
+    catch (PayloadStorageError const& e)
+    {
+        MXL_ERROR("Failed to map slots: {}", e.what());
+        return e.status();
     }
     catch (std::exception const& e)
     {
