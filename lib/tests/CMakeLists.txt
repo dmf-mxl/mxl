@@ -21,6 +21,7 @@ target_sources(mxl-tests
             test_flows.cpp
             test_events.cpp
             test_flows_timing.cpp
+            test_grain_storage.cpp
             test_instance.cpp
             test_time.cpp
             test_read_write_conflict.cpp
