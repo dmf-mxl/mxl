@@ -158,6 +158,14 @@ extern "C"
          * functions such as mxlFlowWriterOpenGrain() and mxlFlowReaderGetGrain() also return.
          */
         MXL_PAYLOAD_STORAGE_HOST_POINTER = 0,
+
+        /**
+         * The payload is in CUDA device memory. A slot is addressed through a CUDA device pointer that is valid in the
+         * calling process, on the device reported by mxlGrainStorageLayout.deviceIndex and deviceUuid. Device work that
+         * writes a grain must be complete before mxlFlowWriterCommitGrain() is called, for example after
+         * cudaStreamSynchronize().
+         */
+        MXL_PAYLOAD_STORAGE_CUDA_DEVICE_POINTER = 1,
     } mxlPayloadStorageType;
 
     /**
@@ -240,6 +248,15 @@ extern "C"
     } mxlHostGrainStorage;
 
     /**
+     * Storage of one slot when the storage type is MXL_PAYLOAD_STORAGE_CUDA_DEVICE_POINTER.
+     */
+    typedef struct mxlCudaGrainStorage_t
+    {
+        /** CUDA device address of the first byte of the slot storage, valid in the calling process. */
+        void* pointer;
+    } mxlCudaGrainStorage;
+
+    /**
      * Describes the storage of the payload of one slot of a discrete flow.
      *
      * The description of a slot does not change for the lifetime of a flow. Applications can therefore set up
@@ -270,6 +287,9 @@ extern "C"
         {
             /** Valid if storageType is MXL_PAYLOAD_STORAGE_HOST_POINTER. */
             mxlHostGrainStorage host;
+
+            /** Valid if storageType is MXL_PAYLOAD_STORAGE_CUDA_DEVICE_POINTER. */
+            mxlCudaGrainStorage cuda;
 
             /**
              * Reserved for future storage types, which need room for one handle per plane and a

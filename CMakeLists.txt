@@ -15,6 +15,7 @@ cmake_policy(SET CMP0076 NEW)
 cmake_policy(SET CMP0135 NEW)
 
 option(MXL_ENABLE_FABRICS_OFI "Enable building the fabrics library with libfabric" OFF)
+option(MXL_ENABLE_CUDA_PAYLOAD "Build the cuda-linear payload backend, which keeps grain payloads in CUDA device memory. Needs the CUDA toolkit." OFF)
 
 # Build type. Used as a build suffix or in the operating system package file name.  Currently manually set but could be automated using branch names, etc.
 # One of : dev, beta, rc, "" (empty for final releases)

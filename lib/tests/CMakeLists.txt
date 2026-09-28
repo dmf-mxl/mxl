@@ -130,6 +130,10 @@ target_compile_options(mxl-all-headers PRIVATE
     -Wstrict-prototypes
 )
 
+if (MXL_ENABLE_CUDA_PAYLOAD)
+    add_subdirectory(cuda)
+endif()
+
 if (MXL_ENABLE_FABRICS_OFI)
     add_subdirectory(fabrics)
 endif ()

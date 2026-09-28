@@ -128,6 +128,40 @@ A reader opens such a flow by loading the backend named in `payload.json` and op
 
 The tests use the file backed test backend (`test-file`) to run this whole path without a GPU. It is built next to the flow test executable, because libmxl only loads backends from the directory of the binary that contains its code, and never installed.
 
+### The cuda-linear backend
+
+`libmxl-payload-cuda-linear.so` keeps the payload of a video flow in linear CUDA device memory, and refuses flows of other formats. It is built when the CMake option `MXL_ENABLE_CUDA_PAYLOAD` is on, which needs the CUDA toolkit, and is installed next to libmxl. It links the static CUDA runtime, so on an installed system it only needs the NVIDIA driver. libmxl itself does not link against CUDA. It is based on the CUDA work by Thomas True in PR #653.
+
+A writer puts a flow's payload on a GPU with:
+
+```json
+{"payload": {"backend": "cuda-linear", "deviceUuid": "GPU-88064374-43da-caf5-b332-be5fb39bf2e6"}}
+```
+
+- `deviceUuid` is required for writers, in the format `nvidia-smi -L` prints, or as 32 hexadecimal digits. The backend accepts no device index.
+- Readers may pass `{"payload": {"deviceUuid": "..."}}` to access the payload on another GPU of the same machine. By default they use the GPU that holds it.
+- Slots have the storage type `MXL_PAYLOAD_STORAGE_CUDA_DEVICE_POINTER`. `mxlGrainStorage.cuda.pointer` is a device address that is valid in the calling process, on the device given by the layout's `deviceIndex` and `deviceUuid`. The pointer API returns `MXL_ERR_UNSUPPORTED_OPERATION`.
+
+How the memory is shared:
+
+- The writer makes one `cudaMalloc` for all slots, with each slot starting at a multiple of 256 bytes, and clears it. It exports the allocation once with `cudaIpcGetMemHandle`, and records the handle, the stride and the device UUID in `payload.cuda.json`, next to `payload.json`, before the flow is published. The file records the version of its format, and readers refuse other versions.
+- A reader in another process imports the allocation once, when the application calls `mxlFlowReaderMapSlots`, with `cudaIpcOpenMemHandle`. Opening the reader makes no CUDA call.
+- A reader on another GPU maps the allocation through peer access (`cudaIpcMemLazyEnablePeerAccess`), if `cudaDeviceCanAccessPeer` allows it. Otherwise mapping returns `MXL_ERR_UNSUPPORTED_OPERATION`.
+- CUDA IPC cannot open a handle in the process that exported it. A reader in the writer's own process therefore shares the writer's allocation through a registry inside the process. The allocation is reference counted, so it stays valid for such a reader after the writer is released.
+
+The commit contract: device work that writes a grain must be complete before the writer calls `mxlFlowWriterCommitGrain`, for example after `cudaStreamSynchronize` or `cudaEventSynchronize`. A reader can use a slot as soon as `mxlFlowReaderGetGrainSlot` returns it.
+
+Where writer and reader can run:
+
+| Writer and reader | Mechanism | Requirements |
+|---|---|---|
+| Same pod, same GPU | CUDA IPC | One MXL domain. |
+| Same pod, different GPUs | CUDA IPC and peer access | One MXL domain. The reader sees both GPUs, and they support peer access (NVLink or a PCIe path that allows it). |
+| Different pods, same node | CUDA IPC, with peer access for different GPUs | A shared MXL domain, and `hostIPC` for CUDA IPC across pods. The reader sees the writer's GPU. |
+| Different nodes | Fabrics | One MXL domain per node. RDMA from device memory is later work. |
+
+`lib/tests/cuda` tests the backend through the public API: sharing in one process and between processes, memory staying valid after the writer is released, and option errors. The tests are skipped when no CUDA device is visible. Peer access between two GPUs is not tested yet.
+
 ## Principles
 
 ### The public API only grows
@@ -239,7 +273,7 @@ flowchart TB
     host["HostPayloadStorage<br/>built in"]
     plugin["PluginPayloadStorage"]
     loader["PayloadBackendLoader<br/>dlopen by name from the libmxl directory"]
-    cuda["libmxl-payload-cuda-linear.so<br/>next step"]
+    cuda["libmxl-payload-cuda-linear.so<br/>CUDA device memory"]
     dmabuf["dma-buf and image backends<br/>later"]
     app --> ptr
     app --> desc
@@ -256,18 +290,7 @@ flowchart TB
 
 ## Future work
 
-The steps below complete the first pull request. They follow the design agreed with the CUDA work in PR #653.
-
-1. Add the `cuda-linear` backend, built only when a CMake option enables it.
-   - It makes one `cudaMalloc` for all slots of a flow, with each slot aligned to 256 bytes, and exports it once with `cudaIpcGetMemHandle`. It records the handle, the export format and the device UUID in its own file in the flow directory. Each reader then imports the memory once.
-   - A reader on another GPU of the same machine maps the memory through peer access (`cudaIpcMemLazyEnablePeerAccess`).
-   - Readers in the writer's own process share the allocation through a reference count. CUDA IPC cannot open a handle in the process that created it.
-2. Document the commit contract: device work that writes a grain must be complete before `mxlFlowWriterCommitGrain`. Also document the ways to deploy it:
-   - Same pod, same GPU: CUDA IPC.
-   - Same pod, different GPU: IPC and peer access.
-   - Different pods on one node: IPC with a shared domain and `hostIPC`.
-   - Different nodes: fabrics.
-3. Test the CUDA backend on machines with a GPU. CI keeps running the whole flow through the test backend.
+The first pull request is complete with the `cuda-linear` backend. The sections below describe later work.
 
 ### Passing file descriptors
 

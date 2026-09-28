@@ -111,7 +111,7 @@ namespace mxl::lib
             {
                 return fmt::format("reports name '{}'", (api.name != nullptr) ? api.name : "<null>");
             }
-            if (api.storageType != MXL_PAYLOAD_STORAGE_HOST_POINTER)
+            if ((api.storageType != MXL_PAYLOAD_STORAGE_HOST_POINTER) && (api.storageType != MXL_PAYLOAD_STORAGE_CUDA_DEVICE_POINTER))
             {
                 return fmt::format("reports unknown storage type {}", api.storageType);
             }
