@@ -72,9 +72,11 @@ if (TARGET PcapPlusPlus::Pcap++)
         )
 endif()
 
-# Payload backends used by test_payload_backend.cpp. They are built into one directory, which the tests pass to their
-# own PayloadBackendLoader. The file names follow the libmxl-payload-<name>.so convention that libmxl expects. These
-# libraries are never installed.
+# Payload backends used by test_payload_backend.cpp and by the flow tests in lib/tests. libmxl only loads backends
+# from the directory of the binary that contains its code. The flow test executable links the internal objects
+# directly, so that binary is the executable itself, and the backends are built next to it. The internal tests pass
+# the same directory to their own PayloadBackendLoader. The file names follow the libmxl-payload-<name>.so convention
+# that libmxl expects. These libraries are never installed.
 function(mxl_add_test_payload_backend backendName sourceFile)
     set(target mxl-test-payload-${backendName})
     add_library(${target} MODULE ${sourceFile})
@@ -83,7 +85,7 @@ function(mxl_add_test_payload_backend backendName sourceFile)
                 OUTPUT_NAME                 mxl-payload-${backendName}
                 PREFIX                      lib
                 SUFFIX                      .so
-                LIBRARY_OUTPUT_DIRECTORY    ${CMAKE_CURRENT_BINARY_DIR}/payload_backends
+                LIBRARY_OUTPUT_DIRECTORY    $<TARGET_FILE_DIR:mxl-tests>
                 VISIBILITY_INLINES_HIDDEN   ON
                 CXX_VISIBILITY_PRESET       hidden
                 CXX_EXTENSIONS              OFF

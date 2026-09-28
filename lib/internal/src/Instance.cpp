@@ -120,12 +120,18 @@ namespace mxl::lib
 
     FlowReader* Instance::getFlowReader(std::string const& flowId)
     {
+        return getFlowReaderWithOptions(flowId, std::string{});
+    }
+
+    FlowReader* Instance::getFlowReaderWithOptions(std::string const& flowId, std::string const& options)
+    {
         auto const id = uuids::uuid::from_string(flowId);
         if (!id.has_value())
         {
             throw std::invalid_argument{"Invalid flow id: '" + flowId + "'."};
         }
 
+        auto const payloadOptions = options.empty() ? std::string{} : FlowOptionsParser{options}.getReaderPayloadOptions();
         auto const lock = std::lock_guard{_mutex};
         if (auto const pos = _readers.find(*id); pos != _readers.end())
         {
@@ -135,7 +141,7 @@ namespace mxl::lib
         }
         else
         {
-            auto flowData = _flowManager.openFlow(*id, AccessMode::READ_ONLY);
+            auto flowData = _flowManager.openFlowWithPayloadOptions(*id, AccessMode::READ_ONLY, payloadOptions);
             auto reader = _flowIoFactory->createFlowReader(_flowManager, *id, std::move(flowData));
 
             return (*_readers.try_emplace(pos, *id, std::move(reader))).second.get();
@@ -243,7 +249,7 @@ namespace mxl::lib
 
         auto const batchSizeDefault = parser.getTotalPayloadSlices();
 
-        auto [created, flowData] = _flowManager.createOrOpenDiscreteFlow(parser.getId(),
+        auto [created, flowData] = _flowManager.createOrOpenDiscreteFlowWithStorage(parser.getId(),
             flowDef,
             parser.getFormat(),
             grainCount,
@@ -252,7 +258,8 @@ namespace mxl::lib
             parser.getTotalPayloadSlices(),
             parser.getPayloadSliceLengths(),
             optionsParser.getMaxSyncBatchSizeHint().value_or(batchSizeDefault),
-            optionsParser.getMaxCommitBatchSizeHint().value_or(batchSizeDefault));
+            optionsParser.getMaxCommitBatchSizeHint().value_or(batchSizeDefault),
+            optionsParser.getPayloadStorageSpec());
 
         return {std::move(flowData), created};
     }
@@ -260,6 +267,12 @@ namespace mxl::lib
     std::pair<std::unique_ptr<FlowData>, bool> Instance::createOrOpenContinuousFlowData(std::string const& flowDef, FlowParser const& parser,
         FlowOptionsParser const& optionsParser)
     {
+        // Continuous flows keep their payload in the built-in host storage.
+        if (optionsParser.getPayloadStorageSpec().usesBackend())
+        {
+            throw PayloadStorageError{MXL_ERR_UNSUPPORTED_OPERATION, "Continuous flows keep their payload in host memory."};
+        }
+
         // Read the mandatory grain_rate field
         auto const sampleRate = parser.getGrainRate();
         // Compute the buffer length based on our configured history duration.

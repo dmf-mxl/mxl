@@ -50,6 +50,21 @@ namespace mxl::lib
         return _status;
     }
 
+    PayloadStorageSpec::PayloadStorageSpec() noexcept
+        : backend{}
+        , backendOptions{}
+    {}
+
+    PayloadStorageSpec::PayloadStorageSpec(std::string backend, std::string backendOptions)
+        : backend{std::move(backend)}
+        , backendOptions{std::move(backendOptions)}
+    {}
+
+    bool PayloadStorageSpec::usesBackend() const noexcept
+    {
+        return !backend.empty();
+    }
+
     PayloadStorage::~PayloadStorage() = default;
 
     HostPayloadStorage::HostPayloadStorage(DiscreteFlowData& flowData)

@@ -15,6 +15,8 @@ namespace mxl::lib
     constexpr auto const GRAIN_DATA_FILE_NAME_STEM = "data";
     constexpr auto const CHANNEL_DATA_FILE_NAME = "channels";
     constexpr auto const DOMAIN_OPTIONS_FILE_NAME = "options.json";
+    /// Name of the file in a flow directory that names the backend holding the payload. Absent for host storage.
+    constexpr auto const PAYLOAD_DESCRIPTOR_FILE_NAME = "payload.json";
 
     std::filesystem::path makeFlowDirectoryName(std::filesystem::path const& domain, std::string const& uuid);
 
@@ -37,6 +39,12 @@ namespace mxl::lib
     std::filesystem::path makeChannelDataFilePath(std::filesystem::path const& domain, std::string const& uuid);
 
     std::filesystem::path makeDomainOptionsFilePath(std::filesystem::path const& domain);
+
+    /**
+     * \param[in] flowDirectory The flow directory.
+     * \return The path of the payload descriptor, which names the backend that holds the payload of the flow.
+     */
+    std::filesystem::path makePayloadDescriptorFilePath(std::filesystem::path const& flowDirectory);
 
     /**************************************************************************/
     /* Inline implementation.                                                 */

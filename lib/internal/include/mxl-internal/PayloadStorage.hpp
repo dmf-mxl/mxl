@@ -41,6 +41,34 @@ namespace mxl::lib
         mxlStatus _status;
     };
 
+    /** Name that selects the built-in host storage in the flow options. */
+    constexpr auto BUILT_IN_HOST_PAYLOAD_BACKEND = "host";
+
+    /**
+     * How the payload of a new discrete flow is stored. Built from the "payload" object of the writer's flow
+     * options.
+     */
+    struct MXL_EXPORT PayloadStorageSpec
+    {
+        /** Built-in host storage, no backend options. */
+        PayloadStorageSpec() noexcept;
+
+        /**
+         * \param[in] backend The backend that implements the storage, or empty for the built-in host storage.
+         * \param[in] backendOptions Options for the backend, as JSON object text, or empty if there are none.
+         */
+        PayloadStorageSpec(std::string backend, std::string backendOptions);
+
+        /**
+         * \return true if a backend library implements the storage, false for the built-in host storage.
+         */
+        [[nodiscard]]
+        bool usesBackend() const noexcept;
+
+        std::string backend;        ///< The backend name, or empty for the built-in host storage.
+        std::string backendOptions; ///< Options for the backend, as JSON object text, or empty. Validated by the backend.
+    };
+
     /**
      * Holds the payload of the ring buffer slots of a discrete flow.
      *

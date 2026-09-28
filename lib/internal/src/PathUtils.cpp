@@ -54,4 +54,9 @@ namespace mxl::lib
     {
         return domain / (DOMAIN_OPTIONS_FILE_NAME);
     }
+
+    std::filesystem::path makePayloadDescriptorFilePath(std::filesystem::path const& flowDirectory)
+    {
+        return flowDirectory / PAYLOAD_DESCRIPTOR_FILE_NAME;
+    }
 }

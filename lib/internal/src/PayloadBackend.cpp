@@ -347,4 +347,41 @@ namespace mxl::lib
             throw PayloadStorageError{status, fmt::format("Payload backend '{}' cannot map the flow storage.", _api->name)};
         }
     }
+
+    UnavailablePayloadStorage::UnavailablePayloadStorage(mxlPayloadStorageType type, std::size_t slotCount, mxlStatus status, std::string reason)
+        : _type{type}
+        , _slotCount{slotCount}
+        , _status{status}
+        , _reason{std::move(reason)}
+    {}
+
+    mxlPayloadStorageType UnavailablePayloadStorage::type() const noexcept
+    {
+        return _type;
+    }
+
+    std::int32_t UnavailablePayloadStorage::deviceIndex() const noexcept
+    {
+        return -1;
+    }
+
+    std::size_t UnavailablePayloadStorage::slotCount() const noexcept
+    {
+        return _slotCount;
+    }
+
+    mxlGrainStorage UnavailablePayloadStorage::slotStorage(std::size_t) const
+    {
+        throw PayloadStorageError{_status, _reason};
+    }
+
+    void UnavailablePayloadStorage::describeLayout(mxlGrainStorageLayout&) const
+    {
+        throw PayloadStorageError{_status, _reason};
+    }
+
+    void UnavailablePayloadStorage::mapSlots() const
+    {
+        throw PayloadStorageError{_status, _reason};
+    }
 }

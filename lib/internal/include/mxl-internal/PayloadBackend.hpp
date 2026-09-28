@@ -208,4 +208,65 @@ namespace mxl::lib
         /** The number of slots of the flow. */
         std::size_t _slotCount;
     };
+
+    /**
+     * Stands in for the storage of a flow whose backend cannot be used in this process, for example because the
+     * backend library is not installed or its device runtime is missing.
+     *
+     * A reader can still open the flow and read its metadata. Every access to the payload storage throws
+     * PayloadStorageError with the status that explains why the backend is not available.
+     */
+    class MXL_EXPORT
+    UnavailablePayloadStorage final : public PayloadStorage
+    {
+    public:
+        /**
+         * \param[in] type The storage type recorded for the flow.
+         * \param[in] slotCount The number of slots of the flow.
+         * \param[in] status The status to report for every access to the payload storage.
+         * \param[in] reason A description of why the backend is not available.
+         */
+        UnavailablePayloadStorage(mxlPayloadStorageType type, std::size_t slotCount, mxlStatus status, std::string reason);
+
+        /** \see PayloadStorage::type() */
+        [[nodiscard]]
+        mxlPayloadStorageType type() const noexcept override;
+
+        /** \see PayloadStorage::deviceIndex() */
+        [[nodiscard]]
+        std::int32_t deviceIndex() const noexcept override;
+
+        /** \see PayloadStorage::slotCount() */
+        [[nodiscard]]
+        std::size_t slotCount() const noexcept override;
+
+        /**
+         * \see PayloadStorage::slotStorage()
+         * \throws PayloadStorageError always.
+         */
+        [[nodiscard]]
+        mxlGrainStorage slotStorage(std::size_t slot) const override;
+
+        /**
+         * \see PayloadStorage::describeLayout()
+         * \throws PayloadStorageError always.
+         */
+        void describeLayout(mxlGrainStorageLayout& layout) const override;
+
+        /**
+         * \see PayloadStorage::mapSlots()
+         * \throws PayloadStorageError always.
+         */
+        void mapSlots() const override;
+
+    private:
+        /** The storage type recorded for the flow. */
+        mxlPayloadStorageType _type;
+        /** The number of slots of the flow. */
+        std::size_t _slotCount;
+        /** The status reported for every access. */
+        mxlStatus _status;
+        /** Why the backend is not available. */
+        std::string _reason;
+    };
 }

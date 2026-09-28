@@ -85,6 +85,9 @@ extern "C"
 
         /**
          * Device index (if payload is in device memory). -1 if on host memory.
+         * This is the index of the device in the writer's process, as numbered by the device API the payload backend
+         * uses. Other processes can number the same device differently, so it is for information only. Use
+         * mxlGrainStorageLayout.deviceUuid to identify the device.
          */
         int32_t deviceIndex;
 
