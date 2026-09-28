@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <exception>
 #include <filesystem>
+#include <stdexcept>
 #include <string>
 #include <uuid.h>
 #include <sys/file.h>
@@ -134,7 +135,7 @@ mxlStatus mxlGetFlowDef(mxlInstance instance, char const* flowId, char* buffer, 
 
 extern "C"
 MXL_EXPORT
-mxlStatus mxlCreateFlowReader(mxlInstance instance, char const* flowId, char const* /*options*/, mxlFlowReader* reader)
+mxlStatus mxlCreateFlowReader(mxlInstance instance, char const* flowId, char const* options, mxlFlowReader* reader)
 {
     try
     {
@@ -144,7 +145,7 @@ mxlStatus mxlCreateFlowReader(mxlInstance instance, char const* flowId, char con
             {
                 if ((flowId != nullptr) && uuids::uuid::is_valid_uuid(flowId))
                 {
-                    *reader = reinterpret_cast<mxlFlowReader>(cppInstance->getFlowReader(flowId));
+                    *reader = reinterpret_cast<mxlFlowReader>(cppInstance->getFlowReaderWithOptions(flowId, (options != nullptr) ? options : ""));
                     return MXL_STATUS_OK;
                 }
             }
@@ -166,6 +167,17 @@ mxlStatus mxlCreateFlowReader(mxlInstance instance, char const* flowId, char con
             return MXL_ERR_PERMISSION_DENIED;
         }
         return MXL_ERR_UNKNOWN;
+    }
+    catch (PayloadStorageError const& e)
+    {
+        MXL_ERROR("Failed to create flow reader: {}", e.what());
+        return e.status();
+    }
+    catch (std::invalid_argument const& e)
+    {
+        // The options are not a JSON object.
+        MXL_ERROR("Failed to create flow reader: {}", e.what());
+        return MXL_ERR_INVALID_ARG;
     }
     catch (...)
     {
@@ -244,6 +256,11 @@ mxlStatus mxlCreateFlowWriter(mxlInstance instance, char const* flowDef, char co
             MXL_ERROR("Filesystem error: {}", code.message());
             return MXL_ERR_UNKNOWN;
         }
+    }
+    catch (PayloadStorageError const& e)
+    {
+        MXL_ERROR("Failed to create flow writer: {}", e.what());
+        return e.status();
     }
     catch (std::exception const& e)
     {
@@ -435,6 +452,11 @@ mxlStatus mxlFlowReaderGetStorageLayout(mxlFlowReader reader, mxlGrainStorageLay
         }
         return MXL_ERR_INVALID_ARG;
     }
+    catch (PayloadStorageError const& e)
+    {
+        MXL_ERROR("Failed to get storage layout: {}", e.what());
+        return e.status();
+    }
     catch (std::exception const& e)
     {
         MXL_ERROR("Failed to get storage layout: {}", e.what());
@@ -610,6 +632,11 @@ mxlStatus mxlFlowWriterGetStorageLayout(mxlFlowWriter writer, mxlGrainStorageLay
             return MXL_ERR_INVALID_FLOW_WRITER;
         }
         return MXL_ERR_INVALID_ARG;
+    }
+    catch (PayloadStorageError const& e)
+    {
+        MXL_ERROR("Failed to get storage layout: {}", e.what());
+        return e.status();
     }
     catch (std::exception const& e)
     {

@@ -5,6 +5,7 @@
 #include <picojson/picojson.h>
 #include <mxl/mxl.h>
 #include "mxl-internal/Logging.hpp"
+#include "mxl-internal/PayloadBackend.hpp"
 
 namespace mxl::lib
 {
@@ -77,5 +78,95 @@ namespace mxl::lib
     std::optional<std::uint32_t> FlowOptionsParser::getMaxSyncBatchSizeHint() const
     {
         return _maxSyncBatchSizeHint;
+    }
+
+    namespace
+    {
+        /** Name of the options object that describes the payload storage. */
+        constexpr auto PAYLOAD_OPTION = "payload";
+
+        /**
+         * \param[in] what The problem with the "payload" options.
+         * \return The error to throw.
+         */
+        PayloadStorageError invalidPayloadOption(std::string const& what)
+        {
+            return PayloadStorageError{MXL_ERR_INVALID_ARG, "Invalid \"payload\" option: " + what};
+        }
+
+        /**
+         * \param[in] root The parsed options.
+         * \return The "payload" object, or null if the options have none.
+         * \throws PayloadStorageError if "payload" is not an object.
+         */
+        picojson::object const* findPayloadObject(picojson::object const& root)
+        {
+            auto const it = root.find(PAYLOAD_OPTION);
+            if (it == root.end())
+            {
+                return nullptr;
+            }
+            if (!it->second.is<picojson::object>())
+            {
+                throw invalidPayloadOption("it must be an object.");
+            }
+            return &it->second.get<picojson::object>();
+        }
+    }
+
+    PayloadStorageSpec FlowOptionsParser::getPayloadStorageSpec() const
+    {
+        auto spec = PayloadStorageSpec{};
+        auto const* const payload = findPayloadObject(_root);
+        if (payload == nullptr)
+        {
+            return spec;
+        }
+
+        auto backendOptions = picojson::object{};
+        for (auto const& [key, value] : *payload)
+        {
+            if (key == "backend")
+            {
+                if (!value.is<std::string>() || !PayloadBackendLoader::isValidBackendName(value.get<std::string>()))
+                {
+                    throw invalidPayloadOption("\"backend\" must be a backend name of lowercase letters, digits and hyphens.");
+                }
+                spec.backend = value.get<std::string>();
+            }
+            else
+            {
+                backendOptions.emplace(key, value);
+            }
+        }
+
+        if (spec.backend == BUILT_IN_HOST_PAYLOAD_BACKEND)
+        {
+            spec.backend.clear();
+        }
+
+        if (!backendOptions.empty())
+        {
+            if (!spec.usesBackend())
+            {
+                throw invalidPayloadOption("the built-in host storage accepts no options, but got \"" + backendOptions.begin()->first + "\".");
+            }
+            spec.backendOptions = picojson::value{backendOptions}.serialize();
+        }
+        return spec;
+    }
+
+    std::string FlowOptionsParser::getReaderPayloadOptions() const
+    {
+        auto const* const payload = findPayloadObject(_root);
+        if ((payload == nullptr) || payload->empty())
+        {
+            return {};
+        }
+        if (payload->find("backend") != payload->end())
+        {
+            throw invalidPayloadOption("readers cannot select the storage with \"backend\".");
+        }
+        return picojson::value{*payload}.serialize();
     }
 } // namespace mxl::lib

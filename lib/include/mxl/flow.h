@@ -454,7 +454,13 @@ extern "C"
      *
      * \param[in] instance The mxl instance created using mxlCreateInstance
      * \param[in] flowDef The flow definition from which a flow should be created if there is not already a flow with the same flow id.
-     * \param[in] options (optional) Additional options, can be NULL
+     * \param[in] options (optional) Additional options in JSON, can be NULL. The optional "payload" object selects where the
+     *     payload of a discrete flow is stored. libmxl interprets one of its keys, "backend", the name of a backend library that
+     *     ships with the SDK and holds the payload. Without it, or with "host", the payload is in host shared memory as before.
+     *     All other keys belong to the backend, which validates them, for example the device to allocate on. Invalid "payload"
+     *     options return MXL_ERR_INVALID_ARG. A backend that is not installed, and a flow that the backend cannot store, return
+     *     MXL_ERR_UNSUPPORTED_OPERATION. A flow whose payload is held by a backend accepts only one writer: creating a second
+     *     writer for it returns MXL_ERR_CONFLICT.
      * \param[out] writer A pointer to a memory location where the created flow writer will be written.
      * \param[out] configInfo (optional) A pointer to an mxlFlowConfigInfo structure.
      *     If not the null pointer, this structure will be updated with the flow information after the flow is created.
@@ -469,15 +475,27 @@ extern "C"
     mxlStatus mxlReleaseFlowWriter(mxlInstance instance, mxlFlowWriter writer);
 
     /**
-     * Open a reader for an existing flow.
+     * Create a reader for an existing flow, or obtain another reference to the reader this instance already has for it.
+     * Each successful call must be paired with a call to mxlReleaseFlowReader().
+     *
+     * Opening a reader does not access the payload storage, so a reader can be created in a process that cannot access the
+     * payload, for example to read the flow metadata.
+     *
      * \param[in] instance The mxl instance created using mxlCreateInstance
      * \param[in] flowId The id of the flow to read, as a UUID string.
-     * \param[in] options (optional) Additional options, can be NULL
-     * \param[out] reader A pointer to a memory location where the created flow reader will be written.
-     * \retval MXL_STATUS_OK The reader was created.
-     * \retval MXL_ERR_INVALID_ARG The instance, the flow id or the reader pointer is not valid.
+     * \param[in] options (optional) Reader options in JSON, can be NULL. The keys of the optional "payload" object are passed to
+     *     the backend that holds the payload of the flow, which validates them, for example the device on which this process
+     *     accesses the payload. Readers cannot select the storage, so "backend" is not accepted. Flows with the
+     *     built-in host storage ignore these keys. Only the options of the call that creates the reader are used.
+     * \param[out] reader A pointer to a memory location where the flow reader will be written.
+     * \retval MXL_STATUS_OK The reader was created, or another reference to it obtained.
+     * \retval MXL_ERR_INVALID_ARG The instance, the flow id, the options or the reader pointer is not valid.
      * \retval MXL_ERR_FLOW_NOT_FOUND There is no flow with this id in the domain.
      * \retval MXL_ERR_PERMISSION_DENIED The files of the flow cannot be accessed with the permissions of the process.
+     * \retval MXL_ERR_INVALID_STATE The payload of the flow is held by a backend, and its payload descriptor, payload.json in
+     *     the flow directory, is missing or invalid.
+     * \retval MXL_ERR_UNSUPPORTED_OPERATION The payload descriptor of the flow is in a format this SDK does not know, written by
+     *     another release.
      * \retval MXL_ERR_UNKNOWN Any other failure.
      */
     MXL_EXPORT
@@ -641,8 +659,10 @@ extern "C"
      *
      * \param[in] reader A valid discrete flow reader.
      * \param[out] layout A valid pointer to a structure that receives the layout.
-     * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if layout is NULL, or MXL_ERR_INVALID_FLOW_READER if
-     *      reader is not a valid discrete flow reader.
+     * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if layout is NULL, MXL_ERR_INVALID_FLOW_READER if
+     *      reader is not a valid discrete flow reader, or MXL_ERR_UNSUPPORTED_OPERATION if the backend that holds the
+     *      payload cannot be used in this process, for example because it is not installed. The reader can still read
+     *      the flow metadata.
      */
     MXL_EXPORT
     mxlStatus mxlFlowReaderGetStorageLayout(mxlFlowReader reader, mxlGrainStorageLayout* layout);
@@ -763,8 +783,8 @@ extern "C"
      *
      * \param[in] writer A valid discrete flow writer.
      * \param[out] layout A valid pointer to a structure that receives the layout.
-     * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if layout is NULL, or MXL_ERR_INVALID_FLOW_WRITER if
-     *      writer is not a valid discrete flow writer.
+     * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if layout is NULL, MXL_ERR_INVALID_FLOW_WRITER if
+     *      writer is not a valid discrete flow writer, or another error code if the storage cannot describe its layout.
      */
     MXL_EXPORT
     mxlStatus mxlFlowWriterGetStorageLayout(mxlFlowWriter writer, mxlGrainStorageLayout* layout);
