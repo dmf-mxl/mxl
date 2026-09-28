@@ -80,6 +80,7 @@ target_sources(mxl-internal-objects
             src/Logging.cpp
             src/MediaUtils.cpp
             src/PathUtils.cpp
+            src/PayloadBackend.cpp
             src/PayloadStorage.cpp
             src/PosixContinuousFlowReader.cpp
             src/PosixContinuousFlowWriter.cpp
@@ -116,6 +117,12 @@ target_include_directories(mxl-internal-objects
 target_link_libraries(mxl-internal-objects
         PRIVATE
             mxl-internal-headers
+    )
+
+# The payload backend loader uses dlopen(). On older glibc and on some other platforms it lives in a separate library.
+target_link_libraries(mxl-internal-objects
+        INTERFACE
+            ${CMAKE_DL_LIBS}
     )
 
 # Enable LTO/IPO on target if enabled and supported
