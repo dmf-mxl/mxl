@@ -1,5 +1,8 @@
 var NAVTREEINDEX13 =
 {
+"namespacemxl_1_1lib.html#ac635ae6fa32715af59e16f08093fcda6":[1,0,1,0,49],
+"namespacemxl_1_1lib.html#ac74c1ea407f851b3914f32d0f2c80f63":[1,0,1,0,77],
+"namespacemxl_1_1lib.html#ac790ffdc56e090cc3b808235965a7da6":[1,0,1,0,40],
 "namespacemxl_1_1lib.html#ac7a6dcbc0a5565d4a6700dbc4cef02b1":[1,0,1,0,37],
 "namespacemxl_1_1lib.html#ac7a6dcbc0a5565d4a6700dbc4cef02b1a47c7e7cb36a953a8c47e02000036bb44":[1,0,1,0,37,0],
 "namespacemxl_1_1lib.html#ac7a6dcbc0a5565d4a6700dbc4cef02b1a75139f51d6c8f471e006c04eab46548c":[1,0,1,0,37,2],
@@ -244,10 +247,7 @@ var NAVTREEINDEX13 =
 "structmxlWrappedMultiBufferSlice__t.html#a19cda114c5f63a539c5048b1621ee1dd":[2,0,25,0],
 "structmxlWrappedMultiBufferSlice__t.html#a4829e7ae2040e290adae63b83f846523":[2,0,25,1],
 "structmxlWrappedMultiBufferSlice__t.html#ad111dcac53c787b5e66b170fa569e1ad":[2,0,25,2],
-"structmxl_1_1lib_1_1DomainWatcherRecord.html":[2,0,1,0,9],
 "structmxl_1_1lib_1_1DomainWatcherRecord.html":[1,0,1,0,11],
-"structmxl_1_1lib_1_1DomainWatcherRecord.html#a78b7df1863c7ec2d936f1525ff43701c":[1,0,1,0,11,4],
-"structmxl_1_1lib_1_1DomainWatcherRecord.html#a78b7df1863c7ec2d936f1525ff43701c":[2,0,1,0,9,4],
-"structmxl_1_1lib_1_1DomainWatcherRecord.html#a7a7c5a1b2b725d8c76553e41a4471aa9":[2,0,1,0,9,5],
-"structmxl_1_1lib_1_1DomainWatcherRecord.html#a7a7c5a1b2b725d8c76553e41a4471aa9":[1,0,1,0,11,5]
+"structmxl_1_1lib_1_1DomainWatcherRecord.html":[2,0,1,0,9],
+"structmxl_1_1lib_1_1DomainWatcherRecord.html#a78b7df1863c7ec2d936f1525ff43701c":[1,0,1,0,11,4]
 };

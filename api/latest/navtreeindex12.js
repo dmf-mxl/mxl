@@ -121,6 +121,9 @@ var NAVTREEINDEX12 =
 "globals_w.html":[3,1,0,16],
 "hierarchy.html":[2,2],
 "index.html":[],
+"internal_2tests_2test__instance_8cpp.html":[3,0,0,2,2,2],
+"internal_2tests_2test__instance_8cpp.html#aab19a6f77b46bf4ce984db8d4fc28ade":[3,0,0,2,2,2,0],
+"internal_2tests_2test__instance_8cpp_source.html":[3,0,0,2,2,2],
 "mxl_8cpp.html":[3,0,0,3,1],
 "mxl_8cpp.html#a1eab869798535b079c3f27b685b4ba67":[3,0,0,3,1,1],
 "mxl_8cpp.html#a2af50793d53b5d7d336123ad00c31fc7":[3,0,0,3,1,3],
@@ -246,8 +249,5 @@ var NAVTREEINDEX12 =
 "namespacemxl_1_1lib.html#abd8d288ed00c27afbf11d9e2c4c7622a":[1,0,1,0,112],
 "namespacemxl_1_1lib.html#ac2ae6195dd3172fbb7a3594d771d9c8a":[1,0,1,0,102],
 "namespacemxl_1_1lib.html#ac2f9c829df788056e61f0f047263bf9b":[1,0,1,0,86],
-"namespacemxl_1_1lib.html#ac56568c9b90aa7900cafd0c54bf6b43e":[1,0,1,0,60],
-"namespacemxl_1_1lib.html#ac635ae6fa32715af59e16f08093fcda6":[1,0,1,0,49],
-"namespacemxl_1_1lib.html#ac74c1ea407f851b3914f32d0f2c80f63":[1,0,1,0,77],
-"namespacemxl_1_1lib.html#ac790ffdc56e090cc3b808235965a7da6":[1,0,1,0,40]
+"namespacemxl_1_1lib.html#ac56568c9b90aa7900cafd0c54bf6b43e":[1,0,1,0,60]
 };
