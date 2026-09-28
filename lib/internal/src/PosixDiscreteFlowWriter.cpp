@@ -88,6 +88,17 @@ namespace mxl::lib
             return MXL_ERR_UNKNOWN;
         }
 
+        auto slot = std::size_t{0};
+        auto const result = openGrainImpl(in_index, out_grainInfo, &slot);
+        if (result == MXL_STATUS_OK)
+        {
+            *out_payload = _flowData->payloadStorage().hostPayload(slot);
+        }
+        return result;
+    }
+
+    mxlStatus PosixDiscreteFlowWriter::openGrainImpl(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::size_t* out_slot)
+    {
         auto const reopening = (_currentIndex == in_index);
 
         if ((_lastCommittedIndex != MXL_UNDEFINED_INDEX) && (in_index <= _lastCommittedIndex))
@@ -123,7 +134,7 @@ namespace mxl::lib
             grain->header.info.validSlices = 0;
         }
         *out_grainInfo = grain->header.info;
-        *out_payload = reinterpret_cast<std::uint8_t*>(&grain->header + 1);
+        *out_slot = offset;
         _currentIndex = in_index;
         return MXL_STATUS_OK;
     }

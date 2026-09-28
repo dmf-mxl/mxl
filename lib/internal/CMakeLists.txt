@@ -77,6 +77,7 @@ target_sources(mxl-internal-objects
             src/Logging.cpp
             src/MediaUtils.cpp
             src/PathUtils.cpp
+            src/PayloadStorage.cpp
             src/PosixContinuousFlowReader.cpp
             src/PosixContinuousFlowWriter.cpp
             src/PosixDiscreteFlowReader.cpp
