@@ -21,6 +21,7 @@ target_sources(mxl-internal-tests
         PRIVATE
             test_domainwatcher.cpp
             test_flowmanager.cpp
+            test_instance.cpp
             test_options.cpp
             test_sharedmem.cpp
     )
