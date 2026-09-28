@@ -3,6 +3,7 @@
 
 #include "mxl-internal/PayloadStorage.hpp"
 #include <cstring>
+#include <algorithm>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
@@ -38,7 +39,31 @@ namespace mxl::lib
     static_assert(sizeof(mxlGrainStorage) == 256, "mxlGrainStorage must be 256 bytes.");
     static_assert(std::has_unique_object_representations_v<mxlGrainStorageLayout>, "mxlGrainStorageLayout must not contain padding.");
 
+    PayloadStorageError::PayloadStorageError(mxlStatus status, std::string const& what)
+        : std::runtime_error{what}
+        , _status{status}
+    {}
+
+    mxlStatus PayloadStorageError::status() const noexcept
+    {
+        return _status;
+    }
+
     PayloadStorage::~PayloadStorage() = default;
+
+    bool isValidStorageTypeName(std::string_view name) noexcept
+    {
+        auto const isLowerOrDigit = [](char c)
+        {
+            return ((c >= 'a') && (c <= 'z')) || ((c >= '0') && (c <= '9'));
+        };
+
+        if (name.empty() || (name.size() >= MXL_PAYLOAD_STORAGE_TYPE_SIZE) || !isLowerOrDigit(name.front()) || !isLowerOrDigit(name.back()))
+        {
+            return false;
+        }
+        return std::ranges::all_of(name, [&](char c) { return isLowerOrDigit(c) || (c == '-') || (c == '_') || (c == '.'); });
+    }
 
     HostPayloadStorage::HostPayloadStorage(DiscreteFlowData& flowData)
         : _slotPayloads{}
@@ -91,9 +116,9 @@ namespace mxl::lib
 
         // The storage type is a null terminated name, followed by zeros up to the end of the field.
         auto const type = storage.type();
-        if (type.empty() || (type.size() >= sizeof(result.storageType)))
+        if (!isValidStorageTypeName(type))
         {
-            throw std::logic_error{fmt::format("Payload storage reported a storage type of {} bytes.", type.size())};
+            throw std::logic_error{fmt::format("Payload storage reported the invalid storage type '{}'.", type)};
         }
         type.copy(result.storageType, type.size());
 
