@@ -148,6 +148,7 @@ namespace mxl::lib::fabrics::ofi
                                                single write. */
         std::optional<RegisteredRegion> _stagingRegistration; /**< Registration of _staging, owned here so it goes with the target. */
         std::optional<LocalRegion> _stagingRegion;            /**< The registered region backing _staging. */
+        bool _saturated{false};                               /**< The last transfer was skipped, the previous round of writes still in flight. */
         std::size_t _pending = 0;
         std::uint32_t _bounceBufferEntryIndex{0};             /**< The index of the bounce buffer entry to use for the next transfer. */
         std::size_t _bounceBufferEntryCount; /**< The total number of bounce buffer entries. Used to wrap around the bounce buffer entry index. */
