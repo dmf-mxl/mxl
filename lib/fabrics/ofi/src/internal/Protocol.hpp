@@ -100,6 +100,10 @@ namespace mxl::lib::fabrics::ofi
          */
         virtual void processCompletion(Completion::Data const& completion) = 0;
 
+        /** \brief Account for an operation of this protocol that completed with an error.
+         */
+        virtual void processCompletionError(Completion::Error const& error) = 0;
+
         /** \brief Check if there is uncompleted requests.
          */
         [[nodiscard]]
