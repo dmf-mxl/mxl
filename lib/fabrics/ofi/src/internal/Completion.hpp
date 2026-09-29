@@ -76,6 +76,11 @@ namespace mxl::lib::fabrics::ofi
             [[nodiscard]]
             Token token() const noexcept;
 
+            /** \brief The positive libfabric error code, FI_ECANCELED for an operation flushed from its queue.
+             */
+            [[nodiscard]]
+            int code() const noexcept;
+
         private:
             friend class CompletionQueue;
 
