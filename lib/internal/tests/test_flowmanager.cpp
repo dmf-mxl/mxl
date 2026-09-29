@@ -642,3 +642,29 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: paralle
     // In each iteration all workers that did not create the flow should have opened it.
     REQUIRE(numOpened.load() == numIterations * (numWorkers - 1));
 }
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow Manager : Reject flows with a payload location", "[flow manager]")
+{
+    auto manager = std::make_shared<FlowManager>(domain);
+
+    auto const flowId = *uuids::uuid::from_string("33333333-3333-3333-3333-333333333333");
+    auto const flowDef = mxl::tests::readFile("data/v210_flow.json");
+    auto const payloadSize = 512;
+    auto const sliceSizes = std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN>{payloadSize, 0, 0, 0};
+
+    auto [created, flowData] = manager->createOrOpenDiscreteFlow(
+        flowId, flowDef, MXL_DATA_FORMAT_VIDEO, 3, mxlRational{60000, 1001}, payloadSize, 0, sliceSizes);
+    REQUIRE(created);
+
+    // Writers leave the deprecated fields at 0 and -1.
+    REQUIRE(flowData->flowInfo()->config.common.payloadLocation == 0U);
+    REQUIRE(flowData->flowInfo()->config.common.deviceIndex == -1);
+
+    // Other software may set it to say that the payload is elsewhere.
+    flowData->flowInfo()->config.common.payloadLocation = 1U;
+    flowData.reset();
+
+    REQUIRE_THROWS_AS(manager->openFlow(flowId, AccessMode::READ_ONLY), std::invalid_argument);
+    REQUIRE_THROWS_AS(manager->openFlow(flowId, AccessMode::READ_WRITE), std::invalid_argument);
+    REQUIRE(manager->deleteFlow(flowId));
+}
