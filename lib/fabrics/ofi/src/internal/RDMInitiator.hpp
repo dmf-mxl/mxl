@@ -178,9 +178,18 @@ namespace mxl::lib::fabrics::ofi
          */
         void blockOnCQ(std::chrono::steady_clock::duration timeout);
 
-        /** \brief Poll the completion queue and process the events until the queue is empty.
+        /** \brief Process completions until the completion queue is empty.
          */
-        void pollCQ();
+        void drainCQ();
+
+        /** \brief Offer a transfer to every target.
+         *
+         * \param transfer Called once per target.
+         * \throws Exception The first one thrown by transfer, after every target was offered the transfer. Any other exception propagates
+         * immediately.
+         */
+        template<typename F>
+        void forEachTarget(F&& transfer);
 
         /** \brief Try to activate any idle endpoints.
          */
