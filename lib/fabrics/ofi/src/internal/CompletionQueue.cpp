@@ -130,7 +130,8 @@ namespace mxl::lib::fabrics::ofi
         if (ret == -FI_EAVAIL)
         {
             // An entry is available but in the error queue
-            ::fi_cq_err_entry err;
+            // Zeroed: a non-zero err_data_size makes fi_cq_readerr copy into err_data.
+            ::fi_cq_err_entry err{};
             fi_cq_readerr(_raw, &err, 0);
 
             return Completion{
