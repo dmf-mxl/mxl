@@ -156,12 +156,6 @@ namespace mxl::lib::fabrics::ofi
             "GrainHeader type size changed! The Fabrics API makes assumptions on the memory layout of a flow, please review the code below if the "
             "change is intended!");
 
-        if (flow.flowInfo()->config.common.payloadLocation != MXL_PAYLOAD_LOCATION_HOST_MEMORY)
-        {
-            throw Exception::make(MXL_ERR_UNKNOWN,
-                "GPU memory is not currently supported in the Flow API of MXL. Edit the code below when it is supported");
-        }
-
         if (mxlIsDiscreteDataFormat(static_cast<int>(flow.flowInfo()->config.common.format)))
         {
             auto const& discreteFlow = static_cast<DiscreteFlowData const&>(flow);
