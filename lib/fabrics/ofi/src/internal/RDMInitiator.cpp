@@ -5,6 +5,7 @@
 #include "RDMInitiator.hpp"
 #include <algorithm>
 #include <cassert>
+#include <exception>
 #include <chrono>
 #include <cstdint>
 #include <memory>
@@ -223,12 +224,11 @@ namespace mxl::lib::fabrics::ofi
     void RDMInitiator::transferGrain(std::uint64_t grainIndex, std::uint16_t startSlice, std::uint16_t endSlice)
     {
         // Post a transfer work item to all targets. If the target is not in "Added" state
-        // this is a no-op.
-        for (auto& [_, target] : _targets)
-        {
-            // A completion will be posted to the completion queue, after which the counter will be decremented again
-            target.transferGrain(_endpoint, grainIndex, grainIndex, MXL_GRAIN_PAYLOAD_OFFSET, SliceRange::make(startSlice, endSlice));
-        }
+        // this is a no-op. One target refusing the work -- EFA answers EAGAIN
+        // for a peer in backoff -- does not withhold it from the others; the
+        // first failure is reported once every target has been offered it.
+        forEachTarget([&](RDMInitiatorTarget& target)
+            { target.transferGrain(_endpoint, grainIndex, grainIndex, MXL_GRAIN_PAYLOAD_OFFSET, SliceRange::make(startSlice, endSlice)); });
     }
 
     void RDMInitiator::transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t payloadOffset,
@@ -240,10 +240,7 @@ namespace mxl::lib::fabrics::ofi
 
     void RDMInitiator::transferSamples(std::uint64_t headIndex, std::size_t count)
     {
-        for (auto& [_, target] : _targets)
-        {
-            target.transferSamples(_endpoint, headIndex, count);
-        }
+        forEachTarget([&](RDMInitiatorTarget& target) { target.transferSamples(_endpoint, headIndex, count); });
     }
 
     // makeProgress
@@ -336,14 +333,41 @@ namespace mxl::lib::fabrics::ofi
         if (auto completion = _endpoint.completionQueue()->readBlocking(timeout); completion)
         {
             processCompletion(*completion);
+            pollCQ();
         }
     }
 
     void RDMInitiator::pollCQ()
     {
-        if (auto completion = _endpoint.completionQueue()->read(); completion)
+        // Every completion that is there. One per call let a fan-out that posts
+        // a write per target per call fill the queue faster than it drained.
+        while (auto completion = _endpoint.completionQueue()->read())
         {
             processCompletion(*completion);
+        }
+    }
+
+    template<typename F>
+    void RDMInitiator::forEachTarget(F&& transfer)
+    {
+        auto failure = std::exception_ptr{};
+        for (auto& [_, target] : _targets)
+        {
+            try
+            {
+                transfer(target);
+            }
+            catch (...)
+            {
+                if (!failure)
+                {
+                    failure = std::current_exception();
+                }
+            }
+        }
+        if (failure)
+        {
+            std::rethrow_exception(failure);
         }
     }
 
