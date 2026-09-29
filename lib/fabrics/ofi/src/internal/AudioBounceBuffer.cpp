@@ -95,6 +95,12 @@ namespace mxl::lib::fabrics::ofi
             return *header;
         }
 
+        if (header->count > _layout.bufferLength)
+        {
+            throw Exception::invalidArgument(
+                "Invalid 'count' {} received in the header. More samples per channel than the ring holds ({}).", header->count, _layout.bufferLength);
+        }
+
         if (header->count > maxCountPerEntry)
         {
             throw Exception::invalidArgument(
