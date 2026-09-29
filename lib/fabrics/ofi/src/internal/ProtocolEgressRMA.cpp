@@ -4,6 +4,7 @@
 
 #include "ProtocolEgressRMA.hpp"
 #include <cstring>
+#include <mxl-internal/Logging.hpp>
 #include "AudioBounceBuffer.hpp"
 #include "DataLayout.hpp"
 #include "Exception.hpp"
@@ -194,11 +195,19 @@ namespace mxl::lib::fabrics::ofi
         }
 
         // An entry is rewritten only once the write that last sent it has completed. With as many writes in flight as there are entries, the next
-        // one would overwrite a staging entry the provider may still be reading; the caller gets the same answer as for a full send queue.
+        // one would overwrite a staging entry the provider may still be reading, so this target misses the transfer. Only this target: failing
+        // the call would have the caller retry it for every target of the flow, and a peer that stopped completing -- one that died -- would
+        // hold back all of them until its writes time out.
         if (_pending >= _bounceBufferEntryCount)
         {
-            throw FabricException::make(-FI_EAGAIN, "All {} bounce buffer entries of this target are in flight.", _bounceBufferEntryCount);
+            if (!_saturated)
+            {
+                MXL_WARN("All {} bounce buffer entries of a target are in flight, skipping its transfers until one completes.", _bounceBufferEntryCount);
+                _saturated = true;
+            }
+            return;
         }
+        _saturated = false;
 
         auto const entrySize = _remoteInfo.bounceBufferInfo->entrySize;
         auto const entrySizeRequired = (_layout.sampleSize * _layout.channelCount * count) + sizeof(AudioEntryHeader);
