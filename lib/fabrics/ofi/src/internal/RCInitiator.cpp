@@ -489,6 +489,8 @@ namespace mxl::lib::fabrics::ofi
                 if (ep == _targets.end())
                 {
                     MXL_WARN("Received completion for an unknown endpoint");
+
+                    return afterProgressResult();
                 }
 
                 ep->second.consume(*completion);
