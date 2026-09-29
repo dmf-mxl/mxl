@@ -9,9 +9,11 @@
 #include <utility>
 #include <fmt/base.h>
 #include <fmt/color.h>
+#include <mxl-internal/Logging.hpp>
 #include "Completion.hpp"
 #include "Endpoint.hpp"
 #include "Event.hpp"
+#include "EventQueue.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
@@ -100,5 +102,22 @@ namespace mxl::lib::fabrics::ofi
         }
 
         return completion;
+    }
+
+    /** \brief Read all entries from a connectionless endpoint's event queue and log the errors among them.
+     *
+     * The errors concern work the provider does on its own behalf, such as EFA's peer handshake, so they are only logged.
+     *
+     * \param eq The event queue to drain.
+     */
+    inline void drainEventQueue(EventQueue& eq)
+    {
+        while (auto event = eq.read())
+        {
+            if (event->isError())
+            {
+                MXL_WARN("Event queue error: {}", event->error().toString());
+            }
+        }
     }
 }
