@@ -39,11 +39,15 @@ namespace mxl::lib::fabrics::ofi
     Completion::Error::Error(::fi_cq_err_entry const& raw, std::shared_ptr<CompletionQueue> cq)
         : _raw(raw)
         , _cq(std::move(cq))
-    {}
+        , _message(::fi_cq_strerror(_cq->raw(), _raw.prov_errno, _raw.err_data, nullptr, 0))
+    {
+        _raw.err_data = nullptr;
+        _raw.err_data_size = 0;
+    }
 
     std::string Completion::Error::toString() const
     {
-        return ::fi_cq_strerror(_cq->raw(), _raw.prov_errno, _raw.err_data, nullptr, 0);
+        return _message;
     }
 
     Completion::Token Completion::Error::token() const noexcept
