@@ -50,6 +50,11 @@ namespace mxl::lib::fabrics::ofi
         return _message;
     }
 
+    int Completion::Error::code() const noexcept
+    {
+        return _raw.err;
+    }
+
     Completion::Token Completion::Error::token() const noexcept
     {
         return tokenFromContextValue(_raw.op_context);
