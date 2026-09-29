@@ -10,10 +10,12 @@
 #include <fmt/base.h>
 #include <fmt/color.h>
 #include <mxl-internal/Logging.hpp>
+#include <rdma/fi_errno.h>
 #include "Completion.hpp"
 #include "Endpoint.hpp"
 #include "Event.hpp"
 #include "EventQueue.hpp"
+#include "Exception.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
@@ -112,12 +114,21 @@ namespace mxl::lib::fabrics::ofi
      */
     inline void drainEventQueue(EventQueue& eq)
     {
-        while (auto event = eq.read())
+        try
         {
-            if (event->isError())
+            while (auto event = eq.read())
             {
-                MXL_WARN("Event queue error: {}", event->error().toString());
+                if (event->isError())
+                {
+                    auto const& error = event->error();
+                    // The provider code is logged as a number: fi_strerror() would name an unrelated error.
+                    MXL_WARN("Event queue error: {} ({}), provider code {}", ::fi_strerror(error.code()), error.code(), error.providerCode());
+                }
             }
+        }
+        catch (Exception const& ex)
+        {
+            MXL_WARN("Unhandled entry on the event queue: {}", ex.what());
         }
     }
 }
