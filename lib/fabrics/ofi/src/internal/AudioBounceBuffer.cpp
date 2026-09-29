@@ -18,7 +18,9 @@ namespace mxl::lib::fabrics::ofi
         auto const startOffset = (index + bufferLength - count) % bufferLength;
         auto const endOffset = (index % bufferLength);
 
-        auto const firstLength = (startOffset < endOffset) ? count : bufferLength - startOffset;
+        // Empty unless count > 0: start and end offsets coincide both for no samples and for a full ring, and read as the latter the second
+        // length underflowed to nearly SIZE_MAX.
+        auto const firstLength = (count == 0) ? 0 : (startOffset < endOffset) ? count : bufferLength - startOffset;
         auto const secondLength = count - firstLength;
 
         slice.base.fragments[0].pointer = baseBufferPtr + (sampleWordSize * startOffset);

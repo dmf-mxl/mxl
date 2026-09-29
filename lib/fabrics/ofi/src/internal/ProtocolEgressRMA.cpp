@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ProtocolEgressRMA.hpp"
+#include <cstring>
 #include "AudioBounceBuffer.hpp"
 #include "DataLayout.hpp"
 #include "Exception.hpp"
@@ -90,6 +91,14 @@ namespace mxl::lib::fabrics::ofi
         }
     }
 
+    void RMAGrainEgressProtocol::processCompletionError(Completion::Error const&)
+    {
+        if (_pending > 0)
+        {
+            --_pending;
+        }
+    }
+
     bool RMAGrainEgressProtocol::hasPendingWork() const
     {
         return _pending > 0;
@@ -139,37 +148,24 @@ namespace mxl::lib::fabrics::ofi
         , _remoteInfo{std::move(info)}
         , _layout{layout}
         , _localRegion{localRegion}
-        , _entryHeaders{bounceBufferEntryCount}
+        , _staging(bounceBufferEntryCount * _remoteInfo.bounceBufferInfo->entrySize)
         , _bounceBufferEntryCount{bounceBufferEntryCount}
     {}
 
     void RMASampleEgressProtocol::registerMemory(std::shared_ptr<Domain> domain)
     {
-        if (_entryHeaders.empty())
+        if (_staging.empty())
         {
-            throw Exception::invalidState("Entry headers buffer are not initialized.");
+            throw Exception::invalidState("Staging buffer is not initialized.");
         }
 
-        auto entryHeaderRegions = std::vector<Region>{};
-        entryHeaderRegions.reserve(_entryHeaders.size());
-        for (auto& header : _entryHeaders)
-        {
-            entryHeaderRegions.emplace_back(reinterpret_cast<std::uintptr_t>(&header),
-                sizeof(AudioEntryHeader),
-                nullptr,
-                nullptr,
-                Region::Location::host()); // Host, because the bounce buffer will always be stored on host memory.
-        }
-
-        // The domain is shared with all endpoints, if there's more than 1 target, we can't assume that the first audio header entry for this target
-        // will be at index 1 (right after the audio samples buffer). Read the number of regions already registered to the domain, then
-        // register the entry header regions, and finally get the local regions again to retrieve the actual regions corresponding to the entry
-        // headers we just registered. Use the offset to correctly get the entry header regions in the list of local regions.
+        // The domain is shared with all endpoints, if there's more than 1 target, the staging region of this target is not the first one registered
+        // to the domain. Read the number of regions already registered, then register the staging region, and pick it out of the local regions by
+        // that offset.
         auto const offset = domain->localRegions().size();
-        domain->registerRegions(entryHeaderRegions, FI_WRITE);
-        auto const localRegions = domain->localRegions();
-
-        _entryHeaderRegions = std::vector(localRegions.cbegin() + static_cast<std::ptrdiff_t>(offset), localRegions.cend());
+        domain->registerRegion(
+            Region{reinterpret_cast<std::uintptr_t>(_staging.data()), _staging.size(), nullptr, nullptr, Region::Location::host()}, FI_WRITE);
+        _stagingRegion = domain->localRegions().at(offset);
     }
 
     void RMASampleEgressProtocol::transferGrain(Endpoint const&, std::uint64_t, std::uint64_t, std::uint32_t, SliceRange const&, ::fi_addr_t)
@@ -184,47 +180,42 @@ namespace mxl::lib::fabrics::ofi
             throw Exception::invalidArgument("Count must be greater than 0.");
         }
 
+        auto const entrySize = _remoteInfo.bounceBufferInfo->entrySize;
         auto const entrySizeRequired = (_layout.sampleSize * _layout.channelCount * count) + sizeof(AudioEntryHeader);
-        if (entrySizeRequired > _remoteInfo.bounceBufferInfo->entrySize)
+        if (entrySizeRequired > entrySize)
         {
             throw Exception::invalidArgument("Count is too large for the bounce buffer entry size. Count {}, entry size {}, required entry size {}.",
                 count,
-                _remoteInfo.bounceBufferInfo->entrySize,
+                entrySize,
                 entrySizeRequired);
         }
 
-        // 1- Create the scatter-gather list for the transfer and prepend the audio header.
-        auto sgl = makeScatterGatherList(_layout, headIndex, count, _localRegion);
-        // set the header and prepend it to the scatter-gather list.
-        _entryHeaders[_bounceBufferEntryIndex].headIndex = headIndex;
-        _entryHeaders[_bounceBufferEntryIndex].count = count;
-        sgl.insert(sgl.begin(), _entryHeaderRegions[_bounceBufferEntryIndex]);
+        // One write per transfer, from a staging copy of the entry. The target reads the header when the write carrying the immediate data
+        // completes, and a provider without write-after-write ordering -- EFA -- delivers the writes of a scatter-gather list split over several
+        // messages in any order. Split, a 12-channel transfer read a header the first message had not delivered yet.
+        auto const offset = static_cast<std::size_t>(_bounceBufferEntryIndex) * entrySize;
+        auto* entry = _staging.data() + offset;
+        auto const header = AudioEntryHeader{.headIndex = headIndex, .count = count};
+        std::memcpy(entry, &header, sizeof(header));
+        copySamples(_layout, headIndex, count, _localRegion, entry + sizeof(header));
 
-        // 2- Get the remote region
         auto const remoteRegion = _remoteInfo.remoteRegions[_bounceBufferEntryIndex % _remoteInfo.remoteRegions.size()];
 
-        // 3- Send the remote write
-        // Count what reached the provider, not what was asked for. Crediting
-        // nothing on a part-way failure left completions arriving for writes
-        // this counter never knew about, and it is unsigned, so it wrapped
-        // and the protocol reported pending work for the rest of its life.
-        auto posted = std::size_t{0};
-        try
-        {
-            ep.write(_token, sgl, remoteRegion, destAddr, _bounceBufferEntryIndex, &posted);
-        }
-        catch (...)
-        {
-            _pending += posted;
-            throw;
-        }
-        _pending += posted;
+        _pending += ep.write(
+            _token, _stagingRegion->sub(offset, entrySizeRequired), remoteRegion.sub(0, entrySizeRequired), destAddr, _bounceBufferEntryIndex);
 
-        // 4- update bounce buffer entry index for the next transfer
         _bounceBufferEntryIndex = (_bounceBufferEntryIndex + 1) % _bounceBufferEntryCount;
     }
 
     void RMASampleEgressProtocol::processCompletion(Completion::Data const&)
+    {
+        if (_pending > 0)
+        {
+            --_pending;
+        }
+    }
+
+    void RMASampleEgressProtocol::processCompletionError(Completion::Error const&)
     {
         if (_pending > 0)
         {
@@ -242,8 +233,8 @@ namespace mxl::lib::fabrics::ofi
         return std::exchange(_pending, 0);
     }
 
-    std::vector<LocalRegion> RMASampleEgressProtocol::makeScatterGatherList(DataLayout::Continuous const& layout, std::uint64_t headIndex,
-        std::size_t count, LocalRegion const& region)
+    void RMASampleEgressProtocol::copySamples(DataLayout::Continuous const& layout, std::uint64_t headIndex, std::size_t count,
+        LocalRegion const& region, std::uint8_t* dst)
     {
         auto slice = mxlMutableWrappedMultiBufferSlice{};
         AudioBounceBuffer::getMutableMultiBufferSlices(headIndex,
@@ -254,32 +245,19 @@ namespace mxl::lib::fabrics::ofi
             reinterpret_cast<std::uint8_t*>(region.addr), // NOLINT
             slice);
 
-        // Double the scatter-gather list length if the second fragment is present.
-        auto const sgListLen = (slice.base.fragments[1].size > 0) ? 2 * slice.count : slice.count;
-
-        // Create the scatter-gather list using the slices. We create at least one scatter-gather entry per channel. We potentially create an
-        // additional one per channel if 2 fragments are present (wrap-around). When a fragment is not present its size will be 0.
-        auto sgList = std::vector<LocalRegion>{};
-        sgList.reserve(sgListLen);
-        // Write all fragments for one channel before moving to the next channel.
-        // Doing otherwise (fragment first) only works when source and target wrapped slices split at the same fragment sizes.
-        // If source and target have different ring positions, the target consumes the bytes with different fragment sizes and "stitches" the channel
-        // data back together incorrectly.
+        // All fragments of one channel before the next channel. Fragment first only works when source and target wrapped slices split at the
+        // same fragment sizes; with different ring positions the target would stitch the channel data back together incorrectly.
         for (auto chan = std::size_t{0}; chan < slice.count; chan++)
         {
             for (auto const& fragment : slice.base.fragments)
             {
-                // check if the fragment present
                 if (fragment.size > 0)
                 {
-                    auto const srcAddr = reinterpret_cast<std::uintptr_t>(fragment.pointer) + (slice.stride * chan);
-
-                    sgList.emplace_back(LocalRegion{.addr = srcAddr, .len = fragment.size, .desc = region.desc});
+                    std::memcpy(dst, static_cast<std::uint8_t const*>(fragment.pointer) + (slice.stride * chan), fragment.size);
+                    dst += fragment.size;
                 }
             }
         }
-
-        return sgList;
     }
 
     RMASampleEgressProtocolTemplate::RMASampleEgressProtocolTemplate(DataLayout::Continuous layout, Region region)

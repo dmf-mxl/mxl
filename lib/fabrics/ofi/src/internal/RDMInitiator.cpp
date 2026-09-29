@@ -105,9 +105,16 @@ namespace mxl::lib::fabrics::ofi
 
     void RDMInitiatorTarget::handleCompletion(Endpoint&, Completion completion)
     {
-        if (completion.isErrEntry())
+        if (auto const error = completion.tryErr(); error)
         {
-            MXL_ERROR("Completion error.");
+            // A failed write is finished all the same. Leaving it counted
+            // kept the target reporting pending work for the rest of its
+            // life.
+            MXL_ERROR("Completion error: {}", error->toString());
+            if (std::holds_alternative<Activated>(_state))
+            {
+                _proto->processCompletionError(*error);
+            }
             return;
         }
 

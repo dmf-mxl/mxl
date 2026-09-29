@@ -88,3 +88,22 @@ TEST_CASE("ofi: audio bounce buffer unpacks channel-major payload across ring wr
 
     REQUIRE(target == expectedTarget);
 }
+
+// An entry whose header has not arrived reads as zero samples. That has to describe no fragments at all rather than a whole ring, whose second
+// fragment has a length of nearly SIZE_MAX.
+TEST_CASE("ofi: audio bounce buffer unpacks an empty header into nothing", "[ofi][AudioBounceBuffer]")
+{
+    auto emptySlice = mxlMutableWrappedMultiBufferSlice{};
+    AudioBounceBuffer::getMutableMultiBufferSlices(0, 0, TargetBufferLength, sizeof(Sample), ChannelCount, nullptr, emptySlice);
+    REQUIRE(emptySlice.base.fragments[0].size == 0U);
+    REQUIRE(emptySlice.base.fragments[1].size == 0U);
+
+    auto target = std::vector<Sample>(ChannelCount * TargetBufferLength, UntouchedSample);
+    auto const targetLayout = DataLayout::Continuous{.sampleSize = sizeof(Sample), .channelCount = ChannelCount, .bufferLength = TargetBufferLength};
+    auto bounceBuffer = AudioBounceBuffer{1, SampleCount * ChannelCount * sizeof(Sample), targetLayout};
+
+    auto const outRegion = Region{regionBaseOf(target.data()), target.size() * sizeof(Sample), nullptr, nullptr, Region::Location::host()};
+    auto const unpackedHeader = bounceBuffer.unpack(0, outRegion);
+    REQUIRE(unpackedHeader.count == 0U);
+    REQUIRE(target == std::vector<Sample>(ChannelCount * TargetBufferLength, UntouchedSample));
+}
