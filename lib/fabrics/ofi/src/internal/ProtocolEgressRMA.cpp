@@ -148,9 +148,24 @@ namespace mxl::lib::fabrics::ofi
         , _remoteInfo{std::move(info)}
         , _layout{layout}
         , _localRegion{localRegion}
-        , _staging(bounceBufferEntryCount * _remoteInfo.bounceBufferInfo->entrySize)
+        , _staging(stagingSize(_remoteInfo, bounceBufferEntryCount))
         , _bounceBufferEntryCount{bounceBufferEntryCount}
     {}
+
+    std::size_t RMASampleEgressProtocol::stagingSize(TargetInfo const& info, std::size_t entryCount)
+    {
+        // The geometry comes from the target, and it is now an allocation and a pinned registration per target rather than a header per entry.
+        constexpr auto maxStagingSize = std::size_t{256} * 1024 * 1024;
+        auto const entrySize = info.bounceBufferInfo->entrySize;
+        if ((entryCount == 0) || (entrySize == 0) || (entryCount != info.remoteRegions.size()) || (entrySize > (maxStagingSize / entryCount)))
+        {
+            throw Exception::invalidArgument("Unusable bounce buffer geometry from the target: {} entries of {} bytes, {} remote regions.",
+                entryCount,
+                entrySize,
+                info.remoteRegions.size());
+        }
+        return entryCount * entrySize;
+    }
 
     void RMASampleEgressProtocol::registerMemory(std::shared_ptr<Domain> domain)
     {
@@ -159,13 +174,11 @@ namespace mxl::lib::fabrics::ofi
             throw Exception::invalidState("Staging buffer is not initialized.");
         }
 
-        // The domain is shared with all endpoints, if there's more than 1 target, the staging region of this target is not the first one registered
-        // to the domain. Read the number of regions already registered, then register the staging region, and pick it out of the local regions by
-        // that offset.
-        auto const offset = domain->localRegions().size();
-        domain->registerRegion(
-            Region{reinterpret_cast<std::uintptr_t>(_staging.data()), _staging.size(), nullptr, nullptr, Region::Location::host()}, FI_WRITE);
-        _stagingRegion = domain->localRegions().at(offset);
+        // Registered here rather than on the domain, which keeps what it registers until it closes: the staging copy goes with the target, and a
+        // target re-added for every peer restart would otherwise leave a whole pinned copy of its bounce buffer behind each time.
+        auto const region = Region{reinterpret_cast<std::uintptr_t>(_staging.data()), _staging.size(), nullptr, nullptr, Region::Location::host()};
+        _stagingRegistration.emplace(MemoryRegion::reg(*domain, region, FI_WRITE), region);
+        _stagingRegion = _stagingRegistration->toLocal();
     }
 
     void RMASampleEgressProtocol::transferGrain(Endpoint const&, std::uint64_t, std::uint64_t, std::uint32_t, SliceRange const&, ::fi_addr_t)
@@ -175,9 +188,16 @@ namespace mxl::lib::fabrics::ofi
 
     void RMASampleEgressProtocol::transferSamples(Endpoint const& ep, std::uint64_t headIndex, std::size_t count, ::fi_addr_t destAddr)
     {
-        if (count == 0)
+        if ((count == 0) || (count > _layout.bufferLength))
         {
-            throw Exception::invalidArgument("Count must be greater than 0.");
+            throw Exception::invalidArgument("Count must be greater than 0 and at most the ring length {}, got {}.", _layout.bufferLength, count);
+        }
+
+        // An entry is rewritten only once the write that last sent it has completed. With as many writes in flight as there are entries, the next
+        // one would overwrite a staging entry the provider may still be reading; the caller gets the same answer as for a full send queue.
+        if (_pending >= _bounceBufferEntryCount)
+        {
+            throw FabricException::make(-FI_EAGAIN, "All {} bounce buffer entries of this target are in flight.", _bounceBufferEntryCount);
         }
 
         auto const entrySize = _remoteInfo.bounceBufferInfo->entrySize;

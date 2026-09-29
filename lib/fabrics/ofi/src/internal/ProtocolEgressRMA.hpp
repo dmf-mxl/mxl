@@ -9,6 +9,7 @@
 #include "DataLayout.hpp"
 #include "Endpoint.hpp"
 #include "Protocol.hpp"
+#include "RegisteredRegion.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
@@ -133,6 +134,11 @@ namespace mxl::lib::fabrics::ofi
         static void copySamples(DataLayout::Continuous const& layout, std::uint64_t headIndex, std::size_t count, LocalRegion const& region,
             std::uint8_t* dst);
 
+        /** \brief Size of the staging copy of a target's bounce buffer, validated against what the target reported.
+         * \throws Exception::invalidArgument if the geometry is empty, inconsistent or unreasonably large.
+         */
+        static std::size_t stagingSize(TargetInfo const& info, std::size_t entryCount);
+
     private:
         Completion::Token _token;
         TargetInfo _remoteInfo;
@@ -140,7 +146,8 @@ namespace mxl::lib::fabrics::ofi
         LocalRegion _localRegion;                     /**< Registered local region corresponding to the user provided audio region.  */
         std::vector<std::uint8_t> _staging; /**< One registered copy of each remote bounce buffer entry, header and samples, so a transfer is a
                                                single write. */
-        std::optional<LocalRegion> _stagingRegion; /**< The registered region backing _staging. */
+        std::optional<RegisteredRegion> _stagingRegistration; /**< Registration of _staging, owned here so it goes with the target. */
+        std::optional<LocalRegion> _stagingRegion;            /**< The registered region backing _staging. */
         std::size_t _pending = 0;
         std::uint32_t _bounceBufferEntryIndex{0};     /**< The index of the bounce buffer entry to use for the next transfer. */
         std::size_t _bounceBufferEntryCount; /**< The total number of bounce buffer entries. Used to wrap around the bounce buffer entry index. */
