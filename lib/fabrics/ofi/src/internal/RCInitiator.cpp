@@ -170,6 +170,8 @@ namespace mxl::lib::fabrics::ofi
                     if (ev.isError())
                     {
                         MXL_WARN("Received an error event in connected state, going idle. Error: {}", ev.error().toString());
+                        // The old endpoint's writes will not complete on the new one.
+                        static_cast<void>(_proto->reset());
                         return restart(state.ep);
                     }
                     else if (ev.isShutdown())
@@ -265,6 +267,20 @@ namespace mxl::lib::fabrics::ofi
     void RCInitiatorEndpoint::handleCompletionError(Completion::Error err)
     {
         MXL_ERROR("Received a completion error: {}", err.toString());
+
+        // A failed write is finished all the same; left counted, the endpoint
+        // reported pending work for the rest of its life.
+        if (auto* flushing = std::get_if<Flushing>(&_state); flushing != nullptr)
+        {
+            if (flushing->pending > 0)
+            {
+                flushing->pending--;
+            }
+        }
+        else if (std::holds_alternative<Connected>(_state))
+        {
+            _proto->processCompletionError(err);
+        }
     }
 
     RCInitiatorEndpoint::Idle RCInitiatorEndpoint::restart(Endpoint const& old)
