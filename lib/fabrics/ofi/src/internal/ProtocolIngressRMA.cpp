@@ -4,6 +4,7 @@
 
 #include "ProtocolIngressRMA.hpp"
 #include "mxl-internal/Logging.hpp"
+#include <rdma/fi_errno.h>
 #include "AudioBounceBuffer.hpp"
 #include "DataLayout.hpp"
 #include "Exception.hpp"
@@ -65,11 +66,18 @@ namespace mxl::lib::fabrics::ofi
         auto completionData = completion.tryData();
         if (!completionData)
         {
-            // A receive that failed -- flushed when a peer goes away -- is
-            // gone from the window all the same. Not replacing it shrank the
-            // window with every peer failure, until writes carrying immediate
-            // data found none posted and retried without end.
-            if (auto const error = completion.tryErr(); error)
+            // A receive that failed is gone from the window all the same.
+            // Not replacing it shrank the window with every peer failure,
+            // until writes carrying immediate data found none posted and
+            // retried without end.
+            // A flushed receive is not replaced: its queue is being torn
+            // down, and a receive posted there would only be flushed again.
+            auto const error = completion.tryErr();
+            if (error && (error->code() == FI_ECANCELED))
+            {
+                return {};
+            }
+            if (error)
             {
                 MXL_WARN("Completion error on target: {}", error->toString());
             }
@@ -205,11 +213,18 @@ namespace mxl::lib::fabrics::ofi
         auto completionData = completion.tryData();
         if (!completionData)
         {
-            // A receive that failed -- flushed when a peer goes away -- is
-            // gone from the window all the same. Not replacing it shrank the
-            // window with every peer failure, until writes carrying immediate
-            // data found none posted and retried without end.
-            if (auto const error = completion.tryErr(); error)
+            // A receive that failed is gone from the window all the same.
+            // Not replacing it shrank the window with every peer failure,
+            // until writes carrying immediate data found none posted and
+            // retried without end.
+            // A flushed receive is not replaced: its queue is being torn
+            // down, and a receive posted there would only be flushed again.
+            auto const error = completion.tryErr();
+            if (error && (error->code() == FI_ECANCELED))
+            {
+                return {};
+            }
+            if (error)
             {
                 MXL_WARN("Completion error on target: {}", error->toString());
             }
