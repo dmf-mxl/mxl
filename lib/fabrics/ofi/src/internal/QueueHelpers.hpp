@@ -9,9 +9,11 @@
 #include <utility>
 #include <fmt/base.h>
 #include <fmt/color.h>
+#include <mxl-internal/Logging.hpp>
 #include "Completion.hpp"
 #include "Endpoint.hpp"
 #include "Event.hpp"
+#include "EventQueue.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
@@ -100,5 +102,22 @@ namespace mxl::lib::fabrics::ofi
         }
 
         return completion;
+    }
+
+    /** \brief Read every entry off a connectionless endpoint's event queue and log the errors among them.
+     *
+     * A connectionless endpoint has no connection events to act on. What arrives here are failures of work the provider does on its own
+     * behalf rather than for an operation of ours, such as EFA's peer handshake or the replies of its emulated write protocols, and they
+     * concern one peer. They are reported and otherwise left alone.
+     */
+    inline void drainEventQueue(EventQueue& eq)
+    {
+        while (auto event = eq.read())
+        {
+            if (event->isError())
+            {
+                MXL_WARN("Event queue error: {}", event->error().toString());
+            }
+        }
     }
 }
