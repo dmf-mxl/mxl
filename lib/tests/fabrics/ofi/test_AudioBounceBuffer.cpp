@@ -107,3 +107,20 @@ TEST_CASE("ofi: audio bounce buffer unpacks an empty header into nothing", "[ofi
     REQUIRE(unpackedHeader.count == 0U);
     REQUIRE(target == std::vector<Sample>(ChannelCount * TargetBufferLength, UntouchedSample));
 }
+
+// A header counting more samples per channel than the target's ring holds would wrap onto itself and write past the channel.
+TEST_CASE("ofi: audio bounce buffer rejects a count longer than the ring", "[ofi][AudioBounceBuffer]")
+{
+    constexpr auto LongCount = TargetBufferLength + 1;
+    auto target = std::vector<Sample>(ChannelCount * TargetBufferLength, UntouchedSample);
+    auto const targetLayout = DataLayout::Continuous{.sampleSize = sizeof(Sample), .channelCount = ChannelCount, .bufferLength = TargetBufferLength};
+    auto bounceBuffer = AudioBounceBuffer{1, LongCount * ChannelCount * sizeof(Sample), targetLayout};
+
+    auto* entryData = reinterpret_cast<std::uint8_t*>(bounceBuffer.getRegions().front().base); // NOLINT
+    auto const header = AudioEntryHeader{.headIndex = HeadIndex, .count = LongCount};
+    std::memcpy(entryData, &header, sizeof(header));
+
+    auto const outRegion = Region{regionBaseOf(target.data()), target.size() * sizeof(Sample), nullptr, nullptr, Region::Location::host()};
+    REQUIRE_THROWS(bounceBuffer.unpack(0, outRegion));
+    REQUIRE(target == std::vector<Sample>(ChannelCount * TargetBufferLength, UntouchedSample));
+}
