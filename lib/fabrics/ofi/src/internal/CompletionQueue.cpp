@@ -134,7 +134,14 @@ namespace mxl::lib::fabrics::ofi
             // the provider's error text through err_data, and uninitialized
             // that was a write of text to a stack-garbage address.
             ::fi_cq_err_entry err{};
-            fi_cq_readerr(_raw, &err, 0);
+            if (auto const rc = ::fi_cq_readerr(_raw, &err, 0); rc < 0)
+            {
+                if (rc == -FI_EAGAIN)
+                {
+                    return std::nullopt;
+                }
+                throw FabricException::make(static_cast<int>(rc), "Failed to read completion error: {}", ::fi_strerror(static_cast<int>(-rc)));
+            }
 
             return Completion{
                 Completion::Error{err, this->shared_from_this()}
