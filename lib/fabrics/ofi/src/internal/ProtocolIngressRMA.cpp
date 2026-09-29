@@ -65,6 +65,18 @@ namespace mxl::lib::fabrics::ofi
         auto completionData = completion.tryData();
         if (!completionData)
         {
+            // A receive that failed -- flushed when a peer goes away -- is
+            // gone from the window all the same. Not replacing it shrank the
+            // window with every peer failure, until writes carrying immediate
+            // data found none posted and retried without end.
+            if (auto const error = completion.tryErr(); error)
+            {
+                MXL_WARN("Completion error on target: {}", error->toString());
+            }
+            if (_immData)
+            {
+                static_cast<void>(tryPostOne(endpoint));
+            }
             return {};
         }
 
@@ -193,6 +205,18 @@ namespace mxl::lib::fabrics::ofi
         auto completionData = completion.tryData();
         if (!completionData)
         {
+            // A receive that failed -- flushed when a peer goes away -- is
+            // gone from the window all the same. Not replacing it shrank the
+            // window with every peer failure, until writes carrying immediate
+            // data found none posted and retried without end.
+            if (auto const error = completion.tryErr(); error)
+            {
+                MXL_WARN("Completion error on target: {}", error->toString());
+            }
+            if (_immData)
+            {
+                static_cast<void>(tryPostOne(endpoint));
+            }
             return {};
         }
 
