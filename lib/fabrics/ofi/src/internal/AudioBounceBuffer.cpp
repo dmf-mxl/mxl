@@ -89,6 +89,12 @@ namespace mxl::lib::fabrics::ofi
 
         auto const maxCountPerEntry = (entrySize() - sizeof(AudioEntryHeader)) / (_layout.channelCount * _layout.sampleSize);
 
+        if (header->count == 0)
+        {
+            // The header of this entry has not arrived yet.
+            return *header;
+        }
+
         if (header->count > maxCountPerEntry)
         {
             throw Exception::invalidArgument(

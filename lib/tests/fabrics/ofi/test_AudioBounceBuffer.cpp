@@ -88,3 +88,16 @@ TEST_CASE("ofi: audio bounce buffer unpacks channel-major payload across ring wr
 
     REQUIRE(target == expectedTarget);
 }
+
+// An entry whose header has not arrived reads as zero samples. Unpacking it must copy nothing rather than a whole ring.
+TEST_CASE("ofi: audio bounce buffer unpacks an empty header into nothing", "[ofi][AudioBounceBuffer]")
+{
+    auto target = std::vector<Sample>(ChannelCount * TargetBufferLength, UntouchedSample);
+    auto const targetLayout = DataLayout::Continuous{.sampleSize = sizeof(Sample), .channelCount = ChannelCount, .bufferLength = TargetBufferLength};
+    auto bounceBuffer = AudioBounceBuffer{1, SampleCount * ChannelCount * sizeof(Sample), targetLayout};
+
+    auto const outRegion = Region{regionBaseOf(target.data()), target.size() * sizeof(Sample), nullptr, nullptr, Region::Location::host()};
+    auto const unpackedHeader = bounceBuffer.unpack(0, outRegion);
+    REQUIRE(unpackedHeader.count == 0U);
+    REQUIRE(target == std::vector<Sample>(ChannelCount * TargetBufferLength, UntouchedSample));
+}
