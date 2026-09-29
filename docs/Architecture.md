@@ -114,7 +114,7 @@ The `common` block that precedes the `continuous` block contributes additional i
 - `grainRate` carries the sample rate (numerator/denominator rational).
 - `format` encodes the payload format (`audio/float32`) so you know the sample word size.
 - `maxCommitBatchSizeHint` / `maxSyncBatchSizeHint` advertise how many samples are written in one go. Staying within those hints keeps the reader from spinning on the futex that controls `flow->state.syncCounter`.
-- `payloadLocation` and `deviceIndex` tell you if the samples sit in host RAM or device memory.
+- `payloadLocation` is deprecated. MXL never used it, writers set it to 0, and readers refuse flows with any other value.
 
 ```c
 mxlFlowInfo info = {};

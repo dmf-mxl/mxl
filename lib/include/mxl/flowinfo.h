@@ -11,6 +11,7 @@
 
 #include <sys/types.h>
 #include <mxl/dataformat.h>
+#include <mxl/platform.h>
 #include <mxl/rational.h>
 
 /**
@@ -28,13 +29,14 @@ extern "C"
 {
 #endif
     /**
-     * The payload location of the grain
+     * The payload location of the grain.
+     * \deprecated MXL never used this. See mxlCommonFlowConfigInfo.payloadLocation.
      */
     typedef enum mxlPayloadLocation
     {
-        MXL_PAYLOAD_LOCATION_HOST_MEMORY = 0,
-        MXL_PAYLOAD_LOCATION_DEVICE_MEMORY = 1,
-    } mxlPayloadLocation;
+        MXL_PAYLOAD_LOCATION_HOST_MEMORY MXL_DEPRECATED("MXL never used the payload location.") = 0,
+        MXL_PAYLOAD_LOCATION_DEVICE_MEMORY MXL_DEPRECATED("MXL never used the payload location.") = 1,
+    } mxlPayloadLocation MXL_DEPRECATED("MXL never used the payload location.");
 
     /**
      * Immutable metadata about a media flow that is independent of the data
@@ -75,8 +77,9 @@ extern "C"
         uint32_t maxSyncBatchSizeHint;
 
         /**
-         * And indication, where the payload memory is located.
-         * \see mxlPayloadLocation
+         * \deprecated MXL never used this field. Writers always set it to 0, and readers refuse to open a flow that has
+         * any other value, because they cannot find its payload. The field is kept so that the layout of this
+         * structure does not change.
          */
         uint32_t payloadLocation;
 

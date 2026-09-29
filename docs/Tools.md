@@ -65,7 +65,6 @@ Example 2a : Printing details about a specific flow using command line options.
          Grain/sample rate: 30000/1001
          Commit batch size: 1080
            Sync batch size: 1080
-          Payload Location: Host
               Device Index: -1
                      Flags: 00000000
                Grain count: 2
@@ -89,7 +88,6 @@ Example 2a : Printing details about a specific flow using an MXL URI
          Grain/sample rate: 30000/1001
          Commit batch size: 1080
            Sync batch size: 1080
-          Payload Location: Host
               Device Index: -1
                      Flags: 00000000
                Grain count: 2
