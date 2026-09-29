@@ -113,8 +113,6 @@ namespace mxl::lib
             result.maxCommitBatchSizeHint = maxCommitBatchSizeHintOpt;
             result.maxSyncBatchSizeHint = maxSyncBatchSizeHintOpt;
 
-            // FIXME: This should come from the configuration when device memory is supported
-            result.payloadLocation = MXL_PAYLOAD_LOCATION_HOST_MEMORY;
             result.deviceIndex = -1;
 
             return result;
@@ -336,6 +334,13 @@ namespace mxl::lib
             {
                 throw std::invalid_argument{
                     fmt::format("Unsupported flow data version: {}, supported is: {}", flowSegment.get()->info.version, FLOW_DATA_VERSION)};
+            }
+
+            // MXL writers leave the deprecated payload location at 0. Another value comes from software that keeps the payload
+            // somewhere this library cannot map.
+            if (auto const payloadLocation = flowSegment.get()->info.config.common.payloadLocation; payloadLocation != 0U)
+            {
+                throw std::invalid_argument{fmt::format("Unsupported payload location: {}, supported is: 0", payloadLocation)};
             }
 
             if (auto const flowFormat = flowSegment.get()->info.config.common.format; mxlIsDiscreteDataFormat(flowFormat))
