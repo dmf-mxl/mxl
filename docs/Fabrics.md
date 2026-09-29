@@ -84,6 +84,8 @@ In libfabric, there’s currently 3 types of endpoint:
 - FI_EP_RDM: reliable connection-less data transfer.
 - FI_EP_DGRAM: unreliable connection-less data transfer.
 
+Every endpoint is bound to an event queue. Connected endpoints receive their connection management events there, such as connection requests and shutdowns. On connection-less endpoints the provider uses it to report asynchronous errors that do not belong to a single transfer. EFA, for example, reports failures of its peer handshake there, and aborts the process if no event queue is bound.
+
 #### 5.1.2 Connection oriented
 
 Connection-oriented data transfer follows the Berkeley Sockets model. A listener (server) waits to accept incoming connections while a client initiates the connection to that listener. After the connection is established, bidirectional data transfer becomes possible.
