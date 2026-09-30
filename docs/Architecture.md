@@ -112,7 +112,7 @@ The following example demonstrates how a FlowWriter may write a grain as slices 
 
 ### Grain storage descriptors
 
-The grain headers of a discrete flow are always in host shared memory. The payload is held by a storage whose type is fixed when the flow is created. The type is reported by `mxlGrainStorageLayout.storageType`. The only type is `MXL_PAYLOAD_STORAGE_HOST_POINTER`: the payload of each grain follows its header in host shared memory.
+The grain headers of a discrete flow are always in host shared memory. The payload is held by a storage whose type is fixed when the flow is created. The type is reported by `mxlGrainStorageLayout.storageType`, as a name. The default, `MXL_PAYLOAD_STORAGE_HOST_POINTER` (`"host-pointer"`), keeps the payload of each grain after its header in host shared memory. A backend can hold a storage type the SDK does not define, named with a reversed domain name, together with the meaning of the reserved bytes of the layout and of the slot description, which libmxl passes through without interpreting them.
 
 A slot is one entry of the ring buffer. The grain at index `i` is stored in slot `i % slotCount`. The storage of a flow is described in two parts, and neither changes for the lifetime of the flow:
 
@@ -121,7 +121,7 @@ A slot is one entry of the ring buffer. The grain at index `i` is stored in slot
 
 An application calls the map function once, before it reads or writes grains, and sets up any per slot resources from the array. Per grain, `mxlFlowReaderGetGrainSlot()` and `mxlFlowWriterOpenGrainSlot()` return the slot that holds the requested grain, which the application looks up in its array. Apart from that, they behave like `mxlFlowReaderGetGrainSlice()` and `mxlFlowWriterOpenGrain()`. A timeout of 0 makes `mxlFlowReaderGetGrainSlot()` return without waiting.
 
-Storage types other than host memory are implemented by backend libraries that ship with the SDK and that libmxl loads by name from its own directory. A writer selects one with the `payload` object of its flow options. The interface between libmxl and these libraries is internal.
+Storage types other than host memory are implemented by backend libraries that libmxl loads by name, from the directories in `MXL_PAYLOAD_PLUGIN_PATH` and from its own directory. A writer selects one with the `payload` object of its flow options. The interface between libmxl and these libraries is internal. [Grain Payload Storage](PayloadStorage.md) describes the design and the planned work.
 
 The pointer based functions (`mxlFlowReaderGetGrain*()` and `mxlFlowWriterOpenGrain()`) return a payload pointer only for host storage. For any other storage type they return `MXL_ERR_UNSUPPORTED_OPERATION`, so that an application never dereferences memory that is not host memory.
 
