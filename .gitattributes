@@ -1,0 +1,5 @@
+# SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+# Expanded by git archive / GitHub source tarballs (see CMakeLists.txt).
+cmake/git-hash.txt export-subst
