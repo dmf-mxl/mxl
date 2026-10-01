@@ -28,6 +28,7 @@ var namespacemxl_1_1lib_1_1fabrics_1_1ofi =
     [ "ImmDataGrain", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1ImmDataGrain.html", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1ImmDataGrain" ],
     [ "IngressProtocol", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1IngressProtocol.html", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1IngressProtocol" ],
     [ "Initiator", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Initiator.html", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Initiator" ],
+    [ "InitiatorSetupOptions", "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorSetupOptions.html", "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorSetupOptions" ],
     [ "InitiatorWrapper", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper" ],
     [ "LocalRegion", "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1LocalRegion.html", "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1LocalRegion" ],
     [ "LocalRegionGroup", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1LocalRegionGroup.html", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1LocalRegionGroup" ],

@@ -1,7 +1,7 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" title=" " alt="" coords="5,13,120,38"/>
-<area shape="rect" id="Node000001" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html" title="Custom exception type used in the fabrics library." alt="" coords="168,5,299,45"/>
-<area shape="poly" id="edge31_Node000000_Node000001" title=" " alt="" coords="134,23,168,23,168,28,134,28"/>
-<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricException.html" title="An internal exception type that extends." alt="" coords="347,5,495,45"/>
-<area shape="poly" id="edge32_Node000001_Node000002" title=" " alt="" coords="312,23,347,23,347,28,312,28"/>
+<area shape="rect" id="Node000000" title=" " alt="" coords="5,37,151,77"/>
+<area shape="rect" id="Node000001" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue.html" title="RAII Wrapper around a libfabric completion queue (fi_cq)." alt="" coords="199,5,361,45"/>
+<area shape="poly" id="edge29_Node000000_Node000001" title=" " alt="" coords="164,41,198,36,199,41,164,46"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EventQueue.html" title="RAII Wrapper around a libfabric event queue (fi_eq)" alt="" coords="215,69,345,109"/>
+<area shape="poly" id="edge30_Node000000_Node000002" title=" " alt="" coords="165,68,215,76,214,82,164,74"/>
 </map>
