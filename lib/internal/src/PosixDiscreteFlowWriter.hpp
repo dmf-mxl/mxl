@@ -73,6 +73,18 @@ namespace mxl::lib
         virtual bool makeExclusive() override;
 
     private:
+        /**
+         * Implementation of openGrain(). The caller must have checked that _flowData is
+         * a valid pointer.
+         *
+         * \param[in] in_index The grain index.
+         * \param[out] out_grainInfo A valid pointer that receives a copy of the grain info.
+         * \param[out] out_slot Receives the slot that holds the grain. Written only on success.
+         * \return A status code describing the outcome of the call.
+         */
+        mxlStatus openGrainImpl(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::size_t* out_slot);
+
+    private:
         /** The FlowData for the currently opened flow. null if no flow is opened. */
         std::unique_ptr<DiscreteFlowData> _flowData;
         /** The currently opened grain index. MXL_UNDEFINED_INDEX if no grain is currently opened. */

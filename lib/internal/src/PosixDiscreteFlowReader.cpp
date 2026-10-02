@@ -110,25 +110,15 @@ namespace mxl::lib
     mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, Timepoint in_deadline,
         mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload)
     {
-        auto result = MXL_ERR_UNKNOWN;
-        if (_flowData)
+        if (!_flowData)
         {
-            result = getGrainImpl(in_index, in_minValidSlices, in_deadline, out_grainInfo, out_payload);
-            if (result == MXL_STATUS_OK)
-            {
-                // We ignore the return value of updateFileAccessTime. It may fail if the domain is in a read-only volume.
-                (void)updateFileAccessTime(_accessFileFd);
-            }
-            else if (result == MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
-            {
-                // If we were ultimately too early, even with blocking for a certain amount
-                // of time it could very well be that we're operating on a stale flow, so we
-                // use the opportunity to check whether it's valid.
-                if (!isFlowValidImpl())
-                {
-                    result = MXL_ERR_FLOW_INVALID;
-                }
-            }
+            return MXL_ERR_UNKNOWN;
+        }
+        auto slot = std::size_t{0};
+        auto const result = completeRead(getGrainImpl(in_index, in_minValidSlices, in_deadline, out_grainInfo, &slot));
+        if ((result == MXL_STATUS_OK) && (out_payload != nullptr))
+        {
+            *out_payload = hostPayloadAt(slot);
         }
         return result;
     }
@@ -136,31 +126,42 @@ namespace mxl::lib
     mxlStatus PosixDiscreteFlowReader::getGrain(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo,
         std::uint8_t** out_payload)
     {
-        auto result = MXL_ERR_UNKNOWN;
-        if (_flowData)
+        if (!_flowData)
         {
-            result = getGrainImpl(in_index, in_minValidSlices, out_grainInfo, out_payload);
-            if (result == MXL_STATUS_OK)
-            {
-                // We ignore the return value of updateFileAccessTime. It may fail if the domain is in a read-only volume.
-                (void)updateFileAccessTime(_accessFileFd);
-            }
-            else if (result == MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
-            {
-                // If we were too early it could very well be that we're operating
-                // on a stale flow, so we use the opportunity to check whether it's
-                // valid.
-                if (!isFlowValidImpl())
-                {
-                    result = MXL_ERR_FLOW_INVALID;
-                }
-            }
+            return MXL_ERR_UNKNOWN;
+        }
+        auto slot = std::size_t{0};
+        auto const result = completeRead(getGrainImpl(in_index, in_minValidSlices, out_grainInfo, &slot));
+        if ((result == MXL_STATUS_OK) && (out_payload != nullptr))
+        {
+            *out_payload = hostPayloadAt(slot);
         }
         return result;
     }
 
+    mxlStatus PosixDiscreteFlowReader::completeRead(mxlStatus in_result) const
+    {
+        if (in_result == MXL_STATUS_OK)
+        {
+            // We ignore the return value of updateFileAccessTime. It may fail if the domain is in a read-only volume.
+            (void)updateFileAccessTime(_accessFileFd);
+        }
+        else if ((in_result == MXL_ERR_OUT_OF_RANGE_TOO_EARLY) && !isFlowValidImpl())
+        {
+            // If we were too early, even after blocking for a certain amount of time, we may
+            // be operating on a stale flow, so we use the opportunity to check whether it's valid.
+            return MXL_ERR_FLOW_INVALID;
+        }
+        return in_result;
+    }
+
+    std::uint8_t* PosixDiscreteFlowReader::hostPayloadAt(std::size_t in_slot) const
+    {
+        return _flowData->payloadStorage().hostPayload(in_slot);
+    }
+
     mxlStatus PosixDiscreteFlowReader::getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo,
-        std::uint8_t** out_payload) const
+        std::size_t* out_slot) const
     {
         auto result = MXL_ERR_UNKNOWN;
         auto const flow = _flowData->flow();
@@ -187,9 +188,9 @@ namespace mxl::lib
                     {
                         *out_grainInfo = grain->header.info;
                     }
-                    if (out_payload != nullptr)
+                    if (out_slot != nullptr)
                     {
-                        *out_payload = reinterpret_cast<std::uint8_t*>(&grain->header + 1);
+                        *out_slot = offset;
                     }
 
                     result = MXL_STATUS_OK;
@@ -213,7 +214,7 @@ namespace mxl::lib
     }
 
     mxlStatus PosixDiscreteFlowReader::getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, Timepoint in_deadline,
-        mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload) const
+        mxlGrainInfo* out_grainInfo, std::size_t* out_slot) const
     {
         auto const flow = _flowData->flow();
         auto const syncObject = std::atomic_ref{flow->state.syncCounter};
@@ -224,7 +225,7 @@ namespace mxl::lib
             // 2. Writer writes the data and updates the counter.
             // 3. If we used the current value of the counter for the futex, we would delay everything by 1 grain.
             auto const previousSyncCounter = syncObject.load(std::memory_order_acquire);
-            auto const result = getGrainImpl(in_index, in_minValidSlices, out_grainInfo, out_payload);
+            auto const result = getGrainImpl(in_index, in_minValidSlices, out_grainInfo, out_slot);
             // NOTE: Before C++26 there is no way to access the address of the object wrapped
             //      by an atomic_ref. If there were it would be much more appropriate to pass
             //      syncObject by reference here and only unwrap the underlying integer in the
