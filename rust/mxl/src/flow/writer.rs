@@ -26,7 +26,10 @@ impl FlowWriterResource {
             context.api.create_flow_writer(
                 context.instance,
                 flow_def.as_ptr(),
-                options.map(|cs| cs.as_ptr()).unwrap_or(std::ptr::null()),
+                options
+                    .as_ref()
+                    .map(|cs| cs.as_ptr())
+                    .unwrap_or(std::ptr::null()),
                 &mut writer,
                 info_unsafe.as_mut_ptr(),
                 &mut was_created,
