@@ -38,7 +38,7 @@ fn main() -> Result<(), mxl::Error> {
     let flow_def = std::fs::read_to_string(opts.flow_config_file.as_str()).map_err(|error| {
         mxl::Error::Other(format!(
             "Error while reading flow definition from \"{}\": {}",
-            &opts.flow_config_file, error
+            opts.flow_config_file, error
         ))
     })?;
 
@@ -115,7 +115,6 @@ pub fn write_grains(
     }
 
     info!("Finished writing requested number of grains, deleting the flow.");
-    writer.destroy()?;
     Ok(())
 }
 
@@ -176,6 +175,5 @@ pub fn write_samples(
     }
 
     info!("Finished writing requested number of samples, deleting the flow.");
-    writer.destroy()?;
     Ok(())
 }
