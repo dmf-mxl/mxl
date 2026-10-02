@@ -31,9 +31,14 @@ impl GrainWriter {
 
     #[deprecated(
         since = "0.2.0",
-        note = "Flow writer lifetimes are now managed automatically. This method only consumes the handle and always returns `Ok(())`; the underlying writer is released when the last related handle is dropped."
+        note = "Flow writer lifetimes are now managed automatically. This method only consumes the handle and always returns `Ok(())` only if no other references to the writer exists; the underlying writer is released when the last related handle is dropped."
     )]
     pub fn destroy(self) -> Result<()> {
+        let _ = Arc::try_unwrap(self.writer).map_err(|_| {
+            Error::Other(
+                "Failed to destroy the writer. There are still other references to it.".to_string(),
+            )
+        })?;
         Ok(())
     }
 

@@ -33,9 +33,14 @@ impl SamplesReader {
 
     #[deprecated(
         since = "0.2.0",
-        note = "Flow reader lifetimes are now managed automatically. This method only consumes the handle and always returns `Ok(())`; the underlying reader is released when the last related handle is dropped."
+        note = "Flow reader lifetimes are now managed automatically. This method only consumes the handle and always returns `Ok(())` only if no other references to the reader exists; the underlying reader is released when the last related handle is dropped."
     )]
     pub fn destroy(self) -> Result<()> {
+        let _ = Arc::try_unwrap(self.reader).map_err(|_| {
+            Error::Other(
+                "Failed to destroy the reader. There are still other references to it.".to_string(),
+            )
+        })?;
         Ok(())
     }
 
