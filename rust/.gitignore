@@ -4,4 +4,4 @@
 .DS_Store
 .idea
 .vscode
-target
+/target
