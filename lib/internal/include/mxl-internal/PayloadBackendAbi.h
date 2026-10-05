@@ -80,6 +80,14 @@ extern "C"
          * formats a backend holds, so a backend rejects the formats it cannot store.
          */
         uint32_t format;
+        /** Reserved. Zero. */
+        uint32_t reserved;
+        /**
+         * The flow definition, NMOS IS-04 flow JSON as null terminated UTF-8, from which a backend reads what the
+         * other fields do not hold, for example the media type and frame size of a video flow. Never null. Only valid
+         * during the call that receives this structure.
+         */
+        char const* flowDefinition;
     } mxlPayloadBackendFlowInfo;
 
     /**

@@ -632,10 +632,11 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Grain storage : Read
     REQUIRE(((socket & perms::group_write) != perms::none) == ((data & perms::group_read) != perms::none));
     REQUIRE(((socket & perms::others_write) != perms::none) == ((data & perms::others_read) != perms::none));
 
-    // The layout carries the backend's storage type.
+    // The layout carries the backend's storage type and the part the backend defines.
     auto layout = mxlGrainStorageLayout{};
     REQUIRE(mxlFlowReaderGetStorageLayout(flows.reader(), &layout) == MXL_STATUS_OK);
     REQUIRE(std::string_view{layout.storageType} == mxl::tests::memfd::STORAGE_TYPE);
+    REQUIRE(std::string{mxl::tests::memfd::layoutOf(layout).mediaType} == "video/v210");
     REQUIRE(layout.planeCount == 1U);
     REQUIRE(layout.planes[0].pitch == flows.configInfo().discrete.sliceSizes[0]);
 
@@ -686,6 +687,14 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Grain storage : Read
     // Memory files of a storage type the backend defines are not host memory for the pointer API.
     std::uint8_t* payload = nullptr;
     REQUIRE(mxlFlowReaderGetGrain(flows.reader(), index, 0U, &grainInfo, &payload) == MXL_ERR_UNSUPPORTED_OPERATION);
+}
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Grain storage : A backend reads the media type from the flow definition",
+    "[mxl flows][grain storage]")
+{
+    REQUIRE(tryCreateWriter(domain, "data/v210a_flow.json", MEMFD_BACKEND_OPTIONS) == MXL_ERR_UNSUPPORTED_OPERATION);
+    REQUIRE(tryCreateWriter(domain, "data/data_flow.json", MEMFD_BACKEND_OPTIONS) == MXL_ERR_UNSUPPORTED_OPERATION);
+    REQUIRE(tryCreateWriter(domain, "data/v210_flow.json", MEMFD_BACKEND_OPTIONS) == MXL_STATUS_OK);
 }
 
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Grain storage : Mapping fails cleanly when the writer is gone",

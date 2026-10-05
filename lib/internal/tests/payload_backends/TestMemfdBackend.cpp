@@ -9,7 +9,7 @@
  * memfd_create(). The backend defines its own storage type, described in TestMemfdStorage.hpp, and has the capability
  * to share descriptors, so that libmxl serves them on payload.sock and readers receive them.
  *
- * The backend stores video flows and accepts no options.
+ * The backend stores video/v210 flows, whose media type it reads from the flow definition, and accepts no options.
  */
 
 #include <cstddef>
@@ -17,6 +17,7 @@
 #include <cstring>
 #include <new>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <fcntl.h>
 #include <unistd.h>
@@ -73,6 +74,29 @@ namespace
     }
 
     /**
+     * \param[in] flowDefinition The flow definition as JSON text.
+     * \return true if its media type is the one the backend stores.
+     */
+    bool hasStoredMediaType(char const* flowDefinition) noexcept
+    {
+        try
+        {
+            auto value = picojson::value{};
+            if ((flowDefinition == nullptr) || !picojson::parse(value, std::string{flowDefinition}).empty() || !value.is<picojson::object>())
+            {
+                return false;
+            }
+            auto const& root = value.get<picojson::object>();
+            auto const it = root.find("media_type");
+            return (it != root.end()) && it->second.is<std::string>() && (it->second.get<std::string>() == mxl::tests::memfd::MEDIA_TYPE);
+        }
+        catch (...)
+        {
+            return false;
+        }
+    }
+
+    /**
      * Create a memory file of a given size.
      * \param[in] size The size in bytes.
      * \return The descriptor, or -1 on error.
@@ -112,7 +136,7 @@ namespace
             *out_status = MXL_ERR_INVALID_ARG;
             return nullptr;
         }
-        if (info->format != MXL_DATA_FORMAT_VIDEO)
+        if ((info->format != MXL_DATA_FORMAT_VIDEO) || !hasStoredMediaType(info->flowDefinition))
         {
             *out_status = MXL_ERR_UNSUPPORTED_OPERATION;
             return nullptr;
@@ -230,6 +254,11 @@ namespace
             return MXL_ERR_INVALID_ARG;
         }
         // The planes of a slot follow each other in its buffer, as in the default layout.
+        constexpr auto mediaType = std::string_view{mxl::tests::memfd::MEDIA_TYPE};
+        auto layout = mxl::tests::memfd::Layout{};
+        static_assert(mediaType.size() < sizeof(layout.mediaType));
+        std::memcpy(layout.mediaType, mediaType.data(), mediaType.size());
+        mxl::tests::memfd::setLayout(*inout_layout, layout);
         return MXL_STATUS_OK;
     }
 

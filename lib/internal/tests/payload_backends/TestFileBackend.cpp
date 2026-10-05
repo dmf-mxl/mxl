@@ -14,18 +14,24 @@
  * read when they map the slots. Readers accept no backend options.
  *
  * Compile with MXL_TEST_BACKEND_NAME set to the backend name as a string literal. The tests build this file a
- * second time with a name that does not match the library name, to check that libmxl rejects it. Define
- * MXL_TEST_BACKEND_STORAGE_TYPE to report another storage type than MXL_PAYLOAD_STORAGE_HOST_POINTER.
+ * second time with a name that does not match the library name, to check that libmxl rejects it.
+ *
+ * MXL_TEST_BACKEND_STORAGE_TYPE sets the storage type the backend reports, MXL_PAYLOAD_STORAGE_HOST_POINTER by
+ * default. The tests also build this file with a storage type of its own, which this backend defines as follows: the
+ * slot descriptions hold the same host pointer, and the reserved bytes of the layout hold the media type of the flow,
+ * read from the flow definition, as a null terminated string.
  */
 
 #include <cerrno>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <algorithm>
 #include <fstream>
 #include <mutex>
 #include <new>
 #include <string>
+#include <string_view>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
@@ -45,6 +51,12 @@
 
 namespace
 {
+    /** The storage type this backend reports. */
+    constexpr auto STORAGE_TYPE = MXL_TEST_BACKEND_STORAGE_TYPE;
+
+    /** Whether the storage type is this backend's own, whose layout holds the media type of the flow. */
+    constexpr auto OWN_STORAGE_TYPE = std::string_view{STORAGE_TYPE} != MXL_PAYLOAD_STORAGE_HOST_POINTER;
+
     /** Name of the file that holds the payload in the flow directory. */
     constexpr auto PAYLOAD_FILE_NAME = "/payload.test";
 
@@ -70,6 +82,8 @@ namespace
         std::uint32_t slotCount{0};
         /** Distance in bytes between the starts of two slots. */
         std::uint64_t stride{0};
+        /** The media type from the flow definition, or empty if it has none. */
+        std::string mediaType;
         /** Whether the mapping is writable. */
         bool writable{false};
         /** Makes the first mapping happen once, even with concurrent first accesses. */
@@ -265,6 +279,25 @@ namespace
     }
 
     /**
+     * Read the media type of a flow definition.
+     * \param[in] flowDefinition The flow definition as JSON text.
+     * \return The media_type, or an empty string if the definition has none.
+     */
+    std::string readMediaType(char const* flowDefinition)
+    {
+        auto value = picojson::value{};
+        if (picojson::parse(value, std::string{flowDefinition}).empty() && value.is<picojson::object>())
+        {
+            auto const& root = value.get<picojson::object>();
+            if (auto const it = root.find("media_type"); (it != root.end()) && it->second.is<std::string>())
+            {
+                return it->second.get<std::string>();
+            }
+        }
+        return {};
+    }
+
+    /**
      * Allocate an instance for a flow.
      * \param[in] info The flow geometry.
      * \param[in] dir The flow directory that holds the payload file.
@@ -273,7 +306,8 @@ namespace
     Instance* makeInstance(mxlPayloadBackendFlowInfo const* info, char const* dir) noexcept
     {
         if ((info == nullptr) || (dir == nullptr) || (info->structSize < sizeof(mxlPayloadBackendFlowInfo)) || (info->grainCount == 0U) ||
-            (info->grainPayloadSize == 0U) || (info->planeCount == 0U) || (info->planeCount > MXL_MAX_PLANES_PER_GRAIN))
+            (info->grainPayloadSize == 0U) || (info->planeCount == 0U) || (info->planeCount > MXL_MAX_PLANES_PER_GRAIN) ||
+            (info->flowDefinition == nullptr))
         {
             return nullptr;
         }
@@ -285,6 +319,7 @@ namespace
             {
                 instance->path = std::string{dir} + PAYLOAD_FILE_NAME;
                 instance->stridePath = std::string{dir} + STRIDE_FILE_NAME;
+                instance->mediaType = readMediaType(info->flowDefinition);
             }
             catch (...)
             {
@@ -439,13 +474,19 @@ namespace
     /** \see mxlPayloadBackendApi::describeLayout */
     mxlStatus describeLayout(mxlPayloadBackendInstance handle, mxlGrainStorageLayout* inout_layout) noexcept
     {
-        if ((handle == nullptr) || (inout_layout == nullptr))
+        auto const* const instance = reinterpret_cast<Instance const*>(handle);
+        if ((instance == nullptr) || (inout_layout == nullptr))
         {
             return MXL_ERR_INVALID_ARG;
         }
 
-        // The planes of a slot are stored like host memory, so the default layout applies, and the host storage
-        // type leaves no room for anything else.
+        // The planes of a slot are stored like host memory, so the default planes apply.
+        if constexpr (OWN_STORAGE_TYPE)
+        {
+            // The last byte stays zero, so the string is always terminated.
+            auto const length = std::min(instance->mediaType.size(), sizeof(inout_layout->reserved) - 1U);
+            std::memcpy(inout_layout->reserved, instance->mediaType.data(), length);
+        }
         return MXL_STATUS_OK;
     }
 
@@ -454,7 +495,7 @@ namespace
         .structSize = sizeof(mxlPayloadBackendApi),
         .abiVersion = MXL_PAYLOAD_BACKEND_ABI_VERSION,
         .name = MXL_TEST_BACKEND_NAME,
-        .storageType = MXL_TEST_BACKEND_STORAGE_TYPE,
+        .storageType = STORAGE_TYPE,
         .prepare = &prepare,
         .open = &open,
         .destroy = &destroy,

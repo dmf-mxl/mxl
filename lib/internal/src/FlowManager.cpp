@@ -243,21 +243,34 @@ namespace mxl::lib
         }
 
         /**
+         * Read the definition of a published flow.
+         * \param[in] flowDir The flow directory.
+         * \return The flow definition, or an empty string if it cannot be read.
+         */
+        std::string readFlowDefinition(std::filesystem::path const& flowDir)
+        {
+            auto in = std::ifstream{makeFlowDescriptorFilePath(flowDir), std::ios::in};
+            return in ? std::string{std::istreambuf_iterator<char>{in}, std::istreambuf_iterator<char>{}} : std::string{};
+        }
+
+        /**
          * Describe a discrete flow to a backend.
          * \param[in] info The flow info.
          * \param[in] slicesPerGrain The number of slices in a grain.
          * \param[in] mode The access this process needs.
          * \param[in] grainPayloadSize The size in bytes of the payload of one grain.
+         * \param[in] flowDef The flow definition. The result points to it, so it must outlive the result.
          * \return The flow description for the backend.
          */
         mxlPayloadBackendFlowInfo makeBackendFlowInfo(mxlFlowInfo const& info, std::size_t slicesPerGrain, AccessMode mode,
-            std::uint64_t grainPayloadSize)
+            std::uint64_t grainPayloadSize, std::string const& flowDef)
         {
             auto result = mxlPayloadBackendFlowInfo{};
             result.structSize = sizeof(mxlPayloadBackendFlowInfo);
             result.grainCount = info.config.discrete.grainCount;
             result.grainPayloadSize = grainPayloadSize;
             result.format = info.config.common.format;
+            result.flowDefinition = flowDef.c_str();
 
             result.accessMode = (mode == AccessMode::READ_ONLY) ? MXL_PAYLOAD_BACKEND_ACCESS_READ_ONLY : MXL_PAYLOAD_BACKEND_ACCESS_READ_WRITE;
             result.slicesPerGrain = static_cast<std::uint32_t>(slicesPerGrain);
@@ -407,7 +420,7 @@ namespace mxl::lib
             // The backend allocates and writes its files while the flow is still in the temporary directory, so
             // that the flow is complete when it is published.
             writePayloadDescriptor(tempDirectory, storageSpec, backendApi->storageType);
-            auto const backendInfo = makeBackendFlowInfo(info, grainNumOfSlices, AccessMode::READ_WRITE, grainPayloadSize);
+            auto const backendInfo = makeBackendFlowInfo(info, grainNumOfSlices, AccessMode::READ_WRITE, grainPayloadSize, flowDef);
             flowData->setPayloadStorage(PluginPayloadStorage::prepare(*backendApi, backendInfo, storageSpec.backendOptions, tempDirectory, finalDir));
         }
         else
@@ -678,7 +691,8 @@ namespace mxl::lib
         auto const descriptor = readPayloadDescriptor(flowDir);
         auto const grainPayloadSize = (grainCount > 0U) ? flowData->grainInfoAt(0)->grainSize : 0U;
         auto const slicesPerGrain = (grainCount > 0U) ? flowData->grainInfoAt(0)->totalSlices : 0U;
-        auto const backendInfo = makeBackendFlowInfo(*flowData->flowInfo(), slicesPerGrain, flowData->accessMode(), grainPayloadSize);
+        auto const flowDef = readFlowDefinition(flowDir);
+        auto const backendInfo = makeBackendFlowInfo(*flowData->flowInfo(), slicesPerGrain, flowData->accessMode(), grainPayloadSize, flowDef);
         mxlPayloadBackendApi const* api = nullptr;
         try
         {

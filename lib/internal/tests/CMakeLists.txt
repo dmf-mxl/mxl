@@ -114,6 +114,14 @@ target_compile_definitions(mxl-test-payload-test-bad-storage-type
             MXL_TEST_BACKEND_STORAGE_TYPE="Not A Name"
     )
 
+# Same backend with a storage type it defines itself, named outside the names the SDK uses.
+mxl_add_test_payload_backend(test-private payload_backends/TestFileBackend.cpp)
+target_compile_definitions(mxl-test-payload-test-private
+        PRIVATE
+            MXL_TEST_BACKEND_NAME="test-private"
+            MXL_TEST_BACKEND_STORAGE_TYPE="org.example.test-private"
+    )
+
 # A library without the backend entry point.
 mxl_add_test_payload_backend(test-no-entry payload_backends/NoEntryPointBackend.cpp)
 

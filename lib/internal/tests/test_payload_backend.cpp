@@ -42,6 +42,8 @@ namespace
             .slicesPerGrain = 100U,
             .sliceSizes = {10U, 0U, 0U, 0U},
             .format = MXL_DATA_FORMAT_VIDEO,
+            .reserved = 0U,
+            .flowDefinition = R"({"format": "urn:x-nmos:format:video", "media_type": "video/v210"})",
         };
     }
 
@@ -363,6 +365,27 @@ TEST_CASE("Plugin payload storage: the backend completes the layout", "[payload 
     REQUIRE(layout.planes[0].offset == 0U);
     REQUIRE(layout.planes[0].pitch == 10U);
     REQUIRE(layout.planes[0].size == 1000U);
+}
+
+TEST_CASE("Plugin payload storage: a backend defines its own storage type", "[payload backend]")
+{
+    auto const& api = testLoader().load("test-private");
+    REQUIRE(std::string_view{api.storageType} == "org.example.test-private");
+
+    auto const domain = TempDirectory{};
+    auto const stagingDir = domain.path / ".mxl-tmp-staging";
+    auto const finalDir = domain.path / "flow.mxl-flow";
+    fs::create_directory(stagingDir);
+    auto writerStorage = PluginPayloadStorage::prepare(api, testFlowInfo(MXL_PAYLOAD_BACKEND_ACCESS_READ_WRITE), "{}", stagingDir, finalDir);
+    fs::rename(stagingDir, finalDir);
+    REQUIRE(writerStorage->type() == "org.example.test-private");
+
+    // libmxl passes the reserved bytes the backend fills through without checking them. This backend puts the media
+    // type it read from the flow definition there.
+    auto readerStorage = PluginPayloadStorage::open(api, testFlowInfo(MXL_PAYLOAD_BACKEND_ACCESS_READ_ONLY), "{}", finalDir);
+    auto const layout = makeGrainStorageLayout(testDiscreteConfig(), 100U, *readerStorage);
+    REQUIRE(std::string_view{layout.storageType} == "org.example.test-private");
+    REQUIRE(std::string{reinterpret_cast<char const*>(layout.reserved)} == "video/v210");
 }
 
 TEST_CASE("Payload storage layout: a storage may choose its own plane geometry", "[payload backend]")
