@@ -5,6 +5,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <atomic>
 #include <filesystem>
 #include <map>
 #include <memory>
@@ -15,6 +16,7 @@
 #include <vector>
 #include <mxl/mxl.h>
 #include <mxl/platform.h>
+#include "DescriptorChannel.hpp"
 #include "PayloadBackendAbi.h"
 #include "PayloadStorage.hpp"
 
@@ -67,7 +69,8 @@ namespace mxl::lib
          * Load a backend, or return the one already loaded under that name.
          *
          * The library must export MXL_PAYLOAD_BACKEND_ENTRY_POINT, implement MXL_PAYLOAD_BACKEND_ABI_VERSION,
-         * report the requested name, provide every function, and report a storage type with a valid name.
+         * report the requested name, report a storage type with a valid name, provide every required function, and
+         * provide the functions of the capabilities it reports.
          *
          * \param[in] name The backend name.
          * \return The function table of the backend. Valid until the process exits.
@@ -76,7 +79,7 @@ namespace mxl::lib
          *     loaded or fails validation.
          */
         [[nodiscard]]
-        mxlPayloadBackendApiV1 const& load(std::string const& name);
+        mxlPayloadBackendApi const& load(std::string const& name);
 
         /**
          * \return The directories this loader searches, in order.
@@ -117,20 +120,24 @@ namespace mxl::lib
         /** Protects _backends. */
         std::mutex _mutex;
         /** Loaded backends by name. The libraries stay mapped for the life of the process. */
-        std::map<std::string, mxlPayloadBackendApiV1 const*, std::less<>> _backends;
+        std::map<std::string, mxlPayloadBackendApi const*, std::less<>> _backends;
     };
 
     /**
      * Payload storage implemented by a backend library.
      *
-     * Owns one backend instance and releases it on destruction.
+     * Owns one backend instance and releases it on destruction. For a backend that shares descriptors, the storage of
+     * a writer serves the descriptors the backend exports on the flow's payload.sock, and the storage of a reader
+     * receives them from there before the slots are first mapped or described.
      */
     class MXL_EXPORT
     PluginPayloadStorage final : public PayloadStorage
     {
     public:
         /**
-         * Create the payload storage of a new flow. See mxlPayloadBackendApiV1::prepare.
+         * Create the payload storage of a new flow. See mxlPayloadBackendApi::prepare. For a backend that shares
+         * descriptors, also starts serving them on payload.sock in stagingDir, where they stay reachable once the flow
+         * is published.
          *
          * \param[in] api The backend function table.
          * \param[in] info The flow geometry.
@@ -138,15 +145,17 @@ namespace mxl::lib
          * \param[in] stagingDir The temporary flow directory.
          * \param[in] finalDir The directory the flow will have once published.
          * \return The new storage.
-         * \throws PayloadStorageError with the backend's status if the backend fails.
+         * \throws PayloadStorageError with the backend's status if the backend fails or cannot export its descriptors,
+         *      with MXL_ERR_INTERNAL if it exports an inconsistent number of them, or with MXL_ERR_UNKNOWN if the
+         *      descriptors cannot be served.
          */
         [[nodiscard]]
-        static std::unique_ptr<PluginPayloadStorage> prepare(mxlPayloadBackendApiV1 const& api, mxlPayloadBackendFlowInfo const& info,
+        static std::unique_ptr<PluginPayloadStorage> prepare(mxlPayloadBackendApi const& api, mxlPayloadBackendFlowInfo const& info,
             std::string const& options, std::filesystem::path const& stagingDir, std::filesystem::path const& finalDir);
 
         /**
          * Open the payload storage of an existing flow. Does not import the payload.
-         * See mxlPayloadBackendApiV1::open.
+         * See mxlPayloadBackendApi::open.
          *
          * \param[in] api The backend function table.
          * \param[in] info The flow geometry and the access this process needs.
@@ -156,7 +165,7 @@ namespace mxl::lib
          * \throws PayloadStorageError with the backend's status if the backend fails.
          */
         [[nodiscard]]
-        static std::unique_ptr<PluginPayloadStorage> open(mxlPayloadBackendApiV1 const& api, mxlPayloadBackendFlowInfo const& info,
+        static std::unique_ptr<PluginPayloadStorage> open(mxlPayloadBackendApi const& api, mxlPayloadBackendFlowInfo const& info,
             std::string const& options, std::filesystem::path const& flowDir);
 
         /** Destructor. Releases the backend instance. */
@@ -172,7 +181,8 @@ namespace mxl::lib
 
         /**
          * \see PayloadStorage::slotStorage()
-         * \throws PayloadStorageError if the backend cannot import the payload or returns an invalid description.
+         * \throws PayloadStorageError if the descriptors cannot be received, or the backend cannot import the payload
+         *      or returns an invalid description.
          */
         [[nodiscard]]
         mxlGrainStorage slotStorage(std::size_t slot) const override;
@@ -185,7 +195,7 @@ namespace mxl::lib
 
         /**
          * \see PayloadStorage::mapSlots()
-         * \throws PayloadStorageError if the backend cannot map the storage.
+         * \throws PayloadStorageError if the descriptors cannot be received, or the backend cannot map the storage.
          */
         void mapSlots() const override;
 
@@ -194,15 +204,43 @@ namespace mxl::lib
          * \param[in] api The backend function table.
          * \param[in] instance The backend instance. Ownership passes to the new object.
          * \param[in] slotCount The number of slots of the flow.
+         * \param[in] readerFlowDir The published flow directory for a reader's storage, or an empty path for a writer's.
          */
-        PluginPayloadStorage(mxlPayloadBackendApiV1 const& api, mxlPayloadBackendInstance instance, std::size_t slotCount) noexcept;
+        PluginPayloadStorage(mxlPayloadBackendApi const& api, mxlPayloadBackendInstance instance, std::size_t slotCount,
+            std::filesystem::path readerFlowDir) noexcept;
+
+        /** \return true if the backend shares its storage through descriptors. */
+        [[nodiscard]]
+        bool sharesDescriptors() const noexcept;
+
+        /**
+         * Start serving the descriptors the writer's backend instance exports.
+         * \param[in] socketPath Where to create the socket.
+         * \throws PayloadStorageError if the backend cannot export them or the socket cannot be created.
+         */
+        void serveDescriptors(std::filesystem::path const& socketPath);
+
+        /**
+         * In a reader, receive the descriptors from the writer and pass them to the backend instance, once.
+         * Does nothing in a writer or for a backend that does not share descriptors.
+         * \throws PayloadStorageError if the descriptors cannot be received or the backend rejects them.
+         */
+        void ensureDescriptors() const;
 
         /** The backend function table. Valid until the process exits. */
-        mxlPayloadBackendApiV1 const* _api;
+        mxlPayloadBackendApi const* _api;
         /** The backend instance owned by this object. */
         mxlPayloadBackendInstance _instance;
         /** The number of slots of the flow. */
         std::size_t _slotCount;
+        /** The published flow directory of a reader, empty for a writer. */
+        std::filesystem::path _readerFlowDir;
+        /** Serves the writer's descriptors. Destroyed before the backend instance, whose descriptors it serves. */
+        std::unique_ptr<DescriptorServer> _server;
+        /** Serializes receiving the descriptors. */
+        mutable std::mutex _descriptorsMutex;
+        /** True once a reader passed the descriptors to the backend instance. */
+        mutable std::atomic<bool> _descriptorsReceived;
     };
 
     /**

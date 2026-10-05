@@ -6,10 +6,10 @@
  *
  * C interface between libmxl and the payload storage backends that the SDK ships as separate shared libraries.
  *
- * This header is internal to the SDK. It is not installed, and applications cannot register backends. libmxl
- * only loads backends by name, from the directory that holds libmxl, so the SDK decides which backends exist
- * and every writer and reader of a flow uses the same backend code. Because the interface is internal it can
- * change between SDK releases. The version fields let libmxl reject a backend library from another release.
+ * This header is internal to the SDK. It is not installed, and applications cannot register backends through the
+ * API. libmxl loads backends by name, from the directories in MXL_PAYLOAD_PLUGIN_PATH and from the directory that
+ * holds libmxl. Because the interface is internal it can change between SDK releases. The interface version lets
+ * libmxl reject a backend library built for another version of this interface.
  *
  * A backend library is named libmxl-payload-\<name\>.so and exports one C function, named by
  * MXL_PAYLOAD_BACKEND_ENTRY_POINT, with the signature mxlGetPayloadBackendApiFn. Only C types cross the
@@ -32,7 +32,7 @@ extern "C"
 #endif
 
 /** Version of the backend interface described by this header. */
-#define MXL_PAYLOAD_BACKEND_ABI_VERSION 1U
+#define MXL_PAYLOAD_BACKEND_ABI_VERSION 2U
 
 /** Name of the function every backend library exports. */
 #define MXL_PAYLOAD_BACKEND_ENTRY_POINT "mxlGetPayloadBackendApi"
@@ -42,6 +42,13 @@ extern "C"
 
 /** Value of mxlPayloadBackendFlowInfo.accessMode for a writer. */
 #define MXL_PAYLOAD_BACKEND_ACCESS_READ_WRITE 1U
+
+/**
+ * Capability of a backend that shares its storage through file descriptors. libmxl serves the descriptors that the
+ * writer's instance exports on the flow's payload.sock, and passes the descriptors a reader receives to the reader's
+ * instance. The backend implements exportDescriptors() and importDescriptors().
+ */
+#define MXL_PAYLOAD_BACKEND_CAP_SHARE_DESCRIPTORS 0x1U
 
     /** Opaque state that a backend keeps for one flow opened or created in one process. */
     typedef struct mxlPayloadBackendInstance_t* mxlPayloadBackendInstance;
@@ -76,12 +83,12 @@ extern "C"
     } mxlPayloadBackendFlowInfo;
 
     /**
-     * Function table of a backend, version 1.
+     * Function table of a backend.
      *
      * The table and the strings it points to must stay valid until the process exits. libmxl never unloads a
      * backend library.
      */
-    typedef struct mxlPayloadBackendApiV1_t
+    typedef struct mxlPayloadBackendApi_t
     {
         /** Size of this structure in bytes, as compiled into the backend. */
         uint32_t structSize;
@@ -185,7 +192,44 @@ extern "C"
          * \return MXL_STATUS_OK on success, or an error code if the storage cannot be mapped in this process.
          */
         mxlStatus (*mapSlots)(mxlPayloadBackendInstance instance);
-    } mxlPayloadBackendApiV1;
+
+        /** Bitwise or of the MXL_PAYLOAD_BACKEND_CAP_* values the backend supports. */
+        uint32_t capabilities;
+        /** Reserved. Must be zero. */
+        uint32_t reserved2;
+
+        /**
+         * Report the file descriptors that readers need to access the storage of a writer's instance.
+         *
+         * Required with MXL_PAYLOAD_BACKEND_CAP_SHARE_DESCRIPTORS, otherwise null. libmxl calls this after
+         * prepare(), first with null descriptors to learn their number, then to receive them, and serves them on the
+         * flow's payload.sock until the instance is destroyed. The order of the descriptors is the backend's own, for
+         * example one per slot. The descriptors stay owned by the backend and must stay open until destroy().
+         *
+         * \param[in] instance A writer's instance.
+         * \param[out] out_descriptors Receives the descriptors, or null to only query their number.
+         * \param[in] capacity Number of entries out_descriptors can hold.
+         * \param[out] out_count Receives the number of descriptors.
+         * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if capacity is too small, or another error code.
+         */
+        mxlStatus (*exportDescriptors)(mxlPayloadBackendInstance instance, int* out_descriptors, uint32_t capacity, uint32_t* out_count);
+
+        /**
+         * Pass a reader's instance the file descriptors received from the writer's payload.sock.
+         *
+         * Required with MXL_PAYLOAD_BACKEND_CAP_SHARE_DESCRIPTORS, otherwise null. libmxl calls this before the first
+         * mapSlots() or slotStorage() of a reader, and again before the next one if it failed. The backend takes
+         * ownership of every descriptor, also when it returns an error, and checks that they match the flow, for
+         * example their number and size.
+         *
+         * \param[in] instance A reader's instance.
+         * \param[in] descriptors The descriptors, in the order exportDescriptors() reported them in the writer.
+         * \param[in] count The number of descriptors.
+         * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_STATE if the descriptors do not match the flow, or
+         *      another error code.
+         */
+        mxlStatus (*importDescriptors)(mxlPayloadBackendInstance instance, int const* descriptors, uint32_t count);
+    } mxlPayloadBackendApi;
 
     /**
      * Signature of the function a backend library exports under MXL_PAYLOAD_BACKEND_ENTRY_POINT.
@@ -195,7 +239,7 @@ extern "C"
      * \return MXL_STATUS_OK on success, or MXL_ERR_UNSUPPORTED_OPERATION if the backend does not implement
      *      requestedVersion.
      */
-    typedef mxlStatus (*mxlGetPayloadBackendApiFn)(uint32_t requestedVersion, mxlPayloadBackendApiV1 const** out_api);
+    typedef mxlStatus (*mxlGetPayloadBackendApiFn)(uint32_t requestedVersion, mxlPayloadBackendApi const** out_api);
 
 #ifdef __cplusplus
 }

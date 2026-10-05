@@ -298,7 +298,7 @@ namespace
         return instance;
     }
 
-    /** \see mxlPayloadBackendApiV1::prepare */
+    /** \see mxlPayloadBackendApi::prepare */
     mxlStatus prepare(mxlPayloadBackendFlowInfo const* info, char const* options, char const* stagingDir, char const* finalDir,
         mxlPayloadBackendInstance* out_instance) noexcept
     {
@@ -344,7 +344,7 @@ namespace
         return MXL_STATUS_OK;
     }
 
-    /** \see mxlPayloadBackendApiV1::open */
+    /** \see mxlPayloadBackendApi::open */
     mxlStatus open(mxlPayloadBackendFlowInfo const* info, char const* options, char const* flowDir, mxlPayloadBackendInstance* out_instance) noexcept
     {
         if ((options == nullptr) || (out_instance == nullptr) || (checkReaderOptions(options) != MXL_STATUS_OK))
@@ -363,7 +363,7 @@ namespace
         return MXL_STATUS_OK;
     }
 
-    /** \see mxlPayloadBackendApiV1::destroy */
+    /** \see mxlPayloadBackendApi::destroy */
     void destroy(mxlPayloadBackendInstance handle) noexcept
     {
         auto* const instance = reinterpret_cast<Instance*>(handle);
@@ -403,7 +403,7 @@ namespace
         return instance.mapStatus;
     }
 
-    /** \see mxlPayloadBackendApiV1::mapSlots */
+    /** \see mxlPayloadBackendApi::mapSlots */
     mxlStatus mapSlots(mxlPayloadBackendInstance handle) noexcept
     {
         auto* const instance = reinterpret_cast<Instance*>(handle);
@@ -414,7 +414,7 @@ namespace
         return ensureMapped(*instance);
     }
 
-    /** \see mxlPayloadBackendApiV1::slotStorage */
+    /** \see mxlPayloadBackendApi::slotStorage */
     mxlStatus slotStorage(mxlPayloadBackendInstance handle, std::uint32_t slot, mxlGrainStorage* out_storage) noexcept
     {
         auto* const instance = reinterpret_cast<Instance*>(handle);
@@ -436,7 +436,7 @@ namespace
         return MXL_STATUS_OK;
     }
 
-    /** \see mxlPayloadBackendApiV1::describeLayout */
+    /** \see mxlPayloadBackendApi::describeLayout */
     mxlStatus describeLayout(mxlPayloadBackendInstance handle, mxlGrainStorageLayout* inout_layout) noexcept
     {
         if ((handle == nullptr) || (inout_layout == nullptr))
@@ -450,8 +450,8 @@ namespace
     }
 
     /** The function table of this backend. */
-    constexpr auto API = mxlPayloadBackendApiV1{
-        .structSize = sizeof(mxlPayloadBackendApiV1),
+    constexpr auto API = mxlPayloadBackendApi{
+        .structSize = sizeof(mxlPayloadBackendApi),
         .abiVersion = MXL_PAYLOAD_BACKEND_ABI_VERSION,
         .name = MXL_TEST_BACKEND_NAME,
         .storageType = MXL_TEST_BACKEND_STORAGE_TYPE,
@@ -461,12 +461,16 @@ namespace
         .slotStorage = &slotStorage,
         .describeLayout = &describeLayout,
         .mapSlots = &mapSlots,
+        .capabilities = 0U,
+        .reserved2 = 0U,
+        .exportDescriptors = nullptr,
+        .importDescriptors = nullptr,
     };
 }
 
 /** \see mxlGetPayloadBackendApiFn */
 extern "C" MXL_EXPORT
-mxlStatus mxlGetPayloadBackendApi(std::uint32_t requestedVersion, mxlPayloadBackendApiV1 const** out_api)
+mxlStatus mxlGetPayloadBackendApi(std::uint32_t requestedVersion, mxlPayloadBackendApi const** out_api)
 {
     if (out_api == nullptr)
     {

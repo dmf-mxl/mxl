@@ -326,7 +326,7 @@ namespace mxl::lib
         }
 
         // Load the backend before touching the file system, so that a missing backend leaves nothing behind.
-        mxlPayloadBackendApiV1 const* backendApi = nullptr;
+        mxlPayloadBackendApi const* backendApi = nullptr;
         if (storageSpec.usesBackend())
         {
             try
@@ -679,7 +679,7 @@ namespace mxl::lib
         auto const grainPayloadSize = (grainCount > 0U) ? flowData->grainInfoAt(0)->grainSize : 0U;
         auto const slicesPerGrain = (grainCount > 0U) ? flowData->grainInfoAt(0)->totalSlices : 0U;
         auto const backendInfo = makeBackendFlowInfo(*flowData->flowInfo(), slicesPerGrain, flowData->accessMode(), grainPayloadSize);
-        mxlPayloadBackendApiV1 const* api = nullptr;
+        mxlPayloadBackendApi const* api = nullptr;
         try
         {
             api = &_backendLoader->load(descriptor.backend);

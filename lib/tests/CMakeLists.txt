@@ -34,8 +34,8 @@ target_link_libraries(mxl-tests
             mxl-internal-objects
     )
 
-# The flow tests create flows whose payload is held by the test backend built in lib/internal/tests.
-add_dependencies(mxl-tests mxl-test-payload-test-file)
+# The flow tests create flows whose payload is held by the test backends built in lib/internal/tests.
+add_dependencies(mxl-tests mxl-test-payload-test-file mxl-test-payload-test-memfd)
 
 if (NOT TARGET Catch2::Catch2WithMain)
     find_package(Catch2 REQUIRED)
