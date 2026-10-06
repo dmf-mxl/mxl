@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "RCTarget.hpp"
-
 #include <algorithm>
 #include <mxl-internal/Logging.hpp>
 #include <rdma/fabric.h>
@@ -100,10 +99,10 @@ namespace mxl::lib::fabrics::ofi
 
                             auto cqAttr = CompletionQueue::Attributes::defaults();
                             // The receive window can put that many completions in the queue
-                        // before anything reads it, so the queue must be able to
-                        // hold them however its depth was chosen.
-                        cqAttr.size = std::max(_setupOptions.cqDepth.value_or(CompletionQueue::Attributes::DEFAULT_SIZE),
-                            2 * DefaultReceiveDepth);
+                            // before anything reads it, so the queue must be able to
+                            // hold them however its depth was chosen.
+                            cqAttr.size = std::max(_setupOptions.cqDepth.value_or(CompletionQueue::Attributes::DEFAULT_SIZE),
+                                2 * DefaultReceiveDepth);
                             auto cq = CompletionQueue::open(_domain, cqAttr);
                             auto endpoint = Endpoint::create(_domain, state.pep.id(), event->connReq().info());
                             endpoint.bind(cq, FI_RECV);

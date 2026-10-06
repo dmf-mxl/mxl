@@ -4,10 +4,10 @@
 
 #include "RCInitiator.hpp"
 #include <cassert>
-#include <exception>
 #include <chrono>
 #include <cstdint>
 #include <algorithm>
+#include <exception>
 #include <ranges>
 #include <uuid.h>
 #include <mxl-internal/Logging.hpp>

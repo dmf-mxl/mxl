@@ -1,9 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 #include "ProviderConfig.hpp"
-
-#include <string>
 #include <algorithm>
+#include <string>
 #include "Exception.hpp"
 
 namespace mxl::lib::fabrics::ofi
@@ -165,10 +164,10 @@ namespace mxl::lib::fabrics::ofi
 
         // Filters out fabrics this provider publishes but cannot be used
         // interchangeably with the one we are built against.
-        auto const unsupportedFabricName = !_values.supportedFabricNames.empty() &&
-                                           ((view->fabric_attr->name == nullptr) ||
-                                               std::ranges::find(_values.supportedFabricNames, std::string{view->fabric_attr->name}) ==
-                                                   _values.supportedFabricNames.end());
+        auto const unsupportedFabricName =
+            !_values.supportedFabricNames.empty() &&
+            ((view->fabric_attr->name == nullptr) ||
+                std::ranges::find(_values.supportedFabricNames, std::string{view->fabric_attr->name}) == _values.supportedFabricNames.end());
 
         return !(protocolNotSupported || addressFormatNotSupported || containsFilteredCaps || missingRequiredCaps || unsupportedEndpointType ||
                  unsupportedFabricName);

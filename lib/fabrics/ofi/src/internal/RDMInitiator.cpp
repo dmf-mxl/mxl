@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "RDMInitiator.hpp"
-#include <algorithm>
 #include <cassert>
-#include <exception>
 #include <chrono>
 #include <cstdint>
+#include <algorithm>
+#include <exception>
 #include <memory>
 #include <utility>
 #include <variant>

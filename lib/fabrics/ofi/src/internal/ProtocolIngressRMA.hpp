@@ -5,7 +5,6 @@
 #pragma once
 
 #include <vector>
-
 #include "AudioBounceBuffer.hpp"
 #include "DataLayout.hpp"
 #include "Protocol.hpp"

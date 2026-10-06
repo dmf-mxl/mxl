@@ -143,14 +143,14 @@ namespace mxl::lib::fabrics::ofi
         Completion::Token _token;
         TargetInfo _remoteInfo;
         DataLayout::Continuous _layout;
-        LocalRegion _localRegion;                     /**< Registered local region corresponding to the user provided audio region.  */
+        LocalRegion _localRegion;           /**< Registered local region corresponding to the user provided audio region.  */
         std::vector<std::uint8_t> _staging; /**< One registered copy of each remote bounce buffer entry, header and samples, so a transfer is a
                                                single write. */
         std::optional<RegisteredRegion> _stagingRegistration; /**< Registration of _staging, owned here so it goes with the target. */
         std::optional<LocalRegion> _stagingRegion;            /**< The registered region backing _staging. */
-        bool _saturated{false}; /**< Every staging entry was in flight at the last transfer, which was skipped. */
+        bool _saturated{false};                               /**< Every staging entry was in flight at the last transfer, which was skipped. */
         std::size_t _pending = 0;
-        std::uint32_t _bounceBufferEntryIndex{0};     /**< The index of the bounce buffer entry to use for the next transfer. */
+        std::uint32_t _bounceBufferEntryIndex{0};             /**< The index of the bounce buffer entry to use for the next transfer. */
         std::size_t _bounceBufferEntryCount; /**< The total number of bounce buffer entries. Used to wrap around the bounce buffer entry index. */
     };
 

@@ -202,7 +202,8 @@ namespace mxl::lib::fabrics::ofi
         {
             if (!_saturated)
             {
-                MXL_WARN("All {} bounce buffer entries of a target are in flight, skipping its transfers until one completes.", _bounceBufferEntryCount);
+                MXL_WARN("All {} bounce buffer entries of a target are in flight, skipping its transfers until one completes.",
+                    _bounceBufferEntryCount);
                 _saturated = true;
             }
             return;

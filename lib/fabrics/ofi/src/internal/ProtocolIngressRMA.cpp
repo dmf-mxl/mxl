@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ProtocolIngressRMA.hpp"
-#include "mxl-internal/Logging.hpp"
 #include <rdma/fi_errno.h>
+#include "mxl-internal/Logging.hpp"
 #include "AudioBounceBuffer.hpp"
 #include "DataLayout.hpp"
 #include "Exception.hpp"
@@ -235,14 +235,12 @@ namespace mxl::lib::fabrics::ofi
             return {};
         }
 
-
         // One receive back for the one this completion consumed, so the
         // window stays open for as long as the connection lives.
         if (_immData)
         {
             static_cast<void>(tryPostOne(endpoint));
         }
-
 
         auto const immData = completionData->data();
         if (!immData)
