@@ -76,7 +76,17 @@ namespace mxl::lib::fabrics::ofi
             }
             catch (ofi::Exception& e)
             {
-                MXL_ERROR("{}: {}", errMsg, e.what());
+                // Not ready and interrupted are answers the caller acts on
+                // -- a full send queue, a wait cut short by a signal -- not
+                // failures, and at error level they buried real ones.
+                if ((e.status() == MXL_ERR_NOT_READY) || (e.status() == MXL_ERR_INTERRUPTED))
+                {
+                    MXL_DEBUG("{}: {}", errMsg, e.what());
+                }
+                else
+                {
+                    MXL_ERROR("{}: {}", errMsg, e.what());
+                }
 
                 return e.status();
             }

@@ -137,6 +137,12 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         std::size_t txIovLimit() const noexcept;
 
+        /** \brief The endpoint's send-queue depth: how many operations may
+         * be outstanding before the provider refuses another.
+         */
+        [[nodiscard]]
+        std::size_t txSize() const noexcept;
+
         [[nodiscard]]
         ::fi_ep_type endpointType() const noexcept;
 

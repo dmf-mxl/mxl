@@ -9,9 +9,13 @@
 #include <utility>
 #include <fmt/base.h>
 #include <fmt/color.h>
+#include <mxl-internal/Logging.hpp>
+#include <rdma/fi_errno.h>
 #include "Completion.hpp"
 #include "Endpoint.hpp"
 #include "Event.hpp"
+#include "EventQueue.hpp"
+#include "Exception.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
@@ -100,5 +104,31 @@ namespace mxl::lib::fabrics::ofi
         }
 
         return completion;
+    }
+
+    /** \brief Read every entry off a connectionless endpoint's event queue and log the errors among them.
+     *
+     * A connectionless endpoint has no connection events to act on. What arrives here are failures not tied to an operation of ours: work
+     * the provider does on its own behalf, such as EFA's peer handshake or the replies of its emulated write protocols, and the provider's
+     * own resource exhaustion. They are reported and otherwise left alone. The provider code is logged as a number, because it is the
+     * provider's own and the libfabric error text for it names something else.
+     */
+    inline void drainEventQueue(EventQueue& eq)
+    {
+        try
+        {
+            while (auto event = eq.read())
+            {
+                if (event->isError())
+                {
+                    auto const& error = event->error();
+                    MXL_WARN("Event queue error: {} ({}), provider code {}", ::fi_strerror(error.code()), error.code(), error.providerCode());
+                }
+            }
+        }
+        catch (Exception const& ex)
+        {
+            MXL_WARN("Unhandled entry on the event queue: {}", ex.what());
+        }
     }
 }
