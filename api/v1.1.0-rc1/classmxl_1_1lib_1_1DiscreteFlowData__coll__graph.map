@@ -1,0 +1,9 @@
+<map id="mxl::lib::DiscreteFlowData" name="mxl::lib::DiscreteFlowData">
+<area shape="rect" id="Node000001" title=" " alt="" coords="25,257,219,283"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1FlowData.html" title=" " alt="" coords="51,183,193,208"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,222,125,257,119,257,119,222"/>
+<area shape="rect" id="Node000003" href="$structmxl_1_1lib_1_1SharedMemoryInstance.html" title=" " alt="" coords="5,80,239,120"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="125,134,125,182,119,182,119,134"/>
+<area shape="rect" id="Node000004" href="$classmxl_1_1lib_1_1SharedMemoryBase.html" title=" " alt="" coords="17,5,227,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="125,44,125,80,119,80,119,44"/>
+</map>

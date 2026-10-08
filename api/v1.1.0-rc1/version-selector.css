@@ -1,0 +1,37 @@
+/* SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+ * SPDX-License-Identifier: CC-BY-4.0
+ *
+ * Styling for the Mike-style version selector injected by version-selector.js.
+ * Intentionally minimal so it picks up doxygen-awesome-css's surrounding
+ * colour scheme without fighting it.
+ */
+
+.mxl-version-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  margin: 0 12px;
+  padding: 4px 0;
+  font-size: 0.9em;
+  vertical-align: middle;
+}
+
+.mxl-version-selector label {
+  font-weight: 600;
+  color: inherit;
+}
+
+.mxl-version-selector select {
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--separator-color, #c1c8d0);
+  background: var(--page-background-color, #fff);
+  color: var(--page-foreground-color, #24292f);
+  font: inherit;
+  cursor: pointer;
+}
+
+.mxl-version-selector select:focus {
+  outline: 2px solid var(--primary-color, #0969da);
+  outline-offset: 1px;
+}

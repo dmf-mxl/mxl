@@ -1,0 +1,15 @@
+<map id="lib/internal/src/Timing.cpp" name="lib/internal/src/Timing.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,196,31"/>
+<area shape="rect" id="Node000002" href="$Timing_8hpp.html" title=" " alt="" coords="39,167,218,192"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="80,33,53,52,31,80,25,99,31,117,53,142,81,159,78,163,49,146,26,120,20,99,26,77,49,48,77,29"/>
+<area shape="rect" id="Node000005" href="$platform_8h.html" title=" " alt="" coords="41,86,160,111"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="103,31,103,72,98,72,98,31"/>
+<area shape="rect" id="Node000006" href="$ClockHelpers_8hpp.html" title=" " alt="" coords="184,79,327,119"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="125,28,207,70,205,75,122,33"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="95,240,162,265"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="131,192,131,226,126,226,126,192"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="206,240,265,265"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="147,190,208,230,205,235,144,194"/>
+<area shape="poly" id="edge7_Node000006_Node000002" title=" " alt="" coords="226,121,160,162,157,157,223,117"/>
+<area shape="poly" id="edge6_Node000006_Node000004" title=" " alt="" coords="255,120,241,227,236,226,250,119"/>
+</map>

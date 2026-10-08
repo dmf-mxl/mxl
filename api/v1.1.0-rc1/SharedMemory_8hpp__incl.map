@@ -1,0 +1,17 @@
+<map id="lib/internal/include/mxl&#45;internal/SharedMemory.hpp" name="lib/internal/include/mxl&#45;internal/SharedMemory.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="147,5,382,45"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,93,76,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,48,87,91,85,86,210,43"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="100,93,149,119"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="232,48,159,89,156,84,230,43"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="173,93,260,119"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="255,47,233,83,229,80,251,44"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="284,93,344,119"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="279,44,302,80,297,83,274,47"/>
+<area shape="rect" id="Node000006" href="$Logging_8hpp.html" title=" " alt="" coords="368,93,553,119"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="313,43,420,86,418,91,311,48"/>
+<area shape="rect" id="Node000008" href="$platform_8h.html" title=" " alt="" coords="577,93,696,119"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="354,43,570,88,569,93,353,48"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="399,167,523,192"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="463,119,463,153,458,153,458,119"/>
+</map>

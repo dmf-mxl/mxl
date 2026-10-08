@@ -1,0 +1,28 @@
+/* SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+ * SPDX-License-Identifier: CC-BY-4.0
+ *
+ * Styling for the "GitHub" repo link injected by github-repo-link.js.
+ * Deliberately mirrors main-docs-link.css so both header links have the
+ * same visual weight and inherit doxygen-awesome-css's colour scheme.
+ */
+
+.mxl-github-repo-link {
+  display: inline-block;
+  margin: 0 12px;
+  padding: 4px 8px;
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--primary-color, #0969da);
+  text-decoration: none;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+.mxl-github-repo-link:hover {
+  text-decoration: underline;
+}
+
+.mxl-github-repo-link:focus {
+  outline: 2px solid var(--primary-color, #0969da);
+  outline-offset: 1px;
+}
