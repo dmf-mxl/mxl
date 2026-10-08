@@ -1,0 +1,12 @@
+<map id="mxl::lib::ContinuousFlowData" name="mxl::lib::ContinuousFlowData">
+<area shape="rect" id="Node000001" title=" " alt="" coords="96,268,311,293"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1FlowData.html" title=" " alt="" coords="69,193,210,219"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="161,228,195,266,191,269,157,231"/>
+<area shape="rect" id="Node000003" href="$structmxl_1_1lib_1_1SharedMemoryInstance.html" title=" " alt="" coords="5,80,239,120"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="114,134,113,151,115,168,129,191,125,194,110,170,107,151,109,133"/>
+<area shape="rect" id="Node000004" href="$classmxl_1_1lib_1_1SharedMemoryBase.html" title=" " alt="" coords="95,5,306,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="182,42,142,82,139,78,178,38"/>
+<area shape="rect" id="Node000005" href="$structmxl_1_1lib_1_1SharedMemorySegment.html" title=" " alt="" coords="163,144,399,169"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="224,39,254,79,270,113,280,143,275,144,265,115,249,81,220,43"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="268,182,213,269,208,266,264,180"/>
+</map>

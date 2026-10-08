@@ -1,0 +1,40 @@
+<map id="lib/fabrics/ofi/src/internal/RemoteRegion.cpp" name="lib/fabrics/ofi/src/internal/RemoteRegion.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="394,5,597,45"/>
+<area shape="rect" id="Node000002" href="$RemoteRegion_8hpp.html" title=" " alt="" coords="206,93,353,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="445,48,325,91,323,86,443,43"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="417,167,502,192"/>
+<area shape="poly" id="edge8_Node000001_Node000005" title=" " alt="" coords="493,46,468,154,463,152,488,45"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="497,93,566,119"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="506,44,523,79,518,82,502,47"/>
+<area shape="rect" id="Node000009" href="$Exception_8hpp.html" title=" " alt="" coords="717,93,831,119"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="563,43,721,87,719,92,561,48"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="5,167,76,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="242,121,90,166,89,161,240,116"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="101,167,167,192"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="257,121,171,163,169,158,255,116"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="309,116,418,159,416,164,307,121"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="192,167,255,192"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="272,121,243,157,239,154,268,117"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="279,167,392,192"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="291,117,320,154,316,157,286,121"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="527,167,613,192"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="742,121,617,165,615,160,740,116"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="638,167,697,192"/>
+<area shape="poly" id="edge11_Node000009_Node000011" title=" " alt="" coords="758,121,698,161,695,157,755,116"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="721,167,827,192"/>
+<area shape="poly" id="edge12_Node000009_Node000012" title=" " alt="" coords="777,119,777,153,771,153,771,119"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="851,167,972,192"/>
+<area shape="poly" id="edge13_Node000009_Node000013" title=" " alt="" coords="797,116,878,158,876,163,795,121"/>
+<area shape="rect" id="Node000014" href="$mxl_8h.html" title=" " alt="" coords="997,167,1085,192"/>
+<area shape="poly" id="edge14_Node000009_Node000014" title=" " alt="" coords="818,116,985,160,983,166,816,121"/>
+<area shape="rect" id="Node000018" href="$Logging_8hpp.html" title=" " alt="" coords="1160,167,1345,192"/>
+<area shape="poly" id="edge18_Node000009_Node000018" title=" " alt="" coords="832,113,1163,162,1162,167,831,118"/>
+<area shape="rect" id="Node000015" title=" " alt="" coords="871,240,954,265"/>
+<area shape="poly" id="edge15_Node000014_Node000015" title=" " alt="" coords="1021,194,947,235,945,231,1019,190"/>
+<area shape="rect" id="Node000016" title=" " alt="" coords="979,240,1049,265"/>
+<area shape="poly" id="edge16_Node000014_Node000016" title=" " alt="" coords="1039,193,1026,228,1021,226,1034,191"/>
+<area shape="rect" id="Node000017" href="$platform_8h.html" title=" " alt="" coords="1073,240,1192,265"/>
+<area shape="poly" id="edge17_Node000014_Node000017" title=" " alt="" coords="1057,190,1109,229,1105,234,1054,194"/>
+<area shape="rect" id="Node000019" title=" " alt="" coords="1216,240,1340,265"/>
+<area shape="poly" id="edge19_Node000018_Node000019" title=" " alt="" coords="1259,191,1272,226,1267,228,1254,193"/>
+</map>

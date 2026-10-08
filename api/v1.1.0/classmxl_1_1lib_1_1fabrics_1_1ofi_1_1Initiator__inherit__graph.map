@@ -1,0 +1,7 @@
+<map id="mxl::lib::fabrics::ofi::Initiator" name="mxl::lib::fabrics::ofi::Initiator">
+<area shape="rect" id="Node000001" title="Abstract base class for Initiator implementations." alt="" coords="83,5,213,45"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html" title="An initiator that uses reliable connected endpoints to transfer data to targets." alt="" coords="5,93,136,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="124,57,90,95,86,91,120,54"/>
+<area shape="rect" id="Node000003" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator.html" title="An initiator that uses reliable datagram (RDM) endpoints for data transfers." alt="" coords="160,93,291,133"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="176,54,210,91,206,95,172,57"/>
+</map>

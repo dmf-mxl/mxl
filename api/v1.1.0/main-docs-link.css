@@ -1,0 +1,28 @@
+/* SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+ * SPDX-License-Identifier: CC-BY-4.0
+ *
+ * Styling for the "MXL Documentation" back-link injected by
+ * main-docs-link.js. Kept minimal so it picks up doxygen-awesome-css's
+ * surrounding colour scheme without fighting it.
+ */
+
+.mxl-main-docs-link {
+  display: inline-block;
+  margin: 0 12px;
+  padding: 4px 8px;
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--primary-color, #0969da);
+  text-decoration: none;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+.mxl-main-docs-link:hover {
+  text-decoration: underline;
+}
+
+.mxl-main-docs-link:focus {
+  outline: 2px solid var(--primary-color, #0969da);
+  outline-offset: 1px;
+}

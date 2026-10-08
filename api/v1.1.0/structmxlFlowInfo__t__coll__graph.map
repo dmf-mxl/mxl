@@ -1,0 +1,15 @@
+<map id="mxlFlowInfo_t" name="mxlFlowInfo_t">
+<area shape="rect" id="Node000001" title=" " alt="" coords="863,83,977,109"/>
+<area shape="rect" id="Node000002" href="$structmxlFlowConfigInfo__t.html" title=" " alt="" coords="595,57,751,82"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="765,77,863,87,862,92,765,82"/>
+<area shape="rect" id="Node000003" href="$structmxlCommonFlowConfigInfo__t.html" title=" " alt="" coords="242,7,457,33"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="451,32,564,49,596,54,595,60,564,55,450,37"/>
+<area shape="rect" id="Node000004" href="$structmxlRational__t.html" title=" " alt="" coords="5,7,119,33"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="133,17,242,17,242,23,133,23"/>
+<area shape="rect" id="Node000005" href="$structmxlDiscreteFlowConfigInfo__t.html" title=" " alt="" coords="244,57,455,82"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="469,67,595,67,595,72,469,72"/>
+<area shape="rect" id="Node000006" href="$structmxlContinuousFlowConfigInfo__t.html" title=" " alt="" coords="235,106,464,131"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="463,102,564,87,605,79,606,85,564,92,464,107"/>
+<area shape="rect" id="Node000007" href="$structmxlFlowRuntimeInfo__t.html" title=" " alt="" coords="588,106,759,131"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="772,118,838,113,875,106,876,111,839,119,772,123"/>
+</map>

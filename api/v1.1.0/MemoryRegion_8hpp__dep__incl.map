@@ -1,0 +1,12 @@
+<map id="lib/fabrics/ofi/src/internal/MemoryRegion.hpp" name="lib/fabrics/ofi/src/internal/MemoryRegion.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="40,5,247,45"/>
+<area shape="rect" id="Node000002" href="$Domain_8cpp.html" title=" " alt="" coords="5,181,164,221"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="75,54,49,71,30,95,25,106,25,117,32,140,47,161,64,179,60,183,43,164,27,142,20,117,20,104,25,92,46,67,72,49"/>
+<area shape="rect" id="Node000003" href="$MemoryRegion_8cpp.html" title=" " alt="" coords="40,93,247,133"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="146,59,146,93,141,93,141,59"/>
+<area shape="rect" id="Node000004" href="$RegisteredRegion_8hpp.html" title=" " alt="" coords="271,93,493,133"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="210,48,331,91,329,96,208,53"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="304,140,151,184,149,179,303,135"/>
+<area shape="rect" id="Node000005" href="$RegisteredRegion_8cpp.html" title=" " alt="" coords="271,181,493,221"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="385,147,385,181,379,181,379,147"/>
+</map>

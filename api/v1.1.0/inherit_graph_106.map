@@ -1,0 +1,9 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$classmxl_1_1lib_1_1SharedMemoryBase.html" title=" " alt="" coords="5,70,216,95"/>
+<area shape="rect" id="Node000001" href="$structmxl_1_1lib_1_1SharedMemoryInstance.html" title=" " alt="" coords="283,5,516,45"/>
+<area shape="poly" id="edge26_Node000000_Node000001" title=" " alt="" coords="188,65,298,43,299,48,189,70"/>
+<area shape="rect" id="Node000002" href="$structmxl_1_1lib_1_1SharedMemoryInstance.html" title=" " alt="" coords="264,70,535,95"/>
+<area shape="poly" id="edge27_Node000000_Node000002" title=" " alt="" coords="230,80,264,80,264,85,230,85"/>
+<area shape="rect" id="Node000003" href="$structmxl_1_1lib_1_1SharedMemorySegment.html" title=" " alt="" coords="281,119,517,145"/>
+<area shape="poly" id="edge28_Node000000_Node000003" title=" " alt="" coords="199,95,325,117,324,122,198,100"/>
+</map>

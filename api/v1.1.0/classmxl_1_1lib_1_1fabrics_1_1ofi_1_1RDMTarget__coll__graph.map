@@ -1,0 +1,9 @@
+<map id="mxl::lib::fabrics::ofi::RDMTarget" name="mxl::lib::fabrics::ofi::RDMTarget">
+<area shape="rect" id="Node000001" title="Reliable Datagram (RDM) Target implementation." alt="" coords="55,211,185,251"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html" title="Abstract base class for Target implementations." alt="" coords="5,108,136,148"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="88,159,113,209,108,212,84,162"/>
+<area shape="rect" id="Node000003" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html" title="RAII Wrapper around a libfabric endpoint (fi_ep)." alt="" coords="160,108,291,148"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="197,160,142,213,138,209,194,156"/>
+<area shape="rect" id="Node000004" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html" title="RAII wrapper around a libfabric fi_info` structure." alt="" coords="160,5,291,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="228,59,228,108,223,108,223,59"/>
+</map>

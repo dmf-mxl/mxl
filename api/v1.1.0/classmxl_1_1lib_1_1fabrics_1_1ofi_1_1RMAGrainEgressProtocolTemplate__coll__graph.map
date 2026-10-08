@@ -1,0 +1,7 @@
+<map id="mxl::lib::fabrics::ofi::RMAGrainEgressProtocolTemplate" name="mxl::lib::fabrics::ofi::RMAGrainEgressProtocolTemplate">
+<area shape="rect" id="Node000001" title="Template for creating an Egress protocol for RMA writer endpoint to handle transferring grains to rem..." alt="" coords="309,30,516,85"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocolTemplate.html" title=" " alt="" coords="5,5,208,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="222,35,309,44,309,49,221,40"/>
+<area shape="rect" id="Node000003" href="$structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete.html" title="Discrete layout variant of DataLayout." alt="" coords="15,69,198,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="211,76,309,65,310,71,212,81"/>
+</map>

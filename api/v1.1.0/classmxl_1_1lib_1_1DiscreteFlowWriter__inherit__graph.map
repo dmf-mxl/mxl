@@ -1,0 +1,9 @@
+<map id="mxl::lib::DiscreteFlowWriter" name="mxl::lib::DiscreteFlowWriter">
+<area shape="rect" id="Node000001" title=" " alt="" coords="37,79,241,104"/>
+<area shape="rect" id="Node000003" href="$structMockWriter.html" title=" " alt="" coords="5,159,103,185"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="118,115,68,161,65,157,115,111"/>
+<area shape="rect" id="Node000004" href="$classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html" title=" " alt="" coords="127,152,325,192"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="164,111,207,150,203,154,161,115"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1FlowWriter.html" title=" " alt="" coords="64,5,215,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="142,44,142,79,137,79,137,44"/>
+</map>
