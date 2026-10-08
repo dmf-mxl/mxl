@@ -40,9 +40,11 @@ namespace mxl::lib
         static_assert(sizeof(::mxlContinuousFlowConfigInfo) == 64, "mxlContinuousFlowConfigInfo does not have a size of 64 bytes");
         static_assert(sizeof(::mxlDiscreteFlowConfigInfo) == 64, "mxlDiscreteFlowConfigInfo does not have a size of 64 bytes");
         static_assert(sizeof(::mxlFlowConfigInfo) == 192, "mxlFlowConfigInfo does not have a size of 192 bytes");
+        static_assert(sizeof(::mxlEventFlowConfigInfo) == 64, "mxlEventFlowConfigInfo does not have a size of 64 bytes");
         static_assert(sizeof(::mxlFlowRuntimeInfo) == 64, "mxlFlowRuntimeInfo does not have a size of 64 bytes");
         static_assert(sizeof(::mxlFlowInfo) == 2048, "mxlFlowInfo does not have a size of 2048 bytes");
         static_assert(sizeof(::mxlGrainInfo) == 4096, "mxlGrainInfo does not have a size of 4096 bytes");
+        static_assert(sizeof(::mxlEventInfo) == 512, "mxlEventInfo does not have a size of 512 bytes");
     }
 
     FlowData::~FlowData() = default;

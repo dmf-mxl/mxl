@@ -45,15 +45,15 @@ An _mxlFlowReader_ will only _mmap_ flow resources in readonly mode (PROT_READ),
 
 See [timing model](./Timing.md)
 
-## Ring buffer types 
+## Ring buffer types
 
-The MXL SDK provides two ringbuffer types: Discrete and Continuous.  Discrete ringbuffers are used for granular data types such as video and ancillary data.  Continuous ringbuffers are used for audio. 
+The MXL SDK provides two ringbuffer types: Discrete and Continuous.  Discrete ringbuffers are used for granular data types such as video and ancillary data.  Continuous ringbuffers are used for audio.
 
 ### Ring buffer access model
 
 Continuous: the tail half of the ring buffer is reserved for the writer, and readers can access the remaining half.
 
-Discrete: the tail entry of the ring buffer is reserved for the writer, and readers can access the remaining entries.
+Discrete (including Events): the tail entry of the ring buffer is reserved for the writer, and readers can access the remaining entries.
 
 ## Discrete Grain I/O
 
@@ -234,16 +234,17 @@ A few important rules fall straight out of the data structure:
 # Aligned Processing of Multiple Flows
 
 Media functions oftentimes have the requirement to consume multiple, time aligned flows concurrently. In order to
-facilitate this use case MXL offers *Flow Synchronization Groups* that allow synchronizing on data availability across
+facilitate this use case MXL offers _Flow Synchronization Groups_ that allow synchronizing on data availability across
 multiple flows.
 
-A *Flow Synchronization Group* is set up by creating it and adding one or more readers to it, by calling either
-* `mxlFlowSynchronizationGroupAddReader()` if the reader operates on a continuous flow or the reader operates on
+A _Flow Synchronization Group_ is set up by creating it and adding one or more readers to it, by calling either
+
+- `mxlFlowSynchronizationGroupAddReader()` if the reader operates on a continuous flow or the reader operates on
     a discrete flow and the intention is to consume entire grains, or
-* `mxlFlowSynchronizationGroupAddPartialGrainReader()` if the reader operates on a discrete flow and the intention is to
+- `mxlFlowSynchronizationGroupAddPartialGrainReader()` if the reader operates on a discrete flow and the intention is to
     consume partial grains, for which a specified number of slices has to be available at the time of synchronization.
 
-Once a *Flow Synchronization Group* is set up clients can synchronize on grain(slice)s or samples corresponding to a
+Once a _Flow Synchronization Group_ is set up clients can synchronize on grain(slice)s or samples corresponding to a
 specified time stamp to become available by calling `mxlFlowSynchronizationGroupWaitForDataAt()`.
 
 Please note that the choice has been made to synchronize on timestamps rather than indices, because the former
@@ -263,7 +264,7 @@ uint64_t nextIndex = ...;
 uint64_t const nextTimestamp = mxlIndexToTimestamp(&outputRate, nextIndex);
 ```
 
-Then the processing loop consuming multiple flows tracked by a *Flow Synchronization Group* can look like this:
+Then the processing loop consuming multiple flows tracked by a _Flow Synchronization Group_ can look like this:
 
 ```c
 // Assume the following variables to be initialized out of the scope of this code section
@@ -285,6 +286,10 @@ while (running)
     }
 }
 ```
+
+## Events ring buffers
+
+Documentation for the events ring buffers is available in [event-flows.md](event-flows.md)
 
 # Grain formats
 
@@ -346,8 +351,8 @@ Key points:
 
 The `audio/float32` format has audio stored as 32 bit [IEEE 754](https://standards.ieee.org/ieee/754/6210/) float values with a full-scale range of \[−1.0 ; +1.0]\. This is the same audio representation as in RIFF/WAV files with `<wFormatTag>` `0x0003` `WAVE_FORMAT_IEEE_FLOAT`.
 
-Please note that flow producing media functions are not required to stay within the full-scale range and *should not* artificially clamp values to that range. Instead flow consuming media functions that are sensitive to levels exceeding 0 dbFS should, as a fail-safe measure clamp the sample values read to the supported range. This gives operators increased freedom in architecting their processing pipelines and retaining maximum fidelity.
+Please note that flow producing media functions are not required to stay within the full-scale range and _should not_ artificially clamp values to that range. Instead flow consuming media functions that are sensitive to levels exceeding 0 dbFS should, as a fail-safe measure clamp the sample values read to the supported range. This gives operators increased freedom in architecting their processing pipelines and retaining maximum fidelity.
 
 ## Ancillary Data
 
-The `video/smpte291` format is an ancillary data payload based on [RFC 8331](https://datatracker.ietf.org/doc/html/rfc8331#section-2).   Only the bytes starting at the *Length* field (See section 2 of RFC 8331) are stored in the grain (bytes 0 to 13 are redundant in the context of MXL and are not stored).
+The `video/smpte291` format is an ancillary data payload based on [RFC 8331](https://datatracker.ietf.org/doc/html/rfc8331#section-2).   Only the bytes starting at the _Length_ field (See section 2 of RFC 8331) are stored in the grain (bytes 0 to 13 are redundant in the context of MXL and are not stored).

@@ -50,6 +50,12 @@ namespace mxl::lib
     }
 
     MXL_EXPORT
+    std::filesystem::path makeEventDataFilePath(std::filesystem::path const& flowDirectory)
+    {
+        return flowDirectory / EVENT_DATA_FILE_NAME;
+    }
+
+    MXL_EXPORT
     std::filesystem::path makeDomainOptionsFilePath(std::filesystem::path const& domain)
     {
         return domain / (DOMAIN_OPTIONS_FILE_NAME);

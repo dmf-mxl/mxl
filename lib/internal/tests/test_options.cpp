@@ -88,3 +88,23 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : invalid co
 
     REQUIRE(instance->getHistoryDurationNs() == 200'000'000ULL); // default value
 }
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : Missing and inaccessible domain config", "[options]")
+{
+    auto const path = makeDomainOptionsFilePath(domain);
+    std::filesystem::remove(path); // The persistent fixture is shared between sections.
+    SECTION("Missing options use the fallback")
+    {}
+    SECTION("A dangling symlink uses the fallback")
+    {
+        std::filesystem::create_symlink("missing-options.json", path);
+    }
+    SECTION("An unresolvable symlink uses the fallback")
+    {
+        std::filesystem::create_symlink(path.filename(), path);
+    }
+    auto domainWatcher = std::make_shared<DomainWatcher>(domain);
+    auto flowIoFactory = std::make_unique<mxl::lib::PosixFlowIoFactory>(domainWatcher);
+    auto const instance = std::make_shared<Instance>(domain, "", std::move(flowIoFactory), domainWatcher);
+    REQUIRE(instance->getHistoryDurationNs() == 200'000'000ULL);
+}

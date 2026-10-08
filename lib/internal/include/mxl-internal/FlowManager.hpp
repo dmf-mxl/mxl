@@ -13,6 +13,7 @@
 #include <mxl/platform.h>
 #include "ContinuousFlowData.hpp"
 #include "DiscreteFlowData.hpp"
+#include "EventFlowData.hpp"
 
 namespace mxl::lib
 {
@@ -88,6 +89,22 @@ namespace mxl::lib
         std::pair<bool, std::unique_ptr<ContinuousFlowData>> createOrOpenContinuousFlow(uuids::uuid const& flowId, std::string const& flowDef,
             mxlDataFormat flowFormat, mxlRational const& sampleRate, std::size_t channelCount, std::size_t sampleWordSize, std::size_t bufferLength,
             std::uint32_t maxSyncBatchSizeHintOpt = 1, std::uint32_t maxCommitBatchSizeHintOpt = 1);
+
+        /**
+         * @brief Create an event flow atomically, or open the existing flow with the same ID.
+         * @param flowId Identifier of the flow to create or open.
+         * @param flowDef Flow descriptor JSON to store when creating the flow.
+         * @param eventCount Number of slots to create, in the range 2 through 65536.
+         * @param grainRate Rate recorded in the common configuration.
+         * @param eventPayloadSize Per-entry payload capacity, in the range 1 through 1048576 bytes.
+         * @return Creation flag and owned read/write mappings. Existing flows retain their geometry.
+         * @throws std::invalid_argument The requested geometry is invalid.
+         * @throws std::filesystem::filesystem_error Flow files cannot be created or opened.
+         * @throws std::runtime_error Existing flow type or stored headers are incompatible.
+         * @note This creates mappings; the caller must guarantee one event writer per flow.
+         */
+        std::pair<bool, std::unique_ptr<EventFlowData>> createOrOpenEventFlow(uuids::uuid const& flowId, std::string const& flowDef,
+            std::size_t eventCount, mxlRational const& grainRate, std::size_t eventPayloadSize);
 
         /// Open an existing flow by id.
         ///

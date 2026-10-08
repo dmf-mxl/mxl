@@ -44,7 +44,7 @@ mxlStatus mxlIsFlowActive(mxlInstance instance, char const* flowId, bool* isActi
                         // other process is writing to the flow.
                         auto flowDataFile = mxl::lib::makeFlowDataFilePath(domain, flowId);
 
-                        int fd = open(flowDataFile.c_str(), O_RDONLY | O_CLOEXEC);
+                        auto const fd = ::open(flowDataFile.c_str(), O_RDONLY | O_CLOEXEC);
                         if (fd < 0)
                         {
                             auto const error = errno;
@@ -58,7 +58,7 @@ mxlStatus mxlIsFlowActive(mxlInstance instance, char const* flowId, bool* isActi
                         }
 
                         // Try to obtain an exclusive lock on the file descriptor. Do not block if the lock cannot be obtained.
-                        bool active = flock(fd, LOCK_EX | LOCK_NB) < 0;
+                        auto const active = ::flock(fd, LOCK_EX | LOCK_NB) < 0;
                         close(fd);
 
                         *isActive = active;
@@ -647,6 +647,112 @@ mxlStatus mxlFlowWriterCommitSamples(mxlFlowWriter writer)
             return cppWriter->commit();
         }
         return MXL_ERR_INVALID_FLOW_WRITER;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowWriterOpenEvent(mxlFlowWriter handle, mxlEventInfo* info, uint8_t** payload)
+{
+    if ((info == nullptr) || (payload == nullptr))
+    {
+        return MXL_ERR_INVALID_ARG;
+    }
+    try
+    {
+        if (auto object = dynamic_cast<EventFlowWriter*>(to_FlowWriter(handle)); object != nullptr)
+        {
+            return object->openEvent(info, payload);
+        }
+        return MXL_ERR_INVALID_FLOW_WRITER;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowWriterCommitEvent(mxlFlowWriter handle, mxlEventInfo const* info)
+{
+    if (info == nullptr)
+    {
+        return MXL_ERR_INVALID_ARG;
+    }
+    try
+    {
+        if (auto object = dynamic_cast<EventFlowWriter*>(to_FlowWriter(handle)); object != nullptr)
+        {
+            return object->commit(*info);
+        }
+        return MXL_ERR_INVALID_FLOW_WRITER;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowWriterCancelEvent(mxlFlowWriter handle)
+{
+    try
+    {
+        if (auto object = dynamic_cast<EventFlowWriter*>(to_FlowWriter(handle)); object != nullptr)
+        {
+            return object->cancel();
+        }
+        return MXL_ERR_INVALID_FLOW_WRITER;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowReaderGetEvent(mxlFlowReader handle, uint64_t timeoutNs, mxlEventInfo* info, uint8_t** payload)
+{
+    if ((info == nullptr) || (payload == nullptr))
+    {
+        return MXL_ERR_INVALID_ARG;
+    }
+    try
+    {
+        if (auto object = dynamic_cast<EventFlowReader*>(to_FlowReader(handle)); object != nullptr)
+        {
+            return object->getEvent(toDeadline(timeoutNs), info, payload);
+        }
+        return MXL_ERR_INVALID_FLOW_READER;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowReaderGetEventNonBlocking(mxlFlowReader handle, mxlEventInfo* info, uint8_t** payload)
+{
+    if ((info == nullptr) || (payload == nullptr))
+    {
+        return MXL_ERR_INVALID_ARG;
+    }
+    try
+    {
+        if (auto object = dynamic_cast<EventFlowReader*>(to_FlowReader(handle)); object != nullptr)
+        {
+            return object->getEvent(toDeadline(0), info, payload);
+        }
+        return MXL_ERR_INVALID_FLOW_READER;
     }
     catch (...)
     {

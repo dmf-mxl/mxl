@@ -38,7 +38,7 @@ impl FlowWriter {
         let flow_type = self.get_flow_type()?;
         if !is_discrete_data_format(flow_type) {
             return Err(Error::Other(format!(
-                "Cannot convert FlowWriter to GrainWriter for continuous flow of type \"{:?}\".",
+                "Cannot convert FlowWriter to GrainWriter for flow of type \"{:?}\".",
                 DataFormat::from(flow_type)
             )));
         }
@@ -49,9 +49,9 @@ impl FlowWriter {
 
     pub fn to_samples_writer(mut self) -> Result<SamplesWriter> {
         let flow_type = self.get_flow_type()?;
-        if is_discrete_data_format(flow_type) {
+        if flow_type != mxl_sys::MXL_DATA_FORMAT_AUDIO {
             return Err(Error::Other(format!(
-                "Cannot convert FlowWriter to SamplesWriter for discrete flow of type \"{:?}\".",
+                "Cannot convert FlowWriter to SamplesWriter for flow of type \"{:?}\".",
                 DataFormat::from(flow_type)
             )));
         }

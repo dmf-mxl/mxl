@@ -7,7 +7,7 @@ include(GNUInstallDirs)
 # internal symbols from the mxl-internal/*.h header files
 add_library(mxl-internal-headers INTERFACE)
 set_target_properties(mxl-internal-headers
-        PROPERTIES 
+        PROPERTIES
             C_EXTENSIONS              OFF
             CXX_EXTENSIONS            OFF
             C_STANDARD                ${MXL_C_STANDARD}
@@ -64,6 +64,9 @@ set_target_properties(mxl-internal-objects
 target_sources(mxl-internal-objects
         PRIVATE
             src/DomainWatcher.cpp
+            src/EventRingBuffer.cpp
+            src/PosixEventFlowReader.cpp
+            src/PosixEventFlowWriter.cpp
             src/FlowData.cpp
             src/FlowInfo.cpp
             src/FlowIoFactory.cpp

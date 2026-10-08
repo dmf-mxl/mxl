@@ -22,6 +22,15 @@ SPDX-License-Identifier: Apache-2.0
 
 - `cargo build`
 
+## Event flows
+
+`mxl-sys` generates the event constants, structures, and C API functions from the
+public headers during each build. The `mxl` crate recognizes `DataFormat::Event`
+and exposes event configuration through `FlowConfigInfo::event()`. Event flows
+cannot be converted into grain or audio sample readers and writers. Event I/O
+is currently available through the low-level `mxl-sys` API; safe event reader
+and writer wrappers are not yet provided.
+
 ## TODO
 
 - Get rid of the headers copy. Use the main headers as part of the build process.
