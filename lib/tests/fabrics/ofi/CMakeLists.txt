@@ -8,11 +8,6 @@ endif()
 
 add_executable(mxl-fabrics-ofi-tests)
 
-target_compile_features(mxl-fabrics-ofi-tests
-        PRIVATE
-            cxx_std_20
-    )
-
 set_target_properties(mxl-fabrics-ofi-tests
         PROPERTIES
             POSITION_INDEPENDENT_CODE    ON
@@ -21,6 +16,8 @@ set_target_properties(mxl-fabrics-ofi-tests
             CXX_VISIBILITY_PRESET        hidden
             C_EXTENSIONS                 OFF
             CXX_EXTENSIONS               OFF
+            C_STANDARD                   ${MXL_C_STANDARD}
+            CXX_STANDARD                 ${MXL_CXX_STANDARD}
     )
 
 target_sources(mxl-fabrics-ofi-tests

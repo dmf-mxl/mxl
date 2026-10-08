@@ -4,10 +4,6 @@
 include(GNUInstallDirs)
 
 add_executable(mxl-data-probe)
-target_compile_features(mxl-data-probe
-        PRIVATE
-            cxx_std_20
-    )
 set_target_properties(mxl-data-probe
         PROPERTIES
             POSITION_INDEPENDENT_CODE    ON
@@ -16,6 +12,8 @@ set_target_properties(mxl-data-probe
             CXX_VISIBILITY_PRESET        hidden
             C_EXTENSIONS                 OFF
             CXX_EXTENSIONS               OFF
+            C_STANDARD                   ${MXL_C_STANDARD}
+            CXX_STANDARD                 ${MXL_CXX_STANDARD}
     )
 target_sources(mxl-data-probe
         PRIVATE

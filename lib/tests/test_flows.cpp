@@ -1259,3 +1259,79 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : Jump fo
     REQUIRE(mxlDestroyInstance(instanceReader) == MXL_STATUS_OK);
     REQUIRE(mxlDestroyInstance(instanceWriter) == MXL_STATUS_OK);
 }
+
+// Verify that opening a new grain resets validSlices to zero when the
+// underlying ring-buffer slot is reused, while reopening the same
+// incomplete grain preserves its existing validSlices value.
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : validSlices on grain open", "[mxl flows]")
+{
+    auto const opts = "{}";
+    auto flowDef = mxl::tests::readFile("data/v210_flow.json");
+
+    auto instance = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instance != nullptr);
+
+    auto writer = mxlFlowWriter{};
+    auto configInfo = mxlFlowConfigInfo{};
+    auto flowWasCreated = false;
+    REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), opts, &writer, &configInfo, &flowWasCreated) == MXL_STATUS_OK);
+    REQUIRE(flowWasCreated);
+
+    auto const grainCount = static_cast<std::uint64_t>(configInfo.discrete.grainCount);
+    REQUIRE(grainCount > 1U);
+
+    auto const firstSlotIndex = std::uint64_t{100};
+    auto const nextSlotIndex = firstSlotIndex + 1U;
+    auto const reusedSlotIndex = firstSlotIndex + grainCount;
+
+    auto gInfo = mxlGrainInfo{};
+    auto buffer = static_cast<std::uint8_t*>(nullptr);
+
+    // A freshly created grain starts with zero valid slices.
+    REQUIRE(mxlFlowWriterOpenGrain(writer, firstSlotIndex, &gInfo, &buffer) == MXL_STATUS_OK);
+    REQUIRE(gInfo.index == firstSlotIndex);
+    REQUIRE(gInfo.validSlices == 0);
+
+    auto const partialValidSlices = std::uint16_t{3};
+    REQUIRE(partialValidSlices < gInfo.totalSlices);
+
+    gInfo.validSlices = partialValidSlices;
+    REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_STATUS_OK);
+
+    // Reopening the same incomplete grain preserves progress.
+    auto reopenedInfo = mxlGrainInfo{};
+    auto reopenedBuffer = static_cast<std::uint8_t*>(nullptr);
+
+    REQUIRE(mxlFlowWriterOpenGrain(writer, firstSlotIndex, &reopenedInfo, &reopenedBuffer) == MXL_STATUS_OK);
+    REQUIRE(reopenedInfo.index == firstSlotIndex);
+    REQUIRE(reopenedBuffer == buffer);
+    REQUIRE(reopenedInfo.validSlices == partialValidSlices);
+
+    // Complete the grain.
+    reopenedInfo.validSlices = reopenedInfo.totalSlices;
+    REQUIRE(mxlFlowWriterCommitGrain(writer, &reopenedInfo) == MXL_STATUS_OK);
+
+    // A new grain starts with zero valid slices after the previous grain is complete.
+    auto nextInfo = mxlGrainInfo{};
+    auto nextBuffer = static_cast<std::uint8_t*>(nullptr);
+
+    REQUIRE(mxlFlowWriterOpenGrain(writer, nextSlotIndex, &nextInfo, &nextBuffer) == MXL_STATUS_OK);
+    REQUIRE(nextInfo.index == nextSlotIndex);
+    REQUIRE(nextInfo.validSlices == 0);
+
+    nextInfo.validSlices = nextInfo.totalSlices;
+    REQUIRE(mxlFlowWriterCommitGrain(writer, &nextInfo) == MXL_STATUS_OK);
+
+    // A new grain reusing the same physical ring slot starts with
+    // zero valid slices rather than inheriting the previous grain's state.
+    auto reusedInfo = mxlGrainInfo{};
+    auto reusedBuffer = static_cast<std::uint8_t*>(nullptr);
+
+    REQUIRE(mxlFlowWriterOpenGrain(writer, reusedSlotIndex, &reusedInfo, &reusedBuffer) == MXL_STATUS_OK);
+    REQUIRE(reusedInfo.index == reusedSlotIndex);
+    REQUIRE(reusedBuffer == buffer);
+    REQUIRE(reusedInfo.validSlices == 0);
+
+    REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+}

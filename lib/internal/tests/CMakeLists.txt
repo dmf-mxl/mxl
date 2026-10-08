@@ -3,10 +3,6 @@
 
 # Add the test executable
 add_executable(mxl-internal-tests)
-target_compile_features(mxl-internal-tests
-        PRIVATE
-            cxx_std_20
-    )
 set_target_properties(mxl-internal-tests
         PROPERTIES
             POSITION_INDEPENDENT_CODE    ON
@@ -15,12 +11,15 @@ set_target_properties(mxl-internal-tests
             CXX_VISIBILITY_PRESET        hidden
             C_EXTENSIONS                 OFF
             CXX_EXTENSIONS               OFF
+            C_STANDARD                   ${MXL_C_STANDARD}
+            CXX_STANDARD                 ${MXL_CXX_STANDARD}
     )
 
 target_sources(mxl-internal-tests
         PRIVATE
             test_domainwatcher.cpp
             test_flowmanager.cpp
+            test_instance.cpp
             test_options.cpp
             test_sharedmem.cpp
     )

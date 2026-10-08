@@ -161,7 +161,7 @@ namespace mxl::lib
         auto const id = uuids::uuid::from_string(flowId);
         if (!id.has_value())
         {
-            throw std::invalid_argument{"Invalid flow UUID."};
+            throw std::invalid_argument{"Invalid flow id: '" + flowId + "'."};
         }
 
         auto const lock = std::scoped_lock{_mutex};

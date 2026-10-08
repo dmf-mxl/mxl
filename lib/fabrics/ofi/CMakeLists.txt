@@ -16,10 +16,6 @@ if (NOT TARGET fmt::fmt)
 endif()
 
 add_library(mxl-fabrics-objects OBJECT)
-target_compile_features(mxl-fabrics-objects
-        PRIVATE
-            cxx_std_20
-    )
 target_sources(mxl-fabrics-objects
         PRIVATE
             src/fabrics.cpp
@@ -77,6 +73,9 @@ set_target_properties(mxl-fabrics-objects
             POSITION_INDEPENDENT_CODE ${MXL_POSITION_INDEPENDENT_CODE}
             C_EXTENSIONS              OFF
             CXX_EXTENSIONS            OFF
+            C_STANDARD                ${MXL_C_STANDARD}
+            CXX_STANDARD              ${MXL_CXX_STANDARD}
+
     )
 target_include_directories(mxl-fabrics-objects
         PUBLIC

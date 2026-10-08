@@ -34,7 +34,7 @@ MXL:
 
 Enables shared-memory access for zero-copy media workflows.
 
-### Fabric API (tbc)
+### Fabric API (MXL v1.1 on)
 
 Enables memory sharing through controlled data movement.
 
