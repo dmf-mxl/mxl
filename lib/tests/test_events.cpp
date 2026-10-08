@@ -1008,8 +1008,8 @@ TEST_CASE_METHOD(EventFixture, "Event slots occupy one shared memory file", "[ev
     auto const eventFile = mxl::lib::makeEventDataFilePath(flowDirectory);
     REQUIRE(std::filesystem::is_regular_file(eventFile));
     REQUIRE(config.event.eventPayloadSize == 4096);
-    // One 4 KiB ring header precedes slots containing 640 bytes of internal metadata plus payload.
-    REQUIRE(std::filesystem::file_size(eventFile) == 4096 + (config.event.eventCount * 4736));
+    // One 4 KiB ring header precedes slots containing 768 bytes of internal metadata plus payload.
+    REQUIRE(std::filesystem::file_size(eventFile) == 4096 + (config.event.eventCount * 4864));
     REQUIRE(std::filesystem::file_size(eventFile) == mxl::lib::EventRingBuffer::bufferSize(config.event.eventCount, config.event.eventPayloadSize));
     REQUIRE_FALSE(std::filesystem::exists(flowDirectory / "grains"));
     REQUIRE_FALSE(std::filesystem::exists(flowDirectory / "producer"));
@@ -1417,21 +1417,35 @@ TEST_CASE("Compact event slots preserve payload boundaries across wraparound", "
     using Ring = mxl::lib::EventRingBuffer;
 
     /** @brief Aligned backing storage with an extra block to detect writes beyond the ring. */
-    struct alignas(64) Block
+    struct alignas(128) Block
     {
-        std::uint8_t bytes[64]; ///< Raw storage for slots or the trailing sentinel.
+        std::uint8_t bytes[128]; ///< Raw storage for slots or the trailing sentinel.
     };
 
     constexpr auto count = std::uint32_t{3};
-    for (auto const capacity : std::array<std::uint32_t, 8>{1, 7, 8, 13, 63, 64, 65, 4096})
+    for (auto const capacity : std::array<std::uint32_t, 11>{1, 7, 8, 13, 63, 64, 65, 127, 128, 129, 4096})
     {
         // Probe word and cache-line boundaries; the extra block detects writes beyond the ring.
         CAPTURE(capacity);
         auto const size = Ring::bufferSize(count, capacity);
         REQUIRE(size % sizeof(Block) == 0);
         auto memory = std::vector<Block>{(size / sizeof(Block)) + 1};
-        std::memset(memory.back().bytes, 0xCD, sizeof(Block));
+        std::memset(memory.data(), 0xCD, size + sizeof(Block));
         Ring::initialize(memory.data(), count, capacity);
+        for (auto i = std::size_t{0}; i < count; ++i)
+        {
+            auto const bytes = reinterpret_cast<std::uint8_t const*>(memory.data()) + sizeof(mxl::lib::EventRingHeader) +
+                               (i * Ring::slotStride(capacity));
+            auto const& header = reinterpret_cast<mxl::lib::Event const*>(bytes)->header;
+            REQUIRE(reinterpret_cast<std::uintptr_t>(&header.sequence) % 128 == 0);
+            REQUIRE(reinterpret_cast<std::uintptr_t>(header.infoWords) % 128 == 0);
+            auto const isZero = [](auto byte) noexcept
+            {
+                return byte == 0;
+            };
+            REQUIRE(std::ranges::all_of(header.layoutPadding, isZero));
+            REQUIRE(std::ranges::all_of(header.sequencePadding, isZero));
+        }
         auto ring = Ring{memory.data(), count, capacity};
         auto payload = std::vector<std::uint8_t>{};
         payload.resize(capacity);

@@ -11,7 +11,6 @@
 #include <algorithm>
 #include <atomic>
 #include <limits>
-#include <new>
 #include <stdexcept>
 #include <type_traits>
 #include "Flow.hpp"
@@ -64,11 +63,11 @@ namespace mxl::lib
         /**
          * @brief Compute the physical stride between adjacent slots.
          * @param payloadSize Maximum payload bytes per entry.
-         * @return Slot header plus payload capacity, rounded up to the 64-byte Event alignment.
+         * @return Slot header plus payload capacity, rounded up to a fixed 128-byte boundary.
          */
         constexpr static std::size_t slotStride(std::uint32_t payloadSize) noexcept
         {
-            constexpr auto alignment = std::size_t{alignof(Event)};
+            constexpr auto alignment = std::size_t{128};
             return (sizeof(Event) + payloadSize + alignment - 1) & ~(alignment - 1U);
         }
 
@@ -93,24 +92,7 @@ namespace mxl::lib
          * @pre memory is aligned for Event, and no reader or writer accesses it yet.
          * @throws std::invalid_argument Geometry is invalid.
          */
-        static void initialize(void* memory, std::uint32_t count, std::uint32_t payloadSize)
-        {
-            validateGeometry(count, payloadSize);
-            auto header = new (memory) EventRingHeader{};
-            header->version = STORAGE_VERSION;
-            header->size = sizeof *header;
-            header->eventCount = count;
-            header->payloadSize = payloadSize;
-            for (auto i = std::size_t{0}; i < count; ++i)
-            {
-                auto bytes = static_cast<std::uint8_t*>(memory) + sizeof(EventRingHeader) + (i * slotStride(payloadSize));
-                auto event = new (bytes) Event{};
-                event->header.version = STORAGE_VERSION;
-                event->header.size = sizeof event->header;
-                event->header.sequence = EMPTY;
-                new (event + 1) std::uint64_t[(payloadSize + 7) / 8]{};
-            }
-        }
+        static void initialize(void* memory, std::uint32_t count, std::uint32_t payloadSize);
 
         /**
          * @brief Attach a view and validate immutable headers across all slots.

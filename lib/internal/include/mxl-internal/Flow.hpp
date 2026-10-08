@@ -61,8 +61,8 @@ namespace mxl::lib
     constexpr inline auto EVENT_HEADER_VERSION = std::uint32_t{1};
 
     /**
-     * @brief 640-byte slot header with layout fields, sequence and metadata on separate 64-byte boundaries.
-     * The fixed alignment is part of the shared-memory ABI and must not depend on compiler CPU tuning.
+     * @brief 768-byte slot header with layout fields, sequence and metadata on separate 128-byte boundaries.
+     * The fixed padding is part of the shared-memory ABI and must not depend on compiler CPU tuning.
      */
     struct EventHeader
     {
@@ -71,18 +71,18 @@ namespace mxl::lib
         /// Immutable size of EventHeader in bytes.
         std::uint32_t size;
         /// Explicit padding to the sequence cache line.
-        std::uint8_t layoutPadding[64 - 2 * sizeof(std::uint32_t)];
+        std::uint8_t layoutPadding[128 - 2 * sizeof(std::uint32_t)];
         /// Atomic tag: index shifted left one bit, low bit set after publication; EMPTY if unused.
-        alignas(64) std::uint64_t sequence;
+        std::uint64_t sequence;
         /// Explicit padding to the metadata cache line.
-        std::uint8_t sequencePadding[64 - sizeof(std::uint64_t)];
+        std::uint8_t sequencePadding[128 - sizeof(std::uint64_t)];
         /// Public metadata accessed through atomic words.
-        alignas(64) std::uint64_t infoWords[sizeof(mxlEventInfo) / sizeof(std::uint64_t)];
+        std::uint64_t infoWords[sizeof(mxlEventInfo) / sizeof(std::uint64_t)];
     };
 
-    static_assert(sizeof(EventHeader) == 640);
-    static_assert(offsetof(EventHeader, sequence) == 64);
-    static_assert(offsetof(EventHeader, infoWords) == 128);
+    static_assert(sizeof(EventHeader) == 768);
+    static_assert(offsetof(EventHeader, sequence) == 128);
+    static_assert(offsetof(EventHeader, infoWords) == 256);
     static_assert(std::has_unique_object_representations_v<EventHeader>);
 
     /** @brief Fixed part of an event slot; its payload follows immediately in the mapping. */

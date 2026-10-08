@@ -62,6 +62,7 @@ set_target_properties(mxl-internal-objects
 target_sources(mxl-internal-objects
         PRIVATE
             src/DomainWatcher.cpp
+            src/EventRingBuffer.cpp
             src/PosixEventFlowReader.cpp
             src/PosixEventFlowWriter.cpp
             src/FlowData.cpp
