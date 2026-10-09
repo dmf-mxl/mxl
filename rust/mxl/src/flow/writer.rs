@@ -103,6 +103,11 @@ impl FlowWriter {
         }
     }
 
+    #[cfg(feature = "mxl-fabrics-ofi")]
+    pub(crate) fn inner(&self) -> mxl_sys::FlowWriter {
+        self.writer.inner.as_ptr()
+    }
+
     #[allow(dead_code)]
     pub(crate) fn keep_alive(&self) -> FlowWriterResourceKeepAlive {
         self.writer.keep_alive()

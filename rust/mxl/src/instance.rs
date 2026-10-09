@@ -8,6 +8,9 @@ use crate::{
     reader::FlowReaderResource, writer::FlowWriterResource,
 };
 
+#[cfg(feature = "mxl-fabrics-ofi")]
+use crate::api::MxlFabricsApiHandle;
+
 /// This struct stores the context that is shared by all objects.
 /// It is separated out from `MxlInstance` so that it can be cloned
 /// and other objects' lifetimes be decoupled from the MxlInstance
@@ -196,5 +199,15 @@ impl MxlInstance {
         let context = Arc::into_inner(self.context)
             .ok_or_else(|| Error::Other("Instance is still in use.".to_string()))?;
         context.destroy()
+    }
+
+    #[cfg(feature = "mxl-fabrics-ofi")]
+    pub fn create_fabrics_instance(
+        &self,
+        fabrics_api: &MxlFabricsApiHandle,
+    ) -> Result<crate::fabrics::FabricsInstance> {
+        use crate::fabrics;
+
+        fabrics::create_instance(self.context.clone(), fabrics_api)
     }
 }

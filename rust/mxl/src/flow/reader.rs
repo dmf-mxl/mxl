@@ -137,6 +137,11 @@ impl FlowReader {
         self.reader.keep_alive()
     }
 
+    #[cfg(feature = "mxl-fabrics-ofi")]
+    pub(crate) fn inner(&self) -> mxl_sys::FlowReader {
+        self.reader.inner.as_ptr()
+    }
+
     pub fn get_info(&self) -> Result<FlowInfo> {
         get_flow_info(&self.reader.context, unsafe { self.reader.as_ptr() })
     }

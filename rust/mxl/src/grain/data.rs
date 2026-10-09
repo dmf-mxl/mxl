@@ -16,6 +16,10 @@ pub struct GrainData<'a> {
     /// index means `R` has not been produced yet, a newer one means the writer
     /// lapped the reader and `R` was evicted.
     pub index: u64,
+
+    /// The number of slices in the full grain. This is does not change depending on whether the
+    /// grain is partial or complete.
+    pub total_slices: u16,
 }
 
 impl<'a> GrainData<'a> {

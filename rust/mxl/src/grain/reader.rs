@@ -99,6 +99,7 @@ impl GrainReader {
             total_size: grain_info.grainSize as usize,
             flags: grain_info.flags,
             index: grain_info.index,
+            total_slices: grain_info.totalSlices,
         })
     }
 
@@ -133,6 +134,7 @@ impl GrainReader {
             total_size: grain_info.grainSize as usize,
             flags: grain_info.flags,
             index: grain_info.index,
+            total_slices: grain_info.totalSlices,
         })
     }
 }
