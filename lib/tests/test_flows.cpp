@@ -1335,3 +1335,63 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : validSl
     REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
 }
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : Grain writer state", "[mxl flows]")
+{
+    auto const opts = "{}";
+    auto flowDef = mxl::tests::readFile("data/v210_flow.json");
+
+    auto instance = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instance != nullptr);
+
+    auto writer = mxlFlowWriter{};
+    auto configInfo = mxlFlowConfigInfo{};
+    auto flowWasCreated = false;
+    REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), opts, &writer, &configInfo, &flowWasCreated) == MXL_STATUS_OK);
+    REQUIRE(flowWasCreated);
+
+    auto const index = std::uint64_t{100};
+
+    SECTION("Complete grain")
+    {
+        // Committing a complete grain clears the current grain.
+        auto gInfo = mxlGrainInfo{};
+        auto buffer = static_cast<std::uint8_t*>(nullptr);
+
+        REQUIRE(mxlFlowWriterOpenGrain(writer, index, &gInfo, &buffer) == MXL_STATUS_OK);
+
+        gInfo.validSlices = gInfo.totalSlices;
+        REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_STATUS_OK);
+
+        auto reopenedInfo = mxlGrainInfo{};
+        auto reopenedBuffer = static_cast<std::uint8_t*>(nullptr);
+        CHECK(mxlFlowWriterOpenGrain(writer, index, &reopenedInfo, &reopenedBuffer) == MXL_ERR_INVALID_ARG);
+
+        auto nextInfo = mxlGrainInfo{};
+        auto nextBuffer = static_cast<std::uint8_t*>(nullptr);
+        CHECK(mxlFlowWriterOpenGrain(writer, index + 1U, &nextInfo, &nextBuffer) == MXL_STATUS_OK);
+    }
+
+    SECTION("Invalid grain")
+    {
+        // Committing an invalid grain should clear the current grain as well.
+        auto gInfo = mxlGrainInfo{};
+        auto buffer = static_cast<std::uint8_t*>(nullptr);
+
+        REQUIRE(mxlFlowWriterOpenGrain(writer, index, &gInfo, &buffer) == MXL_STATUS_OK);
+
+        gInfo.flags |= MXL_GRAIN_FLAG_INVALID;
+        REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_STATUS_OK);
+
+        auto reopenedInfo = mxlGrainInfo{};
+        auto reopenedBuffer = static_cast<std::uint8_t*>(nullptr);
+        CHECK(mxlFlowWriterOpenGrain(writer, index, &reopenedInfo, &reopenedBuffer) == MXL_ERR_INVALID_ARG);
+
+        auto nextInfo = mxlGrainInfo{};
+        auto nextBuffer = static_cast<std::uint8_t*>(nullptr);
+        CHECK(mxlFlowWriterOpenGrain(writer, index + 1U, &nextInfo, &nextBuffer) == MXL_STATUS_OK);
+    }
+
+    REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+}
