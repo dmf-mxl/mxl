@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <cstdint>
+#include <memory>
 #include <vector>
 #include <sys/uio.h>
 #include "Domain.hpp"
@@ -15,13 +17,20 @@
 namespace mxl::lib::fabrics::ofi
 {
     /** \brief Represent a registered memory region.
+     *
+     * Several registered regions may share a single underlying \c MemoryRegion
+     * when their memory is contiguous (see Domain::registerRegions). In that
+     * case \c mrOffset is the byte offset of this region from the start of the
+     * shared registration, used to compute the remote address when the provider
+     * does not use virtual addressing.
      */
     class RegisteredRegion
     {
     public:
-        explicit RegisteredRegion(MemoryRegion memoryRegion, Region reg)
+        explicit RegisteredRegion(std::shared_ptr<MemoryRegion> memoryRegion, Region reg, std::uint64_t mrOffset = 0)
             : _mr(std::move(memoryRegion))
             , _region(std::move(reg))
+            , _mrOffset(mrOffset)
         {}
 
         /** \brief Generate a RemoteRegion from this RegisteredRegion.
@@ -40,8 +49,9 @@ namespace mxl::lib::fabrics::ofi
         LocalRegion toLocal() const noexcept;
 
     private:
-        MemoryRegion _mr;
+        std::shared_ptr<MemoryRegion> _mr;
         Region _region;
+        std::uint64_t _mrOffset;
     };
 
     /** Generate a list of RemoteRegions from a list of RegisteredRegions.
