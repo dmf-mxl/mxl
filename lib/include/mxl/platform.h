@@ -9,6 +9,13 @@
 #   define MXL_EXPORT
 #endif
 
+// Marks a declaration as deprecated. Compilers warn when code uses it.
+#if defined(__GNUC__) || defined(__clang__)
+#   define MXL_DEPRECATED(message) __attribute__((deprecated(message)))
+#else
+#   define MXL_DEPRECATED(message)
+#endif
+
 // TODO: Tailor these more to specific language statdard levels
 #ifdef __cplusplus
 #   define MXL_NODISCARD [[nodiscard]]

@@ -78,18 +78,47 @@ namespace mxl::lib
          * Implementation of the various forms of getGrain() that can also be
          * used by other methods that have previously asserted that we're
          * operating on a valid flow (i.e. that _flowData is a valid pointer).
+         *
+         * \param[in] in_index The grain index.
+         * \param[in] in_minValidSlices The expected number of valid slices in the grain.
+         * \param[out] out_grainInfo If not null, receives a copy of the grain info. Written only on success.
+         * \param[out] out_slot If not null, receives the slot that holds the grain. Written only on success.
+         * \return A status code describing the outcome of the call.
          */
-        mxlStatus getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo,
-            std::uint8_t** out_payload) const;
+        mxlStatus getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, mxlGrainInfo* out_grainInfo, std::size_t* out_slot) const;
 
         /**
          * Implementation of the blocking form of getGrain() and waitForGrain()
          * that can also be used by other methods that have previously asserted
          * that we're operating on a valid flow (i.e. that _flowData is a valid
          * pointer).
+         *
+         * \param[in] in_index The grain index.
+         * \param[in] in_minValidSlices The expected number of valid slices in the grain.
+         * \param[in] in_deadline The point in time of Clock::Realtime at which to stop waiting.
+         * \param[out] out_grainInfo If not null, receives a copy of the grain info. Written only on success.
+         * \param[out] out_slot If not null, receives the slot that holds the grain. Written only on success.
+         * \return A status code describing the outcome of the call.
          */
         mxlStatus getGrainImpl(std::uint64_t in_index, std::uint16_t in_minValidSlices, Timepoint in_deadline, mxlGrainInfo* out_grainInfo,
-            std::uint8_t** out_payload) const;
+            std::size_t* out_slot) const;
+
+        /**
+         * Apply the steps common to all grain reads to the result of a read. On success, update the flow access
+         * time. When the grain is too early, check whether the flow is still valid.
+         *
+         * \param[in] in_result The result of getGrainImpl().
+         * \return in_result, or MXL_ERR_FLOW_INVALID if the grain was too early and the flow is no longer valid.
+         */
+        mxlStatus completeRead(mxlStatus in_result) const;
+
+        /**
+         * Host address of the payload of a slot.
+         * \param[in] in_slot The slot.
+         * \return The host address of the first byte of the slot payload.
+         */
+        [[nodiscard]]
+        std::uint8_t* hostPayloadAt(std::size_t in_slot) const;
 
     private:
         std::unique_ptr<DiscreteFlowData> _flowData;

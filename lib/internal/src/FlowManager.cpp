@@ -16,6 +16,7 @@
 #include <mxl/mxl.h>
 #include "mxl-internal/Logging.hpp"
 #include "mxl-internal/PathUtils.hpp"
+#include "mxl-internal/PayloadStorage.hpp"
 #include "mxl-internal/SharedMemory.hpp"
 #include "mxl-internal/Timing.hpp"
 #include "Deferred.hpp"
@@ -113,8 +114,6 @@ namespace mxl::lib
             result.maxCommitBatchSizeHint = maxCommitBatchSizeHintOpt;
             result.maxSyncBatchSizeHint = maxSyncBatchSizeHintOpt;
 
-            // FIXME: This should come from the configuration when device memory is supported
-            result.payloadLocation = MXL_PAYLOAD_LOCATION_HOST_MEMORY;
             result.deviceIndex = -1;
 
             return result;
@@ -236,6 +235,8 @@ namespace mxl::lib
             gInfo.size = sizeof gInfo;
         }
 
+        flowData->setPayloadStorage(std::make_unique<HostPayloadStorage>(*flowData));
+
         auto const finalDir = makeFlowDirectoryName(_mxlDomain, uuidString);
         if (publishFlowDirectory(tempDirectory, finalDir))
         {
@@ -338,6 +339,13 @@ namespace mxl::lib
                     fmt::format("Unsupported flow data version: {}, supported is: {}", flowSegment.get()->info.version, FLOW_DATA_VERSION)};
             }
 
+            // MXL writers leave the deprecated payload location at 0. Another value comes from software that keeps the payload
+            // somewhere this library cannot map.
+            if (auto const payloadLocation = flowSegment.get()->info.config.common.payloadLocation; payloadLocation != 0U)
+            {
+                throw std::invalid_argument{fmt::format("Unsupported payload location: {}, supported is: 0", payloadLocation)};
+            }
+
             if (auto const flowFormat = flowSegment.get()->info.config.common.format; mxlIsDiscreteDataFormat(flowFormat))
             {
                 return openDiscreteFlow(base, std::move(flowSegment));
@@ -384,6 +392,8 @@ namespace mxl::lib
                     "Grain directory not found.", grainDir, std::make_error_code(std::errc::no_such_file_or_directory)};
             }
         }
+
+        flowData->setPayloadStorage(std::make_unique<HostPayloadStorage>(*flowData));
 
         return flowData;
     }

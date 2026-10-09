@@ -3,10 +3,13 @@
 
 #pragma once
 
+#include <memory>
+#include <stdexcept>
 #include <vector>
 #include <fmt/format.h>
 #include "Flow.hpp"
 #include "FlowData.hpp"
+#include "PayloadStorage.hpp"
 
 namespace mxl::lib
 {
@@ -29,8 +32,28 @@ namespace mxl::lib
         mxlGrainInfo* grainInfoAt(std::size_t i) noexcept;
         mxlGrainInfo const* grainInfoAt(std::size_t i) const noexcept;
 
+        /**
+         * Set the storage that holds the grain payloads. The flow manager calls this once all grains are mapped.
+         * \param[in] storage The payload storage. Replaces any previously set storage.
+         */
+        void setPayloadStorage(std::unique_ptr<PayloadStorage>&& storage) noexcept;
+
+        /**
+         * Accessor for the storage that holds the grain payloads.
+         * \return The payload storage.
+         * \throws std::logic_error if no storage was set. This is the case for flow data that is only used to
+         *      read grain headers, such as the copy held by the domain watcher.
+         */
+        [[nodiscard]]
+        PayloadStorage const& payloadStorage() const;
+
     private:
         std::vector<SharedMemoryInstance<Grain>> _grains;
+        /**
+         * The storage that holds the grain payloads. Declared after _grains so that it is destroyed first, since
+         * a storage may refer to the grain segments.
+         */
+        std::unique_ptr<PayloadStorage> _payloadStorage;
     };
 
     /**************************************************************************/
@@ -40,6 +63,7 @@ namespace mxl::lib
     inline DiscreteFlowData::DiscreteFlowData(SharedMemoryInstance<Flow>&& flowSegement) noexcept
         : FlowData{std::move(flowSegement)}
         , _grains{}
+        , _payloadStorage{}
     {
         _grains.reserve(flowInfo()->config.discrete.grainCount);
     }
@@ -47,6 +71,7 @@ namespace mxl::lib
     inline DiscreteFlowData::DiscreteFlowData(char const* flowFilePath, AccessMode mode, LockMode lockMode)
         : FlowData{flowFilePath, mode, lockMode}
         , _grains{}
+        , _payloadStorage{}
     {
         _grains.reserve(flowInfo()->config.discrete.grainCount);
     }
@@ -100,5 +125,19 @@ namespace mxl::lib
             return &grain->header.info;
         }
         return nullptr;
+    }
+
+    inline void DiscreteFlowData::setPayloadStorage(std::unique_ptr<PayloadStorage>&& storage) noexcept
+    {
+        _payloadStorage = std::move(storage);
+    }
+
+    inline PayloadStorage const& DiscreteFlowData::payloadStorage() const
+    {
+        if (!_payloadStorage)
+        {
+            throw std::logic_error{"No payload storage set for this flow."};
+        }
+        return *_payloadStorage;
     }
 }
