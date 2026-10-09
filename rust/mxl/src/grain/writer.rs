@@ -42,6 +42,22 @@ impl GrainWriter {
         Ok(())
     }
 
+    /// Queries the header information of a grain without opening it. Unlike `open_grain`, this
+    /// does not reset the grain's valid slice count. Use it to read the state of a grain written
+    /// into the flow by a Fabrics target before committing it, as opening such a grain resets its
+    /// valid slices.
+    pub fn get_grain_info(&self, index: u64) -> Result<mxl_sys::GrainInfo> {
+        let mut grain_info: mxl_sys::GrainInfo = unsafe { std::mem::zeroed() };
+        unsafe {
+            Error::from_status(self.writer.context.api.flow_writer_get_grain_info(
+                self.writer.as_ptr(),
+                index,
+                &mut grain_info,
+            ))?;
+        }
+        Ok(grain_info)
+    }
+
     /// The current MXL implementation states a TODO to allow multiple grains to be edited at the
     /// same time. For this reason, there is no protection on the Rust level against trying to open
     /// multiple grains. If the TODO ever gets removed, it may be worth considering pattern where

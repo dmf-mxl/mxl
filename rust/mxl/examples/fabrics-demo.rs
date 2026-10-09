@@ -142,14 +142,18 @@ impl<'a> TargetEndpoint<'a> {
         while running.load(atomic::Ordering::SeqCst) {
             match target.read(Duration::from_millis(200)) {
                 Ok(read_result) => {
+                    // Opening a grain that this writer handle never opened resets its valid
+                    // slices. Query them first, as the fabrics target wrote the received slice
+                    // count into the grain header.
+                    let received_slices =
+                        writer.get_grain_info(read_result.grain_index)?.validSlices;
                     let grain = writer.open_grain(read_result.grain_index)?;
-                    let valid_slices = grain.valid_slices();
-                    grain.commit(valid_slices)?;
+                    grain.commit(received_slices)?;
 
                     tracing::debug!(
                         "Commited grain index {}, slice index {}.",
                         read_result.grain_index,
-                        valid_slices
+                        received_slices
                     );
                 }
                 Err(mxl::Error::NotReady) => {

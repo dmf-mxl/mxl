@@ -8,12 +8,17 @@ mod samples;
 use crate::{
     error::{Error, Result},
     fabrics::{TargetInfo, instance::FabricsInstanceContext},
+    reader::FlowReaderResourceKeepAlive,
 };
 
 pub use config::Config;
 use mxl_sys::types::{FabricsInitiator, FabricsInitiatorConfig};
 
-use std::{marker::PhantomData, sync::Arc, time::Duration};
+use std::{
+    marker::PhantomData,
+    sync::{Arc, OnceLock},
+    time::Duration,
+};
 
 use states::*;
 
@@ -50,6 +55,9 @@ pub mod states {
 struct InitiatorInstance {
     ctx: Arc<FabricsInstanceContext>,
     inner: FabricsInitiator,
+    // Filled in setup(), once the flow reader is known. Keeps the reader's resources alive for as
+    // long as the initiator may reference them.
+    _flow_keep_alive: OnceLock<FlowReaderResourceKeepAlive>,
 }
 unsafe impl Send for InitiatorInstance {}
 
@@ -86,6 +94,7 @@ impl Initiator<New> {
         let instance = InitiatorInstance {
             ctx,
             inner: initiator,
+            _flow_keep_alive: OnceLock::new(),
         };
         Initiator {
             instance,
@@ -106,6 +115,13 @@ impl Initiator<Initializing> {
                 std::ptr::null(), // Unused for now
             )
         })?;
+
+        // SAFETY: set() can only fail if a value was already stored, and this instance is only
+        // accessible through self, which setup() consumes exactly once.
+        self.instance
+            ._flow_keep_alive
+            .set(config.flow_reader.keep_alive())
+            .ok();
 
         let flow_info = config.flow_reader.get_info()?;
         if flow_info.config.is_discrete_flow() {

@@ -5,12 +5,16 @@ mod config;
 mod grain;
 mod samples;
 
-use std::{marker::PhantomData, sync::Arc};
+use std::{
+    marker::PhantomData,
+    sync::{Arc, OnceLock},
+};
 
 use crate::{
     FlowConfigInfo,
     error::{Error, Result},
     fabrics::{instance::FabricsInstanceContext, target_info::TargetInfo},
+    writer::FlowWriterResourceKeepAlive,
 };
 pub use config::Config;
 
@@ -43,6 +47,9 @@ pub mod states {
 pub struct TargetInstance {
     ctx: Arc<FabricsInstanceContext>,
     inner: FabricsTarget,
+    // Filled in setup(), once the flow writer is known. Keeps the writer's resources alive for as
+    // long as the target may reference them.
+    _flow_keep_alive: OnceLock<FlowWriterResourceKeepAlive>,
 }
 unsafe impl Send for TargetInstance {}
 
@@ -75,7 +82,11 @@ impl Target<New> {
         ctx: Arc<FabricsInstanceContext>,
         target: FabricsTarget,
     ) -> Target<Initializing> {
-        let instance = TargetInstance { ctx, inner: target };
+        let instance = TargetInstance {
+            ctx,
+            inner: target,
+            _flow_keep_alive: OnceLock::new(),
+        };
         Target {
             instance,
             _marker: PhantomData,
@@ -103,6 +114,13 @@ impl Target<Initializing> {
                 &mut info,
             )
         })?;
+
+        // SAFETY: set() can only fail if a value was already stored, and this instance is only
+        // accessible through self, which setup() consumes exactly once.
+        self.instance
+            ._flow_keep_alive
+            .set(config.flow_writer.keep_alive())
+            .ok();
 
         let ctx = self.instance.ctx.clone();
 
