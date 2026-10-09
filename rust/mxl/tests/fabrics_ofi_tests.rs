@@ -436,9 +436,14 @@ fn tcp_grain_transfer_delivers_payload_to_target_flow() {
         wait_for_grain_transfer_start(&target, &initiator, grain_index, total_slices);
         let completed_index = wait_for_grain_transfer_completion(&target, &initiator, grain_index);
 
+        // Opening a grain that this writer handle never opened resets its valid slices. Query
+        // them first, as the fabrics target wrote the received slice count into the grain header.
+        let received_slices = target_grain_writer
+            .get_grain_info(completed_index)
+            .unwrap()
+            .validSlices;
         let committed_grain = target_grain_writer.open_grain(completed_index).unwrap();
-        let committed_slices = committed_grain.valid_slices();
-        committed_grain.commit(committed_slices).unwrap();
+        committed_grain.commit(received_slices).unwrap();
 
         let actual = wait_for_target_grain(&target_grain_reader, grain_index);
         assert_eq!(actual.payload, expected.payload);
