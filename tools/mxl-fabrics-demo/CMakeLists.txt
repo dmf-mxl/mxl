@@ -33,11 +33,11 @@ set_target_properties(
     mxl-fabrics-demo-target
     mxl-fabrics-demo-initiator
         PROPERTIES
-            C_EXTENSIONS                 OFF
-            CXX_EXTENSIONS               OFF
-            C_STANDARD                   ${MXL_C_STANDARD}
-            CXX_STANDARD                 ${MXL_CXX_STANDARD}
-            INSTALL_RPATH                "${MXL_TOOLS_INSTALL_RPATH}"
+            C_EXTENSIONS   OFF
+            CXX_EXTENSIONS OFF
+            C_STANDARD     ${MXL_C_STANDARD}
+            CXX_STANDARD   ${MXL_CXX_STANDARD}
+            INSTALL_RPATH  "${MXL_TOOLS_INSTALL_RPATH}"
     )
 
 install(TARGETS mxl-fabrics-demo-target mxl-fabrics-demo-initiator
