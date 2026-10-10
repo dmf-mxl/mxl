@@ -22,11 +22,12 @@ cmake --preset Linux-GCC-Release -DMXL_ENABLE_FABRICS_OFI=ON .
 cmake --build build/Linux-GCC-Release
 ```
 
-This produces two binaries:
+This produces three binaries:
 
 | Binary | Path |
 | - | - |
-| `mxl-fabrics-demo` | `build/Linux-GCC-Release/tools/mxl-fabrics-demo/mxl-fabrics-demo` |
+| `mxl-fabrics-demo-target` | `build/Linux-GCC-Release/tools/mxl-fabrics-demo/mxl-fabrics-demo-target` |
+| `mxl-fabrics-demo-initiator` | `build/Linux-GCC-Release/tools/mxl-fabrics-demo/mxl-fabrics-demo-initiator` |
 | `mxl-fabrics-info` | `build/Linux-GCC-Release/tools/mxl-fabrics-info/mxl-fabrics-info` |
 
 ## 2. Discovering interfaces with `mxl-fabrics-info`
@@ -82,7 +83,7 @@ All transfers use Remote Write, which lets the initiator write directly into the
 
 The difference between connected (MSG) and connectionless (RDM) endpoints is abstracted by the library. The API and workflow are the same regardless of the underlying endpoint type, though there can be slight differences in behavior (for example, error reporting on a failed connection-oriented endpoint may differ from a connectionless one).
 
-The library itself does not select a provider or interface automatically. The caller queries the available interfaces with `mxlFabricsGetInterfaces()` and chooses which provider and node address to pass to the setup functions. The demo application (`mxl-fabrics-demo`) implements its own auto-selection heuristic on top of this query; see [section 5.5](#55-interface-auto-selection-in-the-demo-tool) for details.
+The library itself does not select a provider or interface automatically. The caller queries the available interfaces with `mxlFabricsGetInterfaces()` and chooses which provider and node address to pass to the setup functions. The demo applications (`mxl-fabrics-demo-target` and `mxl-fabrics-demo-initiator`) implement their own auto-selection heuristic on top of this query; see [section 5.5](#55-interface-auto-selection-in-the-demo-tool) for details.
 
 ## 4. Node and service values
 
@@ -93,47 +94,45 @@ The terminology follows libfabric and the Linux Verbs API:
 
 In most cases, let the library choose a random service automatically. Only set it explicitly when you need a fixed, known port.
 
-## 5. Using the demo application
+## 5. Using the demo applications
 
-`mxl-fabrics-demo` transfers video (discrete flow) or audio (continuous flow) data between two endpoints. Both target and initiator roles are in the same binary. By default it runs as a target; pass `-i` to run as an initiator.
+The demo transfers video (discrete flow) or audio (continuous flow) data between two endpoints. It consists of two programs. `mxl-fabrics-demo-target` creates a local flow and receives data into it. `mxl-fabrics-demo-initiator` reads an existing local flow and sends it to the target. The source code is in `tools/mxl-fabrics-demo/`: `target.cpp` and `initiator.cpp` hold the two programs, and `common.cpp` holds the option parsing and interface selection they share.
 
 ### 5.1 Command line options
 
+Both programs take the same options:
+
 | Option | Description |
 | - | - |
-| `-d <path>` | MXL domain directory (required). |
-| `-f <flow>` | As target: path to a flow definition JSON file. As initiator: the source flow UUID. |
-| `--flow-options <path>` | Optional flow options file (target only). |
-| `-i` | Run as initiator. Without this flag, the tool runs as target. |
-| `-p <provider>` | Use a specific provider (`tcp`, `verbs`, `efa`, `shm`). If omitted, the demo picks one automatically. |
-| `-n <address>` | Bind to a specific node address. If omitted, the demo picks one automatically. |
-| `-s <service>` | Service identifier (e.g. a port number). |
-| `-t <target-info>` | Target info exchange (see below). |
+| `-d`, `--domain <path>` | MXL domain directory (required). |
+| `-f`, `--flow <flow>` | Target: path to a flow definition JSON file. Initiator: the source flow UUID (required). |
+| `-t`, `--target-info <path>` | Target info file (required). The target writes it, the initiator reads it. |
+| `-p`, `--provider <provider>` | Use a specific provider (`tcp`, `verbs`, `efa`, `shm`). If omitted, the demo picks one automatically. |
+| `-n`, `--node <address>` | Bind to a specific node address. If omitted, the demo picks one automatically. |
+| `-s`, `--service <service>` | Service identifier (e.g. a port number). If omitted, the provider chooses one. |
+
+Run either program with `--help` to print the usage.
 
 ### 5.2 Target info exchange
 
-The target and initiator must exchange a `TargetInfo` object out of band. This object contains the target's fabric address, remote memory keys, and buffer addresses. The demo tool supports two exchange methods:
-
-**File-based** (recommended for local testing): use the `@` prefix to read/write raw JSON.
-- Target side: `-t @/tmp/target.json` writes the target info to a file.
-- Initiator side: `-t @/tmp/target.json` reads the target info from that file.
-
-**Base64 string**: without the `@` prefix, the target prints a base64-encoded string to stdout, and the initiator accepts the same string via `-t <base64>`.
+The target and initiator must exchange a `TargetInfo` object out of band. This object contains the target's fabric address, remote memory keys, and buffer addresses. The demo exchanges it through a file. The target writes the serialized `TargetInfo` (JSON) to the path given with `-t`, and the initiator reads it from the path given with `-t`. When the two programs run on different hosts, copy the file from the target host to the initiator host before starting the initiator.
 
 ### 5.3 Target setup
 
-1. Start the target with a flow definition, a domain directory, and optionally a specific provider and node address.
-2. The target prints or writes a `TargetInfo`. Share this with the initiator.
-3. The target waits for an initiator to connect and then receives grains or samples as they arrive.
+1. Start `mxl-fabrics-demo-target` with a flow definition, a domain directory, a target info path, and optionally a specific provider and node address.
+2. The target creates the flow and writes the `TargetInfo` file. Share this file with the initiator.
+3. The target waits for an initiator to connect and then commits grains or samples as they arrive.
 
 ### 5.4 Initiator setup
 
-1. Start the initiator with the source flow UUID, the same domain directory, and the target info obtained from the target.
+1. Start `mxl-fabrics-demo-initiator` with the source flow UUID, the domain directory that contains the source flow, and the target info file written by the target. Select the same provider as the target.
 2. The initiator connects and begins transferring grains or samples.
 
-### 5.5 Interface auto-selection in the demo tool
+Stop either program with Ctrl-C. The initiator disconnects from the target before it exits, and the target then waits for a new initiator.
 
-When `-p` and `-n` are omitted, the demo application queries all available interfaces with `mxlFabricsGetInterfaces()` and picks the one whose provider has the highest priority:
+### 5.5 Interface auto-selection in the demo tools
+
+When `-p` and `-n` are omitted, the demo programs query all available interfaces with `mxlFabricsGetInterfaces()` and pick the one whose provider has the highest priority:
 
 | Priority | Provider |
 | - | - |
@@ -142,20 +141,21 @@ When `-p` and `-n` are omitted, the demo application queries all available inter
 | 2 | TCP |
 | 1 (lowest) | SHM |
 
-This is a convenience built into the demo tool. The Fabrics library itself has no built-in provider preference; your application is responsible for choosing a provider and interface from the list returned by `mxlFabricsGetInterfaces()`.
+This is a convenience built into the demo tools. The Fabrics library itself has no built-in provider preference; your application is responsible for choosing a provider and interface from the list returned by `mxlFabricsGetInterfaces()`.
 
 ## 6. Examples
 
 ### 6.1 Local TCP transfer
 
-The simplest setup: both endpoints on the same machine using the TCP provider over loopback.
+The simplest setup: both endpoints on the same machine using the TCP provider over loopback. The target needs its own domain directory here, because the source flow in `/dev/shm` already has the flow id from `flow.json`.
 
 ```bash
 # Terminal 1 — Target
-mxl-fabrics-demo -d /dev/shm -p tcp -n ::1 -s 1312 -f flow.json -t @/tmp/target.json
+mkdir -p /dev/shm/rx
+mxl-fabrics-demo-target -d /dev/shm/rx -p tcp -n ::1 -s 1312 -f flow.json -t /tmp/target.json
 
 # Terminal 2 — Initiator
-mxl-fabrics-demo -i -d /dev/shm -p tcp -n ::1 -f 5fbec3b1-1b0f-417d-9059-8b94a47197ed -t @/tmp/target.json
+mxl-fabrics-demo-initiator -d /dev/shm -p tcp -n ::1 -f 5fbec3b1-1b0f-417d-9059-8b94a47197ed -t /tmp/target.json
 ```
 
 ### 6.2 RDMA Verbs transfer
@@ -163,11 +163,11 @@ mxl-fabrics-demo -i -d /dev/shm -p tcp -n ::1 -f 5fbec3b1-1b0f-417d-9059-8b94a47
 If there is only one Verbs interface on the system, the demo's auto-selection picks it up without any additional flags:
 
 ```bash
-# Terminal 1 — Target
-mxl-fabrics-demo -d /dev/shm -s 1312 -f flow.json -t @/tmp/target.json
+# Host A — Target
+mxl-fabrics-demo-target -d /dev/shm -s 1312 -f flow.json -t /tmp/target.json
 
-# Terminal 2 — Initiator
-mxl-fabrics-demo -i -d /dev/shm -f 5fbec3b1-1b0f-417d-9059-8b94a47197ed -t @/tmp/target.json
+# Host B — Initiator, after copying /tmp/target.json from host A
+mxl-fabrics-demo-initiator -d /dev/shm -f 5fbec3b1-1b0f-417d-9059-8b94a47197ed -t /tmp/target.json
 ```
 
 On a host with multiple Verbs interfaces, use `-n <address>` to select the right one.
@@ -177,11 +177,11 @@ On a host with multiple Verbs interfaces, use `-n <address>` to select the right
 EFA has the highest priority in the demo's auto-selection and will be chosen when available. The service value is ignored by the EFA provider.
 
 ```bash
-# Terminal 1 — Target
-mxl-fabrics-demo -d /dev/shm -f flow.json -t @/tmp/target.json
+# Host A — Target
+mxl-fabrics-demo-target -d /dev/shm -f flow.json -t /tmp/target.json
 
-# Terminal 2 — Initiator
-mxl-fabrics-demo -i -d /dev/shm -f 5fbec3b1-1b0f-417d-9059-8b94a47197ed -t @/tmp/target.json
+# Host B — Initiator, after copying /tmp/target.json from host A
+mxl-fabrics-demo-initiator -d /dev/shm -f 5fbec3b1-1b0f-417d-9059-8b94a47197ed -t /tmp/target.json
 ```
 
 ## 7. RoCEv2 QoS configuration
