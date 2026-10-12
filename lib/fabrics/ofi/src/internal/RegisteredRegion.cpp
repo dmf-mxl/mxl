@@ -11,14 +11,17 @@ namespace mxl::lib::fabrics::ofi
 
     RemoteRegion RegisteredRegion::toRemote(bool useVirtualAddress) const noexcept
     {
-        auto addr = useVirtualAddress ? _region.base : 0;
+        // With virtual addressing the target address is the region's own virtual
+        // address. Otherwise it is the region's offset from the start of the
+        // (possibly shared) memory registration.
+        auto addr = useVirtualAddress ? _region.base : _mrOffset;
 
-        return RemoteRegion{.addr = addr, .len = _region.size, .rkey = _mr.rkey()};
+        return RemoteRegion{.addr = addr, .len = _region.size, .rkey = _mr->rkey()};
     }
 
     LocalRegion RegisteredRegion::toLocal() const noexcept
     {
-        return LocalRegion{.addr = _region.base, .len = _region.size, .desc = _mr.desc()};
+        return LocalRegion{.addr = _region.base, .len = _region.size, .desc = _mr->desc()};
     }
 
     std::vector<RemoteRegion> toRemote(std::vector<RegisteredRegion> const& groups, bool useVirtualAddress) noexcept
