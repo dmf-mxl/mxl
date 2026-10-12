@@ -48,6 +48,7 @@ RUN apt-get install -y --no-install-recommends \
     "clang-tidy-${CLANG_VERSION}" \
     "clang-format-${CLANG_VERSION}" \
     "libclang-rt-${CLANG_VERSION}-dev" \
+    "lld-${CLANG_VERSION}" \
     cmake \
     ninja-build
 
