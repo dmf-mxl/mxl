@@ -94,15 +94,22 @@ RUN git clone --depth 1 --branch 0.14.5 \
     && cd - \
     && rm -rf /tmp/gst-plugins-rs
 
+# Collect the runtime files in a staging tree that mirrors the final paths.
+FROM builder AS staging
+
+RUN LIB="/usr/lib/$(gcc -dumpmachine)" \
+    && mkdir -p "/staging${LIB}/gstreamer-1.0" "/staging/usr/bin" \
+    && cp -a "${LIB}"/libmxl* "/staging${LIB}/" \
+    && cp -a /usr/bin/mxl-* "/staging/usr/bin/" \
+    && cp -a "${LIB}/gstreamer-1.0/libgstmxl.so" \
+             "${LIB}/gstreamer-1.0/libgstrsclosedcaption.so" \
+             "/staging${LIB}/gstreamer-1.0/"
+
 # ------------------------------------------------------------
 # Runtime images
 FROM base AS mxl
 
-ARG  LIB="/usr/lib/x86_64-linux-gnu"
-COPY --from=builder "${LIB}/libmxl*" "${LIB}/"
-COPY --from=builder "/usr/bin/mxl-*" "/usr/bin/"
-COPY --from=builder "${LIB}/gstreamer-1.0/libgstmxl.so" "${LIB}/gstreamer-1.0/"
-COPY --from=builder "${LIB}/gstreamer-1.0/libgstrsclosedcaption.so" "${LIB}/gstreamer-1.0/"
+COPY --from=staging /staging/ /
 
 RUN useradd -m mxl
 USER mxl
