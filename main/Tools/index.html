@@ -13,6 +13,7 @@
       
       
       
+      
         <link rel="prev" href="../Timing/">
       
       
@@ -23,7 +24,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.67">
+      <meta name="generator" content="zensical-0.0.70">
     
     
       
@@ -34,12 +35,12 @@
       
         
       
-      <link rel="stylesheet" href="../assets/stylesheets/modern/main.4ae390e2.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/modern/main.e442bf79.min.css">
       
         
           
         
-        <link rel="stylesheet" href="../assets/stylesheets/modern/palette.96d1a7e4.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/modern/palette.b60ce83d.min.css">
       
       
 
@@ -79,14 +80,11 @@
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
-    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <label class="md-overlay" for="__drawer" aria-hidden="true"></label>
     <div data-md-component="skip">
-      
-        
-        <a href="#tools" class="md-skip">
-          Skip to content
-        </a>
-      
+      <a href="#__skip" class="md-skip">
+        Skip to content
+      </a>
     </div>
     <div data-md-component="announce">
       
@@ -720,6 +718,32 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../event-flows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Event flows
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -880,6 +904,7 @@
 
               
               <article class="md-content__inner md-typeset">
+                <a id="__skip" tabindex="-1"></a>
                 
                   
 
@@ -951,7 +976,7 @@ CAM2:<span class="w"> </span>mxl:///dev/shm/mxl/?id<span class="o">=</span>53c36
 <span class="w">          </span>Latency<span class="w"> </span><span class="o">(</span>grains<span class="o">)</span>:<span class="w"> </span><span class="m">1</span>
 <span class="w">                    </span>Active:<span class="w"> </span><span class="nb">true</span>
 </code></pre></div>
-<p>Example 2a : Printing details about a specific flow using an MXL URI </p>
+<p>Example 2a : Printing details about a specific flow using an MXL URI</p>
 <div class="highlight"><pre><span></span><code>./mxl-info<span class="w"> </span>mxl:///dev/shm/mxl?id<span class="o">=</span>5fbec3b1-1b0f-417d-9059-8b94a47197ed
 
 -<span class="w"> </span>Flow<span class="w"> </span><span class="o">[</span>5fbec3b1-1b0f-417d-9059-8b94a47197ed<span class="o">]</span>
@@ -976,7 +1001,10 @@ CAM2:<span class="w"> </span>mxl:///dev/shm/mxl/?id<span class="o">=</span>53c36
 <div class="highlight"><pre><span></span><code>watch<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>-p<span class="w"> </span>./mxl-info<span class="w"> </span>mxl:///dev/shm/mxl?id<span class="o">=</span>5fbec3b1-1b0f-417d-9059-8b94a47197ed
 </code></pre></div>
 <h2 id="mxl-data-probe">mxl-data-probe</h2>
-<p>A tool that opens an MXL ancillary Data flow (<code>media_type: video/smpte291</code>), reads one or more grains starting at the current head index, and prints the RFC-8331 ANC elements found in each grain.</p>
+<p>A tool that opens an MXL ancillary Data flow (<code>media_type: video/smpte291</code>) or an Event flow (<code>urn:x-nmos:format:event</code>).
+For Data flows, it reads grains starting at the current head index and prints their RFC-8331 ANC elements.
+For Event flows, it reads in queue order starting at the oldest retained event and prints the timestamp, flags, registry, data item type, payload size, fragment offset, completion flag, and payload bytes in hexadecimal. Events do not require a <code>media_type</code>.</p>
+<p><code>--count</code> counts individual stored entries, including fragments. Fragments are displayed separately without reassembly or continuity validation. The printed event number is a local read counter starting at zero. A read error (including a timeout or ring overrun) stops the probe with a nonzero exit status.</p>
 <div class="highlight"><pre><span></span><code>./mxl-data-probe<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">[</span>ADDRESS...<span class="o">]</span>
 
 POSITIONALS:
@@ -987,9 +1015,10 @@ OPTIONS:
 <span class="w">          </span>--version<span class="w">           </span>Display<span class="w"> </span>program<span class="w"> </span>version<span class="w"> </span>information<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
 <span class="w">  </span>-d,<span class="w">     </span>--domain<span class="w"> </span>TEXT:DIR<span class="w">   </span>The<span class="w"> </span>MXL<span class="w"> </span>domain<span class="w"> </span>directory
 <span class="w">  </span>-f,<span class="w">     </span>--flow<span class="w"> </span>TEXT<span class="w">         </span>The<span class="w"> </span>flow<span class="w"> </span>id<span class="w"> </span>to<span class="w"> </span><span class="nb">read</span>
-<span class="w">  </span>-c,<span class="w">     </span>--count<span class="w"> </span>UINT<span class="w"> </span><span class="o">[</span><span class="m">1</span><span class="o">]</span><span class="w">    </span>Number<span class="w"> </span>of<span class="w"> </span>grains<span class="w"> </span>to<span class="w"> </span><span class="nb">read</span><span class="w"> </span>from<span class="w"> </span>the<span class="w"> </span>current<span class="w"> </span>head<span class="w"> </span>index
+<span class="w">  </span>-c,<span class="w">     </span>--count<span class="w"> </span>UINT<span class="w"> </span><span class="o">[</span><span class="m">1</span><span class="o">]</span><span class="w">    </span>Number<span class="w"> </span>of<span class="w"> </span>grains<span class="w"> </span><span class="o">(</span>from<span class="w"> </span>the<span class="w"> </span>head<span class="o">)</span><span class="w"> </span>or<span class="w"> </span>event<span class="w"> </span>entries
+<span class="w">                              </span><span class="o">(</span>from<span class="w"> </span>the<span class="w"> </span>oldest<span class="w"> </span>retained<span class="o">)</span><span class="w"> </span>to<span class="w"> </span><span class="nb">read</span>
 <span class="w">  </span>-t,<span class="w">     </span>--timeout-ms<span class="w"> </span>UINT<span class="w"> </span><span class="o">[</span><span class="m">1000</span><span class="o">]</span>
-<span class="w">                              </span>Timeout<span class="w"> </span>per<span class="w"> </span>grain<span class="w"> </span><span class="nb">read</span><span class="w"> </span><span class="k">in</span><span class="w"> </span>milliseconds
+<span class="w">                              </span>Timeout<span class="w"> </span>per<span class="w"> </span>grain<span class="w"> </span>or<span class="w"> </span>event<span class="w"> </span><span class="nb">read</span><span class="w"> </span><span class="k">in</span><span class="w"> </span>milliseconds
 
 MXL<span class="w"> </span>URI<span class="w"> </span>format:
 mxl://<span class="o">[</span>authority<span class="o">[</span>:port<span class="o">]]</span>/domain<span class="o">[</span>?id<span class="o">=</span>...<span class="o">]</span>
@@ -1001,10 +1030,13 @@ See:<span class="w"> </span>https://github.com/dmf-mxl/mxl/docs/Addressability.m
 <p>Example using an MXL URI:</p>
 <div class="highlight"><pre><span></span><code>./mxl-data-probe<span class="w"> </span>mxl:///dev/shm/mxl?id<span class="o">=</span>db3bd465-2772-484f-8fac-830b0471258b<span class="w"> </span>--count<span class="w"> </span><span class="m">3</span>
 </code></pre></div>
+<p>Example inspecting two event entries (such as a two-fragment event):</p>
+<div class="highlight"><pre><span></span><code>./mxl-data-probe<span class="w"> </span>-d<span class="w"> </span>/dev/shm/mxl<span class="w"> </span>-f<span class="w"> </span>cabbc00d-3860-4438-bc48-8ebdfe67305e<span class="w"> </span>--count<span class="w"> </span><span class="m">2</span>
+</code></pre></div>
 <h2 id="mxl-gst-testsrc">mxl-gst-testsrc</h2>
 <p>A binary that uses the gstreamer 'videotestsrc' and 'audiotestsrc' elements to produce video grains and/or audio samples which will be pushed to a MXL Flow. The flow is configured from a NMOS Flow json file. Here's an example of such file :</p>
 <p>&emsp; <strong>Note</strong> Don't forget to provide valid description, label and grouphint tag.</p>
-<p><div class="highlight"><pre><span></span><code><span class="p">{</span>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"___CHANGE ME___ Long description of the video flow"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"5fbec3b1-1b0f-417d-9059-8b94a47197ed"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"tags"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
@@ -1046,7 +1078,7 @@ See:<span class="w"> </span>https://github.com/dmf-mxl/mxl/docs/Addressability.m
 <span class="w">  </span><span class="p">]</span>
 <span class="p">}</span>
 </code></pre></div>
-Below is an example of an <strong>augmented NMOS Flow JSON</strong> for audio.<br />
+<p>Below is an example of an <strong>augmented NMOS Flow JSON</strong> for audio.<br />
 &emsp; <strong>Note 1:</strong> The <em>channel_count</em> property is a mandatory MXL requirement (not found in standard NMOS definition). To adjust the number of audio channels, simply update the <em>channel_count</em> value.</p>
 <p>&emsp; <strong>Note 2:</strong> Don't forget to provide valid description, label and grouphint tag.</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
@@ -1307,10 +1339,10 @@ OPTIONS:
       
         
         
-      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["announce.dismiss","content.code.annotate","content.code.copy","content.code.select","content.footnote.tooltips","content.tabs.link","content.tooltips","navigation.expand","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.prefetch","navigation.path","navigation.sections","navigation.top","navigation.tracking","search.highlight"],"redirect":null,"search":"../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","clipboard.error":"Could not copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":{"provider":"mike"}}</script>
+      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["announce.dismiss","content.code.annotate","content.code.copy","content.code.select","content.footnote.tooltips","content.tabs.link","content.tooltips","navigation.expand","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.prefetch","navigation.path","navigation.sections","navigation.top","navigation.tracking","search.highlight"],"redirect":null,"search":"../assets/javascripts/workers/search.c47bb847.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","clipboard.error":"Could not copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":{"provider":"mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.67a597eb.min.js"></script>
+      <script src="../assets/javascripts/bundle.a2388154.min.js"></script>
       
         <script src="../javascripts/mermaid.js"></script>
       
