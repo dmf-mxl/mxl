@@ -372,6 +372,116 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connection o
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
 }
 
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connection oriented target reads completions after disconnect",
+    "[fabrics][connected][shutdown]")
+{
+    auto instance = mxlCreateInstance(domain.c_str(), "");
+
+    auto flowDef = mxl::tests::readFile("../data/v210_flow.json");
+    auto const flowId = "5fbec3b1-1b0f-417d-9059-8b94a47197ed";
+
+    mxlFlowWriter writer;
+    REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), nullptr, &writer, nullptr, nullptr) == MXL_STATUS_OK);
+
+    mxlFlowReader reader;
+    REQUIRE(mxlCreateFlowReader(instance, flowId, "", &reader) == MXL_STATUS_OK);
+
+    mxlFabricsInstance fabrics;
+    REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
+
+    mxlFabricsTarget target;
+    REQUIRE(mxlFabricsCreateTarget(fabrics, &target) == MXL_STATUS_OK);
+
+    mxlFabricsInitiator initiator;
+    REQUIRE(mxlFabricsCreateInitiator(fabrics, &initiator) == MXL_STATUS_OK);
+
+    // clang-format off
+    auto const interfaceConfig = mxlFabricsInterfaceConfig{
+        .version = MXL_FABRICS_API_VERSION,
+        .provider = MXL_FABRICS_PROVIDER_TCP,
+        .caps = {
+            .version = MXL_FABRICS_API_VERSION,
+            .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+            .maxMessageSize = 0,
+        },
+        .address = {
+            .node = "127.0.0.1",
+            .service = nullptr,
+        },
+        .attr = nullptr,
+    };
+    // clang-format on
+
+    auto const targetConfig = mxlFabricsTargetConfig{.version = MXL_FABRICS_API_VERSION, .interface = interfaceConfig, .writer = writer};
+    mxlFabricsTargetInfo targetInfo;
+    REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, nullptr, &targetInfo) == MXL_STATUS_OK);
+
+    auto const initiatorConfig = mxlFabricsInitiatorConfig{.version = MXL_FABRICS_API_VERSION, .interface = interfaceConfig, .reader = reader};
+    REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsInitiatorAddTarget(initiator, targetInfo) == MXL_STATUS_OK);
+
+    std::uint64_t dummyIndex;
+    waitForConnection([&]() { mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex); },
+        [&]() { return mxlFabricsInitiatorMakeProgressNonBlocking(initiator); });
+
+    // One complete transfer puts the target into the connected state.
+    waitForTransferStart([&]() { mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex); },
+        [&]() { requireProgressStatus([&]() { return mxlFabricsInitiatorMakeProgressNonBlocking(initiator); }, "initiator"); },
+        [&]() { return mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1); });
+    waitForTransferCompletion([&]() { requireProgressStatus([&]() { return mxlFabricsInitiatorMakeProgressNonBlocking(initiator); }, "initiator"); },
+        [&]() { return mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex); });
+
+    constexpr auto grainCount = 3;
+    for (std::uint64_t grainIndex = 1; grainIndex <= grainCount; ++grainIndex)
+    {
+        REQUIRE(mxlFabricsInitiatorTransferGrain(initiator, grainIndex, 0, 1) == MXL_STATUS_OK);
+    }
+    auto grainsRead = 0;
+    pollUntilSuccess(
+        [&]()
+        {
+            if (mxlFabricsInitiatorMakeProgressNonBlocking(initiator) == MXL_STATUS_OK)
+            {
+                return true;
+            }
+            if (mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex) == MXL_STATUS_OK)
+            {
+                ++grainsRead;
+            }
+            return false;
+        },
+        POLL_TIMEOUT,
+        "Initiator did not complete the transfers in 5 seconds");
+    REQUIRE(grainsRead < grainCount);
+
+    // close the connection and wait until the initiator has finished the shutdown.
+    REQUIRE(mxlFabricsInitiatorRemoveTarget(initiator, targetInfo) == MXL_STATUS_OK);
+    pollUntilSuccess([&]() { return mxlFabricsInitiatorMakeProgressNonBlocking(initiator) == MXL_STATUS_OK; },
+        POLL_TIMEOUT,
+        "Initiator did not finish the shutdown in 5 seconds");
+
+    // the target must still report every grain that arrived before the connection was closed.
+    pollUntilSuccess(
+        [&]()
+        {
+            if (mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex) == MXL_STATUS_OK)
+            {
+                ++grainsRead;
+            }
+            return grainsRead == grainCount;
+        },
+        POLL_TIMEOUT,
+        "Target did not read all grains in 5 seconds");
+
+    REQUIRE(mxlFabricsFreeTargetInfo(targetInfo) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsDestroyInitiator(fabrics, initiator) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsDestroyTarget(fabrics, target) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsDestroyInstance(fabrics) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowReader(instance, reader) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+}
+
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connectionless activation tests", "[fabrics][connectionless][activation]")
 {
     auto instance = mxlCreateInstance(domain.c_str(), "");

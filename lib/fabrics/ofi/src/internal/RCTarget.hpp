@@ -68,9 +68,19 @@ namespace mxl::lib::fabrics::ofi
             Endpoint ep;
         };
 
+        /** \brief The draining state.
+         *
+         * The Initiator has closed the connection. The RCTarget reads the completions that are still in the completion queue, and then
+         * listens for a new connection request.
+         */
+        struct Draining
+        {
+            Endpoint ep;
+        };
+
         /** \brief The internal state of the RCTarget.
          */
-        using State = std::variant<WaitForConnectionRequest, WaitForConnection, Connected>;
+        using State = std::variant<WaitForConnectionRequest, WaitForConnection, Connected, Draining>;
 
     private:
         /** \brief Construct a new RCTarget associated with the given domain and passive endpoint.
@@ -88,6 +98,15 @@ namespace mxl::lib::fabrics::ofi
          */
         template<QueueReadMode>
         std::optional<Target::ReadResult> readNext(std::chrono::steady_clock::duration timeout);
+
+        /** \brief Read the completions that are left after the Initiator closed the connection.
+         *
+         * \param state The draining state.
+         * \param result Receives the result of the first completion that produces one.
+         * \return The draining state if a result was found, otherwise a new WaitForConnectionRequest state.
+         */
+        [[nodiscard]]
+        State drain(Draining state, std::optional<Target::ReadResult>& result);
 
         [[nodiscard]]
         static PassiveEndpoint makeListener(std::shared_ptr<Fabric> const& fabric);

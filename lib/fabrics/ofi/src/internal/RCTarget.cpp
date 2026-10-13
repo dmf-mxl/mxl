@@ -162,15 +162,17 @@ namespace mxl::lib::fabrics::ofi
                     try
                     {
                         auto [completion, event] = readEndpointQueues<queueReadMode>(state.ep, timeout);
-                        if (event && event.value().isShutdown())
-                        {
-                            MXL_INFO("Remote endpoint has shutdown the connection. Transitioning to listening to new connection.");
-                            return WaitForConnectionRequest{.pep = makeListener(state.ep.domain()->fabric())};
-                        }
 
+                        // A completion that was read together with the shutdown event belongs to data that has already arrived.
                         if (completion)
                         {
                             result = _proto->read(state.ep, *completion);
+                        }
+
+                        if (event && event.value().isShutdown())
+                        {
+                            MXL_INFO("Remote endpoint has shutdown the connection. Reading the remaining completions.");
+                            return Draining{.ep = std::move(state.ep)};
                         }
 
                         return Connected{.ep = std::move(state.ep)};
@@ -185,10 +187,38 @@ namespace mxl::lib::fabrics::ofi
 
                         throw;
                     }
-                }},
+                },
+                [&](RCTarget::Draining state) -> State { return drain(std::move(state), result); }},
             std::move(_state));
 
         return result;
+    }
+
+    RCTarget::State RCTarget::drain(Draining state, std::optional<Target::ReadResult>& result)
+    {
+        // The connection is closed, so no new completions are expected. Read the queue without blocking until it returns a result or is
+        // empty. Completions of receive buffers that were cancelled by the shutdown produce no result.
+        while (auto completion = state.ep.completionQueue()->read())
+        {
+            try
+            {
+                result = _proto->read(state.ep, *completion);
+            }
+            catch (FabricException const& ex)
+            {
+                // The protocol posts a new receive buffer before it decodes the completion. Some providers refuse new receive buffers on a
+                // closed connection.
+                MXL_WARN("Failed to read a completion after the connection was shut down: {}", ex.what());
+            }
+
+            if (result)
+            {
+                return state;
+            }
+        }
+
+        MXL_INFO("Completion queue is empty. Transitioning to listening to new connection.");
+        return WaitForConnectionRequest{.pep = makeListener(state.ep.domain()->fabric())};
     }
 
     PassiveEndpoint RCTarget::makeListener(std::shared_ptr<Fabric> const& fabric)
