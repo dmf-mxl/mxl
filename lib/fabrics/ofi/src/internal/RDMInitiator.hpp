@@ -203,7 +203,7 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         Initiator::MakeProgressResult afterProgressResult() const noexcept;
 
-        /** \brief Block on the completion queue with a timeout.
+        /** \brief Block on the completion queue until a completion arrives or the timeout elapses, then process all available completions.
          */
         void blockOnCQ(std::chrono::steady_clock::duration timeout);
 
