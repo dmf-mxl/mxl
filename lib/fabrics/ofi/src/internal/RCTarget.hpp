@@ -36,7 +36,9 @@ namespace mxl::lib::fabrics::ofi
         virtual std::optional<Target::ReadResult> read();
         virtual std::optional<Target::ReadResult> readBlocking(std::chrono::steady_clock::duration timeout) final;
 
-        /** \brief Shut down the target.
+        /** \copydoc Target::shutdown()
+         *
+         * Closes the connection if there is one and waits for the local shutdown event. The target can no longer be used afterwards.
          */
         virtual void shutdown() final;
 
@@ -78,9 +80,20 @@ namespace mxl::lib::fabrics::ofi
             Endpoint ep;
         };
 
+        /** \brief The closed state.
+         *
+         * The target was shut down and can no longer be used.
+         */
+        struct Closed
+        {};
+
         /** \brief The internal state of the RCTarget.
          */
-        using State = std::variant<WaitForConnectionRequest, WaitForConnection, Connected, Draining>;
+        using State = std::variant<WaitForConnectionRequest, WaitForConnection, Connected, Draining, Closed>;
+
+        /** \brief Upper bound for waiting on the local shutdown event in shutdown().
+         */
+        constexpr static auto ShutdownTimeout = std::chrono::seconds(2);
 
     private:
         /** \brief Construct a new RCTarget associated with the given domain and passive endpoint.

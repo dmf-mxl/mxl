@@ -125,6 +125,10 @@ namespace mxl::lib::fabrics::ofi
          * \param api The mxlFabricsInitiator to convert.
          * \return The InitiatorWrapper underlying the given mxlFabricsInitiator.
          */
+        /** \brief Shut down the underlying initiator before it is destroyed.
+         */
+        ~InitiatorWrapper();
+
         [[nodiscard]]
         static InitiatorWrapper* fromAPI(mxlFabricsInitiator api) noexcept;
 
@@ -175,6 +179,10 @@ namespace mxl::lib::fabrics::ofi
         Initiator::MakeProgressResult makeProgressBlocking(std::chrono::steady_clock::duration);
 
     private:
+        /** \brief Shut down and destroy the underlying initiator. Errors are logged, because this runs in the destructor.
+         */
+        void destroyInner() noexcept;
+
         std::unique_ptr<Initiator> _inner; /**< The underlying initiator implementation. */
     };
 }

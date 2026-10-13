@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <algorithm>
 #include <ranges>
+#include <thread>
 #include <uuid.h>
 #include <mxl-internal/Logging.hpp>
 #include <rdma/fabric.h>
@@ -24,9 +25,9 @@
 namespace mxl::lib::fabrics::ofi
 {
     RCInitiatorEndpoint::RCInitiatorEndpoint(Endpoint ep, std::unique_ptr<EgressProtocol> proto, TargetInfo info)
-        : _state(Idle{.ep = std::move(ep), .idleSince = std::chrono::steady_clock::time_point{}})
+        : _proto(std::move(proto))
         , _info(std::move(info))
-        , _proto(std::move(proto))
+        , _state(Idle{.ep = std::move(ep), .idleSince = std::chrono::steady_clock::time_point{}})
     {}
 
     TargetInfo const& RCInitiatorEndpoint::info() const noexcept
@@ -593,9 +594,31 @@ namespace mxl::lib::fabrics::ofi
 
     void RCInitiator::shutdown()
     {
-        for (auto& target : _targets)
+        for (auto& [_, target] : _targets)
         {
-            target.second.shutdown();
+            target.shutdown();
+        }
+
+        auto const deadline = std::chrono::steady_clock::now() + ShutdownTimeout;
+        for (;;)
+        {
+            pollCQ();
+            pollEQ();
+            finishFlushingEndpoints();
+            evictDeadEndpoints();
+
+            if (_targets.empty())
+            {
+                return;
+            }
+
+            if (std::chrono::steady_clock::now() >= deadline)
+            {
+                MXL_WARN("{} endpoints did not shut down in time.", _targets.size());
+                return;
+            }
+
+            std::this_thread::sleep_for(ShutdownPollInterval);
         }
     }
 }

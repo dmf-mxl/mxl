@@ -90,6 +90,11 @@ namespace mxl::lib::fabrics::ofi
          */
         void transferSamples(std::uint64_t headIndex, std::size_t count);
 
+        /** \brief Upper bound for the flushing state. Some providers do not report a local shutdown event, and a peer that disappears
+         * may never complete the outstanding operations.
+         */
+        constexpr static auto FlushTimeout = std::chrono::seconds(2);
+
     private:
         /** \brief The idle state.
          *
@@ -144,11 +149,6 @@ namespace mxl::lib::fabrics::ofi
          */
         using State = std::variant<Idle, Connecting, Connected, Flushing, Done>;
 
-        /** \brief Upper bound for the flushing state. Some providers do not report a local shutdown event, and a peer that disappears
-         * may never complete the outstanding operations.
-         */
-        constexpr static auto FlushTimeout = std::chrono::seconds(2);
-
     private:
         /** \brief Create a flushing state that waits for the given number of outstanding operations.
          */
@@ -163,9 +163,11 @@ namespace mxl::lib::fabrics::ofi
         Idle restart(Endpoint const& endpoint);
 
     private:
-        State _state;     /**< The internal state object. */
-        TargetInfo _info; /**< The target info of the remote endpoint */
+        // The protocol is declared first so that it is destroyed after the endpoint in _state. Writes can read from memory that the
+        // protocol owns until the endpoint is closed.
         std::unique_ptr<EgressProtocol> _proto;
+        TargetInfo _info; /**< The target info of the remote endpoint */
+        State _state;     /**< The internal state object. */
     };
 
     /** \brief An initiator that uses reliable connected endpoints to transfer data to targets.
@@ -216,6 +218,10 @@ namespace mxl::lib::fabrics::ofi
          */
         virtual Initiator::MakeProgressResult makeProgressBlocking(std::chrono::steady_clock::duration) final;
 
+        /** \copydoc Initiator::shutdown()
+         *
+         * Shuts down all endpoints and makes progress until each one has finished flushing.
+         */
         virtual void shutdown() final;
 
     private:
@@ -232,6 +238,14 @@ namespace mxl::lib::fabrics::ofi
         /** \brief When making progress and using blocking queue reads, this is the minimum interval at which the event queue will be read.
          */
         constexpr static auto EQPollInterval = std::chrono::milliseconds(100);
+
+        /** \brief Upper bound for shutdown(). It is longer than RCInitiatorEndpoint::FlushTimeout, so that each flush ends on its own.
+         */
+        constexpr static auto ShutdownTimeout = RCInitiatorEndpoint::FlushTimeout + std::chrono::seconds(1);
+
+        /** \brief Sleep time between two queue reads in shutdown().
+         */
+        constexpr static auto ShutdownPollInterval = std::chrono::milliseconds(1);
 
         /*\brief Construct the RCInitiator.
          *
