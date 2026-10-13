@@ -3,9 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Target.hpp"
+#include <exception>
 #include <memory>
 #include <utility>
 #include <fmt/format.h>
+#include <mxl-internal/Logging.hpp>
 #include <rdma/fabric.h>
 #include <rdma/fi_errno.h>
 #include "mxl/fabrics.h"
@@ -24,6 +26,30 @@ namespace mxl::lib::fabrics::ofi
             .len = sizeof(std::uint64_t),
             .desc = nullptr,
         };
+    }
+
+    TargetWrapper::~TargetWrapper()
+    {
+        destroyInner();
+    }
+
+    void TargetWrapper::destroyInner() noexcept
+    {
+        if (!_inner)
+        {
+            return;
+        }
+
+        try
+        {
+            _inner->shutdown();
+        }
+        catch (std::exception const& e)
+        {
+            MXL_ERROR("Failed to shut down the target: {}", e.what());
+        }
+
+        _inner.reset();
     }
 
     TargetWrapper* TargetWrapper::fromAPI(mxlFabricsTarget api) noexcept
@@ -66,10 +92,7 @@ namespace mxl::lib::fabrics::ofi
 
     std::unique_ptr<TargetInfo> TargetWrapper::setup(mxlFabricsTargetConfig const& config, TargetSetupOptions const& options)
     {
-        if (_inner)
-        {
-            _inner.reset();
-        }
+        destroyInner();
 
         auto [info, providerConfig] = selectSourceInterface(config.interface, /* target */ true);
         switch (info->ep_attr->type)
