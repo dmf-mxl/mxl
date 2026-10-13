@@ -106,6 +106,9 @@ $(document).ready(function(){initNavTree('flow_8h.html',''); initResizable(); })
   <div class="headertitle"><div class="title">flow.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>Public flow reader, writer, payload and synchronization APIs.  
+<a href="#details">More...</a></p>
 <div class="textblock"><code>#include &lt;stdbool.h&gt;</code><br />
 <code>#include &lt;stddef.h&gt;</code><br />
 <code>#include &lt;stdint.h&gt;</code><br />
@@ -116,21 +119,21 @@ Include dependency graph for flow.h:</div>
 <div class="dyncontent">
 <div class="center"><img src="flow_8h__incl.png" border="0" usemap="#alib_2include_2mxl_2flow_8h" alt=""/></div>
 <map name="alib_2include_2mxl_2flow_8h" id="alib_2include_2mxl_2flow_8h">
-<area shape="rect" title=" " alt="" coords="141,5,301,31"/>
+<area shape="rect" title="Public flow reader, writer, payload and synchronization APIs." alt="" coords="141,5,301,31"/>
 <area shape="rect" title=" " alt="" coords="452,152,535,177"/>
 <area shape="poly" title=" " alt="" coords="244,29,461,143,459,148,242,33"/>
 <area shape="rect" title=" " alt="" coords="65,79,140,104"/>
 <area shape="poly" title=" " alt="" coords="204,33,135,74,133,69,201,28"/>
 <area shape="rect" title=" " alt="" coords="147,225,218,251"/>
 <area shape="poly" title=" " alt="" coords="159,33,105,51,79,64,55,81,37,97,26,112,12,153,8,165,12,176,36,200,68,216,101,227,134,232,133,237,100,232,66,221,33,204,7,179,3,165,7,151,22,109,34,93,52,77,76,60,103,46,157,28"/>
-<area shape="rect" href="flowinfo_8h.html" title=" " alt="" coords="164,79,279,104"/>
+<area shape="rect" href="flowinfo_8h.html" title="Public configuration and runtime metadata for MXL flows." alt="" coords="164,79,279,104"/>
 <area shape="poly" title=" " alt="" coords="224,31,224,65,219,65,219,31"/>
 <area shape="rect" href="mxl_8h.html" title=" " alt="" coords="488,79,576,104"/>
 <area shape="poly" title=" " alt="" coords="272,28,475,74,474,80,271,33"/>
 <area shape="poly" title=" " alt="" coords="165,105,80,125,45,138,23,154,17,168,19,180,29,191,44,201,87,217,134,227,133,232,86,222,42,206,25,195,14,182,12,167,19,150,42,134,78,119,163,99"/>
 <area shape="rect" title=" " alt="" coords="33,152,129,177"/>
 <area shape="poly" title=" " alt="" coords="200,106,117,148,115,143,198,102"/>
-<area shape="rect" href="dataformat_8h.html" title=" " alt="" coords="153,152,289,177"/>
+<area shape="rect" href="dataformat_8h.html" title="Public flow format identifiers and format classification helpers." alt="" coords="153,152,289,177"/>
 <area shape="poly" title=" " alt="" coords="224,104,224,138,219,138,219,104"/>
 <area shape="rect" href="rational_8h.html" title=" " alt="" coords="314,152,427,177"/>
 <area shape="poly" title=" " alt="" coords="246,102,335,144,333,148,244,106"/>
@@ -146,146 +149,145 @@ This graph shows which files directly or indirectly include this file:</div>
 <div class="dyncontent">
 <div class="center"><img src="flow_8h__dep__incl.png" border="0" usemap="#alib_2include_2mxl_2flow_8hdep" alt=""/></div>
 <map name="alib_2include_2mxl_2flow_8hdep" id="alib_2include_2mxl_2flow_8hdep">
-<area shape="rect" title=" " alt="" coords="3858,5,4018,31"/>
-<area shape="rect" href="fabrics_8h.html" title=" " alt="" coords="1473,255,1611,295"/>
-<area shape="poly" title=" " alt="" coords="3844,22,3488,22,2992,29,2735,36,2494,47,2287,62,2130,81,2050,98,1970,119,1815,168,1681,218,1585,257,1583,252,1679,213,1813,163,1968,114,2049,93,2130,76,2286,56,2493,41,2734,31,2992,23,3488,17,3844,16"/>
-<area shape="rect" href="Region_8cpp.html" title=" " alt="" coords="2555,438,2707,478"/>
-<area shape="poly" title=" " alt="" coords="3844,25,3437,43,3221,60,3133,70,3065,81,3017,89,2969,92,2882,97,2846,105,2819,120,2809,131,2802,145,2795,186,2795,276,2794,334,2786,358,2769,384,2752,402,2733,418,2690,440,2688,436,2730,413,2749,398,2765,381,2781,355,2788,333,2790,276,2790,185,2797,144,2805,128,2816,116,2844,100,2881,91,2969,86,3016,83,3064,76,3132,64,3221,54,3436,38,3844,19"/>
-<area shape="rect" href="test__basics_8cpp.html" title=" " alt="" coords="2025,343,2176,383"/>
-<area shape="poly" title=" " alt="" coords="3844,24,3158,42,2801,59,2672,69,2596,81,2522,107,2448,139,2378,176,2312,214,2200,289,2126,345,2122,340,2197,285,2309,210,2375,171,2446,134,2520,102,2595,76,2671,64,2800,53,3157,36,3844,18"/>
-<area shape="rect" href="test__interfaces_8cpp.html" title=" " alt="" coords="2200,343,2351,383"/>
-<area shape="poly" title=" " alt="" coords="3844,24,3565,30,3207,41,2880,58,2762,69,2693,81,2629,107,2566,139,2506,176,2451,214,2357,289,2296,344,2293,341,2354,285,2448,210,2503,171,2564,134,2627,102,2692,76,2762,63,2880,52,3207,35,3565,24,3844,18"/>
-<area shape="rect" href="test__sliced_8cpp.html" title=" " alt="" coords="2375,343,2525,383"/>
-<area shape="poly" title=" " alt="" coords="3844,24,3582,29,3249,41,2947,58,2838,69,2775,81,2721,106,2670,137,2623,174,2580,212,2510,288,2465,344,2461,341,2506,284,2577,209,2620,170,2667,133,2719,101,2773,76,2837,63,2946,52,3249,35,3582,24,3844,18"/>
-<area shape="rect" href="Flow_8hpp.html" title=" " alt="" coords="3090,167,3258,207"/>
-<area shape="poly" title=" " alt="" coords="3845,33,3703,52,3545,81,3373,126,3231,169,3230,164,3372,121,3544,76,3702,47,3844,27"/>
-<area shape="rect" href="PosixDiscreteFlowReader_8hpp.html" title=" " alt="" coords="3063,533,3271,573"/>
-<area shape="poly" title=" " alt="" coords="3893,38,3847,61,3800,93,3780,112,3764,134,3754,159,3750,186,3750,276,3751,336,3744,360,3724,385,3701,402,3679,415,3636,428,3594,428,3552,422,3509,414,3464,410,3417,414,3366,433,3350,445,3341,458,3331,472,3316,487,3269,515,3223,536,3221,531,3267,510,3312,483,3327,469,3336,455,3346,441,3363,428,3415,409,3464,404,3509,409,3553,417,3594,423,3636,423,3677,410,3698,398,3720,381,3739,358,3746,335,3745,276,3745,185,3749,157,3760,132,3776,109,3797,89,3844,56,3891,33"/>
-<area shape="rect" href="PosixDiscreteFlowReader_8cpp.html" title=" " alt="" coords="3063,621,3271,661"/>
-<area shape="poly" title=" " alt="" coords="3958,40,3977,68,3996,103,4011,143,4017,185,4017,459,4019,523,4011,550,3990,575,3975,584,3952,592,3884,605,3689,624,3465,636,3272,641,3272,636,3464,630,3688,619,3883,600,3951,587,3973,579,3987,571,4007,547,4013,523,4011,459,4011,186,4005,144,3991,105,3972,71,3954,43"/>
-<area shape="rect" href="PosixDiscreteFlowWriter_8hpp.html" title=" " alt="" coords="3377,438,3585,478"/>
-<area shape="poly" title=" " alt="" coords="3922,43,3896,80,3875,125,3862,167,3847,243,3839,279,3825,314,3802,349,3768,385,3737,402,3692,418,3585,442,3584,437,3691,412,3735,397,3764,381,3798,346,3820,311,3834,277,3842,242,3856,166,3870,123,3892,77,3917,40"/>
-<area shape="rect" href="PosixDiscreteFlowWriter_8cpp.html" title=" " alt="" coords="3518,533,3726,573"/>
-<area shape="poly" title=" " alt="" coords="3934,45,3922,108,3915,185,3915,364,3917,431,3910,458,3889,487,3867,499,3825,511,3718,536,3716,531,3824,506,3865,494,3886,483,3905,456,3912,430,3910,364,3910,185,3917,108,3929,44"/>
-<area shape="rect" href="FlowReader_8hpp.html" title=" " alt="" coords="3495,343,3709,383"/>
-<area shape="poly" title=" " alt="" coords="3845,31,3785,48,3756,62,3730,81,3701,111,3677,145,3657,182,3641,220,3619,291,3607,343,3602,342,3613,290,3636,218,3652,180,3673,142,3697,107,3727,77,3753,58,3783,44,3844,26"/>
-<area shape="rect" href="PosixContinuousFlowReader_8hpp.html" title=" " alt="" coords="3750,533,3977,573"/>
-<area shape="poly" title=" " alt="" coords="3947,44,3959,108,3966,185,3966,364,3965,400,3960,428,3951,455,3934,487,3913,513,3890,535,3887,531,3909,510,3929,484,3946,453,3955,427,3960,399,3961,364,3961,185,3954,108,3942,45"/>
-<area shape="rect" href="FlowWriter_8hpp.html" title=" " alt="" coords="3262,343,3470,383"/>
-<area shape="poly" title=" " alt="" coords="3845,33,3767,50,3727,64,3690,81,3649,106,3617,130,3568,180,3522,234,3457,297,3394,345,3391,340,3454,293,3518,230,3564,176,3613,126,3646,101,3687,76,3725,59,3766,45,3844,27"/>
-<area shape="rect" href="FlowInfo_8hpp.html" title=" " alt="" coords="3077,79,3271,119"/>
-<area shape="poly" title=" " alt="" coords="3844,32,3272,90,3271,85,3844,26"/>
-<area shape="rect" href="FlowManager_8cpp.html" title=" " alt="" coords="4052,86,4285,111"/>
-<area shape="poly" title=" " alt="" coords="3985,33,4136,83,4134,89,3984,38"/>
-<area shape="rect" href="Instance_8cpp.html" title=" " alt="" coords="4309,86,4511,111"/>
-<area shape="poly" title=" " alt="" coords="4021,30,4298,76,4342,83,4341,89,4298,81,4020,35"/>
-<area shape="rect" href="PosixContinuousFlowWriter_8hpp.html" title=" " alt="" coords="4535,79,4762,119"/>
-<area shape="poly" title=" " alt="" coords="4032,25,4256,46,4524,76,4536,78,4535,83,4523,81,4255,51,4031,30"/>
-<area shape="rect" href="flow_8cpp.html" title=" " alt="" coords="4787,86,4905,111"/>
-<area shape="poly" title=" " alt="" coords="4032,18,4176,22,4361,32,4568,49,4774,76,4808,83,4807,89,4774,81,4567,54,4361,37,4176,27,4032,23"/>
-<area shape="rect" href="all__headers_8c.html" title=" " alt="" coords="4929,86,5093,111"/>
-<area shape="poly" title=" " alt="" coords="4032,18,4199,23,4420,33,4668,50,4918,76,4962,83,4961,89,4918,81,4668,55,4419,38,4199,28,4032,23"/>
-<area shape="rect" href="test__flow__sync__groups_8cpp.html" title=" " alt="" coords="5117,79,5255,119"/>
-<area shape="poly" title=" " alt="" coords="4032,16,4228,17,4495,25,4799,43,4954,57,5106,76,5118,78,5117,83,5106,81,4954,63,4799,48,4495,30,4228,22,4032,21"/>
-<area shape="rect" href="test__flows_8cpp.html" title=" " alt="" coords="5279,86,5450,111"/>
-<area shape="poly" title=" " alt="" coords="4032,16,4252,18,4559,26,4911,44,5091,58,5268,76,5313,83,5312,89,5267,81,5091,63,4910,49,4558,31,4252,23,4032,22"/>
-<area shape="rect" href="test__flows__timing_8cpp.html" title=" " alt="" coords="5474,79,5618,119"/>
-<area shape="poly" title=" " alt="" coords="4032,18,4750,35,5161,52,5333,63,5462,76,5474,78,5473,83,5462,81,5332,69,5161,58,4750,41,4032,23"/>
-<area shape="rect" href="tests_2test__instance_8cpp.html" title=" " alt="" coords="5642,86,5834,111"/>
-<area shape="poly" title=" " alt="" coords="4032,18,4829,37,5291,54,5484,64,5630,76,5681,83,5681,89,5630,81,5484,70,5291,59,4829,42,4032,24"/>
-<area shape="rect" href="test__read__write__conflict_8cpp.html" title=" " alt="" coords="5859,79,6001,119"/>
-<area shape="poly" title=" " alt="" coords="4031,17,4405,21,4929,31,5459,48,5679,61,5846,76,5859,78,5858,83,5846,81,5679,66,5458,54,4929,36,4405,26,4031,23"/>
-<area shape="rect" href="fabrics_8cpp.html" title=" " alt="" coords="903,438,1032,478"/>
-<area shape="poly" title=" " alt="" coords="1460,283,1184,306,1059,324,1016,334,993,345,978,365,970,390,968,438,963,438,965,389,973,363,990,341,1014,329,1058,319,1183,301,1459,278"/>
-<area shape="rect" href="FabricInstance_8cpp.html" title=" " alt="" coords="1057,438,1257,478"/>
-<area shape="poly" title=" " alt="" coords="1461,288,1369,308,1322,324,1277,345,1245,366,1216,392,1173,440,1169,436,1212,388,1242,362,1274,340,1320,319,1368,303,1459,283"/>
-<area shape="rect" href="FabricInstance_8hpp.html" title=" " alt="" coords="1004,343,1205,383"/>
-<area shape="poly" title=" " alt="" coords="1460,295,1201,345,1200,340,1459,289"/>
-<area shape="rect" href="FabricInterfaceDescription_8hpp.html" title=" " alt="" coords="600,438,879,478"/>
-<area shape="poly" title=" " alt="" coords="1460,279,1359,284,1235,294,1100,314,967,345,910,366,856,391,770,440,767,436,853,387,908,361,965,340,1099,309,1234,289,1358,278,1460,274"/>
-<area shape="rect" href="FabricInterfaceList_8hpp.html" title=" " alt="" coords="254,533,481,573"/>
-<area shape="poly" title=" " alt="" coords="1460,280,1208,287,871,299,537,318,399,331,294,345,209,354,138,359,107,366,78,379,49,400,21,432,12,447,9,461,9,473,14,484,34,503,67,518,109,530,156,538,254,547,253,552,155,543,107,535,65,523,31,507,9,487,4,474,3,460,8,445,17,429,46,396,75,374,105,361,137,354,208,349,294,340,398,326,537,313,871,294,1207,282,1459,275"/>
-<area shape="rect" href="Format_8hpp.html" title=" " alt="" coords="421,438,575,478"/>
-<area shape="poly" title=" " alt="" coords="1459,281,1242,287,970,300,724,319,637,331,587,345,561,365,538,390,509,439,504,436,534,387,557,361,585,340,636,326,724,314,969,294,1241,282,1459,275"/>
-<area shape="rect" href="Initiator_8cpp.html" title=" " alt="" coords="1530,533,1687,573"/>
-<area shape="poly" title=" " alt="" coords="1554,307,1586,430,1608,532,1602,534,1581,431,1548,309"/>
-<area shape="rect" href="Provider_8cpp.html" title=" " alt="" coords="31,438,191,478"/>
-<area shape="poly" title=" " alt="" coords="1460,281,1234,288,937,300,646,319,526,331,435,345,355,365,278,391,154,440,152,435,276,386,354,360,433,340,525,326,646,314,937,295,1233,282,1460,275"/>
-<area shape="rect" href="Provider_8hpp.html" title=" " alt="" coords="599,343,760,383"/>
-<area shape="poly" title=" " alt="" coords="1460,283,1160,305,971,323,781,345,761,348,760,343,780,340,970,317,1160,300,1459,278"/>
-<area shape="rect" href="test__ProviderConfig_8cpp.html" title=" " alt="" coords="216,438,396,478"/>
-<area shape="poly" title=" " alt="" coords="1459,280,1252,285,986,297,726,316,619,329,539,345,480,365,424,390,336,440,334,435,422,386,478,360,537,340,618,324,725,311,986,292,1252,280,1459,275"/>
-<area shape="rect" href="RCTarget_8hpp.html" title=" " alt="" coords="1732,343,1899,383"/>
-<area shape="poly" title=" " alt="" coords="1616,296,1756,340,1755,345,1614,301"/>
-<area shape="rect" href="Target_8cpp.html" title=" " alt="" coords="1789,533,1935,573"/>
-<area shape="poly" title=" " alt="" coords="1588,299,1657,340,1688,361,1720,380,1754,392,1784,397,1811,406,1839,429,1854,454,1862,483,1866,533,1861,533,1857,484,1849,457,1835,432,1809,411,1783,403,1753,397,1718,385,1685,366,1654,345,1585,304"/>
-<area shape="rect" href="RDMInitiator_8cpp.html" title=" " alt="" coords="1317,533,1505,573"/>
-<area shape="poly" title=" " alt="" coords="1460,280,1422,287,1384,299,1349,317,1321,344,1310,368,1308,393,1314,419,1325,446,1359,494,1393,531,1389,535,1354,498,1321,448,1309,421,1303,394,1305,366,1317,341,1346,313,1382,294,1421,282,1459,275"/>
-<area shape="rect" href="RDMInitiator_8hpp.html" title=" " alt="" coords="1382,438,1571,478"/>
-<area shape="poly" title=" " alt="" coords="1539,309,1519,384,1491,439,1486,437,1514,382,1534,308"/>
-<area shape="rect" href="RDMTarget_8hpp.html" title=" " alt="" coords="1646,438,1825,478"/>
-<area shape="poly" title=" " alt="" coords="1574,302,1717,436,1713,440,1570,306"/>
-<area shape="poly" title=" " alt="" coords="1625,275,1698,281,1783,292,1872,311,1959,340,1976,350,1987,361,1998,371,2014,380,2083,403,2142,416,2196,421,2247,421,2355,419,2418,420,2492,428,2556,439,2555,444,2491,433,2418,426,2355,424,2248,427,2196,426,2141,421,2081,408,2012,385,1995,376,1983,365,1973,354,1957,345,1871,316,1782,297,1697,286,1624,281"/>
-<area shape="rect" href="Region_8hpp.html" title=" " alt="" coords="2601,343,2755,383"/>
-<area shape="poly" title=" " alt="" coords="1624,277,2018,299,2277,317,2538,340,2601,348,2601,353,2538,345,2276,322,2018,304,1624,282"/>
-<area shape="rect" href="Util_8hpp.html" title=" " alt="" coords="2337,438,2480,478"/>
-<area shape="poly" title=" " alt="" coords="1624,278,1688,286,1761,297,1837,315,1911,340,1929,350,1941,361,1953,371,1970,380,2066,411,2166,432,2260,445,2337,451,2337,457,2259,450,2165,438,2065,417,1968,385,1950,375,1938,365,1926,354,1909,345,1836,320,1760,303,1688,291,1624,284"/>
-<area shape="rect" href="TargetInfo_8hpp.html" title=" " alt="" coords="1331,343,1505,383"/>
-<area shape="poly" title=" " alt="" coords="1505,305,1447,345,1444,340,1502,300"/>
-<area shape="poly" title=" " alt="" coords="1625,284,1800,308,2006,340,2026,343,2025,349,2006,345,1800,313,1624,289"/>
-<area shape="poly" title=" " alt="" coords="1625,279,1877,301,2032,318,2188,340,2200,342,2199,347,2187,345,2031,324,1876,306,1624,284"/>
-<area shape="poly" title=" " alt="" coords="1624,277,1948,296,2155,314,2362,340,2375,342,2374,347,2362,345,2154,320,1948,301,1624,282"/>
-<area shape="poly" title=" " alt="" coords="1067,393,997,440,994,436,1064,388"/>
-<area shape="poly" title=" " alt="" coords="1124,393,1148,437,1144,439,1119,396"/>
-<area shape="poly" title=" " alt="" coords="651,484,443,536,442,531,650,479"/>
-<area shape="poly" title=" " alt="" coords="753,384,891,428,913,435,911,440,889,433,751,389"/>
-<area shape="poly" title=" " alt="" coords="701,393,729,436,725,439,697,396"/>
-<area shape="poly" title=" " alt="" coords="632,391,536,440,533,436,629,387"/>
-<area shape="poly" title=" " alt="" coords="585,376,407,398,204,433,174,440,173,435,203,428,406,393,584,371"/>
-<area shape="poly" title=" " alt="" coords="590,388,409,433,381,440,379,435,408,428,589,383"/>
-<area shape="poly" title=" " alt="" coords="1854,390,1871,408,1883,430,1889,458,1887,486,1873,534,1868,532,1882,485,1884,458,1878,432,1866,411,1850,394"/>
-<area shape="poly" title=" " alt="" coords="1516,484,1584,531,1580,535,1513,488"/>
-<area shape="poly" title=" " alt="" coords="1458,491,1427,535,1422,532,1454,488"/>
-<area shape="poly" title=" " alt="" coords="1773,484,1838,531,1835,535,1770,488"/>
-<area shape="poly" title=" " alt="" coords="2619,391,2581,410,2545,433,2530,447,2521,462,2510,476,2492,488,2466,496,2426,503,2313,513,2008,524,1702,530,1518,536,1506,538,1505,532,1518,531,1702,524,2008,519,2313,508,2425,497,2465,491,2490,483,2507,472,2516,459,2526,444,2542,429,2579,405,2617,386"/>
-<area shape="poly" title=" " alt="" coords="2665,396,2643,439,2638,437,2660,394"/>
-<area shape="rect" href="RCInitiator_8cpp.html" title=" " alt="" coords="2732,438,2907,478"/>
-<area shape="poly" title=" " alt="" coords="2720,388,2792,436,2789,440,2717,393"/>
-<area shape="poly" title=" " alt="" coords="2611,390,2464,440,2462,435,2610,385"/>
-<area shape="poly" title=" " alt="" coords="1318,380,1188,402,1045,433,1020,441,1019,435,1044,428,1187,397,1317,375"/>
-<area shape="poly" title=" " alt="" coords="1393,395,1381,413,1373,431,1367,458,1373,485,1383,510,1398,532,1393,534,1379,512,1367,486,1362,458,1367,430,1376,410,1388,392"/>
-<area shape="poly" title=" " alt="" coords="1439,393,1467,437,1463,439,1435,396"/>
-<area shape="poly" title=" " alt="" coords="1496,384,1672,435,1670,441,1494,389"/>
-<area shape="poly" title=" " alt="" coords="3077,210,2851,257,2717,292,2660,312,2591,345,2576,355,2566,365,2555,376,2539,385,2469,404,2350,425,2031,471,1518,536,1506,538,1505,533,1518,531,2030,465,2350,420,2468,399,2537,380,2552,371,2563,362,2573,351,2589,340,2658,307,2715,287,2849,252,3076,205"/>
-<area shape="poly" title=" " alt="" coords="3077,211,2956,239,2889,257,2873,271,2862,286,2851,318,2839,351,2829,368,2813,385,2791,398,2760,413,2689,440,2687,435,2758,408,2789,394,2810,381,2825,365,2834,349,2846,316,2858,284,2869,268,2886,252,2954,233,3076,206"/>
-<area shape="poly" title=" " alt="" coords="3078,212,2983,237,2927,257,2902,285,2889,314,2880,346,2864,384,2833,439,2828,437,2860,381,2875,344,2884,312,2897,282,2924,252,2982,232,3077,207"/>
-<area shape="rect" href="DiscreteFlowData_8hpp.html" title=" " alt="" coords="2983,343,3237,383"/>
-<area shape="poly" title=" " alt="" coords="3186,220,3190,257,3189,277,3183,296,3165,323,3141,345,3137,341,3161,320,3178,294,3183,276,3185,257,3181,221"/>
-<area shape="poly" title=" " alt="" coords="3078,213,3014,233,2989,245,2973,257,2955,281,2948,304,2947,361,2947,459,2952,489,2963,515,2981,539,3004,560,3057,595,3110,619,3108,624,3054,599,3000,565,2977,543,2959,518,2946,490,2942,460,2942,361,2943,303,2951,278,2969,253,2987,240,3013,228,3077,208"/>
-<area shape="poly" title=" " alt="" coords="3272,198,3396,219,3531,250,3595,269,3651,290,3695,314,3724,341,3732,362,3724,384,3707,402,3688,410,3668,417,3651,432,3638,457,3630,485,3625,533,3619,533,3625,483,3633,455,3647,429,3665,412,3686,405,3704,398,3720,381,3726,362,3720,344,3692,319,3648,295,3593,274,3530,255,3395,225,3271,204"/>
-<area shape="rect" href="FlowData_8hpp.html" title=" " alt="" coords="3243,255,3443,295"/>
-<area shape="poly" title=" " alt="" coords="3224,210,3307,252,3305,257,3222,215"/>
-<area shape="rect" href="test__domainwatcher_8cpp.html" title=" " alt="" coords="2983,255,3168,295"/>
-<area shape="poly" title=" " alt="" coords="3144,218,3099,256,3095,252,3140,214"/>
-<area shape="poly" title=" " alt="" coords="2970,387,2848,407,2721,433,2693,441,2691,435,2720,428,2847,402,2969,381"/>
-<area shape="poly" title=" " alt="" coords="3061,392,3040,410,3024,432,3016,459,3017,470,3024,484,3037,499,3052,512,3088,531,3085,536,3049,516,3033,503,3020,487,3012,472,3010,458,3020,429,3036,406,3058,388"/>
-<area shape="poly" title=" " alt="" coords="3199,383,3406,435,3405,441,3198,389"/>
-<area shape="poly" title=" " alt="" coords="3170,587,3170,621,3165,621,3165,587"/>
-<area shape="poly" title=" " alt="" coords="3522,483,3595,531,3592,536,3519,488"/>
-<area shape="poly" title=" " alt="" coords="3230,293,2755,354,2754,349,3229,288"/>
-<area shape="poly" title=" " alt="" coords="3280,302,3162,345,3160,340,3278,297"/>
-<area shape="poly" title=" " alt="" coords="3414,297,3546,340,3545,345,3412,302"/>
-<area shape="poly" title=" " alt="" coords="3354,307,3364,342,3358,343,3349,309"/>
-<area shape="poly" title=" " alt="" coords="3481,385,3237,397,2938,399,2251,392,1900,390,1570,393,1279,407,1153,418,1045,433,1016,441,1015,435,1044,428,1153,413,1278,401,1570,388,1900,384,2251,387,2938,394,3237,391,3481,380"/>
-<area shape="rect" href="ContinuousFlowReader_8hpp.html" title=" " alt="" coords="3660,431,3875,485"/>
-<area shape="poly" title=" " alt="" coords="3649,387,3722,428,3719,433,3646,392"/>
-<area shape="rect" href="DiscreteFlowReader_8hpp.html" title=" " alt="" coords="3033,438,3301,478"/>
-<area shape="poly" title=" " alt="" coords="3501,388,3256,441,3255,435,3500,383"/>
-<area shape="poly" title=" " alt="" coords="3806,493,3846,531,3842,535,3803,497"/>
-<area shape="poly" title=" " alt="" coords="3170,492,3170,533,3165,533,3165,492"/>
-<area shape="poly" title=" " alt="" coords="3177,133,3177,166,3171,166,3171,133"/>
-<area shape="rect" href="FlowInfo_8cpp.html" title=" " alt="" coords="2863,174,3066,199"/>
-<area shape="poly" title=" " alt="" coords="3116,126,2994,176,2992,172,3114,121"/>
+<area shape="rect" title="Public flow reader, writer, payload and synchronization APIs." alt="" coords="4489,5,4649,31"/>
+<area shape="rect" href="fabrics_8h.html" title=" " alt="" coords="1291,79,1429,119"/>
+<area shape="poly" title=" " alt="" coords="4476,24,2024,81,1429,98,1429,93,2024,76,4476,19"/>
+<area shape="rect" href="Region_8cpp.html" title=" " alt="" coords="2831,255,2983,295"/>
+<area shape="poly" title=" " alt="" coords="4476,23,4167,28,3763,38,3392,55,3258,67,3179,81,3139,98,3100,118,3028,167,2968,217,2927,256,2923,252,2965,213,3024,163,3097,114,3137,93,3178,76,3257,62,3391,50,3763,32,4167,22,4476,18"/>
+<area shape="rect" href="test__basics_8cpp.html" title=" " alt="" coords="2369,167,2519,207"/>
+<area shape="poly" title=" " alt="" coords="4476,23,3536,41,3027,59,2841,69,2731,81,2661,99,2593,122,2483,169,2481,164,2591,117,2660,94,2730,76,2840,64,3026,53,3536,36,4476,18"/>
+<area shape="rect" href="test__interfaces_8cpp.html" title=" " alt="" coords="2543,167,2694,207"/>
+<area shape="poly" title=" " alt="" coords="4475,23,4098,28,3587,38,3110,56,2936,67,2834,81,2780,99,2729,122,2648,169,2645,164,2727,117,2779,94,2833,76,2935,62,3109,50,3587,33,4098,23,4475,18"/>
+<area shape="rect" href="test__sliced_8cpp.html" title=" " alt="" coords="2718,167,2869,207"/>
+<area shape="poly" title=" " alt="" coords="4475,23,4092,30,3580,41,3118,59,2963,69,2914,75,2889,81,2862,99,2838,122,2806,168,2801,165,2834,118,2858,95,2887,76,2913,70,2963,64,3118,53,3579,36,4092,24,4475,18"/>
+<area shape="rect" href="Flow_8hpp.html" title="Internal shared&#45;memory headers for discrete grains and event slots." alt="" coords="3407,79,3575,119"/>
+<area shape="poly" title=" " alt="" coords="4475,29,3575,94,3575,89,4475,23"/>
+<area shape="rect" href="PosixDiscreteFlowReader_8hpp.html" title=" " alt="" coords="3477,255,3685,295"/>
+<area shape="poly" title=" " alt="" coords="4551,43,4518,80,4472,148,4445,185,4418,209,4132,234,3686,268,3685,263,4132,229,4416,204,4441,182,4468,145,4514,77,4547,39"/>
+<area shape="rect" href="PosixDiscreteFlowReader_8cpp.html" title=" " alt="" coords="3619,343,3827,383"/>
+<area shape="poly" title=" " alt="" coords="4663,25,4769,43,4813,58,4840,77,4876,115,4904,141,4919,160,4920,169,4915,177,4888,194,4832,216,4614,297,4548,316,4460,330,4357,342,4244,350,4016,360,3827,364,3827,358,4016,355,4244,345,4356,336,4459,325,4547,310,4613,292,4830,211,4886,189,4912,173,4915,168,4914,162,4900,145,4872,119,4837,81,4810,63,4768,49,4663,30"/>
+<area shape="rect" href="PosixDiscreteFlowWriter_8hpp.html" title=" " alt="" coords="3183,255,3391,295"/>
+<area shape="poly" title=" " alt="" coords="4476,23,4234,29,3923,39,3617,56,3491,68,3395,81,3314,91,3248,97,3218,104,3191,117,3164,137,3138,168,3132,182,3132,194,3138,206,3149,217,3181,236,3220,252,3218,257,3179,241,3145,221,3134,209,3127,195,3127,181,3134,165,3161,134,3188,112,3217,99,3247,92,3314,86,3394,76,3490,62,3617,51,3922,34,4234,23,4476,18"/>
+<area shape="rect" href="PosixDiscreteFlowWriter_8cpp.html" title=" " alt="" coords="3336,343,3544,383"/>
+<area shape="poly" title=" " alt="" coords="4577,44,4581,80,4579,119,4568,178,4553,225,4542,245,4527,263,4506,281,4480,297,4457,305,4421,312,4320,323,4047,336,3772,341,3607,345,3545,351,3544,346,3607,340,3772,336,4047,330,4320,318,4420,307,4455,300,4478,292,4503,276,4523,260,4538,242,4548,223,4562,177,4573,118,4575,80,4572,45"/>
+<area shape="rect" href="FlowWriter_8hpp.html" title=" " alt="" coords="3851,255,4059,295"/>
+<area shape="poly" title=" " alt="" coords="4561,45,4516,136,4489,181,4463,209,4441,217,4405,226,4300,242,4059,267,4059,262,4300,237,4404,221,4440,212,4460,204,4484,177,4511,133,4556,42"/>
+<area shape="rect" href="Instance_8cpp.html" title=" " alt="" coords="4265,262,4466,287"/>
+<area shape="poly" title=" " alt="" coords="4571,45,4566,80,4557,123,4540,168,4514,208,4492,228,4467,244,4416,264,4414,259,4465,239,4489,224,4510,205,4535,166,4552,122,4561,79,4565,44"/>
+<area shape="rect" href="PosixEventFlowReader_8cpp.html" title="POSIX event reads, queue advancement and access notifications." alt="" coords="3794,167,3985,207"/>
+<area shape="poly" title=" " alt="" coords="4487,36,4379,56,4261,81,4091,127,3949,169,3948,164,4089,121,4259,76,4378,50,4486,30"/>
+<area shape="rect" href="PosixEventFlowWriter_8cpp.html" title="POSIX event staging, timestamp validation and publication." alt="" coords="4009,167,4199,207"/>
+<area shape="poly" title=" " alt="" coords="4515,37,4370,81,4249,127,4148,169,4146,164,4247,122,4368,76,4513,32"/>
+<area shape="rect" href="test__events_8cpp.html" title="Event API, fragmentation, lifetime and concurrency regression tests." alt="" coords="4224,174,4405,199"/>
+<area shape="poly" title=" " alt="" coords="4519,37,4472,56,4425,81,4395,104,4366,131,4326,176,4322,172,4363,127,4391,100,4423,76,4470,51,4517,33"/>
+<area shape="rect" href="FlowInfo_8hpp.html" title=" " alt="" coords="4632,79,4827,119"/>
+<area shape="poly" title=" " alt="" coords="4606,34,4692,76,4689,81,4603,39"/>
+<area shape="rect" href="FlowReader_8hpp.html" title=" " alt="" coords="1798,167,2013,207"/>
+<area shape="poly" title=" " alt="" coords="4475,23,3548,41,3000,59,2771,69,2598,81,2433,100,2270,123,2002,169,2001,164,2269,118,2432,95,2597,76,2771,64,2999,53,3548,36,4475,18"/>
+<area shape="rect" href="FlowManager_8cpp.html" title=" " alt="" coords="4902,86,5135,111"/>
+<area shape="poly" title=" " alt="" coords="4649,30,4954,83,4953,89,4648,36"/>
+<area shape="rect" href="PosixContinuousFlowReader_8hpp.html" title=" " alt="" coords="5160,79,5387,119"/>
+<area shape="poly" title=" " alt="" coords="4663,25,4885,46,5148,76,5160,78,5160,83,5148,81,4884,52,4663,30"/>
+<area shape="rect" href="PosixContinuousFlowWriter_8hpp.html" title=" " alt="" coords="5411,79,5637,119"/>
+<area shape="poly" title=" " alt="" coords="4663,21,4989,40,5193,56,5399,76,5411,77,5410,83,5398,81,5193,61,4989,46,4663,26"/>
+<area shape="rect" href="flow_8cpp.html" title=" " alt="" coords="5662,86,5781,111"/>
+<area shape="poly" title=" " alt="" coords="4663,16,4846,17,5091,24,5369,43,5511,57,5650,76,5684,83,5683,89,5649,81,5511,63,5369,48,5091,30,4846,22,4663,21"/>
+<area shape="rect" href="all__headers_8c.html" title=" " alt="" coords="5805,86,5969,111"/>
+<area shape="poly" title=" " alt="" coords="4663,16,4868,19,5148,27,5469,45,5633,59,5794,76,5837,83,5837,89,5793,81,5633,64,5469,50,5148,32,4868,24,4663,22"/>
+<area shape="rect" href="event__ipc__worker_8cpp.html" title="Child&#45;process consumer for event IPC regression tests." alt="" coords="5993,79,6135,119"/>
+<area shape="poly" title=" " alt="" coords="4663,18,5328,36,5706,53,5863,64,5982,76,5993,78,5993,83,5981,81,5862,69,5705,59,5328,42,4663,24"/>
+<area shape="rect" href="test__flow__sync__groups_8cpp.html" title=" " alt="" coords="6159,79,6297,119"/>
+<area shape="poly" title=" " alt="" coords="4663,18,4978,23,5406,34,5834,51,6012,63,6147,76,6159,78,6159,83,6146,81,6012,68,5834,57,5406,39,4978,29,4663,23"/>
+<area shape="rect" href="test__flows_8cpp.html" title=" " alt="" coords="6321,86,6492,111"/>
+<area shape="poly" title=" " alt="" coords="4663,18,5483,35,5960,52,6159,63,6310,76,6356,83,6355,89,6309,81,6159,69,5960,58,5483,40,4663,23"/>
+<area shape="rect" href="test__flows__timing_8cpp.html" title=" " alt="" coords="6516,79,6660,119"/>
+<area shape="poly" title=" " alt="" coords="4663,17,5041,21,5573,30,6111,48,6335,61,6504,76,6516,78,6515,83,6504,81,6334,66,6110,53,5573,36,5041,26,4663,23"/>
+<area shape="rect" href="tests_2test__instance_8cpp.html" title=" " alt="" coords="6684,86,6876,111"/>
+<area shape="poly" title=" " alt="" coords="4663,18,5071,23,5651,33,6240,51,6486,62,6672,76,6723,83,6723,89,6672,81,6486,68,6240,56,5651,38,5070,28,4663,23"/>
+<area shape="rect" href="test__read__write__conflict_8cpp.html" title=" " alt="" coords="6901,79,7043,119"/>
+<area shape="poly" title=" " alt="" coords="4663,17,5108,18,5752,26,6407,44,6681,58,6888,76,6901,78,6900,83,6888,81,6681,63,6407,49,5752,31,5108,24,4663,22"/>
+<area shape="rect" href="fabrics_8cpp.html" title=" " alt="" coords="1609,255,1738,295"/>
+<area shape="poly" title=" " alt="" coords="1419,122,1504,164,1533,184,1561,204,1641,252,1638,257,1559,209,1530,188,1501,169,1417,127"/>
+<area shape="rect" href="FabricInstance_8cpp.html" title=" " alt="" coords="1784,255,1984,295"/>
+<area shape="poly" title=" " alt="" coords="1443,100,1600,106,1783,118,1941,137,1996,149,2026,165,2035,179,2035,193,2029,207,2017,219,1983,240,1944,257,1942,252,1981,235,2013,215,2024,204,2030,192,2029,181,2022,169,1994,154,1940,142,1782,123,1600,111,1443,105"/>
+<area shape="rect" href="FabricInstance_8hpp.html" title=" " alt="" coords="1573,167,1774,207"/>
+<area shape="poly" title=" " alt="" coords="1443,120,1605,164,1604,169,1441,125"/>
+<area shape="rect" href="FabricInterfaceDescription_8hpp.html" title=" " alt="" coords="67,255,346,295"/>
+<area shape="poly" title=" " alt="" coords="1277,103,1071,105,807,115,673,123,550,135,445,150,366,169,325,187,287,210,228,257,225,252,284,206,323,183,364,164,444,145,549,130,673,118,807,110,1071,100,1277,97"/>
+<area shape="rect" href="FabricInterfaceList_8hpp.html" title=" " alt="" coords="5,343,232,383"/>
+<area shape="poly" title=" " alt="" coords="1277,105,1057,111,771,124,491,143,375,155,287,169,214,180,154,188,128,196,104,208,80,228,57,256,52,267,51,278,59,300,76,322,95,340,92,344,72,325,54,303,46,278,47,265,52,253,76,224,101,204,126,191,153,183,213,175,286,164,374,150,490,138,771,118,1057,106,1277,99"/>
+<area shape="rect" href="Format_8hpp.html" title=" " alt="" coords="421,255,576,295"/>
+<area shape="poly" title=" " alt="" coords="1278,102,1114,104,914,113,815,122,725,134,649,149,593,169,567,187,544,210,511,256,507,253,540,207,563,183,591,164,648,144,724,128,815,116,914,108,1114,99,1277,97"/>
+<area shape="rect" href="Initiator_8cpp.html" title=" " alt="" coords="572,343,729,383"/>
+<area shape="poly" title=" " alt="" coords="1278,104,1105,109,892,121,687,140,603,153,541,169,497,184,464,198,436,220,412,256,405,278,410,297,425,312,447,325,507,344,572,354,571,359,506,349,445,330,421,316,405,299,400,278,407,254,432,216,461,194,495,179,539,164,602,148,686,135,892,115,1105,104,1278,99"/>
+<area shape="rect" href="Provider_8cpp.html" title=" " alt="" coords="600,255,760,295"/>
+<area shape="poly" title=" " alt="" coords="1278,106,1195,113,1097,124,993,143,890,169,839,188,790,212,710,257,708,252,787,207,837,184,889,164,992,137,1097,119,1195,107,1277,101"/>
+<area shape="rect" href="Provider_8hpp.html" title=" " alt="" coords="605,167,766,207"/>
+<area shape="poly" title=" " alt="" coords="1278,112,807,169,767,175,766,170,806,164,1278,106"/>
+<area shape="rect" href="test__ProviderConfig_8cpp.html" title=" " alt="" coords="785,255,965,295"/>
+<area shape="poly" title=" " alt="" coords="1278,106,1184,113,1080,125,987,143,951,155,926,169,908,188,895,211,880,255,875,254,890,208,903,184,922,165,949,150,986,138,1079,119,1183,107,1277,101"/>
+<area shape="rect" href="RCTarget_8hpp.html" title=" " alt="" coords="981,167,1147,207"/>
+<area shape="poly" title=" " alt="" coords="1283,125,1130,169,1128,164,1281,120"/>
+<area shape="rect" href="Target_8cpp.html" title=" " alt="" coords="980,343,1127,383"/>
+<area shape="poly" title=" " alt="" coords="1278,105,1192,110,1099,121,1019,140,990,153,970,168,966,181,968,199,986,248,1015,299,1042,341,1038,344,1011,302,981,250,962,201,960,180,966,165,987,149,1017,135,1098,116,1191,105,1278,99"/>
+<area shape="rect" href="RDMInitiator_8cpp.html" title=" " alt="" coords="1477,343,1665,383"/>
+<area shape="poly" title=" " alt="" coords="1406,124,1460,165,1502,205,1534,253,1555,300,1568,342,1563,343,1550,302,1530,256,1498,209,1457,169,1403,128"/>
+<area shape="rect" href="RDMInitiator_8hpp.html" title=" " alt="" coords="1091,255,1280,295"/>
+<area shape="poly" title=" " alt="" coords="1309,127,1280,146,1253,169,1218,213,1196,256,1191,253,1214,210,1249,165,1276,142,1306,123"/>
+<area shape="rect" href="RDMTarget_8hpp.html" title=" " alt="" coords="1304,255,1483,295"/>
+<area shape="poly" title=" " alt="" coords="1304,128,1281,145,1264,168,1257,187,1264,205,1275,220,1290,233,1325,252,1322,257,1287,238,1272,224,1259,208,1252,187,1259,165,1277,142,1301,124"/>
+<area shape="poly" title=" " alt="" coords="1443,97,1640,99,1890,108,2016,117,2132,129,2231,144,2305,164,2321,174,2332,185,2342,195,2357,204,2396,216,2448,227,2576,245,2831,266,2830,272,2576,250,2447,232,2395,221,2355,209,2339,199,2328,188,2318,178,2303,169,2230,149,2131,134,2015,122,1890,114,1640,105,1443,102"/>
+<area shape="rect" href="Region_8hpp.html" title=" " alt="" coords="2139,167,2293,207"/>
+<area shape="poly" title=" " alt="" coords="1443,102,1742,123,1931,141,2120,164,2140,167,2139,172,2120,169,1930,146,1741,128,1442,107"/>
+<area shape="rect" href="Util_8hpp.html" title=" " alt="" coords="2031,255,2174,295"/>
+<area shape="poly" title=" " alt="" coords="1443,101,1603,110,1792,123,1957,141,2016,152,2049,164,2070,184,2085,208,2101,254,2096,256,2080,210,2066,187,2047,169,2014,157,1956,147,1791,128,1603,115,1443,106"/>
+<area shape="rect" href="TargetInfo_8hpp.html" title=" " alt="" coords="1273,167,1447,207"/>
+<area shape="poly" title=" " alt="" coords="1363,133,1363,166,1357,166,1357,133"/>
+<area shape="poly" title=" " alt="" coords="1443,99,1835,117,2091,136,2350,164,2369,167,2368,172,2349,169,2091,141,1835,122,1443,105"/>
+<area shape="poly" title=" " alt="" coords="1443,98,1637,101,1907,111,2217,131,2376,146,2531,164,2543,166,2543,171,2530,169,2375,151,2216,136,1907,117,1637,107,1443,103"/>
+<area shape="poly" title=" " alt="" coords="1442,97,1662,99,1975,107,2337,127,2523,143,2706,164,2718,166,2717,171,2705,169,2523,149,2337,133,1975,112,1662,104,1442,102"/>
+<area shape="poly" title=" " alt="" coords="1676,221,1676,254,1671,254,1671,221"/>
+<area shape="poly" title=" " alt="" coords="1733,209,1839,252,1837,257,1731,214"/>
+<area shape="poly" title=" " alt="" coords="179,306,140,344,136,341,175,303"/>
+<area shape="poly" title=" " alt="" coords="780,192,1495,252,1609,264,1608,269,1494,257,780,198"/>
+<area shape="poly" title=" " alt="" coords="591,208,312,257,311,252,590,202"/>
+<area shape="poly" title=" " alt="" coords="633,215,541,257,538,252,631,210"/>
+<area shape="poly" title=" " alt="" coords="686,221,684,255,679,254,681,220"/>
+<area shape="poly" title=" " alt="" coords="740,210,834,252,832,257,738,215"/>
+<area shape="poly" title=" " alt="" coords="1065,221,1057,343,1052,342,1059,220"/>
+<area shape="poly" title=" " alt="" coords="1077,296,730,351,729,346,1076,291"/>
+<area shape="poly" title=" " alt="" coords="1284,295,1487,340,1486,345,1282,300"/>
+<area shape="poly" title=" " alt="" coords="1306,301,1128,345,1127,340,1305,295"/>
+<area shape="poly" title=" " alt="" coords="2218,221,2210,261,2201,280,2187,297,2159,309,2111,320,1972,337,1810,351,1665,359,1665,354,1809,345,1971,332,2110,314,2158,304,2184,293,2197,277,2205,259,2213,220"/>
+<area shape="poly" title=" " alt="" coords="2307,203,2312,204,2598,241,2831,264,2830,269,2598,246,2312,209,2306,208"/>
+<area shape="rect" href="RCInitiator_8cpp.html" title=" " alt="" coords="2443,255,2618,295"/>
+<area shape="poly" title=" " alt="" coords="2299,208,2462,252,2461,257,2298,213"/>
+<area shape="poly" title=" " alt="" coords="2182,217,2129,257,2126,252,2179,213"/>
+<area shape="poly" title=" " alt="" coords="1442,208,1609,253,1608,258,1441,213"/>
+<area shape="poly" title=" " alt="" coords="1426,210,1462,229,1496,253,1518,274,1537,298,1563,341,1559,344,1532,301,1514,278,1493,257,1460,233,1424,215"/>
+<area shape="poly" title=" " alt="" coords="1311,215,1225,257,1222,252,1308,210"/>
+<area shape="poly" title=" " alt="" coords="1375,219,1388,253,1383,255,1370,220"/>
+<area shape="poly" title=" " alt="" coords="3393,107,3333,114,3268,125,3201,143,3137,169,3113,184,3095,200,3068,234,3041,268,3022,284,2996,297,2963,306,2915,315,2777,329,2599,340,2396,348,1981,359,1665,363,1665,358,1981,354,2396,343,2599,334,2777,323,2914,309,2962,301,2994,292,3019,279,3037,264,3064,231,3091,196,3110,180,3135,164,3199,138,3266,120,3333,108,3393,101"/>
+<area shape="poly" title=" " alt="" coords="3393,108,3325,115,3248,127,3169,145,3092,169,3059,187,3028,209,2943,257,2940,252,3025,204,3056,182,3090,164,3167,140,3248,122,3325,110,3393,103"/>
+<area shape="poly" title=" " alt="" coords="3393,113,3222,135,3027,169,2955,189,2882,209,2744,238,2619,261,2618,256,2743,233,2881,204,2953,184,3026,164,3221,130,3392,108"/>
+<area shape="rect" href="DiscreteFlowData_8hpp.html" title=" " alt="" coords="3147,167,3402,207"/>
+<area shape="poly" title=" " alt="" coords="3432,126,3323,169,3321,164,3430,121"/>
+<area shape="poly" title=" " alt="" coords="3493,132,3500,170,3508,189,3519,205,3541,221,3562,228,3585,229,3607,228,3630,226,3654,228,3677,236,3699,253,3714,274,3722,298,3726,342,3721,343,3717,299,3709,276,3695,257,3674,240,3653,233,3630,232,3608,233,3585,235,3561,233,3538,226,3515,209,3503,191,3495,172,3488,133"/>
+<area shape="poly" title=" " alt="" coords="3484,133,3475,167,3456,266,3445,343,3440,342,3451,265,3469,166,3478,131"/>
+<area shape="rect" href="DomainWatcher_8hpp.html" title=" " alt="" coords="3529,167,3770,207"/>
+<area shape="poly" title=" " alt="" coords="3539,123,3616,164,3613,169,3536,128"/>
+<area shape="poly" title=" " alt="" coords="3588,118,3802,164,3801,169,3587,123"/>
+<area shape="poly" title=" " alt="" coords="3589,109,3998,164,4009,166,4008,171,3997,169,3588,114"/>
+<area shape="poly" title=" " alt="" coords="3588,104,3869,126,4041,143,4212,164,4258,171,4257,177,4212,169,4040,148,3869,131,3588,109"/>
+<area shape="poly" title=" " alt="" coords="3181,212,2983,258,2982,253,3180,207"/>
+<area shape="poly" title=" " alt="" coords="3356,208,3515,252,3513,257,3354,213"/>
+<area shape="poly" title=" " alt="" coords="3282,220,3287,254,3281,255,3277,221"/>
+<area shape="poly" title=" " alt="" coords="3625,299,3693,340,3690,345,3623,304"/>
+<area shape="poly" title=" " alt="" coords="3334,299,3408,340,3405,345,3331,304"/>
+<area shape="poly" title=" " alt="" coords="3557,212,3367,257,3365,252,3556,207"/>
+<area shape="poly" title=" " alt="" coords="3730,208,3889,252,3887,257,3729,213"/>
+<area shape="poly" title=" " alt="" coords="3784,204,4264,260,4264,265,3783,209"/>
+<area shape="poly" title=" " alt="" coords="1843,214,1725,257,1723,252,1841,209"/>
 </map>
 </div>
 </div>
@@ -294,6 +296,9 @@ This graph shows which files directly or indirectly include this file:</div>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxlBufferSlice__t.html">mxlBufferSlice_t</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxlEventInfo__t.html">mxlEventInfo_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Metadata for one event queue entry, either a complete event or a fragment.  <a href="structmxlEventInfo__t.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxlGrainInfo__t.html">mxlGrainInfo_t</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -321,6 +326,9 @@ Macros</h2></td></tr>
 Typedefs</h2></td></tr>
 <tr class="memitem:a4907beb8cb812362fb1945c82eecd3a6" id="r_a4907beb8cb812362fb1945c82eecd3a6"><td class="memItemLeft" align="right" valign="top">typedef struct <a class="el" href="structmxlBufferSlice__t.html">mxlBufferSlice_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="flow_8h.html#a4907beb8cb812362fb1945c82eecd3a6">mxlBufferSlice</a></td></tr>
 <tr class="separator:a4907beb8cb812362fb1945c82eecd3a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4ab384e09db0a07580f750ea8077702e" id="r_a4ab384e09db0a07580f750ea8077702e"><td class="memItemLeft" align="right" valign="top">typedef struct <a class="el" href="structmxlEventInfo__t.html">mxlEventInfo_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="flow_8h.html#a4ab384e09db0a07580f750ea8077702e">mxlEventInfo</a></td></tr>
+<tr class="memdesc:a4ab384e09db0a07580f750ea8077702e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Metadata for one event queue entry, either a complete event or a fragment.  <br /></td></tr>
+<tr class="separator:a4ab384e09db0a07580f750ea8077702e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a328b5cb958876433c8ccc5afaa968f37" id="r_a328b5cb958876433c8ccc5afaa968f37"><td class="memItemLeft" align="right" valign="top">typedef struct mxlFlowReader_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="flow_8h.html#a328b5cb958876433c8ccc5afaa968f37">mxlFlowReader</a></td></tr>
 <tr class="separator:a328b5cb958876433c8ccc5afaa968f37"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9b7171358c15085541d02bf0bb06aca1" id="r_a9b7171358c15085541d02bf0bb06aca1"><td class="memItemLeft" align="right" valign="top">typedef struct mxlFlowSynchronizationGroup_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="flow_8h.html#a9b7171358c15085541d02bf0bb06aca1">mxlFlowSynchronizationGroup</a></td></tr>
@@ -350,6 +358,11 @@ Functions</h2></td></tr>
 <tr class="separator:acc1ab72080008663b9ec4463ec9ee575"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaf6d0e4d66099f129ace6936a833a1f1" id="r_aaf6d0e4d66099f129ace6936a833a1f1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="flow_8h.html#aaf6d0e4d66099f129ace6936a833a1f1">mxlFlowReaderGetConfigInfo</a> (<a class="el" href="flow_8h.html#a328b5cb958876433c8ccc5afaa968f37">mxlFlowReader</a> <a class="el" href="test__flows_8cpp.html#a6d993cc8187b48683e21fce9f051df8f">reader</a>, <a class="el" href="flowinfo_8h.html#aa5e3cb9333d8606167f9d7541e38194e">mxlFlowConfigInfo</a> *info)</td></tr>
 <tr class="separator:aaf6d0e4d66099f129ace6936a833a1f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a107f1d7174cf191c4444d80e0a19597e" id="r_a107f1d7174cf191c4444d80e0a19597e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="flow_8h.html#a107f1d7174cf191c4444d80e0a19597e">mxlFlowReaderGetEvent</a> (<a class="el" href="flow_8h.html#a328b5cb958876433c8ccc5afaa968f37">mxlFlowReader</a> <a class="el" href="test__flows_8cpp.html#a6d993cc8187b48683e21fce9f051df8f">reader</a>, uint64_t timeoutNs, <a class="el" href="flow_8h.html#a4ab384e09db0a07580f750ea8077702e">mxlEventInfo</a> *event, uint8_t **payload)</td></tr>
+<tr class="separator:a107f1d7174cf191c4444d80e0a19597e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad57161bc9d85f940c70b2ec0271958fd" id="r_ad57161bc9d85f940c70b2ec0271958fd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="flow_8h.html#ad57161bc9d85f940c70b2ec0271958fd">mxlFlowReaderGetEventNonBlocking</a> (<a class="el" href="flow_8h.html#a328b5cb958876433c8ccc5afaa968f37">mxlFlowReader</a> <a class="el" href="test__flows_8cpp.html#a6d993cc8187b48683e21fce9f051df8f">reader</a>, <a class="el" href="flow_8h.html#a4ab384e09db0a07580f750ea8077702e">mxlEventInfo</a> *event, uint8_t **payload)</td></tr>
+<tr class="memdesc:ad57161bc9d85f940c70b2ec0271958fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attempt to read one event entry without waiting for publication.  <br /></td></tr>
+<tr class="separator:ad57161bc9d85f940c70b2ec0271958fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a203a4f8d873bb792da0abfa6e644ca5b" id="r_a203a4f8d873bb792da0abfa6e644ca5b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="flow_8h.html#a203a4f8d873bb792da0abfa6e644ca5b">mxlFlowReaderGetGrain</a> (<a class="el" href="flow_8h.html#a328b5cb958876433c8ccc5afaa968f37">mxlFlowReader</a> <a class="el" href="test__flows_8cpp.html#a6d993cc8187b48683e21fce9f051df8f">reader</a>, uint64_t <a class="el" href="test__flows_8cpp.html#a92fcffcf98bd4a3cb5c3668473eb9d04">index</a>, uint64_t timeoutNs, <a class="el" href="flow_8h.html#a33342a4bf46bd9c15c58779146960b67">mxlGrainInfo</a> *grain, uint8_t **payload)</td></tr>
 <tr class="separator:a203a4f8d873bb792da0abfa6e644ca5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4babdace1ba4396fb453e66b1f778cfc" id="r_a4babdace1ba4396fb453e66b1f778cfc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="flow_8h.html#a4babdace1ba4396fb453e66b1f778cfc">mxlFlowReaderGetGrainNonBlocking</a> (<a class="el" href="flow_8h.html#a328b5cb958876433c8ccc5afaa968f37">mxlFlowReader</a> <a class="el" href="test__flows_8cpp.html#a6d993cc8187b48683e21fce9f051df8f">reader</a>, uint64_t <a class="el" href="test__flows_8cpp.html#a92fcffcf98bd4a3cb5c3668473eb9d04">index</a>, <a class="el" href="flow_8h.html#a33342a4bf46bd9c15c58779146960b67">mxlGrainInfo</a> *grain, uint8_t **payload)</td></tr>
@@ -376,10 +389,15 @@ Functions</h2></td></tr>
 <tr class="separator:a3537aceb146ff4464ddb1f833c44d1b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3c52616b8591a76a9c68126ed53bda0b" id="r_a3c52616b8591a76a9c68126ed53bda0b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="flow_8h.html#a3c52616b8591a76a9c68126ed53bda0b">mxlFlowSynchronizationGroupWaitForDataAt</a> (<a class="el" href="flow_8h.html#a9b7171358c15085541d02bf0bb06aca1">mxlFlowSynchronizationGroup</a> group, uint64_t <a class="el" href="test__time_8cpp.html#a17d413211a1348f80e6ad24efaadbf98">timestamp</a>, uint64_t timeoutNs)</td></tr>
 <tr class="separator:a3c52616b8591a76a9c68126ed53bda0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac64e3aaf49e0d570d605c9d15fd97934" id="r_ac64e3aaf49e0d570d605c9d15fd97934"><td class="memItemLeft" align="right" valign="top"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="flow_8h.html#ac64e3aaf49e0d570d605c9d15fd97934">mxlFlowWriterCancelEvent</a> (<a class="el" href="flow_8h.html#a9507670765fbb76417144c0d28e5fa46">mxlFlowWriter</a> <a class="el" href="test__flows_8cpp.html#a734b4a7381066a2db8b7d2e74fca3f26">writer</a>)</td></tr>
+<tr class="memdesc:ac64e3aaf49e0d570d605c9d15fd97934"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cancel the open event without publishing or changing timestamp ordering.  <br /></td></tr>
+<tr class="separator:ac64e3aaf49e0d570d605c9d15fd97934"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac8d31e5dd861fcd6d736781213ddbca1" id="r_ac8d31e5dd861fcd6d736781213ddbca1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="flow_8h.html#ac8d31e5dd861fcd6d736781213ddbca1">mxlFlowWriterCancelGrain</a> (<a class="el" href="flow_8h.html#a9507670765fbb76417144c0d28e5fa46">mxlFlowWriter</a> <a class="el" href="test__flows_8cpp.html#a734b4a7381066a2db8b7d2e74fca3f26">writer</a>)</td></tr>
 <tr class="separator:ac8d31e5dd861fcd6d736781213ddbca1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8d72277f9b66d4777bcd7382fcc967b2" id="r_a8d72277f9b66d4777bcd7382fcc967b2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="flow_8h.html#a8d72277f9b66d4777bcd7382fcc967b2">mxlFlowWriterCancelSamples</a> (<a class="el" href="flow_8h.html#a9507670765fbb76417144c0d28e5fa46">mxlFlowWriter</a> <a class="el" href="test__flows_8cpp.html#a734b4a7381066a2db8b7d2e74fca3f26">writer</a>)</td></tr>
 <tr class="separator:a8d72277f9b66d4777bcd7382fcc967b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ff791e4fc744cd6b551a91ebae9f141" id="r_a5ff791e4fc744cd6b551a91ebae9f141"><td class="memItemLeft" align="right" valign="top"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="flow_8h.html#a5ff791e4fc744cd6b551a91ebae9f141">mxlFlowWriterCommitEvent</a> (<a class="el" href="flow_8h.html#a9507670765fbb76417144c0d28e5fa46">mxlFlowWriter</a> <a class="el" href="test__flows_8cpp.html#a734b4a7381066a2db8b7d2e74fca3f26">writer</a>, <a class="el" href="flow_8h.html#a4ab384e09db0a07580f750ea8077702e">mxlEventInfo</a> const *event)</td></tr>
+<tr class="separator:a5ff791e4fc744cd6b551a91ebae9f141"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae6b7ef8e5116010e1390858f2554d963" id="r_ae6b7ef8e5116010e1390858f2554d963"><td class="memItemLeft" align="right" valign="top"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="flow_8h.html#ae6b7ef8e5116010e1390858f2554d963">mxlFlowWriterCommitGrain</a> (<a class="el" href="flow_8h.html#a9507670765fbb76417144c0d28e5fa46">mxlFlowWriter</a> <a class="el" href="test__flows_8cpp.html#a734b4a7381066a2db8b7d2e74fca3f26">writer</a>, <a class="el" href="flow_8h.html#a33342a4bf46bd9c15c58779146960b67">mxlGrainInfo</a> const *grain)</td></tr>
 <tr class="separator:ae6b7ef8e5116010e1390858f2554d963"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5f522359327fcd0a502495f0ac6c4a0b" id="r_a5f522359327fcd0a502495f0ac6c4a0b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="flow_8h.html#a5f522359327fcd0a502495f0ac6c4a0b">mxlFlowWriterCommitSamples</a> (<a class="el" href="flow_8h.html#a9507670765fbb76417144c0d28e5fa46">mxlFlowWriter</a> <a class="el" href="test__flows_8cpp.html#a734b4a7381066a2db8b7d2e74fca3f26">writer</a>)</td></tr>
@@ -388,6 +406,8 @@ Functions</h2></td></tr>
 <tr class="separator:a350e15785b2bd04d6750bf06fee248c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa5afbaa8ab282006fa14c3790fcbbea1" id="r_aa5afbaa8ab282006fa14c3790fcbbea1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="flow_8h.html#aa5afbaa8ab282006fa14c3790fcbbea1">mxlFlowWriterGetMaxWriteLengthSamples</a> (<a class="el" href="flow_8h.html#a9507670765fbb76417144c0d28e5fa46">mxlFlowWriter</a> <a class="el" href="test__flows_8cpp.html#a734b4a7381066a2db8b7d2e74fca3f26">writer</a>, size_t *maxWriteLength)</td></tr>
 <tr class="separator:aa5afbaa8ab282006fa14c3790fcbbea1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeb91243340f12ba394fc0ee7c36c2348" id="r_aeb91243340f12ba394fc0ee7c36c2348"><td class="memItemLeft" align="right" valign="top"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="flow_8h.html#aeb91243340f12ba394fc0ee7c36c2348">mxlFlowWriterOpenEvent</a> (<a class="el" href="flow_8h.html#a9507670765fbb76417144c0d28e5fa46">mxlFlowWriter</a> <a class="el" href="test__flows_8cpp.html#a734b4a7381066a2db8b7d2e74fca3f26">writer</a>, <a class="el" href="flow_8h.html#a4ab384e09db0a07580f750ea8077702e">mxlEventInfo</a> *event, uint8_t **payload)</td></tr>
+<tr class="separator:aeb91243340f12ba394fc0ee7c36c2348"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1a0b7459233f1283716fb00ba1478b74" id="r_a1a0b7459233f1283716fb00ba1478b74"><td class="memItemLeft" align="right" valign="top"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="flow_8h.html#a1a0b7459233f1283716fb00ba1478b74">mxlFlowWriterOpenGrain</a> (<a class="el" href="flow_8h.html#a9507670765fbb76417144c0d28e5fa46">mxlFlowWriter</a> <a class="el" href="test__flows_8cpp.html#a734b4a7381066a2db8b7d2e74fca3f26">writer</a>, uint64_t <a class="el" href="test__flows_8cpp.html#a92fcffcf98bd4a3cb5c3668473eb9d04">index</a>, <a class="el" href="flow_8h.html#a33342a4bf46bd9c15c58779146960b67">mxlGrainInfo</a> *<a class="el" href="flow_8h.html#a33342a4bf46bd9c15c58779146960b67">mxlGrainInfo</a>, uint8_t **payload)</td></tr>
 <tr class="separator:a1a0b7459233f1283716fb00ba1478b74"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad6f906bb015dbdb76b9e51c665ee20f8" id="r_ad6f906bb015dbdb76b9e51c665ee20f8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="flow_8h.html#ad6f906bb015dbdb76b9e51c665ee20f8">mxlFlowWriterOpenSamples</a> (<a class="el" href="flow_8h.html#a9507670765fbb76417144c0d28e5fa46">mxlFlowWriter</a> <a class="el" href="test__flows_8cpp.html#a734b4a7381066a2db8b7d2e74fca3f26">writer</a>, uint64_t <a class="el" href="test__flows_8cpp.html#a92fcffcf98bd4a3cb5c3668473eb9d04">index</a>, size_t count, <a class="el" href="flow_8h.html#a9b071cbe8285f1c8a2f9ccd601ade123">mxlMutableWrappedMultiBufferSlice</a> *payloadBuffersSlices)</td></tr>
@@ -403,7 +423,11 @@ Functions</h2></td></tr>
 <tr class="memitem:aaa62b5167aa44d8d762223d5b11d0f42" id="r_aaa62b5167aa44d8d762223d5b11d0f42"><td class="memItemLeft" align="right" valign="top"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="flow_8h.html#aaa62b5167aa44d8d762223d5b11d0f42">mxlReleaseFlowWriter</a> (<a class="el" href="mxl_8h.html#ad04f4b76a64c48df90f25b3eaac399fa">mxlInstance</a> instance, <a class="el" href="flow_8h.html#a9507670765fbb76417144c0d28e5fa46">mxlFlowWriter</a> <a class="el" href="test__flows_8cpp.html#a734b4a7381066a2db8b7d2e74fca3f26">writer</a>)</td></tr>
 <tr class="separator:aaa62b5167aa44d8d762223d5b11d0f42"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Macro Definition Documentation</h2>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>Public flow reader, writer, payload and synchronization APIs. </p>
+
+<p class="definition">Definition in file <a class="el" href="flow_8h_source.html">flow.h</a>.</p>
+</div><h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="a9266a2a1e1247d4d0aa028eacfd939a5" name="a9266a2a1e1247d4d0aa028eacfd939a5"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9266a2a1e1247d4d0aa028eacfd939a5">&#9670;&#160;</a></span>MXL_GRAIN_FLAG_INVALID</h2>
 
@@ -416,7 +440,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="flow_8h_source.html#l00029">29</a> of file <a class="el" href="flow_8h_source.html">flow.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="flow_8h_source.html#l00033">33</a> of file <a class="el" href="flow_8h_source.html">flow.h</a>.</p>
 
 </div>
 </div>
@@ -433,7 +457,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 <p>A symbolic constant that may be passed to functions as their "min valid slices" parameter, in order to indicate that all slices need to be available and partial grains are not acceptable. </p>
 
-<p class="definition">Definition at line <a class="el" href="flow_8h_source.html#l00041">41</a> of file <a class="el" href="flow_8h_source.html">flow.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="flow_8h_source.html#l00045">45</a> of file <a class="el" href="flow_8h_source.html">flow.h</a>.</p>
 
 </div>
 </div>
@@ -450,7 +474,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 <p>A symbolic constant that may be passed to functions as their "min valid slices" parameter, in order to indicate that no minimum is imposed and any number of valid slices will do. </p>
 
-<p class="definition">Definition at line <a class="el" href="flow_8h_source.html#l00035">35</a> of file <a class="el" href="flow_8h_source.html">flow.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="flow_8h_source.html#l00039">39</a> of file <a class="el" href="flow_8h_source.html">flow.h</a>.</p>
 
 </div>
 </div>
@@ -470,6 +494,22 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a4ab384e09db0a07580f750ea8077702e" name="a4ab384e09db0a07580f750ea8077702e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4ab384e09db0a07580f750ea8077702e">&#9670;&#160;</a></span>mxlEventInfo</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef struct <a class="el" href="structmxlEventInfo__t.html">mxlEventInfo_t</a> <a class="el" href="flow_8h.html#a4ab384e09db0a07580f750ea8077702e">mxlEventInfo</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Metadata for one event queue entry, either a complete event or a fragment. </p>
+
+</div>
+</div>
 <a id="a328b5cb958876433c8ccc5afaa968f37" name="a328b5cb958876433c8ccc5afaa968f37"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a328b5cb958876433c8ccc5afaa968f37">&#9670;&#160;</a></span>mxlFlowReader</h2>
 
@@ -482,7 +522,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="flow_8h_source.html#l00150">150</a> of file <a class="el" href="flow_8h_source.html">flow.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="flow_8h_source.html#l00205">205</a> of file <a class="el" href="flow_8h_source.html">flow.h</a>.</p>
 
 </div>
 </div>
@@ -498,7 +538,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="flow_8h_source.html#l00153">153</a> of file <a class="el" href="flow_8h_source.html">flow.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="flow_8h_source.html#l00208">208</a> of file <a class="el" href="flow_8h_source.html">flow.h</a>.</p>
 
 </div>
 </div>
@@ -514,7 +554,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="flow_8h_source.html#l00151">151</a> of file <a class="el" href="flow_8h_source.html">flow.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="flow_8h_source.html#l00206">206</a> of file <a class="el" href="flow_8h_source.html">flow.h</a>.</p>
 
 </div>
 </div>
@@ -680,7 +720,7 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">  167</span>    }</div>
 <div class="line"><span class="lineno">  168</span>}</div>
 <div class="ttc" id="aLogging_8hpp_html_ac235c0b6be0299ec9671f7bd4551b0ad"><div class="ttname"><a href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a></div><div class="ttdeci">#define MXL_ERROR(...)</div><div class="ttdef"><b>Definition</b> <a href="Logging_8hpp_source.html#l00067">Logging.hpp:67</a></div></div>
-<div class="ttc" id="aflow_8h_html_a328b5cb958876433c8ccc5afaa968f37"><div class="ttname"><a href="flow_8h.html#a328b5cb958876433c8ccc5afaa968f37">mxlFlowReader</a></div><div class="ttdeci">struct mxlFlowReader_t * mxlFlowReader</div><div class="ttdef"><b>Definition</b> <a href="flow_8h_source.html#l00150">flow.h:150</a></div></div>
+<div class="ttc" id="aflow_8h_html_a328b5cb958876433c8ccc5afaa968f37"><div class="ttname"><a href="flow_8h.html#a328b5cb958876433c8ccc5afaa968f37">mxlFlowReader</a></div><div class="ttdeci">struct mxlFlowReader_t * mxlFlowReader</div><div class="ttdef"><b>Definition</b> <a href="flow_8h_source.html#l00205">flow.h:205</a></div></div>
 <div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a></div><div class="ttdeci">@ MXL_ERR_UNKNOWN</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00027">mxl.h:27</a></div></div>
 <div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344fa6583547baa5e85e11d188b13cb247c2e"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa6583547baa5e85e11d188b13cb247c2e">MXL_ERR_FLOW_NOT_FOUND</a></div><div class="ttdeci">@ MXL_ERR_FLOW_NOT_FOUND</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00029">mxl.h:29</a></div></div>
 <div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a></div><div class="ttdeci">@ MXL_ERR_INVALID_ARG</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00035">mxl.h:35</a></div></div>
@@ -725,25 +765,25 @@ Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>MXL_STATUS_OK if the group was successfully created. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="flow_8cpp_source.html#l00659">659</a> of file <a class="el" href="flow_8cpp_source.html">flow.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  660</span>{</div>
-<div class="line"><span class="lineno">  661</span>    <span class="keywordflow">try</span></div>
-<div class="line"><span class="lineno">  662</span>    {</div>
-<div class="line"><span class="lineno">  663</span>        <span class="keyword">auto</span> <span class="keyword">const</span> cppInstance = <a class="code hl_function" href="namespacemxl_1_1lib.html#ad7ae9445f7502d4d1ffcc5af64c8f1a5">to_Instance</a>(instance);</div>
-<div class="line"><span class="lineno">  664</span>        <span class="keywordflow">if</span> (cppInstance != <span class="keyword">nullptr</span>)</div>
-<div class="line"><span class="lineno">  665</span>        {</div>
-<div class="line"><span class="lineno">  666</span>            *group = <span class="keyword">reinterpret_cast&lt;</span><a class="code hl_typedef" href="flow_8h.html#a9b7171358c15085541d02bf0bb06aca1">mxlFlowSynchronizationGroup</a><span class="keyword">&gt;</span>(cppInstance-&gt;createFlowSynchronizationGroup());</div>
-<div class="line"><span class="lineno">  667</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
-<div class="line"><span class="lineno">  668</span>        }</div>
-<div class="line"><span class="lineno">  669</span> </div>
-<div class="line"><span class="lineno">  670</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
-<div class="line"><span class="lineno">  671</span>    }</div>
-<div class="line"><span class="lineno">  672</span>    <span class="keywordflow">catch</span> (...)</div>
-<div class="line"><span class="lineno">  673</span>    {</div>
-<div class="line"><span class="lineno">  674</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
-<div class="line"><span class="lineno">  675</span>    }</div>
-<div class="line"><span class="lineno">  676</span>}</div>
-<div class="ttc" id="aflow_8h_html_a9b7171358c15085541d02bf0bb06aca1"><div class="ttname"><a href="flow_8h.html#a9b7171358c15085541d02bf0bb06aca1">mxlFlowSynchronizationGroup</a></div><div class="ttdeci">struct mxlFlowSynchronizationGroup_t * mxlFlowSynchronizationGroup</div><div class="ttdef"><b>Definition</b> <a href="flow_8h_source.html#l00153">flow.h:153</a></div></div>
+<p class="definition">Definition at line <a class="el" href="flow_8cpp_source.html#l00765">765</a> of file <a class="el" href="flow_8cpp_source.html">flow.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  766</span>{</div>
+<div class="line"><span class="lineno">  767</span>    <span class="keywordflow">try</span></div>
+<div class="line"><span class="lineno">  768</span>    {</div>
+<div class="line"><span class="lineno">  769</span>        <span class="keyword">auto</span> <span class="keyword">const</span> cppInstance = <a class="code hl_function" href="namespacemxl_1_1lib.html#ad7ae9445f7502d4d1ffcc5af64c8f1a5">to_Instance</a>(instance);</div>
+<div class="line"><span class="lineno">  770</span>        <span class="keywordflow">if</span> (cppInstance != <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">  771</span>        {</div>
+<div class="line"><span class="lineno">  772</span>            *group = <span class="keyword">reinterpret_cast&lt;</span><a class="code hl_typedef" href="flow_8h.html#a9b7171358c15085541d02bf0bb06aca1">mxlFlowSynchronizationGroup</a><span class="keyword">&gt;</span>(cppInstance-&gt;createFlowSynchronizationGroup());</div>
+<div class="line"><span class="lineno">  773</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
+<div class="line"><span class="lineno">  774</span>        }</div>
+<div class="line"><span class="lineno">  775</span> </div>
+<div class="line"><span class="lineno">  776</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
+<div class="line"><span class="lineno">  777</span>    }</div>
+<div class="line"><span class="lineno">  778</span>    <span class="keywordflow">catch</span> (...)</div>
+<div class="line"><span class="lineno">  779</span>    {</div>
+<div class="line"><span class="lineno">  780</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">  781</span>    }</div>
+<div class="line"><span class="lineno">  782</span>}</div>
+<div class="ttc" id="aflow_8h_html_a9b7171358c15085541d02bf0bb06aca1"><div class="ttname"><a href="flow_8h.html#a9b7171358c15085541d02bf0bb06aca1">mxlFlowSynchronizationGroup</a></div><div class="ttdeci">struct mxlFlowSynchronizationGroup_t * mxlFlowSynchronizationGroup</div><div class="ttdef"><b>Definition</b> <a href="flow_8h_source.html#l00208">flow.h:208</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -896,7 +936,7 @@ grouphint tag: "Audio Receiver A:Audio #2" </li>
 <div class="line"><span class="lineno">  251</span> </div>
 <div class="line"><span class="lineno">  252</span>    <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
 <div class="line"><span class="lineno">  253</span>}</div>
-<div class="ttc" id="aflow_8h_html_a9507670765fbb76417144c0d28e5fa46"><div class="ttname"><a href="flow_8h.html#a9507670765fbb76417144c0d28e5fa46">mxlFlowWriter</a></div><div class="ttdeci">struct mxlFlowWriter_t * mxlFlowWriter</div><div class="ttdef"><b>Definition</b> <a href="flow_8h_source.html#l00151">flow.h:151</a></div></div>
+<div class="ttc" id="aflow_8h_html_a9507670765fbb76417144c0d28e5fa46"><div class="ttname"><a href="flow_8h.html#a9507670765fbb76417144c0d28e5fa46">mxlFlowWriter</a></div><div class="ttdeci">struct mxlFlowWriter_t * mxlFlowWriter</div><div class="ttdef"><b>Definition</b> <a href="flow_8h_source.html#l00206">flow.h:206</a></div></div>
 <div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344fa2fbc77c9968a7c8549d88b20de30feee"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa2fbc77c9968a7c8549d88b20de30feee">MXL_ERR_PERMISSION_DENIED</a></div><div class="ttdeci">@ MXL_ERR_PERMISSION_DENIED</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00037">mxl.h:37</a></div></div>
 <div class="ttc" id="atest__flows_8cpp_html_a3554d08f9af5542c25750ce420b0170d"><div class="ttname"><a href="test__flows_8cpp.html#a3554d08f9af5542c25750ce420b0170d">configInfo</a></div><div class="ttdeci">mxlFlowConfigInfo configInfo</div><div class="ttdef"><b>Definition</b> <a href="test__flows_8cpp_source.html#l00156">test_flows.cpp:156</a></div></div>
 <div class="ttc" id="atest__flows_8cpp_html_a734b4a7381066a2db8b7d2e74fca3f26"><div class="ttname"><a href="test__flows_8cpp.html#a734b4a7381066a2db8b7d2e74fca3f26">writer</a></div><div class="ttdeci">mxlFlowWriter writer</div><div class="ttdef"><b>Definition</b> <a href="test__flows_8cpp_source.html#l00155">test_flows.cpp:155</a></div></div>
@@ -965,6 +1005,154 @@ grouphint tag: "Audio Receiver A:Audio #2" </li>
 </div><!-- fragment -->
 </div>
 </div>
+<a id="a107f1d7174cf191c4444d80e0a19597e" name="a107f1d7174cf191c4444d80e0a19597e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a107f1d7174cf191c4444d80e0a19597e">&#9670;&#160;</a></span>mxlFlowReaderGetEvent()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a> mxlFlowReaderGetEvent </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="flow_8h.html#a328b5cb958876433c8ccc5afaa968f37">mxlFlowReader</a>&#160;</td>
+          <td class="paramname"><em>reader</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint64_t&#160;</td>
+          <td class="paramname"><em>timeoutNs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="flow_8h.html#a4ab384e09db0a07580f750ea8077702e">mxlEventInfo</a> *&#160;</td>
+          <td class="paramname"><em>event</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t **&#160;</td>
+          <td class="paramname"><em>payload</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Read the next event using this reader's queue cursor, starting with the oldest retained event. An overrun advances the cursor past lost entries; retry to resume reading. Each reader handle must be accessed by a single thread at a time. Payload is a private snapshot, valid until the next read attempt on this reader or reader release. Producers and independent readers cannot overwrite it. Metadata includes the queue index on success; event and payload output arguments are unchanged on failure.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">reader</td><td>Event flow reader acquired with mxlCreateFlowReader. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">timeoutNs</td><td>Maximum wait in nanoseconds; zero requests a nonblocking read. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">event</td><td>Receives metadata on success; must not be NULL. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">payload</td><td>Receives the private payload snapshot on success; must not be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">MXL_STATUS_OK</td><td>One entry was copied and the cursor advanced. </td></tr>
+    <tr><td class="paramname">MXL_ERR_OUT_OF_RANGE_TOO_EARLY</td><td>No entry was available before the deadline. </td></tr>
+    <tr><td class="paramname">MXL_ERR_OUT_OF_RANGE_TOO_LATE</td><td>An entry was lost to ring overwrite. </td></tr>
+    <tr><td class="paramname">MXL_ERR_FLOW_INVALID</td><td>Stored metadata is invalid or a removed/replaced flow was detected. </td></tr>
+    <tr><td class="paramname">MXL_ERR_INVALID_ARG</td><td>An output pointer is NULL. </td></tr>
+    <tr><td class="paramname">MXL_ERR_INVALID_FLOW_READER</td><td>The handle is NULL or is not an event reader. </td></tr>
+    <tr><td class="paramname">MXL_ERR_UNKNOWN</td><td>An internal exception occurred. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">Definition at line <a class="el" href="flow_8cpp_source.html#l00721">721</a> of file <a class="el" href="flow_8cpp_source.html">flow.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  722</span>{</div>
+<div class="line"><span class="lineno">  723</span>    <span class="keywordflow">if</span> ((info == <span class="keyword">nullptr</span>) || (payload == <span class="keyword">nullptr</span>))</div>
+<div class="line"><span class="lineno">  724</span>    {</div>
+<div class="line"><span class="lineno">  725</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
+<div class="line"><span class="lineno">  726</span>    }</div>
+<div class="line"><span class="lineno">  727</span>    <span class="keywordflow">try</span></div>
+<div class="line"><span class="lineno">  728</span>    {</div>
+<div class="line"><span class="lineno">  729</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keywordtype">object</span> = <span class="keyword">dynamic_cast&lt;</span><a class="code hl_class" href="classmxl_1_1lib_1_1EventFlowReader.html">EventFlowReader</a>*<span class="keyword">&gt;</span>(<a class="code hl_function" href="namespacemxl_1_1lib.html#aa281f9c49f04a375d788d7312fe0f257">to_FlowReader</a>(handle)); <span class="keywordtype">object</span> != <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">  730</span>        {</div>
+<div class="line"><span class="lineno">  731</span>            <span class="keywordflow">return</span> <span class="keywordtype">object</span>-&gt;getEvent(toDeadline(timeoutNs), info, payload);</div>
+<div class="line"><span class="lineno">  732</span>        }</div>
+<div class="line"><span class="lineno">  733</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fac09284e19028e8a0250fe3c610255f5b">MXL_ERR_INVALID_FLOW_READER</a>;</div>
+<div class="line"><span class="lineno">  734</span>    }</div>
+<div class="line"><span class="lineno">  735</span>    <span class="keywordflow">catch</span> (...)</div>
+<div class="line"><span class="lineno">  736</span>    {</div>
+<div class="line"><span class="lineno">  737</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">  738</span>    }</div>
+<div class="line"><span class="lineno">  739</span>}</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1EventFlowReader_html"><div class="ttname"><a href="classmxl_1_1lib_1_1EventFlowReader.html">mxl::lib::EventFlowReader</a></div><div class="ttdoc">Backend contract for reading complete event entries or fragments in queue order. Each reader has one ...</div><div class="ttdef"><b>Definition</b> <a href="EventFlowReader_8hpp_source.html#l00018">EventFlowReader.hpp:19</a></div></div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="ad57161bc9d85f940c70b2ec0271958fd" name="ad57161bc9d85f940c70b2ec0271958fd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad57161bc9d85f940c70b2ec0271958fd">&#9670;&#160;</a></span>mxlFlowReaderGetEventNonBlocking()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a> mxlFlowReaderGetEventNonBlocking </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="flow_8h.html#a328b5cb958876433c8ccc5afaa968f37">mxlFlowReader</a>&#160;</td>
+          <td class="paramname"><em>reader</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="flow_8h.html#a4ab384e09db0a07580f750ea8077702e">mxlEventInfo</a> *&#160;</td>
+          <td class="paramname"><em>event</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t **&#160;</td>
+          <td class="paramname"><em>payload</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Attempt to read one event entry without waiting for publication. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">reader</td><td>Event flow reader to advance. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">event</td><td>Receives metadata on success; must not be NULL. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">payload</td><td>Receives a private payload snapshot on success; must not be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The same statuses as mxlFlowReaderGetEvent with timeoutNs equal to zero. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="flow_8cpp_source.html#l00743">743</a> of file <a class="el" href="flow_8cpp_source.html">flow.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  744</span>{</div>
+<div class="line"><span class="lineno">  745</span>    <span class="keywordflow">if</span> ((info == <span class="keyword">nullptr</span>) || (payload == <span class="keyword">nullptr</span>))</div>
+<div class="line"><span class="lineno">  746</span>    {</div>
+<div class="line"><span class="lineno">  747</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
+<div class="line"><span class="lineno">  748</span>    }</div>
+<div class="line"><span class="lineno">  749</span>    <span class="keywordflow">try</span></div>
+<div class="line"><span class="lineno">  750</span>    {</div>
+<div class="line"><span class="lineno">  751</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keywordtype">object</span> = <span class="keyword">dynamic_cast&lt;</span><a class="code hl_class" href="classmxl_1_1lib_1_1EventFlowReader.html">EventFlowReader</a>*<span class="keyword">&gt;</span>(<a class="code hl_function" href="namespacemxl_1_1lib.html#aa281f9c49f04a375d788d7312fe0f257">to_FlowReader</a>(handle)); <span class="keywordtype">object</span> != <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">  752</span>        {</div>
+<div class="line"><span class="lineno">  753</span>            <span class="keywordflow">return</span> <span class="keywordtype">object</span>-&gt;getEvent(toDeadline(0), info, payload);</div>
+<div class="line"><span class="lineno">  754</span>        }</div>
+<div class="line"><span class="lineno">  755</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fac09284e19028e8a0250fe3c610255f5b">MXL_ERR_INVALID_FLOW_READER</a>;</div>
+<div class="line"><span class="lineno">  756</span>    }</div>
+<div class="line"><span class="lineno">  757</span>    <span class="keywordflow">catch</span> (...)</div>
+<div class="line"><span class="lineno">  758</span>    {</div>
+<div class="line"><span class="lineno">  759</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">  760</span>    }</div>
+<div class="line"><span class="lineno">  761</span>}</div>
+</div><!-- fragment -->
+</div>
+</div>
 <a id="a203a4f8d873bb792da0abfa6e644ca5b" name="a203a4f8d873bb792da0abfa6e644ca5b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a203a4f8d873bb792da0abfa6e644ca5b">&#9670;&#160;</a></span>mxlFlowReaderGetGrain()</h2>
 
@@ -1028,7 +1216,7 @@ grouphint tag: "Audio Receiver A:Audio #2" </li>
 <div class="line"><span class="lineno">  359</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="flow_8cpp.html#a3827707d17cdb693b292732b1a00ff80">mxlFlowReaderGetGrainSlice</a>(<a class="code hl_variable" href="test__flows_8cpp.html#a6d993cc8187b48683e21fce9f051df8f">reader</a>, <a class="code hl_variable" href="test__flows_8cpp.html#a92fcffcf98bd4a3cb5c3668473eb9d04">index</a>, <a class="code hl_define" href="flow_8h.html#aed133af87430084007b4328491d8934f">MXL_GRAIN_VALID_SLICES_ALL</a>, timeoutNs, grainInfo, payload);</div>
 <div class="line"><span class="lineno">  360</span>}</div>
 <div class="ttc" id="aflow_8cpp_html_a3827707d17cdb693b292732b1a00ff80"><div class="ttname"><a href="flow_8cpp.html#a3827707d17cdb693b292732b1a00ff80">mxlFlowReaderGetGrainSlice</a></div><div class="ttdeci">MXL_EXPORT mxlStatus mxlFlowReaderGetGrainSlice(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, uint64_t timeoutNs, mxlGrainInfo *grainInfo, uint8_t **payload)</div><div class="ttdef"><b>Definition</b> <a href="flow_8cpp_source.html#l00364">flow.cpp:364</a></div></div>
-<div class="ttc" id="aflow_8h_html_aed133af87430084007b4328491d8934f"><div class="ttname"><a href="flow_8h.html#aed133af87430084007b4328491d8934f">MXL_GRAIN_VALID_SLICES_ALL</a></div><div class="ttdeci">#define MXL_GRAIN_VALID_SLICES_ALL</div><div class="ttdef"><b>Definition</b> <a href="flow_8h_source.html#l00041">flow.h:41</a></div></div>
+<div class="ttc" id="aflow_8h_html_aed133af87430084007b4328491d8934f"><div class="ttname"><a href="flow_8h.html#aed133af87430084007b4328491d8934f">MXL_GRAIN_VALID_SLICES_ALL</a></div><div class="ttdeci">#define MXL_GRAIN_VALID_SLICES_ALL</div><div class="ttdef"><b>Definition</b> <a href="flow_8h_source.html#l00045">flow.h:45</a></div></div>
 <div class="ttc" id="atest__flows_8cpp_html_a92fcffcf98bd4a3cb5c3668473eb9d04"><div class="ttname"><a href="test__flows_8cpp.html#a92fcffcf98bd4a3cb5c3668473eb9d04">index</a></div><div class="ttdeci">uint64_t index</div><div class="ttdef"><b>Definition</b> <a href="test__flows_8cpp_source.html#l00171">test_flows.cpp:171</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -1638,28 +1826,28 @@ grouphint tag: "Audio Receiver A:Audio #2" </li>
 <dl class="section return"><dt>Returns</dt><dd>MXL_STATUS_OK if the reader was successfully added to the synchronization group.</dd></dl>
 <dl class="section note"><dt>Note</dt><dd>Please note that a reader can only be added to a group once and attempts to add the same reader multiple times are ignored, except that the number of valid slices to wait for is updated to the value matching the last add operation. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="flow_8cpp_source.html#l00735">735</a> of file <a class="el" href="flow_8cpp_source.html">flow.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  736</span>{</div>
-<div class="line"><span class="lineno">  737</span>    <span class="keywordflow">try</span></div>
-<div class="line"><span class="lineno">  738</span>    {</div>
-<div class="line"><span class="lineno">  739</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> cppGroup = <a class="code hl_function" href="namespacemxl_1_1lib.html#ac2ae6195dd3172fbb7a3594d771d9c8a">to_FlowSynchronizationGroup</a>(group); cppGroup != <span class="keyword">nullptr</span>)</div>
-<div class="line"><span class="lineno">  740</span>        {</div>
-<div class="line"><span class="lineno">  741</span>            <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> cppReader = <span class="keyword">dynamic_cast&lt;</span><a class="code hl_class" href="classmxl_1_1lib_1_1DiscreteFlowReader.html">DiscreteFlowReader</a> const*<span class="keyword">&gt;</span>(<a class="code hl_function" href="namespacemxl_1_1lib.html#aa281f9c49f04a375d788d7312fe0f257">to_FlowReader</a>(<a class="code hl_variable" href="test__flows_8cpp.html#a6d993cc8187b48683e21fce9f051df8f">reader</a>)); cppReader != <span class="keyword">nullptr</span>)</div>
-<div class="line"><span class="lineno">  742</span>            {</div>
-<div class="line"><span class="lineno">  743</span>                cppGroup-&gt;addReader(*cppReader, minValidSlices);</div>
-<div class="line"><span class="lineno">  744</span>                <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
-<div class="line"><span class="lineno">  745</span>            }</div>
-<div class="line"><span class="lineno">  746</span> </div>
-<div class="line"><span class="lineno">  747</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fac09284e19028e8a0250fe3c610255f5b">MXL_ERR_INVALID_FLOW_READER</a>;</div>
-<div class="line"><span class="lineno">  748</span>        }</div>
-<div class="line"><span class="lineno">  749</span> </div>
-<div class="line"><span class="lineno">  750</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
-<div class="line"><span class="lineno">  751</span>    }</div>
-<div class="line"><span class="lineno">  752</span>    <span class="keywordflow">catch</span> (...)</div>
-<div class="line"><span class="lineno">  753</span>    {</div>
-<div class="line"><span class="lineno">  754</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
-<div class="line"><span class="lineno">  755</span>    }</div>
-<div class="line"><span class="lineno">  756</span>}</div>
+<p class="definition">Definition at line <a class="el" href="flow_8cpp_source.html#l00841">841</a> of file <a class="el" href="flow_8cpp_source.html">flow.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  842</span>{</div>
+<div class="line"><span class="lineno">  843</span>    <span class="keywordflow">try</span></div>
+<div class="line"><span class="lineno">  844</span>    {</div>
+<div class="line"><span class="lineno">  845</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> cppGroup = <a class="code hl_function" href="namespacemxl_1_1lib.html#ac2ae6195dd3172fbb7a3594d771d9c8a">to_FlowSynchronizationGroup</a>(group); cppGroup != <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">  846</span>        {</div>
+<div class="line"><span class="lineno">  847</span>            <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> cppReader = <span class="keyword">dynamic_cast&lt;</span><a class="code hl_class" href="classmxl_1_1lib_1_1DiscreteFlowReader.html">DiscreteFlowReader</a> const*<span class="keyword">&gt;</span>(<a class="code hl_function" href="namespacemxl_1_1lib.html#aa281f9c49f04a375d788d7312fe0f257">to_FlowReader</a>(<a class="code hl_variable" href="test__flows_8cpp.html#a6d993cc8187b48683e21fce9f051df8f">reader</a>)); cppReader != <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">  848</span>            {</div>
+<div class="line"><span class="lineno">  849</span>                cppGroup-&gt;addReader(*cppReader, minValidSlices);</div>
+<div class="line"><span class="lineno">  850</span>                <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
+<div class="line"><span class="lineno">  851</span>            }</div>
+<div class="line"><span class="lineno">  852</span> </div>
+<div class="line"><span class="lineno">  853</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fac09284e19028e8a0250fe3c610255f5b">MXL_ERR_INVALID_FLOW_READER</a>;</div>
+<div class="line"><span class="lineno">  854</span>        }</div>
+<div class="line"><span class="lineno">  855</span> </div>
+<div class="line"><span class="lineno">  856</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
+<div class="line"><span class="lineno">  857</span>    }</div>
+<div class="line"><span class="lineno">  858</span>    <span class="keywordflow">catch</span> (...)</div>
+<div class="line"><span class="lineno">  859</span>    {</div>
+<div class="line"><span class="lineno">  860</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">  861</span>    }</div>
+<div class="line"><span class="lineno">  862</span>}</div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_ac2ae6195dd3172fbb7a3594d771d9c8a"><div class="ttname"><a href="namespacemxl_1_1lib.html#ac2ae6195dd3172fbb7a3594d771d9c8a">mxl::lib::to_FlowSynchronizationGroup</a></div><div class="ttdeci">FlowSynchronizationGroup * to_FlowSynchronizationGroup(mxlFlowSynchronizationGroup group) noexcept</div><div class="ttdoc">Utility function to convert from a C mxlFlowSynchronizationGroup handle to a C++ FlowSynchronizationG...</div><div class="ttdef"><b>Definition</b> <a href="Instance_8hpp_source.html#l00262">Instance.hpp:262</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -1700,36 +1888,36 @@ grouphint tag: "Audio Receiver A:Audio #2" </li>
 <dl class="section return"><dt>Returns</dt><dd>MXL_STATUS_OK if the reader was successfully added to the synchronization group.</dd></dl>
 <dl class="section note"><dt>Note</dt><dd>Please note that a reader can only be added to a group once and attempts to add the same reader multiple times are ignored, except that for grain based readers the number of valid slices to wait for is updated to the value matching the last add operation. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="flow_8cpp_source.html#l00702">702</a> of file <a class="el" href="flow_8cpp_source.html">flow.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  703</span>{</div>
-<div class="line"><span class="lineno">  704</span>    <span class="keywordflow">try</span></div>
-<div class="line"><span class="lineno">  705</span>    {</div>
-<div class="line"><span class="lineno">  706</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> cppGroup = <a class="code hl_function" href="namespacemxl_1_1lib.html#ac2ae6195dd3172fbb7a3594d771d9c8a">to_FlowSynchronizationGroup</a>(group); cppGroup != <span class="keyword">nullptr</span>)</div>
-<div class="line"><span class="lineno">  707</span>        {</div>
-<div class="line"><span class="lineno">  708</span>            <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> cppReader = <a class="code hl_function" href="namespacemxl_1_1lib.html#aa281f9c49f04a375d788d7312fe0f257">to_FlowReader</a>(<a class="code hl_variable" href="test__flows_8cpp.html#a6d993cc8187b48683e21fce9f051df8f">reader</a>); cppReader != <span class="keyword">nullptr</span>)</div>
-<div class="line"><span class="lineno">  709</span>            {</div>
-<div class="line"><span class="lineno">  710</span>                <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> discreteReader = <span class="keyword">dynamic_cast&lt;</span><a class="code hl_class" href="classmxl_1_1lib_1_1DiscreteFlowReader.html">DiscreteFlowReader</a> const*<span class="keyword">&gt;</span>(cppReader); discreteReader != <span class="keyword">nullptr</span>)</div>
-<div class="line"><span class="lineno">  711</span>                {</div>
-<div class="line"><span class="lineno">  712</span>                    cppGroup-&gt;addReader(*discreteReader, <a class="code hl_define" href="flow_8h.html#aed133af87430084007b4328491d8934f">MXL_GRAIN_VALID_SLICES_ALL</a>);</div>
-<div class="line"><span class="lineno">  713</span>                    <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
-<div class="line"><span class="lineno">  714</span>                }</div>
-<div class="line"><span class="lineno">  715</span>                <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> continuousReader = <span class="keyword">dynamic_cast&lt;</span><a class="code hl_class" href="classmxl_1_1lib_1_1ContinuousFlowReader.html">ContinuousFlowReader</a> const*<span class="keyword">&gt;</span>(cppReader); continuousReader != <span class="keyword">nullptr</span>)</div>
-<div class="line"><span class="lineno">  716</span>                {</div>
-<div class="line"><span class="lineno">  717</span>                    cppGroup-&gt;addReader(*continuousReader);</div>
-<div class="line"><span class="lineno">  718</span>                    <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
-<div class="line"><span class="lineno">  719</span>                }</div>
-<div class="line"><span class="lineno">  720</span>            }</div>
-<div class="line"><span class="lineno">  721</span> </div>
-<div class="line"><span class="lineno">  722</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fac09284e19028e8a0250fe3c610255f5b">MXL_ERR_INVALID_FLOW_READER</a>;</div>
-<div class="line"><span class="lineno">  723</span>        }</div>
-<div class="line"><span class="lineno">  724</span> </div>
-<div class="line"><span class="lineno">  725</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
-<div class="line"><span class="lineno">  726</span>    }</div>
-<div class="line"><span class="lineno">  727</span>    <span class="keywordflow">catch</span> (...)</div>
-<div class="line"><span class="lineno">  728</span>    {</div>
-<div class="line"><span class="lineno">  729</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
-<div class="line"><span class="lineno">  730</span>    }</div>
-<div class="line"><span class="lineno">  731</span>}</div>
+<p class="definition">Definition at line <a class="el" href="flow_8cpp_source.html#l00808">808</a> of file <a class="el" href="flow_8cpp_source.html">flow.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  809</span>{</div>
+<div class="line"><span class="lineno">  810</span>    <span class="keywordflow">try</span></div>
+<div class="line"><span class="lineno">  811</span>    {</div>
+<div class="line"><span class="lineno">  812</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> cppGroup = <a class="code hl_function" href="namespacemxl_1_1lib.html#ac2ae6195dd3172fbb7a3594d771d9c8a">to_FlowSynchronizationGroup</a>(group); cppGroup != <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">  813</span>        {</div>
+<div class="line"><span class="lineno">  814</span>            <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> cppReader = <a class="code hl_function" href="namespacemxl_1_1lib.html#aa281f9c49f04a375d788d7312fe0f257">to_FlowReader</a>(<a class="code hl_variable" href="test__flows_8cpp.html#a6d993cc8187b48683e21fce9f051df8f">reader</a>); cppReader != <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">  815</span>            {</div>
+<div class="line"><span class="lineno">  816</span>                <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> discreteReader = <span class="keyword">dynamic_cast&lt;</span><a class="code hl_class" href="classmxl_1_1lib_1_1DiscreteFlowReader.html">DiscreteFlowReader</a> const*<span class="keyword">&gt;</span>(cppReader); discreteReader != <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">  817</span>                {</div>
+<div class="line"><span class="lineno">  818</span>                    cppGroup-&gt;addReader(*discreteReader, <a class="code hl_define" href="flow_8h.html#aed133af87430084007b4328491d8934f">MXL_GRAIN_VALID_SLICES_ALL</a>);</div>
+<div class="line"><span class="lineno">  819</span>                    <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
+<div class="line"><span class="lineno">  820</span>                }</div>
+<div class="line"><span class="lineno">  821</span>                <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> continuousReader = <span class="keyword">dynamic_cast&lt;</span><a class="code hl_class" href="classmxl_1_1lib_1_1ContinuousFlowReader.html">ContinuousFlowReader</a> const*<span class="keyword">&gt;</span>(cppReader); continuousReader != <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">  822</span>                {</div>
+<div class="line"><span class="lineno">  823</span>                    cppGroup-&gt;addReader(*continuousReader);</div>
+<div class="line"><span class="lineno">  824</span>                    <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
+<div class="line"><span class="lineno">  825</span>                }</div>
+<div class="line"><span class="lineno">  826</span>            }</div>
+<div class="line"><span class="lineno">  827</span> </div>
+<div class="line"><span class="lineno">  828</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fac09284e19028e8a0250fe3c610255f5b">MXL_ERR_INVALID_FLOW_READER</a>;</div>
+<div class="line"><span class="lineno">  829</span>        }</div>
+<div class="line"><span class="lineno">  830</span> </div>
+<div class="line"><span class="lineno">  831</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
+<div class="line"><span class="lineno">  832</span>    }</div>
+<div class="line"><span class="lineno">  833</span>    <span class="keywordflow">catch</span> (...)</div>
+<div class="line"><span class="lineno">  834</span>    {</div>
+<div class="line"><span class="lineno">  835</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">  836</span>    }</div>
+<div class="line"><span class="lineno">  837</span>}</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -1768,25 +1956,25 @@ grouphint tag: "Audio Receiver A:Audio #2" </li>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>MXL_STATUS_OK if the reader was successfully removed from the synchronization group. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="flow_8cpp_source.html#l00760">760</a> of file <a class="el" href="flow_8cpp_source.html">flow.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  761</span>{</div>
-<div class="line"><span class="lineno">  762</span>    <span class="keywordflow">try</span></div>
-<div class="line"><span class="lineno">  763</span>    {</div>
-<div class="line"><span class="lineno">  764</span>        <span class="keyword">auto</span> <span class="keyword">const</span> cppGroup = <a class="code hl_function" href="namespacemxl_1_1lib.html#ac2ae6195dd3172fbb7a3594d771d9c8a">to_FlowSynchronizationGroup</a>(group);</div>
-<div class="line"><span class="lineno">  765</span>        <span class="keyword">auto</span> <span class="keyword">const</span> cppReader = <a class="code hl_function" href="namespacemxl_1_1lib.html#aa281f9c49f04a375d788d7312fe0f257">to_FlowReader</a>(<a class="code hl_variable" href="test__flows_8cpp.html#a6d993cc8187b48683e21fce9f051df8f">reader</a>);</div>
-<div class="line"><span class="lineno">  766</span>        <span class="keywordflow">if</span> ((cppGroup != <span class="keyword">nullptr</span>) &amp;&amp; (cppReader != <span class="keyword">nullptr</span>))</div>
-<div class="line"><span class="lineno">  767</span>        {</div>
-<div class="line"><span class="lineno">  768</span>            cppGroup-&gt;removeReader(*cppReader);</div>
-<div class="line"><span class="lineno">  769</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
-<div class="line"><span class="lineno">  770</span>        }</div>
-<div class="line"><span class="lineno">  771</span> </div>
-<div class="line"><span class="lineno">  772</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
-<div class="line"><span class="lineno">  773</span>    }</div>
-<div class="line"><span class="lineno">  774</span>    <span class="keywordflow">catch</span> (...)</div>
-<div class="line"><span class="lineno">  775</span>    {</div>
-<div class="line"><span class="lineno">  776</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
-<div class="line"><span class="lineno">  777</span>    }</div>
-<div class="line"><span class="lineno">  778</span>}</div>
+<p class="definition">Definition at line <a class="el" href="flow_8cpp_source.html#l00866">866</a> of file <a class="el" href="flow_8cpp_source.html">flow.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  867</span>{</div>
+<div class="line"><span class="lineno">  868</span>    <span class="keywordflow">try</span></div>
+<div class="line"><span class="lineno">  869</span>    {</div>
+<div class="line"><span class="lineno">  870</span>        <span class="keyword">auto</span> <span class="keyword">const</span> cppGroup = <a class="code hl_function" href="namespacemxl_1_1lib.html#ac2ae6195dd3172fbb7a3594d771d9c8a">to_FlowSynchronizationGroup</a>(group);</div>
+<div class="line"><span class="lineno">  871</span>        <span class="keyword">auto</span> <span class="keyword">const</span> cppReader = <a class="code hl_function" href="namespacemxl_1_1lib.html#aa281f9c49f04a375d788d7312fe0f257">to_FlowReader</a>(<a class="code hl_variable" href="test__flows_8cpp.html#a6d993cc8187b48683e21fce9f051df8f">reader</a>);</div>
+<div class="line"><span class="lineno">  872</span>        <span class="keywordflow">if</span> ((cppGroup != <span class="keyword">nullptr</span>) &amp;&amp; (cppReader != <span class="keyword">nullptr</span>))</div>
+<div class="line"><span class="lineno">  873</span>        {</div>
+<div class="line"><span class="lineno">  874</span>            cppGroup-&gt;removeReader(*cppReader);</div>
+<div class="line"><span class="lineno">  875</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
+<div class="line"><span class="lineno">  876</span>        }</div>
+<div class="line"><span class="lineno">  877</span> </div>
+<div class="line"><span class="lineno">  878</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
+<div class="line"><span class="lineno">  879</span>    }</div>
+<div class="line"><span class="lineno">  880</span>    <span class="keywordflow">catch</span> (...)</div>
+<div class="line"><span class="lineno">  881</span>    {</div>
+<div class="line"><span class="lineno">  882</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">  883</span>    }</div>
+<div class="line"><span class="lineno">  884</span>}</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -1832,24 +2020,78 @@ grouphint tag: "Audio Receiver A:Audio #2" </li>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>MXL_STATUS_OK if the data corresponding to the specified timestamp has become available. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="flow_8cpp_source.html#l00782">782</a> of file <a class="el" href="flow_8cpp_source.html">flow.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  783</span>{</div>
-<div class="line"><span class="lineno">  784</span>    <span class="keywordflow">try</span></div>
-<div class="line"><span class="lineno">  785</span>    {</div>
-<div class="line"><span class="lineno">  786</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> cppGroup = <a class="code hl_function" href="namespacemxl_1_1lib.html#ac2ae6195dd3172fbb7a3594d771d9c8a">to_FlowSynchronizationGroup</a>(group); cppGroup != <span class="keyword">nullptr</span>)</div>
-<div class="line"><span class="lineno">  787</span>        {</div>
-<div class="line"><span class="lineno">  788</span>            <span class="keywordflow">return</span> cppGroup-&gt;waitForDataAt(<a class="code hl_struct" href="structmxl_1_1lib_1_1Timepoint.html">Timepoint</a>{<span class="keyword">static_cast&lt;</span>std::int64_t<span class="keyword">&gt;</span>(<a class="code hl_variable" href="test__time_8cpp.html#a17d413211a1348f80e6ad24efaadbf98">timestamp</a>)}, toDeadline(timeoutNs));</div>
-<div class="line"><span class="lineno">  789</span>        }</div>
-<div class="line"><span class="lineno">  790</span> </div>
-<div class="line"><span class="lineno">  791</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
-<div class="line"><span class="lineno">  792</span>    }</div>
-<div class="line"><span class="lineno">  793</span>    <span class="keywordflow">catch</span> (...)</div>
-<div class="line"><span class="lineno">  794</span>    {</div>
-<div class="line"><span class="lineno">  795</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
-<div class="line"><span class="lineno">  796</span>    }</div>
-<div class="line"><span class="lineno">  797</span>}</div>
+<p class="definition">Definition at line <a class="el" href="flow_8cpp_source.html#l00888">888</a> of file <a class="el" href="flow_8cpp_source.html">flow.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  889</span>{</div>
+<div class="line"><span class="lineno">  890</span>    <span class="keywordflow">try</span></div>
+<div class="line"><span class="lineno">  891</span>    {</div>
+<div class="line"><span class="lineno">  892</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> cppGroup = <a class="code hl_function" href="namespacemxl_1_1lib.html#ac2ae6195dd3172fbb7a3594d771d9c8a">to_FlowSynchronizationGroup</a>(group); cppGroup != <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">  893</span>        {</div>
+<div class="line"><span class="lineno">  894</span>            <span class="keywordflow">return</span> cppGroup-&gt;waitForDataAt(<a class="code hl_struct" href="structmxl_1_1lib_1_1Timepoint.html">Timepoint</a>{<span class="keyword">static_cast&lt;</span>std::int64_t<span class="keyword">&gt;</span>(<a class="code hl_variable" href="test__time_8cpp.html#a17d413211a1348f80e6ad24efaadbf98">timestamp</a>)}, toDeadline(timeoutNs));</div>
+<div class="line"><span class="lineno">  895</span>        }</div>
+<div class="line"><span class="lineno">  896</span> </div>
+<div class="line"><span class="lineno">  897</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
+<div class="line"><span class="lineno">  898</span>    }</div>
+<div class="line"><span class="lineno">  899</span>    <span class="keywordflow">catch</span> (...)</div>
+<div class="line"><span class="lineno">  900</span>    {</div>
+<div class="line"><span class="lineno">  901</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">  902</span>    }</div>
+<div class="line"><span class="lineno">  903</span>}</div>
 <div class="ttc" id="astructmxl_1_1lib_1_1Timepoint_html"><div class="ttname"><a href="structmxl_1_1lib_1_1Timepoint.html">mxl::lib::Timepoint</a></div><div class="ttdef"><b>Definition</b> <a href="Timing_8hpp_source.html#l00174">Timing.hpp:175</a></div></div>
 <div class="ttc" id="atest__time_8cpp_html_a17d413211a1348f80e6ad24efaadbf98"><div class="ttname"><a href="test__time_8cpp.html#a17d413211a1348f80e6ad24efaadbf98">timestamp</a></div><div class="ttdeci">auto const timestamp</div><div class="ttdef"><b>Definition</b> <a href="test__time_8cpp_source.html#l00061">test_time.cpp:61</a></div></div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="ac64e3aaf49e0d570d605c9d15fd97934" name="ac64e3aaf49e0d570d605c9d15fd97934"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac64e3aaf49e0d570d605c9d15fd97934">&#9670;&#160;</a></span>mxlFlowWriterCancelEvent()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a> mxlFlowWriterCancelEvent </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="flow_8h.html#a9507670765fbb76417144c0d28e5fa46">mxlFlowWriter</a>&#160;</td>
+          <td class="paramname"><em>writer</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Cancel the open event without publishing or changing timestamp ordering. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">writer</td><td>Writer whose open event is to be discarded. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">MXL_STATUS_OK</td><td>The write transaction was closed. </td></tr>
+    <tr><td class="paramname">MXL_ERR_INVALID_ARG</td><td>No event is open. </td></tr>
+    <tr><td class="paramname">MXL_ERR_INVALID_FLOW_WRITER</td><td>The handle is NULL or is not an event writer. </td></tr>
+    <tr><td class="paramname">MXL_ERR_UNKNOWN</td><td>An internal exception occurred. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">Definition at line <a class="el" href="flow_8cpp_source.html#l00703">703</a> of file <a class="el" href="flow_8cpp_source.html">flow.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  704</span>{</div>
+<div class="line"><span class="lineno">  705</span>    <span class="keywordflow">try</span></div>
+<div class="line"><span class="lineno">  706</span>    {</div>
+<div class="line"><span class="lineno">  707</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keywordtype">object</span> = <span class="keyword">dynamic_cast&lt;</span><a class="code hl_class" href="classmxl_1_1lib_1_1EventFlowWriter.html">EventFlowWriter</a>*<span class="keyword">&gt;</span>(<a class="code hl_function" href="namespacemxl_1_1lib.html#a6ac56d2b21f2be2a3ce4eeeb05fc693a">to_FlowWriter</a>(handle)); <span class="keywordtype">object</span> != <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">  708</span>        {</div>
+<div class="line"><span class="lineno">  709</span>            <span class="keywordflow">return</span> <span class="keywordtype">object</span>-&gt;cancel();</div>
+<div class="line"><span class="lineno">  710</span>        }</div>
+<div class="line"><span class="lineno">  711</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7e373bf0b716fa86fddd6f91b796f3d1">MXL_ERR_INVALID_FLOW_WRITER</a>;</div>
+<div class="line"><span class="lineno">  712</span>    }</div>
+<div class="line"><span class="lineno">  713</span>    <span class="keywordflow">catch</span> (...)</div>
+<div class="line"><span class="lineno">  714</span>    {</div>
+<div class="line"><span class="lineno">  715</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">  716</span>    }</div>
+<div class="line"><span class="lineno">  717</span>}</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1EventFlowWriter_html"><div class="ttname"><a href="classmxl_1_1lib_1_1EventFlowWriter.html">mxl::lib::EventFlowWriter</a></div><div class="ttdoc">Backend contract for a single event producer with private write staging. Callers guarantee one writer...</div><div class="ttdef"><b>Definition</b> <a href="EventFlowWriter_8hpp_source.html#l00018">EventFlowWriter.hpp:19</a></div></div>
+<div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344fa7e373bf0b716fa86fddd6f91b796f3d1"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7e373bf0b716fa86fddd6f91b796f3d1">MXL_ERR_INVALID_FLOW_WRITER</a></div><div class="ttdeci">@ MXL_ERR_INVALID_FLOW_WRITER</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00033">mxl.h:33</a></div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_html_a6ac56d2b21f2be2a3ce4eeeb05fc693a"><div class="ttname"><a href="namespacemxl_1_1lib.html#a6ac56d2b21f2be2a3ce4eeeb05fc693a">mxl::lib::to_FlowWriter</a></div><div class="ttdeci">FlowWriter * to_FlowWriter(mxlFlowWriter writer) noexcept</div><div class="ttdoc">Utility function to convert from a C mxlFlowWriter handle to a C++ FlowWriter instance.</div><div class="ttdef"><b>Definition</b> <a href="Instance_8hpp_source.html#l00257">Instance.hpp:257</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -1891,8 +2133,6 @@ grouphint tag: "Audio Receiver A:Audio #2" </li>
 <div class="line"><span class="lineno">  477</span>    }</div>
 <div class="line"><span class="lineno">  478</span>}</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1DiscreteFlowWriter_html"><div class="ttname"><a href="classmxl_1_1lib_1_1DiscreteFlowWriter.html">mxl::lib::DiscreteFlowWriter</a></div><div class="ttdef"><b>Definition</b> <a href="DiscreteFlowWriter_8hpp_source.html#l00010">DiscreteFlowWriter.hpp:11</a></div></div>
-<div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344fa7e373bf0b716fa86fddd6f91b796f3d1"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7e373bf0b716fa86fddd6f91b796f3d1">MXL_ERR_INVALID_FLOW_WRITER</a></div><div class="ttdeci">@ MXL_ERR_INVALID_FLOW_WRITER</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00033">mxl.h:33</a></div></div>
-<div class="ttc" id="anamespacemxl_1_1lib_html_a6ac56d2b21f2be2a3ce4eeeb05fc693a"><div class="ttname"><a href="namespacemxl_1_1lib.html#a6ac56d2b21f2be2a3ce4eeeb05fc693a">mxl::lib::to_FlowWriter</a></div><div class="ttdeci">FlowWriter * to_FlowWriter(mxlFlowWriter writer) noexcept</div><div class="ttdoc">Utility function to convert from a C mxlFlowWriter handle to a C++ FlowWriter instance.</div><div class="ttdef"><b>Definition</b> <a href="Instance_8hpp_source.html#l00257">Instance.hpp:257</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -1936,6 +2176,73 @@ grouphint tag: "Audio Receiver A:Audio #2" </li>
 <div class="line"><span class="lineno">  636</span>    }</div>
 <div class="line"><span class="lineno">  637</span>}</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1ContinuousFlowWriter_html"><div class="ttname"><a href="classmxl_1_1lib_1_1ContinuousFlowWriter.html">mxl::lib::ContinuousFlowWriter</a></div><div class="ttdef"><b>Definition</b> <a href="ContinuousFlowWriter_8hpp_source.html#l00010">ContinuousFlowWriter.hpp:11</a></div></div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="a5ff791e4fc744cd6b551a91ebae9f141" name="a5ff791e4fc744cd6b551a91ebae9f141"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5ff791e4fc744cd6b551a91ebae9f141">&#9670;&#160;</a></span>mxlFlowWriterCommitEvent()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a> mxlFlowWriterCommitEvent </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="flow_8h.html#a9507670765fbb76417144c0d28e5fa46">mxlFlowWriter</a>&#160;</td>
+          <td class="paramname"><em>writer</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="flow_8h.html#a4ab384e09db0a07580f750ea8077702e">mxlEventInfo</a> const *&#160;</td>
+          <td class="paramname"><em>event</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Publish one event entry (a complete event or one fragment) and wake waiting readers. Timestamps must be nondecreasing relative to the last committed event in this flow. Equal timestamps are allowed, including for fragments of the same event. An earlier timestamp returns MXL_ERR_INVALID_ARG without publishing or advancing the queue. A failed commit leaves the event open for correction or cancellation. Queue positions advance in commit order, independently of timestamps. The producer must commit all fragments of one logical event consecutively, ending with complete = 1 before starting any other event in this flow. Interleaving is forbidden even when events have different timestamps or DITs. This is a producer requirement; the API does not enforce fragment continuity or detect interleaving. Queue indices identify entries, not logical events.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">writer</td><td>Writer that owns the open event. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">event</td><td>Metadata to publish with the staged payload; must not be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">MXL_STATUS_OK</td><td>The entry was published and the write transaction closed. </td></tr>
+    <tr><td class="paramname">MXL_ERR_INVALID_ARG</td><td>No event is open, metadata is invalid, the timestamp decreases, the payload exceeds capacity, or event is NULL. </td></tr>
+    <tr><td class="paramname">MXL_ERR_INVALID_FLOW_WRITER</td><td>The handle is NULL or is not an event writer. </td></tr>
+    <tr><td class="paramname">MXL_ERR_FLOW_INVALID</td><td>Publication would overwrite an already-published or newer sequence tag. </td></tr>
+    <tr><td class="paramname">MXL_ERR_OUT_OF_RANGE_TOO_LATE</td><td>The queue sequence index is exhausted. </td></tr>
+    <tr><td class="paramname">MXL_ERR_UNKNOWN</td><td>An internal exception occurred. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">Definition at line <a class="el" href="flow_8cpp_source.html#l00681">681</a> of file <a class="el" href="flow_8cpp_source.html">flow.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  682</span>{</div>
+<div class="line"><span class="lineno">  683</span>    <span class="keywordflow">if</span> (info == <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">  684</span>    {</div>
+<div class="line"><span class="lineno">  685</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
+<div class="line"><span class="lineno">  686</span>    }</div>
+<div class="line"><span class="lineno">  687</span>    <span class="keywordflow">try</span></div>
+<div class="line"><span class="lineno">  688</span>    {</div>
+<div class="line"><span class="lineno">  689</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keywordtype">object</span> = <span class="keyword">dynamic_cast&lt;</span><a class="code hl_class" href="classmxl_1_1lib_1_1EventFlowWriter.html">EventFlowWriter</a>*<span class="keyword">&gt;</span>(<a class="code hl_function" href="namespacemxl_1_1lib.html#a6ac56d2b21f2be2a3ce4eeeb05fc693a">to_FlowWriter</a>(handle)); <span class="keywordtype">object</span> != <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">  690</span>        {</div>
+<div class="line"><span class="lineno">  691</span>            <span class="keywordflow">return</span> <span class="keywordtype">object</span>-&gt;commit(*info);</div>
+<div class="line"><span class="lineno">  692</span>        }</div>
+<div class="line"><span class="lineno">  693</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7e373bf0b716fa86fddd6f91b796f3d1">MXL_ERR_INVALID_FLOW_WRITER</a>;</div>
+<div class="line"><span class="lineno">  694</span>    }</div>
+<div class="line"><span class="lineno">  695</span>    <span class="keywordflow">catch</span> (...)</div>
+<div class="line"><span class="lineno">  696</span>    {</div>
+<div class="line"><span class="lineno">  697</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">  698</span>    }</div>
+<div class="line"><span class="lineno">  699</span>}</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -2159,6 +2466,77 @@ grouphint tag: "Audio Receiver A:Audio #2" </li>
 <div class="line"><span class="lineno">  594</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
 <div class="line"><span class="lineno">  595</span>    }</div>
 <div class="line"><span class="lineno">  596</span>}</div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="aeb91243340f12ba394fc0ee7c36c2348" name="aeb91243340f12ba394fc0ee7c36c2348"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeb91243340f12ba394fc0ee7c36c2348">&#9670;&#160;</a></span>mxlFlowWriterOpenEvent()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> <a class="el" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344f">mxlStatus</a> mxlFlowWriterOpenEvent </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="flow_8h.html#a9507670765fbb76417144c0d28e5fa46">mxlFlowWriter</a>&#160;</td>
+          <td class="paramname"><em>writer</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="flow_8h.html#a4ab384e09db0a07580f750ea8077702e">mxlEventInfo</a> *&#160;</td>
+          <td class="paramname"><em>event</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t **&#160;</td>
+          <td class="paramname"><em>payload</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Open an event for writing </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">writer</td><td>Event flow writer acquired with mxlCreateFlowWriter. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">event</td><td>Receives initialized metadata; must not be NULL. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">payload</td><td>Receives the private writable buffer; must not be NULL. The buffer contents are not cleared on open. eventSize starts at zero; obtain capacity from mxlFlowConfigInfo.event.eventPayloadSize and set the actual size before commit. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">MXL_STATUS_OK</td><td>The event is open for editing. </td></tr>
+    <tr><td class="paramname">MXL_ERR_INVALID_ARG</td><td>An output pointer is NULL or an event is already open. </td></tr>
+    <tr><td class="paramname">MXL_ERR_INVALID_FLOW_WRITER</td><td>The handle is NULL or is not an event writer. </td></tr>
+    <tr><td class="paramname">MXL_ERR_UNKNOWN</td><td>An internal exception occurred. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">Definition at line <a class="el" href="flow_8cpp_source.html#l00659">659</a> of file <a class="el" href="flow_8cpp_source.html">flow.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  660</span>{</div>
+<div class="line"><span class="lineno">  661</span>    <span class="keywordflow">if</span> ((info == <span class="keyword">nullptr</span>) || (payload == <span class="keyword">nullptr</span>))</div>
+<div class="line"><span class="lineno">  662</span>    {</div>
+<div class="line"><span class="lineno">  663</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
+<div class="line"><span class="lineno">  664</span>    }</div>
+<div class="line"><span class="lineno">  665</span>    <span class="keywordflow">try</span></div>
+<div class="line"><span class="lineno">  666</span>    {</div>
+<div class="line"><span class="lineno">  667</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keywordtype">object</span> = <span class="keyword">dynamic_cast&lt;</span><a class="code hl_class" href="classmxl_1_1lib_1_1EventFlowWriter.html">EventFlowWriter</a>*<span class="keyword">&gt;</span>(<a class="code hl_function" href="namespacemxl_1_1lib.html#a6ac56d2b21f2be2a3ce4eeeb05fc693a">to_FlowWriter</a>(handle)); <span class="keywordtype">object</span> != <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">  668</span>        {</div>
+<div class="line"><span class="lineno">  669</span>            <span class="keywordflow">return</span> <span class="keywordtype">object</span>-&gt;openEvent(info, payload);</div>
+<div class="line"><span class="lineno">  670</span>        }</div>
+<div class="line"><span class="lineno">  671</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7e373bf0b716fa86fddd6f91b796f3d1">MXL_ERR_INVALID_FLOW_WRITER</a>;</div>
+<div class="line"><span class="lineno">  672</span>    }</div>
+<div class="line"><span class="lineno">  673</span>    <span class="keywordflow">catch</span> (...)</div>
+<div class="line"><span class="lineno">  674</span>    {</div>
+<div class="line"><span class="lineno">  675</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">  676</span>    }</div>
+<div class="line"><span class="lineno">  677</span>}</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -2469,7 +2847,7 @@ grouphint tag: "Audio Receiver A:Audio #2" </li>
 <div class="line"><span class="lineno">   44</span>                        <span class="comment">// other process is writing to the flow.</span></div>
 <div class="line"><span class="lineno">   45</span>                        <span class="keyword">auto</span> flowDataFile = <a class="code hl_function" href="namespacemxl_1_1lib.html#a70469f14e75438e90bdf85253ad817f9">mxl::lib::makeFlowDataFilePath</a>(domain, <a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>);</div>
 <div class="line"><span class="lineno">   46</span> </div>
-<div class="line"><span class="lineno">   47</span>                        <span class="keywordtype">int</span> fd = open(flowDataFile.c_str(), O_RDONLY | O_CLOEXEC);</div>
+<div class="line"><span class="lineno">   47</span>                        <span class="keyword">auto</span> <span class="keyword">const</span> fd = ::open(flowDataFile.c_str(), O_RDONLY | O_CLOEXEC);</div>
 <div class="line"><span class="lineno">   48</span>                        <span class="keywordflow">if</span> (fd &lt; 0)</div>
 <div class="line"><span class="lineno">   49</span>                        {</div>
 <div class="line"><span class="lineno">   50</span>                            <span class="keyword">auto</span> <span class="keyword">const</span> error = errno;</div>
@@ -2483,7 +2861,7 @@ grouphint tag: "Audio Receiver A:Audio #2" </li>
 <div class="line"><span class="lineno">   58</span>                        }</div>
 <div class="line"><span class="lineno">   59</span> </div>
 <div class="line"><span class="lineno">   60</span>                        <span class="comment">// Try to obtain an exclusive lock on the file descriptor. Do not block if the lock cannot be obtained.</span></div>
-<div class="line"><span class="lineno">   61</span>                        <span class="keywordtype">bool</span> <a class="code hl_variable" href="test__flows_8cpp.html#a03c996f9fcf0e10baeb3e700be0c409a">active</a> = flock(fd, LOCK_EX | LOCK_NB) &lt; 0;</div>
+<div class="line"><span class="lineno">   61</span>                        <span class="keyword">auto</span> <span class="keyword">const</span> <a class="code hl_variable" href="test__flows_8cpp.html#a03c996f9fcf0e10baeb3e700be0c409a">active</a> = ::flock(fd, LOCK_EX | LOCK_NB) &lt; 0;</div>
 <div class="line"><span class="lineno">   62</span>                        close(fd);</div>
 <div class="line"><span class="lineno">   63</span> </div>
 <div class="line"><span class="lineno">   64</span>                        *isActive = <a class="code hl_variable" href="test__flows_8cpp.html#a03c996f9fcf0e10baeb3e700be0c409a">active</a>;</div>
@@ -2591,25 +2969,25 @@ grouphint tag: "Audio Receiver A:Audio #2" </li>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>MXL_STATUS_OK if the group was successfully released. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="flow_8cpp_source.html#l00680">680</a> of file <a class="el" href="flow_8cpp_source.html">flow.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  681</span>{</div>
-<div class="line"><span class="lineno">  682</span>    <span class="keywordflow">try</span></div>
-<div class="line"><span class="lineno">  683</span>    {</div>
-<div class="line"><span class="lineno">  684</span>        <span class="keyword">auto</span> <span class="keyword">const</span> cppInstance = <a class="code hl_function" href="namespacemxl_1_1lib.html#ad7ae9445f7502d4d1ffcc5af64c8f1a5">to_Instance</a>(instance);</div>
-<div class="line"><span class="lineno">  685</span>        <span class="keyword">auto</span> <span class="keyword">const</span> cppGroup = <a class="code hl_function" href="namespacemxl_1_1lib.html#ac2ae6195dd3172fbb7a3594d771d9c8a">to_FlowSynchronizationGroup</a>(group);</div>
-<div class="line"><span class="lineno">  686</span>        <span class="keywordflow">if</span> ((cppInstance != <span class="keyword">nullptr</span>) &amp;&amp; (cppGroup != <span class="keyword">nullptr</span>))</div>
-<div class="line"><span class="lineno">  687</span>        {</div>
-<div class="line"><span class="lineno">  688</span>            cppInstance-&gt;releaseFlowSynchronizationGroup(cppGroup);</div>
-<div class="line"><span class="lineno">  689</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
-<div class="line"><span class="lineno">  690</span>        }</div>
-<div class="line"><span class="lineno">  691</span> </div>
-<div class="line"><span class="lineno">  692</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
-<div class="line"><span class="lineno">  693</span>    }</div>
-<div class="line"><span class="lineno">  694</span>    <span class="keywordflow">catch</span> (...)</div>
-<div class="line"><span class="lineno">  695</span>    {</div>
-<div class="line"><span class="lineno">  696</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
-<div class="line"><span class="lineno">  697</span>    }</div>
-<div class="line"><span class="lineno">  698</span>}</div>
+<p class="definition">Definition at line <a class="el" href="flow_8cpp_source.html#l00786">786</a> of file <a class="el" href="flow_8cpp_source.html">flow.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  787</span>{</div>
+<div class="line"><span class="lineno">  788</span>    <span class="keywordflow">try</span></div>
+<div class="line"><span class="lineno">  789</span>    {</div>
+<div class="line"><span class="lineno">  790</span>        <span class="keyword">auto</span> <span class="keyword">const</span> cppInstance = <a class="code hl_function" href="namespacemxl_1_1lib.html#ad7ae9445f7502d4d1ffcc5af64c8f1a5">to_Instance</a>(instance);</div>
+<div class="line"><span class="lineno">  791</span>        <span class="keyword">auto</span> <span class="keyword">const</span> cppGroup = <a class="code hl_function" href="namespacemxl_1_1lib.html#ac2ae6195dd3172fbb7a3594d771d9c8a">to_FlowSynchronizationGroup</a>(group);</div>
+<div class="line"><span class="lineno">  792</span>        <span class="keywordflow">if</span> ((cppInstance != <span class="keyword">nullptr</span>) &amp;&amp; (cppGroup != <span class="keyword">nullptr</span>))</div>
+<div class="line"><span class="lineno">  793</span>        {</div>
+<div class="line"><span class="lineno">  794</span>            cppInstance-&gt;releaseFlowSynchronizationGroup(cppGroup);</div>
+<div class="line"><span class="lineno">  795</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
+<div class="line"><span class="lineno">  796</span>        }</div>
+<div class="line"><span class="lineno">  797</span> </div>
+<div class="line"><span class="lineno">  798</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
+<div class="line"><span class="lineno">  799</span>    }</div>
+<div class="line"><span class="lineno">  800</span>    <span class="keywordflow">catch</span> (...)</div>
+<div class="line"><span class="lineno">  801</span>    {</div>
+<div class="line"><span class="lineno">  802</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">  803</span>    }</div>
+<div class="line"><span class="lineno">  804</span>}</div>
 </div><!-- fragment -->
 </div>
 </div>

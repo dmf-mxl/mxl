@@ -6,5 +6,7 @@ var structmxl_1_1lib_1_1PosixFlowIoFactory =
     [ "createContinuousFlowWriter", "structmxl_1_1lib_1_1PosixFlowIoFactory.html#a372874b6cc7efc1461e9eb21fc8f92d6", null ],
     [ "createDiscreteFlowReader", "structmxl_1_1lib_1_1PosixFlowIoFactory.html#a27db8afbb7a03c58372f298f36c4e9e1", null ],
     [ "createDiscreteFlowWriter", "structmxl_1_1lib_1_1PosixFlowIoFactory.html#ac145c74513cceb103d6d6840cb69082a", null ],
+    [ "createEventFlowReader", "structmxl_1_1lib_1_1PosixFlowIoFactory.html#a5e7cd055c7709262e9758fd24cc75b9a", null ],
+    [ "createEventFlowWriter", "structmxl_1_1lib_1_1PosixFlowIoFactory.html#a47c29f64788add3235997eaef4705920", null ],
     [ "_watcher", "structmxl_1_1lib_1_1PosixFlowIoFactory.html#aeff5af58df01e7cffec13acd27b88f9d", null ]
 ];

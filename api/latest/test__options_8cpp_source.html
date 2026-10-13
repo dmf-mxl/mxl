@@ -206,13 +206,35 @@ $(document).ready(function(){initNavTree('test__options_8cpp_source.html',''); i
 <div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(instance-&gt;getHistoryDurationNs() == 200&#39;000&#39;000ULL); <span class="comment">// default value</span></div>
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>}</div>
 </div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span> </div>
+<div class="foldopen" id="foldopen00092" data-start="{" data-end="}">
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno"><a class="line" href="test__options_8cpp.html#a51b0599e830af2a0aac4dc348861363c">   92</a></span><a class="code hl_function" href="test__options_8cpp.html#a2e765040369988a52e250c3b5ca96d03">TEST_CASE_PERSISTENT_FIXTURE</a>(<a class="code hl_class" href="classmxl_1_1tests_1_1mxlDomainFixture.html">mxl::tests::mxlDomainFixture</a>, <span class="stringliteral">&quot;Options : Missing and inaccessible domain config&quot;</span>, <span class="stringliteral">&quot;[options]&quot;</span>)</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>{</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    <span class="keyword">auto</span> <span class="keyword">const</span> path = <a class="code hl_function" href="namespacemxl_1_1lib.html#a9ac9d4b5caf62bff41480e66c6f6719f">makeDomainOptionsFilePath</a>(domain);</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    std::filesystem::remove(path); <span class="comment">// The persistent fixture is shared between sections.</span></div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    SECTION(<span class="stringliteral">&quot;Missing options use the fallback&quot;</span>)</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    {}</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>    SECTION(<span class="stringliteral">&quot;A dangling symlink uses the fallback&quot;</span>)</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    {</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>        std::filesystem::create_symlink(<span class="stringliteral">&quot;missing-options.json&quot;</span>, path);</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    }</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    SECTION(<span class="stringliteral">&quot;An unresolvable symlink uses the fallback&quot;</span>)</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>    {</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>        std::filesystem::create_symlink(path.filename(), path);</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>    }</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    <span class="keyword">auto</span> domainWatcher = std::make_shared&lt;DomainWatcher&gt;(domain);</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    <span class="keyword">auto</span> flowIoFactory = std::make_unique&lt;mxl::lib::PosixFlowIoFactory&gt;(domainWatcher);</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    <span class="keyword">auto</span> <span class="keyword">const</span> instance = std::make_shared&lt;Instance&gt;(domain, <span class="stringliteral">&quot;&quot;</span>, std::move(flowIoFactory), domainWatcher);</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(instance-&gt;getHistoryDurationNs() == 200&#39;000&#39;000ULL);</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>}</div>
+</div>
 <div class="ttc" id="aDomainWatcher_8hpp_html"><div class="ttname"><a href="DomainWatcher_8hpp.html">DomainWatcher.hpp</a></div></div>
 <div class="ttc" id="aInstance_8hpp_html"><div class="ttname"><a href="Instance_8hpp.html">Instance.hpp</a></div></div>
-<div class="ttc" id="aPathUtils_8hpp_html"><div class="ttname"><a href="PathUtils_8hpp.html">PathUtils.hpp</a></div></div>
+<div class="ttc" id="aPathUtils_8hpp_html"><div class="ttname"><a href="PathUtils_8hpp.html">PathUtils.hpp</a></div><div class="ttdoc">Paths and filenames utilities used by the MXL SDK.</div></div>
 <div class="ttc" id="aPosixFlowIoFactory_8hpp_html"><div class="ttname"><a href="PosixFlowIoFactory_8hpp.html">PosixFlowIoFactory.hpp</a></div></div>
 <div class="ttc" id="aclassmxl_1_1tests_1_1mxlDomainFixture_html"><div class="ttname"><a href="classmxl_1_1tests_1_1mxlDomainFixture.html">mxl::tests::mxlDomainFixture</a></div><div class="ttdef"><b>Definition</b> <a href="Utils_8hpp_source.html#l00037">Utils.hpp:38</a></div></div>
 <div class="ttc" id="anamespacemxl_1_1lib_html"><div class="ttname"><a href="namespacemxl_1_1lib.html">mxl::lib</a></div><div class="ttdef"><b>Definition</b> <a href="fabrics_8cpp_source.html#l00030">fabrics.cpp:31</a></div></div>
-<div class="ttc" id="anamespacemxl_1_1lib_html_a9ac9d4b5caf62bff41480e66c6f6719f"><div class="ttname"><a href="namespacemxl_1_1lib.html#a9ac9d4b5caf62bff41480e66c6f6719f">mxl::lib::makeDomainOptionsFilePath</a></div><div class="ttdeci">std::filesystem::path makeDomainOptionsFilePath(std::filesystem::path const &amp;domain)</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8cpp_source.html#l00053">PathUtils.cpp:53</a></div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_html_a9ac9d4b5caf62bff41480e66c6f6719f"><div class="ttname"><a href="namespacemxl_1_1lib.html#a9ac9d4b5caf62bff41480e66c6f6719f">mxl::lib::makeDomainOptionsFilePath</a></div><div class="ttdeci">std::filesystem::path makeDomainOptionsFilePath(std::filesystem::path const &amp;domain)</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8cpp_source.html#l00059">PathUtils.cpp:59</a></div></div>
 <div class="ttc" id="atest__options_8cpp_html_a2e765040369988a52e250c3b5ca96d03"><div class="ttname"><a href="test__options_8cpp.html#a2e765040369988a52e250c3b5ca96d03">TEST_CASE_PERSISTENT_FIXTURE</a></div><div class="ttdeci">TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, &quot;Options : Default value&quot;, &quot;[options]&quot;)</div><div class="ttdef"><b>Definition</b> <a href="test__options_8cpp_source.html#l00023">test_options.cpp:23</a></div></div>
 <div class="ttc" id="atest__time_8cpp_html_a1a5968f31b011ad005e4618a3d5f10ef"><div class="ttname"><a href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a></div><div class="ttdeci">REQUIRE(timeDelta&lt; 33 '366 '667LL)</div></div>
 </div><!-- fragment --></div><!-- contents -->

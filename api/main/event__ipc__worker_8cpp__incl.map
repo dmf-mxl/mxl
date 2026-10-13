@@ -1,0 +1,31 @@
+<map id="lib/tests/event_ipc_worker.cpp" name="lib/tests/event_ipc_worker.cpp">
+<area shape="rect" id="Node000001" title="Child&#45;process consumer for event IPC regression tests." alt="" coords="55,5,196,45"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,93,64,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="105,48,60,86,57,82,102,44"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="88,93,163,119"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="128,46,128,79,123,79,123,46"/>
+<area shape="rect" id="Node000004" href="$flow_8h.html" title="Public flow reader, writer, payload and synchronization APIs." alt="" coords="187,93,277,119"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="153,43,206,83,203,87,150,48"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="463,240,545,265"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="255,117,472,231,469,236,253,121"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="76,167,151,192"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="214,121,146,162,143,157,212,116"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="158,313,229,339"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="191,121,119,144,87,157,66,169,48,185,37,200,23,241,19,253,22,264,47,288,78,304,112,315,144,320,144,325,111,320,76,309,44,292,18,267,14,253,17,239,32,197,44,181,62,165,85,152,117,139,189,116"/>
+<area shape="rect" id="Node000008" href="$flowinfo_8h.html" title="Public configuration and runtime metadata for MXL flows." alt="" coords="175,167,289,192"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="235,119,235,153,229,153,229,119"/>
+<area shape="rect" id="Node000012" href="$mxl_8h.html" title=" " alt="" coords="499,167,587,192"/>
+<area shape="poly" id="edge13_Node000004_Node000012" title=" " alt="" coords="278,115,486,162,485,168,277,120"/>
+<area shape="poly" id="edge8_Node000008_Node000007" title=" " alt="" coords="175,193,91,213,55,226,34,242,28,256,30,268,39,279,55,289,98,305,145,315,144,320,97,310,53,294,36,283,25,270,22,255,30,238,53,222,89,207,174,187"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="44,240,140,265"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="211,194,128,236,126,231,208,190"/>
+<area shape="rect" id="Node000010" href="$dataformat_8h.html" title="Public flow format identifiers and format classification helpers." alt="" coords="164,240,300,265"/>
+<area shape="poly" id="edge10_Node000008_Node000010" title=" " alt="" coords="235,192,235,226,229,226,229,192"/>
+<area shape="rect" id="Node000011" href="$rational_8h.html" title=" " alt="" coords="325,240,438,265"/>
+<area shape="poly" id="edge11_Node000008_Node000011" title=" " alt="" coords="257,190,346,232,343,236,255,194"/>
+<area shape="poly" id="edge12_Node000011_Node000007" title=" " alt="" coords="352,268,238,311,236,306,350,263"/>
+<area shape="poly" id="edge14_Node000012_Node000005" title=" " alt="" coords="539,194,519,229,514,227,534,191"/>
+<area shape="poly" id="edge15_Node000012_Node000007" title=" " alt="" coords="552,191,567,227,568,248,559,267,537,284,505,297,419,314,324,323,243,327,242,322,324,318,418,309,503,291,535,279,555,264,562,247,561,228,547,193"/>
+<area shape="rect" id="Node000013" href="$platform_8h.html" title=" " alt="" coords="621,240,739,265"/>
+<area shape="poly" id="edge16_Node000012_Node000013" title=" " alt="" coords="566,190,647,231,644,236,564,194"/>
+</map>

@@ -29,7 +29,9 @@ var searchData=
   ['_7epassiveendpoint_26',['~PassiveEndpoint',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1PassiveEndpoint.html#a074f89d0ec9baf7968aaf472f29c8abe',1,'mxl::lib::fabrics::ofi::PassiveEndpoint']]],
   ['_7eposixdiscreteflowreader_27',['~PosixDiscreteFlowReader',['../classmxl_1_1lib_1_1PosixDiscreteFlowReader.html#a6b15a9eb80fde431869f7422b7869678',1,'mxl::lib::PosixDiscreteFlowReader']]],
   ['_7eposixdiscreteflowwriter_28',['~PosixDiscreteFlowWriter',['../classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#aa9637e3e43821849425814e3b8a84473',1,'mxl::lib::PosixDiscreteFlowWriter']]],
-  ['_7eposixflowiofactory_29',['~PosixFlowIoFactory',['../structmxl_1_1lib_1_1PosixFlowIoFactory.html#a27a911959991b89472426017c45c4720',1,'mxl::lib::PosixFlowIoFactory']]],
-  ['_7esharedmemorybase_30',['~SharedMemoryBase',['../classmxl_1_1lib_1_1SharedMemoryBase.html#aae9ae53956456e5edb3df80f13e64f8b',1,'mxl::lib::SharedMemoryBase']]],
-  ['_7etarget_31',['~Target',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#a8a00c993055e826b0dd24d1892f3e094',1,'mxl::lib::fabrics::ofi::Target']]]
+  ['_7eposixeventflowreader_29',['~PosixEventFlowReader',['../classmxl_1_1lib_1_1PosixEventFlowReader.html#a43656cc7b4475aaa0ecda7d23395003a',1,'mxl::lib::PosixEventFlowReader']]],
+  ['_7eposixeventflowwriter_30',['~PosixEventFlowWriter',['../classmxl_1_1lib_1_1PosixEventFlowWriter.html#a2807a66edabe52139c09d195707f7fad',1,'mxl::lib::PosixEventFlowWriter']]],
+  ['_7eposixflowiofactory_31',['~PosixFlowIoFactory',['../structmxl_1_1lib_1_1PosixFlowIoFactory.html#a27a911959991b89472426017c45c4720',1,'mxl::lib::PosixFlowIoFactory']]],
+  ['_7esharedmemorybase_32',['~SharedMemoryBase',['../classmxl_1_1lib_1_1SharedMemoryBase.html#aae9ae53956456e5edb3df80f13e64f8b',1,'mxl::lib::SharedMemoryBase']]],
+  ['_7etarget_33',['~Target',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#a8a00c993055e826b0dd24d1892f3e094',1,'mxl::lib::fabrics::ofi::Target']]]
 ];

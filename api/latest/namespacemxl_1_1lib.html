@@ -141,6 +141,27 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1Duration.html">Duration</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1Event.html">Event</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fixed part of an event slot; its payload follows immediately in the mapping.  <a href="structmxl_1_1lib_1_1Event.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1EventFlowData.html">EventFlowData</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Own the common flow mapping, single event ring mapping and ring view.  <a href="classmxl_1_1lib_1_1EventFlowData.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1EventFlowReader.html">EventFlowReader</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Backend contract for reading complete event entries or fragments in queue order. Each reader has one owning thread; concurrent consumers must use independent readers.  <a href="classmxl_1_1lib_1_1EventFlowReader.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1EventFlowWriter.html">EventFlowWriter</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Backend contract for a single event producer with private write staging. Callers guarantee one writer per flow across all instances and processes, and serialize the complete open/edit/commit-or-cancel transaction.  <a href="classmxl_1_1lib_1_1EventFlowWriter.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1EventHeader.html">EventHeader</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">768-byte slot header with layout fields, sequence and metadata on separate 128-byte boundaries. The fixed padding is part of the shared-memory ABI and must not depend on compiler CPU tuning.  <a href="structmxl_1_1lib_1_1EventHeader.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1EventRingBuffer.html">EventRingBuffer</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Non-owning single-producer event ring view safe for concurrent snapshot readers.  <a href="classmxl_1_1lib_1_1EventRingBuffer.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1EventRingHeader.html">EventRingHeader</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Immutable 4 KiB geometry header at the start of the single event ring file.  <a href="structmxl_1_1lib_1_1EventRingHeader.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1Flow.html">Flow</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowData.html">FlowData</a></td></tr>
@@ -178,6 +199,12 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowReader.html">PosixDiscreteFlowReader</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html">PosixDiscreteFlowWriter</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1PosixEventFlowReader.html">PosixEventFlowReader</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">POSIX event consumer with a single-thread cursor and an owned payload snapshot.  <a href="classmxl_1_1lib_1_1PosixEventFlowReader.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1PosixEventFlowWriter.html">PosixEventFlowWriter</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">POSIX single-producer writer with private staging and monotonic timestamps. The caller guarantees one writer per flow and serializes transactions; readers may run concurrently.  <a href="classmxl_1_1lib_1_1PosixEventFlowWriter.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1PosixFlowIoFactory.html">PosixFlowIoFactory</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -263,6 +290,9 @@ Functions</h2></td></tr>
 <tr class="separator:a2da47d2e220490d45401e923a7a68c18"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9ac9d4b5caf62bff41480e66c6f6719f" id="r_a9ac9d4b5caf62bff41480e66c6f6719f"><td class="memItemLeft" align="right" valign="top">std::filesystem::path&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemxl_1_1lib.html#a9ac9d4b5caf62bff41480e66c6f6719f">makeDomainOptionsFilePath</a> (std::filesystem::path const &amp;domain)</td></tr>
 <tr class="separator:a9ac9d4b5caf62bff41480e66c6f6719f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3006bf739e2850b7d72f53b7ea36af09" id="r_a3006bf739e2850b7d72f53b7ea36af09"><td class="memItemLeft" align="right" valign="top">std::filesystem::path&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemxl_1_1lib.html#a3006bf739e2850b7d72f53b7ea36af09">makeEventDataFilePath</a> (std::filesystem::path const &amp;flowDirectory)</td></tr>
+<tr class="memdesc:a3006bf739e2850b7d72f53b7ea36af09"><td class="mdescLeft">&#160;</td><td class="mdescRight">Locate an event ring file within its flow directory.  <br /></td></tr>
+<tr class="separator:a3006bf739e2850b7d72f53b7ea36af09"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9e9d7506879416d52eedc23603fd5529" id="r_a9e9d7506879416d52eedc23603fd5529"><td class="memItemLeft" align="right" valign="top">std::filesystem::path&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemxl_1_1lib.html#a9e9d7506879416d52eedc23603fd5529">makeFlowAccessFilePath</a> (std::filesystem::path const &amp;domain, std::string const &amp;uuid)</td></tr>
 <tr class="separator:a9e9d7506879416d52eedc23603fd5529"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a57c0a4f52e26a828deedc371ec79d6ef" id="r_a57c0a4f52e26a828deedc371ec79d6ef"><td class="memItemLeft" align="right" valign="top">std::filesystem::path&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemxl_1_1lib.html#a57c0a4f52e26a828deedc371ec79d6ef">makeFlowAccessFilePath</a> (std::filesystem::path const &amp;flowDirectory)</td></tr>
@@ -389,6 +419,12 @@ Variables</h2></td></tr>
 <tr class="separator:a44b07cb5d69ae9cddd76526d4f6d887b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad8c65b006c5ca55d780dea52924a6b2c" id="r_ad8c65b006c5ca55d780dea52924a6b2c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemxl_1_1lib.html#ad8c65b006c5ca55d780dea52924a6b2c">else</a></td></tr>
 <tr class="separator:ad8c65b006c5ca55d780dea52924a6b2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0f6f136c0828bcf9864f8cbafac49677" id="r_a0f6f136c0828bcf9864f8cbafac49677"><td class="memItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemxl_1_1lib.html#a0f6f136c0828bcf9864f8cbafac49677">EVENT_DATA_FILE_NAME</a> = &quot;events&quot;</td></tr>
+<tr class="memdesc:a0f6f136c0828bcf9864f8cbafac49677"><td class="mdescLeft">&#160;</td><td class="mdescRight">Filename of the single shared-memory event ring within a flow directory.  <br /></td></tr>
+<tr class="separator:a0f6f136c0828bcf9864f8cbafac49677"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a10580dc38bafefba50539a56b45d984e" id="r_a10580dc38bafefba50539a56b45d984e"><td class="memItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemxl_1_1lib.html#a10580dc38bafefba50539a56b45d984e">EVENT_HEADER_VERSION</a> = std::uint32_t{1}</td></tr>
+<tr class="memdesc:a10580dc38bafefba50539a56b45d984e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Version stored in the public mxlEventInfo metadata of every published entry.  <br /></td></tr>
+<tr class="separator:a10580dc38bafefba50539a56b45d984e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a17f29e695260e46dfb1336e2b5fd5675" id="r_a17f29e695260e46dfb1336e2b5fd5675"><td class="memItemLeft" align="right" valign="top">constexpr auto const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemxl_1_1lib.html#a17f29e695260e46dfb1336e2b5fd5675">FLOW_ACCESS_FILE_NAME</a> = &quot;access&quot;</td></tr>
 <tr class="separator:a17f29e695260e46dfb1336e2b5fd5675"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a580bdf4fb1b1f1780a71c0d6f97ad412" id="r_a580bdf4fb1b1f1780a71c0d6f97ad412"><td class="memItemLeft" align="right" valign="top">constexpr auto const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemxl_1_1lib.html#a580bdf4fb1b1f1780a71c0d6f97ad412">FLOW_DATA_FILE_NAME</a> = &quot;data&quot;</td></tr>
@@ -1257,10 +1293,10 @@ template&lt;typename To , typename From &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00070">70</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   71</span>    {</div>
-<div class="line"><span class="lineno">   72</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="namespacemxl_1_1lib.html#a2da47d2e220490d45401e923a7a68c18">makeChannelDataFilePath</a>(<a class="code hl_function" href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">makeFlowDirectoryName</a>(domain, uuid));</div>
-<div class="line"><span class="lineno">   73</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00083">83</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   84</span>    {</div>
+<div class="line"><span class="lineno">   85</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="namespacemxl_1_1lib.html#a2da47d2e220490d45401e923a7a68c18">makeChannelDataFilePath</a>(<a class="code hl_function" href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">makeFlowDirectoryName</a>(domain, uuid));</div>
+<div class="line"><span class="lineno">   86</span>    }</div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_a2da47d2e220490d45401e923a7a68c18"><div class="ttname"><a href="namespacemxl_1_1lib.html#a2da47d2e220490d45401e923a7a68c18">mxl::lib::makeChannelDataFilePath</a></div><div class="ttdeci">std::filesystem::path makeChannelDataFilePath(std::filesystem::path const &amp;flowDirectory)</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8cpp_source.html#l00047">PathUtils.cpp:47</a></div></div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_aeeacfdf05a4fd16afc20501015b3413b"><div class="ttname"><a href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">mxl::lib::makeFlowDirectoryName</a></div><div class="ttdeci">std::filesystem::path makeFlowDirectoryName(std::filesystem::path const &amp;domain, std::string const &amp;uuid)</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8cpp_source.html#l00011">PathUtils.cpp:11</a></div></div>
 </div><!-- fragment -->
@@ -1286,7 +1322,7 @@ template&lt;typename To , typename From &gt; </div>
 <div class="fragment"><div class="line"><span class="lineno">   48</span>    {</div>
 <div class="line"><span class="lineno">   49</span>        <span class="keywordflow">return</span> flowDirectory / <a class="code hl_variable" href="namespacemxl_1_1lib.html#a2438463309d4c01dd389a2b12eab1dbc">CHANNEL_DATA_FILE_NAME</a>;</div>
 <div class="line"><span class="lineno">   50</span>    }</div>
-<div class="ttc" id="anamespacemxl_1_1lib_html_a2438463309d4c01dd389a2b12eab1dbc"><div class="ttname"><a href="namespacemxl_1_1lib.html#a2438463309d4c01dd389a2b12eab1dbc">mxl::lib::CHANNEL_DATA_FILE_NAME</a></div><div class="ttdeci">constexpr auto const CHANNEL_DATA_FILE_NAME</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8hpp_source.html#l00016">PathUtils.hpp:16</a></div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_html_a2438463309d4c01dd389a2b12eab1dbc"><div class="ttname"><a href="namespacemxl_1_1lib.html#a2438463309d4c01dd389a2b12eab1dbc">mxl::lib::CHANNEL_DATA_FILE_NAME</a></div><div class="ttdeci">constexpr auto const CHANNEL_DATA_FILE_NAME</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8hpp_source.html#l00020">PathUtils.hpp:20</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -1306,11 +1342,44 @@ template&lt;typename To , typename From &gt; </div>
       </table>
 </div><div class="memdoc">
 
+<p class="definition">Definition at line <a class="el" href="PathUtils_8cpp_source.html#l00059">59</a> of file <a class="el" href="PathUtils_8cpp_source.html">PathUtils.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   60</span>    {</div>
+<div class="line"><span class="lineno">   61</span>        <span class="keywordflow">return</span> domain / (<a class="code hl_variable" href="namespacemxl_1_1lib.html#a44b07cb5d69ae9cddd76526d4f6d887b">DOMAIN_OPTIONS_FILE_NAME</a>);</div>
+<div class="line"><span class="lineno">   62</span>    }</div>
+<div class="ttc" id="anamespacemxl_1_1lib_html_a44b07cb5d69ae9cddd76526d4f6d887b"><div class="ttname"><a href="namespacemxl_1_1lib.html#a44b07cb5d69ae9cddd76526d4f6d887b">mxl::lib::DOMAIN_OPTIONS_FILE_NAME</a></div><div class="ttdeci">constexpr auto const DOMAIN_OPTIONS_FILE_NAME</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8hpp_source.html#l00023">PathUtils.hpp:23</a></div></div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="a3006bf739e2850b7d72f53b7ea36af09" name="a3006bf739e2850b7d72f53b7ea36af09"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3006bf739e2850b7d72f53b7ea36af09">&#9670;&#160;</a></span>makeEventDataFilePath()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="platform_8h.html#ad90e68ab074186a989ed4fc5f0532a4b">MXL_EXPORT</a> std::filesystem::path mxl::lib::makeEventDataFilePath </td>
+          <td>(</td>
+          <td class="paramtype">std::filesystem::path const &amp;&#160;</td>
+          <td class="paramname"><em>flowDirectory</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Locate an event ring file within its flow directory. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">flowDirectory</td><td>Fully resolved flow directory, including its flow ID component. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Path to the events file; no filesystem access is performed. </dd></dl>
+
 <p class="definition">Definition at line <a class="el" href="PathUtils_8cpp_source.html#l00053">53</a> of file <a class="el" href="PathUtils_8cpp_source.html">PathUtils.cpp</a>.</p>
 <div class="fragment"><div class="line"><span class="lineno">   54</span>    {</div>
-<div class="line"><span class="lineno">   55</span>        <span class="keywordflow">return</span> domain / (<a class="code hl_variable" href="namespacemxl_1_1lib.html#a44b07cb5d69ae9cddd76526d4f6d887b">DOMAIN_OPTIONS_FILE_NAME</a>);</div>
+<div class="line"><span class="lineno">   55</span>        <span class="keywordflow">return</span> flowDirectory / <a class="code hl_variable" href="namespacemxl_1_1lib.html#a0f6f136c0828bcf9864f8cbafac49677">EVENT_DATA_FILE_NAME</a>;</div>
 <div class="line"><span class="lineno">   56</span>    }</div>
-<div class="ttc" id="anamespacemxl_1_1lib_html_a44b07cb5d69ae9cddd76526d4f6d887b"><div class="ttname"><a href="namespacemxl_1_1lib.html#a44b07cb5d69ae9cddd76526d4f6d887b">mxl::lib::DOMAIN_OPTIONS_FILE_NAME</a></div><div class="ttdeci">constexpr auto const DOMAIN_OPTIONS_FILE_NAME</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8hpp_source.html#l00017">PathUtils.hpp:17</a></div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_html_a0f6f136c0828bcf9864f8cbafac49677"><div class="ttname"><a href="namespacemxl_1_1lib.html#a0f6f136c0828bcf9864f8cbafac49677">mxl::lib::EVENT_DATA_FILE_NAME</a></div><div class="ttdeci">constexpr auto EVENT_DATA_FILE_NAME</div><div class="ttdoc">Filename of the single shared-memory event ring within a flow directory.</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8hpp_source.html#l00022">PathUtils.hpp:22</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -1348,10 +1417,10 @@ template&lt;typename To , typename From &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00055">55</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   56</span>    {</div>
-<div class="line"><span class="lineno">   57</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="namespacemxl_1_1lib.html#a57c0a4f52e26a828deedc371ec79d6ef">makeFlowAccessFilePath</a>(<a class="code hl_function" href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">makeFlowDirectoryName</a>(domain, uuid));</div>
-<div class="line"><span class="lineno">   58</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00068">68</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   69</span>    {</div>
+<div class="line"><span class="lineno">   70</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="namespacemxl_1_1lib.html#a57c0a4f52e26a828deedc371ec79d6ef">makeFlowAccessFilePath</a>(<a class="code hl_function" href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">makeFlowDirectoryName</a>(domain, uuid));</div>
+<div class="line"><span class="lineno">   71</span>    }</div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_a57c0a4f52e26a828deedc371ec79d6ef"><div class="ttname"><a href="namespacemxl_1_1lib.html#a57c0a4f52e26a828deedc371ec79d6ef">mxl::lib::makeFlowAccessFilePath</a></div><div class="ttdeci">std::filesystem::path makeFlowAccessFilePath(std::filesystem::path const &amp;flowDirectory)</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8cpp_source.html#l00029">PathUtils.cpp:29</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -1376,7 +1445,7 @@ template&lt;typename To , typename From &gt; </div>
 <div class="fragment"><div class="line"><span class="lineno">   30</span>    {</div>
 <div class="line"><span class="lineno">   31</span>        <span class="keywordflow">return</span> flowDirectory / <a class="code hl_variable" href="namespacemxl_1_1lib.html#a17f29e695260e46dfb1336e2b5fd5675">FLOW_ACCESS_FILE_NAME</a>;</div>
 <div class="line"><span class="lineno">   32</span>    }</div>
-<div class="ttc" id="anamespacemxl_1_1lib_html_a17f29e695260e46dfb1336e2b5fd5675"><div class="ttname"><a href="namespacemxl_1_1lib.html#a17f29e695260e46dfb1336e2b5fd5675">mxl::lib::FLOW_ACCESS_FILE_NAME</a></div><div class="ttdeci">constexpr auto const FLOW_ACCESS_FILE_NAME</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8hpp_source.html#l00013">PathUtils.hpp:13</a></div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_html_a17f29e695260e46dfb1336e2b5fd5675"><div class="ttname"><a href="namespacemxl_1_1lib.html#a17f29e695260e46dfb1336e2b5fd5675">mxl::lib::FLOW_ACCESS_FILE_NAME</a></div><div class="ttdeci">constexpr auto const FLOW_ACCESS_FILE_NAME</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8hpp_source.html#l00017">PathUtils.hpp:17</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -1414,10 +1483,10 @@ template&lt;typename To , typename From &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00045">45</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   46</span>    {</div>
-<div class="line"><span class="lineno">   47</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="namespacemxl_1_1lib.html#a70469f14e75438e90bdf85253ad817f9">makeFlowDataFilePath</a>(<a class="code hl_function" href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">makeFlowDirectoryName</a>(domain, uuid));</div>
-<div class="line"><span class="lineno">   48</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00058">58</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   59</span>    {</div>
+<div class="line"><span class="lineno">   60</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="namespacemxl_1_1lib.html#a70469f14e75438e90bdf85253ad817f9">makeFlowDataFilePath</a>(<a class="code hl_function" href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">makeFlowDirectoryName</a>(domain, uuid));</div>
+<div class="line"><span class="lineno">   61</span>    }</div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_a70469f14e75438e90bdf85253ad817f9"><div class="ttname"><a href="namespacemxl_1_1lib.html#a70469f14e75438e90bdf85253ad817f9">mxl::lib::makeFlowDataFilePath</a></div><div class="ttdeci">std::filesystem::path makeFlowDataFilePath(std::filesystem::path const &amp;flowDirectory)</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8cpp_source.html#l00017">PathUtils.cpp:17</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -1442,7 +1511,7 @@ template&lt;typename To , typename From &gt; </div>
 <div class="fragment"><div class="line"><span class="lineno">   18</span>    {</div>
 <div class="line"><span class="lineno">   19</span>        <span class="keywordflow">return</span> flowDirectory / <a class="code hl_variable" href="namespacemxl_1_1lib.html#a580bdf4fb1b1f1780a71c0d6f97ad412">FLOW_DATA_FILE_NAME</a>;</div>
 <div class="line"><span class="lineno">   20</span>    }</div>
-<div class="ttc" id="anamespacemxl_1_1lib_html_a580bdf4fb1b1f1780a71c0d6f97ad412"><div class="ttname"><a href="namespacemxl_1_1lib.html#a580bdf4fb1b1f1780a71c0d6f97ad412">mxl::lib::FLOW_DATA_FILE_NAME</a></div><div class="ttdeci">constexpr auto const FLOW_DATA_FILE_NAME</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8hpp_source.html#l00012">PathUtils.hpp:12</a></div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_html_a580bdf4fb1b1f1780a71c0d6f97ad412"><div class="ttname"><a href="namespacemxl_1_1lib.html#a580bdf4fb1b1f1780a71c0d6f97ad412">mxl::lib::FLOW_DATA_FILE_NAME</a></div><div class="ttdeci">constexpr auto const FLOW_DATA_FILE_NAME</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8hpp_source.html#l00016">PathUtils.hpp:16</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -1480,10 +1549,10 @@ template&lt;typename To , typename From &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00050">50</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   51</span>    {</div>
-<div class="line"><span class="lineno">   52</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="namespacemxl_1_1lib.html#a39dfe661c534ef636ce8dd418e9e8e8f">makeFlowDescriptorFilePath</a>(<a class="code hl_function" href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">makeFlowDirectoryName</a>(domain, uuid));</div>
-<div class="line"><span class="lineno">   53</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00063">63</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   64</span>    {</div>
+<div class="line"><span class="lineno">   65</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="namespacemxl_1_1lib.html#a39dfe661c534ef636ce8dd418e9e8e8f">makeFlowDescriptorFilePath</a>(<a class="code hl_function" href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">makeFlowDirectoryName</a>(domain, uuid));</div>
+<div class="line"><span class="lineno">   66</span>    }</div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_a39dfe661c534ef636ce8dd418e9e8e8f"><div class="ttname"><a href="namespacemxl_1_1lib.html#a39dfe661c534ef636ce8dd418e9e8e8f">mxl::lib::makeFlowDescriptorFilePath</a></div><div class="ttdeci">std::filesystem::path makeFlowDescriptorFilePath(std::filesystem::path const &amp;flowDirectory)</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8cpp_source.html#l00023">PathUtils.cpp:23</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -1508,7 +1577,7 @@ template&lt;typename To , typename From &gt; </div>
 <div class="fragment"><div class="line"><span class="lineno">   24</span>    {</div>
 <div class="line"><span class="lineno">   25</span>        <span class="keywordflow">return</span> flowDirectory / <a class="code hl_variable" href="namespacemxl_1_1lib.html#ad3f5d3561c83048f1790e4405481e986">FLOW_DESCRIPTOR_FILE_NAME</a>;</div>
 <div class="line"><span class="lineno">   26</span>    }</div>
-<div class="ttc" id="anamespacemxl_1_1lib_html_ad3f5d3561c83048f1790e4405481e986"><div class="ttname"><a href="namespacemxl_1_1lib.html#ad3f5d3561c83048f1790e4405481e986">mxl::lib::FLOW_DESCRIPTOR_FILE_NAME</a></div><div class="ttdeci">constexpr auto const FLOW_DESCRIPTOR_FILE_NAME</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8hpp_source.html#l00011">PathUtils.hpp:11</a></div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_html_ad3f5d3561c83048f1790e4405481e986"><div class="ttname"><a href="namespacemxl_1_1lib.html#ad3f5d3561c83048f1790e4405481e986">mxl::lib::FLOW_DESCRIPTOR_FILE_NAME</a></div><div class="ttdeci">constexpr auto const FLOW_DESCRIPTOR_FILE_NAME</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8hpp_source.html#l00015">PathUtils.hpp:15</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -1542,7 +1611,7 @@ template&lt;typename To , typename From &gt; </div>
 <div class="fragment"><div class="line"><span class="lineno">   12</span>    {</div>
 <div class="line"><span class="lineno">   13</span>        <span class="keywordflow">return</span> domain / (uuid + <a class="code hl_variable" href="namespacemxl_1_1lib.html#a9d84906a0c5763e7d494b6858b1bd1f3">FLOW_DIRECTORY_NAME_SUFFIX</a>);</div>
 <div class="line"><span class="lineno">   14</span>    }</div>
-<div class="ttc" id="anamespacemxl_1_1lib_html_a9d84906a0c5763e7d494b6858b1bd1f3"><div class="ttname"><a href="namespacemxl_1_1lib.html#a9d84906a0c5763e7d494b6858b1bd1f3">mxl::lib::FLOW_DIRECTORY_NAME_SUFFIX</a></div><div class="ttdeci">constexpr auto const FLOW_DIRECTORY_NAME_SUFFIX</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8hpp_source.html#l00010">PathUtils.hpp:10</a></div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_html_a9d84906a0c5763e7d494b6858b1bd1f3"><div class="ttname"><a href="namespacemxl_1_1lib.html#a9d84906a0c5763e7d494b6858b1bd1f3">mxl::lib::FLOW_DIRECTORY_NAME_SUFFIX</a></div><div class="ttdeci">constexpr auto const FLOW_DIRECTORY_NAME_SUFFIX</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8hpp_source.html#l00014">PathUtils.hpp:14</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -1586,10 +1655,10 @@ template&lt;typename To , typename From &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00065">65</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   66</span>    {</div>
-<div class="line"><span class="lineno">   67</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="namespacemxl_1_1lib.html#afeccbb33b65a1adc285679681b2f09cb">makeGrainDataFilePath</a>(<a class="code hl_function" href="namespacemxl_1_1lib.html#acebeb5a6c2361ba379c4d1008540abe5">makeGrainDirectoryName</a>(domain, uuid), <a class="code hl_variable" href="test__flows_8cpp.html#a92fcffcf98bd4a3cb5c3668473eb9d04">index</a>);</div>
-<div class="line"><span class="lineno">   68</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00078">78</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   79</span>    {</div>
+<div class="line"><span class="lineno">   80</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="namespacemxl_1_1lib.html#afeccbb33b65a1adc285679681b2f09cb">makeGrainDataFilePath</a>(<a class="code hl_function" href="namespacemxl_1_1lib.html#acebeb5a6c2361ba379c4d1008540abe5">makeGrainDirectoryName</a>(domain, uuid), <a class="code hl_variable" href="test__flows_8cpp.html#a92fcffcf98bd4a3cb5c3668473eb9d04">index</a>);</div>
+<div class="line"><span class="lineno">   81</span>    }</div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_acebeb5a6c2361ba379c4d1008540abe5"><div class="ttname"><a href="namespacemxl_1_1lib.html#acebeb5a6c2361ba379c4d1008540abe5">mxl::lib::makeGrainDirectoryName</a></div><div class="ttdeci">std::filesystem::path makeGrainDirectoryName(std::filesystem::path const &amp;flowDirectory)</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8cpp_source.html#l00035">PathUtils.cpp:35</a></div></div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_afeccbb33b65a1adc285679681b2f09cb"><div class="ttname"><a href="namespacemxl_1_1lib.html#afeccbb33b65a1adc285679681b2f09cb">mxl::lib::makeGrainDataFilePath</a></div><div class="ttdeci">std::filesystem::path makeGrainDataFilePath(std::filesystem::path const &amp;grainDirectory, unsigned int index)</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8cpp_source.html#l00041">PathUtils.cpp:41</a></div></div>
 </div><!-- fragment -->
@@ -1662,10 +1731,10 @@ template&lt;typename To , typename From &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00060">60</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   61</span>    {</div>
-<div class="line"><span class="lineno">   62</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="namespacemxl_1_1lib.html#acebeb5a6c2361ba379c4d1008540abe5">makeGrainDirectoryName</a>(<a class="code hl_function" href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">makeFlowDirectoryName</a>(domain, uuid));</div>
-<div class="line"><span class="lineno">   63</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00073">73</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   74</span>    {</div>
+<div class="line"><span class="lineno">   75</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="namespacemxl_1_1lib.html#acebeb5a6c2361ba379c4d1008540abe5">makeGrainDirectoryName</a>(<a class="code hl_function" href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">makeFlowDirectoryName</a>(domain, uuid));</div>
+<div class="line"><span class="lineno">   76</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -1689,7 +1758,7 @@ template&lt;typename To , typename From &gt; </div>
 <div class="fragment"><div class="line"><span class="lineno">   36</span>    {</div>
 <div class="line"><span class="lineno">   37</span>        <span class="keywordflow">return</span> flowDirectory / <a class="code hl_variable" href="namespacemxl_1_1lib.html#a8777b6f0a2f0f8bf3526b67a06abb9a9">GRAIN_DIRECTORY_NAME</a>;</div>
 <div class="line"><span class="lineno">   38</span>    }</div>
-<div class="ttc" id="anamespacemxl_1_1lib_html_a8777b6f0a2f0f8bf3526b67a06abb9a9"><div class="ttname"><a href="namespacemxl_1_1lib.html#a8777b6f0a2f0f8bf3526b67a06abb9a9">mxl::lib::GRAIN_DIRECTORY_NAME</a></div><div class="ttdeci">constexpr auto const GRAIN_DIRECTORY_NAME</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8hpp_source.html#l00014">PathUtils.hpp:14</a></div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_html_a8777b6f0a2f0f8bf3526b67a06abb9a9"><div class="ttname"><a href="namespacemxl_1_1lib.html#a8777b6f0a2f0f8bf3526b67a06abb9a9">mxl::lib::GRAIN_DIRECTORY_NAME</a></div><div class="ttdeci">constexpr auto const GRAIN_DIRECTORY_NAME</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8hpp_source.html#l00018">PathUtils.hpp:18</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -3377,12 +3446,12 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00016">16</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00020">20</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
 
 </div>
 </div>
@@ -3401,12 +3470,12 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00017">17</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00023">23</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
 
 </div>
 </div>
@@ -3438,6 +3507,59 @@ template&lt;typename T &gt; </div>
 </div><!-- fragment -->
 </div>
 </div>
+<a id="a0f6f136c0828bcf9864f8cbafac49677" name="a0f6f136c0828bcf9864f8cbafac49677"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0f6f136c0828bcf9864f8cbafac49677">&#9670;&#160;</a></span>EVENT_DATA_FILE_NAME</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr auto mxl::lib::EVENT_DATA_FILE_NAME = &quot;events&quot;</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Filename of the single shared-memory event ring within a flow directory. </p>
+
+<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00022">22</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a10580dc38bafefba50539a56b45d984e" name="a10580dc38bafefba50539a56b45d984e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a10580dc38bafefba50539a56b45d984e">&#9670;&#160;</a></span>EVENT_HEADER_VERSION</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr auto mxl::lib::EVENT_HEADER_VERSION = std::uint32_t{1}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Version stored in the public mxlEventInfo metadata of every published entry. </p>
+
+<p class="definition">Definition at line <a class="el" href="Flow_8hpp_source.html#l00061">61</a> of file <a class="el" href="Flow_8hpp_source.html">Flow.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   61</span>{1};</div>
+</div><!-- fragment -->
+</div>
+</div>
 <a id="a17f29e695260e46dfb1336e2b5fd5675" name="a17f29e695260e46dfb1336e2b5fd5675"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a17f29e695260e46dfb1336e2b5fd5675">&#9670;&#160;</a></span>FLOW_ACCESS_FILE_NAME</h2>
 
@@ -3453,12 +3575,12 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00013">13</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00017">17</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
 
 </div>
 </div>
@@ -3477,12 +3599,12 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00012">12</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00016">16</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
 
 </div>
 </div>
@@ -3501,14 +3623,14 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 <p>The version of the flow data structs in shared memory that we expect and support. </p>
 
-<p class="definition">Definition at line <a class="el" href="Flow_8hpp_source.html#l00017">17</a> of file <a class="el" href="Flow_8hpp_source.html">Flow.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="Flow_8hpp_source.html#l00021">21</a> of file <a class="el" href="Flow_8hpp_source.html">Flow.hpp</a>.</p>
 
 </div>
 </div>
@@ -3527,12 +3649,12 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00011">11</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00015">15</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
 
 </div>
 </div>
@@ -3551,12 +3673,12 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00010">10</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00014">14</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
 
 </div>
 </div>
@@ -3575,12 +3697,12 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00015">15</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00019">19</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
 
 </div>
 </div>
@@ -3599,12 +3721,12 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00014">14</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="PathUtils_8hpp_source.html#l00018">18</a> of file <a class="el" href="PathUtils_8hpp_source.html">PathUtils.hpp</a>.</p>
 
 </div>
 </div>
@@ -3623,14 +3745,14 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 <p>The version of the grain header structs in shared memory that we expect an support. </p>
 
-<p class="definition">Definition at line <a class="el" href="Flow_8hpp_source.html#l00020">20</a> of file <a class="el" href="Flow_8hpp_source.html">Flow.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="Flow_8hpp_source.html#l00024">24</a> of file <a class="el" href="Flow_8hpp_source.html">Flow.hpp</a>.</p>
 
 </div>
 </div>
@@ -3649,14 +3771,14 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 <p>The first 8KiB of a grain are reserved for the mxlGrainInfo structure, including user data. Ample padding is provided between the header and the payload. Payload is page aligned AND AVX512 (64 bytes) aligned. </p>
 
-<p class="definition">Definition at line <a class="el" href="Flow_8hpp_source.html#l00034">34</a> of file <a class="el" href="Flow_8hpp_source.html">Flow.hpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   34</span>{8192};</div>
+<p class="definition">Definition at line <a class="el" href="Flow_8hpp_source.html#l00038">38</a> of file <a class="el" href="Flow_8hpp_source.html">Flow.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   38</span>{8192};</div>
 </div><!-- fragment -->
 </div>
 </div>

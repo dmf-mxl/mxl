@@ -1,0 +1,5 @@
+<map id="mxl::lib::Event" name="mxl::lib::Event">
+<area shape="rect" id="Node000001" title="Fixed part of an event slot; its payload follows immediately in the mapping." alt="" coords="29,93,145,119"/>
+<area shape="rect" id="Node000002" href="$structmxl_1_1lib_1_1EventHeader.html" title="768&#45;byte slot header with layout fields, sequence and metadata on separate 128&#45;byte boundaries...." alt="" coords="5,5,168,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="89,45,89,93,84,93,84,45"/>
+</map>

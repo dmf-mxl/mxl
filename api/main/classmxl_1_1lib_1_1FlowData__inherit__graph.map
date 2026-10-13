@@ -1,7 +1,9 @@
 <map id="mxl::lib::FlowData" name="mxl::lib::FlowData">
-<area shape="rect" id="Node000001" title=" " alt="" coords="157,5,298,31"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="271,5,413,31"/>
 <area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1ContinuousFlowData.html" title=" " alt="" coords="5,79,220,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="199,40,133,81,130,76,196,35"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="293,37,151,81,149,76,291,32"/>
 <area shape="rect" id="Node000003" href="$classmxl_1_1lib_1_1DiscreteFlowData.html" title=" " alt="" coords="245,79,439,104"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="259,35,325,76,322,81,256,40"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="345,44,345,79,339,79,339,44"/>
+<area shape="rect" id="Node000004" href="$classmxl_1_1lib_1_1EventFlowData.html" title="Own the common flow mapping, single event ring mapping and ring view." alt="" coords="463,79,642,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="389,32,519,76,518,81,388,37"/>
 </map>

@@ -3,6 +3,7 @@ var classmxl_1_1lib_1_1FlowManager =
     [ "FlowManager", "classmxl_1_1lib_1_1FlowManager.html#a737c167c8361185f91b7ed626a1fbe7d", null ],
     [ "createOrOpenContinuousFlow", "classmxl_1_1lib_1_1FlowManager.html#ab76b674a2de78839b4d8002159bda7b7", null ],
     [ "createOrOpenDiscreteFlow", "classmxl_1_1lib_1_1FlowManager.html#a88cff4cbf0d597602f126965064744f7", null ],
+    [ "createOrOpenEventFlow", "classmxl_1_1lib_1_1FlowManager.html#a6380563ace20c2f710df306fdea30620", null ],
     [ "deleteFlow", "classmxl_1_1lib_1_1FlowManager.html#a15f7e50f602f9df2fa87e57db0321081", null ],
     [ "deleteFlow", "classmxl_1_1lib_1_1FlowManager.html#aefc154e3b9aa2df1bde4f75c02d55b9f", null ],
     [ "getDomain", "classmxl_1_1lib_1_1FlowManager.html#a98e9f817db419c2f2628a07617566f9c", null ],

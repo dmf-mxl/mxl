@@ -113,17 +113,21 @@ Inheritance diagram for mxl::lib::FlowWriter:</div>
 <div class="dyncontent">
 <div class="center"><img src="classmxl_1_1lib_1_1FlowWriter__inherit__graph.png" border="0" usemap="#amxl_1_1lib_1_1FlowWriter_inherit__map" alt="Inheritance graph"/></div>
 <map name="amxl_1_1lib_1_1FlowWriter_inherit__map" id="amxl_1_1lib_1_1FlowWriter_inherit__map">
-<area shape="rect" title=" " alt="" coords="131,5,282,31"/>
-<area shape="rect" href="classmxl_1_1lib_1_1ContinuousFlowWriter.html" title=" " alt="" coords="7,79,190,119"/>
-<area shape="poly" title=" " alt="" coords="181,41,126,81,123,76,178,37"/>
-<area shape="rect" href="classmxl_1_1lib_1_1DiscreteFlowWriter.html" title=" " alt="" coords="214,86,418,111"/>
-<area shape="poly" title=" " alt="" coords="236,37,301,84,298,88,233,41"/>
-<area shape="rect" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html" title=" " alt="" coords="5,167,192,207"/>
-<area shape="poly" title=" " alt="" coords="101,133,101,166,96,166,96,133"/>
-<area shape="rect" href="structMockWriter.html" title=" " alt="" coords="242,174,339,199"/>
-<area shape="poly" title=" " alt="" coords="311,125,297,174,292,173,306,124"/>
-<area shape="rect" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html" title=" " alt="" coords="363,167,562,207"/>
-<area shape="poly" title=" " alt="" coords="349,116,432,164,429,169,346,121"/>
+<area shape="rect" title=" " alt="" coords="5,113,156,138"/>
+<area shape="rect" href="classmxl_1_1lib_1_1ContinuousFlowWriter.html" title=" " alt="" coords="215,20,397,60"/>
+<area shape="poly" title=" " alt="" coords="127,105,252,58,253,62,129,110"/>
+<area shape="rect" href="classmxl_1_1lib_1_1DiscreteFlowWriter.html" title=" " alt="" coords="204,113,408,138"/>
+<area shape="poly" title=" " alt="" coords="170,123,204,123,204,128,170,128"/>
+<area shape="rect" href="classmxl_1_1lib_1_1EventFlowWriter.html" title="Backend contract for a single event producer with private write staging. Callers guarantee one writer..." alt="" coords="213,169,399,194"/>
+<area shape="poly" title=" " alt="" coords="146,139,255,166,253,171,145,144"/>
+<area shape="rect" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html" title=" " alt="" coords="462,5,649,45"/>
+<area shape="poly" title=" " alt="" coords="411,31,462,28,462,33,411,37"/>
+<area shape="rect" href="structMockWriter.html" title=" " alt="" coords="507,70,604,95"/>
+<area shape="poly" title=" " alt="" coords="393,108,506,88,507,93,394,113"/>
+<area shape="rect" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html" title=" " alt="" coords="456,120,655,160"/>
+<area shape="poly" title=" " alt="" coords="422,129,456,131,455,137,421,135"/>
+<area shape="rect" href="classmxl_1_1lib_1_1PosixEventFlowWriter.html" title="POSIX single&#45;producer writer with private staging and monotonic timestamps. The caller guarantees one..." alt="" coords="464,184,647,224"/>
+<area shape="poly" title=" " alt="" coords="413,188,464,193,464,198,413,194"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -336,7 +340,7 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>Accessor for the immutable metadata that describes the currently opened flow. The reader must be properly attached to the flow before invoking this method. </p><dl class="section return"><dt>Returns</dt><dd>A copy of the mxlFlowConfigInfo of the currently opened flow. </dd></dl>
 
-<p>Implemented in <a class="el" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#aef54ac065086a4523650d9e9e6d17028">mxl::lib::PosixContinuousFlowWriter</a>, <a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a248bb248c66724d6bccc0cba9fc434db">mxl::lib::PosixDiscreteFlowWriter</a>, and <a class="el" href="structMockWriter.html#a98fad08d7b21c11d81eec7fe870a2516">MockWriter</a>.</p>
+<p>Implemented in <a class="el" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#aef54ac065086a4523650d9e9e6d17028">mxl::lib::PosixContinuousFlowWriter</a>, <a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a248bb248c66724d6bccc0cba9fc434db">mxl::lib::PosixDiscreteFlowWriter</a>, <a class="el" href="classmxl_1_1lib_1_1PosixEventFlowWriter.html#ae7951f81b41a687e93c5ff1006080726">mxl::lib::PosixEventFlowWriter</a>, and <a class="el" href="structMockWriter.html#a98fad08d7b21c11d81eec7fe870a2516">MockWriter</a>.</p>
 
 </div>
 </div>
@@ -364,7 +368,7 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>Accessor for the underlying flow data. The flow writer must first open the flow before invoking this method. </p>
 
-<p>Implemented in <a class="el" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a12a1558c9f09b266152ffda6605d2c02">mxl::lib::PosixContinuousFlowWriter</a>, <a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#ad9bb0707bb11ffa9b6bc92aa2bb56d5e">mxl::lib::PosixDiscreteFlowWriter</a>, and <a class="el" href="structMockWriter.html#a376d7ae0466e482bb5484380ad7e047c">MockWriter</a>.</p>
+<p>Implemented in <a class="el" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a12a1558c9f09b266152ffda6605d2c02">mxl::lib::PosixContinuousFlowWriter</a>, <a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#ad9bb0707bb11ffa9b6bc92aa2bb56d5e">mxl::lib::PosixDiscreteFlowWriter</a>, <a class="el" href="classmxl_1_1lib_1_1PosixEventFlowWriter.html#a5e42226d173a035a778bfdb5bee54abf">mxl::lib::PosixEventFlowWriter</a>, and <a class="el" href="structMockWriter.html#a376d7ae0466e482bb5484380ad7e047c">MockWriter</a>.</p>
 
 </div>
 </div>
@@ -392,7 +396,7 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>Accessor for the underlying flow data. The flow writer must first open the flow before invoking this method. </p>
 
-<p>Implemented in <a class="el" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a3677250fa4b6feebd712ce3a77b610e4">mxl::lib::PosixContinuousFlowWriter</a>, <a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#aecd0a3254c260d668aae3fdb1006be70">mxl::lib::PosixDiscreteFlowWriter</a>, and <a class="el" href="structMockWriter.html#ae50aa7ff7c54ffb5c63c07fce99e17cb">MockWriter</a>.</p>
+<p>Implemented in <a class="el" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a3677250fa4b6feebd712ce3a77b610e4">mxl::lib::PosixContinuousFlowWriter</a>, <a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#aecd0a3254c260d668aae3fdb1006be70">mxl::lib::PosixDiscreteFlowWriter</a>, <a class="el" href="classmxl_1_1lib_1_1PosixEventFlowWriter.html#aa5bf001b0cc41a8c9a57b2bbf46b4248">mxl::lib::PosixEventFlowWriter</a>, and <a class="el" href="structMockWriter.html#ae50aa7ff7c54ffb5c63c07fce99e17cb">MockWriter</a>.</p>
 
 </div>
 </div>
@@ -420,7 +424,7 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>Accessor for the current mxlFlowInfo. A copy of the current structure is returned. The flow writer must first open the flow before invoking this method. </p><dl class="section return"><dt>Returns</dt><dd>A copy of the mxlFlowInfo </dd></dl>
 
-<p>Implemented in <a class="el" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a16be963c18e6f2dcb8efdd99b608c39a">mxl::lib::PosixContinuousFlowWriter</a>, <a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a257536a4b4b3419e1e8fcef5298d22f2">mxl::lib::PosixDiscreteFlowWriter</a>, and <a class="el" href="structMockWriter.html#a5c5c9b35be994dde672d09a2f321ba0e">MockWriter</a>.</p>
+<p>Implemented in <a class="el" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a16be963c18e6f2dcb8efdd99b608c39a">mxl::lib::PosixContinuousFlowWriter</a>, <a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a257536a4b4b3419e1e8fcef5298d22f2">mxl::lib::PosixDiscreteFlowWriter</a>, <a class="el" href="classmxl_1_1lib_1_1PosixEventFlowWriter.html#accf35cf4814aa67fb1d4d8c3cd4b9cdd">mxl::lib::PosixEventFlowWriter</a>, and <a class="el" href="structMockWriter.html#a5c5c9b35be994dde672d09a2f321ba0e">MockWriter</a>.</p>
 
 </div>
 </div>
@@ -448,7 +452,7 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>Accessor for the current metadata that describes the current runtime state of the currently opened flow. The reader must be properly attached to the flow before invoking this method. </p><dl class="section return"><dt>Returns</dt><dd>A copy of the current mxlFlowRuntimeInfo of the currently opened flow. </dd></dl>
 
-<p>Implemented in <a class="el" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#af8b56886cd536bac1f51fe81627d1a4f">mxl::lib::PosixContinuousFlowWriter</a>, <a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#aa020c67f9ba0216ba6f5efbcfb47103d">mxl::lib::PosixDiscreteFlowWriter</a>, and <a class="el" href="structMockWriter.html#a116b8a097f27a7151b73ed1299605b39">MockWriter</a>.</p>
+<p>Implemented in <a class="el" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#af8b56886cd536bac1f51fe81627d1a4f">mxl::lib::PosixContinuousFlowWriter</a>, <a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#aa020c67f9ba0216ba6f5efbcfb47103d">mxl::lib::PosixDiscreteFlowWriter</a>, <a class="el" href="classmxl_1_1lib_1_1PosixEventFlowWriter.html#a15147c74a14bdd419d30d8c348551df6">mxl::lib::PosixEventFlowWriter</a>, and <a class="el" href="structMockWriter.html#a116b8a097f27a7151b73ed1299605b39">MockWriter</a>.</p>
 
 </div>
 </div>
@@ -499,7 +503,7 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>Check if this is the only writer for this flow. </p>
 
-<p>Implemented in <a class="el" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a18c78bf8c192dc0e65ee6de3662a742f">mxl::lib::PosixContinuousFlowWriter</a>, <a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2fd217b66e1eece54241a66ff62881b1">mxl::lib::PosixDiscreteFlowWriter</a>, and <a class="el" href="structMockWriter.html#a00438640cdb6f91d6caf6e2e99e0ccfe">MockWriter</a>.</p>
+<p>Implemented in <a class="el" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a18c78bf8c192dc0e65ee6de3662a742f">mxl::lib::PosixContinuousFlowWriter</a>, <a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a2fd217b66e1eece54241a66ff62881b1">mxl::lib::PosixDiscreteFlowWriter</a>, <a class="el" href="classmxl_1_1lib_1_1PosixEventFlowWriter.html#a018e9defee0338ac1ac45d0fbd7bc8fe">mxl::lib::PosixEventFlowWriter</a>, and <a class="el" href="structMockWriter.html#a00438640cdb6f91d6caf6e2e99e0ccfe">MockWriter</a>.</p>
 
 </div>
 </div>
@@ -527,7 +531,7 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>Try to turn this into a exclusive writer. </p><dl class="section return"><dt>Returns</dt><dd>true if the operation was successful and this is the only writer, false if the operation was not successful because there are other active writers for this flow. </dd></dl>
 
-<p>Implemented in <a class="el" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a05d11291df94aab5ce3bd48a51fe3e1a">mxl::lib::PosixContinuousFlowWriter</a>, <a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a3e09033791d287a1e82d22e691f23f5c">mxl::lib::PosixDiscreteFlowWriter</a>, and <a class="el" href="structMockWriter.html#aaa4c33c880a440fc3de27c4a28770786">MockWriter</a>.</p>
+<p>Implemented in <a class="el" href="classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a05d11291df94aab5ce3bd48a51fe3e1a">mxl::lib::PosixContinuousFlowWriter</a>, <a class="el" href="classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html#a3e09033791d287a1e82d22e691f23f5c">mxl::lib::PosixDiscreteFlowWriter</a>, <a class="el" href="classmxl_1_1lib_1_1PosixEventFlowWriter.html#a3492cd595e883ac28c3e56ad416d0a81">mxl::lib::PosixEventFlowWriter</a>, and <a class="el" href="structMockWriter.html#aaa4c33c880a440fc3de27c4a28770786">MockWriter</a>.</p>
 
 </div>
 </div>

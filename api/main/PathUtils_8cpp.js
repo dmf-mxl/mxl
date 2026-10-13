@@ -2,6 +2,7 @@ var PathUtils_8cpp =
 [
     [ "makeChannelDataFilePath", "PathUtils_8cpp.html#a2da47d2e220490d45401e923a7a68c18", null ],
     [ "makeDomainOptionsFilePath", "PathUtils_8cpp.html#a9ac9d4b5caf62bff41480e66c6f6719f", null ],
+    [ "makeEventDataFilePath", "PathUtils_8cpp.html#a3006bf739e2850b7d72f53b7ea36af09", null ],
     [ "makeFlowAccessFilePath", "PathUtils_8cpp.html#a57c0a4f52e26a828deedc371ec79d6ef", null ],
     [ "makeFlowDataFilePath", "PathUtils_8cpp.html#a70469f14e75438e90bdf85253ad817f9", null ],
     [ "makeFlowDescriptorFilePath", "PathUtils_8cpp.html#a39dfe661c534ef636ce8dd418e9e8e8f", null ],

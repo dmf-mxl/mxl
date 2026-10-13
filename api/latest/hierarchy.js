@@ -8,6 +8,10 @@ var hierarchy =
     [ "mxl::lib::DomainWatcher", "classmxl_1_1lib_1_1DomainWatcher.html", null ],
     [ "mxl::lib::DomainWatcherRecord", "structmxl_1_1lib_1_1DomainWatcherRecord.html", null ],
     [ "mxl::lib::Duration", "structmxl_1_1lib_1_1Duration.html", null ],
+    [ "mxl::lib::Event", "structmxl_1_1lib_1_1Event.html", null ],
+    [ "mxl::lib::EventHeader", "structmxl_1_1lib_1_1EventHeader.html", null ],
+    [ "mxl::lib::EventRingBuffer", "classmxl_1_1lib_1_1EventRingBuffer.html", null ],
+    [ "mxl::lib::EventRingHeader", "structmxl_1_1lib_1_1EventRingHeader.html", null ],
     [ "mxl::lib::fabrics::ofi::AddressVector", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AddressVector.html", null ],
     [ "mxl::lib::fabrics::ofi::AddressVector::Attributes", "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1AddressVector_1_1Attributes.html", null ],
     [ "mxl::lib::fabrics::ofi::AudioBounceBuffer", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html", null ],
@@ -109,7 +113,8 @@ var hierarchy =
     [ "mxl::lib::Flow", "structmxl_1_1lib_1_1Flow.html", null ],
     [ "mxl::lib::FlowData", "classmxl_1_1lib_1_1FlowData.html", [
       [ "mxl::lib::ContinuousFlowData", "classmxl_1_1lib_1_1ContinuousFlowData.html", null ],
-      [ "mxl::lib::DiscreteFlowData", "classmxl_1_1lib_1_1DiscreteFlowData.html", null ]
+      [ "mxl::lib::DiscreteFlowData", "classmxl_1_1lib_1_1DiscreteFlowData.html", null ],
+      [ "mxl::lib::EventFlowData", "classmxl_1_1lib_1_1EventFlowData.html", null ]
     ] ],
     [ "mxl::lib::FlowManager", "classmxl_1_1lib_1_1FlowManager.html", null ],
     [ "mxl::lib::FlowOptionsParser", "classmxl_1_1lib_1_1FlowOptionsParser.html", null ],
@@ -120,6 +125,9 @@ var hierarchy =
       ] ],
       [ "mxl::lib::DiscreteFlowReader", "classmxl_1_1lib_1_1DiscreteFlowReader.html", [
         [ "mxl::lib::PosixDiscreteFlowReader", "classmxl_1_1lib_1_1PosixDiscreteFlowReader.html", null ]
+      ] ],
+      [ "mxl::lib::EventFlowReader", "classmxl_1_1lib_1_1EventFlowReader.html", [
+        [ "mxl::lib::PosixEventFlowReader", "classmxl_1_1lib_1_1PosixEventFlowReader.html", null ]
       ] ]
     ] ],
     [ "mxl::lib::FlowReaderFactory", "classmxl_1_1lib_1_1FlowReaderFactory.html", [
@@ -137,6 +145,9 @@ var hierarchy =
       [ "mxl::lib::DiscreteFlowWriter", "classmxl_1_1lib_1_1DiscreteFlowWriter.html", [
         [ "MockWriter", "structMockWriter.html", null ],
         [ "mxl::lib::PosixDiscreteFlowWriter", "classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html", null ]
+      ] ],
+      [ "mxl::lib::EventFlowWriter", "classmxl_1_1lib_1_1EventFlowWriter.html", [
+        [ "mxl::lib::PosixEventFlowWriter", "classmxl_1_1lib_1_1PosixEventFlowWriter.html", null ]
       ] ]
     ] ],
     [ "mxl::lib::FlowWriterFactory", "classmxl_1_1lib_1_1FlowWriterFactory.html", [
@@ -157,6 +168,8 @@ var hierarchy =
     [ "mxlCommonFlowConfigInfo_t", "structmxlCommonFlowConfigInfo__t.html", null ],
     [ "mxlContinuousFlowConfigInfo_t", "structmxlContinuousFlowConfigInfo__t.html", null ],
     [ "mxlDiscreteFlowConfigInfo_t", "structmxlDiscreteFlowConfigInfo__t.html", null ],
+    [ "mxlEventFlowConfigInfo_t", "structmxlEventFlowConfigInfo__t.html", null ],
+    [ "mxlEventInfo_t", "structmxlEventInfo__t.html", null ],
     [ "mxlFabricsEndpointAddress_t", "structmxlFabricsEndpointAddress__t.html", null ],
     [ "mxlFabricsInitiatorConfig_t", "structmxlFabricsInitiatorConfig__t.html", null ],
     [ "mxlFabricsInterfaceCaps_t", "structmxlFabricsInterfaceCaps__t.html", null ],

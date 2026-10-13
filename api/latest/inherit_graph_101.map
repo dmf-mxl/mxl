@@ -1,3 +1,15 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$structmxl_1_1lib_1_1FlowSynchronizationGroup_1_1ListEntry.html" title=" " alt="" coords="5,5,220,45"/>
+<area shape="rect" id="Node000000" href="$classmxl_1_1lib_1_1FlowReader.html" title=" " alt="" coords="5,77,161,102"/>
+<area shape="rect" id="Node000001" href="$classmxl_1_1lib_1_1ContinuousFlowReader.html" title=" " alt="" coords="223,9,406,49"/>
+<area shape="poly" id="edge15_Node000000_Node000001" title=" " alt="" coords="146,71,236,47,238,52,147,76"/>
+<area shape="rect" id="Node000003" href="$classmxl_1_1lib_1_1DiscreteFlowReader.html" title=" " alt="" coords="209,77,420,102"/>
+<area shape="poly" id="edge17_Node000000_Node000003" title=" " alt="" coords="175,87,209,87,209,92,175,92"/>
+<area shape="rect" id="Node000005" href="$classmxl_1_1lib_1_1EventFlowReader.html" title="Backend contract for reading complete event entries or fragments in queue order. Each reader has one ..." alt="" coords="218,133,411,158"/>
+<area shape="poly" id="edge19_Node000000_Node000005" title=" " alt="" coords="150,103,262,130,261,135,149,108"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1PosixContinuousFlowReader.html" title=" " alt="" coords="474,5,661,45"/>
+<area shape="poly" id="edge16_Node000001_Node000002" title=" " alt="" coords="420,25,474,24,474,29,420,30"/>
+<area shape="rect" id="Node000004" href="$classmxl_1_1lib_1_1PosixDiscreteFlowReader.html" title=" " alt="" coords="468,69,667,109"/>
+<area shape="poly" id="edge18_Node000003_Node000004" title=" " alt="" coords="434,87,468,87,468,92,434,92"/>
+<area shape="rect" id="Node000006" href="$classmxl_1_1lib_1_1PosixEventFlowReader.html" title="POSIX event consumer with a single&#45;thread cursor and an owned payload snapshot." alt="" coords="476,133,659,173"/>
+<area shape="poly" id="edge20_Node000005_Node000006" title=" " alt="" coords="425,146,476,148,476,153,425,151"/>
 </map>

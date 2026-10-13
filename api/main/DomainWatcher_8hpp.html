@@ -105,113 +105,85 @@ $(document).ready(function(){initNavTree('DomainWatcher_8hpp.html',''); initResi
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><code>#include &lt;cstdint&gt;</code><br />
-<code>#include &lt;atomic&gt;</code><br />
 <code>#include &lt;filesystem&gt;</code><br />
 <code>#include &lt;memory&gt;</code><br />
-<code>#include &lt;mutex&gt;</code><br />
 <code>#include &lt;string&gt;</code><br />
-<code>#include &lt;thread&gt;</code><br />
-<code>#include &lt;unordered_map&gt;</code><br />
-<code>#include &lt;variant&gt;</code><br />
 <code>#include &lt;unistd.h&gt;</code><br />
 <code>#include &lt;uuid.h&gt;</code><br />
 <code>#include &lt;<a class="el" href="platform_8h_source.html">mxl/platform.h</a>&gt;</code><br />
-<code>#include &quot;<a class="el" href="DiscreteFlowData_8hpp_source.html">mxl-internal/DiscreteFlowData.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="Flow_8hpp_source.html">mxl-internal/Flow.hpp</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="SharedMemory_8hpp_source.html">mxl-internal/SharedMemory.hpp</a>&quot;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for DomainWatcher.hpp:</div>
 <div class="dyncontent">
 <div class="center"><img src="DomainWatcher_8hpp__incl.png" border="0" usemap="#alib_2internal_2include_2mxl-internal_2DomainWatcher_8hpp" alt=""/></div>
 <map name="alib_2internal_2include_2mxl-internal_2DomainWatcher_8hpp" id="alib_2internal_2include_2mxl-internal_2DomainWatcher_8hpp">
-<area shape="rect" title=" " alt="" coords="589,5,830,45"/>
-<area shape="rect" title=" " alt="" coords="223,401,289,427"/>
-<area shape="poly" title=" " alt="" coords="589,30,477,34,359,45,257,64,217,78,190,95,172,116,165,138,165,193,165,268,172,305,189,338,211,367,234,390,230,394,207,371,185,341,167,307,160,269,160,193,160,137,167,114,186,91,215,74,255,59,359,39,477,29,588,24"/>
-<area shape="rect" title=" " alt="" coords="200,101,267,126"/>
-<area shape="poly" title=" " alt="" coords="589,40,440,61,359,77,279,96,272,98,270,93,278,91,358,71,439,56,588,35"/>
-<area shape="rect" title=" " alt="" coords="291,101,381,126"/>
-<area shape="poly" title=" " alt="" coords="607,48,504,69,394,96,383,99,381,94,393,91,503,64,606,43"/>
-<area shape="rect" title=" " alt="" coords="405,101,483,126"/>
-<area shape="poly" title=" " alt="" coords="647,48,496,96,488,98,486,93,494,91,645,43"/>
-<area shape="rect" title=" " alt="" coords="507,101,571,126"/>
-<area shape="poly" title=" " alt="" coords="673,48,575,97,572,92,671,43"/>
-<area shape="rect" title=" " alt="" coords="595,101,653,126"/>
-<area shape="poly" title=" " alt="" coords="692,47,647,92,644,89,689,44"/>
-<area shape="rect" title=" " alt="" coords="677,101,741,126"/>
-<area shape="poly" title=" " alt="" coords="712,46,712,87,707,87,707,46"/>
-<area shape="rect" title=" " alt="" coords="766,101,890,126"/>
-<area shape="poly" title=" " alt="" coords="737,43,802,90,799,95,734,48"/>
-<area shape="rect" title=" " alt="" coords="914,101,982,126"/>
-<area shape="poly" title=" " alt="" coords="767,43,904,91,909,93,907,98,902,96,765,48"/>
-<area shape="rect" title=" " alt="" coords="1007,101,1081,126"/>
-<area shape="poly" title=" " alt="" coords="804,43,897,64,995,91,1003,93,1002,98,994,96,896,69,803,48"/>
-<area shape="rect" title=" " alt="" coords="1106,101,1169,126"/>
-<area shape="poly" title=" " alt="" coords="831,38,959,59,1094,91,1101,93,1099,98,1093,96,958,64,830,43"/>
-<area shape="rect" href="platform_8h.html" title=" " alt="" coords="727,548,846,573"/>
-<area shape="poly" title=" " alt="" coords="830,25,977,31,1141,42,1291,61,1352,74,1397,91,1434,109,1464,129,1484,154,1489,172,1491,193,1491,416,1485,439,1470,460,1447,478,1416,494,1337,519,1242,537,1138,550,1034,557,860,562,860,557,1034,552,1137,544,1241,532,1336,514,1414,489,1444,474,1466,456,1480,437,1485,415,1485,193,1484,173,1479,157,1460,132,1432,114,1395,96,1350,80,1290,66,1140,47,977,36,830,31"/>
-<area shape="rect" href="DiscreteFlowData_8hpp.html" title=" " alt="" coords="1193,93,1383,133"/>
-<area shape="poly" title=" " alt="" coords="831,40,1180,90,1179,96,830,45"/>
-<area shape="rect" title=" " alt="" coords="1235,181,1298,207"/>
-<area shape="poly" title=" " alt="" coords="1285,134,1276,168,1271,167,1280,133"/>
-<area shape="rect" title=" " alt="" coords="1322,181,1427,207"/>
-<area shape="poly" title=" " alt="" coords="1311,132,1353,170,1350,174,1307,136"/>
-<area shape="rect" href="Flow_8hpp.html" title=" " alt="" coords="671,255,751,280"/>
-<area shape="poly" title=" " alt="" coords="1193,134,1182,136,1126,143,1078,145,995,145,956,147,915,153,870,165,818,184,770,213,733,246,729,242,767,209,816,179,869,159,914,148,956,142,995,140,1077,140,1125,137,1181,131,1192,129"/>
-<area shape="rect" href="FlowData_8hpp.html" title=" " alt="" coords="829,181,941,207"/>
-<area shape="poly" title=" " alt="" coords="1193,136,956,182,955,177,1192,131"/>
-<area shape="poly" title=" " alt="" coords="671,272,578,274,462,283,354,301,312,314,283,330,273,342,266,357,259,388,254,387,261,355,268,339,280,326,310,309,353,295,462,278,578,269,670,266"/>
-<area shape="poly" title=" " alt="" coords="716,279,783,534,778,535,711,281"/>
-<area shape="rect" title=" " alt="" coords="850,328,921,353"/>
-<area shape="poly" title=" " alt="" coords="740,278,845,320,843,325,738,282"/>
-<area shape="rect" title=" " alt="" coords="660,401,724,427"/>
-<area shape="poly" title=" " alt="" coords="712,281,698,388,693,387,706,280"/>
-<area shape="rect" href="flow_8h.html" title=" " alt="" coords="485,401,574,427"/>
-<area shape="poly" title=" " alt="" coords="671,276,612,294,582,309,557,330,541,358,534,388,528,387,536,356,553,326,579,304,610,289,670,271"/>
-<area shape="rect" href="FlowInfo_8hpp.html" title=" " alt="" coords="567,328,673,353"/>
-<area shape="poly" title=" " alt="" coords="698,282,647,321,644,317,694,278"/>
-<area shape="rect" href="FlowState_8hpp.html" title=" " alt="" coords="293,328,408,353"/>
-<area shape="poly" title=" " alt="" coords="671,279,422,328,421,323,670,274"/>
-<area shape="rect" title=" " alt="" coords="525,548,608,573"/>
-<area shape="poly" title=" " alt="" coords="535,426,563,534,558,535,530,428"/>
-<area shape="rect" title=" " alt="" coords="376,475,451,500"/>
-<area shape="poly" title=" " alt="" coords="512,429,445,470,443,465,509,424"/>
-<area shape="rect" title=" " alt="" coords="367,621,438,647"/>
-<area shape="poly" title=" " alt="" coords="529,428,507,493,488,534,465,575,429,614,425,611,461,572,483,532,502,491,524,426"/>
-<area shape="rect" href="flowinfo_8h.html" title=" " alt="" coords="187,475,301,500"/>
-<area shape="poly" title=" " alt="" coords="485,429,304,474,302,469,483,424"/>
-<area shape="rect" href="mxl_8h.html" title=" " alt="" coords="576,475,664,500"/>
-<area shape="poly" title=" " alt="" coords="546,425,596,464,593,468,542,429"/>
-<area shape="poly" title=" " alt="" coords="259,498,381,610,378,614,255,502"/>
-<area shape="rect" title=" " alt="" coords="355,548,451,573"/>
-<area shape="poly" title=" " alt="" coords="271,498,365,540,363,545,268,502"/>
-<area shape="rect" href="dataformat_8h.html" title=" " alt="" coords="5,548,141,573"/>
-<area shape="poly" title=" " alt="" coords="218,502,115,545,113,540,216,498"/>
-<area shape="rect" href="rational_8h.html" title=" " alt="" coords="166,548,279,573"/>
-<area shape="poly" title=" " alt="" coords="243,501,233,536,227,534,238,500"/>
-<area shape="poly" title=" " alt="" coords="253,571,362,614,360,619,251,576"/>
-<area shape="poly" title=" " alt="" coords="648,498,748,540,746,545,646,502"/>
-<area shape="poly" title=" " alt="" coords="613,502,586,539,581,536,609,499"/>
-<area shape="poly" title=" " alt="" coords="627,500,633,535,631,556,622,575,594,594,550,609,452,629,451,624,549,604,592,589,618,572,626,555,627,536,621,501"/>
-<area shape="poly" title=" " alt="" coords="625,353,633,387,650,425,676,459,705,490,761,538,757,542,701,494,672,463,646,428,628,389,619,354"/>
-<area shape="poly" title=" " alt="" coords="634,352,672,390,669,394,630,356"/>
-<area shape="poly" title=" " alt="" coords="607,355,557,395,553,390,604,351"/>
-<area shape="poly" title=" " alt="" coords="337,355,284,395,281,391,334,351"/>
-<area shape="poly" title=" " alt="" coords="352,354,352,417,357,458,366,499,387,536,382,539,362,501,351,459,347,417,347,353"/>
-<area shape="poly" title=" " alt="" coords="877,209,858,231,838,263,821,300,815,340,815,415,808,481,796,536,791,534,803,480,809,415,809,339,816,298,833,260,854,228,872,205"/>
-<area shape="poly" title=" " alt="" coords="858,209,753,252,751,247,856,204"/>
-<area shape="poly" title=" " alt="" coords="888,207,888,314,883,314,883,207"/>
-<area shape="rect" href="SharedMemory_8hpp.html" title=" " alt="" coords="948,255,1095,280"/>
-<area shape="poly" title=" " alt="" coords="908,204,988,246,986,251,906,209"/>
-<area shape="poly" title=" " alt="" coords="1014,282,807,539,803,535,1010,278"/>
-<area shape="poly" title=" " alt="" coords="1001,282,921,324,918,319,998,278"/>
-<area shape="rect" title=" " alt="" coords="997,328,1046,353"/>
-<area shape="poly" title=" " alt="" coords="1024,280,1024,314,1019,314,1019,280"/>
-<area shape="rect" title=" " alt="" coords="1070,328,1157,353"/>
-<area shape="poly" title=" " alt="" coords="1038,278,1089,317,1086,322,1034,282"/>
-<area shape="rect" title=" " alt="" coords="1181,328,1241,353"/>
-<area shape="poly" title=" " alt="" coords="1053,278,1168,321,1167,326,1051,283"/>
-<area shape="rect" href="Logging_8hpp.html" title=" " alt="" coords="1265,328,1450,353"/>
-<area shape="poly" title=" " alt="" coords="1076,277,1290,322,1289,328,1075,283"/>
-<area shape="rect" title=" " alt="" coords="1295,401,1419,427"/>
-<area shape="poly" title=" " alt="" coords="1360,354,1360,388,1355,388,1355,354"/>
+<area shape="rect" title=" " alt="" coords="654,5,896,45"/>
+<area shape="rect" title=" " alt="" coords="220,240,287,265"/>
+<area shape="poly" title=" " alt="" coords="655,33,485,44,389,53,294,67,205,85,126,107,65,135,42,151,25,168,16,189,22,205,40,219,67,229,137,242,206,248,206,253,136,248,65,234,37,223,18,208,11,189,21,165,38,147,62,130,125,102,204,79,293,62,389,48,484,38,654,27"/>
+<area shape="rect" title=" " alt="" coords="730,93,820,119"/>
+<area shape="poly" title=" " alt="" coords="778,46,778,79,772,79,772,46"/>
+<area shape="rect" title=" " alt="" coords="844,93,922,119"/>
+<area shape="poly" title=" " alt="" coords="803,43,857,83,854,87,800,48"/>
+<area shape="rect" title=" " alt="" coords="946,93,1004,119"/>
+<area shape="poly" title=" " alt="" coords="824,43,934,86,932,91,822,48"/>
+<area shape="rect" title=" " alt="" coords="1028,93,1103,119"/>
+<area shape="poly" title=" " alt="" coords="845,43,1016,88,1014,94,844,48"/>
+<area shape="rect" title=" " alt="" coords="1128,93,1190,119"/>
+<area shape="poly" title=" " alt="" coords="879,43,1115,91,1113,96,878,48"/>
+<area shape="rect" href="platform_8h.html" title=" " alt="" coords="409,313,528,339"/>
+<area shape="poly" title=" " alt="" coords="654,32,509,38,347,50,198,69,138,81,93,96,65,109,43,123,27,141,12,168,8,180,12,191,36,213,73,233,121,251,176,268,292,294,396,312,395,317,291,300,174,273,119,257,71,238,33,217,7,193,3,180,7,166,23,138,40,119,62,104,91,91,137,76,197,64,347,45,509,33,654,27"/>
+<area shape="rect" href="Flow_8hpp.html" title="Internal shared&#45;memory headers for discrete grains and event slots." alt="" coords="276,93,440,119"/>
+<area shape="poly" title=" " alt="" coords="676,48,433,93,432,88,675,43"/>
+<area shape="rect" href="SharedMemory_8hpp.html" title=" " alt="" coords="474,93,705,119"/>
+<area shape="poly" title=" " alt="" coords="732,48,631,90,628,85,730,43"/>
+<area shape="poly" title=" " alt="" coords="337,121,308,141,281,168,267,198,259,227,254,226,262,196,277,165,304,137,334,117"/>
+<area shape="poly" title=" " alt="" coords="375,117,398,138,420,165,438,200,451,236,467,299,462,300,446,238,433,202,415,168,394,142,371,121"/>
+<area shape="rect" title=" " alt="" coords="481,167,552,192"/>
+<area shape="poly" title=" " alt="" coords="384,116,479,159,477,163,382,121"/>
+<area shape="rect" title=" " alt="" coords="35,167,99,192"/>
+<area shape="poly" title=" " alt="" coords="310,121,113,169,112,164,309,116"/>
+<area shape="rect" title=" " alt="" coords="124,167,216,192"/>
+<area shape="poly" title=" " alt="" coords="328,121,214,164,212,159,327,116"/>
+<area shape="rect" href="flow_8h.html" title="Public flow reader, writer, payload and synchronization APIs." alt="" coords="628,167,717,192"/>
+<area shape="poly" title=" " alt="" coords="409,116,615,162,614,168,408,121"/>
+<area shape="rect" href="FlowState_8hpp.html" title=" " alt="" coords="291,167,406,192"/>
+<area shape="poly" title=" " alt="" coords="359,119,354,154,349,153,354,119"/>
+<area shape="rect" title=" " alt="" coords="686,313,768,339"/>
+<area shape="poly" title=" " alt="" coords="691,190,714,211,732,239,738,270,736,300,730,300,733,271,727,241,709,214,687,194"/>
+<area shape="rect" title=" " alt="" coords="531,240,606,265"/>
+<area shape="poly" title=" " alt="" coords="657,194,598,234,595,230,654,190"/>
+<area shape="rect" title=" " alt="" coords="936,387,1006,412"/>
+<area shape="poly" title=" " alt="" coords="692,190,721,211,753,238,776,266,792,290,807,313,833,337,877,363,923,381,921,386,875,368,829,341,803,316,787,293,772,269,749,242,718,215,689,194"/>
+<area shape="rect" href="flowinfo_8h.html" title="Public configuration and runtime metadata for MXL flows." alt="" coords="955,240,1070,265"/>
+<area shape="poly" title=" " alt="" coords="718,187,944,234,943,240,717,193"/>
+<area shape="rect" href="mxl_8h.html" title=" " alt="" coords="630,240,718,265"/>
+<area shape="poly" title=" " alt="" coords="675,192,676,226,671,227,670,192"/>
+<area shape="poly" title=" " alt="" coords="1047,263,1075,276,1102,294,1117,315,1118,327,1113,340,1094,361,1071,376,1021,394,1019,389,1069,371,1091,357,1109,337,1113,327,1112,317,1098,297,1073,281,1044,268"/>
+<area shape="rect" title=" " alt="" coords="843,313,939,339"/>
+<area shape="poly" title=" " alt="" coords="994,268,924,309,921,304,992,263"/>
+<area shape="rect" href="dataformat_8h.html" title="Public flow format identifiers and format classification helpers." alt="" coords="963,313,1099,339"/>
+<area shape="poly" title=" " alt="" coords="1018,265,1027,300,1022,301,1013,266"/>
+<area shape="rect" href="rational_8h.html" title=" " alt="" coords="1174,313,1288,339"/>
+<area shape="poly" title=" " alt="" coords="1048,263,1183,306,1182,312,1047,268"/>
+<area shape="poly" title=" " alt="" coords="1190,341,1020,387,1019,382,1189,336"/>
+<area shape="poly" title=" " alt="" coords="642,268,515,311,514,306,640,263"/>
+<area shape="poly" title=" " alt="" coords="685,264,712,301,708,304,680,267"/>
+<area shape="poly" title=" " alt="" coords="672,266,666,301,668,320,676,337,692,349,716,360,782,377,856,387,922,393,922,398,855,392,780,382,714,365,689,354,672,340,662,322,660,301,667,265"/>
+<area shape="poly" title=" " alt="" coords="335,194,282,234,279,229,332,190"/>
+<area shape="poly" title=" " alt="" coords="406,185,580,208,668,222,731,237,804,269,864,304,861,308,802,274,729,243,666,228,579,213,405,190"/>
+<area shape="poly" title=" " alt="" coords="590,120,582,154,565,193,544,218,521,242,483,303,478,300,517,238,540,215,561,191,577,152,585,118"/>
+<area shape="poly" title=" " alt="" coords="579,121,540,159,536,155,576,117"/>
+<area shape="rect" title=" " alt="" coords="741,167,790,192"/>
+<area shape="poly" title=" " alt="" coords="619,116,729,160,727,165,617,121"/>
+<area shape="rect" title=" " alt="" coords="814,167,901,192"/>
+<area shape="poly" title=" " alt="" coords="633,116,802,161,801,166,632,121"/>
+<area shape="rect" title=" " alt="" coords="925,167,985,192"/>
+<area shape="poly" title=" " alt="" coords="663,116,776,136,912,164,911,169,775,141,662,121"/>
+<area shape="rect" href="Logging_8hpp.html" title=" " alt="" coords="1028,167,1213,192"/>
+<area shape="poly" title=" " alt="" coords="675,116,1022,162,1021,167,675,121"/>
+<area shape="rect" title=" " alt="" coords="1094,240,1218,265"/>
+<area shape="poly" title=" " alt="" coords="1129,191,1147,226,1142,229,1124,194"/>
 </map>
 </div>
 </div><div class="textblock"><div class="dynheader">
@@ -219,74 +191,84 @@ This graph shows which files directly or indirectly include this file:</div>
 <div class="dyncontent">
 <div class="center"><img src="DomainWatcher_8hpp__dep__incl.png" border="0" usemap="#alib_2internal_2include_2mxl-internal_2DomainWatcher_8hppdep" alt=""/></div>
 <map name="alib_2internal_2include_2mxl-internal_2DomainWatcher_8hppdep" id="alib_2internal_2include_2mxl-internal_2DomainWatcher_8hppdep">
-<area shape="rect" title=" " alt="" coords="847,5,1088,45"/>
-<area shape="rect" href="FlowWriter_8hpp.html" title=" " alt="" coords="1329,93,1537,133"/>
-<area shape="poly" title=" " alt="" coords="1083,45,1331,91,1330,96,1082,50"/>
-<area shape="rect" href="Instance_8hpp.html" title=" " alt="" coords="609,460,803,500"/>
-<area shape="poly" title=" " alt="" coords="899,53,848,78,800,111,780,132,764,155,754,180,750,208,750,305,746,350,738,393,716,461,711,459,732,392,741,349,745,305,745,207,749,178,759,152,776,128,797,107,846,73,896,48"/>
+<area shape="rect" title=" " alt="" coords="1420,5,1661,45"/>
+<area shape="rect" href="FlowWriter_8hpp.html" title=" " alt="" coords="839,93,1047,133"/>
+<area shape="poly" title=" " alt="" coords="1406,49,1048,100,1047,94,1406,43"/>
+<area shape="rect" href="Instance_8hpp.html" title=" " alt="" coords="287,460,480,500"/>
+<area shape="poly" title=" " alt="" coords="1406,33,1064,48,858,61,651,79,461,102,304,131,243,148,197,167,169,187,162,197,159,208,159,305,163,334,175,359,192,382,214,402,267,435,320,457,318,462,264,440,211,407,188,386,170,362,158,335,154,306,154,207,157,195,165,183,195,162,241,143,302,126,460,97,651,73,858,56,1064,42,1406,28"/>
 <area shape="rect" href="Instance_8cpp.html" title=" " alt="" coords="5,555,207,581"/>
-<area shape="poly" title=" " alt="" coords="833,41,678,61,596,76,518,94,448,117,392,143,371,158,355,173,345,190,342,208,342,394,337,427,322,456,299,482,272,504,210,537,152,558,150,553,208,532,269,499,296,478,317,453,331,425,337,393,337,207,340,188,351,170,367,154,389,138,446,112,516,89,595,71,678,56,833,35"/>
-<area shape="rect" href="internal_2tests_2test__instance_8cpp.html" title=" " alt="" coords="828,548,968,588"/>
-<area shape="poly" title=" " alt="" coords="919,55,895,73,875,95,857,123,848,147,844,174,843,207,843,393,848,437,860,480,890,547,885,549,855,482,843,438,838,393,838,207,839,173,843,146,852,121,871,92,891,69,916,51"/>
-<area shape="rect" href="test__options_8cpp.html" title=" " alt="" coords="993,548,1126,588"/>
-<area shape="poly" title=" " alt="" coords="948,58,930,88,913,125,899,165,894,208,894,393,895,450,902,473,919,498,934,514,953,527,993,547,991,552,950,532,931,518,915,502,897,475,890,451,889,393,889,207,894,164,908,123,926,86,944,55"/>
-<area shape="rect" href="mxl_8cpp.html" title=" " alt="" coords="1150,555,1267,581"/>
-<area shape="poly" title=" " alt="" coords="977,59,989,127,995,207,995,305,995,363,1002,386,1020,410,1042,426,1065,433,1088,434,1112,432,1136,429,1159,431,1182,439,1204,458,1216,483,1220,510,1215,555,1209,555,1215,510,1211,484,1200,462,1180,444,1158,436,1136,435,1112,437,1088,439,1064,438,1039,431,1016,414,997,389,990,364,990,305,990,207,984,127,972,59"/>
-<area shape="rect" href="PosixFlowIoFactory_8hpp.html" title=" " alt="" coords="929,460,1190,500"/>
-<area shape="poly" title=" " alt="" coords="963,59,951,127,945,207,945,305,946,337,950,361,960,384,976,410,1000,437,1028,458,1025,462,997,441,972,414,955,386,945,363,940,337,939,305,939,207,946,127,957,59"/>
-<area shape="rect" href="DomainWatcher_8cpp.html" title=" " alt="" coords="1793,291,2043,317"/>
-<area shape="poly" title=" " alt="" coords="1102,33,1293,50,1511,79,1615,99,1709,122,1787,148,1819,163,1844,179,1870,206,1892,237,1916,290,1912,292,1887,240,1866,209,1840,183,1816,168,1785,153,1708,127,1614,104,1510,85,1292,56,1102,38"/>
-<area shape="rect" href="PosixDiscreteFlowWriter_8hpp.html" title=" " alt="" coords="1561,284,1769,324"/>
-<area shape="poly" title=" " alt="" coords="1028,48,1142,102,1205,138,1265,179,1280,194,1290,209,1299,222,1315,234,1405,253,1561,282,1560,287,1404,259,1313,238,1296,225,1285,212,1276,198,1262,183,1202,143,1139,107,1026,53"/>
-<area shape="rect" href="test__domainwatcher_8cpp.html" title=" " alt="" coords="2067,284,2252,324"/>
-<area shape="poly" title=" " alt="" coords="1102,24,1225,29,1370,40,1524,60,1676,91,1736,109,1782,129,1883,179,2118,281,2116,286,1881,184,1779,134,1735,114,1675,96,1523,65,1369,46,1225,35,1102,30"/>
-<area shape="rect" href="ContinuousFlowWriter_8hpp.html" title=" " alt="" coords="1036,181,1251,236"/>
-<area shape="poly" title=" " alt="" coords="1362,140,1226,184,1224,179,1360,135"/>
-<area shape="rect" href="DiscreteFlowWriter_8hpp.html" title=" " alt="" coords="1567,189,1829,229"/>
-<area shape="poly" title=" " alt="" coords="1500,135,1645,186,1644,191,1498,140"/>
-<area shape="rect" href="FlowWriter_8cpp.html" title=" " alt="" coords="1326,196,1542,221"/>
-<area shape="poly" title=" " alt="" coords="1436,147,1436,196,1431,196,1430,147"/>
-<area shape="rect" href="FlowWriterFactory_8hpp.html" title=" " alt="" coords="1281,284,1536,324"/>
-<area shape="poly" title=" " alt="" coords="1232,238,1356,281,1354,287,1230,243"/>
-<area shape="rect" href="PosixContinuousFlowWriter_8hpp.html" title=" " alt="" coords="1030,284,1257,324"/>
-<area shape="poly" title=" " alt="" coords="1146,250,1146,284,1141,284,1141,250"/>
-<area shape="rect" href="FlowIoFactory_8hpp.html" title=" " alt="" coords="1281,372,1507,412"/>
-<area shape="poly" title=" " alt="" coords="1406,338,1400,372,1395,371,1400,337"/>
-<area shape="rect" href="FlowIoFactory_8cpp.html" title=" " alt="" coords="1273,467,1507,493"/>
-<area shape="poly" title=" " alt="" coords="1476,328,1502,346,1522,371,1529,392,1522,413,1505,433,1485,449,1440,470,1438,465,1482,444,1502,429,1517,411,1523,392,1517,373,1498,350,1473,333"/>
-<area shape="poly" title=" " alt="" coords="1268,415,803,471,802,465,1267,410"/>
-<area shape="poly" title=" " alt="" coords="1308,418,1133,463,1132,457,1307,413"/>
-<area shape="poly" title=" " alt="" coords="1395,426,1393,467,1388,467,1390,426"/>
-<area shape="rect" href="fabrics_8cpp.html" title=" " alt="" coords="589,636,719,676"/>
-<area shape="poly" title=" " alt="" coords="741,508,756,526,768,546,772,568,767,589,742,618,709,638,707,634,738,614,762,587,767,568,763,548,752,529,737,512"/>
-<area shape="rect" href="FabricInstance_8hpp.html" title=" " alt="" coords="231,548,432,588"/>
-<area shape="poly" title=" " alt="" coords="611,506,414,551,413,545,610,500"/>
-<area shape="rect" href="Region_8cpp.html" title=" " alt="" coords="457,548,609,588"/>
-<area shape="poly" title=" " alt="" coords="657,508,572,550,569,546,655,504"/>
-<area shape="poly" title=" " alt="" coords="596,498,218,551,173,558,172,553,218,545,595,493"/>
-<area shape="poly" title=" " alt="" coords="762,503,857,546,855,550,760,508"/>
-<area shape="poly" title=" " alt="" coords="797,501,993,548,991,553,796,506"/>
-<area shape="rect" href="flow_8cpp.html" title=" " alt="" coords="633,555,752,581"/>
-<area shape="poly" title=" " alt="" coords="704,514,697,555,692,554,698,513"/>
-<area shape="poly" title=" " alt="" coords="817,493,970,515,1139,545,1169,553,1168,558,1137,551,969,520,816,498"/>
-<area shape="poly" title=" " alt="" coords="416,589,590,635,588,640,415,594"/>
-<area shape="rect" href="FabricInstance_8cpp.html" title=" " alt="" coords="231,636,431,676"/>
-<area shape="poly" title=" " alt="" coords="334,602,334,636,329,636,329,602"/>
-<area shape="poly" title=" " alt="" coords="1013,509,935,550,932,546,1011,504"/>
-<area shape="poly" title=" " alt="" coords="1062,514,1062,548,1057,548,1057,514"/>
-<area shape="poly" title=" " alt="" coords="1105,504,1190,553,1187,558,1102,509"/>
-<area shape="rect" href="PosixFlowIoFactory_8cpp.html" title=" " alt="" coords="1452,548,1637,588"/>
-<area shape="poly" title=" " alt="" coords="1180,500,1452,548,1451,553,1179,505"/>
-<area shape="poly" title=" " alt="" coords="1271,322,1432,348,1492,360,1521,370,1536,390,1547,414,1557,463,1556,511,1551,548,1546,547,1551,510,1551,464,1542,415,1532,393,1518,374,1491,366,1431,353,1270,327"/>
-<area shape="rect" href="PosixContinuousFlowWriter_8cpp.html" title=" " alt="" coords="1030,372,1257,412"/>
-<area shape="poly" title=" " alt="" coords="1146,338,1146,372,1141,372,1141,338"/>
-<area shape="poly" title=" " alt="" coords="1627,235,1468,286,1466,281,1626,230"/>
-<area shape="poly" title=" " alt="" coords="1756,232,1892,289,1890,294,1754,236"/>
-<area shape="poly" title=" " alt="" coords="1689,242,1674,285,1669,283,1684,241"/>
-<area shape="poly" title=" " alt="" coords="1805,229,2067,281,2066,287,1804,234"/>
-<area shape="poly" title=" " alt="" coords="1778,325,1816,340,1846,359,1856,370,1862,383,1861,398,1855,413,1835,441,1811,464,1756,503,1695,531,1637,550,1636,545,1693,526,1753,499,1808,460,1831,437,1850,411,1856,397,1856,384,1852,373,1843,363,1814,345,1776,330"/>
-<area shape="rect" href="PosixDiscreteFlowWriter_8cpp.html" title=" " alt="" coords="1633,372,1841,412"/>
-<area shape="poly" title=" " alt="" coords="1691,333,1723,370,1719,374,1687,336"/>
+<area shape="poly" title=" " alt="" coords="1406,28,1144,30,823,38,663,47,516,59,391,75,296,96,227,112,166,127,143,138,124,154,113,176,109,208,109,393,109,555,103,555,103,393,103,207,108,175,120,150,140,133,165,122,226,107,295,91,390,70,516,54,663,42,823,33,1144,24,1406,23"/>
+<area shape="rect" href="internal_2tests_2test__instance_8cpp.html" title=" " alt="" coords="1620,548,1760,588"/>
+<area shape="poly" title=" " alt="" coords="1625,48,1665,66,1702,91,1733,117,1755,141,1769,169,1774,207,1774,394,1767,440,1750,483,1728,521,1708,549,1704,546,1724,518,1745,481,1762,438,1769,393,1769,207,1764,171,1751,144,1729,121,1699,95,1663,71,1623,52"/>
+<area shape="rect" href="test__options_8cpp.html" title=" " alt="" coords="1321,548,1454,588"/>
+<area shape="poly" title=" " alt="" coords="1559,57,1580,109,1599,176,1605,213,1607,251,1604,289,1594,325,1579,355,1563,377,1514,414,1485,429,1459,435,1435,442,1412,462,1400,482,1393,505,1389,548,1384,548,1388,504,1395,480,1408,458,1432,438,1457,430,1483,424,1511,410,1559,373,1575,353,1589,323,1598,288,1602,251,1600,214,1594,177,1575,111,1554,59"/>
+<area shape="rect" href="mxl_8cpp.html" title=" " alt="" coords="1478,555,1595,581"/>
+<area shape="poly" title=" " alt="" coords="1605,49,1638,68,1666,91,1692,119,1710,143,1720,171,1723,207,1723,393,1722,451,1715,476,1697,502,1677,517,1645,532,1575,558,1573,553,1643,527,1674,513,1693,498,1710,473,1717,451,1718,393,1718,207,1715,172,1705,146,1688,122,1663,95,1634,72,1603,54"/>
+<area shape="rect" href="PosixFlowIoFactory_8hpp.html" title=" " alt="" coords="1422,460,1683,500"/>
+<area shape="poly" title=" " alt="" coords="1592,51,1617,69,1637,92,1656,121,1665,146,1669,173,1670,207,1670,305,1667,330,1660,354,1637,397,1607,434,1578,461,1575,458,1603,430,1632,394,1655,352,1662,329,1665,305,1665,207,1664,174,1660,147,1651,123,1633,95,1613,73,1589,55"/>
+<area shape="rect" href="PosixDiscreteFlowWriter_8hpp.html" title=" " alt="" coords="1161,284,1369,324"/>
+<area shape="poly" title=" " alt="" coords="1545,59,1543,99,1536,147,1520,195,1508,218,1492,238,1471,252,1440,265,1363,287,1361,281,1438,260,1468,248,1488,234,1503,215,1515,193,1531,146,1538,99,1540,59"/>
+<area shape="rect" href="test__domainwatcher_8cpp.html" title=" " alt="" coords="1393,284,1579,324"/>
+<area shape="poly" title=" " alt="" coords="1548,59,1552,141,1548,190,1537,237,1523,263,1507,285,1502,282,1519,260,1531,235,1542,189,1546,141,1543,59"/>
+<area shape="rect" href="DomainWatcher_8cpp.html" title=" " alt="" coords="1229,196,1479,221"/>
+<area shape="poly" title=" " alt="" coords="1513,57,1368,198,1364,194,1509,53"/>
+<area shape="rect" href="ContinuousFlowWriter_8hpp.html" title=" " alt="" coords="704,181,919,236"/>
+<area shape="poly" title=" " alt="" coords="907,143,850,183,847,179,904,139"/>
+<area shape="rect" href="DiscreteFlowWriter_8hpp.html" title=" " alt="" coords="943,189,1205,229"/>
+<area shape="poly" title=" " alt="" coords="983,139,1049,186,1046,191,980,144"/>
+<area shape="rect" href="EventFlowWriter_8hpp.html" title="Backend contract for the single event producer." alt="" coords="434,189,679,229"/>
+<area shape="poly" title=" " alt="" coords="852,139,635,191,634,186,851,134"/>
+<area shape="poly" title=" " alt="" coords="1040,134,1304,193,1303,199,1039,139"/>
+<area shape="rect" href="FlowWriter_8cpp.html" title=" " alt="" coords="194,196,410,221"/>
+<area shape="poly" title=" " alt="" coords="826,129,636,152,422,184,351,198,350,193,422,179,636,147,825,124"/>
+<area shape="rect" href="FlowWriterFactory_8hpp.html" title=" " alt="" coords="631,284,885,324"/>
+<area shape="poly" title=" " alt="" coords="792,250,771,285,766,283,787,247"/>
+<area shape="rect" href="PosixContinuousFlowWriter_8hpp.html" title=" " alt="" coords="910,284,1137,324"/>
+<area shape="poly" title=" " alt="" coords="885,239,981,281,979,286,882,244"/>
+<area shape="rect" href="FlowIoFactory_8hpp.html" title=" " alt="" coords="639,372,866,412"/>
+<area shape="poly" title=" " alt="" coords="759,338,757,372,751,372,753,338"/>
+<area shape="rect" href="FlowIoFactory_8cpp.html" title=" " alt="" coords="711,467,946,493"/>
+<area shape="poly" title=" " alt="" coords="833,328,859,346,880,371,885,384,886,398,877,426,861,450,843,469,839,465,856,447,872,423,881,398,880,385,876,373,856,350,830,332"/>
+<area shape="poly" title=" " alt="" coords="659,418,465,463,464,457,658,413"/>
+<area shape="poly" title=" " alt="" coords="880,404,1422,462,1422,467,879,410"/>
+<area shape="poly" title=" " alt="" coords="780,421,820,465,816,469,776,424"/>
+<area shape="rect" href="fabrics_8cpp.html" title=" " alt="" coords="180,636,309,676"/>
+<area shape="poly" title=" " alt="" coords="322,509,295,527,272,550,261,571,253,594,247,636,242,636,248,593,256,569,268,546,291,523,319,504"/>
+<area shape="rect" href="FabricInstance_8hpp.html" title=" " alt="" coords="283,548,484,588"/>
+<area shape="poly" title=" " alt="" coords="386,514,386,548,381,548,381,514"/>
+<area shape="rect" href="Region_8cpp.html" title=" " alt="" coords="509,548,661,588"/>
+<area shape="poly" title=" " alt="" coords="441,503,542,546,540,550,439,508"/>
+<area shape="poly" title=" " alt="" coords="310,507,144,558,142,553,309,501"/>
+<area shape="poly" title=" " alt="" coords="494,485,699,497,955,507,1155,509,1353,518,1470,528,1608,545,1620,547,1619,553,1607,551,1470,534,1353,523,1154,514,955,512,699,503,493,491"/>
+<area shape="poly" title=" " alt="" coords="494,486,957,516,1179,533,1308,545,1321,548,1320,553,1307,551,1179,538,956,522,494,491"/>
+<area shape="rect" href="flow_8cpp.html" title=" " alt="" coords="685,555,804,581"/>
+<area shape="poly" title=" " alt="" coords="481,501,673,545,702,553,701,558,672,551,480,506"/>
+<area shape="poly" title=" " alt="" coords="494,485,1466,545,1500,553,1499,558,1466,551,493,490"/>
+<area shape="poly" title=" " alt="" coords="343,597,276,638,274,634,340,593"/>
+<area shape="rect" href="FabricInstance_8cpp.html" title=" " alt="" coords="334,636,534,676"/>
+<area shape="poly" title=" " alt="" coords="404,599,425,634,420,637,399,601"/>
+<area shape="poly" title=" " alt="" coords="1596,505,1661,546,1659,550,1593,510"/>
+<area shape="poly" title=" " alt="" coords="1505,509,1425,550,1422,546,1503,504"/>
+<area shape="poly" title=" " alt="" coords="1549,514,1541,555,1536,554,1544,513"/>
+<area shape="rect" href="PosixFlowIoFactory_8cpp.html" title=" " alt="" coords="1111,548,1296,588"/>
+<area shape="poly" title=" " alt="" coords="1463,506,1280,551,1279,545,1462,501"/>
+<area shape="rect" href="test__events_8cpp.html" title="Event API, fragmentation, lifetime and concurrency regression tests." alt="" coords="1785,555,1966,581"/>
+<area shape="poly" title=" " alt="" coords="1637,501,1833,553,1832,558,1636,506"/>
+<area shape="poly" title=" " alt="" coords="1124,327,1155,345,1181,370,1195,392,1204,416,1213,465,1213,512,1209,548,1204,548,1208,512,1207,466,1199,417,1190,394,1177,374,1152,349,1121,332"/>
+<area shape="rect" href="PosixContinuousFlowWriter_8cpp.html" title=" " alt="" coords="941,372,1167,412"/>
+<area shape="poly" title=" " alt="" coords="1037,336,1050,371,1045,373,1032,338"/>
+<area shape="poly" title=" " alt="" coords="998,235,823,287,821,281,996,230"/>
+<area shape="poly" title=" " alt="" coords="1126,232,1227,282,1225,286,1124,237"/>
+<area shape="poly" title=" " alt="" coords="1171,229,1403,281,1402,287,1170,234"/>
+<area shape="poly" title=" " alt="" coords="1261,338,1226,501,1212,548,1207,547,1221,499,1256,337"/>
+<area shape="rect" href="PosixDiscreteFlowWriter_8cpp.html" title=" " alt="" coords="1293,372,1501,412"/>
+<area shape="poly" title=" " alt="" coords="1307,329,1369,370,1366,374,1304,334"/>
+<area shape="poly" title=" " alt="" coords="611,232,718,282,716,286,609,237"/>
+<area shape="rect" href="PosixEventFlowWriter_8hpp.html" title="POSIX event writer declaration and private publication state." alt="" coords="416,284,607,324"/>
+<area shape="poly" title=" " alt="" coords="544,242,523,285,518,283,539,240"/>
+<area shape="poly" title=" " alt="" coords="454,333,431,351,414,373,407,392,414,410,434,428,465,444,546,468,700,497,810,518,920,535,1111,556,1110,562,920,540,809,524,699,503,545,473,463,449,431,433,409,414,402,393,409,371,427,347,451,329"/>
+<area shape="rect" href="PosixEventFlowWriter_8cpp.html" title="POSIX event staging, timestamp validation and publication." alt="" coords="424,372,615,412"/>
+<area shape="poly" title=" " alt="" coords="517,337,520,372,515,372,512,338"/>
 </map>
 </div>
 </div>

@@ -141,7 +141,7 @@ Public Attributes</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Immutable metadata about a media flow that is independent of the data format of the flow and thus common to all flows handled by MXL. </p>
 
-<p class="definition">Definition at line <a class="el" href="flowinfo_8h_source.html#l00043">43</a> of file <a class="el" href="flowinfo_8h_source.html">flowinfo.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="flowinfo_8h_source.html#l00047">47</a> of file <a class="el" href="flowinfo_8h_source.html">flowinfo.h</a>.</p>
 </div><h2 class="groupheader">Member Data Documentation</h2>
 <a id="ae6f71b10a101913817f3037dbfbe579c" name="ae6f71b10a101913817f3037dbfbe579c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae6f71b10a101913817f3037dbfbe579c">&#9670;&#160;</a></span>deviceIndex</h2>
@@ -156,7 +156,7 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>Device index (if payload is in device memory). -1 if on host memory. </p>
 
-<p class="definition">Definition at line <a class="el" href="flowinfo_8h_source.html#l00086">86</a> of file <a class="el" href="flowinfo_8h_source.html">flowinfo.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="flowinfo_8h_source.html#l00091">91</a> of file <a class="el" href="flowinfo_8h_source.html">flowinfo.h</a>.</p>
 
 </div>
 </div>
@@ -173,7 +173,7 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>No flags defined yet. </p>
 
-<p class="definition">Definition at line <a class="el" href="flowinfo_8h_source.html#l00055">55</a> of file <a class="el" href="flowinfo_8h_source.html">flowinfo.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="flowinfo_8h_source.html#l00059">59</a> of file <a class="el" href="flowinfo_8h_source.html">flowinfo.h</a>.</p>
 
 </div>
 </div>
@@ -190,7 +190,7 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>The data format of this flow. </p><dl class="section see"><dt>See also</dt><dd><a class="el" href="dataformat_8h.html#ae0d6ccb052d9f48c3d6f1eb8644a0d7b">mxlDataFormat</a> </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="flowinfo_8h_source.html#l00052">52</a> of file <a class="el" href="flowinfo_8h_source.html">flowinfo.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="flowinfo_8h_source.html#l00056">56</a> of file <a class="el" href="flowinfo_8h_source.html">flowinfo.h</a>.</p>
 
 </div>
 </div>
@@ -205,9 +205,9 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>The number of grains per second expressed as a rational. For VIDEO and DATA this value must match the 'grain_rate' found in the flow descriptor. For AUDIO flows this value must match the 'sample_rate' found in the flow descriptor. </p>
+<p>The number of grains per second expressed as a rational. For VIDEO, DATA and EVENT this value must match the 'grain_rate' found in the flow descriptor. For AUDIO flows this value must match the 'sample_rate' found in the flow descriptor. For EVENT flows this controls buffer capacity; queue positions are independent of time. </p>
 
-<p class="definition">Definition at line <a class="el" href="flowinfo_8h_source.html#l00062">62</a> of file <a class="el" href="flowinfo_8h_source.html">flowinfo.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="flowinfo_8h_source.html#l00067">67</a> of file <a class="el" href="flowinfo_8h_source.html">flowinfo.h</a>.</p>
 
 </div>
 </div>
@@ -224,7 +224,7 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>The flow UUID. This should be identical to the {flowId} path component. </p>
 
-<p class="definition">Definition at line <a class="el" href="flowinfo_8h_source.html#l00046">46</a> of file <a class="el" href="flowinfo_8h_source.html">flowinfo.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="flowinfo_8h_source.html#l00050">50</a> of file <a class="el" href="flowinfo_8h_source.html">flowinfo.h</a>.</p>
 
 </div>
 </div>
@@ -241,7 +241,7 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>The largest expected batch size in samples (for continuous flows) or slices (for discrete flows), in which new data is written to this this flow by its producer. For continuous flows, this value must be less than half of the buffer length. For discrete flows, this must be greater or equal to 1. </p>
 
-<p class="definition">Definition at line <a class="el" href="flowinfo_8h_source.html#l00069">69</a> of file <a class="el" href="flowinfo_8h_source.html">flowinfo.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="flowinfo_8h_source.html#l00074">74</a> of file <a class="el" href="flowinfo_8h_source.html">flowinfo.h</a>.</p>
 
 </div>
 </div>
@@ -258,7 +258,7 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>The largest expected batch size in samples (for continuous flows) or slices (for discrete flows), at which availability of new data is signaled to waiting consumers. This must be a multiple of the commit batch size greater or equal to 1. </p>
 
-<p class="definition">Definition at line <a class="el" href="flowinfo_8h_source.html#l00075">75</a> of file <a class="el" href="flowinfo_8h_source.html">flowinfo.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="flowinfo_8h_source.html#l00080">80</a> of file <a class="el" href="flowinfo_8h_source.html">flowinfo.h</a>.</p>
 
 </div>
 </div>
@@ -275,7 +275,7 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>And indication, where the payload memory is located. </p><dl class="section see"><dt>See also</dt><dd><a class="el" href="flowinfo_8h.html#a35f8f98bcf8dd9305b0ebfed0fde7a4e">mxlPayloadLocation</a> </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="flowinfo_8h_source.html#l00081">81</a> of file <a class="el" href="flowinfo_8h_source.html">flowinfo.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="flowinfo_8h_source.html#l00086">86</a> of file <a class="el" href="flowinfo_8h_source.html">flowinfo.h</a>.</p>
 
 </div>
 </div>
@@ -292,7 +292,7 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>Reserved space for future extensions, padding the total size of this structure to 128 bytes. </p>
 
-<p class="definition">Definition at line <a class="el" href="flowinfo_8h_source.html#l00092">92</a> of file <a class="el" href="flowinfo_8h_source.html">flowinfo.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="flowinfo_8h_source.html#l00097">97</a> of file <a class="el" href="flowinfo_8h_source.html">flowinfo.h</a>.</p>
 
 </div>
 </div>

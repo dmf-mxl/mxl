@@ -10,7 +10,7 @@
 <area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="243,29,268,66,264,69,239,33"/>
 <area shape="rect" id="Node000006" title=" " alt="" coords="343,79,402,104"/>
 <area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="256,28,339,70,337,75,254,33"/>
-<area shape="rect" id="Node000007" href="$PathUtils_8hpp.html" title=" " alt="" coords="426,79,618,104"/>
+<area shape="rect" id="Node000007" href="$PathUtils_8hpp.html" title="Paths and filenames utilities used by the MXL SDK." alt="" coords="426,79,618,104"/>
 <area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="280,28,463,73,461,78,279,33"/>
 <area shape="poly" id="edge7_Node000007_Node000003" title=" " alt="" coords="490,107,363,150,361,145,488,101"/>
 </map>

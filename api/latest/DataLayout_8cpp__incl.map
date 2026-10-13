@@ -4,7 +4,7 @@
 <area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="317,48,224,90,222,85,315,43"/>
 <area shape="rect" id="Node000004" title=" " alt="" coords="5,167,61,192"/>
 <area shape="poly" id="edge13_Node000001_Node000004" title=" " alt="" coords="266,41,188,61,149,76,112,96,77,125,51,157,47,153,73,121,109,91,147,72,187,56,265,36"/>
-<area shape="rect" id="Node000006" href="$flowinfo_8h.html" title=" " alt="" coords="269,167,384,192"/>
+<area shape="rect" id="Node000006" href="$flowinfo_8h.html" title="Public configuration and runtime metadata for MXL flows." alt="" coords="269,167,384,192"/>
 <area shape="poly" id="edge15_Node000001_Node000006" title=" " alt="" coords="342,47,326,69,313,94,311,124,318,153,313,154,306,125,308,93,321,66,337,44"/>
 <area shape="rect" id="Node000011" title=" " alt="" coords="323,93,392,119"/>
 <area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="360,46,360,79,355,79,355,46"/>
@@ -24,7 +24,7 @@
 <area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="310,194,290,209,273,227,264,246,264,255,269,264,288,278,318,290,398,308,488,317,567,321,566,326,488,322,398,313,316,296,286,283,265,267,259,256,258,245,268,224,287,205,307,190"/>
 <area shape="rect" id="Node000008" title=" " alt="" coords="279,240,375,265"/>
 <area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="329,192,329,226,324,226,324,192"/>
-<area shape="rect" id="Node000009" href="$dataformat_8h.html" title=" " alt="" coords="399,240,535,265"/>
+<area shape="rect" id="Node000009" href="$dataformat_8h.html" title="Public flow format identifiers and format classification helpers." alt="" coords="399,240,535,265"/>
 <area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="350,190,433,231,431,236,348,194"/>
 <area shape="rect" id="Node000010" href="$rational_8h.html" title=" " alt="" coords="559,240,673,265"/>
 <area shape="poly" id="edge9_Node000006_Node000010" title=" " alt="" coords="374,189,557,234,555,239,373,195"/>

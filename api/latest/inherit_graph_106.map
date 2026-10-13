@@ -1,3 +1,17 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$classmxl_1_1lib_1_1Instance_1_1RefCounted.html" title=" " alt="" coords="5,5,149,45"/>
+<area shape="rect" id="Node000000" href="$classmxl_1_1lib_1_1FlowWriter.html" title=" " alt="" coords="5,113,156,138"/>
+<area shape="rect" id="Node000001" href="$classmxl_1_1lib_1_1ContinuousFlowWriter.html" title=" " alt="" coords="215,20,397,60"/>
+<area shape="poly" id="edge24_Node000000_Node000001" title=" " alt="" coords="127,105,252,58,253,62,129,110"/>
+<area shape="rect" id="Node000003" href="$classmxl_1_1lib_1_1DiscreteFlowWriter.html" title=" " alt="" coords="204,113,408,138"/>
+<area shape="poly" id="edge26_Node000000_Node000003" title=" " alt="" coords="170,123,204,123,204,128,170,128"/>
+<area shape="rect" id="Node000006" href="$classmxl_1_1lib_1_1EventFlowWriter.html" title="Backend contract for a single event producer with private write staging. Callers guarantee one writer..." alt="" coords="213,169,399,194"/>
+<area shape="poly" id="edge29_Node000000_Node000006" title=" " alt="" coords="146,139,255,166,253,171,145,144"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1PosixContinuousFlowWriter.html" title=" " alt="" coords="462,5,649,45"/>
+<area shape="poly" id="edge25_Node000001_Node000002" title=" " alt="" coords="411,31,462,28,462,33,411,37"/>
+<area shape="rect" id="Node000004" href="$structMockWriter.html" title=" " alt="" coords="507,70,604,95"/>
+<area shape="poly" id="edge27_Node000003_Node000004" title=" " alt="" coords="393,108,506,88,507,93,394,113"/>
+<area shape="rect" id="Node000005" href="$classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html" title=" " alt="" coords="456,120,655,160"/>
+<area shape="poly" id="edge28_Node000003_Node000005" title=" " alt="" coords="422,129,456,131,455,137,421,135"/>
+<area shape="rect" id="Node000007" href="$classmxl_1_1lib_1_1PosixEventFlowWriter.html" title="POSIX single&#45;producer writer with private staging and monotonic timestamps. The caller guarantees one..." alt="" coords="464,184,647,224"/>
+<area shape="poly" id="edge30_Node000006_Node000007" title=" " alt="" coords="413,188,464,193,464,198,413,194"/>
 </map>

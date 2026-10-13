@@ -113,11 +113,13 @@ Inheritance diagram for mxl::lib::FlowData:</div>
 <div class="dyncontent">
 <div class="center"><img src="classmxl_1_1lib_1_1FlowData__inherit__graph.png" border="0" usemap="#amxl_1_1lib_1_1FlowData_inherit__map" alt="Inheritance graph"/></div>
 <map name="amxl_1_1lib_1_1FlowData_inherit__map" id="amxl_1_1lib_1_1FlowData_inherit__map">
-<area shape="rect" title=" " alt="" coords="157,5,298,31"/>
+<area shape="rect" title=" " alt="" coords="271,5,413,31"/>
 <area shape="rect" href="classmxl_1_1lib_1_1ContinuousFlowData.html" title=" " alt="" coords="5,79,220,104"/>
-<area shape="poly" title=" " alt="" coords="199,40,133,81,130,76,196,35"/>
+<area shape="poly" title=" " alt="" coords="293,37,151,81,149,76,291,32"/>
 <area shape="rect" href="classmxl_1_1lib_1_1DiscreteFlowData.html" title=" " alt="" coords="245,79,439,104"/>
-<area shape="poly" title=" " alt="" coords="259,35,325,76,322,81,256,40"/>
+<area shape="poly" title=" " alt="" coords="345,44,345,79,339,79,339,44"/>
+<area shape="rect" href="classmxl_1_1lib_1_1EventFlowData.html" title="Own the common flow mapping, single event ring mapping and ring view." alt="" coords="463,79,642,104"/>
+<area shape="poly" title=" " alt="" coords="389,32,519,76,518,81,388,37"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <div class="dynheader">
@@ -312,17 +314,21 @@ Private Attributes</h2></td></tr>
 <div class="line"><span class="lineno">   40</span>        <span class="keyword">static_assert</span>(<span class="keyword">sizeof</span>(<a class="code hl_typedef" href="flowinfo_8h.html#ae3178e998e2b9fe7df8af3476bca616b">::mxlContinuousFlowConfigInfo</a>) == 64, <span class="stringliteral">&quot;mxlContinuousFlowConfigInfo does not have a size of 64 bytes&quot;</span>);</div>
 <div class="line"><span class="lineno">   41</span>        <span class="keyword">static_assert</span>(<span class="keyword">sizeof</span>(<a class="code hl_typedef" href="flowinfo_8h.html#aafff8feac4d7c0df11c2bc6f77e37334">::mxlDiscreteFlowConfigInfo</a>) == 64, <span class="stringliteral">&quot;mxlDiscreteFlowConfigInfo does not have a size of 64 bytes&quot;</span>);</div>
 <div class="line"><span class="lineno">   42</span>        <span class="keyword">static_assert</span>(<span class="keyword">sizeof</span>(<a class="code hl_typedef" href="flowinfo_8h.html#aa5e3cb9333d8606167f9d7541e38194e">::mxlFlowConfigInfo</a>) == 192, <span class="stringliteral">&quot;mxlFlowConfigInfo does not have a size of 192 bytes&quot;</span>);</div>
-<div class="line"><span class="lineno">   43</span>        <span class="keyword">static_assert</span>(<span class="keyword">sizeof</span>(<a class="code hl_typedef" href="flowinfo_8h.html#a9286201a41ac10b67996a18e9a3add4b">::mxlFlowRuntimeInfo</a>) == 64, <span class="stringliteral">&quot;mxlFlowRuntimeInfo does not have a size of 64 bytes&quot;</span>);</div>
-<div class="line"><span class="lineno">   44</span>        <span class="keyword">static_assert</span>(<span class="keyword">sizeof</span>(<a class="code hl_typedef" href="flowinfo_8h.html#ad615a00dc0d3feb66fcdce75ecdeefb5">::mxlFlowInfo</a>) == 2048, <span class="stringliteral">&quot;mxlFlowInfo does not have a size of 2048 bytes&quot;</span>);</div>
-<div class="line"><span class="lineno">   45</span>        <span class="keyword">static_assert</span>(<span class="keyword">sizeof</span>(<a class="code hl_typedef" href="flow_8h.html#a33342a4bf46bd9c15c58779146960b67">::mxlGrainInfo</a>) == 4096, <span class="stringliteral">&quot;mxlGrainInfo does not have a size of 4096 bytes&quot;</span>);</div>
-<div class="line"><span class="lineno">   46</span>    }</div>
+<div class="line"><span class="lineno">   43</span>        <span class="keyword">static_assert</span>(<span class="keyword">sizeof</span>(<a class="code hl_typedef" href="flowinfo_8h.html#aedaa3522dfefe63c56aa7787f7019fd6">::mxlEventFlowConfigInfo</a>) == 64, <span class="stringliteral">&quot;mxlEventFlowConfigInfo does not have a size of 64 bytes&quot;</span>);</div>
+<div class="line"><span class="lineno">   44</span>        <span class="keyword">static_assert</span>(<span class="keyword">sizeof</span>(<a class="code hl_typedef" href="flowinfo_8h.html#a9286201a41ac10b67996a18e9a3add4b">::mxlFlowRuntimeInfo</a>) == 64, <span class="stringliteral">&quot;mxlFlowRuntimeInfo does not have a size of 64 bytes&quot;</span>);</div>
+<div class="line"><span class="lineno">   45</span>        <span class="keyword">static_assert</span>(<span class="keyword">sizeof</span>(<a class="code hl_typedef" href="flowinfo_8h.html#ad615a00dc0d3feb66fcdce75ecdeefb5">::mxlFlowInfo</a>) == 2048, <span class="stringliteral">&quot;mxlFlowInfo does not have a size of 2048 bytes&quot;</span>);</div>
+<div class="line"><span class="lineno">   46</span>        <span class="keyword">static_assert</span>(<span class="keyword">sizeof</span>(<a class="code hl_typedef" href="flow_8h.html#a33342a4bf46bd9c15c58779146960b67">::mxlGrainInfo</a>) == 4096, <span class="stringliteral">&quot;mxlGrainInfo does not have a size of 4096 bytes&quot;</span>);</div>
+<div class="line"><span class="lineno">   47</span>        <span class="keyword">static_assert</span>(<span class="keyword">sizeof</span>(<a class="code hl_typedef" href="flow_8h.html#a4ab384e09db0a07580f750ea8077702e">::mxlEventInfo</a>) == 512, <span class="stringliteral">&quot;mxlEventInfo does not have a size of 512 bytes&quot;</span>);</div>
+<div class="line"><span class="lineno">   48</span>    }</div>
 <div class="ttc" id="aflow_8h_html_a33342a4bf46bd9c15c58779146960b67"><div class="ttname"><a href="flow_8h.html#a33342a4bf46bd9c15c58779146960b67">mxlGrainInfo</a></div><div class="ttdeci">struct mxlGrainInfo_t mxlGrainInfo</div></div>
+<div class="ttc" id="aflow_8h_html_a4ab384e09db0a07580f750ea8077702e"><div class="ttname"><a href="flow_8h.html#a4ab384e09db0a07580f750ea8077702e">mxlEventInfo</a></div><div class="ttdeci">struct mxlEventInfo_t mxlEventInfo</div><div class="ttdoc">Metadata for one event queue entry, either a complete event or a fragment.</div></div>
 <div class="ttc" id="aflowinfo_8h_html_a5fc82d690786c8a3aa71fcdb4a9464c5"><div class="ttname"><a href="flowinfo_8h.html#a5fc82d690786c8a3aa71fcdb4a9464c5">mxlCommonFlowConfigInfo</a></div><div class="ttdeci">struct mxlCommonFlowConfigInfo_t mxlCommonFlowConfigInfo</div></div>
 <div class="ttc" id="aflowinfo_8h_html_a9286201a41ac10b67996a18e9a3add4b"><div class="ttname"><a href="flowinfo_8h.html#a9286201a41ac10b67996a18e9a3add4b">mxlFlowRuntimeInfo</a></div><div class="ttdeci">struct mxlFlowRuntimeInfo_t mxlFlowRuntimeInfo</div></div>
 <div class="ttc" id="aflowinfo_8h_html_aa5e3cb9333d8606167f9d7541e38194e"><div class="ttname"><a href="flowinfo_8h.html#aa5e3cb9333d8606167f9d7541e38194e">mxlFlowConfigInfo</a></div><div class="ttdeci">struct mxlFlowConfigInfo_t mxlFlowConfigInfo</div></div>
 <div class="ttc" id="aflowinfo_8h_html_aafff8feac4d7c0df11c2bc6f77e37334"><div class="ttname"><a href="flowinfo_8h.html#aafff8feac4d7c0df11c2bc6f77e37334">mxlDiscreteFlowConfigInfo</a></div><div class="ttdeci">struct mxlDiscreteFlowConfigInfo_t mxlDiscreteFlowConfigInfo</div></div>
 <div class="ttc" id="aflowinfo_8h_html_ad615a00dc0d3feb66fcdce75ecdeefb5"><div class="ttname"><a href="flowinfo_8h.html#ad615a00dc0d3feb66fcdce75ecdeefb5">mxlFlowInfo</a></div><div class="ttdeci">struct mxlFlowInfo_t mxlFlowInfo</div></div>
 <div class="ttc" id="aflowinfo_8h_html_ae3178e998e2b9fe7df8af3476bca616b"><div class="ttname"><a href="flowinfo_8h.html#ae3178e998e2b9fe7df8af3476bca616b">mxlContinuousFlowConfigInfo</a></div><div class="ttdeci">struct mxlContinuousFlowConfigInfo_t mxlContinuousFlowConfigInfo</div></div>
+<div class="ttc" id="aflowinfo_8h_html_aedaa3522dfefe63c56aa7787f7019fd6"><div class="ttname"><a href="flowinfo_8h.html#aedaa3522dfefe63c56aa7787f7019fd6">mxlEventFlowConfigInfo</a></div><div class="ttdeci">struct mxlEventFlowConfigInfo_t mxlEventFlowConfigInfo</div><div class="ttdoc">Immutable event queue capacity and entry payload geometry (64 bytes). This is the event member of mxl...</div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -479,7 +485,7 @@ Private Attributes</h2></td></tr>
 <div class="line"><span class="lineno">  107</span>        <span class="keywordflow">return</span> <span class="keyword">nullptr</span>;</div>
 <div class="line"><span class="lineno">  108</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1FlowData_html_a8265993e17565e6d748c066e6d6f6efb"><div class="ttname"><a href="classmxl_1_1lib_1_1FlowData.html#a8265993e17565e6d748c066e6d6f6efb">mxl::lib::FlowData::flow</a></div><div class="ttdeci">constexpr Flow * flow() noexcept</div><div class="ttdef"><b>Definition</b> <a href="FlowData_8hpp_source.html#l00082">FlowData.hpp:82</a></div></div>
-<div class="ttc" id="astructmxl_1_1lib_1_1Flow_html_a5752aab3e43adff9aa0feb9bf5a4b75d"><div class="ttname"><a href="structmxl_1_1lib_1_1Flow.html#a5752aab3e43adff9aa0feb9bf5a4b75d">mxl::lib::Flow::info</a></div><div class="ttdeci">mxlFlowInfo info</div><div class="ttdef"><b>Definition</b> <a href="Flow_8hpp_source.html#l00028">Flow.hpp:28</a></div></div>
+<div class="ttc" id="astructmxl_1_1lib_1_1Flow_html_a5752aab3e43adff9aa0feb9bf5a4b75d"><div class="ttname"><a href="structmxl_1_1lib_1_1Flow.html#a5752aab3e43adff9aa0feb9bf5a4b75d">mxl::lib::Flow::info</a></div><div class="ttdeci">mxlFlowInfo info</div><div class="ttdef"><b>Definition</b> <a href="Flow_8hpp_source.html#l00032">Flow.hpp:32</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -548,7 +554,7 @@ Private Attributes</h2></td></tr>
 <div class="line"><span class="lineno">  124</span>        }</div>
 <div class="line"><span class="lineno">  125</span>        <span class="keywordflow">return</span> <span class="keyword">nullptr</span>;</div>
 <div class="line"><span class="lineno">  126</span>    }</div>
-<div class="ttc" id="astructmxl_1_1lib_1_1Flow_html_abd94fc78c86bdf6128441e5ce0f95f02"><div class="ttname"><a href="structmxl_1_1lib_1_1Flow.html#abd94fc78c86bdf6128441e5ce0f95f02">mxl::lib::Flow::state</a></div><div class="ttdeci">mxl::lib::FlowState state</div><div class="ttdef"><b>Definition</b> <a href="Flow_8hpp_source.html#l00029">Flow.hpp:29</a></div></div>
+<div class="ttc" id="astructmxl_1_1lib_1_1Flow_html_abd94fc78c86bdf6128441e5ce0f95f02"><div class="ttname"><a href="structmxl_1_1lib_1_1Flow.html#abd94fc78c86bdf6128441e5ce0f95f02">mxl::lib::Flow::state</a></div><div class="ttdeci">mxl::lib::FlowState state</div><div class="ttdef"><b>Definition</b> <a href="Flow_8hpp_source.html#l00033">Flow.hpp:33</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -601,10 +607,10 @@ Private Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="FlowData_8cpp_source.html#l00050">50</a> of file <a class="el" href="FlowData_8cpp_source.html">FlowData.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   51</span>    {</div>
-<div class="line"><span class="lineno">   52</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1FlowData.html#aea6eee1a0ace7dd5ee4ac43ac344df1f">_flow</a>.isExclusive();</div>
-<div class="line"><span class="lineno">   53</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FlowData_8cpp_source.html#l00052">52</a> of file <a class="el" href="FlowData_8cpp_source.html">FlowData.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   53</span>    {</div>
+<div class="line"><span class="lineno">   54</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1FlowData.html#aea6eee1a0ace7dd5ee4ac43ac344df1f">_flow</a>.isExclusive();</div>
+<div class="line"><span class="lineno">   55</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -653,10 +659,10 @@ Private Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="FlowData_8cpp_source.html#l00055">55</a> of file <a class="el" href="FlowData_8cpp_source.html">FlowData.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   56</span>    {</div>
-<div class="line"><span class="lineno">   57</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1FlowData.html#aea6eee1a0ace7dd5ee4ac43ac344df1f">_flow</a>.makeExclusive();</div>
-<div class="line"><span class="lineno">   58</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FlowData_8cpp_source.html#l00057">57</a> of file <a class="el" href="FlowData_8cpp_source.html">FlowData.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   58</span>    {</div>
+<div class="line"><span class="lineno">   59</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1FlowData.html#aea6eee1a0ace7dd5ee4ac43ac344df1f">_flow</a>.makeExclusive();</div>
+<div class="line"><span class="lineno">   60</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>

@@ -146,7 +146,11 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a27db8afbb7a03c58372f298f36c4e9e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac145c74513cceb103d6d6840cb69082a" id="r_ac145c74513cceb103d6d6840cb69082a"><td class="memItemLeft" align="right" valign="top">virtual std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowWriter.html">DiscreteFlowWriter</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1PosixFlowIoFactory.html#ac145c74513cceb103d6d6840cb69082a">createDiscreteFlowWriter</a> (<a class="el" href="classmxl_1_1lib_1_1FlowManager.html">FlowManager</a> const &amp;manager, uuids::uuid const &amp;<a class="el" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowData.html">DiscreteFlowData</a> &gt; &amp;&amp;data) const override</td></tr>
 <tr class="separator:ac145c74513cceb103d6d6840cb69082a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab89202b6a01726002fb796ef01dd94f4" id="r_ab89202b6a01726002fb796ef01dd94f4"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1PosixFlowIoFactory.html#ab89202b6a01726002fb796ef01dd94f4">PosixFlowIoFactory</a> (<a class="el" href="classmxl_1_1lib_1_1DomainWatcher.html#a9b228b158de820c3481500cbd9acc787">DomainWatcher::ptr</a> watcher)</td></tr>
+<tr class="memitem:a5e7cd055c7709262e9758fd24cc75b9a" id="r_a5e7cd055c7709262e9758fd24cc75b9a"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1EventFlowReader.html">EventFlowReader</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1PosixFlowIoFactory.html#a5e7cd055c7709262e9758fd24cc75b9a">createEventFlowReader</a> (<a class="el" href="classmxl_1_1lib_1_1FlowManager.html">FlowManager</a> const &amp;manager, uuids::uuid const &amp;<a class="el" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1EventFlowData.html">EventFlowData</a> &gt; &amp;&amp;data) const override</td></tr>
+<tr class="separator:a5e7cd055c7709262e9758fd24cc75b9a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a47c29f64788add3235997eaef4705920" id="r_a47c29f64788add3235997eaef4705920"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1EventFlowWriter.html">EventFlowWriter</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1PosixFlowIoFactory.html#a47c29f64788add3235997eaef4705920">createEventFlowWriter</a> (<a class="el" href="classmxl_1_1lib_1_1FlowManager.html">FlowManager</a> const &amp;manager, uuids::uuid const &amp;<a class="el" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1EventFlowData.html">EventFlowData</a> &gt; &amp;&amp;data) const override</td></tr>
+<tr class="separator:a47c29f64788add3235997eaef4705920"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab89202b6a01726002fb796ef01dd94f4" id="r_ab89202b6a01726002fb796ef01dd94f4"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1PosixFlowIoFactory.html#ab89202b6a01726002fb796ef01dd94f4">PosixFlowIoFactory</a> (<a class="el" href="classmxl_1_1lib_1_1DomainWatcher.html#a1b493a19cec582cebc8c1c4f70c2bc27">DomainWatcher::ptr</a> watcher)</td></tr>
 <tr class="separator:ab89202b6a01726002fb796ef01dd94f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a27a911959991b89472426017c45c4720" id="r_a27a911959991b89472426017c45c4720"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1PosixFlowIoFactory.html#a27a911959991b89472426017c45c4720">~PosixFlowIoFactory</a> ()</td></tr>
 <tr class="separator:a27a911959991b89472426017c45c4720"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -160,7 +164,7 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
-<tr class="memitem:aeff5af58df01e7cffec13acd27b88f9d" id="r_aeff5af58df01e7cffec13acd27b88f9d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classmxl_1_1lib_1_1DomainWatcher.html#a9b228b158de820c3481500cbd9acc787">DomainWatcher::ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1PosixFlowIoFactory.html#aeff5af58df01e7cffec13acd27b88f9d">_watcher</a></td></tr>
+<tr class="memitem:aeff5af58df01e7cffec13acd27b88f9d" id="r_aeff5af58df01e7cffec13acd27b88f9d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classmxl_1_1lib_1_1DomainWatcher.html#a1b493a19cec582cebc8c1c4f70c2bc27">DomainWatcher::ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1PosixFlowIoFactory.html#aeff5af58df01e7cffec13acd27b88f9d">_watcher</a></td></tr>
 <tr class="separator:aeff5af58df01e7cffec13acd27b88f9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
@@ -188,7 +192,7 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td class="memname">mxl::lib::PosixFlowIoFactory::PosixFlowIoFactory </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1DomainWatcher.html#a9b228b158de820c3481500cbd9acc787">DomainWatcher::ptr</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1DomainWatcher.html#a1b493a19cec582cebc8c1c4f70c2bc27">DomainWatcher::ptr</a>&#160;</td>
           <td class="paramname"><em>watcher</em></td><td>)</td>
           <td></td>
         </tr>
@@ -201,10 +205,10 @@ Additional Inherited Members</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="PosixFlowIoFactory_8cpp_source.html#l00012">12</a> of file <a class="el" href="PosixFlowIoFactory_8cpp_source.html">PosixFlowIoFactory.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   13</span>        : <a class="code hl_variable" href="structmxl_1_1lib_1_1PosixFlowIoFactory.html#aeff5af58df01e7cffec13acd27b88f9d">_watcher</a>{std::move(watcher)}</div>
-<div class="line"><span class="lineno">   14</span>    {}</div>
-<div class="ttc" id="astructmxl_1_1lib_1_1PosixFlowIoFactory_html_aeff5af58df01e7cffec13acd27b88f9d"><div class="ttname"><a href="structmxl_1_1lib_1_1PosixFlowIoFactory.html#aeff5af58df01e7cffec13acd27b88f9d">mxl::lib::PosixFlowIoFactory::_watcher</a></div><div class="ttdeci">DomainWatcher::ptr _watcher</div><div class="ttdef"><b>Definition</b> <a href="PosixFlowIoFactory_8hpp_source.html#l00034">PosixFlowIoFactory.hpp:34</a></div></div>
+<p class="definition">Definition at line <a class="el" href="PosixFlowIoFactory_8cpp_source.html#l00014">14</a> of file <a class="el" href="PosixFlowIoFactory_8cpp_source.html">PosixFlowIoFactory.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   15</span>        : <a class="code hl_variable" href="structmxl_1_1lib_1_1PosixFlowIoFactory.html#aeff5af58df01e7cffec13acd27b88f9d">_watcher</a>{std::move(watcher)}</div>
+<div class="line"><span class="lineno">   16</span>    {}</div>
+<div class="ttc" id="astructmxl_1_1lib_1_1PosixFlowIoFactory_html_aeff5af58df01e7cffec13acd27b88f9d"><div class="ttname"><a href="structmxl_1_1lib_1_1PosixFlowIoFactory.html#aeff5af58df01e7cffec13acd27b88f9d">mxl::lib::PosixFlowIoFactory::_watcher</a></div><div class="ttdeci">DomainWatcher::ptr _watcher</div><div class="ttdef"><b>Definition</b> <a href="PosixFlowIoFactory_8hpp_source.html#l00042">PosixFlowIoFactory.hpp:42</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -277,10 +281,10 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowReaderFactory.html#af8384049639ba5e1e980488ee0a6fd4b">mxl::lib::FlowReaderFactory</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixFlowIoFactory_8cpp_source.html#l00024">24</a> of file <a class="el" href="PosixFlowIoFactory_8cpp_source.html">PosixFlowIoFactory.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   26</span>    {</div>
-<div class="line"><span class="lineno">   27</span>        <span class="keywordflow">return</span> std::make_unique&lt;PosixContinuousFlowReader&gt;(manager, <a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, std::move(data));</div>
-<div class="line"><span class="lineno">   28</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixFlowIoFactory_8cpp_source.html#l00026">26</a> of file <a class="el" href="PosixFlowIoFactory_8cpp_source.html">PosixFlowIoFactory.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   28</span>    {</div>
+<div class="line"><span class="lineno">   29</span>        <span class="keywordflow">return</span> std::make_unique&lt;PosixContinuousFlowReader&gt;(manager, <a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, std::move(data));</div>
+<div class="line"><span class="lineno">   30</span>    }</div>
 <div class="ttc" id="atest__flows_8cpp_html_a8120482e2d040fcf08a3008238ee95e8"><div class="ttname"><a href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a></div><div class="ttdeci">auto const flowId</div><div class="ttdef"><b>Definition</b> <a href="test__flows_8cpp_source.html#l00145">test_flows.cpp:145</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -328,10 +332,10 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriterFactory.html#a9c095e376ba2a6714e717e8087a249c7">mxl::lib::FlowWriterFactory</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixFlowIoFactory_8cpp_source.html#l00036">36</a> of file <a class="el" href="PosixFlowIoFactory_8cpp_source.html">PosixFlowIoFactory.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   38</span>    {</div>
-<div class="line"><span class="lineno">   39</span>        <span class="keywordflow">return</span> std::make_unique&lt;PosixContinuousFlowWriter&gt;(manager, <a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, std::move(data));</div>
-<div class="line"><span class="lineno">   40</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixFlowIoFactory_8cpp_source.html#l00038">38</a> of file <a class="el" href="PosixFlowIoFactory_8cpp_source.html">PosixFlowIoFactory.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   40</span>    {</div>
+<div class="line"><span class="lineno">   41</span>        <span class="keywordflow">return</span> std::make_unique&lt;PosixContinuousFlowWriter&gt;(manager, <a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, std::move(data));</div>
+<div class="line"><span class="lineno">   42</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -378,10 +382,10 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowReaderFactory.html#a09eaee6b5e2b067e4905a34961104770">mxl::lib::FlowReaderFactory</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixFlowIoFactory_8cpp_source.html#l00018">18</a> of file <a class="el" href="PosixFlowIoFactory_8cpp_source.html">PosixFlowIoFactory.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   20</span>    {</div>
-<div class="line"><span class="lineno">   21</span>        <span class="keywordflow">return</span> std::make_unique&lt;PosixDiscreteFlowReader&gt;(manager, <a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, std::move(data));</div>
-<div class="line"><span class="lineno">   22</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixFlowIoFactory_8cpp_source.html#l00020">20</a> of file <a class="el" href="PosixFlowIoFactory_8cpp_source.html">PosixFlowIoFactory.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   22</span>    {</div>
+<div class="line"><span class="lineno">   23</span>        <span class="keywordflow">return</span> std::make_unique&lt;PosixDiscreteFlowReader&gt;(manager, <a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, std::move(data));</div>
+<div class="line"><span class="lineno">   24</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -428,10 +432,112 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriterFactory.html#a3d6f191cfbfced07322c8abaf1b49000">mxl::lib::FlowWriterFactory</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="PosixFlowIoFactory_8cpp_source.html#l00030">30</a> of file <a class="el" href="PosixFlowIoFactory_8cpp_source.html">PosixFlowIoFactory.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   32</span>    {</div>
-<div class="line"><span class="lineno">   33</span>        <span class="keywordflow">return</span> std::make_unique&lt;PosixDiscreteFlowWriter&gt;(manager, <a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, std::move(data), <a class="code hl_variable" href="structmxl_1_1lib_1_1PosixFlowIoFactory.html#aeff5af58df01e7cffec13acd27b88f9d">_watcher</a>);</div>
-<div class="line"><span class="lineno">   34</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="PosixFlowIoFactory_8cpp_source.html#l00032">32</a> of file <a class="el" href="PosixFlowIoFactory_8cpp_source.html">PosixFlowIoFactory.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   34</span>    {</div>
+<div class="line"><span class="lineno">   35</span>        <span class="keywordflow">return</span> std::make_unique&lt;PosixDiscreteFlowWriter&gt;(manager, <a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, std::move(data), <a class="code hl_variable" href="structmxl_1_1lib_1_1PosixFlowIoFactory.html#aeff5af58df01e7cffec13acd27b88f9d">_watcher</a>);</div>
+<div class="line"><span class="lineno">   36</span>    }</div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="a5e7cd055c7709262e9758fd24cc75b9a" name="a5e7cd055c7709262e9758fd24cc75b9a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5e7cd055c7709262e9758fd24cc75b9a">&#9670;&#160;</a></span>createEventFlowReader()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1EventFlowReader.html">EventFlowReader</a> &gt; mxl::lib::PosixFlowIoFactory::createEventFlowReader </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html">FlowManager</a> const &amp;&#160;</td>
+          <td class="paramname"><em>manager</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uuids::uuid const &amp;&#160;</td>
+          <td class="paramname"><em>flowId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1EventFlowData.html">EventFlowData</a> &gt; &amp;&amp;&#160;</td>
+          <td class="paramname"><em>data</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p></p>
+
+<p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowReaderFactory.html#a843a0f11de05a4decd2ccd28d9048cc7">mxl::lib::FlowReaderFactory</a>.</p>
+
+<p class="definition">Definition at line <a class="el" href="PosixFlowIoFactory_8cpp_source.html#l00044">44</a> of file <a class="el" href="PosixFlowIoFactory_8cpp_source.html">PosixFlowIoFactory.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   46</span>    {</div>
+<div class="line"><span class="lineno">   47</span>        <span class="keywordflow">return</span> std::make_unique&lt;PosixEventFlowReader&gt;(manager, <a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, std::move(data));</div>
+<div class="line"><span class="lineno">   48</span>    }</div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="a47c29f64788add3235997eaef4705920" name="a47c29f64788add3235997eaef4705920"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a47c29f64788add3235997eaef4705920">&#9670;&#160;</a></span>createEventFlowWriter()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1EventFlowWriter.html">EventFlowWriter</a> &gt; mxl::lib::PosixFlowIoFactory::createEventFlowWriter </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html">FlowManager</a> const &amp;&#160;</td>
+          <td class="paramname"><em>manager</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uuids::uuid const &amp;&#160;</td>
+          <td class="paramname"><em>flowId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1EventFlowData.html">EventFlowData</a> &gt; &amp;&amp;&#160;</td>
+          <td class="paramname"><em>data</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p></p>
+
+<p>Implements <a class="el" href="classmxl_1_1lib_1_1FlowWriterFactory.html#a9be82734d72de80dd7a8b73cc3d33820">mxl::lib::FlowWriterFactory</a>.</p>
+
+<p class="definition">Definition at line <a class="el" href="PosixFlowIoFactory_8cpp_source.html#l00050">50</a> of file <a class="el" href="PosixFlowIoFactory_8cpp_source.html">PosixFlowIoFactory.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   52</span>    {</div>
+<div class="line"><span class="lineno">   53</span>        <span class="keywordflow">return</span> std::make_unique&lt;PosixEventFlowWriter&gt;(manager, <a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, std::move(data), <a class="code hl_variable" href="structmxl_1_1lib_1_1PosixFlowIoFactory.html#aeff5af58df01e7cffec13acd27b88f9d">_watcher</a>);</div>
+<div class="line"><span class="lineno">   54</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -446,7 +552,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classmxl_1_1lib_1_1DomainWatcher.html#a9b228b158de820c3481500cbd9acc787">DomainWatcher::ptr</a> mxl::lib::PosixFlowIoFactory::_watcher</td>
+          <td class="memname"><a class="el" href="classmxl_1_1lib_1_1DomainWatcher.html#a1b493a19cec582cebc8c1c4f70c2bc27">DomainWatcher::ptr</a> mxl::lib::PosixFlowIoFactory::_watcher</td>
         </tr>
       </table>
   </td>
@@ -456,7 +562,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="PosixFlowIoFactory_8hpp_source.html#l00034">34</a> of file <a class="el" href="PosixFlowIoFactory_8hpp_source.html">PosixFlowIoFactory.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="PosixFlowIoFactory_8hpp_source.html#l00042">42</a> of file <a class="el" href="PosixFlowIoFactory_8hpp_source.html">PosixFlowIoFactory.hpp</a>.</p>
 
 </div>
 </div>

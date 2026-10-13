@@ -8,7 +8,7 @@
 <area shape="poly" id="edge20_Node000001_Node000005" title=" " alt="" coords="767,22,610,24,429,33,261,51,193,64,143,81,122,93,104,109,74,142,70,138,100,105,119,89,141,76,192,59,260,46,429,28,610,19,767,16"/>
 <area shape="rect" id="Node000006" title=" " alt="" coords="111,152,173,177"/>
 <area shape="poly" id="edge23_Node000001_Node000006" title=" " alt="" coords="767,24,600,30,411,40,249,57,194,68,163,81,154,93,148,107,143,139,138,138,142,106,149,90,160,77,192,63,248,51,410,35,599,24,767,19"/>
-<area shape="rect" id="Node000008" href="$dataformat_8h.html" title=" " alt="" coords="143,225,279,251"/>
+<area shape="rect" id="Node000008" href="$dataformat_8h.html" title="Public flow format identifiers and format classification helpers." alt="" coords="143,225,279,251"/>
 <area shape="poly" id="edge26_Node000001_Node000008" title=" " alt="" coords="767,22,602,25,410,34,230,52,157,65,103,81,62,99,27,121,15,133,9,146,9,160,17,176,40,198,68,214,98,225,130,231,129,236,97,230,65,219,37,202,13,179,4,161,4,145,11,130,24,117,59,94,101,76,156,60,229,47,410,29,602,20,767,17"/>
 <area shape="rect" id="Node000014" title=" " alt="" coords="797,152,863,177"/>
 <area shape="poly" id="edge17_Node000001_Node000014" title=" " alt="" coords="983,19,1122,25,1264,39,1322,50,1365,64,1379,72,1387,82,1388,94,1381,106,1359,114,1312,122,1171,138,877,163,877,157,1170,133,1312,117,1357,109,1378,102,1383,92,1382,84,1375,76,1362,68,1321,55,1263,44,1122,30,983,24"/>
@@ -40,7 +40,7 @@
 <area shape="rect" id="Node000007" title=" " alt="" coords="329,152,473,177"/>
 <area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="298,102,370,143,367,147,295,106"/>
 <area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="269,106,239,153,219,213,214,211,234,151,265,103"/>
-<area shape="rect" id="Node000009" href="$flowinfo_8h.html" title=" " alt="" coords="497,152,611,177"/>
+<area shape="rect" id="Node000009" href="$flowinfo_8h.html" title="Public configuration and runtime metadata for MXL flows." alt="" coords="497,152,611,177"/>
 <area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="322,101,496,146,495,151,320,107"/>
 <area shape="rect" id="Node000012" href="$rational_8h.html" title=" " alt="" coords="669,225,783,251"/>
 <area shape="poly" id="edge15_Node000002_Node000012" title=" " alt="" coords="377,101,517,122,579,135,624,150,672,180,708,213,705,217,668,184,622,154,578,140,516,127,377,107"/>

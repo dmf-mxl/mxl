@@ -1,0 +1,7 @@
+<map id="lib/internal/src/PosixEventFlowReader.hpp" name="lib/internal/src/PosixEventFlowReader.hpp">
+<area shape="rect" id="Node000001" title="POSIX event reader declaration and reader&#45;owned snapshot state." alt="" coords="111,5,301,45"/>
+<area shape="rect" id="Node000002" href="$PosixEventFlowReader_8cpp.html" title="POSIX event reads, queue advancement and access notifications." alt="" coords="5,93,196,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="174,56,126,95,122,91,171,52"/>
+<area shape="rect" id="Node000003" href="$PosixFlowIoFactory_8cpp.html" title=" " alt="" coords="220,93,405,133"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="242,52,291,91,287,95,239,56"/>
+</map>

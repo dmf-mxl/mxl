@@ -14,7 +14,7 @@
 <area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="490,194,322,307,319,303,487,190"/>
 <area shape="rect" id="Node000008" title=" " alt="" coords="419,460,490,485"/>
 <area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="463,195,353,226,216,273,149,300,89,329,42,359,13,388,8,400,13,410,31,420,68,430,177,446,406,466,405,471,176,451,67,435,29,425,9,414,3,400,8,385,39,355,87,325,147,296,214,268,352,221,461,189"/>
-<area shape="rect" id="Node000009" href="$flow_8h.html" title=" " alt="" coords="461,240,550,265"/>
+<area shape="rect" id="Node000009" href="$flow_8h.html" title="Public flow reader, writer, payload and synchronization APIs." alt="" coords="461,240,550,265"/>
 <area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="508,192,508,226,503,226,503,192"/>
 <area shape="rect" id="Node000015" href="$mxl_8h.html" title=" " alt="" coords="593,313,681,339"/>
 <area shape="poly" id="edge22_Node000006_Node000015" title=" " alt="" coords="518,191,563,238,620,301,616,305,559,242,515,194"/>
@@ -24,13 +24,13 @@
 <area shape="poly" id="edge11_Node000009_Node000008" title=" " alt="" coords="505,266,463,447,458,446,500,265"/>
 <area shape="rect" id="Node000010" title=" " alt="" coords="543,387,625,412"/>
 <area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="514,265,574,373,569,376,509,267"/>
-<area shape="rect" id="Node000011" href="$flowinfo_8h.html" title=" " alt="" coords="353,313,468,339"/>
+<area shape="rect" id="Node000011" href="$flowinfo_8h.html" title="Public configuration and runtime metadata for MXL flows." alt="" coords="353,313,468,339"/>
 <area shape="poly" id="edge12_Node000009_Node000011" title=" " alt="" coords="492,267,439,307,435,303,488,263"/>
 <area shape="poly" id="edge18_Node000009_Node000015" title=" " alt="" coords="528,263,605,304,603,309,525,268"/>
 <area shape="poly" id="edge13_Node000011_Node000008" title=" " alt="" coords="417,338,432,386,450,446,445,448,427,387,412,339"/>
 <area shape="rect" id="Node000012" title=" " alt="" coords="161,387,257,412"/>
 <area shape="poly" id="edge14_Node000011_Node000012" title=" " alt="" coords="379,341,256,385,254,379,377,336"/>
-<area shape="rect" id="Node000013" href="$dataformat_8h.html" title=" " alt="" coords="281,387,417,412"/>
+<area shape="rect" id="Node000013" href="$dataformat_8h.html" title="Public flow format identifiers and format classification helpers." alt="" coords="281,387,417,412"/>
 <area shape="poly" id="edge15_Node000011_Node000013" title=" " alt="" coords="402,341,370,378,366,374,398,337"/>
 <area shape="rect" id="Node000014" href="$rational_8h.html" title=" " alt="" coords="23,387,137,412"/>
 <area shape="poly" id="edge16_Node000011_Node000014" title=" " alt="" coords="358,341,147,386,146,381,357,336"/>

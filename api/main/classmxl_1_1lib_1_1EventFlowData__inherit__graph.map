@@ -1,0 +1,5 @@
+<map id="mxl::lib::EventFlowData" name="mxl::lib::EventFlowData">
+<area shape="rect" id="Node000001" title="Own the common flow mapping, single event ring mapping and ring view." alt="" coords="5,79,184,104"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1FlowData.html" title=" " alt="" coords="24,5,165,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="97,44,97,79,92,79,92,44"/>
+</map>

@@ -126,6 +126,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:af8384049639ba5e1e980488ee0a6fd4b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a09eaee6b5e2b067e4905a34961104770" id="r_a09eaee6b5e2b067e4905a34961104770"><td class="memItemLeft" align="right" valign="top">virtual std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowReader.html">DiscreteFlowReader</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowReaderFactory.html#a09eaee6b5e2b067e4905a34961104770">createDiscreteFlowReader</a> (<a class="el" href="classmxl_1_1lib_1_1FlowManager.html">FlowManager</a> const &amp;manager, uuids::uuid const &amp;<a class="el" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowData.html">DiscreteFlowData</a> &gt; &amp;&amp;data) const =0</td></tr>
 <tr class="separator:a09eaee6b5e2b067e4905a34961104770"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a843a0f11de05a4decd2ccd28d9048cc7" id="r_a843a0f11de05a4decd2ccd28d9048cc7"><td class="memItemLeft" align="right" valign="top">virtual std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1EventFlowReader.html">EventFlowReader</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowReaderFactory.html#a843a0f11de05a4decd2ccd28d9048cc7">createEventFlowReader</a> (<a class="el" href="classmxl_1_1lib_1_1FlowManager.html">FlowManager</a> const &amp;manager, uuids::uuid const &amp;<a class="el" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1EventFlowData.html">EventFlowData</a> &gt; &amp;&amp;data) const =0</td></tr>
+<tr class="separator:a843a0f11de05a4decd2ccd28d9048cc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
@@ -134,7 +136,7 @@ Protected Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="FlowReaderFactory_8hpp_source.html#l00016">16</a> of file <a class="el" href="FlowReaderFactory_8hpp_source.html">FlowReaderFactory.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="FlowReaderFactory_8hpp_source.html#l00018">18</a> of file <a class="el" href="FlowReaderFactory_8hpp_source.html">FlowReaderFactory.hpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ab2371bc7da72465cceccaae1d82537f8" name="ab2371bc7da72465cceccaae1d82537f8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab2371bc7da72465cceccaae1d82537f8">&#9670;&#160;</a></span>~FlowReaderFactory()</h2>
@@ -247,6 +249,50 @@ Protected Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Implemented in <a class="el" href="structmxl_1_1lib_1_1PosixFlowIoFactory.html#a27db8afbb7a03c58372f298f36c4e9e1">mxl::lib::PosixFlowIoFactory</a>.</p>
+
+</div>
+</div>
+<a id="a843a0f11de05a4decd2ccd28d9048cc7" name="a843a0f11de05a4decd2ccd28d9048cc7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a843a0f11de05a4decd2ccd28d9048cc7">&#9670;&#160;</a></span>createEventFlowReader()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1EventFlowReader.html">EventFlowReader</a> &gt; mxl::lib::FlowReaderFactory::createEventFlowReader </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html">FlowManager</a> const &amp;&#160;</td>
+          <td class="paramname"><em>manager</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uuids::uuid const &amp;&#160;</td>
+          <td class="paramname"><em>flowId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1EventFlowData.html">EventFlowData</a> &gt; &amp;&amp;&#160;</td>
+          <td class="paramname"><em>data</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implemented in <a class="el" href="structmxl_1_1lib_1_1PosixFlowIoFactory.html#a5e7cd055c7709262e9758fd24cc75b9a">mxl::lib::PosixFlowIoFactory</a>.</p>
 
 </div>
 </div>
