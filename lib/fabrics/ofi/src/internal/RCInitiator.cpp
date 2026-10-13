@@ -468,6 +468,7 @@ namespace mxl::lib::fabrics::ofi
                 auto ep = _targets.find(Endpoint::idFromToken(completion->token()));
                 if (ep == _targets.end())
                 {
+                    // The endpoint can already be evicted, for example after a flush timeout.
                     MXL_WARN("Received completion for an unknown endpoint");
 
                     return afterProgressResult();
