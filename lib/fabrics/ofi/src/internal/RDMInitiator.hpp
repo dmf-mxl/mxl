@@ -62,6 +62,10 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         bool canEvict() const noexcept;
 
+        /** \brief Upper bound for the removing state. A target that disappears may never complete the outstanding writes.
+         */
+        constexpr static auto RemoveTimeout = std::chrono::seconds(2);
+
         /** \brief Post a grain data transfer request to this endpoint.
          */
         void transferGrain(Endpoint const& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t remotePayloadOffset,
@@ -118,10 +122,6 @@ namespace mxl::lib::fabrics::ofi
          */
         using State = std::variant<Idle, Activated, Removing, Done>;
 
-        /** \brief Upper bound for the removing state. A target that disappears may never complete the outstanding writes.
-         */
-        constexpr static auto RemoveTimeout = std::chrono::seconds(2);
-
     private:
         State _state; /**< The current state of the endpoint. */
         std::unique_ptr<EgressProtocol> _proto;
@@ -154,6 +154,10 @@ namespace mxl::lib::fabrics::ofi
          */
         virtual void removeTarget(TargetInfo const& remoteTargetInfo) final;
 
+        /** \copydoc Initiator::shutdown()
+         *
+         * Removes all targets and makes progress until the outstanding writes to each one have completed.
+         */
         virtual void shutdown() final;
 
         /** \copydoc Initiator::transferGrain()
@@ -240,13 +244,23 @@ namespace mxl::lib::fabrics::ofi
          */
         void handleCompletionData(Completion::Data data);
 
-    private:
-        Endpoint _endpoint; /** Shared endpoint used for all transfers. */
+        /** \brief Upper bound for shutdown(). It is longer than RDMInitiatorTarget::RemoveTimeout, so that each removal ends on its own.
+         */
+        constexpr static auto ShutdownTimeout = RDMInitiatorTarget::RemoveTimeout + std::chrono::seconds(1);
 
+        /** \brief Sleep time between two queue reads in shutdown().
+         */
+        constexpr static auto ShutdownPollInterval = std::chrono::milliseconds(1);
+
+    private:
         std::unique_ptr<EgressProtocolTemplate> _proto;
 
         /** Targets managed by this initiator. Each target has its own remote address and remote memory regions. */
         std::map<Completion::Token, RDMInitiatorTarget> _targets{};
         std::map<Endpoint::Id, Completion::Token> _remoteEndpoints{};
+
+        // The endpoint is declared last so that it is destroyed before the protocols. Writes can read from memory that the protocols own
+        // until the endpoint is closed.
+        Endpoint _endpoint; /** Shared endpoint used for all transfers. */
     };
 }

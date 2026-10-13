@@ -74,7 +74,33 @@ namespace mxl::lib::fabrics::ofi
     }
 
     void RCTarget::shutdown()
-    {}
+    {
+        if (auto state = std::get_if<Connected>(&_state); state != nullptr)
+        {
+            MXL_INFO("Shutting down the connection.");
+            state->ep.shutdown();
+
+            auto const deadline = std::chrono::steady_clock::now() + ShutdownTimeout;
+            for (;;)
+            {
+                auto const remaining = deadline - std::chrono::steady_clock::now();
+                if (remaining <= std::chrono::steady_clock::duration::zero())
+                {
+                    MXL_WARN("Did not receive a shutdown event within {} ms.",
+                        std::chrono::duration_cast<std::chrono::milliseconds>(ShutdownTimeout).count());
+                    break;
+                }
+
+                auto const event = state->ep.eventQueue()->readBlocking(remaining);
+                if (event && (event->isShutdown() || event->isError()))
+                {
+                    break;
+                }
+            }
+        }
+
+        _state = Closed{};
+    }
 
     template<QueueReadMode queueReadMode>
     std::optional<Target::ReadResult> RCTarget::readNext(std::chrono::steady_clock::duration timeout)
@@ -190,6 +216,7 @@ namespace mxl::lib::fabrics::ofi
                     }
                 },
                 [&](RCTarget::Draining state) -> State { return drain(std::move(state), result); },
+                [](RCTarget::Closed) -> State { throw Exception::invalidState("Target has been shut down and can no longer be used."); },
             },
             std::move(_state));
 
