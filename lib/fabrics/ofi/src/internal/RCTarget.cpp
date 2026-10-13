@@ -82,7 +82,8 @@ namespace mxl::lib::fabrics::ofi
         auto result = std::optional<Target::ReadResult>{std::nullopt};
 
         _state = std::visit(
-            overloaded{[](std::monostate) -> State { throw Exception::invalidState("Target is in an invalid state an can no longer make progress"); },
+            overloaded{
+                [](std::monostate) -> State { throw Exception::invalidState("Target is in an invalid state an can no longer make progress"); },
                 [&](WaitForConnectionRequest state) -> State
                 {
                     try
@@ -188,7 +189,8 @@ namespace mxl::lib::fabrics::ofi
                         throw;
                     }
                 },
-                [&](RCTarget::Draining state) -> State { return drain(std::move(state), result); }},
+                [&](RCTarget::Draining state) -> State { return drain(std::move(state), result); },
+            },
             std::move(_state));
 
         return result;
