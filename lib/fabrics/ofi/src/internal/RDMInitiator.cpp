@@ -106,16 +106,15 @@ namespace mxl::lib::fabrics::ofi
 
     void RDMInitiatorTarget::handleCompletion(Endpoint&, Completion completion)
     {
-        if (completion.isErrEntry())
+        if (auto error = completion.tryErr(); error)
         {
-            MXL_ERROR("Completion error.");
-            return;
+            MXL_ERROR("Received a completion error: {}", error->toString());
         }
 
         std::visit(
             overloaded{
                 [](Idle const&) {},
-                [&](Activated const&) { _proto->processCompletion(completion.data()); },
+                [&](Activated const&) { _proto->processCompletion(completion); },
                 [](Done const&) {},
             },
             _state);
