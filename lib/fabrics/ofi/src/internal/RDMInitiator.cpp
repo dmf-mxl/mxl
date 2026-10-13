@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <exception>
 #include <memory>
+#include <thread>
 #include <utility>
 #include <variant>
 #include <mxl-internal/Logging.hpp>
@@ -217,8 +218,8 @@ namespace mxl::lib::fabrics::ofi
     }
 
     RDMInitiator::RDMInitiator(Endpoint ep, std::unique_ptr<EgressProtocolTemplate> proto)
-        : _endpoint(std::move(ep))
-        , _proto(std::move(proto))
+        : _proto(std::move(proto))
+        , _endpoint(std::move(ep))
     {}
 
     void RDMInitiator::addTarget(TargetInfo const& targetInfo)
@@ -251,7 +252,33 @@ namespace mxl::lib::fabrics::ofi
     }
 
     void RDMInitiator::shutdown()
-    {}
+    {
+        for (auto& [_, target] : _targets)
+        {
+            target.shutdown(_endpoint);
+        }
+        _remoteEndpoints.clear();
+
+        auto const deadline = std::chrono::steady_clock::now() + ShutdownTimeout;
+        for (;;)
+        {
+            evictRemovedTargets();
+
+            if (_targets.empty())
+            {
+                return;
+            }
+
+            if (std::chrono::steady_clock::now() >= deadline)
+            {
+                MXL_WARN("{} targets were not removed in time.", _targets.size());
+                return;
+            }
+
+            std::this_thread::sleep_for(ShutdownPollInterval);
+            drainCQ();
+        }
+    }
 
     void RDMInitiator::transferGrain(std::uint64_t grainIndex, std::uint16_t startSlice, std::uint16_t endSlice)
     {
