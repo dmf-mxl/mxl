@@ -9,14 +9,20 @@ if(NOT TARGET fmt::fmt)
     find_package(fmt CONFIG REQUIRED)
 endif()
 
+if(NOT TARGET ada::ada)
+    find_package(ada CONFIG REQUIRED)
+endif()
+
 # Code shared by the target and the initiator.
 add_library(mxl-fabrics-demo-common OBJECT common.cpp)
-target_link_libraries(mxl-fabrics-demo-common 
-    PUBLIC 
+target_link_libraries(mxl-fabrics-demo-common
+    PUBLIC
         mxl
-        mxl-fabrics 
+        mxl-fabrics
         fmt::fmt
-        CLI11::CLI11)
+        CLI11::CLI11
+    PRIVATE
+        ada::ada)
 
 add_executable(mxl-fabrics-demo-target target.cpp)
 target_link_libraries(mxl-fabrics-demo-target 

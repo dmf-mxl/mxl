@@ -18,8 +18,8 @@ namespace mxl::fabrics::demo
     /// Command line options shared by the target and the initiator.
     struct Options
     {
-        std::string domain;   ///< MXL domain directory (-d, --domain). Required.
-        std::string flow;     ///< Target: path of a flow definition JSON file. Initiator: flow id (-f, --flow). Required.
+        std::string domain;   ///< MXL domain directory (-d, --domain, or the path of the initiator's MXL URI). Required.
+        std::string flow;     ///< Target: path of a flow definition JSON file. Initiator: flow id (-f, --flow, or the id of the MXL URI). Required.
         std::string info;     ///< Path of the file that holds the serialized target info (-t, --target-info). Required.
         std::string provider; ///< Provider name such as "tcp" or "verbs" (-p, --provider). Empty selects one automatically.
         std::string node;     ///< Local node address, usually an IP address (-n, --node). Empty selects one automatically.
@@ -28,13 +28,15 @@ namespace mxl::fabrics::demo
 
     /**
      * Parse the command line and install the SIGINT and SIGTERM handlers.
-     * Prints the help text and exits the process for --help, an unknown option or a missing required option.
+     * Prints the help text and exits the process for --help, an unknown option, an invalid MXL URI or a missing required option.
      * @param[in] argc Argument count passed to main().
      * @param[in] argv Argument vector passed to main().
      * @param[in] flowHelp Help text for the -f option, which differs between the target and the initiator.
+     * @param[in] acceptUri Accept an optional MXL URI (mxl:///domain?id=<flow id>) as positional argument. The domain and flow id
+     * in the URI replace the values of -d and -f. Only the initiator uses it, because the target needs a flow definition file.
      * @return The parsed options.
      */
-    Options parseOptions(int argc, char** argv, char const* flowHelp);
+    Options parseOptions(int argc, char** argv, char const* flowHelp, bool acceptUri);
 
     /**
      * Select a local fabrics interface.

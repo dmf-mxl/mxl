@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iterator>
+#include <ada.h>
 #include <CLI/CLI.hpp>
 #include <fmt/format.h>
 #include <mxl/time.h>
@@ -41,18 +42,72 @@ namespace mxl::fabrics::demo
                 default:                         return 0;
             }
         }
+
+        /**
+         * Take the domain and the flow id from an MXL URI of the form mxl:///domain?id=<flow id>.
+         * Remote authorities are not supported, and the URI must name exactly one flow.
+         * @param[in] address The URI.
+         * @param[in,out] options Receives the domain and the flow id, if the URI has them.
+         * @return true on success, false if the URI is invalid. An error is printed on stderr.
+         */
+        bool applyUri(std::string const& address, Options* options)
+        {
+            auto const uri = ada::parse<ada::url_aggregator>(address);
+            if (!uri || (uri->get_protocol() != "mxl:"))
+            {
+                fmt::print(stderr, "invalid MXL URI '{}'\n", address);
+                return false;
+            }
+            if (!uri->get_hostname().empty() || !uri->get_port().empty())
+            {
+                fmt::print(stderr, "authority and port are not supported in the MXL URI\n");
+                return false;
+            }
+
+            auto const path = uri->get_pathname();
+            if (!path.empty())
+            {
+                options->domain = std::string{path};
+            }
+
+            auto const ids = ada::url_search_params{uri->get_search()}.get_all("id");
+            if (ids.size() > 1)
+            {
+                fmt::print(stderr, "the MXL URI must name only one flow\n");
+                return false;
+            }
+            if (!ids.empty())
+            {
+                options->flow = ids.front();
+            }
+            return true;
+        }
     }
 
-    Options parseOptions(int argc, char** argv, char const* flowHelp)
+    Options parseOptions(int argc, char** argv, char const* flowHelp, bool acceptUri)
     {
         // std::signal() only fails for invalid signal numbers.
         static_cast<void>(std::signal(SIGINT, onSignal));
         static_cast<void>(std::signal(SIGTERM, onSignal));
 
         auto options = Options{};
+        auto address = std::string{};
         auto app = CLI::App{"MXL fabrics demo"};
-        app.add_option("-d,--domain", options.domain, "MXL domain directory")->required()->check(CLI::ExistingDirectory);
-        app.add_option("-f,--flow", options.flow, flowHelp)->required();
+        auto* domainOpt = app.add_option("-d,--domain", options.domain, "MXL domain directory")->check(CLI::ExistingDirectory);
+        auto* flowOpt = app.add_option("-f,--flow", options.flow, flowHelp);
+        if (acceptUri)
+        {
+            // -d and -f become optional, because the URI can provide them. Their presence is checked after parsing.
+            app.add_option("ADDRESS", address, "MXL URI of the local flow. Replaces -d and -f.");
+            app.footer("MXL URI format:\n"
+                       "    mxl:///domain?id=<flow id>\n"
+                       "    See: https://github.com/dmf-mxl/mxl/docs/Addressability.md");
+        }
+        else
+        {
+            domainOpt->required();
+            flowOpt->required();
+        }
         app.add_option("-t,--target-info", options.info, "Target info file")->required();
         app.add_option("-p,--provider", options.provider, "Provider: tcp, verbs, efa or shm. Default: best available.");
         app.add_option("-n,--node", options.node, "Local node address. Default: first address of the provider.");
@@ -65,6 +120,16 @@ namespace mxl::fabrics::demo
         {
             // Prints the help text or the error, and returns the exit status for it.
             std::exit(app.exit(e));
+        }
+
+        if (!address.empty() && !applyUri(address, &options))
+        {
+            std::exit(EXIT_FAILURE);
+        }
+        if (options.domain.empty() || options.flow.empty())
+        {
+            fmt::print(stderr, "the domain and the flow id must be given with -d and -f or with an MXL URI\n");
+            std::exit(EXIT_FAILURE);
         }
         return options;
     }
