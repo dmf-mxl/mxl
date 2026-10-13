@@ -104,12 +104,14 @@ Both programs take the same options:
 
 | Option | Description |
 | - | - |
-| `-d`, `--domain <path>` | MXL domain directory (required). |
-| `-f`, `--flow <flow>` | Target: path to a flow definition JSON file. Initiator: the source flow UUID (required). |
+| `-d`, `--domain <path>` | MXL domain directory (required, unless the initiator gets an MXL URI). |
+| `-f`, `--flow <flow>` | Target: path to a flow definition JSON file. Initiator: the source flow UUID (required, unless the initiator gets an MXL URI). |
 | `-t`, `--target-info <path>` | Target info file (required). The target writes it, the initiator reads it. |
 | `-p`, `--provider <provider>` | Use a specific provider (`tcp`, `verbs`, `efa`, `shm`). If omitted, the demo picks one automatically. |
 | `-n`, `--node <address>` | Bind to a specific node address. If omitted, the demo picks one automatically. |
 | `-s`, `--service <service>` | Service identifier (e.g. a port number). If omitted, the provider chooses one. |
+
+The initiator also takes an optional MXL URI as positional argument, for example `mxl:///dev/shm?id=5fbec3b1-1b0f-417d-9059-8b94a47197ed`. The path of the URI is the domain directory and the `id` parameter is the source flow UUID. They replace the values of `-d` and `-f`, so either the URI or both options must be given. The URI must name a single flow and must not have an authority. See [Addressability](Addressability.md) for the URI format. The target does not take a URI, because it needs a flow definition file.
 
 Run either program with `--help` to print the usage.
 
@@ -125,7 +127,7 @@ The target and initiator must exchange a `TargetInfo` object out of band. This o
 
 ### 5.4 Initiator setup
 
-1. Start `mxl-fabrics-demo-initiator` with the source flow UUID, the domain directory that contains the source flow, and the target info file written by the target. Select the same provider as the target.
+1. Start `mxl-fabrics-demo-initiator` with the source flow UUID, the domain directory that contains the source flow (with `-d` and `-f`, or as an MXL URI), and the target info file written by the target. Select the same provider as the target.
 2. The initiator connects and begins transferring grains or samples.
 
 Stop either program with Ctrl-C. The initiator disconnects from the target before it exits, and the target then waits for a new initiator.
@@ -156,6 +158,9 @@ mxl-fabrics-demo-target -d /dev/shm/rx -p tcp -n ::1 -s 1312 -f flow.json -t /tm
 
 # Terminal 2 — Initiator
 mxl-fabrics-demo-initiator -d /dev/shm -p tcp -n ::1 -f 5fbec3b1-1b0f-417d-9059-8b94a47197ed -t /tmp/target.json
+
+# Terminal 2 — Initiator, same flow given as an MXL URI
+mxl-fabrics-demo-initiator -p tcp -n ::1 -t /tmp/target.json "mxl:///dev/shm?id=5fbec3b1-1b0f-417d-9059-8b94a47197ed"
 ```
 
 ### 6.2 RDMA Verbs transfer

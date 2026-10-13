@@ -209,7 +209,7 @@ namespace
 
 int main(int argc, char** argv)
 {
-    auto const options = parseOptions(argc, argv, "Flow definition JSON file of the flow to create");
+    auto const options = parseOptions(argc, argv, "Flow definition JSON file of the flow to create", false);
 
     auto t = Target{};
     auto ok = setup(&t, options);

@@ -290,7 +290,7 @@ namespace
 
 int main(int argc, char** argv)
 {
-    auto const options = parseOptions(argc, argv, "ID of the local flow to send");
+    auto const options = parseOptions(argc, argv, "ID of the local flow to send", true);
 
     auto in = Initiator{};
     auto ok = setup(&in, options);
