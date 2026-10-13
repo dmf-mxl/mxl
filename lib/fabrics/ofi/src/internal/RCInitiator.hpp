@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -51,10 +52,12 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         bool canEvict() const noexcept;
 
-        /** \brief Called to transition the endpoint out of the flushing state to the done state. If the endpoint is in any other state, this is a
-         * no-op.
+        /** \brief Move the endpoint from the flushing state to the done state when the flush is complete.
+         *
+         * The flush is complete when a shutdown or error event was received and all operations that were outstanding at shutdown have
+         * completed, or when FlushTimeout has elapsed since the flush started. In any other state, this is a no-op.
          */
-        void terminate() noexcept;
+        void finishFlush() noexcept;
 
         /** \brief Initiate a shutdown process.
          *
@@ -118,12 +121,15 @@ namespace mxl::lib::fabrics::ofi
 
         /** \brief The flushing state.
          *
-         * The endpoint is shutting down and is waiting for a Event::Shutdown event.
+         * The endpoint is shutting down. It waits for an Event::Shutdown or error event and for a completion of every operation that was
+         * outstanding when the shutdown started. Operations that were cancelled by the shutdown complete with an error.
          */
         struct Flushing
         {
             Endpoint ep;
-            std::size_t pending;
+            std::size_t pending;                            /**< Number of outstanding operations that have not completed yet. */
+            bool shutdownReceived;                          /**< True once a shutdown or error event was received. */
+            std::chrono::steady_clock::time_point deadline; /**< The flush is abandoned after this point in time. */
         };
 
         /** \brief The endpoint is done and can be evicted from the initiator.
@@ -136,7 +142,17 @@ namespace mxl::lib::fabrics::ofi
          */
         using State = std::variant<Idle, Connecting, Connected, Flushing, Done>;
 
+        /** \brief Upper bound for the flushing state. Some providers do not report a local shutdown event, and a peer that disappears
+         * may never complete the outstanding operations.
+         */
+        constexpr static auto FlushTimeout = std::chrono::seconds(2);
+
     private:
+        /** \brief Create a flushing state that waits for the given number of outstanding operations.
+         */
+        [[nodiscard]]
+        static Flushing startFlush(Endpoint ep, std::size_t pending, bool shutdownReceived);
+
         /** \brief Handle a completion error event.
          */
         void handleCompletionError(Completion::Error error);
@@ -246,6 +262,10 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Try to activate any idle endpoints.
          */
         void activateIdleEndpoints();
+
+        /** \brief Move endpoints that have finished flushing to the done state.
+         */
+        void finishFlushingEndpoints();
 
         /** \brief Evict any dead endpoints that are no longer used.
          */
