@@ -42,11 +42,25 @@ namespace mxl::lib::fabrics::ofi
          */
         void activate(Endpoint& ep);
 
-        /** \brief Initiate a shutdown process.
+        /** \brief Stop transfers to this target.
          *
-         * The endpoint will have pending work until a shutdown or error event will be received. After which it can be evicted from the initiator.
+         * If writes are still outstanding, the target goes to the removing state. It keeps its address vector entry and its protocol
+         * instance until finishRemoval() finds that the writes have completed. Otherwise the address vector entry is removed right away and
+         * the target can be evicted.
          */
         void shutdown(Endpoint& ep);
+
+        /** \brief Complete the removal once all outstanding writes have completed or RemoveTimeout has elapsed.
+         *
+         * Removes the address vector entry and moves the target to the done state. In any other state than the removing state, this is a
+         * no-op.
+         */
+        void finishRemoval(Endpoint& ep);
+
+        /** \brief Returns true if the target was shut down and can be evicted from the initiator.
+         */
+        [[nodiscard]]
+        bool canEvict() const noexcept;
 
         /** \brief Post a grain data transfer request to this endpoint.
          */
@@ -83,6 +97,17 @@ namespace mxl::lib::fabrics::ofi
             ::fi_addr_t fiAddr; /**< Address index in address vector. */
         };
 
+        /** \brief The removing state.
+         *
+         * The target was removed while writes to it were outstanding. No new writes are posted. The address vector entry stays valid until
+         * the outstanding writes have completed.
+         */
+        struct Removing
+        {
+            ::fi_addr_t fiAddr;                             /**< Address index in address vector. */
+            std::chrono::steady_clock::time_point deadline; /**< The removal is completed after this point in time even with writes outstanding. */
+        };
+
         /** \brief The endpoint is done and can be evicted from the initiator.
          */
         struct Done
@@ -91,7 +116,11 @@ namespace mxl::lib::fabrics::ofi
         /** \brief The various states that the endpoint can be in are stored inside a variant that we move from and then back into when processing
          * events.
          */
-        using State = std::variant<Idle, Activated, Done>;
+        using State = std::variant<Idle, Activated, Removing, Done>;
+
+        /** \brief Upper bound for the removing state. A target that disappears may never complete the outstanding writes.
+         */
+        constexpr static auto RemoveTimeout = std::chrono::seconds(2);
 
     private:
         State _state; /**< The current state of the endpoint. */
@@ -194,6 +223,10 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Try to activate any idle endpoints.
          */
         void activateIdleEndpoints();
+
+        /** \brief Complete the removal of targets whose outstanding writes have completed, and evict them.
+         */
+        void evictRemovedTargets();
 
         /** \brief Consume a completion entry
          */

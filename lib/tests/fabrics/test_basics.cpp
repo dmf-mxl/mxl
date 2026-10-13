@@ -482,6 +482,89 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connection o
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
 }
 
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connectionless remove target with transfers in flight",
+    "[fabrics][connectionless][shutdown]")
+{
+    auto instance = mxlCreateInstance(domain.c_str(), "");
+
+    auto flowDef = mxl::tests::readFile("../data/v210_flow.json");
+    auto const flowId = "5fbec3b1-1b0f-417d-9059-8b94a47197ed";
+
+    mxlFlowWriter writer;
+    REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), nullptr, &writer, nullptr, nullptr) == MXL_STATUS_OK);
+
+    mxlFlowReader reader;
+    REQUIRE(mxlCreateFlowReader(instance, flowId, "", &reader) == MXL_STATUS_OK);
+
+    mxlFabricsInstance fabrics;
+    REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
+
+    mxlFabricsTarget target;
+    REQUIRE(mxlFabricsCreateTarget(fabrics, &target) == MXL_STATUS_OK);
+
+    mxlFabricsInitiator initiator;
+    REQUIRE(mxlFabricsCreateInitiator(fabrics, &initiator) == MXL_STATUS_OK);
+
+    auto const targetInterface = mxlFabricsInterfaceConfig{
+        .version = MXL_FABRICS_API_VERSION,
+        .provider = MXL_FABRICS_PROVIDER_SHM,
+        .caps =
+            {
+                   .version = MXL_FABRICS_API_VERSION,
+                   .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                   .maxMessageSize = 0,
+                   },
+        .address = {.node = "target",                                  .service = "remove"                                                                                                          },
+        .attr = nullptr
+    };
+    auto initiatorInterface = targetInterface;
+    initiatorInterface.address = {.node = "initiator", .service = "remove"};
+
+    auto const targetConfig = mxlFabricsTargetConfig{.version = MXL_FABRICS_API_VERSION, .interface = targetInterface, .writer = writer};
+    mxlFabricsTargetInfo targetInfo;
+    REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, nullptr, &targetInfo) == MXL_STATUS_OK);
+
+    auto const initiatorConfig = mxlFabricsInitiatorConfig{.version = MXL_FABRICS_API_VERSION, .interface = initiatorInterface, .reader = reader};
+    REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsInitiatorAddTarget(initiator, targetInfo) == MXL_STATUS_OK);
+
+    std::uint64_t dummyIndex;
+    waitForConnection([&]() { mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex); },
+        [&]() { return mxlFabricsInitiatorMakeProgressNonBlocking(initiator); });
+
+    // Post a write and remove the target before the initiator has read its completion. The write is posted last in each iteration.
+    waitForTransferStart([&]() { mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex); },
+        [&]() { requireProgressStatus([&]() { return mxlFabricsInitiatorMakeProgressNonBlocking(initiator); }, "initiator"); },
+        [&]() { return mxlFabricsInitiatorTransferGrain(initiator, 0, 0, 1); });
+    REQUIRE(mxlFabricsInitiatorRemoveTarget(initiator, targetInfo) == MXL_STATUS_OK);
+
+    // The removal is complete once the initiator no longer reports pending work.
+    pollUntilSuccess(
+        [&]()
+        {
+            mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex);
+            return mxlFabricsInitiatorMakeProgressNonBlocking(initiator) == MXL_STATUS_OK;
+        },
+        POLL_TIMEOUT,
+        "Initiator did not finish removing the target in 5 seconds");
+
+    // The same target can be added again and receives data.
+    REQUIRE(mxlFabricsInitiatorAddTarget(initiator, targetInfo) == MXL_STATUS_OK);
+    waitForTransferStart([&]() { mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex); },
+        [&]() { requireProgressStatus([&]() { return mxlFabricsInitiatorMakeProgressNonBlocking(initiator); }, "initiator"); },
+        [&]() { return mxlFabricsInitiatorTransferGrain(initiator, 1, 0, 1); });
+    waitForTransferCompletion([&]() { requireProgressStatus([&]() { return mxlFabricsInitiatorMakeProgressNonBlocking(initiator); }, "initiator"); },
+        [&]() { return mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex); });
+
+    REQUIRE(mxlFabricsFreeTargetInfo(targetInfo) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsDestroyInitiator(fabrics, initiator) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsDestroyTarget(fabrics, target) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsDestroyInstance(fabrics) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowReader(instance, reader) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+}
+
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connectionless activation tests", "[fabrics][connectionless][activation]")
 {
     auto instance = mxlCreateInstance(domain.c_str(), "");

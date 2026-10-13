@@ -52,6 +52,7 @@ namespace mxl::lib::fabrics::ofi
                     return Activated{.fiAddr = fiAddr};
                 },
                 [](Activated state) -> State { return state; },
+                [](Removing state) -> State { return state; },
                 [](Done) -> State { throw Exception::invalidState("Endpoint has been shutdown and can no longer be used."); },
             },
             std::move(_state));
@@ -68,12 +69,50 @@ namespace mxl::lib::fabrics::ofi
                 },
                 [&](Activated state) -> State
                 {
+                    if (_proto->hasPendingWork())
+                    {
+                        MXL_INFO("Target removed with writes outstanding, waiting for their completions.");
+                        return Removing{.fiAddr = state.fiAddr, .deadline = std::chrono::steady_clock::now() + RemoveTimeout};
+                    }
+
                     ep.addressVector()->remove(state.fiAddr);
                     return Done{};
                 },
+                [](Removing state) -> State { return state; },
                 [](Done state) -> State { return state; },
             },
             std::move(_state));
+    }
+
+    void RDMInitiatorTarget::finishRemoval(Endpoint& ep)
+    {
+        auto const state = std::get_if<Removing>(&_state);
+        if (state == nullptr)
+        {
+            return;
+        }
+
+        if (!_proto->hasPendingWork())
+        {
+            MXL_INFO("All writes to the removed target have completed.");
+        }
+        else if (std::chrono::steady_clock::now() >= state->deadline)
+        {
+            MXL_WARN("Writes to the removed target did not complete within {} ms, removing it anyway.",
+                std::chrono::duration_cast<std::chrono::milliseconds>(RemoveTimeout).count());
+        }
+        else
+        {
+            return;
+        }
+
+        ep.addressVector()->remove(state->fiAddr);
+        _state = Done{};
+    }
+
+    bool RDMInitiatorTarget::canEvict() const noexcept
+    {
+        return std::holds_alternative<Done>(_state);
     }
 
     void RDMInitiatorTarget::transferGrain(Endpoint const& ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t remotePayloadOffset,
@@ -99,6 +138,7 @@ namespace mxl::lib::fabrics::ofi
             overloaded{
                 [](Idle const&) { return true; },
                 [&](Activated const&) { return _proto->hasPendingWork(); },
+                [](Removing const&) { return true; },
                 [](Done const&) { return false; },
             },
             _state);
@@ -115,6 +155,7 @@ namespace mxl::lib::fabrics::ofi
             overloaded{
                 [](Idle const&) {},
                 [&](Activated const&) { _proto->processCompletion(completion); },
+                [&](Removing const&) { _proto->processCompletion(completion); },
                 [](Done const&) {},
             },
             _state);
@@ -199,7 +240,14 @@ namespace mxl::lib::fabrics::ofi
     {
         auto& remote = findRemoteByEndpoint(targetInfo.id);
         remote.shutdown(_endpoint);
-        _targets.erase(_remoteEndpoints.extract(targetInfo.id).mapped());
+
+        // The target can no longer be found by its id, so no new transfers are posted to it. It stays in _targets until its outstanding
+        // writes have completed, so that their completions can be counted and the protocol memory stays valid.
+        auto const token = _remoteEndpoints.extract(targetInfo.id).mapped();
+        if (remote.canEvict())
+        {
+            _targets.erase(token);
+        }
     }
 
     void RDMInitiator::shutdown()
@@ -231,6 +279,7 @@ namespace mxl::lib::fabrics::ofi
         activateIdleEndpoints();
         drainCQ();
         drainEventQueue(*_endpoint.eventQueue());
+        evictRemovedTargets();
         return afterProgressResult();
     }
 
@@ -243,6 +292,7 @@ namespace mxl::lib::fabrics::ofi
             {
                 makeProgress();
                 blockOnCQ(timeout);
+                evictRemovedTargets();
                 return afterProgressResult();
             }
 
@@ -366,6 +416,16 @@ namespace mxl::lib::fabrics::ofi
         {
             target.activate(_endpoint);
         }
+    }
+
+    void RDMInitiator::evictRemovedTargets()
+    {
+        for (auto& [_, target] : _targets)
+        {
+            target.finishRemoval(_endpoint);
+        }
+
+        std::erase_if(_targets, [](auto const& item) { return item.second.canEvict(); });
     }
 
     void RDMInitiator::processCompletion(Completion completion)
