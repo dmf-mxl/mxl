@@ -60,13 +60,13 @@ impl From<&FabricsEndpointAddress> for EndpointAddress {
             None
         } else {
             //SAFETY: if the pointer is not null, then we assume the FFI layer has allocated a valid C string and we can safely convert it to a CString.
-            unsafe { Some(CStr::from_ptr(value.node as *mut i8).to_owned()) }
+            unsafe { Some(CStr::from_ptr(value.node.cast()).to_owned()) }
         };
         let service = if value.service.is_null() {
             None
         } else {
             //SAFETY: if the pointer is not null, then we assume the FFI layer has allocated a valid C string and we can safely convert it to a CString.
-            unsafe { Some(CStr::from_ptr(value.service as *mut i8).to_owned()) }
+            unsafe { Some(CStr::from_ptr(value.service.cast()).to_owned()) }
         };
         Self { node, service }
     }

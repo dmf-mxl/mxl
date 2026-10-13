@@ -111,7 +111,7 @@ impl Provider {
         Error::from_status(unsafe {
             self.ctx.api().fabrics_provider_to_string(
                 (&self.inner).into(),
-                out_string.as_mut_ptr() as *mut i8,
+                out_string.as_mut_ptr().cast(),
                 &mut size,
             )
         })?;

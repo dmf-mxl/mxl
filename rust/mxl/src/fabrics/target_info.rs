@@ -52,7 +52,7 @@ impl TargetInfo {
         Error::from_status(unsafe {
             self.ctx.api().fabrics_target_info_to_string(
                 self.inner,
-                out_string.as_mut_ptr() as *mut i8,
+                out_string.as_mut_ptr().cast(),
                 &mut size,
             )
         })?;
