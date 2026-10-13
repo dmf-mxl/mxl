@@ -52,12 +52,13 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         bool canEvict() const noexcept;
 
-        /** \brief Move the endpoint from the flushing state to the done state when the flush is complete.
+        /** \brief Move the endpoint out of the flushing state when the flush is complete.
          *
          * The flush is complete when a shutdown or error event was received and all operations that were outstanding at shutdown have
-         * completed, or when FlushTimeout has elapsed since the flush started. In any other state, this is a no-op.
+         * completed, or when FlushTimeout has elapsed since the flush started. The endpoint then goes to the idle state if it is to
+         * reconnect, and to the done state otherwise. In any other state, this is a no-op.
          */
-        void finishFlush() noexcept;
+        void finishFlush();
 
         /** \brief Initiate a shutdown process.
          *
@@ -129,6 +130,7 @@ namespace mxl::lib::fabrics::ofi
             Endpoint ep;
             std::size_t pending;                            /**< Number of outstanding operations that have not completed yet. */
             bool shutdownReceived;                          /**< True once a shutdown or error event was received. */
+            bool reconnect;                                 /**< Go to the idle state instead of the done state after the flush. */
             std::chrono::steady_clock::time_point deadline; /**< The flush is abandoned after this point in time. */
         };
 
@@ -151,17 +153,11 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Create a flushing state that waits for the given number of outstanding operations.
          */
         [[nodiscard]]
-        static Flushing startFlush(Endpoint ep, std::size_t pending, bool shutdownReceived);
-
-        /** \brief Handle a completion error event.
-         */
-        void handleCompletionError(Completion::Error error);
-
-        /** \brief Handle a completion data event.
-         */
-        void handleCompletionData(Completion::Data data);
+        static Flushing startFlush(Endpoint ep, std::size_t pending, bool shutdownReceived, bool reconnect);
 
         /** \brief Restarts the endpoint. Produces a new Idle state from any previous state.
+         *
+         * The new endpoint has the same id as the old one, so completions of the old endpoint must not be in the completion queue anymore.
          */
         [[nodiscard]]
         Idle restart(Endpoint const& endpoint);

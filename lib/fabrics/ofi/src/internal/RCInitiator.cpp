@@ -79,11 +79,19 @@ namespace mxl::lib::fabrics::ofi
                     auto pending = _proto->reset();
                     state.ep.shutdown();
 
-                    return startFlush(std::move(state.ep), pending, false);
+                    return startFlush(std::move(state.ep), pending, false, false);
                 },
                 [](Flushing state) -> State
                 {
-                    MXL_WARN("Another shutdown was requested while trying to flush the completion queue, ignoring.");
+                    if (state.reconnect)
+                    {
+                        MXL_INFO("Shutdown requested while flushing after a connection error, the endpoint will not reconnect.");
+                        state.reconnect = false;
+                    }
+                    else
+                    {
+                        MXL_WARN("Another shutdown was requested while trying to flush the completion queue, ignoring.");
+                    }
                     return state;
                 },
                 [](Done state) -> State { return state; },
@@ -91,7 +99,7 @@ namespace mxl::lib::fabrics::ofi
             std::move(_state));
     }
 
-    void RCInitiatorEndpoint::finishFlush() noexcept
+    void RCInitiatorEndpoint::finishFlush()
     {
         auto const state = std::get_if<Flushing>(&_state);
         if (state == nullptr)
@@ -101,23 +109,36 @@ namespace mxl::lib::fabrics::ofi
 
         if (state->shutdownReceived && (state->pending == 0))
         {
-            MXL_INFO("Flushing complete, transitioning to done state.");
-            _state = Done{};
+            MXL_INFO("Flushing complete, transitioning to {} state.", state->reconnect ? "idle" : "done");
         }
         else if (std::chrono::steady_clock::now() >= state->deadline)
         {
-            MXL_WARN("Flushing timed out with {} outstanding operations, shutdown event received: {}. Transitioning to done state.",
+            MXL_WARN("Flushing timed out with {} outstanding operations, shutdown event received: {}. Transitioning to {} state.",
                 state->pending,
-                state->shutdownReceived);
+                state->shutdownReceived,
+                state->reconnect ? "idle" : "done");
+        }
+        else
+        {
+            return;
+        }
+
+        if (state->reconnect)
+        {
+            _state = restart(state->ep);
+        }
+        else
+        {
             _state = Done{};
         }
     }
 
-    RCInitiatorEndpoint::Flushing RCInitiatorEndpoint::startFlush(Endpoint ep, std::size_t pending, bool shutdownReceived)
+    RCInitiatorEndpoint::Flushing RCInitiatorEndpoint::startFlush(Endpoint ep, std::size_t pending, bool shutdownReceived, bool reconnect)
     {
         return Flushing{.ep = std::move(ep),
             .pending = pending,
             .shutdownReceived = shutdownReceived,
+            .reconnect = reconnect,
             .deadline = std::chrono::steady_clock::now() + FlushTimeout};
     }
 
@@ -189,13 +210,13 @@ namespace mxl::lib::fabrics::ofi
                 {
                     if (ev.isError())
                     {
-                        MXL_WARN("Received an error event in connected state, going idle. Error: {}", ev.error().toString());
-                        return restart(state.ep);
+                        MXL_WARN("Received an error event in connected state, going idle after flushing. Error: {}", ev.error().toString());
+                        return startFlush(std::move(state.ep), _proto->reset(), true, true);
                     }
                     else if (ev.isShutdown())
                     {
                         MXL_INFO("Remote endpoint has closed the connection");
-                        return startFlush(std::move(state.ep), _proto->reset(), true);
+                        return startFlush(std::move(state.ep), _proto->reset(), true, false);
                     }
 
                     return state;
@@ -226,14 +247,36 @@ namespace mxl::lib::fabrics::ofi
 
     void RCInitiatorEndpoint::consume(Completion completion)
     {
-        if (auto error = completion.tryErr(); error)
-        {
-            handleCompletionError(*error);
-        }
-        else if (auto data = completion.tryData(); data)
-        {
-            handleCompletionData(*data);
-        }
+        auto const error = completion.tryErr();
+
+        std::visit(
+            overloaded{
+                [](Idle const&) { MXL_WARN("Received a completion event while idle, ignoring."); },
+                [](Connecting const&) { MXL_WARN("Received a completion event while connecting, ignoring."); },
+                [&](Connected const&)
+                {
+                    // A failed operation is finished as well, so it is counted like a successful one.
+                    if (error)
+                    {
+                        MXL_ERROR("Received a completion error: {}", error->toString());
+                    }
+                    _proto->processCompletion(completion);
+                },
+                [&](Flushing& state)
+                {
+                    // Operations that were still queued when the connection was shut down complete with an error. They count as flushed.
+                    if (error)
+                    {
+                        MXL_DEBUG("Received a completion error while flushing: {}", error->toString());
+                    }
+                    if (state.pending > 0)
+                    {
+                        --state.pending;
+                    }
+                },
+                [](Done const&) { MXL_DEBUG("Ignoring completion after shutdown."); },
+            },
+            _state);
     }
 
     void RCInitiatorEndpoint::transferGrain(std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t remotePayloadOffset,
@@ -251,56 +294,6 @@ namespace mxl::lib::fabrics::ofi
         {
             _proto->transferSamples(state->ep, headIndex, count);
         }
-    }
-
-    void RCInitiatorEndpoint::handleCompletionData(Completion::Data completion)
-    {
-        _state = std::visit(
-            overloaded{[](Idle state) -> State
-                {
-                    MXL_WARN("Received a completion event while idle, ignoring.");
-                    return state;
-                },
-                [](Connecting state) -> State
-                {
-                    MXL_WARN("Received a completion event while connecting, ignoring.");
-                    return state;
-                },
-                [&](Connected state) -> State
-                {
-                    _proto->processCompletion(completion);
-                    return state;
-                },
-                [](Flushing state) -> State
-                {
-                    if (state.pending > 0)
-                    {
-                        --state.pending;
-                    }
-                    return state;
-                },
-                [](Done state) -> State
-                {
-                    MXL_DEBUG("Ignoring completion after shutdown.");
-                    return state;
-                }},
-            std::move(_state));
-    }
-
-    void RCInitiatorEndpoint::handleCompletionError(Completion::Error err)
-    {
-        if (auto state = std::get_if<Flushing>(&_state); state != nullptr)
-        {
-            // Operations that were still queued when the connection was shut down complete with an error. They count as flushed.
-            MXL_DEBUG("Received a completion error while flushing: {}", err.toString());
-            if (state->pending > 0)
-            {
-                --state->pending;
-            }
-            return;
-        }
-
-        MXL_ERROR("Received a completion error: {}", err.toString());
     }
 
     RCInitiatorEndpoint::Idle RCInitiatorEndpoint::restart(Endpoint const& old)
