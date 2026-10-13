@@ -82,9 +82,12 @@ namespace mxl::lib::fabrics::ofi
         throw Exception::invalidState("transferSamples is not supported in RMAGrainEgressProtocol.");
     }
 
-    void RMAGrainEgressProtocol::processCompletion(Completion::Data const&)
+    void RMAGrainEgressProtocol::processCompletion(Completion const&)
     {
-        --_pending;
+        if (_pending > 0)
+        {
+            --_pending;
+        }
     }
 
     bool RMAGrainEgressProtocol::hasPendingWork() const
@@ -207,9 +210,12 @@ namespace mxl::lib::fabrics::ofi
         _bounceBufferEntryIndex = (_bounceBufferEntryIndex + 1) % _bounceBufferEntryCount;
     }
 
-    void RMASampleEgressProtocol::processCompletion(Completion::Data const&)
+    void RMASampleEgressProtocol::processCompletion(Completion const&)
     {
-        --_pending;
+        if (_pending > 0)
+        {
+            --_pending;
+        }
     }
 
     bool RMASampleEgressProtocol::hasPendingWork() const
