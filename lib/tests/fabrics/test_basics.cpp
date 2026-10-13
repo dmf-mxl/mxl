@@ -286,6 +286,92 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connection o
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
 }
 
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connection oriented remove target with transfers in flight",
+    "[fabrics][connected][shutdown]")
+{
+    auto instance = mxlCreateInstance(domain.c_str(), "");
+
+    auto flowDef = mxl::tests::readFile("../data/v210_flow.json");
+    auto const flowId = "5fbec3b1-1b0f-417d-9059-8b94a47197ed";
+
+    mxlFlowWriter writer = nullptr;
+    REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), nullptr, &writer, nullptr, nullptr) == MXL_STATUS_OK);
+
+    mxlFlowReader reader = nullptr;
+    REQUIRE(mxlCreateFlowReader(instance, flowId, "", &reader) == MXL_STATUS_OK);
+
+    mxlFabricsInstance fabrics = nullptr;
+    REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
+
+    mxlFabricsTarget target = nullptr;
+    REQUIRE(mxlFabricsCreateTarget(fabrics, &target) == MXL_STATUS_OK);
+
+    mxlFabricsInitiator initiator = nullptr;
+    REQUIRE(mxlFabricsCreateInitiator(fabrics, &initiator) == MXL_STATUS_OK);
+
+    // clang-format off
+    auto const interfaceConfig = mxlFabricsInterfaceConfig{
+        .version = MXL_FABRICS_API_VERSION,
+        .provider = MXL_FABRICS_PROVIDER_TCP,
+        .caps = {
+            .version = MXL_FABRICS_API_VERSION,
+            .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+            .maxMessageSize = 0,
+         },
+        .address = {
+            .node = "127.0.0.1",                                  
+            .service = nullptr,
+        },
+        .attr = nullptr,
+    };
+    // clang-format on
+
+    auto const targetConfig = mxlFabricsTargetConfig{.version = MXL_FABRICS_API_VERSION, .interface = interfaceConfig, .writer = writer};
+    mxlFabricsTargetInfo targetInfo = nullptr;
+    REQUIRE(mxlFabricsTargetSetup(target, &targetConfig, nullptr, &targetInfo) == MXL_STATUS_OK);
+
+    auto const initiatorConfig = mxlFabricsInitiatorConfig{.version = MXL_FABRICS_API_VERSION, .interface = interfaceConfig, .reader = reader};
+    REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsInitiatorAddTarget(initiator, targetInfo) == MXL_STATUS_OK);
+
+    auto dummyIndex = std::uint64_t{0};
+    waitForConnection([&]() { mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex); },
+        [&]() { return mxlFabricsInitiatorMakeProgressNonBlocking(initiator); });
+
+    // Queue several writes and remove the target before their completions were read.
+    for (std::uint64_t grainIndex = 0; grainIndex < 4; ++grainIndex)
+    {
+        REQUIRE(mxlFabricsInitiatorTransferGrain(initiator, grainIndex, 0, 1) == MXL_STATUS_OK);
+    }
+    REQUIRE(mxlFabricsInitiatorRemoveTarget(initiator, targetInfo) == MXL_STATUS_OK);
+
+    auto const start = std::chrono::steady_clock::now();
+    pollUntilSuccess(
+        [&]()
+        {
+            mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex);
+
+            auto status = mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
+            if (status != MXL_STATUS_OK && status != MXL_ERR_NOT_READY)
+            {
+                FAIL("Something went wrong in the initiator: " + std::to_string(status));
+            }
+
+            return status == MXL_STATUS_OK;
+        },
+        POLL_TIMEOUT,
+        "Initiator did not finish the shutdown in 5 seconds");
+    CHECK(std::chrono::steady_clock::now() - start < std::chrono::seconds(1));
+
+    REQUIRE(mxlFabricsFreeTargetInfo(targetInfo) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsDestroyInitiator(fabrics, initiator) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsDestroyTarget(fabrics, target) == MXL_STATUS_OK);
+    REQUIRE(mxlFabricsDestroyInstance(fabrics) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowReader(instance, reader) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+}
+
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connectionless activation tests", "[fabrics][connectionless][activation]")
 {
     auto instance = mxlCreateInstance(domain.c_str(), "");
