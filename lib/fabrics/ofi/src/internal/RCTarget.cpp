@@ -248,7 +248,7 @@ namespace mxl::lib::fabrics::ofi
             }
         }
 
-        MXL_INFO("Completion queue is empty. Transitioning to listening to new connection.");
+        MXL_INFO("Transitioning to listening to new connection.");
         return WaitForConnectionRequest{.pep = makeListener(state.ep.domain()->fabric())};
     }
 
