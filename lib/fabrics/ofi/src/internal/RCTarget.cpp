@@ -199,6 +199,8 @@ namespace mxl::lib::fabrics::ofi
                         if (event && event.value().isShutdown())
                         {
                             MXL_INFO("Remote endpoint has shutdown the connection. Reading the remaining completions.");
+                            catchAndLogFabricError([&]() { state.ep.shutdown(); },
+                                "Failed to shut down the endpoint after the remote endpoint closed it");
                             return Draining{.ep = std::move(state.ep)};
                         }
 
