@@ -72,7 +72,7 @@ namespace mxl::lib::fabrics::ofi
                 {
                     if (_proto->hasPendingWork())
                     {
-                        MXL_INFO("Target removed with writes outstanding, waiting for their completions.");
+                        MXL_INFO("Target removed that had outstanding writes, transitioning to removing state.");
                         return Removing{.fiAddr = state.fiAddr, .deadline = std::chrono::steady_clock::now() + RemoveTimeout};
                     }
 
@@ -93,11 +93,7 @@ namespace mxl::lib::fabrics::ofi
             return;
         }
 
-        if (!_proto->hasPendingWork())
-        {
-            MXL_INFO("All writes to the removed target have completed.");
-        }
-        else if (std::chrono::steady_clock::now() >= state->deadline)
+        if (std::chrono::steady_clock::now() >= state->deadline)
         {
             MXL_WARN("Writes to the removed target did not complete within {} ms, removing it anyway.",
                 std::chrono::duration_cast<std::chrono::milliseconds>(RemoveTimeout).count());
