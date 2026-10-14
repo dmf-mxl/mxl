@@ -318,9 +318,9 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connection o
             .version = MXL_FABRICS_API_VERSION,
             .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
             .maxMessageSize = 0,
-         },
+        },
         .address = {
-            .node = "127.0.0.1",                                  
+            .node = "127.0.0.1",
             .service = nullptr,
         },
         .attr = nullptr,
@@ -352,7 +352,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connection o
         {
             mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex);
 
-            auto status = mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
+            auto const status = mxlFabricsInitiatorMakeProgressNonBlocking(initiator);
             if ((status != MXL_STATUS_OK) && (status != MXL_ERR_NOT_READY))
             {
                 FAIL("Something went wrong in the initiator: " + std::to_string(status));
@@ -506,18 +506,22 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connectionle
     mxlFabricsInitiator initiator = nullptr;
     REQUIRE(mxlFabricsCreateInitiator(fabrics, &initiator) == MXL_STATUS_OK);
 
+    // clang-format off
     auto const targetInterface = mxlFabricsInterfaceConfig{
         .version = MXL_FABRICS_API_VERSION,
         .provider = MXL_FABRICS_PROVIDER_SHM,
-        .caps =
-            {
-                   .version = MXL_FABRICS_API_VERSION,
-                   .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
-                   .maxMessageSize = 0,
-                   },
-        .address = {.node = "target",                                  .service = "remove"                                                                                                          },
-        .attr = nullptr
+        .caps = {
+            .version = MXL_FABRICS_API_VERSION,
+            .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+            .maxMessageSize = 0,
+        },
+        .address = {
+            .node = "target",
+            .service = "remove",
+        },
+        .attr = nullptr,
     };
+    // clang-format on
     auto initiatorInterface = targetInterface;
     initiatorInterface.address = {.node = "initiator", .service = "remove"};
 
