@@ -55,8 +55,8 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Move the endpoint out of the flushing state when the flush is complete.
          *
          * The flush is complete when a shutdown or error event was received and all operations that were outstanding at shutdown have
-         * completed, or when FlushTimeout has elapsed since the flush started. The endpoint then goes to the idle state if it is to
-         * reconnect, and to the done state otherwise. In any other state, this is a no-op.
+         * completed, or when FlushTimeout has elapsed since the flush started. The endpoint then goes to the state that Flushing::next
+         * selects. In any other state, this is a no-op.
          */
         void finishFlush();
 
@@ -125,6 +125,15 @@ namespace mxl::lib::fabrics::ofi
             Endpoint ep;
         };
 
+        /** \brief The state that the endpoint goes to when a flush is complete.
+         */
+        enum class AfterFlush
+        {
+            Reconnect,  /**< Go to the idle state and connect again. Used after an error event, when the target can still be running. */
+            Disconnect, /**< Go to the disconnected state. Used after the target has closed the connection. */
+            Done,       /**< Go to the done state, so that the endpoint is evicted. Used after the target was removed. */
+        };
+
         /** \brief The flushing state.
          *
          * The endpoint is shutting down. It waits for an Event::Shutdown or error event and for a completion of every operation that was
@@ -135,9 +144,17 @@ namespace mxl::lib::fabrics::ofi
             Endpoint ep;
             std::size_t pending;                            /**< Number of outstanding operations that have not completed yet. */
             bool shutdownReceived;                          /**< True once a shutdown or error event was received. */
-            bool reconnect;                                 /**< Go to the idle state instead of the done state after the flush. */
+            AfterFlush next;                                /**< The state to go to after the flush. */
             std::chrono::steady_clock::time_point deadline; /**< The flush is abandoned after this point in time. */
         };
+
+        /** \brief The disconnected state.
+         *
+         * The target has closed the connection. A target only does this when it is destroyed, so its target info is no longer valid and the
+         * endpoint does not reconnect. The target stays added until it is removed, and transfers to it are skipped.
+         */
+        struct Disconnected
+        {};
 
         /** \brief The endpoint is done and can be evicted from the initiator.
          */
@@ -147,13 +164,13 @@ namespace mxl::lib::fabrics::ofi
         /** \brief The various states that the endpoint can be in are stored inside a variant that we move from and then back into when processing
          * events.
          */
-        using State = std::variant<Idle, Connecting, Connected, Flushing, Done>;
+        using State = std::variant<Idle, Connecting, Connected, Flushing, Disconnected, Done>;
 
     private:
         /** \brief Create a flushing state that waits for the given number of outstanding operations.
          */
         [[nodiscard]]
-        static Flushing startFlush(Endpoint ep, std::size_t pending, bool shutdownReceived, bool reconnect);
+        static Flushing startFlush(Endpoint ep, std::size_t pending, bool shutdownReceived, AfterFlush next);
 
         /** \brief Restarts the endpoint. Produces a new Idle state from any previous state.
          *
@@ -272,6 +289,10 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Try to activate any idle endpoints.
          */
         void activateIdleEndpoints();
+
+        /** \brief Try to activate the endpoint if it is idle. Called before a transfer is posted to the endpoint.
+         */
+        void activateIfIdle(RCInitiatorEndpoint& target);
 
         /** \brief Move endpoints that have finished flushing to the done state.
          */
