@@ -98,15 +98,15 @@ namespace mxl::lib::fabrics::ofi
     class TargetWrapper
     {
     public:
+        /** \brief Shut down the underlying target before it is destroyed.
+         */
+        ~TargetWrapper();
+
         /** \brief Convert an mxlFabricsTarget API object to its underlying TargetWrapper.
          *
          * \param api The mxlFabricsTarget to convert.
          * \return The TargetWrapper underlying the given mxlFabricsTarget.
          */
-        /** \brief Shut down the underlying target before it is destroyed.
-         */
-        ~TargetWrapper();
-
         [[nodiscard]]
         static TargetWrapper* fromAPI(mxlFabricsTarget api) noexcept;
 

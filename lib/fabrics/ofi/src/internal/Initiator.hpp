@@ -120,15 +120,15 @@ namespace mxl::lib::fabrics::ofi
     class InitiatorWrapper
     {
     public:
+        /** \brief Shut down the underlying initiator before it is destroyed.
+         */
+        ~InitiatorWrapper();
+
         /** \brief Convert an mxlFabricsInitiator API object to its underlying InitiatorWrapper.
          *
          * \param api The mxlFabricsInitiator to convert.
          * \return The InitiatorWrapper underlying the given mxlFabricsInitiator.
          */
-        /** \brief Shut down the underlying initiator before it is destroyed.
-         */
-        ~InitiatorWrapper();
-
         [[nodiscard]]
         static InitiatorWrapper* fromAPI(mxlFabricsInitiator api) noexcept;
 

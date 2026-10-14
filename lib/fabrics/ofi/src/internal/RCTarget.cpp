@@ -109,7 +109,7 @@ namespace mxl::lib::fabrics::ofi
 
         _state = std::visit(
             overloaded{
-                [](std::monostate) -> State { throw Exception::invalidState("Target is in an invalid state an can no longer make progress"); },
+                [](std::monostate) -> State { throw Exception::invalidState("Target is in an invalid state and can no longer make progress"); },
                 [&](WaitForConnectionRequest state) -> State
                 {
                     try
