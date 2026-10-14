@@ -111,7 +111,6 @@ mod tests {
                 .map_err(|_| glib::Error::new(CoreError::Failed, "Failed to parse UUID"))?,
             description: default_name.clone(),
             tags,
-            format: "urn:x-nmos:format:video".into(),
             label: default_name,
             parents: vec![],
             media_type: format!("video/{}", format),

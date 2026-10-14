@@ -272,7 +272,6 @@ pub(crate) fn init_state_with_video(
             .map_err(|e| gst::loggable_error!(CAT, "Flow ID is invalid: {}", e))?,
         description,
         tags,
-        format: "urn:x-nmos:format:video".into(),
         label,
         parents: vec![],
         media_type: format!("video/{}", format),
@@ -354,7 +353,6 @@ pub(crate) fn init_state_with_audio(
         id: Uuid::parse_str(&settings.flow_id)
             .map_err(|e| gst::loggable_error!(CAT, "Flow ID is invalid: {}", e))?,
         description,
-        format: "urn:x-nmos:format:audio".into(),
         tags,
         label,
         media_type: "audio/float32".to_string(),
@@ -440,7 +438,6 @@ pub(crate) fn init_state_with_data(
             .map_err(|e| gst::loggable_error!(CAT, "Flow ID is invalid: {}", e))?,
         description,
         tags,
-        format: "urn:x-nmos:format:data".into(),
         label,
         parents: vec![],
         media_type: "video/smpte291".into(),
