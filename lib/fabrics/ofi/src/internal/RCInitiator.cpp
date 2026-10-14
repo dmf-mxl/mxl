@@ -91,7 +91,7 @@ namespace mxl::lib::fabrics::ofi
                     }
                     else
                     {
-                        MXL_WARN("Another shutdown was requested while trying to flush the completion queue, ignoring.");
+                        MXL_INFO("Shutdown requested while the endpoint is already flushing.");
                     }
                     return state;
                 },
@@ -212,11 +212,14 @@ namespace mxl::lib::fabrics::ofi
                     if (ev.isError())
                     {
                         MXL_WARN("Received an error event in connected state, going idle after flushing. Error: {}", ev.error().toString());
+                        catchAndLogFabricError([&]() { state.ep.shutdown(); }, "Failed to shut down the endpoint after an error event");
                         return startFlush(std::move(state.ep), _proto->reset(), true, true);
                     }
                     else if (ev.isShutdown())
                     {
                         MXL_INFO("Remote endpoint has closed the connection");
+                        catchAndLogFabricError([&]() { state.ep.shutdown(); },
+                            "Failed to shut down the endpoint after the remote endpoint closed it");
                         return startFlush(std::move(state.ep), _proto->reset(), true, false);
                     }
 
