@@ -223,7 +223,7 @@ namespace mxl::lib::fabrics::ofi
                     {
                         // A target closes the connection only when it is destroyed. A restarted target has new target info, so the
                         // endpoint does not reconnect. The target stays added, so that it can be removed.
-                        MXL_WARN("Remote endpoint has closed the connection. Remove the target and add it again with its new target info.");
+                        MXL_INFO("Remote endpoint has closed the connection.");
                         catchAndLogFabricError([&]() { state.ep.shutdown(); },
                             "Failed to shut down the endpoint after the remote endpoint closed it");
                         return startFlush(std::move(state.ep), _proto->reset(), true, AfterFlush::Disconnect);
