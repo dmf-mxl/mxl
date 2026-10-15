@@ -41,8 +41,8 @@ site_author = "The MXL Project"
 # (dmf-mxl/mxl) point at the correct repo without config drift.
 #
 # Read more: https://zensical.org/docs/setup/repository/
-repo_name = "__REPO_SLUG__"
-repo_url = "https://github.com/__REPO_SLUG__"
+repo_name = "dmf-mxl/mxl"
+repo_url = "https://github.com/dmf-mxl/mxl"
 
 # The copyright notice appears in the page footer and can contain an HTML
 # fragment.
@@ -84,6 +84,10 @@ extra_javascript = [
     "javascripts/mermaid.js",
     "javascripts/mathjax.js",
     "https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"
+]
+
+extra_css = [
+    "stylesheets/extra.css",
 ]
 
 [project.markdown_extensions.pymdownx.superfences]
@@ -281,7 +285,6 @@ features = [
 # option in the "theme" subsection. The logo must be a relative path to a file
 # in your "docs_dir", e.g., to use `docs/assets/logo.png` you would set:
 # ----------------------------------------------------------------------------
-#logo = "assets/logo.png"
 
 # ----------------------------------------------------------------------------
 # If you don't have a dedicated project logo, you can use a built-in icon from
@@ -316,11 +319,13 @@ features = [
 # ----------------------------------------------------------------------------
 [[project.theme.palette]]
 scheme = "default"
+primary = "custom"
 toggle.icon = "lucide/sun"
 toggle.name = "Switch to dark mode"
 
 [[project.theme.palette]]
 scheme = "slate"
+primary = "custom"
 toggle.icon = "lucide/moon"
 toggle.name = "Switch to light mode"
 
