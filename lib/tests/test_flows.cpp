@@ -405,13 +405,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Data Flow : Create/D
     std::filesystem::create_directories(domain);
 
     // Read some RFC-8331 packets from a pcap file downloaded from https://github.com/NEOAdvancedTechnology/ST2110_pcap_zoo
-    std::unique_ptr<pcpp::IFileReaderDevice> pcapReader(pcpp::IFileReaderDevice::getReader("data/ST2110-40-Closed_Captions.cap"));
-    REQUIRE(pcapReader != nullptr);
-    REQUIRE(pcapReader->open());
+    auto pcapReader = pcpp::PcapFileReaderDevice{"data/ST2110-40-Closed_Captions.cap"};
+    REQUIRE(pcapReader.open());
 
     // We know that in the pcap file the first packet is an empty packet with a marker bit. Skip it and read the second one.
     pcpp::RawPacketVector rawPackets;
-    REQUIRE(pcapReader->getNextPackets(rawPackets, 2) == 2);
+    REQUIRE(pcapReader.getNextPackets(rawPackets, 2) == 2);
     pcpp::Packet parsedPacket(rawPackets.at(1));
 
     auto udpLayer = parsedPacket.getLayerOfType<pcpp::UdpLayer>();
