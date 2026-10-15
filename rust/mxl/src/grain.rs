@@ -3,5 +3,6 @@
 
 pub mod data;
 pub mod reader;
+pub mod slot_write_access;
 pub mod write_access;
 pub mod writer;
