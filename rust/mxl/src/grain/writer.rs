@@ -3,10 +3,10 @@
 
 use std::{cell::Cell, marker::PhantomData, sync::Arc};
 
-use super::write_access::GrainWriteAccess;
+use super::{slot_write_access::GrainSlotWriteAccess, write_access::GrainWriteAccess};
 
 use crate::{
-    Error, Result,
+    Error, GrainStorage, GrainStorageLayout, MappedSlots, Result,
     writer::{FlowWriterResource, FlowWriterResourceKeepAlive},
 };
 
@@ -84,6 +84,58 @@ impl GrainWriter {
             self.writer.as_ref(),
             grain_info,
             payload_ptr,
+        ))
+    }
+
+    /// The layout of the storage of the payloads. It does not change for the lifetime of the flow.
+    pub fn storage_layout(&self) -> Result<GrainStorageLayout> {
+        let mut layout = GrainStorageLayout::zeroed();
+        unsafe {
+            Error::from_status(
+                self.writer
+                    .context
+                    .api
+                    .flow_writer_get_storage_layout(self.writer.as_ptr(), &mut layout.value),
+            )?;
+        }
+        Ok(layout)
+    }
+
+    /// Describes the storage of every slot, so that a writer sets up its per slot resources as
+    /// readers do, and finds the slot that `open_grain_slot` returns.
+    pub fn map_slots(&self) -> Result<MappedSlots> {
+        let layout = self.storage_layout()?;
+        let slot_count = layout.slot_count();
+        let mut slots = vec![GrainStorage::zeroed(); slot_count as usize];
+        unsafe {
+            Error::from_status(self.writer.context.api.flow_writer_map_slots(
+                self.writer.as_ptr(),
+                slot_count,
+                // GrainStorage is a transparent wrapper of mxl_sys::GrainStorage.
+                slots.as_mut_ptr().cast::<mxl_sys::GrainStorage>(),
+            ))?;
+        }
+        Ok(MappedSlots::from_writer(layout, slots, self.writer.clone()))
+    }
+
+    /// Opens the grain at `index` and returns the slot that holds it. Works for every storage type:
+    /// the application writes the payload into the slot's storage, then commits. As for
+    /// `open_grain`, one grain can be open at a time.
+    pub fn open_grain_slot<'a>(&'a self, index: u64) -> Result<GrainSlotWriteAccess<'a>> {
+        let mut grain_info: mxl_sys::GrainInfo = unsafe { std::mem::zeroed() };
+        let mut slot = 0u32;
+        unsafe {
+            Error::from_status(self.writer.context.api.flow_writer_open_grain_slot(
+                self.writer.as_ptr(),
+                index,
+                &mut grain_info,
+                &mut slot,
+            ))?;
+        }
+        Ok(GrainSlotWriteAccess::new(
+            self.writer.as_ref(),
+            grain_info,
+            slot,
         ))
     }
 }

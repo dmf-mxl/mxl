@@ -4,7 +4,8 @@
 use std::{cell::Cell, marker::PhantomData, sync::Arc, time::Duration};
 
 use crate::{
-    Error, FlowConfigInfo, GrainData, Result,
+    Error, FlowConfigInfo, GrainData, GrainSlot, GrainStorage, GrainStorageLayout, MappedSlots,
+    Result,
     flow::{
         FlowInfo,
         reader::{get_config_info, get_flow_info, get_runtime_info},
@@ -136,5 +137,66 @@ impl GrainReader {
             index: grain_info.index,
             total_slices: grain_info.totalSlices,
         })
+    }
+
+    /// The layout of the storage of the payloads. It does not change for the lifetime of the flow.
+    pub fn storage_layout(&self) -> Result<GrainStorageLayout> {
+        let mut layout = GrainStorageLayout::zeroed();
+        unsafe {
+            Error::from_status(
+                self.reader
+                    .context
+                    .api
+                    .flow_reader_get_storage_layout(self.reader.as_ptr(), &mut layout.value),
+            )?;
+        }
+        Ok(layout)
+    }
+
+    /// Maps the storage of every slot into this process, for example by receiving the file
+    /// descriptors of a backend's storage from the writer. Call it once, before reading grains with
+    /// `get_grain_slot`. If a read later returns `Error::FlowInvalid`, the descriptions are stale:
+    /// drop this reader and the `MappedSlots` it returned, then create a new reader and map it again.
+    pub fn map_slots(&self) -> Result<MappedSlots> {
+        let layout = self.storage_layout()?;
+        let slot_count = layout.slot_count();
+        let mut slots = vec![GrainStorage::zeroed(); slot_count as usize];
+        unsafe {
+            Error::from_status(self.reader.context.api.flow_reader_map_slots(
+                self.reader.as_ptr(),
+                slot_count,
+                // GrainStorage is a transparent wrapper of mxl_sys::GrainStorage.
+                slots.as_mut_ptr().cast::<mxl_sys::GrainStorage>(),
+            ))?;
+        }
+        Ok(MappedSlots::from_reader(layout, slots, self.reader.clone()))
+    }
+
+    /// Waits up to `timeout` for the grain at `index` to have at least `min_valid_slices` valid
+    /// slices, and returns the slot that holds it. `GRAIN_VALID_SLICES_ALL` waits for the complete
+    /// grain. Works for every storage type: the payload is in the slot's storage, in `MappedSlots`.
+    ///
+    /// Returns `Error::OutOfRangeTooEarly` if the grain is not available in time,
+    /// `Error::OutOfRangeTooLate` if it was overwritten, and `Error::FlowInvalid` if the flow is stale.
+    pub fn get_grain_slot(
+        &self,
+        index: u64,
+        min_valid_slices: u16,
+        timeout: Duration,
+    ) -> Result<GrainSlot> {
+        let mut grain_info: mxl_sys::GrainInfo = unsafe { std::mem::zeroed() };
+        let mut slot = 0u32;
+        let timeout_ns = u64::try_from(timeout.as_nanos()).unwrap_or(u64::MAX);
+        unsafe {
+            Error::from_status(self.reader.context.api.flow_reader_get_grain_slot(
+                self.reader.as_ptr(),
+                index,
+                min_valid_slices,
+                timeout_ns,
+                &mut grain_info,
+                &mut slot,
+            ))?;
+        }
+        Ok(GrainSlot::new(&grain_info, slot))
     }
 }
