@@ -1,5 +1,10 @@
 var NAVTREEINDEX13 =
 {
+"functions_func_r.html":[3,3,1,14],
+"functions_func_s.html":[3,3,1,15],
+"functions_func_t.html":[3,3,1,16],
+"functions_func_u.html":[3,3,1,17],
+"functions_func_v.html":[3,3,1,18],
 "functions_func_w.html":[3,3,1,19],
 "functions_func_~.html":[3,3,1,20],
 "functions_g.html":[3,3,0,7],
@@ -42,8 +47,8 @@ var NAVTREEINDEX13 =
 "functions_vars_w.html":[3,3,2,20],
 "functions_w.html":[3,3,0,21],
 "functions_~.html":[3,3,0,22],
-"globals.html":[4,1,0,0],
 "globals.html":[4,1,0],
+"globals.html":[4,1,0,0],
 "globals_a.html":[4,1,0,1],
 "globals_b.html":[4,1,0,2],
 "globals_c.html":[4,1,0,3],
@@ -51,8 +56,8 @@ var NAVTREEINDEX13 =
 "globals_enum.html":[4,1,4],
 "globals_eval.html":[4,1,5],
 "globals_f.html":[4,1,0,4],
-"globals_func.html":[4,1,1],
 "globals_func.html":[4,1,1,0],
+"globals_func.html":[4,1,1],
 "globals_func_i.html":[4,1,1,1],
 "globals_func_m.html":[4,1,1,2],
 "globals_func_o.html":[4,1,1,3],
@@ -244,10 +249,5 @@ var NAVTREEINDEX13 =
 "namespacemxl_1_1lib.html#afd06016c864539c40c64c34a5c2513b6":[2,0,1,0,115],
 "namespacemxl_1_1lib.html#afeccbb33b65a1adc285679681b2f09cb":[2,0,1,0,81],
 "namespacemxl_1_1lib.html#aff481d8fe9ac5903012035c23a353a62":[2,0,1,0,94],
-"namespacemxl_1_1lib_1_1detail.html":[2,0,1,0,0],
-"namespacemxl_1_1lib_1_1detail.html#a3b965bb80cadedc3cade3dfe76512834":[2,0,1,0,0,0],
-"namespacemxl_1_1lib_1_1detail.html#a5ff7ab6956c757e5995f48a13efeb919":[2,0,1,0,0,1],
-"namespacemxl_1_1lib_1_1fabrics.html":[2,0,1,0,1],
-"namespacemxl_1_1lib_1_1fabrics_1_1ofi.html":[2,0,1,0,1,0],
-"namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a0570ab32e149571fae537a3196d37bca":[2,0,1,0,1,0,99]
+"namespacemxl_1_1lib_1_1detail.html":[2,0,1,0,0]
 };

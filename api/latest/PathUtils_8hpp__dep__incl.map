@@ -17,34 +17,38 @@
 <area shape="rect" id="Node000009" href="$PosixEventFlowReader_8cpp.html" title="POSIX event reads, queue advancement and access notifications." alt="" coords="1720,93,1911,133"/>
 <area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="1654,48,1767,91,1765,96,1652,53"/>
 <area shape="rect" id="Node000010" href="$test__domainwatcher_8cpp.html" title=" " alt="" coords="1580,181,1765,221"/>
-<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="1703,32,1770,40,1835,52,1890,69,1911,79,1925,92,1934,113,1925,135,1905,147,1866,159,1765,184,1763,179,1864,154,1903,142,1921,132,1929,113,1921,95,1908,84,1888,73,1834,57,1769,45,1703,37"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="1703,32,1770,40,1835,52,1889,69,1910,79,1924,92,1933,113,1924,135,1904,147,1865,159,1764,184,1763,179,1863,154,1901,142,1920,132,1928,113,1920,95,1907,84,1887,74,1833,57,1769,45,1703,37"/>
 <area shape="rect" id="Node000011" href="$test__flowmanager_8cpp.html" title=" " alt="" coords="1789,181,1959,221"/>
 <area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="1703,30,1776,37,1848,49,1909,67,1932,78,1948,92,1955,104,1956,117,1946,141,1927,164,1904,183,1900,179,1923,160,1942,138,1951,116,1950,105,1944,95,1929,83,1907,72,1847,54,1775,43,1703,35"/>
 <area shape="rect" id="Node000012" href="$test__options_8cpp.html" title=" " alt="" coords="1983,181,2117,221"/>
-<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="1703,35,1855,57,1922,72,1969,91,1994,111,2015,134,2043,180,2039,183,2010,138,1990,114,1966,96,1920,78,1854,62,1703,40"/>
-<area shape="rect" id="Node000013" href="$flow_8cpp.html" title=" " alt="" coords="2560,101,2679,126"/>
-<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="1703,25,1868,30,2079,41,2313,60,2548,91,2581,98,2580,103,2547,96,2313,65,2079,46,1868,35,1703,30"/>
-<area shape="rect" id="Node000014" href="$Utils_8hpp.html" title=" " alt="" coords="2399,101,2535,126"/>
-<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="1703,35,2399,103,2399,108,1703,40"/>
-<area shape="poly" id="edge14_Node000014_Node000010" title=" " alt="" coords="2386,123,2115,146,1946,163,1777,184,1766,186,1765,180,1776,179,1946,158,2114,140,2385,118"/>
-<area shape="poly" id="edge15_Node000014_Node000011" title=" " alt="" coords="2386,127,2196,151,1972,184,1959,186,1958,181,1971,179,2196,146,2385,122"/>
-<area shape="poly" id="edge17_Node000014_Node000012" title=" " alt="" coords="2394,131,2131,184,2117,187,2116,182,2129,179,2393,126"/>
-<area shape="rect" id="Node000015" href="$internal_2tests_2test__instance_8cpp.html" title=" " alt="" coords="2141,181,2281,221"/>
-<area shape="poly" id="edge16_Node000014_Node000015" title=" " alt="" coords="2420,133,2269,184,2267,179,2419,128"/>
-<area shape="rect" id="Node000016" href="$test__basics_8cpp.html" title=" " alt="" coords="2305,181,2456,221"/>
-<area shape="poly" id="edge18_Node000014_Node000016" title=" " alt="" coords="2448,138,2402,183,2398,179,2444,134"/>
-<area shape="rect" id="Node000017" href="$test__interfaces_8cpp.html" title=" " alt="" coords="2480,181,2631,221"/>
-<area shape="poly" id="edge19_Node000014_Node000017" title=" " alt="" coords="2491,134,2538,179,2534,183,2487,138"/>
-<area shape="rect" id="Node000018" href="$test__events_8cpp.html" title="Event API, fragmentation, lifetime and concurrency regression tests." alt="" coords="2655,189,2837,214"/>
-<area shape="poly" id="edge20_Node000014_Node000018" title=" " alt="" coords="2519,128,2709,186,2708,191,2517,133"/>
-<area shape="rect" id="Node000019" href="$test__flow__sync__groups_8cpp.html" title=" " alt="" coords="2861,181,2999,221"/>
-<area shape="poly" id="edge21_Node000014_Node000019" title=" " alt="" coords="2528,126,2549,131,2699,155,2849,179,2862,181,2861,187,2848,184,2698,160,2548,136,2527,132"/>
-<area shape="rect" id="Node000020" href="$test__flows_8cpp.html" title=" " alt="" coords="3023,189,3194,214"/>
-<area shape="poly" id="edge22_Node000014_Node000020" title=" " alt="" coords="2526,126,2549,131,2679,148,2780,156,2882,163,3012,179,3054,186,3053,191,3011,184,2881,169,2780,161,2678,154,2548,136,2525,132"/>
-<area shape="rect" id="Node000021" href="$test__flows__timing_8cpp.html" title=" " alt="" coords="3218,181,3362,221"/>
-<area shape="poly" id="edge23_Node000014_Node000021" title=" " alt="" coords="2525,126,2549,131,2648,144,2733,151,2877,155,3022,159,3107,166,3206,179,3218,181,3217,186,3206,184,3106,171,3022,165,2877,160,2733,156,2648,149,2548,136,2524,132"/>
-<area shape="rect" id="Node000022" href="$tests_2test__instance_8cpp.html" title=" " alt="" coords="3386,189,3578,214"/>
-<area shape="poly" id="edge24_Node000014_Node000022" title=" " alt="" coords="2525,126,2549,131,2674,146,2780,154,2961,158,3142,161,3249,167,3374,179,3424,186,3423,191,3374,184,3248,172,3142,166,2961,164,2780,160,2673,151,2548,136,2524,132"/>
-<area shape="rect" id="Node000023" href="$test__read__write__conflict_8cpp.html" title=" " alt="" coords="3603,181,3745,221"/>
-<area shape="poly" id="edge25_Node000014_Node000023" title=" " alt="" coords="2524,126,2549,131,2707,148,2841,156,2959,157,3069,155,3180,153,3298,154,3432,162,3590,179,3603,181,3602,186,3590,184,3432,167,3298,160,3180,158,3069,161,2959,163,2840,161,2706,154,2548,136,2523,132"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="1704,35,1856,57,1923,72,1970,91,1995,111,2015,134,2043,180,2039,182,2011,138,1991,114,1967,96,1921,77,1855,62,1703,40"/>
+<area shape="rect" id="Node000013" href="$flow_8cpp.html" title=" " alt="" coords="2579,101,2697,126"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="1703,25,1872,29,2087,40,2326,60,2566,91,2600,98,2599,103,2566,96,2326,65,2087,45,1871,35,1703,30"/>
+<area shape="rect" id="Node000014" href="$Utils_8hpp.html" title=" " alt="" coords="2418,101,2554,126"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="1704,35,2418,103,2418,108,1703,40"/>
+<area shape="poly" id="edge14_Node000014_Node000010" title=" " alt="" coords="2404,123,2126,145,1952,163,1777,184,1766,186,1765,180,1776,179,1951,157,2126,140,2404,117"/>
+<area shape="poly" id="edge15_Node000014_Node000011" title=" " alt="" coords="2404,126,2207,150,1972,184,1959,186,1958,181,1971,179,2206,145,2404,121"/>
+<area shape="poly" id="edge17_Node000014_Node000012" title=" " alt="" coords="2406,131,2129,184,2117,186,2116,181,2128,179,2405,126"/>
+<area shape="rect" id="Node000015" href="$internal_2tests_2test__instance_8cpp.html" title=" " alt="" coords="2308,181,2448,221"/>
+<area shape="poly" id="edge16_Node000014_Node000015" title=" " alt="" coords="2462,137,2403,183,2400,179,2459,133"/>
+<area shape="rect" id="Node000016" href="$PcapReader_8hpp.html" title="Minimal reader for the UDP datagrams in the pcap files used by the tests." alt="" coords="2524,189,2707,214"/>
+<area shape="poly" id="edge18_Node000014_Node000016" title=" " alt="" coords="2516,131,2599,186,2596,191,2513,136"/>
+<area shape="rect" id="Node000017" href="$test__events_8cpp.html" title="Event API, fragmentation, lifetime and concurrency regression tests." alt="" coords="2425,269,2606,295"/>
+<area shape="poly" id="edge23_Node000014_Node000017" title=" " alt="" coords="2493,139,2516,269,2511,270,2488,140"/>
+<area shape="rect" id="Node000018" href="$test__flows_8cpp.html" title=" " alt="" coords="2645,269,2815,295"/>
+<area shape="poly" id="edge25_Node000014_Node000018" title=" " alt="" coords="2544,127,2655,157,2721,179,2733,202,2738,227,2735,269,2730,269,2733,227,2728,204,2718,183,2654,162,2543,132"/>
+<area shape="rect" id="Node000019" href="$test__basics_8cpp.html" title=" " alt="" coords="2783,181,2933,221"/>
+<area shape="poly" id="edge21_Node000014_Node000019" title=" " alt="" coords="2550,127,2783,180,2782,185,2548,132"/>
+<area shape="rect" id="Node000020" href="$test__interfaces_8cpp.html" title=" " alt="" coords="2957,181,3108,221"/>
+<area shape="poly" id="edge22_Node000014_Node000020" title=" " alt="" coords="2546,126,2568,131,2674,147,2757,155,2840,163,2946,179,2958,181,2957,186,2946,184,2839,169,2756,160,2673,152,2567,136,2545,132"/>
+<area shape="rect" id="Node000021" href="$test__flow__sync__groups_8cpp.html" title=" " alt="" coords="3132,181,3269,221"/>
+<area shape="poly" id="edge24_Node000014_Node000021" title=" " alt="" coords="2544,126,2568,131,2723,149,2844,155,2966,160,3121,179,3132,181,3131,186,3120,184,2965,166,2844,160,2722,154,2567,136,2543,132"/>
+<area shape="rect" id="Node000022" href="$test__flows__timing_8cpp.html" title=" " alt="" coords="3294,181,3438,221"/>
+<area shape="poly" id="edge26_Node000014_Node000022" title=" " alt="" coords="2544,126,2568,131,2676,144,2768,151,2925,155,3082,159,3174,166,3282,179,3294,181,3293,186,3282,184,3173,171,3082,164,2925,160,2767,157,2675,150,2567,136,2543,132"/>
+<area shape="rect" id="Node000023" href="$tests_2test__instance_8cpp.html" title=" " alt="" coords="3462,189,3654,214"/>
+<area shape="poly" id="edge27_Node000014_Node000023" title=" " alt="" coords="2543,126,2568,131,2701,147,2815,155,3008,159,3202,160,3316,166,3450,179,3500,186,3499,191,3450,184,3316,171,3202,166,3008,164,2814,160,2701,152,2567,136,2542,132"/>
+<area shape="rect" id="Node000024" href="$test__read__write__conflict_8cpp.html" title=" " alt="" coords="2141,181,2284,221"/>
+<area shape="poly" id="edge28_Node000014_Node000024" title=" " alt="" coords="2437,133,2274,184,2272,179,2435,128"/>
+<area shape="poly" id="edge19_Node000016_Node000017" title=" " alt="" coords="2591,225,2532,271,2529,267,2588,221"/>
+<area shape="poly" id="edge20_Node000016_Node000018" title=" " alt="" coords="2645,220,2715,267,2712,271,2642,224"/>
 </map>

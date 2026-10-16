@@ -164,6 +164,7 @@ var hierarchy =
     ] ],
     [ "mxl::lib::Timepoint", "structmxl_1_1lib_1_1Timepoint.html", null ],
     [ "mxl::tests::mxlDomainFixture", "classmxl_1_1tests_1_1mxlDomainFixture.html", null ],
+    [ "mxl::tests::UdpDatagram", "structmxl_1_1tests_1_1UdpDatagram.html", null ],
     [ "mxlBufferSlice_t", "structmxlBufferSlice__t.html", null ],
     [ "mxlCommonFlowConfigInfo_t", "structmxlCommonFlowConfigInfo__t.html", null ],
     [ "mxlContinuousFlowConfigInfo_t", "structmxlContinuousFlowConfigInfo__t.html", null ],

@@ -120,7 +120,8 @@ var annotated_dup =
         [ "Timepoint", "structmxl_1_1lib_1_1Timepoint.html", "structmxl_1_1lib_1_1Timepoint" ]
       ] ],
       [ "tests", "namespacemxl_1_1tests.html", [
-        [ "mxlDomainFixture", "classmxl_1_1tests_1_1mxlDomainFixture.html", "classmxl_1_1tests_1_1mxlDomainFixture" ]
+        [ "mxlDomainFixture", "classmxl_1_1tests_1_1mxlDomainFixture.html", "classmxl_1_1tests_1_1mxlDomainFixture" ],
+        [ "UdpDatagram", "structmxl_1_1tests_1_1UdpDatagram.html", "structmxl_1_1tests_1_1UdpDatagram" ]
       ] ]
     ] ],
     [ "BatchIndexAndSize", "structBatchIndexAndSize.html", "structBatchIndexAndSize" ],
