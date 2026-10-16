@@ -9,6 +9,7 @@
 #include <rdma/fabric.h>
 #include <rdma/fi_eq.h>
 #include "AddressVector.hpp"
+#include "EventQueue.hpp"
 #include "Exception.hpp"
 #include "FabricAddress.hpp"
 #include "FabricInfo.hpp"
@@ -62,11 +63,32 @@ namespace mxl::lib::fabrics::ofi
         auto av = AddressVector::open(domain);
         endpoint.bind(av);
 
+        // Without an event queue, the EFA provider calls abort() for any
+        // failure it cannot attach to an operation of ours -- its peer
+        // handshake, the replies of its emulated write protocols. A peer
+        // that restarts causes exactly that, and took this whole process
+        // down with it.
+        endpoint.bind(EventQueue::open(fabric));
+
         // Connectionless endpoints must be explictely enabled when they are ready to be used.
         endpoint.enable();
 
         auto mxlRegions = MxlRegions::forWriter(config.writer);
         auto protocol = selectIngressProtocol(mxlRegions.dataLayout(), mxlRegions.regions(), mxlRegions.maxSyncBatchSize());
+
+        // Start receiving. The connected path does this once the peer
+        // arrives; a connectionless endpoint has no such moment, and
+        // leaving it out meant no receive was ever posted here.
+        //
+        // It is not optional where the provider reports FI_RX_CQ_DATA.
+        // Declaring that mode turns off the device's unsolicited write
+        // receive, so every inbound write carrying immediate data has to
+        // consume a receive. With none posted the far side gets no
+        // acknowledgement and retries, and EFA's default retry count for
+        // that condition is infinite -- an unbounded retransmit aimed at
+        // this host, with nothing on either side reporting an error.
+        protocol->start(endpoint);
+
         auto targetInfo = std::make_unique<TargetInfo>(
             endpoint.id(), endpoint.localAddress(), *provider, protocol->registerMemory(domain), protocol->bounceBufferInfo());
 
@@ -101,6 +123,7 @@ namespace mxl::lib::fabrics::ofi
     template<QueueReadMode queueReadMode>
     std::optional<Target::ReadResult> RDMTarget::readNext(std::chrono::steady_clock::duration timeout)
     {
+        drainEventQueue(*_ep.eventQueue());
         try
         {
             auto completion = readCompletionQueue<queueReadMode>(*_ep.completionQueue(), timeout);

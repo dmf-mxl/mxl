@@ -76,6 +76,11 @@ namespace mxl::lib::fabrics::ofi
             [[nodiscard]]
             Token token() const noexcept;
 
+            /** \brief The positive libfabric error code, FI_ECANCELED for an operation flushed from its queue.
+             */
+            [[nodiscard]]
+            int code() const noexcept;
+
         private:
             friend class CompletionQueue;
 
@@ -85,6 +90,7 @@ namespace mxl::lib::fabrics::ofi
         private:
             ::fi_cq_err_entry _raw;
             std::shared_ptr<CompletionQueue> _cq;
+            std::string _message; /**< Resolved at construction: err_data is the provider's buffer, which its next readerr frees. */
         };
 
     public:

@@ -182,6 +182,11 @@ namespace mxl::lib::fabrics::ofi
          */
         void pollCQ();
 
+        /** \brief Offer a transfer to every target, then rethrow the first failure, if any.
+         */
+        template<typename F>
+        void forEachTarget(F&& transfer);
+
         /** \brief Try to activate any idle endpoints.
          */
         void activateIdleEndpoints();
