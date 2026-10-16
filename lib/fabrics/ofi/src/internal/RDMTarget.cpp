@@ -68,7 +68,10 @@ namespace mxl::lib::fabrics::ofi
         auto mxlRegions = MxlRegions::forWriter(config.writer);
         auto protocol = selectIngressProtocol(mxlRegions.dataLayout(), mxlRegions.regions(), mxlRegions.maxSyncBatchSize());
         auto targetInfo = std::make_unique<TargetInfo>(
-            endpoint.id(), endpoint.localAddress(), *provider, protocol->registerMemory(domain), protocol->bounceBufferInfo());
+            endpoint.id(), endpoint.localAddress(), *provider, protocol->registerMemory(domain), protocol->bounceBufferInfo(), domain->notifyMode());
+
+        // Post the notification receive buffers. A connectionless endpoint can receive as soon as it is enabled.
+        protocol->start(endpoint);
 
         struct MakeUniqueEnabler : RDMTarget
         {
@@ -81,8 +84,8 @@ namespace mxl::lib::fabrics::ofi
     }
 
     RDMTarget::RDMTarget(Endpoint ep, std::unique_ptr<IngressProtocol> proto)
-        : _ep(std::move(ep))
-        , _protocol(std::move(proto))
+        : _protocol(std::move(proto))
+        , _ep(std::move(ep))
     {}
 
     std::optional<Target::ReadResult> RDMTarget::read()

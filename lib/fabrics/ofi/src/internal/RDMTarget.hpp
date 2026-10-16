@@ -57,8 +57,8 @@ namespace mxl::lib::fabrics::ofi
         std::optional<Target::ReadResult> readNext(std::chrono::steady_clock::duration timeout);
 
     private:
+        std::unique_ptr<IngressProtocol> _protocol = {}; ///< Declared before _ep so the endpoint closes before the protocol's buffers are released.
         Endpoint _ep;
-        std::unique_ptr<IngressProtocol> _protocol = {};
         std::vector<Region> _regions;
     };
 }

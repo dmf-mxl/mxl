@@ -42,7 +42,7 @@ namespace mxl::lib::fabrics::ofi
         auto const mxlRegions = MxlRegions::forWriter(config.writer);
         auto proto = selectIngressProtocol(mxlRegions.dataLayout(), mxlRegions.regions(), mxlRegions.maxSyncBatchSize());
         auto targetInfo = std::make_unique<TargetInfo>(
-            pep.id(), pep.localAddress(), *provider, proto->registerMemory(domain), proto->bounceBufferInfo());
+            pep.id(), pep.localAddress(), *provider, proto->registerMemory(domain), proto->bounceBufferInfo(), domain->notifyMode());
 
         // Helper struct to enable the std::make_unique function to access the private constructor of this class.
         struct MakeUniqueEnabler : RCTarget
@@ -99,7 +99,8 @@ namespace mxl::lib::fabrics::ofi
                             cqAttr.size = _setupOptions.cqDepth.value_or(CompletionQueue::Attributes::DEFAULT_SIZE);
                             auto cq = CompletionQueue::open(_domain, cqAttr);
                             auto endpoint = Endpoint::create(_domain, state.pep.id(), event->connReq().info());
-                            endpoint.bind(cq, FI_RECV);
+                            // Verbs on Linux enables transmit as well because of the message capability, and insists on a send queue.
+                            endpoint.bind(cq, FI_RECV | FI_TRANSMIT);
 
                             auto eq = EventQueue::open(_domain->fabric(), EventQueue::Attributes::defaults());
                             endpoint.bind(eq);
@@ -162,15 +163,16 @@ namespace mxl::lib::fabrics::ofi
                     try
                     {
                         auto [completion, event] = readEndpointQueues<queueReadMode>(state.ep, timeout);
-                        if (event && event.value().isShutdown())
-                        {
-                            MXL_INFO("Remote endpoint has shutdown the connection. Transitioning to listening to new connection.");
-                            return WaitForConnectionRequest{.pep = makeListener(state.ep.domain()->fabric())};
-                        }
-
                         if (completion)
                         {
                             result = _proto->read(state.ep, *completion);
+                        }
+
+                        if (event && event.value().isShutdown())
+                        {
+                            MXL_INFO("Remote endpoint has shutdown the connection. Reading the remaining completions.");
+                            _proto->reset();
+                            return Draining{.ep = std::move(state.ep)};
                         }
 
                         return Connected{.ep = std::move(state.ep)};
@@ -185,6 +187,22 @@ namespace mxl::lib::fabrics::ofi
 
                         throw;
                     }
+                },
+                [&](RCTarget::Draining state) -> State
+                {
+                    // Read without blocking: the initiator is gone, so nothing new arrives. Each call reports at most one transfer, like in the
+                    // connected state.
+                    while (auto completion = state.ep.completionQueue()->read())
+                    {
+                        result = _proto->read(state.ep, *completion);
+                        if (result)
+                        {
+                            return Draining{.ep = std::move(state.ep)};
+                        }
+                    }
+
+                    MXL_INFO("Completion queue drained. Transitioning to listening to new connection.");
+                    return WaitForConnectionRequest{.pep = makeListener(state.ep.domain()->fabric())};
                 }},
             std::move(_state));
 

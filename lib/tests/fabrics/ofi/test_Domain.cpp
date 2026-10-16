@@ -2,8 +2,11 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <cstdint>
 #include <catch2/catch_test_macros.hpp>
 #include <rdma/fabric.h>
+#include "../NotifyEnvGuard.hpp"
+#include "NotifyMode.hpp"
 #include "Util.hpp"
 
 using namespace mxl::lib::fabrics::ofi;
@@ -80,4 +83,49 @@ TEST_CASE("Domain - RX CQ Data Mode", "[ofi][Domain][RxCqData]")
 
     auto domain2 = getDomain(false, true);
     REQUIRE(domain2->usingRecvBufForCqData() == true);
+}
+
+using mxl::tests::NotifyEnvGuard;
+
+TEST_CASE("Domain - Notify mode follows remote CQ data support", "[ofi][Domain][NotifyMode]")
+{
+    auto const env = NotifyEnvGuard{nullptr};
+    auto domain = getDomain();
+
+    SECTION("Provider with remote CQ data uses immediate data")
+    {
+        domain->fabric()->info()->domain_attr->cq_data_size = sizeof(std::uint64_t);
+        REQUIRE(domain->notifyMode() == NotifyMode::Immediate);
+    }
+
+    SECTION("Provider without remote CQ data uses send notifications")
+    {
+        domain->fabric()->info()->domain_attr->cq_data_size = 0;
+        REQUIRE(domain->notifyMode() == NotifyMode::Send);
+    }
+}
+
+TEST_CASE("Domain - Notify mode environment override", "[ofi][Domain][NotifyMode]")
+{
+    auto domain = getDomain();
+
+    SECTION("send forces send notifications")
+    {
+        auto const env = NotifyEnvGuard{"send"};
+        domain->fabric()->info()->domain_attr->cq_data_size = sizeof(std::uint64_t);
+        REQUIRE(domain->notifyMode() == NotifyMode::Send);
+    }
+
+    SECTION("imm forces immediate data")
+    {
+        auto const env = NotifyEnvGuard{"imm"};
+        domain->fabric()->info()->domain_attr->cq_data_size = 0;
+        REQUIRE(domain->notifyMode() == NotifyMode::Immediate);
+    }
+
+    SECTION("Unknown values are rejected")
+    {
+        auto const env = NotifyEnvGuard{"bogus"};
+        REQUIRE_THROWS(domain->notifyMode());
+    }
 }

@@ -13,11 +13,12 @@ namespace mxl::lib::fabrics::ofi
 {
 
     RMAGrainEgressProtocol::RMAGrainEgressProtocol(Completion::Token token, TargetInfo info, DataLayout::Discrete layout,
-        std::vector<LocalRegion> localRegions)
+        std::vector<LocalRegion> localRegions, NotifyMode notifyMode)
         : _token{token}
         , _remoteInfo{std::move(info)}
         , _layout{layout}
         , _localRegions{std::move(localRegions)}
+        , _notifier{notifyMode, token}
     {}
 
     void RMAGrainEgressProtocol::registerMemory(std::shared_ptr<Domain>)
@@ -35,10 +36,14 @@ namespace mxl::lib::fabrics::ofi
         // Fast path: a full grain is transferred, can do one write no matter how many planes
         if ((sliceRange.start() == 0) && (sliceRange.end() == _layout.totalSlices))
         {
-            _pending += ep.write(_token, localGrain, remoteGrain, destAddr, std::make_optional(ImmDataGrain{remoteSlot, _layout.totalSlices}.data()));
+            auto const notifyValue = ImmDataGrain{remoteSlot, _layout.totalSlices}.data();
+            _pending += ep.write(_token, localGrain, remoteGrain, destAddr, _notifier.immData(notifyValue));
+            _pending += _notifier.notify(ep, notifyValue, destAddr);
             return;
         }
 
+        // The notification goes with the last plane, so the target only reports the slices once every plane has been written.
+        auto const notifyValue = ImmDataGrain{remoteSlot, sliceRange.end()}.data();
         auto const planeCount = _layout.activePlaneCount();
         for (std::size_t plane = 0; plane < planeCount; ++plane)
         {
@@ -71,10 +76,12 @@ namespace mxl::lib::fabrics::ofi
             auto const remoteRegion = remoteGrain.sub(offset, size);
 
             auto const isLastPlane = (plane == planeCount - 1);
-            auto const immData = isLastPlane ? std::make_optional(ImmDataGrain{remoteSlot, sliceRange.end()}.data()) : std::nullopt;
+            auto const immData = isLastPlane ? _notifier.immData(notifyValue) : std::nullopt;
 
             _pending += ep.write(_token, localRegion, remoteRegion, destAddr, immData);
         }
+
+        _pending += _notifier.notify(ep, notifyValue, destAddr);
     }
 
     void RMAGrainEgressProtocol::transferSamples(Endpoint const&, std::uint64_t, std::size_t, ::fi_addr_t)
@@ -87,13 +94,19 @@ namespace mxl::lib::fabrics::ofi
         --_pending;
     }
 
+    void RMAGrainEgressProtocol::flush(Endpoint const& ep)
+    {
+        _pending += _notifier.flush(ep);
+    }
+
     bool RMAGrainEgressProtocol::hasPendingWork() const
     {
-        return _pending > 0;
+        return (_pending > 0) || _notifier.hasPending();
     }
 
     std::size_t RMAGrainEgressProtocol::reset()
     {
+        _notifier.reset();
         return std::exchange(_pending, 0);
     }
 
@@ -111,6 +124,7 @@ namespace mxl::lib::fabrics::ofi
 
         domain->registerRegions(_regions, FI_WRITE);
         _localRegions = domain->localRegions();
+        _domain = std::move(domain);
     }
 
     std::unique_ptr<EgressProtocol> RMAGrainEgressProtocolTemplate::createInstance(Completion::Token token, TargetInfo remoteInfo)
@@ -122,22 +136,25 @@ namespace mxl::lib::fabrics::ofi
 
         struct MakeUniqueEnabler : RMAGrainEgressProtocol
         {
-            MakeUniqueEnabler(Completion::Token token, TargetInfo info, DataLayout::Discrete layout, std::vector<LocalRegion> localRegion)
-                : RMAGrainEgressProtocol{token, std::move(info), layout, std::move(localRegion)}
+            MakeUniqueEnabler(Completion::Token token, TargetInfo info, DataLayout::Discrete layout, std::vector<LocalRegion> localRegion,
+                NotifyMode notifyMode)
+                : RMAGrainEgressProtocol{token, std::move(info), layout, std::move(localRegion), notifyMode}
             {}
         };
 
-        return std::make_unique<MakeUniqueEnabler>(token, std::move(remoteInfo), _layout, *_localRegions);
+        auto const notifyMode = selectEgressNotifyMode(*_domain, remoteInfo);
+        return std::make_unique<MakeUniqueEnabler>(token, std::move(remoteInfo), _layout, *_localRegions, notifyMode);
     }
 
     RMASampleEgressProtocol::RMASampleEgressProtocol(Completion::Token token, TargetInfo info, DataLayout::Continuous layout, LocalRegion localRegion,
-        std::size_t bounceBufferEntryCount)
+        std::size_t bounceBufferEntryCount, NotifyMode notifyMode)
         : _token{token}
         , _remoteInfo{std::move(info)}
         , _layout{layout}
         , _localRegion{localRegion}
         , _entryHeaders{bounceBufferEntryCount}
         , _bounceBufferEntryCount{bounceBufferEntryCount}
+        , _notifier{notifyMode, token}
     {}
 
     void RMASampleEgressProtocol::registerMemory(std::shared_ptr<Domain> domain)
@@ -200,8 +217,9 @@ namespace mxl::lib::fabrics::ofi
         // 2- Get the remote region
         auto const remoteRegion = _remoteInfo.remoteRegions[_bounceBufferEntryIndex % _remoteInfo.remoteRegions.size()];
 
-        // 3- Send the remote write
-        _pending += ep.write(_token, sgl, remoteRegion, destAddr, _bounceBufferEntryIndex);
+        // 3- Send the remote write, and tell the target which bounce buffer entry it filled
+        _pending += ep.write(_token, sgl, remoteRegion, destAddr, _notifier.immData(_bounceBufferEntryIndex));
+        _pending += _notifier.notify(ep, _bounceBufferEntryIndex, destAddr);
 
         // 4- update bounce buffer entry index for the next transfer
         _bounceBufferEntryIndex = (_bounceBufferEntryIndex + 1) % _bounceBufferEntryCount;
@@ -212,13 +230,19 @@ namespace mxl::lib::fabrics::ofi
         --_pending;
     }
 
+    void RMASampleEgressProtocol::flush(Endpoint const& ep)
+    {
+        _pending += _notifier.flush(ep);
+    }
+
     bool RMASampleEgressProtocol::hasPendingWork() const
     {
-        return _pending > 0;
+        return (_pending > 0) || _notifier.hasPending();
     }
 
     std::size_t RMASampleEgressProtocol::reset()
     {
+        _notifier.reset();
         return std::exchange(_pending, 0);
     }
 
@@ -285,6 +309,7 @@ namespace mxl::lib::fabrics::ofi
         domain->registerRegion(_region, FI_WRITE);
 
         _localRegion = domain->localRegions().front();
+        _domain = std::move(domain);
     }
 
     std::unique_ptr<EgressProtocol> RMASampleEgressProtocolTemplate::createInstance(Completion::Token token, TargetInfo remoteInfo)
@@ -302,11 +327,13 @@ namespace mxl::lib::fabrics::ofi
         struct MakeUniqueEnabler : RMASampleEgressProtocol
         {
             MakeUniqueEnabler(Completion::Token token, TargetInfo info, DataLayout::Continuous layout, LocalRegion localRegion,
-                std::uint32_t bounceBufferEntryCount)
-                : RMASampleEgressProtocol{token, std::move(info), layout, localRegion, bounceBufferEntryCount}
+                std::uint32_t bounceBufferEntryCount, NotifyMode notifyMode)
+                : RMASampleEgressProtocol{token, std::move(info), layout, localRegion, bounceBufferEntryCount, notifyMode}
             {}
         };
 
-        return std::make_unique<MakeUniqueEnabler>(token, std::move(remoteInfo), _layout, *_localRegion, remoteInfo.bounceBufferInfo->entryCount);
+        auto const notifyMode = selectEgressNotifyMode(*_domain, remoteInfo);
+        return std::make_unique<MakeUniqueEnabler>(
+            token, std::move(remoteInfo), _layout, *_localRegion, remoteInfo.bounceBufferInfo->entryCount, notifyMode);
     };
 }

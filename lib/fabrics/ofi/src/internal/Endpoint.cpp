@@ -400,4 +400,46 @@ namespace mxl::lib::fabrics::ofi
         auto iovec = region.toIovec();
         fiCall(::fi_recv, "Failed to push recv to work queue", _raw, iovec.iov_base, iovec.iov_len, nullptr, FI_ADDR_UNSPEC, nullptr);
     }
+
+    bool Endpoint::recv(LocalRegion region, Completion::Token token) const
+    {
+        auto iovec = region.toIovec();
+        auto const result = ::fi_recv(_raw, iovec.iov_base, iovec.iov_len, region.desc, FI_ADDR_UNSPEC, Completion::tokenToContextValue(token));
+        if (result == -FI_EAGAIN)
+        {
+            return false;
+        }
+        if (result < 0)
+        {
+            throw FabricException::make(
+                static_cast<int>(result), "Failed to push recv to work queue: {}, code {}", ::fi_strerror(static_cast<int>(result)), result);
+        }
+        return true;
+    }
+
+    bool Endpoint::sendInline(Completion::Token token, void const* data, std::size_t size, ::fi_addr_t destAddr) const
+    {
+        auto iov = ::iovec{.iov_base = const_cast<void*>(data), .iov_len = size};
+        ::fi_msg msg = {
+            .msg_iov = &iov,
+            .desc = nullptr,
+            .iov_count = 1,
+            .addr = destAddr,
+            .context = Completion::tokenToContextValue(token),
+            .data = 0,
+        };
+
+        // FI_COMPLETION, because a plain fi_inject reports nothing, so the caller could not tell when the message was delivered.
+        auto const result = ::fi_sendmsg(_raw, &msg, FI_INJECT | FI_COMPLETION | FI_DELIVERY_COMPLETE);
+        if (result == -FI_EAGAIN)
+        {
+            return false;
+        }
+        if (result < 0)
+        {
+            throw FabricException::make(
+                static_cast<int>(result), "Failed to send inline message: {}, code {}", ::fi_strerror(static_cast<int>(result)), result);
+        }
+        return true;
+    }
 }

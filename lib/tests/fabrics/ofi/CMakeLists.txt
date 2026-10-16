@@ -30,6 +30,8 @@ target_sources(mxl-fabrics-ofi-tests
             test_Region.cpp
             test_DataLayout.cpp
             test_SliceRange.cpp
+            test_Notify.cpp
+            test_TargetInfo.cpp
     )
 
 target_link_libraries(mxl-fabrics-ofi-tests

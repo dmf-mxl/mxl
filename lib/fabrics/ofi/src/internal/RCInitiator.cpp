@@ -118,7 +118,9 @@ namespace mxl::lib::fabrics::ofi
 
                     // The endpoint in an idle target is always fresh and thus needs to be bound the the queues.
                     state.ep.bind(eq);
-                    state.ep.bind(cq, FI_TRANSMIT);
+                    // The message capability, which carries send notifications, makes some providers (verbs on Linux) enable receive on the
+                    // endpoint and insist on a receive queue, even though the initiator never posts receives.
+                    state.ep.bind(cq, FI_TRANSMIT | FI_RECV);
 
                     // Transition into the connecting state
                     auto const faddr = _info.fabricAddress.decode();
@@ -227,6 +229,14 @@ namespace mxl::lib::fabrics::ofi
         if (auto const state = std::get_if<Connected>(&_state); state != nullptr)
         {
             _proto->transferSamples(state->ep, headIndex, count);
+        }
+    }
+
+    void RCInitiatorEndpoint::flushNotifications()
+    {
+        if (auto const state = std::get_if<Connected>(&_state); state != nullptr)
+        {
+            _proto->flush(state->ep);
         }
     }
 
@@ -393,6 +403,14 @@ namespace mxl::lib::fabrics::ofi
         }
     }
 
+    void RCInitiator::flushNotifications()
+    {
+        for (auto& [_, target] : _targets)
+        {
+            target.flushNotifications();
+        }
+    }
+
     void RCInitiator::evictDeadEndpoints()
     {
         std::erase_if(_targets, [](auto const& item) { return item.second.canEvict(); });
@@ -433,6 +451,7 @@ namespace mxl::lib::fabrics::ofi
                 }
 
                 ep->second.consume(*completion);
+                flushNotifications();
 
                 return afterProgressResult();
             }
@@ -512,6 +531,9 @@ namespace mxl::lib::fabrics::ofi
         // Poll the completion and event queue once and process pending events.
         pollCQ();
         pollEQ();
+
+        // Completions free room in the transmit queue, so post notifications that were waiting for it.
+        flushNotifications();
 
         // Evict any peers that are dead and no longer will make progress.
         evictDeadEndpoints();

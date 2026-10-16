@@ -9,6 +9,7 @@
 #include "FabricAddress.hpp"
 #include "FabricVersion.hpp"
 #include "Format.hpp" // IWYU pragma: keep; Includes template specializations of fmt::formatter for our types
+#include "NotifyMode.hpp"
 #include "Provider.hpp"
 #include "ProviderConfig.hpp"
 
@@ -189,6 +190,13 @@ namespace mxl::lib::fabrics::ofi
         hints->domain_attr->mr_mode = providerConfig.getSupportedMemoryRegistrationModes();
         hints->ep_attr->type = providerConfig.getEndpointType();
         hints->caps = providerConfig.getCaps();
+
+        // Send notifications need sends ordered after writes. Only ask for it when send notifications are forced, because providers that
+        // cannot order are dropped from the list.
+        if (notifyModeFromEnvironment() == NotifyMode::Send)
+        {
+            hints->tx_attr->msg_order |= FI_ORDER_SAW;
+        }
 
         if (sourceAddress)
         {

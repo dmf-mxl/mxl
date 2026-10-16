@@ -74,6 +74,27 @@ namespace mxl::lib::fabrics::ofi
         return (_fabric->info().raw()->rx_attr->mode & FI_RX_CQ_DATA) != 0;
     }
 
+    NotifyMode Domain::notifyMode() const
+    {
+        if (auto const forcedMode = notifyModeFromEnvironment(); forcedMode)
+        {
+            return *forcedMode;
+        }
+
+        auto const* info = _fabric->info().raw();
+        if (info->domain_attr->cq_data_size == 0)
+        {
+            return NotifyMode::Send;
+        }
+
+        return NotifyMode::Immediate;
+    }
+
+    bool Domain::sendAfterWriteOrdered() const noexcept
+    {
+        return (_fabric->info().raw()->tx_attr->msg_order & FI_ORDER_SAW) != 0;
+    }
+
     std::shared_ptr<Fabric> Domain::fabric() const noexcept
     {
         return _fabric;

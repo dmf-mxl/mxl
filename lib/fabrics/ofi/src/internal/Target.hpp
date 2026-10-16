@@ -74,20 +74,6 @@ namespace mxl::lib::fabrics::ofi
          * target can now longer be used.
          */
         virtual void shutdown() = 0;
-
-        /** \brief Represent an immediate data
-         */
-        struct ImmediateDataLocation
-        {
-        public:
-            /** \brief Get the underlying local region of the immediate data.
-             */
-            [[nodiscard]]
-            LocalRegion toLocalRegion() const noexcept;
-
-        public:
-            std::uint64_t data; /**< The immediate data value. Libfabric uses a uint64_t, but some provider might only transfer 4 bytes. (Verbs) */
-        };
     };
 
     /** \brief A wrapper around Target implementations.

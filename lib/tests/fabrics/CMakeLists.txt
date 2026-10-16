@@ -23,6 +23,7 @@ target_sources(mxl-fabrics-tests
         PRIVATE
             test_basics.cpp
             test_interfaces.cpp
+            test_notify.cpp
             test_sliced.cpp
     )
 

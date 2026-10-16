@@ -86,6 +86,10 @@ namespace mxl::lib::fabrics::ofi
          */
         void transferSamples(std::uint64_t headIndex, std::size_t count);
 
+        /** \brief Post notifications that waited for room in the transmit queue. Does nothing unless the endpoint is connected.
+         */
+        void flushNotifications();
+
     private:
         /** \brief The idle state.
          *
@@ -246,6 +250,10 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Try to activate any idle endpoints.
          */
         void activateIdleEndpoints();
+
+        /** \brief Post notifications that waited for room in the transmit queue, for all targets.
+         */
+        void flushNotifications();
 
         /** \brief Evict any dead endpoints that are no longer used.
          */

@@ -11,6 +11,7 @@
 #include <rdma/fi_domain.h>
 #include "Fabric.hpp"
 #include "LocalRegion.hpp"
+#include "NotifyMode.hpp"
 #include "Region.hpp"
 #include "RemoteRegion.hpp"
 
@@ -82,6 +83,25 @@ namespace mxl::lib::fabrics::ofi
          */
         [[nodiscard]]
         bool usingRecvBufForCqData() const noexcept;
+
+        /** \brief The notify mode this domain can receive and send with.
+         *
+         * The MXL_FABRICS_NOTIFY environment variable ("imm" or "send") overrides the detection. Without it, the mode is Send when the
+         * provider reports no remote CQ data (cq_data_size == 0). Otherwise the mode is Immediate. A provider that advertises remote CQ data
+         * but cannot post RDMA writes with it has to be switched to Send with the environment variable.
+         * \return The notify mode to use on endpoints of this domain.
+         * \throws Exception if the environment variable holds an unknown value.
+         */
+        [[nodiscard]]
+        NotifyMode notifyMode() const;
+
+        /** \brief Whether the provider processes a send after an earlier RMA write on the same endpoint (FI_ORDER_SAW).
+         *
+         * In Send notify mode, the notification can then be posted right after the write, without waiting for the write's completion.
+         * \return true if the provider reports FI_ORDER_SAW in its transmit message ordering.
+         */
+        [[nodiscard]]
+        bool sendAfterWriteOrdered() const noexcept;
 
         /** \brief Accessor for the fabric associated with this domain.
          */

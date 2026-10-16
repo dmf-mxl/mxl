@@ -41,6 +41,18 @@ As stated in the proposition, the preferred method to use to transfer data is Re
 
 Remote Write supports scatter-gather functionality on the source side, allowing the initiator to specify multiple non-contiguous buffers as the source. However, the destination is limited to a single contiguous address, which prevents unpacking the results back into multiple non-contiguous buffers and creates an asymmetry in the transfer operation. To address this problem, we have to use a bouncing buffer on the target side. On completion, the target is responsible for unpacking data back to non-contiguous buffers.
 
+#### Remote Write without immediate data
+
+Some providers can do RMA writes but cannot deliver immediate data, either because they report no remote CQ data or because their RMA write cannot carry it. For these providers the initiator uses send notifications. The writes of a transfer carry no immediate data. After the last write, the initiator sends a 4 byte message on the same endpoint. The message holds the value that would otherwise be the immediate data, as a little endian 32 bit integer. The data still lands in the target's buffers directly, so no copy is added.
+
+The provider must process a send after earlier writes on the same endpoint (`FI_ORDER_SAW`). The target then sees the message only after the data of the writes is in place. The verbs and tcp providers guarantee this ordering. The message is sent inline (`FI_INJECT`), so the provider's inject size must be at least 4 bytes. If either condition is not met, adding the target to the initiator fails. Each message produces a delivery completion on the initiator, like a write. A transfer is complete only once its notification was delivered, so the initiator does not report it done before the target can see it, and a shutdown waits for notifications still in flight.
+
+The target always posts a pool of registered receive buffers, as many as its completion queue (the `cqDepth` setup option) and its receive queue hold, up to 1024. A target that serves several senders needs a deeper completion queue. It accepts both notification types on every connection: immediate data from initiators that have it, and messages from initiators that do not. A target whose own provider cannot receive immediate data advertises this in its TargetInfo (`"notify": "send"`), and initiators then use send notifications toward it.
+
+The initiator chooses send notifications when its own domain cannot send immediate data, or when the target advertises `"notify": "send"`. A target built before this mode existed accepts only immediate data, so an initiator that has to use send notifications cannot transfer to it.
+
+The `MXL_FABRICS_NOTIFY` environment variable forces the mode. With `send`, the domain uses send notifications and `FI_ORDER_SAW` is requested when the fabric interfaces are queried. shm then accepts a notification only once the writes before it have completed, so each transfer needs an extra progress call. With `imm`, the domain uses immediate data. The variable is meant for testing.
+
 ### 3.2 Send/Recv
 There are some cases where the hardware does not support Remote Write. One example of this is some AWS instances that have EFA enabled hardware only have support for Send/Recv transfers.
 With untagged Send/Recv, the receiver cannot direct an incoming message to a specific buffer as posted receives are consumed in FIFO order. Since the target doesn't know in advance which grain the initiator will send next, it cannot pre-post the grain's final buffer and rely on the data landing there. To land data directly in the correct per-grain buffer one would need tag matching (FI_TAGGED, tag = grain index), otherwise a single bounce buffer is used and the grain index is recovered from the immediate data, which results in an extra copy.
@@ -71,6 +83,7 @@ The TargetInfo object is created during target setup and encapsulates all necess
     - Virtual addresses of registered buffers used in the transfer
     - Remote keys corresponding to these registered buffers
 - Endpoint identifier: Used for referencing completions and events
+- Notify mode (`notify`): present with the value `send` when the target cannot receive immediate data. When the field is absent, the target expects immediate data. See [Remote Write without immediate data](#remote-write-without-immediate-data).
 
 The fabrics API offers functions to convert TargetInfo to and from string format: `mxlFabricsTargetInfoToString` for serialization and `mxlFabricsTargetInfoFromString` for de-serialization. While the API exposes an opaque `mxlTargetInfo` type, the underlying implementation uses the `TargetInfo` type. The serialized format is in JSON format.
 
@@ -343,6 +356,7 @@ The currently implemented feature set covers the optimal paths for both discrete
 
 - **Discrete flow (grains):** Transferred using Remote Write (RMA) directly into the target's media buffer, with immediate data carrying the grain index. This is the optimal path that requires no involvement from the target during the transfer itself.
 - **Continuous flow (samples):** Transferred using Remote Write (RMA) with scatter-gather on the source side, landing data into a bouncing buffer on the target. Upon completion, the target unpacks the bouncing buffer back into the non-contiguous per-channel buffers of the MXL audio flow.
+- **Providers without immediate data:** Both flow types use send notifications in place of immediate data, as described in [Remote Write without immediate data](#remote-write-without-immediate-data).
 
 Send/Recv and tag-matching fallback paths are not yet implemented. Send/Recv without tag matching requires a bouncing buffer and an extra copy, while tag matching requires explicit synchronization between initiator and target and may not benefit from hardware acceleration depending on the NIC. Given these trade-offs and that Remote Write covers the primary use cases, the fallback paths have been deferred.
 

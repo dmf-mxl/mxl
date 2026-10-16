@@ -8,6 +8,7 @@
 #include "mxl/fabrics.h"
 #include "Address.hpp"
 #include "Endpoint.hpp"
+#include "NotifyMode.hpp"
 #include "RemoteRegion.hpp"
 
 namespace mxl::lib::fabrics::ofi
@@ -57,5 +58,8 @@ namespace mxl::lib::fabrics::ofi
         std::vector<RemoteRegion>
             remoteRegions; /**< Target's memory regions (and keys) which an initiator can operate on. This is used only for RMA operations */
         std::optional<TargetInfoBounceBufferInfo> bounceBufferInfo; /**< Information about the bounce buffer on the target, if the target uses one.*/
+        NotifyMode notifyMode = NotifyMode::Immediate; /**< How the target expects to be told that a write completed. Serialized as "notify"
+                                                          only when it is Send, so targets in Immediate mode produce the same JSON as before, and
+                                                          JSON without the field parses as Immediate. */
     };
 }

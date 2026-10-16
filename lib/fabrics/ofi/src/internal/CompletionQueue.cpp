@@ -57,12 +57,12 @@ namespace mxl::lib::fabrics::ofi
         // expose the private constructor to std::make_shared inside this function
         struct MakeSharedEnabler : public CompletionQueue
         {
-            MakeSharedEnabler(::fid_cq* raw, std::shared_ptr<Domain> domain)
-                : CompletionQueue(raw, domain)
+            MakeSharedEnabler(::fid_cq* raw, std::shared_ptr<Domain> domain, std::size_t size)
+                : CompletionQueue(raw, domain, size)
             {}
         };
 
-        return std::make_shared<MakeSharedEnabler>(cq, domain);
+        return std::make_shared<MakeSharedEnabler>(cq, domain, attr.size);
     }
 
     std::optional<Completion> CompletionQueue::read()
@@ -88,10 +88,16 @@ namespace mxl::lib::fabrics::ofi
         return handleReadResult(ret, entry);
     }
 
-    CompletionQueue::CompletionQueue(::fid_cq* raw, std::shared_ptr<Domain> domain)
+    CompletionQueue::CompletionQueue(::fid_cq* raw, std::shared_ptr<Domain> domain, std::size_t size)
         : _raw(raw)
         , _domain(std::move(domain))
+        , _size(size)
     {}
+
+    std::size_t CompletionQueue::size() const noexcept
+    {
+        return _size;
+    }
 
     CompletionQueue::~CompletionQueue()
     {

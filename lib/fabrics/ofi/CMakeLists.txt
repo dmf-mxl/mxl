@@ -45,6 +45,7 @@ target_sources(mxl-fabrics-objects
             src/internal/Initiator.cpp
             src/internal/LocalRegion.cpp
             src/internal/MemoryRegion.cpp
+            src/internal/Notify.cpp
             src/internal/PassiveEndpoint.cpp
             src/internal/Protocol.cpp
             src/internal/ProtocolEgressRMA.cpp

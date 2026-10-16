@@ -68,9 +68,19 @@ namespace mxl::lib::fabrics::ofi
             Endpoint ep;
         };
 
+        /** \brief The draining state.
+         *
+         * The Initiator has shut down the connection. Transfers it saw complete may still be unread in the completion queue. The RCTarget reads
+         * them before it listens for a new connection.
+         */
+        struct Draining
+        {
+            Endpoint ep;
+        };
+
         /** \brief The internal state of the RCTarget.
          */
-        using State = std::variant<WaitForConnectionRequest, WaitForConnection, Connected>;
+        using State = std::variant<WaitForConnectionRequest, WaitForConnection, Connected, Draining>;
 
     private:
         /** \brief Construct a new RCTarget associated with the given domain and passive endpoint.

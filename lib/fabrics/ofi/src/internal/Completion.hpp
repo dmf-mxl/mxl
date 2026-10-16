@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <bit>
 #include <memory>
@@ -49,6 +50,18 @@ namespace mxl::lib::fabrics::ofi
              */
             [[nodiscard]]
             bool isLocalWrite() const noexcept;
+
+            /** \brief Indicates whether the completion entry represents a received message (FI_RECV and FI_MSG).
+             * \return true for a completed fi_recv that received a message.
+             */
+            [[nodiscard]]
+            bool isRecv() const noexcept;
+
+            /** \brief Number of bytes received, for receive completions.
+             * \return The length reported by the provider.
+             */
+            [[nodiscard]]
+            std::size_t length() const noexcept;
 
         private:
             friend class CompletionQueue;

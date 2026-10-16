@@ -8,6 +8,7 @@
 #include "AudioBounceBuffer.hpp"
 #include "DataLayout.hpp"
 #include "Endpoint.hpp"
+#include "Notify.hpp"
 #include "Protocol.hpp"
 
 namespace mxl::lib::fabrics::ofi
@@ -35,6 +36,10 @@ namespace mxl::lib::fabrics::ofi
          */
         virtual void processCompletion(Completion::Data const&) final;
 
+        /** \copydoc EgressProtocol::flush()
+         */
+        virtual void flush(Endpoint const& ep) final;
+
         /** \copydoc EgressProtocol::hasPendingWork()
          */
         [[nodiscard]]
@@ -47,7 +52,8 @@ namespace mxl::lib::fabrics::ofi
     private:
         friend class RMAGrainEgressProtocolTemplate;
 
-        RMAGrainEgressProtocol(Completion::Token token, TargetInfo info, DataLayout::Discrete dataLayout, std::vector<LocalRegion> _localRegions);
+        RMAGrainEgressProtocol(Completion::Token token, TargetInfo info, DataLayout::Discrete dataLayout, std::vector<LocalRegion> _localRegions,
+            NotifyMode notifyMode);
 
     private:
         Completion::Token _token;
@@ -55,6 +61,7 @@ namespace mxl::lib::fabrics::ofi
         DataLayout::Discrete _layout;
         std::vector<LocalRegion> _localRegions;
         std::size_t _pending = 0;
+        NotifySender _notifier; ///< Tells the target which slot and slices a transfer filled.
     };
 
     /** \brief Template for creating an Egress protocol for RMA writer endpoint to handle transferring grains to remote targets using remote write
@@ -72,6 +79,7 @@ namespace mxl::lib::fabrics::ofi
         DataLayout::Discrete _layout;
         std::vector<Region> _regions;
         std::optional<std::vector<LocalRegion>> _localRegions{};
+        std::shared_ptr<Domain> _domain; ///< Domain passed to registerMemory(). Used to choose the notify mode of each instance.
     };
 
     //
@@ -99,6 +107,10 @@ namespace mxl::lib::fabrics::ofi
          */
         virtual void processCompletion(Completion::Data const&) final;
 
+        /** \copydoc EgressProtocol::flush()
+         */
+        virtual void flush(Endpoint const& ep) final;
+
         /** \copydoc EgressProtocol::hasPendingWork()
          */
         [[nodiscard]]
@@ -113,7 +125,7 @@ namespace mxl::lib::fabrics::ofi
 
     private:
         RMASampleEgressProtocol(Completion::Token token, TargetInfo info, DataLayout::Continuous dataLayout, LocalRegion _localRegion,
-            std::size_t bounceBufferEntryCount);
+            std::size_t bounceBufferEntryCount, NotifyMode notifyMode);
 
         /** \brief Create the scatter-gather list for a given audio region and data layout. This will be used for the remote write transfer. The list
          * will be created based on the head index and count of samples to transfer.
@@ -139,6 +151,7 @@ namespace mxl::lib::fabrics::ofi
         std::size_t _pending = 0;
         std::uint32_t _bounceBufferEntryIndex{0};     /**< The index of the bounce buffer entry to use for the next transfer. */
         std::size_t _bounceBufferEntryCount; /**< The total number of bounce buffer entries. Used to wrap around the bounce buffer entry index. */
+        NotifySender _notifier;              /**< Tells the target which bounce buffer entry a transfer filled. */
     };
 
     /** \brief Template for creating an Egress protocol for RMA writer endpoint to handles transferring audio data to remote targets using remote
@@ -157,6 +170,7 @@ namespace mxl::lib::fabrics::ofi
         Region _region;                          /**< Region provided by the user. */
         std::optional<LocalRegion> _localRegion; /**< Registered local region corresponding to the user provided region. This is what will actually be
                                                     used for remote writes. */
+        std::shared_ptr<Domain> _domain;         /**< Domain passed to registerMemory(). Used to choose the notify mode of each instance. */
     };
 
 }

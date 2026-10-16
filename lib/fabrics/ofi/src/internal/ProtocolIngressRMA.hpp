@@ -6,6 +6,7 @@
 
 #include "AudioBounceBuffer.hpp"
 #include "DataLayout.hpp"
+#include "Notify.hpp"
 #include "Protocol.hpp"
 
 namespace mxl::lib::fabrics::ofi
@@ -54,12 +55,9 @@ namespace mxl::lib::fabrics::ofi
         virtual void reset() override;
 
     private:
-        LocalRegion immDataRegion();
-
-    private:
         std::vector<Region> _regions;
         bool _isMemoryRegistered{false};
-        std::optional<Target::ImmediateDataLocation> _immDataBuffer{};
+        NotifyReceiver _notifications; ///< Receives the notify values that name the ring slot and slices of each transfer.
     };
 
     /** \brief Ingress protocol for RMA writer endpoint for audio samples.
@@ -106,8 +104,6 @@ namespace mxl::lib::fabrics::ofi
         virtual void reset() override;
 
     private:
-        LocalRegion immDataRegion();
-
         /** \brief Helper function to create an AudioBounceBuffer based on the given audio data layout and maximum synchronous batch size.
          * Entries are as big as the maximum number of samples that can be transferred in a single batch, which is determined by maxSyncBatchSize.
          * The number of entries is determined by how many batches are needed to cover the entire history buffer.
@@ -118,6 +114,6 @@ namespace mxl::lib::fabrics::ofi
         AudioBounceBuffer _bounceBuffer;
         Region _region;
         bool _isMemoryRegistered = false;
-        std::optional<Target::ImmediateDataLocation> _immDataBuffer{};
+        NotifyReceiver _notifications; ///< Receives the notify values that name the bounce buffer entry of each transfer.
     };
 }

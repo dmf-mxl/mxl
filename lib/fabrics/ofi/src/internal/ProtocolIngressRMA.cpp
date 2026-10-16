@@ -38,10 +38,7 @@ namespace mxl::lib::fabrics::ofi
 
     void RMAGrainIngressProtocol::start(Endpoint const& endpoint)
     {
-        if (endpoint.domain()->usingRecvBufForCqData())
-        {
-            endpoint.recv(immDataRegion());
-        }
+        _notifications.start(endpoint);
     }
 
     std::optional<Target::ReadResult> RMAGrainIngressProtocol::read(Endpoint const& endpoint, Completion const& completion)
@@ -52,20 +49,15 @@ namespace mxl::lib::fabrics::ofi
             return {};
         }
 
-        if (_immDataBuffer)
-        {
-            endpoint.recv(_immDataBuffer->toLocalRegion());
-        }
-
-        auto immData = completionData->data();
-        if (!immData)
+        auto const notifyValue = _notifications.read(endpoint, *completionData);
+        if (!notifyValue)
         {
             return {};
         }
 
-        auto [slot, slice] = ImmDataGrain{static_cast<std::uint32_t>(*immData)}.unpack();
+        auto [slot, slice] = ImmDataGrain{*notifyValue}.unpack();
 
-        // Set the number of valid slices in the grain header. This information is received through the immediate data and must be updated
+        // Set the number of valid slices in the grain header. This information is received through the notify value and must be updated
         // in the local shared memory in the case of partial writes.
         setValidSlicesForGrain(_regions, slot, slice);
 
@@ -86,16 +78,8 @@ namespace mxl::lib::fabrics::ofi
     }
 
     void RMAGrainIngressProtocol::reset()
-    {}
-
-    LocalRegion RMAGrainIngressProtocol::immDataRegion()
     {
-        if (!_immDataBuffer)
-        {
-            _immDataBuffer.emplace();
-        }
-
-        return _immDataBuffer->toLocalRegion();
+        _notifications.stop();
     }
 
     //
@@ -128,10 +112,7 @@ namespace mxl::lib::fabrics::ofi
 
     void RMASampleIngressProtocol::start(Endpoint const& endpoint)
     {
-        if (endpoint.domain()->usingRecvBufForCqData())
-        {
-            endpoint.recv(immDataRegion());
-        }
+        _notifications.start(endpoint);
     }
 
     std::optional<Target::ReadResult> RMASampleIngressProtocol::read(Endpoint const& endpoint, Completion const& completion)
@@ -142,18 +123,13 @@ namespace mxl::lib::fabrics::ofi
             return {};
         }
 
-        if (_immDataBuffer)
+        auto const notifyValue = _notifications.read(endpoint, *completionData);
+        if (!notifyValue)
         {
-            endpoint.recv(immDataRegion());
+            return {};
         }
 
-        auto const immData = completionData->data();
-        if (!immData)
-        {
-            throw Exception::invalidState("Received a completion without immediate data.");
-        }
-
-        auto const header = _bounceBuffer.unpack(*immData, _region);
+        auto const header = _bounceBuffer.unpack(*notifyValue, _region);
         return std::make_optional<Target::SampleReadResult>(header.headIndex, header.count);
     }
 
@@ -168,16 +144,8 @@ namespace mxl::lib::fabrics::ofi
     }
 
     void RMASampleIngressProtocol::reset()
-    {}
-
-    LocalRegion RMASampleIngressProtocol::immDataRegion()
     {
-        if (!_immDataBuffer)
-        {
-            _immDataBuffer.emplace();
-        }
-
-        return _immDataBuffer->toLocalRegion();
+        _notifications.stop();
     }
 
     AudioBounceBuffer RMASampleIngressProtocol::makeAudioBounceBuffer(DataLayout::Continuous const& layout, std::uint32_t maxSyncBatchSize)

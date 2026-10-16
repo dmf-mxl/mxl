@@ -282,8 +282,8 @@ extern "C"
      * corresponds to the one that will be shared with targets.
      * \param in_options An optional json-formatted string with options. May be NULL or empty. Recognized fields:
      *  - "cqDepth" (number >= 1): the depth of the initiator's completion queue. The queue receives one completion per posted
-     *    write, so increase this when many writes are in flight at once (many targets, many slices per grain). When omitted,
-     *    an implementation default is used.
+     *    write, plus one per notification message when a target is reached with send notifications. Increase this when many
+     *    writes are in flight at once (many targets, many slices per grain). When omitted, an implementation default is used.
      * \return The result code. \see mxlStatus
      */
     MXL_EXPORT

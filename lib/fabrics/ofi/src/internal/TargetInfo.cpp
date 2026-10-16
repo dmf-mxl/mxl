@@ -56,6 +56,11 @@ namespace mxl::lib::fabrics::ofi
         root["id"] = picojson::value(std::to_string(id));
         root["provider"] = picojson::value{fmt::to_string(provider)};
 
+        if (notifyMode != NotifyMode::Immediate)
+        {
+            root["notify"] = picojson::value{std::string{notifyModeToString(notifyMode)}};
+        }
+
         return picojson::value(root).serialize(false);
     }
 
@@ -102,11 +107,31 @@ namespace mxl::lib::fabrics::ofi
 
         auto const id = std::stoull(root.at("id").get<std::string>());
         auto const provider = providerFromString(root.at("provider").get<std::string>()).value_or(Provider::ANY);
-        return {.id = id, .fabricAddress = fabricAddress, .provider = provider, .remoteRegions = regions, .bounceBufferInfo = bounceBufferInfo};
+
+        auto notifyMode = NotifyMode::Immediate;
+        if (root.contains("notify"))
+        {
+            auto const& notifyString = root.at("notify").get<std::string>();
+            auto const parsedMode = notifyModeFromString(notifyString);
+            if (!parsedMode)
+            {
+                // An initiator that guesses the mode would post transfers the target never reports, so reject unknown modes.
+                throw Exception::invalidArgument("Unsupported notify mode '{}' in target info.", notifyString);
+            }
+            notifyMode = *parsedMode;
+        }
+
+        return {.id = id,
+            .fabricAddress = fabricAddress,
+            .provider = provider,
+            .remoteRegions = regions,
+            .bounceBufferInfo = bounceBufferInfo,
+            .notifyMode = notifyMode};
     }
 
     bool TargetInfo::operator==(TargetInfo const& other) const noexcept
     {
-        return (fabricAddress == other.fabricAddress) && (remoteRegions == other.remoteRegions) && (id == other.id);
+        return (fabricAddress == other.fabricAddress) && (remoteRegions == other.remoteRegions) && (id == other.id) &&
+               (notifyMode == other.notifyMode);
     }
 }

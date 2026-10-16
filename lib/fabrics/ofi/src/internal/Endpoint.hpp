@@ -292,6 +292,33 @@ namespace mxl::lib::fabrics::ofi
          */
         void recv(LocalRegion region) const;
 
+        /** \brief Push a recv work request for a registered buffer to the endpoint work queue.
+         *
+         * Unlike recv(LocalRegion), the memory descriptor of the region is passed to the provider, so the buffer can receive message data with
+         * providers that require registered local buffers (FI_MR_LOCAL).
+         * \param[in] region Registered memory region to receive data into.
+         * \param[in] token Value reported as the token of the completion, to identify the buffer.
+         * \return true if the buffer was posted, false if the receive queue is full (FI_EAGAIN) and the call must be repeated later.
+         * \throws FabricException on any other error.
+         */
+        [[nodiscard]]
+        bool recv(LocalRegion region, Completion::Token token) const;
+
+        /** \brief Send a small message with its data inline (fi_sendmsg with FI_INJECT).
+         *
+         * The provider copies the data before returning, so the buffer can be reused right away. The size must not exceed the endpoint's
+         * inject size. Like a write, the send produces one completion with the given token once the message was delivered to the target
+         * (FI_DELIVERY_COMPLETE).
+         * \param[in] token Token reported in the completion of the send.
+         * \param[in] data The message payload.
+         * \param[in] size The payload size in bytes.
+         * \param[in] destAddr The destination address. Ignored for connection-oriented endpoints.
+         * \return true if the message was posted, false if the transmit queue is full (FI_EAGAIN) and the call must be repeated later.
+         * \throws FabricException on any other error.
+         */
+        [[nodiscard]]
+        bool sendInline(Completion::Token token, void const* data, std::size_t size, ::fi_addr_t destAddr = FI_ADDR_UNSPEC) const;
+
         /** \brief Get the raw libfabric handle to this endpoint.
          */
         ::fid_ep* raw() noexcept;

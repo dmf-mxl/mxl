@@ -89,6 +89,14 @@ namespace mxl::lib::fabrics::ofi
         }
     }
 
+    void RDMInitiatorTarget::flushNotifications(Endpoint const& ep)
+    {
+        if (std::holds_alternative<Activated>(_state))
+        {
+            _proto->flush(ep);
+        }
+    }
+
     bool RDMInitiatorTarget::hasPendingWork() const noexcept
     {
         return std::visit(
@@ -227,6 +235,7 @@ namespace mxl::lib::fabrics::ofi
     {
         activateIdleEndpoints();
         pollCQ();
+        flushNotifications();
         return afterProgressResult();
     }
 
@@ -258,6 +267,7 @@ namespace mxl::lib::fabrics::ofi
             pollCQ();
         }
 
+        flushNotifications();
         return afterProgressResult();
     }
 
@@ -318,6 +328,14 @@ namespace mxl::lib::fabrics::ofi
         if (auto completion = _endpoint.completionQueue()->read(); completion)
         {
             processCompletion(*completion);
+        }
+    }
+
+    void RDMInitiator::flushNotifications()
+    {
+        for (auto& [_, target] : _targets)
+        {
+            target.flushNotifications(_endpoint);
         }
     }
 

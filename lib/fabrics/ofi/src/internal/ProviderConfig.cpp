@@ -22,7 +22,8 @@ namespace mxl::lib::fabrics::ofi
             auto result = std::uint64_t{0};
             if ((capabilities->interfaceCaps & MXL_FABRICS_IFACE_CAP_REMOTE_WRITE) != 0)
             {
-                result |= (isTarget ? FI_REMOTE_WRITE : FI_WRITE) | FI_RMA;
+                // The message capability carries send notifications, for providers that cannot deliver remote CQ data.
+                result |= (isTarget ? (FI_REMOTE_WRITE | FI_RECV) : (FI_WRITE | FI_SEND)) | FI_RMA | FI_MSG;
             }
             if ((capabilities->interfaceCaps & MXL_FABRICS_IFACE_CAP_SEND_RECEIVE) != 0)
             {

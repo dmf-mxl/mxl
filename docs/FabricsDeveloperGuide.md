@@ -186,7 +186,7 @@ The `in_options` parameter accepts a JSON string. Currently the following option
 
 | Option | Type | Description |
 | --- | --- | --- |
-| `cqDepth` | number >= 1 | Depth of the initiator's completion queue. Each posted write produces one completion, so increase this when many writes are in flight at once, for example with many targets or many slices per grain. |
+| `cqDepth` | number >= 1 | Depth of the initiator's completion queue. Each posted write produces one completion, and so does each notification message toward a target that uses [send notifications](./Fabrics.md#remote-write-without-immediate-data). Increase this when many writes are in flight at once, for example with many targets or many slices per grain. |
 
 Select an interface from `mxlFabricsGetInterfaces()` that is compatible with the target's interface (same provider, matching capabilities).
 

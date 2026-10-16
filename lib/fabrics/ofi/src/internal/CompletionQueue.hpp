@@ -69,6 +69,11 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         ::fid_cq const* raw() const noexcept;
 
+        /** \brief The depth this queue was opened with.
+         */
+        [[nodiscard]]
+        std::size_t size() const noexcept;
+
         /** \brief Perform a non-blocking read on the completion queue.
          *
          * If no completion event is available in the queue
@@ -96,7 +101,7 @@ namespace mxl::lib::fabrics::ofi
          * completion queue. To prevent the queue from being released before all these events have be released, they own
          * a shared_ptr to the queue they have originated from.
          */
-        CompletionQueue(::fid_cq* raw, std::shared_ptr<Domain> domain);
+        CompletionQueue(::fid_cq* raw, std::shared_ptr<Domain> domain, std::size_t size);
 
         /** \brief Handle the result of a blocking or non-blocking read.
          *
@@ -107,5 +112,6 @@ namespace mxl::lib::fabrics::ofi
     private:
         ::fid_cq* _raw;                  /**< Raw resource reference. */
         std::shared_ptr<Domain> _domain; /**< The domain this queue was created into. */
+        std::size_t _size;               /**< The depth the queue was opened with. */
     };
 }

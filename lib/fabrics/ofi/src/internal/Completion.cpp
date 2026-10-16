@@ -36,6 +36,16 @@ namespace mxl::lib::fabrics::ofi
         return (_raw.flags & FI_RMA) && (_raw.flags & FI_WRITE);
     }
 
+    bool Completion::Data::isRecv() const noexcept
+    {
+        return ((_raw.flags & FI_RECV) != 0) && ((_raw.flags & FI_MSG) != 0);
+    }
+
+    std::size_t Completion::Data::length() const noexcept
+    {
+        return _raw.len;
+    }
+
     Completion::Error::Error(::fi_cq_err_entry const& raw, std::shared_ptr<CompletionQueue> cq)
         : _raw(raw)
         , _cq(std::move(cq))

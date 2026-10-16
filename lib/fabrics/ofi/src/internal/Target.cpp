@@ -11,21 +11,11 @@
 #include "mxl/fabrics.h"
 #include "Exception.hpp"
 #include "FabricInterfaceProbe.hpp"
-#include "LocalRegion.hpp"
 #include "RCTarget.hpp"
 #include "RDMTarget.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
-    LocalRegion Target::ImmediateDataLocation::toLocalRegion() const noexcept
-    {
-        return LocalRegion{
-            .addr = std::bit_cast<std::uint64_t>(&data),
-            .len = sizeof(std::uint64_t),
-            .desc = nullptr,
-        };
-    }
-
     TargetWrapper* TargetWrapper::fromAPI(mxlFabricsTarget api) noexcept
     {
         return reinterpret_cast<TargetWrapper*>(api);

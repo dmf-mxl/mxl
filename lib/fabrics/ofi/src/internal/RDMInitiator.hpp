@@ -57,6 +57,11 @@ namespace mxl::lib::fabrics::ofi
          */
         void transferSamples(Endpoint const& ep, std::uint64_t headIndex, std::size_t count);
 
+        /** \brief Post notifications that waited for room in the transmit queue. Does nothing unless the target is activated.
+         * \param[in] ep The initiator's endpoint.
+         */
+        void flushNotifications(Endpoint const& ep);
+
         /** \brief Returns true if there's pending work for this target.
          */
         [[nodiscard]]
@@ -181,6 +186,10 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Poll the completion queue and process the events until the queue is empty.
          */
         void pollCQ();
+
+        /** \brief Post notifications that waited for room in the transmit queue, for all targets.
+         */
+        void flushNotifications();
 
         /** \brief Try to activate any idle endpoints.
          */

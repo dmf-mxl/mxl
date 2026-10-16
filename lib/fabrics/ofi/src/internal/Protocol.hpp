@@ -56,7 +56,8 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         virtual bool canReadSamples() const noexcept = 0;
 
-        /** \brief Destroy the protocol object.
+        /** \brief Stop posting receive buffers, because the connection was closed. Completions still in the queue can be read afterwards.
+         * The next call to start() posts the buffers again.
          */
         virtual void reset() = 0;
     };
@@ -99,6 +100,13 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Process a completion event. Any post-processing after a transfer should be done here.
          */
         virtual void processCompletion(Completion::Data const& completion) = 0;
+
+        /** \brief Post notifications that could not be posted earlier because the transmit queue was full.
+         *
+         * Initiators call this on every progress call. It does nothing in Immediate notify mode.
+         * \param[in] ep The endpoint used for transfers to the target.
+         */
+        virtual void flush(Endpoint const& ep) = 0;
 
         /** \brief Check if there is uncompleted requests.
          */
