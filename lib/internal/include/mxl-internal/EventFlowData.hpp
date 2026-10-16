@@ -73,13 +73,13 @@ namespace mxl::lib
         }
 
         /** @return Mutable ring view; openEventBuffer must have succeeded. */
-        constexpr EventRingBuffer& ring() noexcept
+        EventRingBuffer& ring() noexcept
         {
             return *_ring;
         }
 
         /** @return Read-only ring view; openEventBuffer must have succeeded. */
-        constexpr EventRingBuffer const& ring() const noexcept
+        EventRingBuffer const& ring() const noexcept
         {
             return *_ring;
         }
