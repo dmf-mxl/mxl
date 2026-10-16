@@ -304,6 +304,10 @@ extern "C"
      * required it will happend during a call to mxlFabricsInitiatorMakeProgress*(). It is guaranteed that no new grain transfer operations will
      * be queued for this target during calls to mxlFabricsInitiatorTransferGrain() after the target was removed, but it is only guaranteed that
      * the connection shutdown has completed after mxlFabricsInitiatorMakeProgress*() no longer returns MXL_ERR_NOT_READY.
+     * If a connection oriented target closes its connection, for example because it was destroyed, it stays added until it is removed with this
+     * function.
+     * The initiator does not connect to it again, because a new target has new target information with new keys, and potentially a new port. The user
+     * needs to remove the old target and add the target information of the new one.
      * \param in_initiator A valid fabrics initiator
      * \param in_targetInfo The target information. This should be the same as the one returned from "mxlFabricsTargetSetup".
      */
@@ -337,20 +341,24 @@ extern "C"
 
     /**
      * This function must be called regularly for the initiator to make progress on queued transfer operations, connection establishment
-     * operations and connection shutdown operations.
+     * operations and connection shutdown operations. If a connection fails, the target is connected again during a later call to this
+     * function or to a mxlFabricsInitiatorTransferGrain or mxlFabricsInitiatorTransferSamples function.
      * \param in_initiator The initiator that should make progress.
-     * \return The result code. Returns MXL_ERR_NOT_READY if there is still progress to be made, and not all operations have completed.
+     * \return The result code. Returns MXL_ERR_NOT_READY if there is still progress to be made, and not all operations have completed. Returns
+     * MXL_STATUS_OK if no transfer, connection setup or shutdown is pending.
      */
     MXL_EXPORT
     mxlStatus mxlFabricsInitiatorMakeProgressNonBlocking(mxlFabricsInitiator in_initiator);
 
     /**
      * This function must be called regularly for the initiator to make progress on queued transfer operations, connection establishment
-     * operations and connection shutdown operations.
+     * operations and connection shutdown operations. If a connection fails, the target is connected again during a later call to this
+     * function or to a transfer function.
      * \param in_initiator The initiator that should make progress.
      * \param in_timeoutMs The maximum time to wait for progress to be made (in milliseconds).
      * \return The result code. Returns MXL_ERR_NOT_READY if there is still progress to be made and not all operations have completed before the
-     * timeout. Some providers return MXL_ERR_INTERRUPTED if the operation is interrupted by the arrival of a POSIX signal.
+     * timeout. Returns MXL_STATUS_OK if no transfer, connection setup or shutdown is pending, which includes the case that no target is added. Some
+     * providers return MXL_ERR_INTERRUPTED if the operation is interrupted by the arrival of a POSIX signal.
      */
     MXL_EXPORT
     mxlStatus mxlFabricsInitiatorMakeProgressBlocking(mxlFabricsInitiator in_initiator, uint16_t in_timeoutMs);

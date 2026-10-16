@@ -98,7 +98,7 @@ namespace mxl::lib::fabrics::ofi
 
         /** \brief Process a completion event. Any post-processing after a transfer should be done here.
          */
-        virtual void processCompletion(Completion::Data const& completion) = 0;
+        virtual void processCompletion(Completion const& completion) = 0;
 
         /** \brief Check if there is uncompleted requests.
          */

@@ -42,11 +42,29 @@ namespace mxl::lib::fabrics::ofi
          */
         void activate(Endpoint& ep);
 
-        /** \brief Initiate a shutdown process.
+        /** \brief Stop transfers to this target.
          *
-         * The endpoint will have pending work until a shutdown or error event will be received. After which it can be evicted from the initiator.
+         * If writes are still outstanding, the target goes to the removing state. It keeps its address vector entry and its protocol
+         * instance until finishRemoval() finds that the writes have completed. Otherwise the address vector entry is removed right away and
+         * the target can be evicted.
          */
         void shutdown(Endpoint& ep);
+
+        /** \brief Complete the removal once all outstanding writes have completed or RemoveTimeout has elapsed.
+         *
+         * Removes the address vector entry and moves the target to the done state. In any other state than the removing state, this is a
+         * no-op.
+         */
+        void finishRemoval(Endpoint& ep);
+
+        /** \brief Returns true if the target was shut down and can be evicted from the initiator.
+         */
+        [[nodiscard]]
+        bool canEvict() const noexcept;
+
+        /** \brief Upper bound for the removing state. A target that disappears may never complete the outstanding writes.
+         */
+        constexpr static auto RemoveTimeout = std::chrono::seconds(2);
 
         /** \brief Post a grain data transfer request to this endpoint.
          */
@@ -83,6 +101,17 @@ namespace mxl::lib::fabrics::ofi
             ::fi_addr_t fiAddr; /**< Address index in address vector. */
         };
 
+        /** \brief The removing state.
+         *
+         * The target was removed while writes to it were outstanding. No new writes are posted. The address vector entry stays valid until
+         * the outstanding writes have completed.
+         */
+        struct Removing
+        {
+            ::fi_addr_t fiAddr;                             /**< Address index in address vector. */
+            std::chrono::steady_clock::time_point deadline; /**< The removal is completed after this point in time even with writes outstanding. */
+        };
+
         /** \brief The endpoint is done and can be evicted from the initiator.
          */
         struct Done
@@ -91,7 +120,7 @@ namespace mxl::lib::fabrics::ofi
         /** \brief The various states that the endpoint can be in are stored inside a variant that we move from and then back into when processing
          * events.
          */
-        using State = std::variant<Idle, Activated, Done>;
+        using State = std::variant<Idle, Activated, Removing, Done>;
 
     private:
         State _state; /**< The current state of the endpoint. */
@@ -125,6 +154,10 @@ namespace mxl::lib::fabrics::ofi
          */
         virtual void removeTarget(TargetInfo const& remoteTargetInfo) final;
 
+        /** \copydoc Initiator::shutdown()
+         *
+         * Removes all targets and makes progress until the outstanding writes to each one have completed.
+         */
         virtual void shutdown() final;
 
         /** \copydoc Initiator::transferGrain()
@@ -174,7 +207,7 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         Initiator::MakeProgressResult afterProgressResult() const noexcept;
 
-        /** \brief Block on the completion queue with a timeout.
+        /** \brief Block on the completion queue until a completion arrives or the timeout elapses, then process all available completions.
          */
         void blockOnCQ(std::chrono::steady_clock::duration timeout);
 
@@ -185,6 +218,10 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Try to activate any idle endpoints.
          */
         void activateIdleEndpoints();
+
+        /** \brief Complete the removal of targets whose outstanding writes have completed, and evict them.
+         */
+        void evictRemovedTargets();
 
         /** \brief Consume a completion entry
          */
@@ -198,13 +235,23 @@ namespace mxl::lib::fabrics::ofi
          */
         void handleCompletionData(Completion::Data data);
 
-    private:
-        Endpoint _endpoint; /** Shared endpoint used for all transfers. */
+        /** \brief Upper bound for shutdown(). It is longer than RDMInitiatorTarget::RemoveTimeout, so that each removal ends on its own.
+         */
+        constexpr static auto ShutdownTimeout = RDMInitiatorTarget::RemoveTimeout + std::chrono::seconds(1);
 
+        /** \brief Sleep time between two queue reads in shutdown().
+         */
+        constexpr static auto ShutdownPollInterval = std::chrono::milliseconds(1);
+
+    private:
         std::unique_ptr<EgressProtocolTemplate> _proto;
 
         /** Targets managed by this initiator. Each target has its own remote address and remote memory regions. */
         std::map<Completion::Token, RDMInitiatorTarget> _targets{};
         std::map<Endpoint::Id, Completion::Token> _remoteEndpoints{};
+
+        // The endpoint is declared last so that it is destroyed before the protocols. Writes can read from memory that the protocols own
+        // until the endpoint is closed.
+        Endpoint _endpoint; /** Shared endpoint used for all transfers. */
     };
 }
