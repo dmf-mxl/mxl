@@ -230,7 +230,7 @@ These functions return `MXL_ERR_NOT_READY` when there is pending work that has n
 
 ## Moving media
 
-The fabrics API does not access readers and writers directly. It replicates data between the underlying buffers. The application is still responsible for reading grains/samples on the initiator side and committing them on the target side using the regular flow API. On the target side, the remote initiator writes both the media payload and the grain/sample metadata directly into the local ring buffer, so `mxlFlowWriterOpenGrain` and `mxlFlowWriterOpenSamples` return the already-populated data and the application only needs to commit.
+The fabrics API does not access readers and writers directly. It replicates data between the underlying buffers. The application is still responsible for reading grains/samples on the initiator side and committing them on the target side using the regular flow API. On the target side, the remote initiator writes both the media payload and the grain/sample metadata directly into the local ring buffer. For samples, `mxlFlowWriterOpenSamples` returns the already-populated data and the application only needs to commit. For grains, `mxlFlowWriterOpenGrain` resets the `validSlices` field and the `MXL_GRAIN_FLAG_INVALID` flag of the grain info, so the application reads the grain info written by the initiator with `mxlFlowWriterGetGrainInfo` before opening the grain, and commits that grain info.
 
 ### Transferring discrete flows (grains)
 
@@ -294,10 +294,16 @@ uint64_t grainIndex;
 mxlStatus s = mxlFabricsTargetReadGrainNonBlocking(target, &grainIndex);
 if (s == MXL_STATUS_OK) {
     // The grain data and grain info were already written into the local ring buffer
-    // by the remote initiator. Open and commit to make it visible to local readers.
+    // by the remote initiator. Read the grain info first, because opening the grain
+    // resets its validSlices and invalid flag.
     mxlGrainInfo info;
+    mxlFlowWriterGetGrainInfo(writer, grainIndex, &info);
+
+    // Open the grain and commit the grain info written by the initiator to make the
+    // grain visible to local readers.
+    mxlGrainInfo opened;
     uint8_t* buffer;
-    mxlFlowWriterOpenGrain(writer, grainIndex, &info, &buffer);
+    mxlFlowWriterOpenGrain(writer, grainIndex, &opened, &buffer);
     mxlFlowWriterCommitGrain(writer, &info);
 }
 ```
@@ -371,18 +377,17 @@ mxlStatus s = mxlFabricsTargetReadSamples(target, 200 /*ms*/, &headIndex, &count
 
 ## Demo application
 
-The `tools/mxl-fabrics-demo/` directory contains a working command-line application that implements both a target and an initiator for discrete and continuous flows. It covers interface selection, target info exchange, error handling and graceful shutdown. Run it with `--help` for usage. A typical session:
+The `tools/mxl-fabrics-demo/` directory contains two small command-line programs that use the API described in this guide. `target.cpp` builds `mxl-fabrics-demo-target`, which creates a flow and receives data into it. `initiator.cpp` builds `mxl-fabrics-demo-initiator`, which sends an existing flow to the target. Both handle discrete and continuous flows. `common.cpp` holds the option parsing and interface selection they share. Run either program with `--help` to print the usage. A typical session:
 
 ```bash
-# Start a target (receiver):
-./mxl-fabrics-demo -d /dev/shm/mxl -f flow.json --service 1234
+# Host A: start a target (receiver). It writes the target info to /tmp/target.json:
+./mxl-fabrics-demo-target -d /dev/shm/mxl -f flow.json -s 1234 -t /tmp/target.json
 
-# The target prints a base64-encoded target info string to stdout.
-# Pass it to the initiator:
-./mxl-fabrics-demo -i -d /dev/shm/mxl -f <flow-uuid> --service 1234 --target-info <base64-string>
+# Host B: copy /tmp/target.json from host A, then start an initiator (sender):
+./mxl-fabrics-demo-initiator -d /dev/shm/mxl -f <flow-uuid> -t /tmp/target.json
 ```
 
-The demo selects the best available provider automatically (EFA > Verbs > TCP > SHM). Use `--node` to bind to a specific address and `--provider` to force a specific provider.
+The demo selects the best available provider automatically (EFA > Verbs > TCP > SHM). Use `--node` to bind to a specific address and `--provider` to force a specific provider. See [Fabrics - Getting Started](./FabricsGettingStarted.md) for more examples.
 
 ## Teardown
 
