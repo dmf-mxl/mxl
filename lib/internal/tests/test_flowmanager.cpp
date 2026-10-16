@@ -347,6 +347,63 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: re-crea
     REQUIRE(mgr->listFlows().size() == 1);
 }
 
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: open existing flow leaves no temporary directory", "[flow manager][reuse]")
+{
+    auto const countTemporaryDirectories = [this]
+    {
+        return std::ranges::count_if(std::filesystem::directory_iterator{domain},
+            [](auto const& entry) { return entry.path().filename().string().starts_with(".mxl-tmp-"); });
+    };
+
+    auto const mgr = std::make_shared<FlowManager>(domain);
+    auto const initialCount = countTemporaryDirectories();
+
+    SECTION("discrete")
+    {
+        auto const id = *uuids::uuid::from_string("c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1");
+        auto const def = mxl::tests::readFile("data/v210_flow.json");
+        auto const payloadSize = 512;
+        auto const sliceSizes = std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN>{payloadSize, 0, 0, 0};
+
+        auto [created1, f1] = mgr->createOrOpenDiscreteFlow(
+            id, def, MXL_DATA_FORMAT_VIDEO, 1, mxlRational{.numerator = 50, .denominator = 1}, payloadSize, 1, sliceSizes);
+        REQUIRE(created1);
+        auto [created2, f2] = mgr->createOrOpenDiscreteFlow(
+            id, def, MXL_DATA_FORMAT_VIDEO, 1, mxlRational{.numerator = 50, .denominator = 1}, payloadSize, 1, sliceSizes);
+        REQUIRE_FALSE(created2);
+        REQUIRE(f2);
+        REQUIRE(countTemporaryDirectories() == initialCount);
+    }
+
+    SECTION("continuous")
+    {
+        auto const id = *uuids::uuid::from_string("c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2");
+        auto const def = mxl::tests::readFile("data/audio_flow.json");
+
+        auto [created1, f1] = mgr->createOrOpenContinuousFlow(
+            id, def, MXL_DATA_FORMAT_AUDIO, mxlRational{.numerator = 48000, .denominator = 1}, 8, sizeof(float), 4096);
+        REQUIRE(created1);
+        auto [created2, f2] = mgr->createOrOpenContinuousFlow(
+            id, def, MXL_DATA_FORMAT_AUDIO, mxlRational{.numerator = 48000, .denominator = 1}, 8, sizeof(float), 4096);
+        REQUIRE_FALSE(created2);
+        REQUIRE(f2);
+        REQUIRE(countTemporaryDirectories() == initialCount);
+    }
+
+    SECTION("event")
+    {
+        auto const id = *uuids::uuid::from_string("c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3");
+        auto const def = mxl::tests::readFile("data/event_flow.json");
+
+        auto [created1, f1] = mgr->createOrOpenEventFlow(id, def, 4, mxlRational{.numerator = 20, .denominator = 1}, 64);
+        REQUIRE(created1);
+        auto [created2, f2] = mgr->createOrOpenEventFlow(id, def, 4, mxlRational{.numerator = 20, .denominator = 1}, 64);
+        REQUIRE_FALSE(created2);
+        REQUIRE(f2);
+        REQUIRE(countTemporaryDirectories() == initialCount);
+    }
+}
+
 // Test robustness: corrupted flow directory with missing descriptor
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: corrupted flow with missing descriptor", "[flow manager][corruption]")
 {
