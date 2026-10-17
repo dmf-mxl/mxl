@@ -29,6 +29,20 @@
   color: #ffffff;
 }
 
+/* Keep unselected Mike versions readable on the light menu background. */
+.md-header .md-version__list a {
+  color: var(--md-default-fg-color--light);
+}
+
+.md-header .md-version__list .md-version__link:hover,
+.md-header .md-version__list .md-version__link:focus {
+  color: var(--md-accent-fg-color);
+}
+
+.md-header .md-version__list .md-version__link:hover {
+  background-color: var(--md-default-fg-color--lightest);
+}
+
 /* Load the official logo without copying it into this repository. */
 .md-header__button.md-logo,
 .md-nav__button.md-logo {
