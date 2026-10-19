@@ -45,10 +45,6 @@ if (NOT TARGET picojson::picojson)
     find_package(picojson REQUIRED)
 endif()
 
-if (NOT TARGET PcapPlusPlus::Pcap++)
-    find_package(PcapPlusPlus CONFIG REQUIRED)
-endif()
-
 
 target_link_libraries(mxl-tests
         PRIVATE
@@ -56,7 +52,6 @@ target_link_libraries(mxl-tests
             stduuid
             picojson::picojson
             Catch2::Catch2WithMain
-            PcapPlusPlus::Pcap++
     )
 
 # Helper process for event IPC tests.

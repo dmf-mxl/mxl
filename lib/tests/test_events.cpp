@@ -24,10 +24,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 #include <fmt/format.h>
-#include <Packet.h>
-#include <PcapFileDevice.h>
-#include <RawPacket.h>
-#include <UdpLayer.h>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include "mxl-internal/EventRingBuffer.hpp"
@@ -36,6 +32,7 @@
 #include "mxl-internal/FlowParser.hpp"
 #include "mxl-internal/PosixFlowIoFactory.hpp"
 #include "mxl-internal/Sync.hpp"
+#include "PcapReader.hpp"
 #include "Utils.hpp"
 
 namespace
@@ -335,16 +332,10 @@ TEST_CASE("ST 2110-41 pcap packets round trip through the event ring", "[events]
         St2110Capture{"data/st2110-41-fragmented.pcap", 125, 1, 98, 4500, 894525369, {1436, 28}});
     CAPTURE(capture.path);
     auto fixture = EventFixture{definitionWithRate(R"({"numerator":50})")};
-    auto pcapReader = pcpp::PcapFileReaderDevice{capture.path};
-    REQUIRE(pcapReader.open());
-    auto packets = pcpp::RawPacketVector{};
+    auto const datagrams = mxl::tests::readUdpDatagrams(capture.path);
     // Count RTP fragments separately from logical events and exclude the SAP announcement.
     auto const expectedPackets = capture.eventCount * capture.fragmentSizes.size();
-    auto const packetsRead = pcapReader.getNextPackets(packets);
-    REQUIRE(packetsRead >= 0);
-    REQUIRE(static_cast<std::size_t>(packetsRead) == expectedPackets + capture.announcementCount);
-    REQUIRE(packets.size() == expectedPackets + capture.announcementCount);
-    pcapReader.close();
+    REQUIRE(datagrams.size() == expectedPackets + capture.announcementCount);
     REQUIRE(fixture.config.common.grainRate.numerator == 50);
     REQUIRE(fixture.config.common.grainRate.denominator == 1);
     REQUIRE(fixture.config.event.eventCount == 10);
@@ -356,15 +347,11 @@ TEST_CASE("ST 2110-41 pcap packets round trip through the event ring", "[events]
     auto announcements = std::size_t{};
     auto originalEvent = std::vector<std::uint8_t>{};
     auto receivedEvent = std::vector<std::uint8_t>{};
-    for (auto rawPacket : packets)
+    for (auto const& datagram : datagrams)
     {
         CAPTURE(packetIndex);
-        auto packet = pcpp::Packet{rawPacket};
-        auto const udp = packet.getLayerOfType<pcpp::UdpLayer>();
-        REQUIRE(udp != nullptr);
-        REQUIRE(udp->getLayerPayload() != nullptr);
-        auto const rtp = std::span<std::uint8_t const>{udp->getLayerPayload(), udp->getLayerPayloadSize()};
-        if (udp->getDstPort() == 9875)
+        auto const rtp = std::span<std::uint8_t const>{datagram.payload};
+        if (datagram.dstPort == 9875)
         {
             // The fragmented capture includes a SAP announcement; it is not an RTP event.
             auto const announcement = std::string_view{reinterpret_cast<char const*>(rtp.data()), rtp.size()};

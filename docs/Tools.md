@@ -407,4 +407,4 @@ OPTIONS:
 
 ## Gstreamer filters
 
-MXL Source and Sink filters for GStreamer are available [here](../rust/gst-mxl-rs/README.md).
+MXL Source and Sink filters for GStreamer are available [here](https://github.com/dmf-mxl/mxl/blob/main/rust/gst-mxl-rs/README.md).

@@ -1,17 +1,6 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-#include "Utils.hpp"
-
-#ifndef __APPLE__
-#   include <Device.h>
-#   include <Packet.h>
-#   include <PcapFileDevice.h>
-#   include <ProtocolType.h>
-#   include <RawPacket.h>
-#   include <UdpLayer.h>
-#endif
-
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
@@ -27,6 +16,8 @@
 #include <mxl/mxl.h>
 #include <mxl/time.h>
 #include "../internal/include/mxl-internal/MediaUtils.hpp"
+#include "PcapReader.hpp"
+#include "Utils.hpp"
 
 namespace fs = std::filesystem;
 
@@ -396,28 +387,15 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Invalid flow definit
     mxlDestroyInstance(instance);
 }
 
-#ifndef __APPLE__
-
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Data Flow : Create/Destroy", "[mxl flows]")
 {
-    fs::path domain{"/dev/shm/mxl_domain"}; // Remove that path if it exists.
-    fs::remove_all(domain);
-    std::filesystem::create_directories(domain);
-
     // Read some RFC-8331 packets from a pcap file downloaded from https://github.com/NEOAdvancedTechnology/ST2110_pcap_zoo
-    std::unique_ptr<pcpp::IFileReaderDevice> pcapReader(pcpp::IFileReaderDevice::getReader("data/ST2110-40-Closed_Captions.cap"));
-    REQUIRE(pcapReader != nullptr);
-    REQUIRE(pcapReader->open());
+    auto const datagrams = mxl::tests::readUdpDatagrams("data/ST2110-40-Closed_Captions.cap");
 
     // We know that in the pcap file the first packet is an empty packet with a marker bit. Skip it and read the second one.
-    pcpp::RawPacketVector rawPackets;
-    REQUIRE(pcapReader->getNextPackets(rawPackets, 2) == 2);
-    pcpp::Packet parsedPacket(rawPackets.at(1));
-
-    auto udpLayer = parsedPacket.getLayerOfType<pcpp::UdpLayer>();
-    auto* rtpData = udpLayer->getLayerPayload();
-    REQUIRE(rtpData != nullptr);
-    auto rtpSize = udpLayer->getLayerPayloadSize();
+    REQUIRE(datagrams.size() >= 2);
+    auto const* rtpData = datagrams[1].payload.data();
+    auto rtpSize = datagrams[1].payload.size();
     REQUIRE(rtpSize > 14);
     rtpData += 14; // skip packet header until Length field, as defined in RFC-8331, section 2.
     rtpSize -= 14;
@@ -641,8 +619,6 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : Slices"
     REQUIRE(mxlDestroyInstance(instanceReader) == MXL_STATUS_OK);
     REQUIRE(mxlDestroyInstance(instanceWriter) == MXL_STATUS_OK);
 }
-
-#endif
 
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Audio Flow : Create/Destroy", "[mxl flows]")
 {
