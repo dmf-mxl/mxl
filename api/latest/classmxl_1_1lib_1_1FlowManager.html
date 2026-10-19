@@ -298,57 +298,61 @@ Private Attributes</h2></td></tr>
 <div class="line"><span class="lineno">  342</span>        }</div>
 <div class="line"><span class="lineno">  343</span> </div>
 <div class="line"><span class="lineno">  344</span>        <span class="keyword">auto</span> <span class="keyword">const</span> tempDirectory = createTemporaryFlowDirectory(<a class="code hl_variable" href="classmxl_1_1lib_1_1FlowManager.html#a1b73d40dca287ce6d9b0a4df86d32e5d">_mxlDomain</a>);</div>
-<div class="line"><span class="lineno">  345</span>        <span class="keywordflow">try</span></div>
-<div class="line"><span class="lineno">  346</span>        {</div>
-<div class="line"><span class="lineno">  347</span>            <span class="comment">// Write the json file to disk.</span></div>
-<div class="line"><span class="lineno">  348</span>            writeFlowDescriptor(tempDirectory, <a class="code hl_variable" href="test__flows_8cpp.html#ab521c2c3a0e0004467a645a8946301df">flowDef</a>);</div>
-<div class="line"><span class="lineno">  349</span> </div>
-<div class="line"><span class="lineno">  350</span>            <span class="keyword">auto</span> <span class="keyword">const</span> flowDataPath = <a class="code hl_function" href="namespacemxl_1_1lib.html#a70469f14e75438e90bdf85253ad817f9">makeFlowDataFilePath</a>(tempDirectory);</div>
-<div class="line"><span class="lineno">  351</span>            <span class="keyword">auto</span> flowData = std::make_unique&lt;ContinuousFlowData&gt;(flowDataPath.string().c_str(), <a class="code hl_enumvalue" href="namespacemxl_1_1lib.html#ac7a6dcbc0a5565d4a6700dbc4cef02b1a75139f51d6c8f471e006c04eab46548c">AccessMode::CREATE_READ_WRITE</a>, <a class="code hl_enumvalue" href="namespacemxl_1_1lib.html#adeb5fbd2d14765f3eda2a85e6e4af3acaa6156ea9d66fef24e87e841fbabf7cca">LockMode::Shared</a>);</div>
-<div class="line"><span class="lineno">  352</span> </div>
-<div class="line"><span class="lineno">  353</span>            <span class="keyword">auto</span>&amp; info = *flowData-&gt;flowInfo();</div>
-<div class="line"><span class="lineno">  354</span>            info.version = <a class="code hl_variable" href="namespacemxl_1_1lib.html#af5cc5553c6cc15f6f44a399bdf478d8f">FLOW_DATA_VERSION</a>;</div>
-<div class="line"><span class="lineno">  355</span>            info.size = <span class="keyword">sizeof</span> info;</div>
-<div class="line"><span class="lineno">  356</span>            info.config.common = initCommonFlowConfigInfo(<a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, flowFormat, sampleRate, maxSyncBatchSizeHintOpt, maxCommitBatchSizeHintOpt);</div>
-<div class="line"><span class="lineno">  357</span>            info.config.continuous = {};</div>
-<div class="line"><span class="lineno">  358</span>            info.config.continuous.channelCount = channelCount;</div>
-<div class="line"><span class="lineno">  359</span>            info.config.continuous.bufferLength = bufferLength;</div>
-<div class="line"><span class="lineno">  360</span> </div>
-<div class="line"><span class="lineno">  361</span>            info.runtime = initFlowRuntimeInfo();</div>
-<div class="line"><span class="lineno">  362</span> </div>
-<div class="line"><span class="lineno">  363</span>            <span class="keyword">auto</span>&amp; state = *flowData-&gt;flowState();</div>
-<div class="line"><span class="lineno">  364</span>            state = initFlowState(flowDataPath);</div>
-<div class="line"><span class="lineno">  365</span> </div>
-<div class="line"><span class="lineno">  366</span>            flowData-&gt;openChannelBuffers(<a class="code hl_function" href="namespacemxl_1_1lib.html#a2da47d2e220490d45401e923a7a68c18">makeChannelDataFilePath</a>(tempDirectory).<span class="keywordtype">string</span>().c_str(), sampleWordSize);</div>
-<div class="line"><span class="lineno">  367</span> </div>
-<div class="line"><span class="lineno">  368</span>            <span class="keyword">auto</span> <span class="keyword">const</span> finalDir = <a class="code hl_function" href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">makeFlowDirectoryName</a>(<a class="code hl_variable" href="classmxl_1_1lib_1_1FlowManager.html#a1b73d40dca287ce6d9b0a4df86d32e5d">_mxlDomain</a>, uuidString);</div>
-<div class="line"><span class="lineno">  369</span>            <span class="keywordflow">if</span> (publishFlowDirectory(tempDirectory, finalDir))</div>
-<div class="line"><span class="lineno">  370</span>            {</div>
-<div class="line"><span class="lineno">  371</span>                <span class="keywordflow">return</span> {<span class="keyword">true</span>, std::move(flowData)};</div>
-<div class="line"><span class="lineno">  372</span>            }</div>
-<div class="line"><span class="lineno">  373</span>            <span class="keywordflow">else</span></div>
-<div class="line"><span class="lineno">  374</span>            {</div>
-<div class="line"><span class="lineno">  375</span>                <span class="keyword">auto</span> existingFlowData = dynamic_pointer_cast&lt;ContinuousFlowData&gt;(<a class="code hl_function" href="classmxl_1_1lib_1_1FlowManager.html#ad5d2f7f72dffe19af2479ce202dd1c93">openFlow</a>(<a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, <a class="code hl_enumvalue" href="namespacemxl_1_1lib.html#ac7a6dcbc0a5565d4a6700dbc4cef02b1aa7b843fb734e3b3fea8e5f902d3f4144">AccessMode::READ_WRITE</a>));</div>
-<div class="line"><span class="lineno">  376</span>                <span class="keywordflow">if</span> (!existingFlowData)</div>
-<div class="line"><span class="lineno">  377</span>                {</div>
-<div class="line"><span class="lineno">  378</span>                    <span class="keywordflow">throw</span> std::runtime_error(<span class="stringliteral">&quot;Could not open existing flow because it is of a different format&quot;</span>);</div>
-<div class="line"><span class="lineno">  379</span>                }</div>
-<div class="line"><span class="lineno">  380</span> </div>
-<div class="line"><span class="lineno">  381</span>                <span class="keywordflow">return</span> {<span class="keyword">false</span>, std::move(existingFlowData)};</div>
-<div class="line"><span class="lineno">  382</span>            }</div>
-<div class="line"><span class="lineno">  383</span>        }</div>
-<div class="line"><span class="lineno">  384</span>        <span class="keywordflow">catch</span> (...)</div>
-<div class="line"><span class="lineno">  385</span>        {</div>
-<div class="line"><span class="lineno">  386</span>            <span class="keyword">auto</span> ec = std::error_code{};</div>
-<div class="line"><span class="lineno">  387</span>            remove_all(tempDirectory, ec);</div>
-<div class="line"><span class="lineno">  388</span>            <span class="keywordflow">throw</span>;</div>
-<div class="line"><span class="lineno">  389</span>        }</div>
-<div class="line"><span class="lineno">  390</span>    }</div>
+<div class="line"><span class="lineno">  345</span>        <span class="keyword">auto</span> _ = <a class="code hl_function" href="namespacemxl_1_1lib.html#a9cf48066430fff6c21a2ecb1a6acd50c">defer</a>(</div>
+<div class="line"><span class="lineno">  346</span>            [&amp;]() <span class="keyword">noexcept</span></div>
+<div class="line"><span class="lineno">  347</span>            {</div>
+<div class="line"><span class="lineno">  348</span>                <span class="keyword">auto</span> ec = std::error_code{};</div>
+<div class="line"><span class="lineno">  349</span>                std::filesystem::remove_all(tempDirectory, ec);</div>
+<div class="line"><span class="lineno">  350</span>                <span class="keywordflow">if</span> (ec)</div>
+<div class="line"><span class="lineno">  351</span>                {</div>
+<div class="line"><span class="lineno">  352</span>                    <a class="code hl_define" href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a>(<span class="stringliteral">&quot;Failed to remove temporary flow directory: {}&quot;</span>, ec.message());</div>
+<div class="line"><span class="lineno">  353</span>                }</div>
+<div class="line"><span class="lineno">  354</span>            });</div>
+<div class="line"><span class="lineno">  355</span> </div>
+<div class="line"><span class="lineno">  356</span>        <span class="comment">// Write the json file to disk.</span></div>
+<div class="line"><span class="lineno">  357</span>        writeFlowDescriptor(tempDirectory, <a class="code hl_variable" href="test__flows_8cpp.html#ab521c2c3a0e0004467a645a8946301df">flowDef</a>);</div>
+<div class="line"><span class="lineno">  358</span> </div>
+<div class="line"><span class="lineno">  359</span>        <span class="keyword">auto</span> <span class="keyword">const</span> flowDataPath = <a class="code hl_function" href="namespacemxl_1_1lib.html#a70469f14e75438e90bdf85253ad817f9">makeFlowDataFilePath</a>(tempDirectory);</div>
+<div class="line"><span class="lineno">  360</span>        <span class="keyword">auto</span> flowData = std::make_unique&lt;ContinuousFlowData&gt;(flowDataPath.string().c_str(), <a class="code hl_enumvalue" href="namespacemxl_1_1lib.html#ac7a6dcbc0a5565d4a6700dbc4cef02b1a75139f51d6c8f471e006c04eab46548c">AccessMode::CREATE_READ_WRITE</a>, <a class="code hl_enumvalue" href="namespacemxl_1_1lib.html#adeb5fbd2d14765f3eda2a85e6e4af3acaa6156ea9d66fef24e87e841fbabf7cca">LockMode::Shared</a>);</div>
+<div class="line"><span class="lineno">  361</span> </div>
+<div class="line"><span class="lineno">  362</span>        <span class="keyword">auto</span>&amp; info = *flowData-&gt;flowInfo();</div>
+<div class="line"><span class="lineno">  363</span>        info.version = <a class="code hl_variable" href="namespacemxl_1_1lib.html#af5cc5553c6cc15f6f44a399bdf478d8f">FLOW_DATA_VERSION</a>;</div>
+<div class="line"><span class="lineno">  364</span>        info.size = <span class="keyword">sizeof</span> info;</div>
+<div class="line"><span class="lineno">  365</span>        info.config.common = initCommonFlowConfigInfo(<a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, flowFormat, sampleRate, maxSyncBatchSizeHintOpt, maxCommitBatchSizeHintOpt);</div>
+<div class="line"><span class="lineno">  366</span>        info.config.continuous = {};</div>
+<div class="line"><span class="lineno">  367</span>        info.config.continuous.channelCount = channelCount;</div>
+<div class="line"><span class="lineno">  368</span>        info.config.continuous.bufferLength = bufferLength;</div>
+<div class="line"><span class="lineno">  369</span> </div>
+<div class="line"><span class="lineno">  370</span>        info.runtime = initFlowRuntimeInfo();</div>
+<div class="line"><span class="lineno">  371</span> </div>
+<div class="line"><span class="lineno">  372</span>        <span class="keyword">auto</span>&amp; state = *flowData-&gt;flowState();</div>
+<div class="line"><span class="lineno">  373</span>        state = initFlowState(flowDataPath);</div>
+<div class="line"><span class="lineno">  374</span> </div>
+<div class="line"><span class="lineno">  375</span>        flowData-&gt;openChannelBuffers(<a class="code hl_function" href="namespacemxl_1_1lib.html#a2da47d2e220490d45401e923a7a68c18">makeChannelDataFilePath</a>(tempDirectory).<span class="keywordtype">string</span>().c_str(), sampleWordSize);</div>
+<div class="line"><span class="lineno">  376</span> </div>
+<div class="line"><span class="lineno">  377</span>        <span class="keyword">auto</span> <span class="keyword">const</span> finalDir = <a class="code hl_function" href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">makeFlowDirectoryName</a>(<a class="code hl_variable" href="classmxl_1_1lib_1_1FlowManager.html#a1b73d40dca287ce6d9b0a4df86d32e5d">_mxlDomain</a>, uuidString);</div>
+<div class="line"><span class="lineno">  378</span>        <span class="keywordflow">if</span> (publishFlowDirectory(tempDirectory, finalDir))</div>
+<div class="line"><span class="lineno">  379</span>        {</div>
+<div class="line"><span class="lineno">  380</span>            <span class="keywordflow">return</span> {<span class="keyword">true</span>, std::move(flowData)};</div>
+<div class="line"><span class="lineno">  381</span>        }</div>
+<div class="line"><span class="lineno">  382</span>        <span class="keywordflow">else</span></div>
+<div class="line"><span class="lineno">  383</span>        {</div>
+<div class="line"><span class="lineno">  384</span>            <span class="keyword">auto</span> existingFlowData = dynamic_pointer_cast&lt;ContinuousFlowData&gt;(<a class="code hl_function" href="classmxl_1_1lib_1_1FlowManager.html#ad5d2f7f72dffe19af2479ce202dd1c93">openFlow</a>(<a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, <a class="code hl_enumvalue" href="namespacemxl_1_1lib.html#ac7a6dcbc0a5565d4a6700dbc4cef02b1aa7b843fb734e3b3fea8e5f902d3f4144">AccessMode::READ_WRITE</a>));</div>
+<div class="line"><span class="lineno">  385</span>            <span class="keywordflow">if</span> (!existingFlowData)</div>
+<div class="line"><span class="lineno">  386</span>            {</div>
+<div class="line"><span class="lineno">  387</span>                <span class="keywordflow">throw</span> std::runtime_error{<span class="stringliteral">&quot;Could not open existing flow because it is of a different format&quot;</span>};</div>
+<div class="line"><span class="lineno">  388</span>            }</div>
+<div class="line"><span class="lineno">  389</span> </div>
+<div class="line"><span class="lineno">  390</span>            <span class="keywordflow">return</span> {<span class="keyword">false</span>, std::move(existingFlowData)};</div>
+<div class="line"><span class="lineno">  391</span>        }</div>
+<div class="line"><span class="lineno">  392</span>    }</div>
+<div class="ttc" id="aLogging_8hpp_html_ac5601472e8ef54d952b767d574a32427"><div class="ttname"><a href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a></div><div class="ttdeci">#define MXL_WARN(...)</div><div class="ttdef"><b>Definition</b> <a href="Logging_8hpp_source.html#l00056">Logging.hpp:56</a></div></div>
 <div class="ttc" id="aLogging_8hpp_html_ada673532b5c2d25942321c46eb95553b"><div class="ttname"><a href="Logging_8hpp.html#ada673532b5c2d25942321c46eb95553b">MXL_DEBUG</a></div><div class="ttdeci">#define MXL_DEBUG(...)</div><div class="ttdef"><b>Definition</b> <a href="Logging_8hpp_source.html#l00034">Logging.hpp:34</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1FlowManager_html_ad5d2f7f72dffe19af2479ce202dd1c93"><div class="ttname"><a href="classmxl_1_1lib_1_1FlowManager.html#ad5d2f7f72dffe19af2479ce202dd1c93">mxl::lib::FlowManager::openFlow</a></div><div class="ttdeci">std::unique_ptr&lt; FlowData &gt; openFlow(uuids::uuid const &amp;flowId, AccessMode mode)</div><div class="ttdef"><b>Definition</b> <a href="FlowManager_8cpp_source.html#l00392">FlowManager.cpp:392</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1FlowManager_html_ad5d2f7f72dffe19af2479ce202dd1c93"><div class="ttname"><a href="classmxl_1_1lib_1_1FlowManager.html#ad5d2f7f72dffe19af2479ce202dd1c93">mxl::lib::FlowManager::openFlow</a></div><div class="ttdeci">std::unique_ptr&lt; FlowData &gt; openFlow(uuids::uuid const &amp;flowId, AccessMode mode)</div><div class="ttdef"><b>Definition</b> <a href="FlowManager_8cpp_source.html#l00394">FlowManager.cpp:394</a></div></div>
 <div class="ttc" id="adataformat_8h_html_a92c8558b4d7af570af14cf0f2897f466"><div class="ttname"><a href="dataformat_8h.html#a92c8558b4d7af570af14cf0f2897f466">mxlIsContinuousDataFormat</a></div><div class="ttdeci">int mxlIsContinuousDataFormat(int format)</div><div class="ttdef"><b>Definition</b> <a href="dataformat_8h_source.html#l00106">dataformat.h:106</a></div></div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_a2da47d2e220490d45401e923a7a68c18"><div class="ttname"><a href="namespacemxl_1_1lib.html#a2da47d2e220490d45401e923a7a68c18">mxl::lib::makeChannelDataFilePath</a></div><div class="ttdeci">std::filesystem::path makeChannelDataFilePath(std::filesystem::path const &amp;flowDirectory)</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8cpp_source.html#l00047">PathUtils.cpp:47</a></div></div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_a70469f14e75438e90bdf85253ad817f9"><div class="ttname"><a href="namespacemxl_1_1lib.html#a70469f14e75438e90bdf85253ad817f9">mxl::lib::makeFlowDataFilePath</a></div><div class="ttdeci">std::filesystem::path makeFlowDataFilePath(std::filesystem::path const &amp;flowDirectory)</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8cpp_source.html#l00017">PathUtils.cpp:17</a></div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_html_a9cf48066430fff6c21a2ecb1a6acd50c"><div class="ttname"><a href="namespacemxl_1_1lib.html#a9cf48066430fff6c21a2ecb1a6acd50c">mxl::lib::defer</a></div><div class="ttdeci">constexpr Deferred&lt; F &gt; defer(F &amp;&amp;f) noexcept</div><div class="ttdef"><b>Definition</b> <a href="Deferred_8hpp_source.html#l00048">Deferred.hpp:48</a></div></div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_ac7a6dcbc0a5565d4a6700dbc4cef02b1a75139f51d6c8f471e006c04eab46548c"><div class="ttname"><a href="namespacemxl_1_1lib.html#ac7a6dcbc0a5565d4a6700dbc4cef02b1a75139f51d6c8f471e006c04eab46548c">mxl::lib::AccessMode::CREATE_READ_WRITE</a></div><div class="ttdeci">@ CREATE_READ_WRITE</div></div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_ac7a6dcbc0a5565d4a6700dbc4cef02b1aa7b843fb734e3b3fea8e5f902d3f4144"><div class="ttname"><a href="namespacemxl_1_1lib.html#ac7a6dcbc0a5565d4a6700dbc4cef02b1aa7b843fb734e3b3fea8e5f902d3f4144">mxl::lib::AccessMode::READ_WRITE</a></div><div class="ttdeci">@ READ_WRITE</div></div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_adeb5fbd2d14765f3eda2a85e6e4af3acaa6156ea9d66fef24e87e841fbabf7cca"><div class="ttname"><a href="namespacemxl_1_1lib.html#adeb5fbd2d14765f3eda2a85e6e4af3acaa6156ea9d66fef24e87e841fbabf7cca">mxl::lib::LockMode::Shared</a></div><div class="ttdeci">@ Shared</div></div>
@@ -537,12 +541,10 @@ Private Attributes</h2></td></tr>
 <div class="line"><span class="lineno">  252</span>            <span class="keywordflow">return</span> {<span class="keyword">false</span>, std::move(existingFlowData)};</div>
 <div class="line"><span class="lineno">  253</span>        }</div>
 <div class="line"><span class="lineno">  254</span>    }</div>
-<div class="ttc" id="aLogging_8hpp_html_ac5601472e8ef54d952b767d574a32427"><div class="ttname"><a href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a></div><div class="ttdeci">#define MXL_WARN(...)</div><div class="ttdef"><b>Definition</b> <a href="Logging_8hpp_source.html#l00056">Logging.hpp:56</a></div></div>
 <div class="ttc" id="aLogging_8hpp_html_adf58a856799e2264d7603b5d47d0b644"><div class="ttname"><a href="Logging_8hpp.html#adf58a856799e2264d7603b5d47d0b644">MXL_TRACE</a></div><div class="ttdeci">#define MXL_TRACE(...)</div><div class="ttdef"><b>Definition</b> <a href="Logging_8hpp_source.html#l00023">Logging.hpp:23</a></div></div>
 <div class="ttc" id="adataformat_8h_html_a9562763110b10ea313893f8f855b599c"><div class="ttname"><a href="dataformat_8h.html#a9562763110b10ea313893f8f855b599c">mxlIsDiscreteDataFormat</a></div><div class="ttdeci">int mxlIsDiscreteDataFormat(int format)</div><div class="ttdef"><b>Definition</b> <a href="dataformat_8h_source.html#l00075">dataformat.h:75</a></div></div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_a57c0a4f52e26a828deedc371ec79d6ef"><div class="ttname"><a href="namespacemxl_1_1lib.html#a57c0a4f52e26a828deedc371ec79d6ef">mxl::lib::makeFlowAccessFilePath</a></div><div class="ttdeci">std::filesystem::path makeFlowAccessFilePath(std::filesystem::path const &amp;flowDirectory)</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8cpp_source.html#l00029">PathUtils.cpp:29</a></div></div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_a6076a01d36bc842093ae85faf1a9d7d7"><div class="ttname"><a href="namespacemxl_1_1lib.html#a6076a01d36bc842093ae85faf1a9d7d7">mxl::lib::GRAIN_HEADER_VERSION</a></div><div class="ttdeci">constexpr auto GRAIN_HEADER_VERSION</div><div class="ttdoc">The version of the grain header structs in shared memory that we expect an support.</div><div class="ttdef"><b>Definition</b> <a href="Flow_8hpp_source.html#l00024">Flow.hpp:24</a></div></div>
-<div class="ttc" id="anamespacemxl_1_1lib_html_a9cf48066430fff6c21a2ecb1a6acd50c"><div class="ttname"><a href="namespacemxl_1_1lib.html#a9cf48066430fff6c21a2ecb1a6acd50c">mxl::lib::defer</a></div><div class="ttdeci">constexpr Deferred&lt; F &gt; defer(F &amp;&amp;f) noexcept</div><div class="ttdef"><b>Definition</b> <a href="Deferred_8hpp_source.html#l00048">Deferred.hpp:48</a></div></div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_acebeb5a6c2361ba379c4d1008540abe5"><div class="ttname"><a href="namespacemxl_1_1lib.html#acebeb5a6c2361ba379c4d1008540abe5">mxl::lib::makeGrainDirectoryName</a></div><div class="ttdeci">std::filesystem::path makeGrainDirectoryName(std::filesystem::path const &amp;flowDirectory)</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8cpp_source.html#l00035">PathUtils.cpp:35</a></div></div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_afeccbb33b65a1adc285679681b2f09cb"><div class="ttname"><a href="namespacemxl_1_1lib.html#afeccbb33b65a1adc285679681b2f09cb">mxl::lib::makeGrainDataFilePath</a></div><div class="ttdeci">std::filesystem::path makeGrainDataFilePath(std::filesystem::path const &amp;grainDirectory, unsigned int index)</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8cpp_source.html#l00041">PathUtils.cpp:41</a></div></div>
 <div class="ttc" id="astructmxlGrainInfo__t_html_a7ff6a446d219f78bf9cfa3580d0c6444"><div class="ttname"><a href="structmxlGrainInfo__t.html#a7ff6a446d219f78bf9cfa3580d0c6444">mxlGrainInfo_t::grainSize</a></div><div class="ttdeci">uint32_t grainSize</div><div class="ttdoc">Size in bytes of the complete payload of a grain.</div><div class="ttdef"><b>Definition</b> <a href="flow_8h_source.html#l00143">flow.h:143</a></div></div>
@@ -719,24 +721,24 @@ Private Attributes</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>success or failure. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="FlowManager_8cpp_source.html#l00478">478</a> of file <a class="el" href="FlowManager_8cpp_source.html">FlowManager.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  479</span>    {</div>
-<div class="line"><span class="lineno">  480</span>        <span class="keywordflow">if</span> (flowData)</div>
-<div class="line"><span class="lineno">  481</span>        {</div>
-<div class="line"><span class="lineno">  482</span>            <span class="comment">// Extract the ID</span></div>
-<div class="line"><span class="lineno">  483</span>            <span class="keyword">auto</span> <span class="keyword">const</span> span = uuids::span&lt;std::uint8_t, <span class="keyword">sizeof</span> flowData-&gt;flowInfo()-&gt;config.common.id&gt;{</div>
-<div class="line"><span class="lineno">  484</span>                <span class="keyword">const_cast&lt;</span>std::uint8_t*<span class="keyword">&gt;</span>(flowData-&gt;flowInfo()-&gt;config.common.id), <span class="keyword">sizeof</span> flowData-&gt;flowInfo()-&gt;config.common.id};</div>
-<div class="line"><span class="lineno">  485</span>            <span class="keyword">auto</span> <span class="keyword">const</span> <span class="keywordtype">id</span> = uuids::uuid(span);</div>
-<div class="line"><span class="lineno">  486</span> </div>
-<div class="line"><span class="lineno">  487</span>            <span class="comment">// Close the flow</span></div>
-<div class="line"><span class="lineno">  488</span>            flowData.reset();</div>
-<div class="line"><span class="lineno">  489</span> </div>
-<div class="line"><span class="lineno">  490</span>            <span class="comment">// Delegate to the other deleteFlow overload</span></div>
-<div class="line"><span class="lineno">  491</span>            <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1FlowManager.html#a15f7e50f602f9df2fa87e57db0321081">deleteFlow</a>(<span class="keywordtype">id</span>);</div>
-<div class="line"><span class="lineno">  492</span>        }</div>
-<div class="line"><span class="lineno">  493</span>        <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
-<div class="line"><span class="lineno">  494</span>    }</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1FlowManager_html_a15f7e50f602f9df2fa87e57db0321081"><div class="ttname"><a href="classmxl_1_1lib_1_1FlowManager.html#a15f7e50f602f9df2fa87e57db0321081">mxl::lib::FlowManager::deleteFlow</a></div><div class="ttdeci">bool deleteFlow(std::unique_ptr&lt; FlowData &gt; &amp;&amp;flowData)</div><div class="ttdef"><b>Definition</b> <a href="FlowManager_8cpp_source.html#l00478">FlowManager.cpp:478</a></div></div>
+<p class="definition">Definition at line <a class="el" href="FlowManager_8cpp_source.html#l00480">480</a> of file <a class="el" href="FlowManager_8cpp_source.html">FlowManager.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  481</span>    {</div>
+<div class="line"><span class="lineno">  482</span>        <span class="keywordflow">if</span> (flowData)</div>
+<div class="line"><span class="lineno">  483</span>        {</div>
+<div class="line"><span class="lineno">  484</span>            <span class="comment">// Extract the ID</span></div>
+<div class="line"><span class="lineno">  485</span>            <span class="keyword">auto</span> <span class="keyword">const</span> span = uuids::span&lt;std::uint8_t, <span class="keyword">sizeof</span> flowData-&gt;flowInfo()-&gt;config.common.id&gt;{</div>
+<div class="line"><span class="lineno">  486</span>                <span class="keyword">const_cast&lt;</span>std::uint8_t*<span class="keyword">&gt;</span>(flowData-&gt;flowInfo()-&gt;config.common.id), <span class="keyword">sizeof</span> flowData-&gt;flowInfo()-&gt;config.common.id};</div>
+<div class="line"><span class="lineno">  487</span>            <span class="keyword">auto</span> <span class="keyword">const</span> <span class="keywordtype">id</span> = uuids::uuid(span);</div>
+<div class="line"><span class="lineno">  488</span> </div>
+<div class="line"><span class="lineno">  489</span>            <span class="comment">// Close the flow</span></div>
+<div class="line"><span class="lineno">  490</span>            flowData.reset();</div>
+<div class="line"><span class="lineno">  491</span> </div>
+<div class="line"><span class="lineno">  492</span>            <span class="comment">// Delegate to the other deleteFlow overload</span></div>
+<div class="line"><span class="lineno">  493</span>            <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1FlowManager.html#a15f7e50f602f9df2fa87e57db0321081">deleteFlow</a>(<span class="keywordtype">id</span>);</div>
+<div class="line"><span class="lineno">  494</span>        }</div>
+<div class="line"><span class="lineno">  495</span>        <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><span class="lineno">  496</span>    }</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1FlowManager_html_a15f7e50f602f9df2fa87e57db0321081"><div class="ttname"><a href="classmxl_1_1lib_1_1FlowManager.html#a15f7e50f602f9df2fa87e57db0321081">mxl::lib::FlowManager::deleteFlow</a></div><div class="ttdeci">bool deleteFlow(std::unique_ptr&lt; FlowData &gt; &amp;&amp;flowData)</div><div class="ttdef"><b>Definition</b> <a href="FlowManager_8cpp_source.html#l00480">FlowManager.cpp:480</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -763,30 +765,30 @@ Private Attributes</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>success or failure. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="FlowManager_8cpp_source.html#l00496">496</a> of file <a class="el" href="FlowManager_8cpp_source.html">FlowManager.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  497</span>    {</div>
-<div class="line"><span class="lineno">  498</span>        <span class="keyword">auto</span> uuid = uuids::to_string(<a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>);</div>
-<div class="line"><span class="lineno">  499</span>        <a class="code hl_define" href="Logging_8hpp.html#adf58a856799e2264d7603b5d47d0b644">MXL_TRACE</a>(<span class="stringliteral">&quot;Delete flow: {}&quot;</span>, uuid);</div>
-<div class="line"><span class="lineno">  500</span> </div>
-<div class="line"><span class="lineno">  501</span>        <span class="keywordflow">try</span></div>
-<div class="line"><span class="lineno">  502</span>        {</div>
-<div class="line"><span class="lineno">  503</span>            <span class="comment">// Compute the flow directory path</span></div>
-<div class="line"><span class="lineno">  504</span>            <span class="keyword">auto</span> <span class="keyword">const</span> flowPath = <a class="code hl_function" href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">makeFlowDirectoryName</a>(<a class="code hl_variable" href="classmxl_1_1lib_1_1FlowManager.html#a1b73d40dca287ce6d9b0a4df86d32e5d">_mxlDomain</a>, uuid);</div>
-<div class="line"><span class="lineno">  505</span>            <span class="keyword">auto</span> <span class="keyword">const</span> removed = remove_all(flowPath);</div>
-<div class="line"><span class="lineno">  506</span>            <span class="keywordflow">if</span> (removed == 0)</div>
-<div class="line"><span class="lineno">  507</span>            {</div>
-<div class="line"><span class="lineno">  508</span>                <a class="code hl_define" href="Logging_8hpp.html#adf58a856799e2264d7603b5d47d0b644">MXL_TRACE</a>(<span class="stringliteral">&quot;Flow not found or already deleted: {}&quot;</span>, uuid);</div>
-<div class="line"><span class="lineno">  509</span>                <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
-<div class="line"><span class="lineno">  510</span>            }</div>
-<div class="line"><span class="lineno">  511</span>            <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
-<div class="line"><span class="lineno">  512</span>        }</div>
-<div class="line"><span class="lineno">  513</span>        <span class="keywordflow">catch</span> (...)</div>
-<div class="line"><span class="lineno">  514</span>        {</div>
-<div class="line"><span class="lineno">  515</span>            <span class="comment">// Convert any filesystem exception to false return</span></div>
-<div class="line"><span class="lineno">  516</span>            <span class="comment">// This makes the method effectively noexcept while indicating failure</span></div>
-<div class="line"><span class="lineno">  517</span>            <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
-<div class="line"><span class="lineno">  518</span>        }</div>
-<div class="line"><span class="lineno">  519</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FlowManager_8cpp_source.html#l00498">498</a> of file <a class="el" href="FlowManager_8cpp_source.html">FlowManager.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  499</span>    {</div>
+<div class="line"><span class="lineno">  500</span>        <span class="keyword">auto</span> uuid = uuids::to_string(<a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>);</div>
+<div class="line"><span class="lineno">  501</span>        <a class="code hl_define" href="Logging_8hpp.html#adf58a856799e2264d7603b5d47d0b644">MXL_TRACE</a>(<span class="stringliteral">&quot;Delete flow: {}&quot;</span>, uuid);</div>
+<div class="line"><span class="lineno">  502</span> </div>
+<div class="line"><span class="lineno">  503</span>        <span class="keywordflow">try</span></div>
+<div class="line"><span class="lineno">  504</span>        {</div>
+<div class="line"><span class="lineno">  505</span>            <span class="comment">// Compute the flow directory path</span></div>
+<div class="line"><span class="lineno">  506</span>            <span class="keyword">auto</span> <span class="keyword">const</span> flowPath = <a class="code hl_function" href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">makeFlowDirectoryName</a>(<a class="code hl_variable" href="classmxl_1_1lib_1_1FlowManager.html#a1b73d40dca287ce6d9b0a4df86d32e5d">_mxlDomain</a>, uuid);</div>
+<div class="line"><span class="lineno">  507</span>            <span class="keyword">auto</span> <span class="keyword">const</span> removed = remove_all(flowPath);</div>
+<div class="line"><span class="lineno">  508</span>            <span class="keywordflow">if</span> (removed == 0)</div>
+<div class="line"><span class="lineno">  509</span>            {</div>
+<div class="line"><span class="lineno">  510</span>                <a class="code hl_define" href="Logging_8hpp.html#adf58a856799e2264d7603b5d47d0b644">MXL_TRACE</a>(<span class="stringliteral">&quot;Flow not found or already deleted: {}&quot;</span>, uuid);</div>
+<div class="line"><span class="lineno">  511</span>                <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><span class="lineno">  512</span>            }</div>
+<div class="line"><span class="lineno">  513</span>            <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
+<div class="line"><span class="lineno">  514</span>        }</div>
+<div class="line"><span class="lineno">  515</span>        <span class="keywordflow">catch</span> (...)</div>
+<div class="line"><span class="lineno">  516</span>        {</div>
+<div class="line"><span class="lineno">  517</span>            <span class="comment">// Convert any filesystem exception to false return</span></div>
+<div class="line"><span class="lineno">  518</span>            <span class="comment">// This makes the method effectively noexcept while indicating failure</span></div>
+<div class="line"><span class="lineno">  519</span>            <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><span class="lineno">  520</span>        }</div>
+<div class="line"><span class="lineno">  521</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -806,10 +808,10 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>Accessor for the mxl domain (base path where shared memory will be stored) </p><dl class="section return"><dt>Returns</dt><dd>The base path </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="FlowManager_8cpp_source.html#l00574">574</a> of file <a class="el" href="FlowManager_8cpp_source.html">FlowManager.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  575</span>    {</div>
-<div class="line"><span class="lineno">  576</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1FlowManager.html#a1b73d40dca287ce6d9b0a4df86d32e5d">_mxlDomain</a>;</div>
-<div class="line"><span class="lineno">  577</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FlowManager_8cpp_source.html#l00576">576</a> of file <a class="el" href="FlowManager_8cpp_source.html">FlowManager.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  577</span>    {</div>
+<div class="line"><span class="lineno">  578</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1FlowManager.html#a1b73d40dca287ce6d9b0a4df86d32e5d">_mxlDomain</a>;</div>
+<div class="line"><span class="lineno">  579</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -843,30 +845,30 @@ Private Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="FlowManager_8cpp_source.html#l00549">549</a> of file <a class="el" href="FlowManager_8cpp_source.html">FlowManager.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  550</span>    {</div>
-<div class="line"><span class="lineno">  551</span>        <span class="keyword">auto</span> <span class="keyword">const</span> uuid = uuids::to_string(<a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>);</div>
-<div class="line"><span class="lineno">  552</span>        <span class="keyword">auto</span> <span class="keyword">const</span> flowPath = <a class="code hl_function" href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">makeFlowDirectoryName</a>(<a class="code hl_variable" href="classmxl_1_1lib_1_1FlowManager.html#a1b73d40dca287ce6d9b0a4df86d32e5d">_mxlDomain</a>, uuid);</div>
-<div class="line"><span class="lineno">  553</span>        <span class="keyword">auto</span> <span class="keyword">const</span> flowJsonFile = <a class="code hl_function" href="namespacemxl_1_1lib.html#a39dfe661c534ef636ce8dd418e9e8e8f">makeFlowDescriptorFilePath</a>(flowPath);</div>
-<div class="line"><span class="lineno">  554</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> in = std::ifstream{flowJsonFile, std::ios::in}; in)</div>
-<div class="line"><span class="lineno">  555</span>        {</div>
-<div class="line"><span class="lineno">  556</span>            <span class="keyword">auto</span> <span class="keyword">const</span> result = std::string{std::istreambuf_iterator&lt;char&gt;{in}, std::istreambuf_iterator&lt;char&gt;{}};</div>
-<div class="line"><span class="lineno">  557</span>            <span class="keywordflow">if</span> (!in)</div>
-<div class="line"><span class="lineno">  558</span>            {</div>
-<div class="line"><span class="lineno">  559</span>                <span class="keywordflow">throw</span> std::runtime_error{<span class="stringliteral">&quot;Error while reading the flow definition.&quot;</span>};</div>
-<div class="line"><span class="lineno">  560</span>            }</div>
-<div class="line"><span class="lineno">  561</span>            <span class="keywordflow">return</span> result;</div>
-<div class="line"><span class="lineno">  562</span>        }</div>
-<div class="line"><span class="lineno">  563</span>        <span class="comment">// Here is a race condition, but plain C++ API does not provide a way to check whether it was not possible to open a file because it does</span></div>
-<div class="line"><span class="lineno">  564</span>        <span class="comment">// not exist, or whether the access rights are wrong.</span></div>
-<div class="line"><span class="lineno">  565</span>        <span class="keywordflow">if</span> (!exists(flowJsonFile))</div>
-<div class="line"><span class="lineno">  566</span>        {</div>
-<div class="line"><span class="lineno">  567</span>            <span class="keywordflow">throw</span> std::filesystem::filesystem_error{<span class="stringliteral">&quot;Failed to open flow resource definition - file not found.&quot;</span>,</div>
-<div class="line"><span class="lineno">  568</span>                flowJsonFile,</div>
-<div class="line"><span class="lineno">  569</span>                std::make_error_code(std::errc::no_such_file_or_directory)};</div>
-<div class="line"><span class="lineno">  570</span>        }</div>
-<div class="line"><span class="lineno">  571</span>        <span class="keywordflow">throw</span> std::runtime_error{<span class="stringliteral">&quot;Failed to open flow resource definition.&quot;</span>};</div>
-<div class="line"><span class="lineno">  572</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FlowManager_8cpp_source.html#l00551">551</a> of file <a class="el" href="FlowManager_8cpp_source.html">FlowManager.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  552</span>    {</div>
+<div class="line"><span class="lineno">  553</span>        <span class="keyword">auto</span> <span class="keyword">const</span> uuid = uuids::to_string(<a class="code hl_variable" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>);</div>
+<div class="line"><span class="lineno">  554</span>        <span class="keyword">auto</span> <span class="keyword">const</span> flowPath = <a class="code hl_function" href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">makeFlowDirectoryName</a>(<a class="code hl_variable" href="classmxl_1_1lib_1_1FlowManager.html#a1b73d40dca287ce6d9b0a4df86d32e5d">_mxlDomain</a>, uuid);</div>
+<div class="line"><span class="lineno">  555</span>        <span class="keyword">auto</span> <span class="keyword">const</span> flowJsonFile = <a class="code hl_function" href="namespacemxl_1_1lib.html#a39dfe661c534ef636ce8dd418e9e8e8f">makeFlowDescriptorFilePath</a>(flowPath);</div>
+<div class="line"><span class="lineno">  556</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> in = std::ifstream{flowJsonFile, std::ios::in}; in)</div>
+<div class="line"><span class="lineno">  557</span>        {</div>
+<div class="line"><span class="lineno">  558</span>            <span class="keyword">auto</span> <span class="keyword">const</span> result = std::string{std::istreambuf_iterator&lt;char&gt;{in}, std::istreambuf_iterator&lt;char&gt;{}};</div>
+<div class="line"><span class="lineno">  559</span>            <span class="keywordflow">if</span> (!in)</div>
+<div class="line"><span class="lineno">  560</span>            {</div>
+<div class="line"><span class="lineno">  561</span>                <span class="keywordflow">throw</span> std::runtime_error{<span class="stringliteral">&quot;Error while reading the flow definition.&quot;</span>};</div>
+<div class="line"><span class="lineno">  562</span>            }</div>
+<div class="line"><span class="lineno">  563</span>            <span class="keywordflow">return</span> result;</div>
+<div class="line"><span class="lineno">  564</span>        }</div>
+<div class="line"><span class="lineno">  565</span>        <span class="comment">// Here is a race condition, but plain C++ API does not provide a way to check whether it was not possible to open a file because it does</span></div>
+<div class="line"><span class="lineno">  566</span>        <span class="comment">// not exist, or whether the access rights are wrong.</span></div>
+<div class="line"><span class="lineno">  567</span>        <span class="keywordflow">if</span> (!exists(flowJsonFile))</div>
+<div class="line"><span class="lineno">  568</span>        {</div>
+<div class="line"><span class="lineno">  569</span>            <span class="keywordflow">throw</span> std::filesystem::filesystem_error{<span class="stringliteral">&quot;Failed to open flow resource definition - file not found.&quot;</span>,</div>
+<div class="line"><span class="lineno">  570</span>                flowJsonFile,</div>
+<div class="line"><span class="lineno">  571</span>                std::make_error_code(std::errc::no_such_file_or_directory)};</div>
+<div class="line"><span class="lineno">  572</span>        }</div>
+<div class="line"><span class="lineno">  573</span>        <span class="keywordflow">throw</span> std::runtime_error{<span class="stringliteral">&quot;Failed to open flow resource definition.&quot;</span>};</div>
+<div class="line"><span class="lineno">  574</span>    }</div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_a39dfe661c534ef636ce8dd418e9e8e8f"><div class="ttname"><a href="namespacemxl_1_1lib.html#a39dfe661c534ef636ce8dd418e9e8e8f">mxl::lib::makeFlowDescriptorFilePath</a></div><div class="ttdeci">std::filesystem::path makeFlowDescriptorFilePath(std::filesystem::path const &amp;flowDirectory)</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8cpp_source.html#l00023">PathUtils.cpp:23</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -887,33 +889,33 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 <dl class="section return"><dt>Returns</dt><dd>List all flows on disk. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="FlowManager_8cpp_source.html#l00521">521</a> of file <a class="el" href="FlowManager_8cpp_source.html">FlowManager.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  522</span>    {</div>
-<div class="line"><span class="lineno">  523</span>        <span class="keyword">auto</span> base = std::filesystem::path{<a class="code hl_variable" href="classmxl_1_1lib_1_1FlowManager.html#a1b73d40dca287ce6d9b0a4df86d32e5d">_mxlDomain</a>};</div>
-<div class="line"><span class="lineno">  524</span> </div>
-<div class="line"><span class="lineno">  525</span>        <span class="keyword">auto</span> flowIds = std::vector&lt;uuids::uuid&gt;{};</div>
-<div class="line"><span class="lineno">  526</span>        <span class="keywordflow">if</span> (exists(base) &amp;&amp; is_directory(base))</div>
-<div class="line"><span class="lineno">  527</span>        {</div>
-<div class="line"><span class="lineno">  528</span>            <span class="keywordflow">for</span> (<span class="keyword">auto</span> <span class="keyword">const</span>&amp; entry : std::filesystem::directory_iterator{<a class="code hl_variable" href="classmxl_1_1lib_1_1FlowManager.html#a1b73d40dca287ce6d9b0a4df86d32e5d">_mxlDomain</a>})</div>
-<div class="line"><span class="lineno">  529</span>            {</div>
-<div class="line"><span class="lineno">  530</span>                <span class="keywordflow">if</span> (is_directory(entry) &amp;&amp; (entry.path().extension() == <a class="code hl_variable" href="namespacemxl_1_1lib.html#a9d84906a0c5763e7d494b6858b1bd1f3">FLOW_DIRECTORY_NAME_SUFFIX</a>))</div>
-<div class="line"><span class="lineno">  531</span>                {</div>
-<div class="line"><span class="lineno">  532</span>                    <span class="comment">// this looks like a uuid. try to parse it an confirm it is valid.</span></div>
-<div class="line"><span class="lineno">  533</span>                    <span class="keyword">auto</span> <span class="keywordtype">id</span> = uuids::uuid::from_string(entry.path().stem().string());</div>
-<div class="line"><span class="lineno">  534</span>                    <span class="keywordflow">if</span> (<span class="keywordtype">id</span>.has_value())</div>
-<div class="line"><span class="lineno">  535</span>                    {</div>
-<div class="line"><span class="lineno">  536</span>                        flowIds.push_back(*<span class="keywordtype">id</span>);</div>
-<div class="line"><span class="lineno">  537</span>                    }</div>
-<div class="line"><span class="lineno">  538</span>                }</div>
-<div class="line"><span class="lineno">  539</span>            }</div>
-<div class="line"><span class="lineno">  540</span>        }</div>
-<div class="line"><span class="lineno">  541</span>        <span class="keywordflow">else</span></div>
-<div class="line"><span class="lineno">  542</span>        {</div>
-<div class="line"><span class="lineno">  543</span>            <span class="keywordflow">throw</span> std::filesystem::filesystem_error{<span class="stringliteral">&quot;Base directory not found.&quot;</span>, base, std::make_error_code(std::errc::no_such_file_or_directory)};</div>
-<div class="line"><span class="lineno">  544</span>        }</div>
-<div class="line"><span class="lineno">  545</span> </div>
-<div class="line"><span class="lineno">  546</span>        <span class="keywordflow">return</span> flowIds;</div>
-<div class="line"><span class="lineno">  547</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FlowManager_8cpp_source.html#l00523">523</a> of file <a class="el" href="FlowManager_8cpp_source.html">FlowManager.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  524</span>    {</div>
+<div class="line"><span class="lineno">  525</span>        <span class="keyword">auto</span> base = std::filesystem::path{<a class="code hl_variable" href="classmxl_1_1lib_1_1FlowManager.html#a1b73d40dca287ce6d9b0a4df86d32e5d">_mxlDomain</a>};</div>
+<div class="line"><span class="lineno">  526</span> </div>
+<div class="line"><span class="lineno">  527</span>        <span class="keyword">auto</span> flowIds = std::vector&lt;uuids::uuid&gt;{};</div>
+<div class="line"><span class="lineno">  528</span>        <span class="keywordflow">if</span> (exists(base) &amp;&amp; is_directory(base))</div>
+<div class="line"><span class="lineno">  529</span>        {</div>
+<div class="line"><span class="lineno">  530</span>            <span class="keywordflow">for</span> (<span class="keyword">auto</span> <span class="keyword">const</span>&amp; entry : std::filesystem::directory_iterator{<a class="code hl_variable" href="classmxl_1_1lib_1_1FlowManager.html#a1b73d40dca287ce6d9b0a4df86d32e5d">_mxlDomain</a>})</div>
+<div class="line"><span class="lineno">  531</span>            {</div>
+<div class="line"><span class="lineno">  532</span>                <span class="keywordflow">if</span> (is_directory(entry) &amp;&amp; (entry.path().extension() == <a class="code hl_variable" href="namespacemxl_1_1lib.html#a9d84906a0c5763e7d494b6858b1bd1f3">FLOW_DIRECTORY_NAME_SUFFIX</a>))</div>
+<div class="line"><span class="lineno">  533</span>                {</div>
+<div class="line"><span class="lineno">  534</span>                    <span class="comment">// this looks like a uuid. try to parse it an confirm it is valid.</span></div>
+<div class="line"><span class="lineno">  535</span>                    <span class="keyword">auto</span> <span class="keywordtype">id</span> = uuids::uuid::from_string(entry.path().stem().string());</div>
+<div class="line"><span class="lineno">  536</span>                    <span class="keywordflow">if</span> (<span class="keywordtype">id</span>.has_value())</div>
+<div class="line"><span class="lineno">  537</span>                    {</div>
+<div class="line"><span class="lineno">  538</span>                        flowIds.push_back(*<span class="keywordtype">id</span>);</div>
+<div class="line"><span class="lineno">  539</span>                    }</div>
+<div class="line"><span class="lineno">  540</span>                }</div>
+<div class="line"><span class="lineno">  541</span>            }</div>
+<div class="line"><span class="lineno">  542</span>        }</div>
+<div class="line"><span class="lineno">  543</span>        <span class="keywordflow">else</span></div>
+<div class="line"><span class="lineno">  544</span>        {</div>
+<div class="line"><span class="lineno">  545</span>            <span class="keywordflow">throw</span> std::filesystem::filesystem_error{<span class="stringliteral">&quot;Base directory not found.&quot;</span>, base, std::make_error_code(std::errc::no_such_file_or_directory)};</div>
+<div class="line"><span class="lineno">  546</span>        }</div>
+<div class="line"><span class="lineno">  547</span> </div>
+<div class="line"><span class="lineno">  548</span>        <span class="keywordflow">return</span> flowIds;</div>
+<div class="line"><span class="lineno">  549</span>    }</div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_a9d84906a0c5763e7d494b6858b1bd1f3"><div class="ttname"><a href="namespacemxl_1_1lib.html#a9d84906a0c5763e7d494b6858b1bd1f3">mxl::lib::FLOW_DIRECTORY_NAME_SUFFIX</a></div><div class="ttdeci">constexpr auto const FLOW_DIRECTORY_NAME_SUFFIX</div><div class="ttdef"><b>Definition</b> <a href="PathUtils_8hpp_source.html#l00014">PathUtils.hpp:14</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -952,14 +954,14 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="FlowManager_8cpp_source.html#l00468">468</a> of file <a class="el" href="FlowManager_8cpp_source.html">FlowManager.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  470</span>    {</div>
-<div class="line"><span class="lineno">  471</span>        <span class="keyword">auto</span> flowData = std::make_unique&lt;ContinuousFlowData&gt;(std::move(sharedFlowInstance));</div>
-<div class="line"><span class="lineno">  472</span> </div>
-<div class="line"><span class="lineno">  473</span>        flowData-&gt;openChannelBuffers(<a class="code hl_function" href="namespacemxl_1_1lib.html#a2da47d2e220490d45401e923a7a68c18">makeChannelDataFilePath</a>(flowDir).<span class="keywordtype">string</span>().c_str(), <span class="comment">/*sampleWordSize=*/</span>0U);</div>
+<p class="definition">Definition at line <a class="el" href="FlowManager_8cpp_source.html#l00470">470</a> of file <a class="el" href="FlowManager_8cpp_source.html">FlowManager.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  472</span>    {</div>
+<div class="line"><span class="lineno">  473</span>        <span class="keyword">auto</span> flowData = std::make_unique&lt;ContinuousFlowData&gt;(std::move(sharedFlowInstance));</div>
 <div class="line"><span class="lineno">  474</span> </div>
-<div class="line"><span class="lineno">  475</span>        <span class="keywordflow">return</span> flowData;</div>
-<div class="line"><span class="lineno">  476</span>    }</div>
+<div class="line"><span class="lineno">  475</span>        flowData-&gt;openChannelBuffers(<a class="code hl_function" href="namespacemxl_1_1lib.html#a2da47d2e220490d45401e923a7a68c18">makeChannelDataFilePath</a>(flowDir).<span class="keywordtype">string</span>().c_str(), <span class="comment">/*sampleWordSize=*/</span>0U);</div>
+<div class="line"><span class="lineno">  476</span> </div>
+<div class="line"><span class="lineno">  477</span>        <span class="keywordflow">return</span> flowData;</div>
+<div class="line"><span class="lineno">  478</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -997,34 +999,34 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="FlowManager_8cpp_source.html#l00438">438</a> of file <a class="el" href="FlowManager_8cpp_source.html">FlowManager.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  440</span>    {</div>
-<div class="line"><span class="lineno">  441</span>        <span class="keyword">auto</span> flowData = std::make_unique&lt;DiscreteFlowData&gt;(std::move(sharedFlowInstance));</div>
-<div class="line"><span class="lineno">  442</span> </div>
-<div class="line"><span class="lineno">  443</span>        <span class="keyword">auto</span> <span class="keyword">const</span> grainCount = flowData-&gt;flowInfo()-&gt;config.discrete.grainCount;</div>
-<div class="line"><span class="lineno">  444</span>        <span class="keywordflow">if</span> (grainCount &gt; 0U)</div>
-<div class="line"><span class="lineno">  445</span>        {</div>
-<div class="line"><span class="lineno">  446</span>            <span class="keyword">auto</span> <span class="keyword">const</span> grainDir = <a class="code hl_function" href="namespacemxl_1_1lib.html#acebeb5a6c2361ba379c4d1008540abe5">makeGrainDirectoryName</a>(flowDir);</div>
-<div class="line"><span class="lineno">  447</span>            <span class="keywordflow">if</span> (exists(grainDir) &amp;&amp; is_directory(grainDir))</div>
-<div class="line"><span class="lineno">  448</span>            {</div>
-<div class="line"><span class="lineno">  449</span>                <span class="comment">// Open each grain with per-item error handling</span></div>
-<div class="line"><span class="lineno">  450</span>                <span class="keywordflow">for</span> (<span class="keyword">auto</span> i = 0U; i &lt; grainCount; ++i)</div>
-<div class="line"><span class="lineno">  451</span>                {</div>
-<div class="line"><span class="lineno">  452</span>                    <span class="keyword">auto</span> <span class="keyword">const</span> grainPath = <a class="code hl_function" href="namespacemxl_1_1lib.html#afeccbb33b65a1adc285679681b2f09cb">makeGrainDataFilePath</a>(grainDir, i).string();</div>
-<div class="line"><span class="lineno">  453</span>                    <a class="code hl_define" href="Logging_8hpp.html#adf58a856799e2264d7603b5d47d0b644">MXL_TRACE</a>(<span class="stringliteral">&quot;Opening grain: {}&quot;</span>, grainPath);</div>
-<div class="line"><span class="lineno">  454</span> </div>
-<div class="line"><span class="lineno">  455</span>                    flowData-&gt;emplaceGrain(grainPath.c_str(), <span class="comment">/*grainPayloadSize=*/</span>0U);</div>
-<div class="line"><span class="lineno">  456</span>                }</div>
-<div class="line"><span class="lineno">  457</span>            }</div>
-<div class="line"><span class="lineno">  458</span>            <span class="keywordflow">else</span></div>
-<div class="line"><span class="lineno">  459</span>            {</div>
-<div class="line"><span class="lineno">  460</span>                <span class="keywordflow">throw</span> std::filesystem::filesystem_error{</div>
-<div class="line"><span class="lineno">  461</span>                    <span class="stringliteral">&quot;Grain directory not found.&quot;</span>, grainDir, std::make_error_code(std::errc::no_such_file_or_directory)};</div>
-<div class="line"><span class="lineno">  462</span>            }</div>
-<div class="line"><span class="lineno">  463</span>        }</div>
-<div class="line"><span class="lineno">  464</span> </div>
-<div class="line"><span class="lineno">  465</span>        <span class="keywordflow">return</span> flowData;</div>
-<div class="line"><span class="lineno">  466</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FlowManager_8cpp_source.html#l00440">440</a> of file <a class="el" href="FlowManager_8cpp_source.html">FlowManager.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  442</span>    {</div>
+<div class="line"><span class="lineno">  443</span>        <span class="keyword">auto</span> flowData = std::make_unique&lt;DiscreteFlowData&gt;(std::move(sharedFlowInstance));</div>
+<div class="line"><span class="lineno">  444</span> </div>
+<div class="line"><span class="lineno">  445</span>        <span class="keyword">auto</span> <span class="keyword">const</span> grainCount = flowData-&gt;flowInfo()-&gt;config.discrete.grainCount;</div>
+<div class="line"><span class="lineno">  446</span>        <span class="keywordflow">if</span> (grainCount &gt; 0U)</div>
+<div class="line"><span class="lineno">  447</span>        {</div>
+<div class="line"><span class="lineno">  448</span>            <span class="keyword">auto</span> <span class="keyword">const</span> grainDir = <a class="code hl_function" href="namespacemxl_1_1lib.html#acebeb5a6c2361ba379c4d1008540abe5">makeGrainDirectoryName</a>(flowDir);</div>
+<div class="line"><span class="lineno">  449</span>            <span class="keywordflow">if</span> (exists(grainDir) &amp;&amp; is_directory(grainDir))</div>
+<div class="line"><span class="lineno">  450</span>            {</div>
+<div class="line"><span class="lineno">  451</span>                <span class="comment">// Open each grain with per-item error handling</span></div>
+<div class="line"><span class="lineno">  452</span>                <span class="keywordflow">for</span> (<span class="keyword">auto</span> i = 0U; i &lt; grainCount; ++i)</div>
+<div class="line"><span class="lineno">  453</span>                {</div>
+<div class="line"><span class="lineno">  454</span>                    <span class="keyword">auto</span> <span class="keyword">const</span> grainPath = <a class="code hl_function" href="namespacemxl_1_1lib.html#afeccbb33b65a1adc285679681b2f09cb">makeGrainDataFilePath</a>(grainDir, i).string();</div>
+<div class="line"><span class="lineno">  455</span>                    <a class="code hl_define" href="Logging_8hpp.html#adf58a856799e2264d7603b5d47d0b644">MXL_TRACE</a>(<span class="stringliteral">&quot;Opening grain: {}&quot;</span>, grainPath);</div>
+<div class="line"><span class="lineno">  456</span> </div>
+<div class="line"><span class="lineno">  457</span>                    flowData-&gt;emplaceGrain(grainPath.c_str(), <span class="comment">/*grainPayloadSize=*/</span>0U);</div>
+<div class="line"><span class="lineno">  458</span>                }</div>
+<div class="line"><span class="lineno">  459</span>            }</div>
+<div class="line"><span class="lineno">  460</span>            <span class="keywordflow">else</span></div>
+<div class="line"><span class="lineno">  461</span>            {</div>
+<div class="line"><span class="lineno">  462</span>                <span class="keywordflow">throw</span> std::filesystem::filesystem_error{</div>
+<div class="line"><span class="lineno">  463</span>                    <span class="stringliteral">&quot;Grain directory not found.&quot;</span>, grainDir, std::make_error_code(std::errc::no_such_file_or_directory)};</div>
+<div class="line"><span class="lineno">  464</span>            }</div>
+<div class="line"><span class="lineno">  465</span>        }</div>
+<div class="line"><span class="lineno">  466</span> </div>
+<div class="line"><span class="lineno">  467</span>        <span class="keywordflow">return</span> flowData;</div>
+<div class="line"><span class="lineno">  468</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -1062,53 +1064,53 @@ Private Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="FlowManager_8cpp_source.html#l00392">392</a> of file <a class="el" href="FlowManager_8cpp_source.html">FlowManager.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  393</span>    {</div>
-<div class="line"><span class="lineno">  394</span>        <span class="keywordflow">if</span> (in_mode == <a class="code hl_enumvalue" href="namespacemxl_1_1lib.html#ac7a6dcbc0a5565d4a6700dbc4cef02b1a75139f51d6c8f471e006c04eab46548c">AccessMode::CREATE_READ_WRITE</a>)</div>
-<div class="line"><span class="lineno">  395</span>        {</div>
-<div class="line"><span class="lineno">  396</span>            <span class="keywordflow">throw</span> std::invalid_argument{<span class="stringliteral">&quot;Attempt to open flow with invalid access mode.&quot;</span>};</div>
-<div class="line"><span class="lineno">  397</span>        }</div>
-<div class="line"><span class="lineno">  398</span> </div>
-<div class="line"><span class="lineno">  399</span>        <span class="keyword">auto</span> uuid = uuids::to_string(in_flowId);</div>
-<div class="line"><span class="lineno">  400</span>        <span class="keyword">auto</span> <span class="keyword">const</span> base = <a class="code hl_function" href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">makeFlowDirectoryName</a>(<a class="code hl_variable" href="classmxl_1_1lib_1_1FlowManager.html#a1b73d40dca287ce6d9b0a4df86d32e5d">_mxlDomain</a>, uuid);</div>
-<div class="line"><span class="lineno">  401</span> </div>
-<div class="line"><span class="lineno">  402</span>        <span class="comment">// Verify that the flow file exists.</span></div>
-<div class="line"><span class="lineno">  403</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> flowFile = <a class="code hl_function" href="namespacemxl_1_1lib.html#a70469f14e75438e90bdf85253ad817f9">makeFlowDataFilePath</a>(base); exists(flowFile))</div>
-<div class="line"><span class="lineno">  404</span>        {</div>
-<div class="line"><span class="lineno">  405</span>            <span class="keyword">auto</span> flowSegment = SharedMemoryInstance&lt;Flow&gt;{flowFile.string().c_str(), in_mode, 0U, <a class="code hl_enumvalue" href="namespacemxl_1_1lib.html#adeb5fbd2d14765f3eda2a85e6e4af3acaa6156ea9d66fef24e87e841fbabf7cca">LockMode::Shared</a>};</div>
-<div class="line"><span class="lineno">  406</span>            <span class="keywordflow">if</span> (flowSegment.get()-&gt;info.version != <a class="code hl_variable" href="namespacemxl_1_1lib.html#af5cc5553c6cc15f6f44a399bdf478d8f">FLOW_DATA_VERSION</a>)</div>
-<div class="line"><span class="lineno">  407</span>            {</div>
-<div class="line"><span class="lineno">  408</span>                <span class="keywordflow">throw</span> std::invalid_argument{</div>
-<div class="line"><span class="lineno">  409</span>                    fmt::format(<span class="stringliteral">&quot;Unsupported flow data version: {}, supported is: {}&quot;</span>, flowSegment.get()-&gt;info.version, <a class="code hl_variable" href="namespacemxl_1_1lib.html#af5cc5553c6cc15f6f44a399bdf478d8f">FLOW_DATA_VERSION</a>)};</div>
-<div class="line"><span class="lineno">  410</span>            }</div>
-<div class="line"><span class="lineno">  411</span> </div>
-<div class="line"><span class="lineno">  412</span>            <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> flowFormat = flowSegment.get()-&gt;info.config.common.format; <a class="code hl_function" href="dataformat_8h.html#a9562763110b10ea313893f8f855b599c">mxlIsDiscreteDataFormat</a>(flowFormat))</div>
-<div class="line"><span class="lineno">  413</span>            {</div>
-<div class="line"><span class="lineno">  414</span>                <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1FlowManager.html#a1a7f9f7233a7a88147fcabcde4c94587">openDiscreteFlow</a>(base, std::move(flowSegment));</div>
-<div class="line"><span class="lineno">  415</span>            }</div>
-<div class="line"><span class="lineno">  416</span>            <span class="keywordflow">else</span> <span class="keywordflow">if</span> (flowFormat == <a class="code hl_enumvalue" href="dataformat_8h.html#ae0d6ccb052d9f48c3d6f1eb8644a0d7ba1aadeac85a3df388af5ced9e0f1bebe0">MXL_DATA_FORMAT_EVENT</a>)</div>
-<div class="line"><span class="lineno">  417</span>            {</div>
-<div class="line"><span class="lineno">  418</span>                <span class="keyword">auto</span> data = std::make_unique&lt;EventFlowData&gt;(std::move(flowSegment));</div>
-<div class="line"><span class="lineno">  419</span>                data-&gt;openEventBuffer(<a class="code hl_function" href="namespacemxl_1_1lib.html#a3006bf739e2850b7d72f53b7ea36af09">makeEventDataFilePath</a>(base).<span class="keywordtype">string</span>().c_str());</div>
-<div class="line"><span class="lineno">  420</span>                <span class="keywordflow">return</span> data;</div>
-<div class="line"><span class="lineno">  421</span>            }</div>
-<div class="line"><span class="lineno">  422</span>            <span class="keywordflow">else</span> <span class="keywordflow">if</span> (<a class="code hl_function" href="dataformat_8h.html#a92c8558b4d7af570af14cf0f2897f466">mxlIsContinuousDataFormat</a>(flowFormat))</div>
-<div class="line"><span class="lineno">  423</span>            {</div>
-<div class="line"><span class="lineno">  424</span>                <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1FlowManager.html#a49a3bacb024034b621e386cceef7ddae">openContinuousFlow</a>(base, std::move(flowSegment));</div>
-<div class="line"><span class="lineno">  425</span>            }</div>
-<div class="line"><span class="lineno">  426</span>            <span class="keywordflow">else</span></div>
-<div class="line"><span class="lineno">  427</span>            {</div>
-<div class="line"><span class="lineno">  428</span>                <span class="comment">// This should never happen for a valid flow.</span></div>
-<div class="line"><span class="lineno">  429</span>                <span class="keywordflow">throw</span> std::runtime_error{<span class="stringliteral">&quot;Attempt to open flow with unsupported data format.&quot;</span>};</div>
-<div class="line"><span class="lineno">  430</span>            }</div>
-<div class="line"><span class="lineno">  431</span>        }</div>
-<div class="line"><span class="lineno">  432</span>        <span class="keywordflow">else</span></div>
-<div class="line"><span class="lineno">  433</span>        {</div>
-<div class="line"><span class="lineno">  434</span>            <span class="keywordflow">throw</span> std::filesystem::filesystem_error{<span class="stringliteral">&quot;Flow file not found.&quot;</span>, flowFile, std::make_error_code(std::errc::no_such_file_or_directory)};</div>
-<div class="line"><span class="lineno">  435</span>        }</div>
-<div class="line"><span class="lineno">  436</span>    }</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1FlowManager_html_a1a7f9f7233a7a88147fcabcde4c94587"><div class="ttname"><a href="classmxl_1_1lib_1_1FlowManager.html#a1a7f9f7233a7a88147fcabcde4c94587">mxl::lib::FlowManager::openDiscreteFlow</a></div><div class="ttdeci">std::unique_ptr&lt; DiscreteFlowData &gt; openDiscreteFlow(std::filesystem::path const &amp;flowDir, SharedMemoryInstance&lt; Flow &gt; &amp;&amp;sharedFlowInstance)</div><div class="ttdef"><b>Definition</b> <a href="FlowManager_8cpp_source.html#l00438">FlowManager.cpp:438</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1FlowManager_html_a49a3bacb024034b621e386cceef7ddae"><div class="ttname"><a href="classmxl_1_1lib_1_1FlowManager.html#a49a3bacb024034b621e386cceef7ddae">mxl::lib::FlowManager::openContinuousFlow</a></div><div class="ttdeci">std::unique_ptr&lt; ContinuousFlowData &gt; openContinuousFlow(std::filesystem::path const &amp;flowDir, SharedMemoryInstance&lt; Flow &gt; &amp;&amp;sharedFlowInstance)</div><div class="ttdef"><b>Definition</b> <a href="FlowManager_8cpp_source.html#l00468">FlowManager.cpp:468</a></div></div>
+<p class="definition">Definition at line <a class="el" href="FlowManager_8cpp_source.html#l00394">394</a> of file <a class="el" href="FlowManager_8cpp_source.html">FlowManager.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  395</span>    {</div>
+<div class="line"><span class="lineno">  396</span>        <span class="keywordflow">if</span> (in_mode == <a class="code hl_enumvalue" href="namespacemxl_1_1lib.html#ac7a6dcbc0a5565d4a6700dbc4cef02b1a75139f51d6c8f471e006c04eab46548c">AccessMode::CREATE_READ_WRITE</a>)</div>
+<div class="line"><span class="lineno">  397</span>        {</div>
+<div class="line"><span class="lineno">  398</span>            <span class="keywordflow">throw</span> std::invalid_argument{<span class="stringliteral">&quot;Attempt to open flow with invalid access mode.&quot;</span>};</div>
+<div class="line"><span class="lineno">  399</span>        }</div>
+<div class="line"><span class="lineno">  400</span> </div>
+<div class="line"><span class="lineno">  401</span>        <span class="keyword">auto</span> uuid = uuids::to_string(in_flowId);</div>
+<div class="line"><span class="lineno">  402</span>        <span class="keyword">auto</span> <span class="keyword">const</span> base = <a class="code hl_function" href="namespacemxl_1_1lib.html#aeeacfdf05a4fd16afc20501015b3413b">makeFlowDirectoryName</a>(<a class="code hl_variable" href="classmxl_1_1lib_1_1FlowManager.html#a1b73d40dca287ce6d9b0a4df86d32e5d">_mxlDomain</a>, uuid);</div>
+<div class="line"><span class="lineno">  403</span> </div>
+<div class="line"><span class="lineno">  404</span>        <span class="comment">// Verify that the flow file exists.</span></div>
+<div class="line"><span class="lineno">  405</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> flowFile = <a class="code hl_function" href="namespacemxl_1_1lib.html#a70469f14e75438e90bdf85253ad817f9">makeFlowDataFilePath</a>(base); exists(flowFile))</div>
+<div class="line"><span class="lineno">  406</span>        {</div>
+<div class="line"><span class="lineno">  407</span>            <span class="keyword">auto</span> flowSegment = SharedMemoryInstance&lt;Flow&gt;{flowFile.string().c_str(), in_mode, 0U, <a class="code hl_enumvalue" href="namespacemxl_1_1lib.html#adeb5fbd2d14765f3eda2a85e6e4af3acaa6156ea9d66fef24e87e841fbabf7cca">LockMode::Shared</a>};</div>
+<div class="line"><span class="lineno">  408</span>            <span class="keywordflow">if</span> (flowSegment.get()-&gt;info.version != <a class="code hl_variable" href="namespacemxl_1_1lib.html#af5cc5553c6cc15f6f44a399bdf478d8f">FLOW_DATA_VERSION</a>)</div>
+<div class="line"><span class="lineno">  409</span>            {</div>
+<div class="line"><span class="lineno">  410</span>                <span class="keywordflow">throw</span> std::invalid_argument{</div>
+<div class="line"><span class="lineno">  411</span>                    fmt::format(<span class="stringliteral">&quot;Unsupported flow data version: {}, supported is: {}&quot;</span>, flowSegment.get()-&gt;info.version, <a class="code hl_variable" href="namespacemxl_1_1lib.html#af5cc5553c6cc15f6f44a399bdf478d8f">FLOW_DATA_VERSION</a>)};</div>
+<div class="line"><span class="lineno">  412</span>            }</div>
+<div class="line"><span class="lineno">  413</span> </div>
+<div class="line"><span class="lineno">  414</span>            <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> flowFormat = flowSegment.get()-&gt;info.config.common.format; <a class="code hl_function" href="dataformat_8h.html#a9562763110b10ea313893f8f855b599c">mxlIsDiscreteDataFormat</a>(flowFormat))</div>
+<div class="line"><span class="lineno">  415</span>            {</div>
+<div class="line"><span class="lineno">  416</span>                <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1FlowManager.html#a1a7f9f7233a7a88147fcabcde4c94587">openDiscreteFlow</a>(base, std::move(flowSegment));</div>
+<div class="line"><span class="lineno">  417</span>            }</div>
+<div class="line"><span class="lineno">  418</span>            <span class="keywordflow">else</span> <span class="keywordflow">if</span> (flowFormat == <a class="code hl_enumvalue" href="dataformat_8h.html#ae0d6ccb052d9f48c3d6f1eb8644a0d7ba1aadeac85a3df388af5ced9e0f1bebe0">MXL_DATA_FORMAT_EVENT</a>)</div>
+<div class="line"><span class="lineno">  419</span>            {</div>
+<div class="line"><span class="lineno">  420</span>                <span class="keyword">auto</span> data = std::make_unique&lt;EventFlowData&gt;(std::move(flowSegment));</div>
+<div class="line"><span class="lineno">  421</span>                data-&gt;openEventBuffer(<a class="code hl_function" href="namespacemxl_1_1lib.html#a3006bf739e2850b7d72f53b7ea36af09">makeEventDataFilePath</a>(base).<span class="keywordtype">string</span>().c_str());</div>
+<div class="line"><span class="lineno">  422</span>                <span class="keywordflow">return</span> data;</div>
+<div class="line"><span class="lineno">  423</span>            }</div>
+<div class="line"><span class="lineno">  424</span>            <span class="keywordflow">else</span> <span class="keywordflow">if</span> (<a class="code hl_function" href="dataformat_8h.html#a92c8558b4d7af570af14cf0f2897f466">mxlIsContinuousDataFormat</a>(flowFormat))</div>
+<div class="line"><span class="lineno">  425</span>            {</div>
+<div class="line"><span class="lineno">  426</span>                <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1FlowManager.html#a49a3bacb024034b621e386cceef7ddae">openContinuousFlow</a>(base, std::move(flowSegment));</div>
+<div class="line"><span class="lineno">  427</span>            }</div>
+<div class="line"><span class="lineno">  428</span>            <span class="keywordflow">else</span></div>
+<div class="line"><span class="lineno">  429</span>            {</div>
+<div class="line"><span class="lineno">  430</span>                <span class="comment">// This should never happen for a valid flow.</span></div>
+<div class="line"><span class="lineno">  431</span>                <span class="keywordflow">throw</span> std::runtime_error{<span class="stringliteral">&quot;Attempt to open flow with unsupported data format.&quot;</span>};</div>
+<div class="line"><span class="lineno">  432</span>            }</div>
+<div class="line"><span class="lineno">  433</span>        }</div>
+<div class="line"><span class="lineno">  434</span>        <span class="keywordflow">else</span></div>
+<div class="line"><span class="lineno">  435</span>        {</div>
+<div class="line"><span class="lineno">  436</span>            <span class="keywordflow">throw</span> std::filesystem::filesystem_error{<span class="stringliteral">&quot;Flow file not found.&quot;</span>, flowFile, std::make_error_code(std::errc::no_such_file_or_directory)};</div>
+<div class="line"><span class="lineno">  437</span>        }</div>
+<div class="line"><span class="lineno">  438</span>    }</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1FlowManager_html_a1a7f9f7233a7a88147fcabcde4c94587"><div class="ttname"><a href="classmxl_1_1lib_1_1FlowManager.html#a1a7f9f7233a7a88147fcabcde4c94587">mxl::lib::FlowManager::openDiscreteFlow</a></div><div class="ttdeci">std::unique_ptr&lt; DiscreteFlowData &gt; openDiscreteFlow(std::filesystem::path const &amp;flowDir, SharedMemoryInstance&lt; Flow &gt; &amp;&amp;sharedFlowInstance)</div><div class="ttdef"><b>Definition</b> <a href="FlowManager_8cpp_source.html#l00440">FlowManager.cpp:440</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1FlowManager_html_a49a3bacb024034b621e386cceef7ddae"><div class="ttname"><a href="classmxl_1_1lib_1_1FlowManager.html#a49a3bacb024034b621e386cceef7ddae">mxl::lib::FlowManager::openContinuousFlow</a></div><div class="ttdeci">std::unique_ptr&lt; ContinuousFlowData &gt; openContinuousFlow(std::filesystem::path const &amp;flowDir, SharedMemoryInstance&lt; Flow &gt; &amp;&amp;sharedFlowInstance)</div><div class="ttdef"><b>Definition</b> <a href="FlowManager_8cpp_source.html#l00470">FlowManager.cpp:470</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
