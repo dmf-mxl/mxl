@@ -313,7 +313,7 @@ namespace mxl::lib
             auto existingFlowData = dynamic_pointer_cast<ContinuousFlowData>(openFlow(flowId, AccessMode::READ_WRITE));
             if (!existingFlowData)
             {
-                throw std::runtime_error("Could not open existing flow because it is of a different format");
+                throw std::runtime_error{"Could not open existing flow because it is of a different format"};
             }
 
             return {false, std::move(existingFlowData)};
