@@ -5,10 +5,11 @@
 
 ## mxl-info
 
-Simple tool that uses the MXL sdk to open a flow by ID and prints the flow details.
+Simple tool that uses the MXL SDK to open a flow by ID and prints the flow details.
 
 ```bash
 ./mxl-info [OPTIONS] [ADDRESS...]
+
 
 POSITIONALS:
   ADDRESS TEXT ...            MXL URI
@@ -52,7 +53,6 @@ CAM2: mxl:///dev/shm/mxl/?id=53c36c15-10c8-48a3-9ba1-41f31d557fba&id=20e6824e-44
         audio : 20e6824e-44b1-43ad-b198-99ebb7fa7092 - Camera 2
 ```
 
-
 Example 2a : Printing details about a specific flow using command line options.
 
 ```bash
@@ -77,7 +77,7 @@ Example 2a : Printing details about a specific flow using command line options.
                     Active: true
 ```
 
-Example 2a : Printing details about a specific flow using an MXL URI 
+Example 2a : Printing details about a specific flow using an MXL URI
 
 ```bash
 ./mxl-info mxl:///dev/shm/mxl?id=5fbec3b1-1b0f-417d-9059-8b94a47197ed
@@ -114,6 +114,7 @@ A tool that opens an MXL ancillary Data flow (`media_type: video/smpte291`), rea
 ```bash
 ./mxl-data-probe [OPTIONS] [ADDRESS...]
 
+
 POSITIONALS:
   ADDRESS TEXT ...            MXL URI
 
@@ -122,9 +123,9 @@ OPTIONS:
           --version           Display program version information and exit
   -d,     --domain TEXT:DIR   The MXL domain directory
   -f,     --flow TEXT         The flow id to read
-  -c,     --count UINT [1]    Number of grains to read from the current head index
-  -t,     --timeout-ms UINT [1000]
-                              Timeout per grain read in milliseconds
+  -c,     --count UINT:UINT in [1 - 18446744073709551615] 
+                              Number of grains to read from the current head index
+  -t,     --timeout-ms UINT   Timeout per grain read in milliseconds
 
 MXL URI format:
 mxl://[authority[:port]]/domain[?id=...]
@@ -145,10 +146,16 @@ Example using an MXL URI:
 
 ## mxl-gst-testsrc
 
-A binary that uses the gstreamer 'videotestsrc' and 'audiotestsrc' elements to produce video grains and/or audio samples which will be pushed to a MXL Flow. The flow is configured from a NMOS Flow json file. Here's an example of such file :
+A binary that uses the GStreamer `videotestsrc` and `audiotestsrc` elements to produce video grains and/or audio samples which will be pushed to an MXL Flow.
 
-&emsp; **Note** Don't forget to provide valid description, label and grouphint tag.
+The GStreamer pipeline ends at an `appsink`. This program pulls each sample from that sink and writes it with the MXL SDK. The flow is configured from a NMOS Flow JSON file.
 
+Here's an example of such file.
+
+> [!NOTE]
+> Don't forget to provide valid description, label, and group-hint tag.
+
+`video_flow.json`
 
 ```json
 {
@@ -193,11 +200,15 @@ A binary that uses the gstreamer 'videotestsrc' and 'audiotestsrc' elements to p
   ]
 }
 ```
+
 Below is an example of an **augmented NMOS Flow JSON** for audio.  
-&emsp; **Note 1:** The *channel_count* property is a mandatory MXL requirement (not found in standard NMOS definition). To adjust the number of audio channels, simply update the *channel_count* value.
 
-&emsp; **Note 2:** Don't forget to provide valid description, label and grouphint tag.
+> [!NOTE]
+> 1. The `channel_count` property is a mandatory MXL requirement (not found in the NMOS audio Flow schema).
+>    To adjust the number of audio channels, simply update the `channel_count` value.
+> 2. Don't forget to provide valid description, label and group-hint tag.
 
+`audio_flow.json`
 
 ```json
 {
@@ -226,31 +237,32 @@ Below is an example of an **augmented NMOS Flow JSON** for audio.
 ```bash
 ./mxl-gst-testsrc [OPTIONS]
 
+
 OPTIONS:
   -h,     --help              Print this help message and exit
-  -v,     --video-config-file TEXT
+  -v,     --video-config-file TEXT 
                               The json file which contains the Video NMOS Flow configuration.
-          --video-options-file TEXT
+          --video-options-file TEXT 
                               The json file which contains the Video Flow options.
-  -a,     --audio-config-file TEXT
+  -a,     --audio-config-file TEXT 
                               The json file which contains the Audio NMOS Flow configuration
-          --audio-options-file TEXT
+          --audio-options-file TEXT 
                               The json file which contains the Audio Flow options.
-          --audio-offset INT [0]
+          --audio-offset INT [0]  
                               Audio sample offset in number of samples. Positive value means
                               you are adding a delay (commit in the past).
-          --video-offset INT [0]
+          --video-offset INT [0]  
                               Video frame offset in number of frames. Positive value means you
                               are adding a delay (commit in the past).
-  -d,     --domain TEXT:DIR REQUIRED
+  -d,     --domain TEXT:DIR REQUIRED 
                               The MXL domain directory
-  -p,     --pattern TEXT [smpte]
+  -p,     --pattern TEXT [smpte]  
                               Test pattern to use. For available options see
                               https://gstreamer.freedesktop.org/documentation/videotestsrc/index.html?gi-language=c#GstVideoTestSrcPattern
-  -t,     --overlay-text TEXT [EBU DMF MXL]
+  -t,     --overlay-text TEXT [EBU DMF MXL]  
                               Change the text overlay of the test source
-  -g,     --group-hint TEXT [mxl-gst-testsrc-group]
-                              The group-hint value to use in the flow json definition                               
+  -g,     --group-hint TEXT [mxl-gst-testsrc-group]  
+                              The group-hint value to use in the flow json definition
 ```
 
 Example to run with video only:
@@ -281,18 +293,18 @@ Example to run with both video and audio:
 
 By default, `videotestsrc` produces one slice and one sample at a time because it relies on the`maxSyncBatchSizeHint` field in the flow options to determine batch size, which defaults to 1 when not configured. To modify this behavior, create separate flow option files for video and audio.
 
-video_options.json
+`video_options.json`
 
-```video_options.json
+```json
 {
   "maxCommitBatchSizeHint": 60,
   "maxSyncBatchSizeHint": 60
 }
 ```
 
-audio_options.json
+`audio_options.json`
 
-```audio_options.json
+```json
 {
   "maxCommitBatchSizeHint": 512,
   "maxSyncBatchSizeHint": 512
@@ -310,9 +322,11 @@ You can run the full example with:
   --audio-options-file audio_options.json
 ```
 
+The same test pattern and tones are written with the `mxlsink` element in [Equivalent to mxl-gst-testsrc](#equivalent-to-mxl-gst-testsrc).
+
 ## mxl-gst-sink
 
-A binary that reads from a MXL Flow and display the flow using the gstreamer element 'autovideosink'.
+A binary that reads from an MXL Flow and displays the flow using the GStreamer element `autovideosink`. This program reads grains with the MXL SDK and pushes each buffer into an `appsrc`.
 
 ```bash
 ./mxl-gst-sink [OPTIONS]
@@ -320,23 +334,28 @@ A binary that reads from a MXL Flow and display the flow using the gstreamer ele
 
 OPTIONS:
   -h,     --help              Print this help message and exit
-  -v,     --video-flow-id TEXT
+  -v,     --video-flow-id TEXT 
                               The video flow ID
-  -a,     --audio-flow-id TEXT
+  -a,     --audio-flow-id TEXT 
                               The audio flow ID
-  -d,     --domain TEXT:DIR REQUIRED
+  -d,     --domain TEXT:DIR REQUIRED 
                               The MXL domain directory.
-  -l,     --listen-channels UINT [[0,1]]  ...
+  -l,     --listen-channels UINT [[0,1]]  ... 
                               Audio channels to listen.
-          --read-delay INT [40000000]
+          --read-delay INT [40000000]  
                               How far in the past/future to read (in nanoseconds). A positive
                               values means you are delaying the read.
-          --playback-delay INT [0]
+          --playback-delay INT [0]  
                               The time in nanoseconds, by which to delay playback of audio
                               and/or video.
           --av-delay INT [0]  The time in nanoseconds, by which to delay the audio relative to
                               video. A positive value means you are delaying audio, a negative
                               value means you are delaying video.
+          --pts-offset UINT   The time in nanoseconds by which to delay playback of grains
+                              relative to their MXL-based timestamps. This sets a fixed value
+                              that will not change during runtime. If the parameter is not
+                              provided, the PTS will be automatically increased so that no PTS
+                              value supplied to GStreamer is ever in the past.
 ```
 
 Example to run with video only:
@@ -364,13 +383,15 @@ Example to run with both video and audio:
   -a b3bb5be7-9fe9-4324-a5bb-4c70e1084449
 ```
 
-### mxl-gst-looping-filesrc
+The same flows are played with the `mxlsrc` element in [Equivalent to mxl-gst-sink](#equivalent-to-mxl-gst-sink).
 
-A utility that continuously loops through MPEG-TS files to generate video grains to push into MXL flows.
+## mxl-gst-looping-filesrc
+
+A utility that continuously loops through MPEG-TS files to generate video grains to push into MXL flows. The GStreamer pipeline ends at an `appsink` for video and an `appsink` for audio. This program pulls each sample (buffer) and writes it with the MXL SDK.
 
 #### Prerequisites
 
-This application requires the `looping_filesrc` GStreamer plugin located in `utils/gst-looping-filesrc/`.  After building the plugin successfully, set the GST_PLUGIN_PATH environment variable to enable GStreamer to locate and load the plugin.
+This application requires the `looping_filesrc` GStreamer plugin located in `utils/gst-looping-filesrc/`.  After building the plugin successfully, set the `GST_PLUGIN_PATH` environment variable to enable GStreamer to locate and load the plugin.
 
 ```bash
 export GST_PLUGIN_PATH="./build/Linux-GCC-Release/utils/gst-looping-filesrc:${GST_PLUGIN_PATH}"
@@ -390,12 +411,175 @@ gst-inspect-1.0 looping_filesrc
 
 OPTIONS:
   -h,     --help              Print this help message and exit
-  -d,     --domain TEXT REQUIRED
+  -d,     --domain TEXT REQUIRED 
                               The MXL domain directory
-  -i,     --input TEXT:FILE REQUIRED
+  -i,     --input TEXT:FILE REQUIRED 
                               MPEGTS media file location
+          --video-id TEXT:UUID 
+                              The MXL video flow id
+          --audio-id TEXT:UUID 
+                              The MXL audio flow id
 ```
 
-## Gstreamer filters
+`looping_filesrc` reads an MPEG-TS file and effectively rewinds it to the start every time it reaches the end. A seamless loop needs closed GOPs and a duration that is a whole number of those GOPs and of the audio frames. The pipelines below create files that meet those constraints.
 
-MXL Source and Sink filters for GStreamer are available [here](../rust/gst-mxl-rs/README.md).
+Each file is 300 frames at 30000/1001, which is 10.01 seconds: ten closed GOPs of 30 frames, and 1001 Opus frames of 10 ms (480480 samples at 48 kHz). The picture in the file is H.265 main profile, 8-bit 4:2:0. Playback converts it to `v210` at 1920×1080, 30000/1001, matching `lib/tests/data/v210_flow.json`. The audio decodes to 48 kHz stereo `F32LE`, matching `lib/tests/data/audio_flow.json`.
+
+The same files are written with the `mxlsink` element in [Equivalent to mxl-gst-looping-filesrc](#equivalent-to-mxl-gst-looping-filesrc).
+
+#### Test pattern
+
+The same bars, label, clock, and tones as `mxl-gst-testsrc`. A 100 Hz tone is on the first channel and a 200 Hz tone is on the second. `clockoverlay` draws the pipeline time on the bars, so the rewind is visible.
+
+```bash
+gst-launch-1.0 -e \
+  videotestsrc is-live=false num-buffers=300 pattern=smpte ! \
+  video/x-raw,format=I420,width=1920,height=1080,framerate=30000/1001,colorimetry=bt709 ! \
+  textoverlay text="EBU DMF MXL" font-desc="Sans, 36" ! \
+  clockoverlay ! \
+  x265enc key-int-max=30 speed-preset=ultrafast tune=zerolatency bitrate=8000 \
+    option-string="keyint=30:min-keyint=30:scenecut=0:open-gop=0:bframes=0" ! \
+  h265parse ! queue ! mux. \
+  audiotestsrc is-live=false num-buffers=1001 samplesperbuffer=480 freq=100 ! \
+  'audio/x-raw,format=S16LE,rate=48000,channels=1,channel-mask=(bitmask)0x1' ! queue ! m.sink_0 \
+  audiotestsrc is-live=false num-buffers=1001 samplesperbuffer=480 freq=200 ! \
+  'audio/x-raw,format=S16LE,rate=48000,channels=1,channel-mask=(bitmask)0x2' ! queue ! m.sink_1 \
+  interleave name=m ! \
+  audioconvert ! audio/x-raw,format=S16LE,rate=48000,channels=2 ! \
+  opusenc frame-size=10 ! queue ! mux. \
+  mpegtsmux name=mux ! filesink location=mxl-gst-testsrc.ts
+```
+
+#### A/V sync
+
+`avsyncvideotestsrc` and `avsyncaudiotestsrc` come from `libgstavsynctest.so`, in the same `GST_PLUGIN_PATH` directory as `libgstmxl.so`. The default pip interval is 1 second on both. The bar is at the centre of the frame on each pip, and the tone is centred on that same instant. Set `pip-interval` to the same value on each source if you change it. The file stores the sweeping bar and the tone pip. The CEA-708 caption and the frame-index ancillary stay on the raw video buffers from `avsyncvideotestsrc`.
+
+```bash
+gst-launch-1.0 -e \
+  avsyncvideotestsrc is-live=false num-buffers=300 ! \
+  video/x-raw,format=v210,width=1920,height=1080,framerate=30000/1001 ! \
+  videoconvert ! video/x-raw,format=I420 ! \
+  x265enc key-int-max=30 speed-preset=ultrafast tune=zerolatency bitrate=8000 \
+    option-string="keyint=30:min-keyint=30:scenecut=0:open-gop=0:bframes=0" ! \
+  h265parse ! queue ! mux. \
+  avsyncaudiotestsrc is-live=false num-buffers=1001 samples-per-buffer=480 ! \
+  audio/x-raw,format=F32LE,rate=48000,channels=2 ! \
+  audioconvert ! audio/x-raw,format=S16LE,rate=48000,channels=2 ! \
+  opusenc frame-size=10 ! queue ! mux. \
+  mpegtsmux name=mux ! filesink location=avsynctest.ts
+```
+
+## GStreamer plugin
+
+The `mxl` plugin (`libgstmxl.so`) provides two elements, `mxlsink` and `mxlsrc`. `mxlsink` writes GStreamer buffers into an MXL Flow. `mxlsrc` reads an MXL Flow into GStreamer buffers. Each element calls the MXL SDK itself, so the example pipelines below can be run with `gst-launch-1.0`. They provide the functionality of `mxl-gst-testsrc`, `mxl-gst-sink`, and `mxl-gst-looping-filesrc` with no application code.
+
+The GStreamer plugin is documented [here](../rust/gst-mxl-rs/README.md). Set `GST_PLUGIN_PATH` and `LD_LIBRARY_PATH` as that README describes before running the examples below. The `looping_filesrc` example also needs that plugin on `GST_PLUGIN_PATH`, as described under [mxl-gst-looping-filesrc](#mxl-gst-looping-filesrc).
+
+### Equivalent to mxl-gst-testsrc
+
+Video only:
+
+```bash
+gst-launch-1.0 \
+  videotestsrc is-live=true do-timestamp=true pattern=smpte ! \
+  textoverlay text="EBU DMF MXL" font-desc="Sans, 36" ! \
+  clockoverlay ! \
+  videoconvert ! \
+  video/x-raw,format=v210,width=1920,height=1080,framerate=30000/1001 ! \
+  queue ! \
+  mxlsink flow-id=5fbec3b1-1b0f-417d-9059-8b94a47197ed domain=/dev/shm
+```
+
+Audio only:
+
+```bash
+gst-launch-1.0 \
+  audiotestsrc is-live=true do-timestamp=true freq=100 ! \
+  'audio/x-raw,channels=1,channel-mask=(bitmask)0x1' ! queue ! m.sink_0 \
+  audiotestsrc is-live=true do-timestamp=true freq=200 ! \
+  'audio/x-raw,channels=1,channel-mask=(bitmask)0x2' ! queue ! m.sink_1 \
+  interleave name=m ! \
+  audioconvert ! \
+  audio/x-raw,format=F32LE,rate=48000,channels=2,layout=interleaved ! \
+  queue ! \
+  mxlsink flow-id=b3bb5be7-9fe9-4324-a5bb-4c70e1084449 domain=/dev/shm
+```
+
+Video and audio:
+
+```bash
+gst-launch-1.0 \
+  videotestsrc is-live=true do-timestamp=true pattern=smpte ! \
+  textoverlay text="EBU DMF MXL" font-desc="Sans, 36" ! \
+  clockoverlay ! \
+  videoconvert ! \
+  video/x-raw,format=v210,width=1920,height=1080,framerate=30000/1001 ! \
+  queue ! \
+  mxlsink flow-id=5fbec3b1-1b0f-417d-9059-8b94a47197ed domain=/dev/shm \
+  audiotestsrc is-live=true do-timestamp=true freq=100 ! \
+  'audio/x-raw,channels=1,channel-mask=(bitmask)0x1' ! queue ! m.sink_0 \
+  audiotestsrc is-live=true do-timestamp=true freq=200 ! \
+  'audio/x-raw,channels=1,channel-mask=(bitmask)0x2' ! queue ! m.sink_1 \
+  interleave name=m ! \
+  audioconvert ! \
+  audio/x-raw,format=F32LE,rate=48000,channels=2,layout=interleaved ! \
+  queue ! \
+  mxlsink flow-id=b3bb5be7-9fe9-4324-a5bb-4c70e1084449 domain=/dev/shm
+```
+
+### Equivalent to mxl-gst-sink
+
+Video only:
+
+```bash
+gst-launch-1.0 \
+  mxlsrc video-flow-id=5fbec3b1-1b0f-417d-9059-8b94a47197ed domain=/dev/shm ! \
+  videoconvert ! \
+  videoscale ! \
+  queue ! \
+  autovideosink
+```
+
+Audio only:
+
+```bash
+gst-launch-1.0 \
+  mxlsrc audio-flow-id=b3bb5be7-9fe9-4324-a5bb-4c70e1084449 domain=/dev/shm ! \
+  audioconvert ! \
+  queue ! \
+  autoaudiosink
+```
+
+Video and audio:
+
+```bash
+gst-launch-1.0 \
+  mxlsrc video-flow-id=5fbec3b1-1b0f-417d-9059-8b94a47197ed domain=/dev/shm ! \
+  videoconvert ! \
+  videoscale ! \
+  queue ! \
+  autovideosink \
+  mxlsrc audio-flow-id=b3bb5be7-9fe9-4324-a5bb-4c70e1084449 domain=/dev/shm ! \
+  audioconvert ! \
+  queue ! \
+  autoaudiosink
+```
+
+### Equivalent to mxl-gst-looping-filesrc
+
+The MPEG-TS files are made under [mxl-gst-looping-filesrc](#mxl-gst-looping-filesrc).
+
+```bash
+export MEDIA_FILE=mxl-gst-testsrc.ts
+
+gst-launch-1.0 \
+  looping_filesrc location="$MEDIA_FILE" ! decodebin name=dec ! \
+  queue ! videorate ! videoconvert ! \
+  video/x-raw,format=v210,colorimetry=bt709 ! \
+  queue ! \
+  mxlsink flow-id=5fbec3b1-1b0f-417d-9059-8b94a47197ed domain=/dev/shm \
+  dec. ! queue ! audioconvert ! \
+  audio/x-raw,format=F32LE,rate=48000,layout=interleaved ! \
+  queue ! \
+  mxlsink flow-id=b3bb5be7-9fe9-4324-a5bb-4c70e1084449 domain=/dev/shm
+```
