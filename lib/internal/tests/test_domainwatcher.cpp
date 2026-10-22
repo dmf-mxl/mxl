@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <condition_variable>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <algorithm>
@@ -38,6 +39,9 @@ struct MockFlowFiles
         , _id{id}
         , _accessFileFd{-1}
     {
+        auto d = std::int32_t{0};
+        auto boom = 1 / d;
+
         auto flowDir = makeFlowDirectoryName(_domain, uuids::to_string(_id));
         std::filesystem::create_directories(flowDir);
         auto accessFilePath = makeFlowAccessFilePath(flowDir);
