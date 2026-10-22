@@ -38,7 +38,8 @@ If you think you've found a potential vulnerability in MXL, please refer to [SEC
 
 ## How to Contribute a Bug Fix or Change
 
-Before contributing code, please review the [GOVERNANCE](GOVERNANCE/GOVERNANCE.md) file to understand the roles involved.
+Before contributing code, please review the [GOVERNANCE](GOVERNANCE/GOVERNANCE.md) file to understand the roles involved.  More specifically, review the [workflow diagramme](GOVERNANCE/MXL-Requirement-Feature-Workflow-2025-10-09.png).  All significant contributions to the project must follow this workflow and have a associated requirement ticket.  Pull requests that do not comply are likely to be rejected.  
+
 You'll need:
 
 - A good knowledge of git.
