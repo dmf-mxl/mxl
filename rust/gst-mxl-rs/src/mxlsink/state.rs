@@ -1,14 +1,16 @@
 // SPDX-FileCopyrightText: 2025-2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{collections::HashMap, process, str::FromStr};
+use std::{collections::HashMap, process};
 
+use crate::format::video;
 use crate::mxlsink::imp::CAT;
 use gst::StructureRef;
 use gst::prelude::*;
 use gst_audio::AudioInfo;
 use gstreamer as gst;
 use gstreamer_audio as gst_audio;
+use gstreamer_video as gst_video;
 use mxl::{
     FlowConfigInfo, GrainWriter, MxlInstance, SamplesWriter,
     flowdef::{
@@ -148,9 +150,11 @@ pub(crate) enum FlowState {
     Continuous(ContinuousState),
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub(crate) enum DiscreteFormat {
     Video,
+    /// `A422_10LE` frames of this layout, written as `video/v210a` grains.
+    VideoAlpha(Box<gst_video::VideoInfo>),
     Data,
 }
 
@@ -191,7 +195,9 @@ pub(crate) fn init_state_with_video(
 ) -> Result<(), gst::LoggableError> {
     let format = structure
         .get::<String>("format")
-        .unwrap_or_else(|_| "v210".to_string());
+        .unwrap_or_else(|_| video::GST_V210.to_string());
+    let media_type = video::media_type_for_gst_format(&format)
+        .ok_or_else(|| gst::loggable_error!(CAT, "Unsupported video format: {}", format))?;
     let width = structure.get::<i32>("width").unwrap_or(1920);
     let height = structure.get::<i32>("height").unwrap_or(1080);
     let framerate = structure
@@ -200,8 +206,30 @@ pub(crate) fn init_state_with_video(
     let interlace = structure
         .get::<String>("interlace-mode")
         .unwrap_or_else(|_| "progressive".to_string());
-    let interlace_mode =
-        InterlaceMode::from_str(interlace.as_str()).unwrap_or(InterlaceMode::Progressive);
+    if interlace != "progressive" {
+        return Err(gst::loggable_error!(
+            CAT,
+            "Interlaced video is not supported (interlace-mode={})",
+            interlace
+        ));
+    }
+    let interlace_mode = InterlaceMode::Progressive;
+    let discrete_format = if media_type == video::V210A_MEDIA_TYPE {
+        let frame_width = u32::try_from(width)
+            .map_err(|e| gst::loggable_error!(CAT, "Invalid width {}: {}", width, e))?;
+        let frame_height = u32::try_from(height)
+            .map_err(|e| gst::loggable_error!(CAT, "Invalid height {}: {}", height, e))?;
+        let info = gst_video::VideoInfo::builder(
+            gst_video::VideoFormat::A42210le,
+            frame_width,
+            frame_height,
+        )
+        .build()
+        .map_err(|e| gst::loggable_error!(CAT, "Invalid A422_10LE frame layout: {}", e))?;
+        DiscreteFormat::VideoAlpha(Box::new(info))
+    } else {
+        DiscreteFormat::Video
+    };
     let colorimetry = structure
         .get::<String>("colorimetry")
         .unwrap_or_else(|_| "BT709".to_string());
@@ -212,7 +240,7 @@ pub(crate) fn init_state_with_video(
     );
     let (label, description, tags) =
         resolve_flow_metadata(settings, default_name, default_group_hint("Video", element));
-    let flow_def_details = FlowDefVideo {
+    let mut flow_def_details = FlowDefVideo {
         grain_rate: Rate {
             numerator: framerate.numer(),
             denominator: framerate.denom(),
@@ -242,11 +270,25 @@ pub(crate) fn init_state_with_video(
             },
         ],
     };
+    if matches!(discrete_format, DiscreteFormat::VideoAlpha(_)) {
+        // The key plane, named "A" as in the NMOS flow schema.
+        flow_def_details.components.push(Component {
+            name: "A".into(),
+            width,
+            height,
+            bit_depth: 10,
+        });
+    }
     if let Some(prev_state) = &state.flow_state {
         return match prev_state {
             FlowState::Discrete(prev_discrete) => match &prev_discrete.flow_def {
                 DiscreteFlowDef::Video(prev_def_details)
-                    if prev_def_details == &flow_def_details =>
+                    if prev_def_details == &flow_def_details
+                        && matches!(
+                            (&prev_discrete.format, &discrete_format),
+                            (DiscreteFormat::Video, DiscreteFormat::Video)
+                                | (DiscreteFormat::VideoAlpha(_), DiscreteFormat::VideoAlpha(_))
+                        ) =>
                 {
                     trace!(RE_SET_CAPS_NO_CHANGE);
                     Ok(())
@@ -274,7 +316,7 @@ pub(crate) fn init_state_with_video(
         tags,
         label,
         parents: vec![],
-        media_type: format!("video/{}", format),
+        media_type: media_type.to_owned(),
         details: mxl::flowdef::FlowDefDetails::Video(flow_def_details.clone()),
     };
     let instance = &state.instance;
@@ -297,7 +339,7 @@ pub(crate) fn init_state_with_video(
         .to_grain_writer()
         .map_err(|e| gst::loggable_error!(CAT, "Failed to create grain writer: {}", e))?;
     state.flow_state = Some(FlowState::Discrete(DiscreteState {
-        format: DiscreteFormat::Video,
+        format: discrete_format,
         writer,
         flow_def: DiscreteFlowDef::Video(flow_def_details),
     }));
