@@ -47,8 +47,6 @@ namespace mxl::lib
         /// The vnode events that mean a reader touched a flow's access file.
         constexpr auto VNODE_EVENTS = static_cast<unsigned int>(NOTE_DELETE | NOTE_WRITE | NOTE_ATTRIB);
 
-        /// `kevent` names both a struct and a function, so the struct needs its own name
-        /// to be value-initialized as `auto name = Type{}`.
         using KEvent = struct kevent;
 #endif
     }
@@ -241,10 +239,6 @@ namespace mxl::lib
                 existingWd = ::open(record.fileName.c_str(), O_EVTONLY | O_CLOEXEC);
                 if (existingWd != -1)
                 {
-                    // Register the file with the kqueue now, as inotify_add_watch does on Linux.
-                    // setWatch() registers it again, but only after the watcher thread returns
-                    // from kevent(), which can take up to 250 ms. A read in that window would
-                    // not update lastReadTime.
                     auto change = KEvent{};
                     EV_SET(&change,
                         existingWd,
