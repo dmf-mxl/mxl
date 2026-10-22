@@ -39,3 +39,7 @@ suite for broad changes such as dependency updates. Report which checks ran,
 their results, and any failures or unavailable tools; do not claim checks passed
 without running them. Documentation-only edits need a content and diff review,
 not an unrelated rebuild.
+
+## Significant changes
+
+Significant changes to the project must be first discussed with the MXL requirement council and have an associated requirement ticket in this GitHub repository : https://github.com/dmf-mxl/mxl-requirements.  

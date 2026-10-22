@@ -130,7 +130,9 @@ Calls can be recorded and kept for a limited period of time as AI summarisation 
 
 # Project Workflow
 
-The workflow followed by the RC and TSC to manage Requirements, create Features, Roadmpap, bug fixes and improvements is documented here: [MXL Requirement-Feature Workflow](MXL-Requirement-Feature-Workflow-2025-10-09.png)
+The workflow followed by the RC and TSC to manage requirements, create features, roadmap, bug fixes and improvements is documented here: [MXL Requirement-Feature Workflow](MXL-Requirement-Feature-Workflow-2025-10-09.png)
+
+All significant contributions to the project must follow this workflow and have a associated requirement ticket.  Pull requests that do not comply are likely to be rejected.    
 
 # Definition of Done
 The Definition of Done for Requirements, Features and BUg fixes as described in the [Project Workflow](#project-workflow) is maintained [here](DoD.md)
