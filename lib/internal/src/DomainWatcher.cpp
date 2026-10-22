@@ -42,6 +42,15 @@ namespace mxl::lib
         {
             std::atomic_ref{info.runtime.lastReadTime}.store(time, std::memory_order_release);
         }
+
+#ifdef __APPLE__
+        /// The vnode events that mean a reader touched a flow's access file.
+        constexpr auto VNODE_EVENTS = static_cast<unsigned int>(NOTE_DELETE | NOTE_WRITE | NOTE_ATTRIB);
+
+        /// `kevent` names both a struct and a function, so the struct needs its own name
+        /// to be value-initialized as `auto name = Type{}`.
+        using KEvent = struct kevent;
+#endif
     }
 
     DomainWatcher::DomainWatcher(std::filesystem::path const& in_domain)
@@ -230,6 +239,28 @@ namespace mxl::lib
 
 #ifdef __APPLE__
                 existingWd = ::open(record.fileName.c_str(), O_EVTONLY | O_CLOEXEC);
+                if (existingWd != -1)
+                {
+                    // Register the file with the kqueue now, as inotify_add_watch does on Linux.
+                    // setWatch() registers it again, but only after the watcher thread returns
+                    // from kevent(), which can take up to 250 ms. A read in that window would
+                    // not update lastReadTime.
+                    auto change = KEvent{};
+                    EV_SET(&change,
+                        existingWd,
+                        EVFILT_VNODE,
+                        EV_ADD | EV_CLEAR,
+                        VNODE_EVENTS,
+                        0,
+                        std::bit_cast<void*>(static_cast<std::uintptr_t>(existingWd)));
+                    if (::kevent(_kq, &change, 1, nullptr, 0, nullptr) == -1)
+                    {
+                        auto const error = errno;
+                        ::close(existingWd);
+                        errno = error;
+                        existingWd = -1;
+                    }
+                }
 #elif defined __linux__
                 // if not found, add the watch and add it to the maps
                 existingWd = ::inotify_add_watch(_inotifyFd, record.fileName.c_str(), IN_ACCESS | IN_ATTRIB);
@@ -394,8 +425,6 @@ namespace mxl::lib
         auto lock = std::scoped_lock{_mutex};
 
         /* Set up a list of events to monitor. */
-        constexpr unsigned int vnodeEvents = NOTE_DELETE | NOTE_WRITE | NOTE_ATTRIB;
-
         _eventsToMonitor.resize(_watches.size() + 1);
         _eventData.resize(_watches.size() + 1);
 
@@ -404,7 +433,7 @@ namespace mxl::lib
         for (auto const& [wd, rec] : _watches)
         {
             EV_SET(
-                &_eventsToMonitor[index], wd, EVFILT_VNODE, EV_ADD | EV_CLEAR, vnodeEvents, 0, std::bit_cast<void*>(static_cast<std::uintptr_t>(wd)));
+                &_eventsToMonitor[index], wd, EVFILT_VNODE, EV_ADD | EV_CLEAR, VNODE_EVENTS, 0, std::bit_cast<void*>(static_cast<std::uintptr_t>(wd)));
             index++;
         }
 
