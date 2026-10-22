@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2025-2026 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+use gstreamer_video as gst_video;
 use mxl::{FlowReader, GrainReader, MxlInstance, Rational, SamplesReader};
 
 pub(crate) const DEFAULT_FLOW_ID: &str = "";
@@ -54,9 +55,11 @@ pub enum FlowState {
     Continuous(ContinuousState),
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub enum DiscreteFormat {
     Video,
+    /// A `video/v210a` flow, output as `A422_10LE` frames of this layout.
+    VideoAlpha(Box<gst_video::VideoInfo>),
     Data,
 }
 

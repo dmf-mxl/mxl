@@ -3,3 +3,4 @@
 
 //! Buffer and grain **layout** helpers.
 pub mod data;
+pub mod video;
