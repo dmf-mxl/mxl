@@ -44,7 +44,6 @@ namespace mxl::lib
         }
 
 #ifdef __APPLE__
-        /// The vnode events that mean a reader touched a flow's access file.
         constexpr auto VNODE_EVENTS = static_cast<unsigned int>(NOTE_DELETE | NOTE_WRITE | NOTE_ATTRIB);
 
         using KEvent = struct kevent;
