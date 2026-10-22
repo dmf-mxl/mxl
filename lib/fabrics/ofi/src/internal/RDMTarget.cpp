@@ -96,7 +96,9 @@ namespace mxl::lib::fabrics::ofi
     }
 
     void RDMTarget::shutdown()
-    {}
+    {
+        // no connection, no shutdown...
+    }
 
     template<QueueReadMode queueReadMode>
     std::optional<Target::ReadResult> RDMTarget::readNext(std::chrono::steady_clock::duration timeout)
