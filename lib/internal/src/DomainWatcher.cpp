@@ -222,7 +222,7 @@ namespace mxl::lib
             // Check if this flow is already being watched
             for (auto const& [wd, rec] : _watches)
             {
-                if (rec == record)
+                if (rec.id == record.id)
                 {
                     existingWd = wd;
                     record.flowData = rec.flowData;
