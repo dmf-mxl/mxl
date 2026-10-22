@@ -38,6 +38,12 @@
       "width": 960,
       "height": 1080,
       "bit_depth": 10
+    },
+    {
+      "name": "A",
+      "width": 1920,
+      "height": 1080,
+      "bit_depth": 10
     }
   ]
 }

@@ -29,6 +29,7 @@ use std::sync::Mutex;
 use std::sync::MutexGuard;
 
 use crate::clock::ClockOffsetExt;
+use crate::format::video;
 use crate::mxlsink;
 use crate::mxlsink::state::Context;
 use crate::mxlsink::state::DEFAULT_DOMAIN;
@@ -237,7 +238,10 @@ impl ElementImpl for MxlSink {
 
                     caps_mut.append(
                         gst::Caps::builder("video/x-raw")
-                            .field("format", "v210")
+                            .field(
+                                "format",
+                                gst::List::new([video::GST_V210, video::GST_A422_10LE]),
+                            )
                             .build(),
                     );
                     for ch in 1..64 {
