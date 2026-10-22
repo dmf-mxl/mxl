@@ -4,6 +4,7 @@
 use std::time::Duration;
 
 use crate::format;
+use crate::format::video;
 use crate::mxlsrc::imp::{CreateState, MxlSrc};
 use crate::mxlsrc::mxl_helper::pts_subtrahend;
 use crate::mxlsrc::state::{DiscreteFormat, FlowState, State};
@@ -11,6 +12,7 @@ use crate::mxlsrc::timing::{
     ReadStep, discrete_grain_count, flow_head_index, index_period, pts_for_index, resolve_read_step,
 };
 use gstreamer as gst;
+use gstreamer_video::{self as gst_video, VideoFrameExt};
 use tracing::trace;
 
 const GET_GRAIN_TIMEOUT: Duration = Duration::from_secs(5);
@@ -31,7 +33,7 @@ pub(crate) fn create_discrete(
     let head = flow_head_index(&discrete_state.grain_reader)?;
     let grain_count = discrete_grain_count(&discrete_state.grain_reader)?;
     let media = match discrete_state.format {
-        DiscreteFormat::Video => "video",
+        DiscreteFormat::Video | DiscreteFormat::VideoAlpha(_) => "video",
         DiscreteFormat::Data => "data",
     };
 
@@ -97,8 +99,9 @@ pub(crate) fn create_discrete(
     let deferred_discont = std::mem::take(&mut discrete_state.next_discont);
     let is_discont = jumped || slot_discont || deferred_discont;
 
-    let mut buffer = match discrete_state.format {
+    let mut buffer = match &discrete_state.format {
         DiscreteFormat::Video => gst::Buffer::from_slice(grain_data.payload.to_vec()),
+        DiscreteFormat::VideoAlpha(info) => a422_10le_buffer_from_grain(grain_data.payload, info)?,
         DiscreteFormat::Data => {
             let st2038 = format::data::gst_st2038_from_mxl_smpte291_grain(grain_data.payload)
                 .map_err(|_| gst::FlowError::Error)?;
@@ -117,4 +120,39 @@ pub(crate) fn create_discrete(
     trace!(pts = ?buffer.pts(), index = read_index, "Produced {media} buffer");
     discrete_state.index = read_index + 1;
     Ok(CreateState::DataCreated(buffer))
+}
+
+/// Copies a `video/v210a` grain into a new `A422_10LE` buffer laid out as `info`.
+fn a422_10le_buffer_from_grain(
+    grain: &[u8],
+    info: &gst_video::VideoInfo,
+) -> Result<gst::Buffer, gst::FlowError> {
+    let mut buffer = gst::Buffer::with_size(info.size()).map_err(|_| gst::FlowError::Error)?;
+    {
+        let buffer = buffer.get_mut().ok_or(gst::FlowError::Error)?;
+        let mut frame = gst_video::VideoFrameRef::from_buffer_ref_writable(buffer, info)
+            .map_err(|_| gst::FlowError::Error)?;
+        let stride = |i: usize| {
+            frame
+                .plane_stride()
+                .get(i)
+                .and_then(|&s| usize::try_from(s).ok())
+                .ok_or(gst::FlowError::Error)
+        };
+        let [sy, su, sv, sa] = [stride(0)?, stride(1)?, stride(2)?, stride(3)?];
+        let [y, u, v, a] = frame.planes_data_mut();
+        let mut planes = [(y, sy), (u, su), (v, sv), (a, sa)]
+            .map(|(data, stride)| video::PlaneMut { data, stride });
+        video::gst_a422_10le_from_mxl_v210a_grain(
+            grain,
+            info.width() as usize,
+            info.height() as usize,
+            &mut planes,
+        )
+        .map_err(|err| {
+            trace!("v210a grain does not match the flow: {err}");
+            gst::FlowError::Error
+        })?;
+    }
+    Ok(buffer)
 }
