@@ -39,7 +39,7 @@ If you think you've found a potential vulnerability in MXL, please refer to [SEC
 ## How to Contribute a Bug Fix or Change
 
 Before contributing code, please review the [GOVERNANCE](GOVERNANCE/GOVERNANCE.md) file to understand the roles involved.
-Review the [workflow diagram](GOVERNANCE/MXL-Requirement-Feature-Workflow.md).
+Review the [workflow diagram](GOVERNANCE/MXL-Requirement-Feature-Workflow-2025-10-09.png).
 All significant contributions to the project must follow this workflow and have an associated requirement ticket.
 
 You'll need:
