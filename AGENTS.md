@@ -42,4 +42,4 @@ not an unrelated rebuild.
 
 ## Significant changes
 
-Significant changes to the project must be first discussed with the MXL requirement council and have an associated requirement ticket in this GitHub repository : https://github.com/dmf-mxl/mxl-requirements.  
+Significant changes to the project must first be discussed with the MXL Requirements Council and have an associated requirement ticket in this GitHub repository: https://github.com/dmf-mxl/mxl-requirements.
