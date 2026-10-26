@@ -322,7 +322,7 @@ You can run the full example with:
   --audio-options-file audio_options.json
 ```
 
-The same test pattern and tones are written with the `mxlsink` element in [Equivalent to mxl-gst-testsrc](#equivalent-to-mxl-gst-testsrc).
+The same test pattern and tones are written to MXL flows using the `mxlsink` element in [Equivalent to mxl-gst-testsrc](#equivalent-to-mxl-gst-testsrc).
 
 ## mxl-gst-sink
 
@@ -421,22 +421,22 @@ OPTIONS:
                               The MXL audio flow id
 ```
 
-`looping_filesrc` reads an MPEG-TS file and effectively rewinds it to the start every time it reaches the end. A seamless loop needs closed GOPs and a duration that is a whole number of those GOPs and of the audio frames. The pipelines below create files that meet those constraints.
+`looping_filesrc` reads an MPEG-TS file and effectively rewinds it to the start every time it reaches the end. It cannot guarantee seamless playback, because the MPEG-TS timestamps do not meet at the rewind.
 
-Each file is 300 frames at 30000/1001, which is 10.01 seconds: ten closed GOPs of 30 frames, and 1001 Opus frames of 10 ms (480480 samples at 48 kHz). The picture in the file is H.265 main profile, 8-bit 4:2:0. Playback converts it to `v210` at 1920×1080, 30000/1001, matching `lib/tests/data/v210_flow.json`. The audio decodes to 48 kHz stereo `F32LE`, matching `lib/tests/data/audio_flow.json`.
+The pipelines below each create one file. Each file is 300 frames at 30000/1001, which is 10.01 seconds: ten closed GOPs of 30 frames, and 1001 Opus frames of 10 ms (480480 samples at 48 kHz). The picture in the file is H.265 main profile, 8-bit 4:2:0. Playback converts it to `v210` at 1920×1080, 30000/1001, matching `lib/tests/data/v210_flow.json`. The audio decodes to 48 kHz stereo `F32LE`, matching `lib/tests/data/audio_flow.json`.
 
-The same files are written with the `mxlsink` element in [Equivalent to mxl-gst-looping-filesrc](#equivalent-to-mxl-gst-looping-filesrc).
+The same files are written to MXL flows using the `mxlsink` element in [Equivalent to mxl-gst-looping-filesrc](#equivalent-to-mxl-gst-looping-filesrc).
 
 #### Test pattern
 
-The same bars, label, clock, and tones as `mxl-gst-testsrc`. A 100 Hz tone is on the first channel and a 200 Hz tone is on the second. `clockoverlay` draws the pipeline time on the bars, so the rewind is visible.
+The same bars, label, and tones as `mxl-gst-testsrc`. A 100 Hz tone is on the first channel and a 200 Hz tone is on the second. `timeoverlay` draws each buffer's timestamp on the bars, so the rewind is visible.
 
 ```bash
 gst-launch-1.0 -e \
   videotestsrc is-live=false num-buffers=300 pattern=smpte ! \
   video/x-raw,format=I420,width=1920,height=1080,framerate=30000/1001,colorimetry=bt709 ! \
   textoverlay text="EBU DMF MXL" font-desc="Sans, 36" ! \
-  clockoverlay ! \
+  timeoverlay ! \
   x265enc key-int-max=30 speed-preset=ultrafast tune=zerolatency bitrate=8000 \
     option-string="keyint=30:min-keyint=30:scenecut=0:open-gop=0:bframes=0" ! \
   h265parse ! queue ! mux. \
@@ -452,7 +452,7 @@ gst-launch-1.0 -e \
 
 #### A/V sync
 
-`avsyncvideotestsrc` and `avsyncaudiotestsrc` come from `libgstavsynctest.so`, in the same `GST_PLUGIN_PATH` directory as `libgstmxl.so`. The default pip interval is 1 second on both. The bar is at the centre of the frame on each pip, and the tone is centred on that same instant. Set `pip-interval` to the same value on each source if you change it. The file stores the sweeping bar and the tone pip. The CEA-708 caption and the frame-index ancillary stay on the raw video buffers from `avsyncvideotestsrc`.
+`avsyncvideotestsrc` and `avsyncaudiotestsrc` come from `libgstavsynctest.so`, in the same `GST_PLUGIN_PATH` directory as `libgstmxl.so`. The default pip interval is 1 second on both. The bar is at the centre of the frame on each pip, and the tone is centred on that same instant. Set `pip-interval` to the same value on each source if you change it. The file stores the sweeping bar and the tone pip. It does not store the CEA-708 caption or the frame-index ancillary.
 
 ```bash
 gst-launch-1.0 -e \
@@ -567,10 +567,12 @@ gst-launch-1.0 \
 
 ### Equivalent to mxl-gst-looping-filesrc
 
-The MPEG-TS files are made under [mxl-gst-looping-filesrc](#mxl-gst-looping-filesrc).
+The MPEG-TS files are made under [mxl-gst-looping-filesrc](#mxl-gst-looping-filesrc). `decodebin` uses `nvh265dec` when GStreamer's NVDEC H.265 decoder is available, and a software H.265 decoder otherwise.
 
 ```bash
 export MEDIA_FILE=mxl-gst-testsrc.ts
+# DeepStream's nvv4l2decoder outputs memory:NVMM, which videoconvert cannot accept.
+export GST_PLUGIN_FEATURE_RANK=nvv4l2decoder:NONE
 
 gst-launch-1.0 \
   looping_filesrc location="$MEDIA_FILE" ! decodebin name=dec ! \
