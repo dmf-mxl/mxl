@@ -1,0 +1,51 @@
+# SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+include(GNUInstallDirs)
+
+add_executable(mxl-video-probe)
+set_target_properties(mxl-video-probe
+        PROPERTIES
+            POSITION_INDEPENDENT_CODE    ON
+            VISIBILITY_INLINES_HIDDEN    ON
+            C_VISIBILITY_PRESET          hidden
+            CXX_VISIBILITY_PRESET        hidden
+            C_EXTENSIONS                 OFF
+            CXX_EXTENSIONS               OFF
+            C_STANDARD                   ${MXL_C_STANDARD}
+            CXX_STANDARD                 ${MXL_CXX_STANDARD}
+    )
+target_sources(mxl-video-probe
+        PRIVATE
+            main.cpp
+    )
+
+if (NOT TARGET CLI11::CLI11)
+    find_package(CLI11 CONFIG REQUIRED)
+endif ()
+
+if (NOT TARGET fmt::fmt)
+    find_package(fmt CONFIG REQUIRED)
+endif()
+
+if (NOT TARGET ada::ada)
+    find_package(ada CONFIG REQUIRED)
+endif ()
+
+target_link_libraries(mxl-video-probe
+        PRIVATE
+            mxl
+            ada::ada
+            CLI11::CLI11
+            fmt::fmt
+    )
+
+set_target_properties(mxl-video-probe
+        PROPERTIES
+            INSTALL_RPATH "${MXL_TOOLS_INSTALL_RPATH}"
+    )
+
+install(TARGETS mxl-video-probe
+        COMPONENT ${PROJECT_NAME}-tools
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )

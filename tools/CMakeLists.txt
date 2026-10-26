@@ -16,6 +16,7 @@ endif()
 
 add_subdirectory(mxl-info)
 add_subdirectory(mxl-data-probe)
+add_subdirectory(mxl-video-probe)
 add_subdirectory(mxl-gst)
 
 if (MXL_ENABLE_FABRICS_OFI)
