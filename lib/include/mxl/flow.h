@@ -344,6 +344,18 @@ extern "C"
     MXL_EXPORT
     mxlStatus mxlReleaseFlowWriter(mxlInstance instance, mxlFlowWriter writer);
 
+    /**
+     * Open a reader for an existing flow.
+     * \param[in] instance The mxl instance created using mxlCreateInstance
+     * \param[in] flowId The id of the flow to read, as a UUID string.
+     * \param[in] options (optional) Additional options, can be NULL
+     * \param[out] reader A pointer to a memory location where the created flow reader will be written.
+     * \retval MXL_STATUS_OK The reader was created.
+     * \retval MXL_ERR_INVALID_ARG The instance, the flow id or the reader pointer is not valid.
+     * \retval MXL_ERR_FLOW_NOT_FOUND There is no flow with this id in the domain.
+     * \retval MXL_ERR_PERMISSION_DENIED The files of the flow cannot be accessed with the permissions of the process.
+     * \retval MXL_ERR_UNKNOWN Any other failure.
+     */
     MXL_EXPORT
     mxlStatus mxlCreateFlowReader(mxlInstance instance, char const* flowId, char const* options, mxlFlowReader* reader);
 

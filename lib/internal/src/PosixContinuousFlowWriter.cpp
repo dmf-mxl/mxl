@@ -4,7 +4,9 @@
 #include "PosixContinuousFlowWriter.hpp"
 #include <cstring>
 #include <algorithm>
+#include <filesystem>
 #include <stdexcept>
+#include <system_error>
 #include <mxl/time.h>
 #include "mxl-internal/Sync.hpp"
 
@@ -25,7 +27,8 @@ namespace mxl::lib
     {
         if (!checkPermissions())
         {
-            throw std::runtime_error{"Flow is not accessible due to insufficient permissions."};
+            throw std::filesystem::filesystem_error{
+                "Flow is not accessible due to insufficient permissions.", manager.getDomain(), std::make_error_code(std::errc::permission_denied)};
         }
         if (_flowData)
         {

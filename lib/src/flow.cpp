@@ -153,12 +153,17 @@ mxlStatus mxlCreateFlowReader(mxlInstance instance, char const* flowId, char con
     }
     catch (std::filesystem::filesystem_error const& e)
     {
-        if (e.code().value() == ENOENT)
+        auto const code = e.code();
+        if (code.value() == ENOENT)
         {
             return MXL_ERR_FLOW_NOT_FOUND;
         }
 
         MXL_ERROR("Failed to create flow reader: {}", e.what());
+        if ((code == std::errc::permission_denied) || (code == std::errc::operation_not_permitted))
+        {
+            return MXL_ERR_PERMISSION_DENIED;
+        }
         return MXL_ERR_UNKNOWN;
     }
     catch (...)

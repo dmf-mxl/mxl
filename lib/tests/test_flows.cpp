@@ -1002,6 +1002,63 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlCreateFlow: unwri
     remove_all(domain);
 }
 
+// Verify that a reader that may not open the files of a flow gets a proper error
+// code. The reader uses an instance of its own, as a reading process would.
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlCreateFlowReader: unreadable flow directory", "[mxl flows]")
+{
+    auto const opts = "{}";
+    auto const instance = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instance != nullptr);
+    auto const readerInstance = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(readerInstance != nullptr);
+
+    auto const flowDef = mxl::tests::readFile("data/v210_flow.json");
+    mxlFlowWriter writer = nullptr;
+    auto configInfo = mxlFlowConfigInfo{};
+    REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), opts, &writer, &configInfo, nullptr) == MXL_STATUS_OK);
+    auto const flowId = uuids::to_string(configInfo.common.id);
+    auto const flowDirectory = mxl::lib::makeFlowDirectoryName(domain, flowId);
+
+    // Restore the permissions before checking, so the domain can be removed whatever the outcome.
+    permissions(flowDirectory, std::filesystem::perms::owner_read | std::filesystem::perms::owner_exec, std::filesystem::perm_options::remove);
+    mxlFlowReader reader = nullptr;
+    auto const status = mxlCreateFlowReader(readerInstance, flowId.c_str(), "", &reader);
+    permissions(flowDirectory, std::filesystem::perms::owner_all, std::filesystem::perm_options::add);
+    REQUIRE(status == MXL_ERR_PERMISSION_DENIED);
+
+    REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(readerInstance) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+}
+
+// Verify that a reader of a continuous flow whose descriptor it may not read gets
+// a proper error code.
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlCreateFlowReader: unreadable continuous flow descriptor", "[mxl flows]")
+{
+    auto const opts = "{}";
+    auto const instance = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instance != nullptr);
+    auto const readerInstance = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(readerInstance != nullptr);
+
+    auto const flowDef = mxl::tests::readFile("data/audio_flow.json");
+    mxlFlowWriter writer = nullptr;
+    auto configInfo = mxlFlowConfigInfo{};
+    REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), opts, &writer, &configInfo, nullptr) == MXL_STATUS_OK);
+    auto const flowId = uuids::to_string(configInfo.common.id);
+    auto const flowDescriptor = mxl::lib::makeFlowDescriptorFilePath(domain, flowId);
+
+    permissions(flowDescriptor, std::filesystem::perms::owner_read, std::filesystem::perm_options::remove);
+    mxlFlowReader reader = nullptr;
+    auto const status = mxlCreateFlowReader(readerInstance, flowId.c_str(), "", &reader);
+    permissions(flowDescriptor, std::filesystem::perms::owner_read, std::filesystem::perm_options::add);
+    REQUIRE(status == MXL_ERR_PERMISSION_DENIED);
+
+    REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(readerInstance) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+}
+
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlFlowWriterCommitSamples should notify the reader", "[mxl flows][futex]")
 {
     constexpr auto const startIndex = 1000;
