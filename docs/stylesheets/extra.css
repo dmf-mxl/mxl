@@ -58,3 +58,39 @@
 .md-nav__button.md-logo svg {
   display: none;
 }
+
+/* Important and Caution are not built-in types.
+   Use the example purple and the danger red. */
+.md-typeset .admonition.important,
+.md-typeset details.important {
+  background-color: #7c4dff1a;
+}
+
+.md-typeset .important > .admonition-title:before,
+.md-typeset .important > summary:before {
+  background-color: #7c4dff;
+  -webkit-mask-image: var(--md-admonition-icon--important);
+  mask-image: var(--md-admonition-icon--important);
+}
+
+.md-typeset .important > .admonition-title:after,
+.md-typeset .important > summary:after {
+  color: #7c4dff;
+}
+
+.md-typeset .admonition.caution,
+.md-typeset details.caution {
+  background-color: #ff17441a;
+}
+
+.md-typeset .caution > .admonition-title:before,
+.md-typeset .caution > summary:before {
+  background-color: #ff1744;
+  -webkit-mask-image: var(--md-admonition-icon--caution);
+  mask-image: var(--md-admonition-icon--caution);
+}
+
+.md-typeset .caution > .admonition-title:after,
+.md-typeset .caution > summary:after {
+  color: #ff1744;
+}

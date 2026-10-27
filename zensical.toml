@@ -98,6 +98,11 @@ custom_fences = [
 [project.markdown_extensions.pymdownx.arithmatex]
 generic = true
 
+# Render GitHub alert blockquotes (`> [!NOTE]` and the other four markers)
+# as admonitions. The marker must be uppercase.
+[project.markdown_extensions.pymdownx.quotes]
+callouts = true
+
 # ----------------------------------------------------------------------------
 # Section for configuring theme options
 # ----------------------------------------------------------------------------
@@ -297,6 +302,12 @@ features = [
 # ----------------------------------------------------------------------------
 #[project.theme.icon]
 #logo = "lucide/smile"
+
+# [!IMPORTANT] and [!CAUTION] are not built-in admonition types. These line
+# icons are the theme's equivalents of GitHub's report and stop marks.
+[project.theme.icon.admonition]
+important = "lucide/message-square-warning"
+caution = "lucide/octagon-alert"
 
 # ----------------------------------------------------------------------------
 # In the "font" subsection you can configure the fonts used. By default, fonts
