@@ -61,6 +61,10 @@ Copyright &copy; 2026 Contributors to the Media eXchange Layer project.
 # Read more: https://zensical.org/docs/setup/navigation/
 # nav = []
 
+# The sidebar order lives in docs/nav.md. The literate-nav plugin reads
+# that file. The leading slash limits the exclusion to that file.
+exclude_docs = "/nav.md"
+plugins.literate-nav.nav_file = "nav.md"
 
 # With the "extra_css" option you can add your own CSS styling to customize
 # your Zensical project according to your needs. You can add any number of
@@ -71,6 +75,9 @@ Copyright &copy; 2026 Contributors to the Media eXchange Layer project.
 # Read more: https://zensical.org/docs/customization/#additional-css
 #
 #extra_css = ["stylesheets/extra.css"]
+extra_css = [
+    "stylesheets/extra.css",
+]
 
 # With the `extra_javascript` option you can add your own JavaScript to your
 # project to customize the behavior according to your needs.
@@ -84,10 +91,6 @@ extra_javascript = [
     "javascripts/mermaid.js",
     "javascripts/mathjax.js",
     "https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"
-]
-
-extra_css = [
-    "stylesheets/extra.css",
 ]
 
 [project.markdown_extensions.pymdownx.superfences]
