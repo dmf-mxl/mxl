@@ -39,6 +39,7 @@ endif ()
 target_link_libraries(mxl-data-probe
         PRIVATE
             mxl
+            mxl-tools-common
             ada::ada
             CLI11::CLI11
             fmt::fmt

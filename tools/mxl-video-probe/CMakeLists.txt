@@ -35,6 +35,7 @@ endif ()
 target_link_libraries(mxl-video-probe
         PRIVATE
             mxl
+            mxl-tools-common
             ada::ada
             CLI11::CLI11
             fmt::fmt
