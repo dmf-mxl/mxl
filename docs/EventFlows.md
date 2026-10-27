@@ -1,7 +1,7 @@
 <!-- SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project. -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-# Event flows
+# Event Flows
 
 An event flow (`MXL_DATA_FORMAT_EVENT`) carries non-periodic, variable size timed events.  An event flow ring buffer behaves like a double ended queue where timing information is carried in the payload itself.  Each ring buffer entry contains either a complete event or a fragment of a large event whose payload is fragmented across multiple events.  Event flows enable, amongst other things, bit accurate round trip of SMPTE ST 2110-41 packets (SMPTE ST 2110-41 RX -> MXL Write -> MXL Read -> SMPTE ST 2110-41 TX).
 

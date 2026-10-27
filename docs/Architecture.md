@@ -289,7 +289,7 @@ while (running)
 
 ## Events ring buffers
 
-Documentation for the events ring buffers is available in [event-flows.md](event-flows.md)
+Documentation for the events ring buffers is available in [Event Flows](EventFlows.md)
 
 # Grain formats
 

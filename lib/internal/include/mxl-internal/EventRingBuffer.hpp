@@ -42,7 +42,7 @@ namespace mxl::lib
      * The mapping must outlive this view and all calls through it.
      *
      * Inspired by vt-tv/lockfree_ipc_ringbuffer revision
-     * ffd97a3cb0162109920af04408b54c2703aa9e4e; see docs/event-flows.md.
+     * ffd97a3cb0162109920af04408b54c2703aa9e4e; see docs/EventFlows.md.
      */
     class EventRingBuffer
     {
