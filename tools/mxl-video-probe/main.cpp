@@ -112,32 +112,37 @@ namespace
         ::mxlFlowReader _reader; ///< Owned reader handle.
     };
 
-    /// Compare complete video grains with reference frames and report delivery rate, latency and jitter.
+    /// Inspect complete video grains and optionally compare their payloads with reference frames.
     /// \param domain Directory containing the MXL domain.
     /// \param flowId Flow identifier to read.
-    /// \param referencePath Raw file containing a repeating sequence of complete frames.
+    /// \param referencePath Raw file containing a repeating sequence of complete frames, or empty to skip payload comparison.
     /// \param count Number of frames to read, at least 60.
     /// \param timeoutNs Maximum wait per grain in nanoseconds.
     /// \throws std::runtime_error If the reference, flow, read or timestamp conversion is invalid.
-    /// \return EXIT_SUCCESS if bytes, order, grain indices and measured rate pass; EXIT_FAILURE otherwise.
+    /// \return EXIT_SUCCESS if grain validity, measured rate and any enabled payload checks pass; EXIT_FAILURE otherwise.
     int verifyVideoFlow(std::string const& domain, std::string const& flowId, std::string const& referencePath, std::uint64_t count,
         std::uint64_t timeoutNs)
     {
-        auto file = std::ifstream{referencePath, std::ios::binary | std::ios::ate};
-        if (!file)
+        auto const verifyPayload = !referencePath.empty();
+        auto reference = std::vector<std::uint8_t>{};
+        if (verifyPayload)
         {
-            throw std::runtime_error{"Failed to open reference frame file."};
-        }
-        auto const fileSize = static_cast<std::streamoff>(file.tellg());
-        if ((fileSize <= 0) || (fileSize > std::numeric_limits<std::streamsize>::max()))
-        {
-            throw std::runtime_error{"Reference file must contain complete frames."};
-        }
-        auto reference = std::vector<std::uint8_t>(static_cast<std::size_t>(fileSize));
-        file.seekg(0);
-        if (!file.read(reinterpret_cast<char*>(reference.data()), static_cast<std::streamsize>(reference.size())))
-        {
-            throw std::runtime_error{"Failed to read reference frame file."};
+            auto file = std::ifstream{referencePath, std::ios::binary | std::ios::ate};
+            if (!file)
+            {
+                throw std::runtime_error{"Failed to open reference frame file."};
+            }
+            auto const fileSize = static_cast<std::streamoff>(file.tellg());
+            if ((fileSize <= 0) || (fileSize > std::numeric_limits<std::streamsize>::max()))
+            {
+                throw std::runtime_error{"Reference file must contain complete frames."};
+            }
+            reference.resize(static_cast<std::size_t>(fileSize));
+            file.seekg(0);
+            if (!file.read(reinterpret_cast<char*>(reference.data()), static_cast<std::streamsize>(reference.size())))
+            {
+                throw std::runtime_error{"Failed to read reference frame file."};
+            }
         }
         auto instance = ScopedMxlInstance{domain};
         auto reader = ScopedFlowReader{instance.get(), flowId};
@@ -195,7 +200,8 @@ namespace
             minMs = std::min(minMs, latencyMs);
             maxMs = std::max(maxMs, latencyMs);
             meanMs += (latencyMs - meanMs) / static_cast<double>(n + 1);
-            if ((grain.index != index) || (grain.flags & MXL_GRAIN_FLAG_INVALID) || (grain.validSlices != grain.totalSlices))
+            if ((grain.index != index) || (grain.flags & MXL_GRAIN_FLAG_INVALID) || (grain.validSlices != grain.totalSlices) ||
+                (grain.grainSize == 0) || (payload == nullptr) || ((frameSize != 0) && (grain.grainSize != frameSize)))
             {
                 ++grainErrors;
                 expectedFrames.clear();
@@ -204,20 +210,21 @@ namespace
             if (frameSize == 0)
             {
                 frameSize = grain.grainSize;
-                if ((frameSize == 0) || (reference.size() % frameSize != 0))
+                if (verifyPayload)
                 {
-                    throw std::runtime_error{"Reference file must contain complete frames matching the flow's grain size."};
-                }
-                referenceCount = reference.size() / frameSize;
-                if ((referenceCount > 1) && (std::memcmp(reference.data(), reference.data() + frameSize, reference.size() - frameSize) == 0))
-                {
-                    referenceCount = 1;
+                    if (reference.size() % frameSize != 0)
+                    {
+                        throw std::runtime_error{"Reference file must contain complete frames matching the flow's grain size."};
+                    }
+                    referenceCount = reference.size() / frameSize;
+                    if ((referenceCount > 1) && (std::memcmp(reference.data(), reference.data() + frameSize, reference.size() - frameSize) == 0))
+                    {
+                        referenceCount = 1;
+                    }
                 }
             }
-            if ((grain.grainSize != frameSize) || (payload == nullptr))
+            if (!verifyPayload)
             {
-                ++byteErrors;
-                expectedFrames.clear();
                 continue;
             }
             nextFrames.clear();
@@ -254,19 +261,20 @@ namespace
         auto const expectedSpan = static_cast<double>(count - 1) * rate.denominator / rate.numerator;
         auto const tolerance = expectedSpan * 0.01;
         auto const rateOk = (span > 0) && (span >= expectedSpan - tolerance) && (span <= expectedSpan + tolerance);
-        std::cout << fmt::format("frames_checked={} fps={:.2f} byte_errors={} order_errors={} grain_errors={} rate_ok={} "
+        std::cout << fmt::format("frames_checked={} fps={:.2f} payload_check={} byte_errors={} order_errors={} grain_errors={} rate_ok={} "
                                  "latency_min_ms={:.3f} latency_mean_ms={:.3f} latency_max_ms={:.3f} jitter_ms={:.3f}\n",
             count,
             (span > 0) ? (count - 1) / span : 0.0,
-            byteErrors,
-            orderErrors,
+            verifyPayload ? "reference" : "skipped",
+            verifyPayload ? std::to_string(byteErrors) : "n/a",
+            verifyPayload ? std::to_string(orderErrors) : "n/a",
             grainErrors,
             rateOk,
             minMs,
             meanMs,
             maxMs,
             maxMs - minMs);
-        return ((byteErrors == 0) && (orderErrors == 0) && (grainErrors == 0) && rateOk) ? EXIT_SUCCESS : EXIT_FAILURE;
+        return ((grainErrors == 0) && rateOk && (!verifyPayload || ((byteErrors == 0) && (orderErrors == 0)))) ? EXIT_SUCCESS : EXIT_FAILURE;
     }
 
 }
@@ -300,8 +308,7 @@ try
     app.add_option("-t,--timeout-ms", timeoutMs, "Timeout per grain read in milliseconds")
         ->check(CLI::Range(std::uint64_t{1}, std::numeric_limits<std::uint64_t>::max() / std::uint64_t{1'000'000}));
     auto referencePath = std::string{};
-    app.add_option("--reference-file", referencePath, "Raw file containing a repeating sequence of complete frames")
-        ->required()
+    app.add_option("--reference-file", referencePath, "Optional raw file containing a repeating sequence of complete frames")
         ->check(CLI::ExistingFile);
     auto address = std::vector<std::string>{};
     app.add_option("ADDRESS", address, "MXL URI")->expected(-1);

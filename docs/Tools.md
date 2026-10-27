@@ -110,8 +110,8 @@ watch -n 1 -p ./mxl-info mxl:///dev/shm/mxl?id=5fbec3b1-1b0f-417d-9059-8b94a4719
 
 `mxl-video-probe` keeps a video flow reader open and verifies `--count` grains
 starting after the current head. The default count is 60, and the minimum is 60.
-The default timeout per grain is 1000 ms. A domain, flow id, and reference file
-are required. The domain and flow id can also be supplied as an MXL URI.
+The default timeout per grain is 1000 ms. A domain and flow id are required.
+They can also be supplied as an MXL URI. The reference file is optional.
 
 ```text
 Verify video grains and report delivery rate, latency and jitter
@@ -132,8 +132,8 @@ OPTIONS:
                               Number of video grains to verify, starting after the current head
   -t,     --timeout-ms UINT:UINT in [1 - 18446744073709]
                               Timeout per grain read in milliseconds
-          --reference-file TEXT:FILE REQUIRED
-                              Raw file containing a repeating sequence of complete frames
+          --reference-file TEXT:FILE
+                              Optional raw file containing a repeating sequence of complete frames
 
 MXL URI format:
 mxl://[authority[:port]]/domain[?id=...]
@@ -142,7 +142,7 @@ See: https://github.com/dmf-mxl/mxl/docs/Addressability.md
 
 Start the sender before launching the probe. A new video flow starts with head index zero; the probe does not retarget its first read when the sender publishes its first grain.
 
-The probe reads each complete video grain. It checks the grain index, invalid-grain flag, full payload bytes, reference sequence order and measured delivery rate. It fails on a read error, a mismatch, or measured elapsed time outside 1% of the expected duration.
+The probe reads each complete video grain. It checks the grain index, invalid-grain flag and measured delivery rate. When a reference file is supplied, it also checks full payload bytes and reference sequence order. It fails on a read error, a mismatch, or measured elapsed time outside 1% of the expected duration.
 
 The reference file contains a repeating sequence of raw frames with the same format and frame size as the flow. Its length must be a nonzero multiple of the first valid grain's payload size. The probe aligns to the sequence at any starting position, then checks its order and wraps at the end of the file. Repeated frames are allowed; all possible starting positions are retained until the received content distinguishes them. A grain that matches a reference frame outside the expected sequence counts as an order error and starts a new alignment. A grain matching no reference frame counts as a byte error. Invalid grains and byte errors reset alignment.
 
