@@ -25,7 +25,7 @@ jobs:
       prefix: ${{ steps.build-key.outputs.prefix }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Compute key prefix
         id: build-key
@@ -42,7 +42,7 @@ jobs:
     runs-on: ${{ startsWith(matrix.architecture, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Lookup cached build image
         id: lookup-build-image
@@ -104,7 +104,7 @@ jobs:
     runs-on: ${{ startsWith(matrix.architecture, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Restore cached build image
         uses: actions/cache/restore@v6
@@ -142,7 +142,7 @@ jobs:
     runs-on: ${{ startsWith(matrix.architecture, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Initialize Git Submodules (if needed)
         run: git submodule update --init --recursive
@@ -233,7 +233,7 @@ jobs:
     runs-on: ${{ startsWith(matrix.architecture, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Initialize Git Submodules (if needed)
         run: git submodule update --init --recursive
