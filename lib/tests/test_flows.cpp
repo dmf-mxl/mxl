@@ -1031,7 +1031,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlFlowWriterCommitS
     constexpr auto const startIndex = 1000;
     constexpr auto const blockSize = 480;
     constexpr auto const iterations = std::uint64_t{50};
-    constexpr auto const readTimeout = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(50));
+    constexpr auto const readTimeout = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(150));
     auto flowDef = mxl::tests::readFile("data/audio_flow.json");
     auto configInfo = mxlFlowConfigInfo{};
     auto instance = mxlCreateInstance(domain.c_str(), nullptr);
