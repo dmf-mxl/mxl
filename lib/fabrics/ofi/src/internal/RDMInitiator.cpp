@@ -117,11 +117,16 @@ namespace mxl::lib::fabrics::ofi
             _state);
     }
 
-    std::unique_ptr<RDMInitiator> RDMInitiator::setup(mxlFabricsInitiatorConfig const& config, FabricInfoView info)
+    std::unique_ptr<RDMInitiator> RDMInitiator::setup(mxlFabricsInitiatorConfig const& config, FabricInfoView info,
+        InitiatorSetupOptions const& options)
     {
         requireCapability(info, FI_WRITE, "Interface is missing required remote write capability");
 
         auto cqAttr = CompletionQueue::Attributes::defaults();
+        if (options.cqDepth)
+        {
+            cqAttr.size = *options.cqDepth;
+        }
         if (config.interface.provider == MXL_FABRICS_PROVIDER_EFA)
         {
             if (!CompletionQueue::isWaitObjectSupportedForEFA())

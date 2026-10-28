@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-use std::{sync::Arc, time::Duration};
+use std::{cell::Cell, marker::PhantomData, sync::Arc, time::Duration};
 
 use crate::{
     Error, Result, SamplesData,
@@ -9,39 +9,53 @@ use crate::{
         FlowConfigInfo, FlowInfo,
         reader::{get_config_info, get_flow_info, get_runtime_info},
     },
-    instance::InstanceContext,
+    reader::{FlowReaderResource, FlowReaderResourceKeepAlive},
 };
 
 pub struct SamplesReader {
-    context: Arc<InstanceContext>,
-    reader: mxl_sys::FlowReader,
+    reader: Arc<FlowReaderResource>,
+    _not_sync: PhantomData<Cell<()>>, // Prevent Sync implementation, as the underlying MXL reader
+                                      // is not thread-safe.
 }
 
-/// The MXL readers and writers are not thread-safe, so we do not implement `Sync` for them, but
-/// there is no reason to not implement `Send`.
-unsafe impl Send for SamplesReader {}
-
 impl SamplesReader {
-    pub(crate) fn new(context: Arc<InstanceContext>, reader: mxl_sys::FlowReader) -> Self {
-        Self { context, reader }
+    pub(crate) fn new(reader: Arc<FlowReaderResource>) -> Self {
+        Self {
+            reader,
+            _not_sync: PhantomData,
+        }
     }
 
-    pub fn destroy(mut self) -> Result<()> {
-        self.destroy_inner()
+    #[allow(dead_code)]
+    pub(crate) fn keep_alive(&self) -> FlowReaderResourceKeepAlive {
+        self.reader.keep_alive()
+    }
+
+    #[deprecated(
+        since = "0.2.0",
+        note = "Flow reader lifetimes are now managed automatically. This method only consumes the handle and always returns `Ok(())` only if no other references to the reader exists; the underlying reader is released when the last related handle is dropped."
+    )]
+    pub fn destroy(self) -> Result<()> {
+        let _ = Arc::try_unwrap(self.reader).map_err(|_| {
+            Error::Other(
+                "Failed to destroy the reader. There are still other references to it.".to_string(),
+            )
+        })?;
+        Ok(())
     }
 
     /// The whole FlowInfo is quite a chunk of data. Go for `get_config_info` or `get_runtime_info`
     /// if they contain what you need.
     pub fn get_info(&self) -> Result<FlowInfo> {
-        get_flow_info(&self.context, self.reader)
+        get_flow_info(&self.reader.context, unsafe { self.reader.as_ptr() })
     }
 
     pub fn get_config_info(&self) -> Result<FlowConfigInfo> {
-        get_config_info(&self.context, self.reader)
+        get_config_info(&self.reader.context, unsafe { self.reader.as_ptr() })
     }
 
     pub fn get_runtime_info(&self) -> Result<mxl_sys::FlowRuntimeInfo> {
-        get_runtime_info(&self.context, self.reader)
+        get_runtime_info(&self.reader.context, unsafe { self.reader.as_ptr() })
     }
 
     pub fn get_samples(
@@ -53,8 +67,8 @@ impl SamplesReader {
         let timeout_ns = timeout.as_nanos() as u64;
         let mut buffer_slice: mxl_sys::WrappedMultiBufferSlice = unsafe { std::mem::zeroed() };
         unsafe {
-            Error::from_status(self.context.api.flow_reader_get_samples(
-                self.reader,
+            Error::from_status(self.reader.context.api.flow_reader_get_samples(
+                self.reader.as_ptr(),
                 index,
                 count,
                 timeout_ns,
@@ -67,38 +81,18 @@ impl SamplesReader {
     pub fn get_samples_non_blocking(&self, index: u64, count: usize) -> Result<SamplesData<'_>> {
         let mut buffer_slice: mxl_sys::WrappedMultiBufferSlice = unsafe { std::mem::zeroed() };
         unsafe {
-            Error::from_status(self.context.api.flow_reader_get_samples_non_blocking(
-                self.reader,
-                index,
-                count,
-                &mut buffer_slice,
-            ))?;
+            Error::from_status(
+                self.reader
+                    .context
+                    .api
+                    .flow_reader_get_samples_non_blocking(
+                        self.reader.as_ptr(),
+                        index,
+                        count,
+                        &mut buffer_slice,
+                    ),
+            )?;
         }
         Ok(SamplesData::new(buffer_slice))
-    }
-
-    fn destroy_inner(&mut self) -> Result<()> {
-        if self.reader.is_null() {
-            return Err(Error::InvalidArg);
-        }
-
-        let mut reader = std::ptr::null_mut();
-        std::mem::swap(&mut self.reader, &mut reader);
-
-        Error::from_status(unsafe {
-            self.context
-                .api
-                .release_flow_reader(self.context.instance, reader)
-        })
-    }
-}
-
-impl Drop for SamplesReader {
-    fn drop(&mut self) {
-        if !self.reader.is_null()
-            && let Err(err) = self.destroy_inner()
-        {
-            tracing::error!("Failed to release MXL flow reader (continuous): {:?}", err);
-        }
     }
 }

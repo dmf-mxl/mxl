@@ -167,7 +167,14 @@ namespace mxl::lib
         if (auto const headIndex = flow->info.runtime.headIndex; in_index <= headIndex)
         {
             auto const grainCount = flow->info.config.discrete.grainCount;
-            auto const minIndex = (headIndex >= grainCount) ? (headIndex - grainCount + 1U) : std::uint64_t{0};
+
+            // Reserve the tail position for the writer. The +2U advances
+            // minIndex one position past the tail. Since the tail and
+            // headIndex+1 alias the same physical ring-buffer position,
+            // this hides uncommitted headIndex+1 write state from
+            // readers.
+            auto const minIndex = (headIndex >= grainCount) ? (headIndex - grainCount + 2U) : std::uint64_t{0};
+
             if (in_index >= minIndex)
             {
                 auto const offset = in_index % grainCount;

@@ -31,8 +31,8 @@ namespace mxl::lib::fabrics::ofi
 {
     namespace
     {
-        /// Parse the optional target setup options JSON and return the requested completion
-        /// queue depth, or std::nullopt (use the implementation default) when not specified.
+        /// Parse the optional target or initiator setup options JSON and return the requested
+        /// completion queue depth, or std::nullopt (use the implementation default) when not specified.
         ///
         /// Recognized form: {"cqDepth": <positive integer>}
         std::optional<std::size_t> parseCqDepthOption(char const* options)
@@ -46,7 +46,7 @@ namespace mxl::lib::fabrics::ofi
             auto const err = picojson::parse(value, options);
             if (!err.empty() || !value.is<picojson::object>())
             {
-                throw Exception::invalidArgument("Invalid JSON target options: {}", err.empty() ? std::string{"expected an object"} : err);
+                throw Exception::invalidArgument("Invalid JSON setup options: {}", err.empty() ? std::string{"expected an object"} : err);
             }
 
             auto const& root = value.get<picojson::object>();
@@ -406,7 +406,6 @@ mxlStatus mxlFabricsDestroyInitiator(mxlFabricsInstance in_fabricsInstance, mxlF
 extern "C" MXL_EXPORT
 mxlStatus mxlFabricsInitiatorSetup(mxlFabricsInitiator in_initiator, mxlFabricsInitiatorConfig const* in_config, char const* options)
 {
-    (void)options;
     if ((in_initiator == nullptr) || (in_config == nullptr))
     {
         return MXL_ERR_INVALID_ARG;
@@ -415,7 +414,8 @@ mxlStatus mxlFabricsInitiatorSetup(mxlFabricsInitiator in_initiator, mxlFabricsI
     return ofi::try_run(
         [&]()
         {
-            ofi::InitiatorWrapper::fromAPI(in_initiator)->setup(*in_config);
+            auto const setupOptions = ofi::InitiatorSetupOptions{.cqDepth = ofi::parseCqDepthOption(options)};
+            ofi::InitiatorWrapper::fromAPI(in_initiator)->setup(*in_config, setupOptions);
 
             return MXL_STATUS_OK;
         },

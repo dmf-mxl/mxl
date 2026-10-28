@@ -327,9 +327,8 @@ impl BaseSrcImpl for MxlSrc {
         }
 
         // `start()` does not attach the MXL reader (so PLAYING is reachable
-        // before the producer creates the flow). Attach here on the streaming
-        // thread. `init_mxl_reader` polls until the flow exists; `unlock()` sets
-        // `clock_wait.flushing` so teardown can interrupt that wait.
+        // before the producer creates the flow). Do not wait here; `create()`
+        // attaches the reader.
         let need_init = {
             let context = self
                 .context
@@ -341,32 +340,13 @@ impl BaseSrcImpl for MxlSrc {
                 .is_none_or(|s| s.flow_state.is_none())
         };
         if need_init {
-            mxl_helper::init(self)
-                .map_err(|e| gst::loggable_error!(CAT, "Failed to attach flow: {}", e))?;
-            // The flow's grain rate (hence our live latency) is only known after
-            // attach; ask the pipeline to recompute latency with the real value.
-            let _ = self
-                .obj()
-                .post_message(gst::message::Latency::builder().src(&*self.obj()).build());
+            // Succeed without caps so BaseSrc proceeds to create(), where we
+            // wait for the flow. Err here would be not-negotiated and create()
+            // would never run.
+            return Ok(());
         }
 
-        let settings = self
-            .settings
-            .lock()
-            .map_err(|e| gst::loggable_error!(CAT, "Failed to lock settings mutex {}", e))?;
-        let context = self
-            .context
-            .lock()
-            .map_err(|e| gst::loggable_error!(CAT, "Failed to lock context mutex {}", e))?;
-        let instance = &context
-            .state
-            .as_ref()
-            .ok_or(gst::loggable_error!(CAT, "Failed to get state"))?
-            .instance;
-        let flow_id = mxl_helper::get_flow_type_id(&settings)?;
-        let json_flow_description = mxl_helper::get_mxl_flow_json(instance, flow_id)?;
-        let flow_description = mxl_helper::get_flow_def(self, json_flow_description)?;
-        mxl_helper::set_json_caps(self, flow_description)
+        self.set_flow_caps()
     }
 
     fn set_caps(&self, caps: &gst::Caps) -> Result<(), gst::LoggableError> {
@@ -467,8 +447,8 @@ impl BaseSrcImpl for MxlSrc {
         // when the pipeline selects one. This is non-blocking — unlike the
         // reader attach (which can wait for `FlowNotFound`), creating the
         // instance never waits for the flow, so it is safe on the state-change
-        // thread. The reader attach still runs from `negotiate()`. If the domain
-        // was unset here, `negotiate()` → `init()` calls `ensure_instance()` once
+        // thread. The reader attach runs from `create()`. If the domain was
+        // unset here, `create()` → `init()` calls `ensure_instance()` once
         // domain and flow-id are ready. No race: `ensure_instance` caches under
         // `context` lock and concurrent callers reuse the winner.
         let have_domain = {
@@ -555,6 +535,44 @@ impl PushSrcImpl for MxlSrc {
         _buffer: Option<&mut gst::BufferRef>,
     ) -> Result<CreateSuccess, gst::FlowError> {
         loop {
+            if mxl_helper::is_flushing(self) {
+                return Err(gst::FlowError::Flushing);
+            }
+            let need_init = {
+                let context = self.context.lock().map_err(|_| gst::FlowError::Error)?;
+                context
+                    .state
+                    .as_ref()
+                    .is_none_or(|s| s.flow_state.is_none())
+            };
+            if need_init {
+                match mxl_helper::init(self) {
+                    Ok(mxl_helper::Init::Attached) => {
+                        if let Err(e) = self.set_flow_caps() {
+                            gst::element_imp_error!(
+                                self,
+                                gst::CoreError::Failed,
+                                ["Failed to set caps after attach: {}", e]
+                            );
+                            return Err(gst::FlowError::NotNegotiated);
+                        }
+                        let _ = self.obj().post_message(
+                            gst::message::Latency::builder().src(&*self.obj()).build(),
+                        );
+                    }
+                    Ok(mxl_helper::Init::Flushing) => {
+                        return Err(gst::FlowError::Flushing);
+                    }
+                    Err(e) => {
+                        gst::element_imp_error!(
+                            self,
+                            gst::CoreError::Failed,
+                            ["Failed to attach flow: {}", e]
+                        );
+                        return Err(gst::FlowError::Error);
+                    }
+                }
+            }
             // Establish the pipeline-shared `D` before `try_create` takes the
             // context lock. `None` means no clock yet: wait like NoDataCreated.
             let offset = match self.resolve_clock_offset() {
@@ -601,6 +619,26 @@ impl PushSrcImpl for MxlSrc {
 }
 
 impl MxlSrc {
+    fn set_flow_caps(&self) -> Result<(), gst::LoggableError> {
+        let settings = self
+            .settings
+            .lock()
+            .map_err(|e| gst::loggable_error!(CAT, "Failed to lock settings mutex {}", e))?;
+        let context = self
+            .context
+            .lock()
+            .map_err(|e| gst::loggable_error!(CAT, "Failed to lock context mutex {}", e))?;
+        let instance = &context
+            .state
+            .as_ref()
+            .ok_or(gst::loggable_error!(CAT, "Failed to get state"))?
+            .instance;
+        let flow_id = mxl_helper::get_flow_type_id(&settings)?;
+        let json_flow_description = mxl_helper::get_mxl_flow_json(instance, flow_id)?;
+        let flow_description = mxl_helper::get_flow_def(self, json_flow_description)?;
+        mxl_helper::set_json_caps(self, flow_description)
+    }
+
     /// Live latency to advertise: one grain period of the attached discrete flow.
     ///
     /// A grain becomes readable only once the producer has committed it, and this
@@ -623,7 +661,13 @@ impl MxlSrc {
         match &state.flow_state {
             Some(FlowState::Discrete(_)) => create_discrete(self, state, offset),
             Some(FlowState::Continuous(_)) => create_continuous(self, state, offset),
-            None => Err(gst::FlowError::Error),
+            None => {
+                if mxl_helper::is_flushing(self) {
+                    Err(gst::FlowError::Flushing)
+                } else {
+                    Err(gst::FlowError::Error)
+                }
+            }
         }
     }
 }

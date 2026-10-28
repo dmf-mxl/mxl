@@ -3,9 +3,9 @@
 
 [package]
 name = "mxl-sys"
+version = "1.1.0"
 edition.workspace = true
 publish.workspace = true
-version.workspace = true
 license.workspace = true
 rust-version.workspace = true
 
@@ -18,3 +18,4 @@ cmake = "0.1.54"
 
 [features]
 mxl-not-built = []
+mxl-fabrics-ofi = []

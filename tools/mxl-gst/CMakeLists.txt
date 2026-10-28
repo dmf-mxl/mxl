@@ -27,10 +27,6 @@ if (gstreamer_FOUND)
     endif ()
 
     add_executable(mxl-gst-testsrc)
-    target_compile_features(mxl-gst-testsrc
-            PRIVATE
-                cxx_std_20
-        )
     set_target_properties(mxl-gst-testsrc
             PROPERTIES
                 POSITION_INDEPENDENT_CODE    ON
@@ -39,6 +35,8 @@ if (gstreamer_FOUND)
                 CXX_VISIBILITY_PRESET        hidden
                 C_EXTENSIONS                 OFF
                 CXX_EXTENSIONS               OFF
+                C_STANDARD                   ${MXL_C_STANDARD}
+                CXX_STANDARD                 ${MXL_CXX_STANDARD}
         )
     target_sources(mxl-gst-testsrc
             PRIVATE
@@ -59,10 +57,6 @@ if (gstreamer_FOUND)
 
 
     add_executable(mxl-gst-sink)
-    target_compile_features(mxl-gst-sink
-            PRIVATE
-                cxx_std_20
-        )
     set_target_properties(mxl-gst-sink
             PROPERTIES
                 POSITION_INDEPENDENT_CODE   ON
@@ -71,6 +65,8 @@ if (gstreamer_FOUND)
                 CXX_VISIBILITY_PRESET       hidden
                 C_EXTENSIONS                OFF
                 CXX_EXTENSIONS              OFF
+                C_STANDARD                   ${MXL_C_STANDARD}
+                CXX_STANDARD                 ${MXL_CXX_STANDARD}
         )
     target_sources(mxl-gst-sink
             PRIVATE
@@ -92,10 +88,6 @@ if (gstreamer_FOUND)
         )
 
     add_executable(mxl-gst-looping-filesrc)
-    target_compile_features(mxl-gst-looping-filesrc
-            PRIVATE
-                cxx_std_20
-        )
     set_target_properties(mxl-gst-looping-filesrc
             PROPERTIES
                 POSITION_INDEPENDENT_CODE   ON
@@ -104,6 +96,8 @@ if (gstreamer_FOUND)
                 CXX_VISIBILITY_PRESET       hidden
                 C_EXTENSIONS                OFF
                 CXX_EXTENSIONS              OFF
+                C_STANDARD                  ${MXL_C_STANDARD}
+                CXX_STANDARD                ${MXL_CXX_STANDARD}
         )
     target_sources(mxl-gst-looping-filesrc
             PRIVATE

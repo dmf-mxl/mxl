@@ -1239,3 +1239,70 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Target setu
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
 }
 #endif
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Initiator setup honors cqDepth option", "[fabrics][cqdepth]")
+{
+    auto instance = mxlCreateInstance(domain.c_str(), "");
+    mxlFabricsInstance fabrics;
+    REQUIRE(mxlFabricsCreateInstance(instance, nullptr, &fabrics) == MXL_STATUS_OK);
+
+    auto flowDef = mxl::tests::readFile("../data/v210_flow.json");
+    mxlFlowWriter writer;
+    REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), nullptr, &writer, nullptr, nullptr) == MXL_STATUS_OK);
+    auto const flowId = "5fbec3b1-1b0f-417d-9059-8b94a47197ed";
+    mxlFlowReader reader;
+    REQUIRE(mxlCreateFlowReader(instance, flowId, "", &reader) == MXL_STATUS_OK);
+
+    auto makeConfig = [&]()
+    {
+        return mxlFabricsInitiatorConfig{
+            .version = MXL_FABRICS_API_VERSION,
+            .interface = {.version = MXL_FABRICS_API_VERSION,
+                          .provider = MXL_FABRICS_PROVIDER_TCP,
+                          .caps =
+                    {
+                        .version = MXL_FABRICS_API_VERSION,
+                        .flags = MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS | MXL_FABRICS_IFACE_CAP_REMOTE_WRITE,
+                        .maxMessageSize = 0,
+                    }, .address = {.node = "127.0.0.1", .service = nullptr},
+                          .attr = nullptr},
+            .reader = reader,
+        };
+    };
+
+    auto setupWithOptions = [&](char const* options)
+    {
+        mxlFabricsInitiator initiator;
+        REQUIRE(mxlFabricsCreateInitiator(fabrics, &initiator) == MXL_STATUS_OK);
+        auto config = makeConfig();
+        auto const status = mxlFabricsInitiatorSetup(initiator, &config, options);
+        REQUIRE(mxlFabricsDestroyInitiator(fabrics, initiator) == MXL_STATUS_OK);
+        return status;
+    };
+
+    SECTION("a valid cqDepth option is accepted")
+    {
+        REQUIRE(setupWithOptions(R"({"cqDepth": 64})") == MXL_STATUS_OK);
+    }
+
+    SECTION("no options selects the default and is accepted")
+    {
+        REQUIRE(setupWithOptions(nullptr) == MXL_STATUS_OK);
+        REQUIRE(setupWithOptions("") == MXL_STATUS_OK);
+    }
+
+    SECTION("an invalid cqDepth option is rejected")
+    {
+        // Zero / negative depth.
+        REQUIRE(setupWithOptions(R"({"cqDepth": 0})") == MXL_ERR_INVALID_ARG);
+        // Wrong type.
+        REQUIRE(setupWithOptions(R"({"cqDepth": "big"})") == MXL_ERR_INVALID_ARG);
+        // Malformed JSON.
+        REQUIRE(setupWithOptions("{not json") == MXL_ERR_INVALID_ARG);
+    }
+
+    REQUIRE(mxlFabricsDestroyInstance(fabrics) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowReader(instance, reader) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+}
