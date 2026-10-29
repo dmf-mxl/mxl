@@ -214,7 +214,7 @@ Private Attributes</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Non-owning single-producer event ring view safe for concurrent snapshot readers. </p>
 <p>Metadata and payload are copied through atomic words; sequence tags detect overwrite during a read. The writer owns head advancement, timestamp validation and notifications. No shared tail or writer reservation cursor is stored here. The mapping must outlive this view and all calls through it.</p>
-<p>Inspired by vt-tv/lockfree_ipc_ringbuffer revision ffd97a3cb0162109920af04408b54c2703aa9e4e; see docs/event-flows.md. </p>
+<p>Inspired by vt-tv/lockfree_ipc_ringbuffer revision ffd97a3cb0162109920af04408b54c2703aa9e4e; see docs/EventFlows.md. </p>
 
 <p class="definition">Definition at line <a class="el" href="EventRingBuffer_8hpp_source.html#l00047">47</a> of file <a class="el" href="EventRingBuffer_8hpp_source.html">EventRingBuffer.hpp</a>.</p>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
