@@ -25,7 +25,7 @@ jobs:
       prefix: ${{ steps.build-key.outputs.prefix }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Compute key prefix
         id: build-key
@@ -42,7 +42,7 @@ jobs:
     runs-on: ${{ startsWith(matrix.architecture, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Lookup cached build image
         id: lookup-build-image
@@ -104,7 +104,7 @@ jobs:
     runs-on: ${{ startsWith(matrix.architecture, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Restore cached build image
         uses: actions/cache/restore@v6
@@ -142,10 +142,9 @@ jobs:
     runs-on: ${{ startsWith(matrix.architecture, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Initialize Git Submodules (if needed)
-        run: git submodule update --init --recursive
+        uses: actions/checkout@v7
+        with:
+          submodules: true
 
       - name: Restore cached build image
         uses: actions/cache/restore@v6
@@ -223,6 +222,63 @@ jobs:
           files: |
             **/test-results.xml
 
+  build_c_cxx_macos:
+    name: Build C library on macOS
+    strategy:
+      matrix:
+        os-version: [26]
+        architecture: [x64, arm64]
+        build-type: [Darwin-Clang-Release]
+    runs-on: ${{ format(startsWith(matrix.architecture, 'x64') && 'macos-{0}-intel' || 'macos-{0}', matrix.os-version) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          path: 'mxl'
+          submodules: true
+
+      - name: Restore vcpkg cache
+        id: vcpkg-cache-restore
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ github.workspace }}/vcpkg_cache
+          key: vcpkg-macos-${{ matrix.os-version }}-${{ matrix.architecture }}-${{ matrix.build-type }}-${{ hashFiles('mxl/vcpkg.json') }}
+          restore-keys: vcpkg-macos-${{ matrix.os-version }}-${{ matrix.architecture }}-${{ matrix.build-type }}-
+
+      - name: Install build dependencies
+        run: brew install cmake gstreamer ninja pkgconf
+
+      - name: Install vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg '${{ github.workspace }}/vcpkg'
+          '${{ github.workspace }}/vcpkg/bootstrap-vcpkg.sh' -disableMetrics
+          printf 'VCPKG_ROOT=%s\n' '${{ github.workspace }}/vcpkg' >> "${GITHUB_ENV}"
+          printf 'VCPKG_BINARY_SOURCES=clear;files,${{ github.workspace }}/vcpkg_cache,readwrite\n' >> "${GITHUB_ENV}"
+          printf 'VCPKG_DEFAULT_TRIPLET=${{ matrix.architecture }}-osx\n' >> "${GITHUB_ENV}"
+
+      - name: Configure CMake
+        run: |
+          cmake -S '${{github.workspace}}/mxl' -B '${{ github.workspace }}/build/${{ matrix.build-type }}' \
+            --preset '${{ matrix.build-type }}' \
+            -DMXL_BUILD_NUMBER='${{ github.run_number }}'
+
+      - name: Save vcpkg cache
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ github.workspace }}/vcpkg_cache
+          key: ${{ steps.vcpkg-cache-restore.outputs.cache-primary-key }}
+
+      - name: Build Project
+        run: |
+          cmake --build '${{ github.workspace }}/build/${{ matrix.build-type }}' --target all
+
+      - name: Run Tests
+        working-directory: ${{ github.workspace }}/build/${{ matrix.build-type }}
+        run: ctest --output-junit test-results.xml
+
+      # We can not publish the test results here, because the action is only
+      # compatible with Linux.
+
   build_rust:
     name: Build Rust bindings on Ubuntu
     needs: [ compute_build_image_cache_key, create_build_images ]
@@ -233,10 +289,9 @@ jobs:
     runs-on: ${{ startsWith(matrix.architecture, 'arm') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Initialize Git Submodules (if needed)
-        run: git submodule update --init --recursive
+        uses: actions/checkout@v7
+        with:
+          submodules: true
 
       - name: Restore cached build image
         uses: actions/cache/restore@v6
@@ -313,4 +368,3 @@ jobs:
             printf '### Runtime tests skipped (%s)\n\n```text\n%s\n```\n' "${count}" "${skipped}" >> "${GITHUB_STEP_SUMMARY}"
           fi
           exit "${status}"
-
