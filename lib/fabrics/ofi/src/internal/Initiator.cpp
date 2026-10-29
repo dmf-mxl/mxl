@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Initiator.hpp"
+#include <exception>
+#include <mxl-internal/Logging.hpp>
 #include "mxl/fabrics.h"
 #include "Exception.hpp"
 #include "FabricInterfaceProbe.hpp"
@@ -11,6 +13,30 @@
 
 namespace mxl::lib::fabrics::ofi
 {
+
+    InitiatorWrapper::~InitiatorWrapper()
+    {
+        destroyInner();
+    }
+
+    void InitiatorWrapper::destroyInner() noexcept
+    {
+        if (!_inner)
+        {
+            return;
+        }
+
+        try
+        {
+            _inner->shutdown();
+        }
+        catch (std::exception const& e)
+        {
+            MXL_ERROR("Failed to shut down the initiator: {}", e.what());
+        }
+
+        _inner.reset();
+    }
 
     InitiatorWrapper* InitiatorWrapper::fromAPI(mxlFabricsInitiator api) noexcept
     {
@@ -24,10 +50,7 @@ namespace mxl::lib::fabrics::ofi
 
     void InitiatorWrapper::setup(mxlFabricsInitiatorConfig const& config, InitiatorSetupOptions const& options)
     {
-        if (_inner)
-        {
-            _inner.reset();
-        }
+        destroyInner();
 
         auto const [info, provierConfig] = selectSourceInterface(config.interface, /* target */ false);
         switch (info.view().endpointType())

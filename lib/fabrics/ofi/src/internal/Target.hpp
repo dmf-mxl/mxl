@@ -98,6 +98,10 @@ namespace mxl::lib::fabrics::ofi
     class TargetWrapper
     {
     public:
+        /** \brief Shut down the underlying target before it is destroyed.
+         */
+        ~TargetWrapper();
+
         /** \brief Convert an mxlFabricsTarget API object to its underlying TargetWrapper.
          *
          * \param api The mxlFabricsTarget to convert.
@@ -140,6 +144,10 @@ namespace mxl::lib::fabrics::ofi
         template<typename TargetT>
         [[nodiscard]]
         std::unique_ptr<TargetInfo> setup(mxlFabricsTargetConfig const& config, FabricInfoView info, TargetSetupOptions const& options = {});
+
+        /** \brief Shut down and destroy the underlying target. Errors are logged, because this runs in the destructor.
+         */
+        void destroyInner() noexcept;
 
         std::unique_ptr<Target> _inner; /**< The underlying target implementation. */
     };

@@ -39,6 +39,11 @@ namespace mxl::lib::fabrics::ofi
          */
         virtual void start(Endpoint const& endpoint) = 0;
 
+        /** \brief Signal that the connection is shutting down.
+         * Completions can still be read after this call, but no new receive buffers should be posted.
+         */
+        virtual void shutdown() noexcept = 0;
+
         /** \brief Process a completion with the given immediate data.
          * \param endpoint The endpoint associated with the completion
          * \param completion The completion object to process.
@@ -98,7 +103,7 @@ namespace mxl::lib::fabrics::ofi
 
         /** \brief Process a completion event. Any post-processing after a transfer should be done here.
          */
-        virtual void processCompletion(Completion::Data const& completion) = 0;
+        virtual void processCompletion(Completion const& completion) = 0;
 
         /** \brief Check if there is uncompleted requests.
          */
