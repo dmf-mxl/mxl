@@ -474,6 +474,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#mxl-video-probe" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        mxl-video-probe
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mxl-data-probe" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -1197,6 +1208,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#mxl-video-probe" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        mxl-video-probe
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mxl-data-probe" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -1514,6 +1536,69 @@ CAM2:<span class="w"> </span>mxl:///dev/shm/mxl/?id<span class="o">=</span>53c36
 <p>Hint : Live monitoring of a flow details (updates every second)</p>
 <div class="highlight"><pre><span></span><code>watch<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>-p<span class="w"> </span>./mxl-info<span class="w"> </span>mxl:///dev/shm/mxl?id<span class="o">=</span>5fbec3b1-1b0f-417d-9059-8b94a47197ed
 </code></pre></div>
+<h2 id="mxl-video-probe">mxl-video-probe</h2>
+<p><code>mxl-video-probe</code> keeps a video flow reader open and verifies <code>--count</code> grains
+starting after the current head. The default count is 60, and the minimum is 60.
+The default timeout per grain is 1000 ms. A domain and flow id are required.
+They can also be supplied as an MXL URI. The reference file is optional.</p>
+<div class="highlight"><pre><span></span><code>Verify video grains and report delivery rate, latency and jitter
+
+
+mxl-video-probe [OPTIONS] [ADDRESS...]
+
+
+POSITIONALS:
+  ADDRESS TEXT ...            MXL URI
+
+OPTIONS:
+  -h,     --help              Print this help message and exit
+          --version           Display program version information and exit
+  -d,     --domain TEXT:DIR   The MXL domain directory
+  -f,     --flow TEXT         The video flow id to read
+  -c,     --count UINT:UINT in [60 - 18446744073709551615]
+                              Number of video grains to verify, starting after the current head
+  -t,     --timeout-ms UINT:UINT in [1 - 18446744073709]
+                              Timeout per grain read in milliseconds
+          --reference-file TEXT:FILE
+                              Optional raw file containing a repeating sequence of complete frames
+
+MXL URI format:
+mxl://[authority[:port]]/domain[?id=...]
+See: https://github.com/dmf-mxl/mxl/docs/Addressability.md
+</code></pre></div>
+<p>Start the sender before launching the probe. A new video flow starts with head index zero; the probe does not retarget its first read when the sender publishes its first grain.</p>
+<p>The probe reads each complete video grain. It checks the grain index, invalid-grain flag and measured delivery rate. When a reference file is supplied, it also checks full payload bytes and reference sequence order. It fails on a read error, a mismatch, or measured elapsed time outside 1% of the expected duration.</p>
+<p>The reference file contains a repeating sequence of raw frames with the same format and frame size as the flow. Its length must be a nonzero multiple of the first valid grain's payload size. The probe aligns to the sequence at any starting position, then checks its order and wraps at the end of the file. Repeated frames are allowed; all possible starting positions are retained until the received content distinguishes them. A grain that matches a reference frame outside the expected sequence counts as an order error and starts a new alignment. A grain matching no reference frame counts as a byte error. Invalid grains and byte errors reset alignment.</p>
+<p>Static references work without additional options. Repeated copies of a static frame use a single comparison per grain. Identical frames cannot reveal stale or duplicated content published under a new grain index.</p>
+<p>Delivery timing uses <code>std::chrono::steady_clock</code> timestamps taken after the first and last successful <code>mxlFlowReaderGetGrain</code> calls. The expected duration is the number of frame intervals divided by the flow's configured grain rate.</p>
+<p>Verification also reports <code>latency_min_ms</code>, <code>latency_mean_ms</code>, <code>latency_max_ms</code>, and <code>jitter_ms</code> over all successfully read grains. Each latency sample is the MXL TAI time just after the read returns minus the nominal timestamp of the requested grain index, calculated using the configured grain rate.
+Negative values mean the grain is dated in the future. Jitter is the maximum latency minus the minimum latency over the run. These statistics do not set additional pass or fail thresholds.</p>
+<p>Latency includes reader scheduling delays, payload verification time between reads, and any backlog. MXL rounds origin timestamps to the nearest grain index, so reconstructing an origin timestamp can introduce up to half a frame interval of error. This does not measure end-to-end presentation latency. Clock adjustments during sampling can affect the results.</p>
+<p>For a v210 <code>blink</code> flow, generate the reference using the same dimensions and rate as the sender. A GStreamer pipeline can publish the flow without a custom sender application:</p>
+<div class="highlight"><pre><span></span><code>gst-launch-1.0<span class="w"> </span>-q<span class="w"> </span>videotestsrc<span class="w"> </span>num-buffers<span class="o">=</span><span class="m">2</span><span class="w"> </span><span class="nv">pattern</span><span class="o">=</span>blink<span class="w"> </span>!<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>video/x-raw,format<span class="o">=</span>v210,width<span class="o">=</span><span class="m">1920</span>,height<span class="o">=</span><span class="m">1080</span>,framerate<span class="o">=</span><span class="m">60</span>/1<span class="w"> </span>!<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>filesink<span class="w"> </span><span class="nv">location</span><span class="o">=</span>/tmp/blink-1080p60.v210
+
+gst-launch-1.0<span class="w"> </span>-q<span class="w"> </span>videotestsrc<span class="w"> </span>is-live<span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="nv">pattern</span><span class="o">=</span>blink<span class="w"> </span>!<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>video/x-raw,format<span class="o">=</span>v210,width<span class="o">=</span><span class="m">1920</span>,height<span class="o">=</span><span class="m">1080</span>,framerate<span class="o">=</span><span class="m">60</span>/1<span class="w"> </span>!<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>mxlsink<span class="w"> </span><span class="nv">domain</span><span class="o">=</span>/dev/shm/mxl<span class="w"> </span>flow-id<span class="o">=</span>FLOW_ID<span class="w"> </span><span class="nv">sync</span><span class="o">=</span><span class="nb">false</span>
+
+mxl-video-probe<span class="w"> </span>-d<span class="w"> </span>/dev/shm/mxl<span class="w"> </span>-f<span class="w"> </span>FLOW_ID<span class="w"> </span>--count<span class="w"> </span><span class="m">10800</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--reference-file<span class="w"> </span>/tmp/blink-1080p60.v210
+</code></pre></div>
+<p>For a static white flow, use a reference file generated from the same pattern:</p>
+<div class="highlight"><pre><span></span><code>gst-launch-1.0<span class="w"> </span>-q<span class="w"> </span>videotestsrc<span class="w"> </span>num-buffers<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="nv">pattern</span><span class="o">=</span>white<span class="w"> </span>!<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>video/x-raw,format<span class="o">=</span>v210,width<span class="o">=</span><span class="m">1920</span>,height<span class="o">=</span><span class="m">1080</span>,framerate<span class="o">=</span><span class="m">60</span>/1<span class="w"> </span>!<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>filesink<span class="w"> </span><span class="nv">location</span><span class="o">=</span>/tmp/white-1080p60.v210
+
+gst-launch-1.0<span class="w"> </span>-q<span class="w"> </span>videotestsrc<span class="w"> </span>is-live<span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="nv">pattern</span><span class="o">=</span>white<span class="w"> </span>!<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>video/x-raw,format<span class="o">=</span>v210,width<span class="o">=</span><span class="m">1920</span>,height<span class="o">=</span><span class="m">1080</span>,framerate<span class="o">=</span><span class="m">60</span>/1<span class="w"> </span>!<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>mxlsink<span class="w"> </span><span class="nv">domain</span><span class="o">=</span>/dev/shm/mxl<span class="w"> </span>flow-id<span class="o">=</span>FLOW_ID<span class="w"> </span><span class="nv">sync</span><span class="o">=</span><span class="nb">false</span>
+
+mxl-video-probe<span class="w"> </span>-d<span class="w"> </span>/dev/shm/mxl<span class="w"> </span>-f<span class="w"> </span>FLOW_ID<span class="w"> </span>--count<span class="w"> </span><span class="m">10800</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--reference-file<span class="w"> </span>/tmp/white-1080p60.v210
+</code></pre></div>
+<p>GStreamer generates each blink frame; static patterns such as white reuse a cached image with a copy per frame. Sender capacity may differ from a sender that wraps prebuilt frame buffers. The stock <code>mxl-gst-testsrc</code> adds changing text and clock overlays, so its output does not match the fixed reference file.</p>
 <h2 id="mxl-data-probe">mxl-data-probe</h2>
 <p>A tool that opens an MXL ancillary Data flow (<code>media_type: video/smpte291</code>) or an Event flow (<code>urn:x-nmos:format:event</code>).
 For Data flows, it reads grains starting at the current head index and prints their RFC-8331 ANC elements.
