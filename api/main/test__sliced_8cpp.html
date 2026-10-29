@@ -189,10 +189,12 @@ Functions</h2></td></tr>
 <tr class="separator:af23c9cad481a9026f99e4c75f46655f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6cfe6728f2d4e0cfe7e19d6ad932d180" id="r_a6cfe6728f2d4e0cfe7e19d6ad932d180"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="test__sliced_8cpp.html#a6cfe6728f2d4e0cfe7e19d6ad932d180">TEMPLATE_TEST_CASE_METHOD</a> (FabricsTestFixture, &quot;Slice transfer single&quot;, &quot;[sliced][single-slices]&quot;, TCP_V210, TCP_V210a)</td></tr>
 <tr class="separator:a6cfe6728f2d4e0cfe7e19d6ad932d180"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a57ebb67475b273e0ff16e0e6fc8d93cc" id="r_a57ebb67475b273e0ff16e0e6fc8d93cc"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="test__sliced_8cpp.html#a57ebb67475b273e0ff16e0e6fc8d93cc">TEMPLATE_TEST_CASE_METHOD</a> (FabricsTestFixture, &quot;Target commits received grains&quot;, &quot;[sliced][target-commit]&quot;, TCP_V210)</td></tr>
+<tr class="separator:a57ebb67475b273e0ff16e0e6fc8d93cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
 <a id="af23c9cad481a9026f99e4c75f46655f5" name="af23c9cad481a9026f99e4c75f46655f5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af23c9cad481a9026f99e4c75f46655f5">&#9670;&#160;</a></span>TEMPLATE_TEST_CASE_METHOD() <span class="overload">[1/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#af23c9cad481a9026f99e4c75f46655f5">&#9670;&#160;</a></span>TEMPLATE_TEST_CASE_METHOD() <span class="overload">[1/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -235,79 +237,79 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="test__sliced_8cpp_source.html#l00481">481</a> of file <a class="el" href="test__sliced_8cpp_source.html">test_sliced.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  482</span>{</div>
-<div class="line"><span class="lineno">  483</span>    <span class="comment">// test different block sizes</span></div>
-<div class="line"><span class="lineno">  484</span>    <span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="keyword">const</span> blockSizes = std::array{2, 13, 73, 720};</div>
-<div class="line"><span class="lineno">  485</span>    <span class="keywordflow">for</span> (<span class="keyword">auto</span> <span class="keyword">const</span> blockSize : blockSizes)</div>
-<div class="line"><span class="lineno">  486</span>    {</div>
-<div class="line"><span class="lineno">  487</span>        <span class="keyword">auto</span> <span class="keyword">const</span> startGrainIndex = std::uint64_t{140 + <span class="keyword">static_cast&lt;</span>std::uint64_t<span class="keyword">&gt;</span>(blockSize)};</div>
-<div class="line"><span class="lineno">  488</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> iteration = std::size_t{0}; iteration &lt; 4; ++iteration)</div>
-<div class="line"><span class="lineno">  489</span>        {</div>
-<div class="line"><span class="lineno">  490</span>            <span class="keyword">auto</span> lastSlice = std::uint16_t{0};</div>
-<div class="line"><span class="lineno">  491</span>            <span class="keyword">auto</span> <span class="keyword">const</span> grainIndex = startGrainIndex + iteration;</div>
-<div class="line"><span class="lineno">  492</span>            this-&gt;fillInitiatorGrainWithZeros(grainIndex);</div>
-<div class="line"><span class="lineno">  493</span>            this-&gt;fillTargetGrainWithZeros(grainIndex);</div>
-<div class="line"><span class="lineno">  494</span> </div>
-<div class="line"><span class="lineno">  495</span>            <span class="keyword">auto</span> startSlice = std::uint16_t{0};</div>
-<div class="line"><span class="lineno">  496</span>            <span class="keyword">auto</span> info = this-&gt;getInitiatorGrainInfo(grainIndex);</div>
-<div class="line"><span class="lineno">  497</span>            <span class="keywordflow">for</span> (;;)</div>
-<div class="line"><span class="lineno">  498</span>            {</div>
-<div class="line"><span class="lineno">  499</span>                <span class="keyword">auto</span> endSlice = startSlice + blockSize;</div>
-<div class="line"><span class="lineno">  500</span>                <span class="keywordflow">if</span> (endSlice &gt;= info.totalSlices)</div>
-<div class="line"><span class="lineno">  501</span>                {</div>
-<div class="line"><span class="lineno">  502</span>                    endSlice = info.totalSlices;</div>
-<div class="line"><span class="lineno">  503</span>                }</div>
-<div class="line"><span class="lineno">  504</span> </div>
-<div class="line"><span class="lineno">  505</span>                <span class="comment">// find a slice in the middle of the block &lt;= (endSlice - 1)</span></div>
-<div class="line"><span class="lineno">  506</span>                <span class="keyword">auto</span> middleSlice = std::min(startSlice + (blockSize / 2), endSlice - 1);</div>
-<div class="line"><span class="lineno">  507</span>                <span class="keyword">auto</span> [fillValueBefore, keyValueBefore] = this-&gt;readTargetGrainSlice(grainIndex, middleSlice, <a class="code hl_define" href="flow_8h.html#a9f68bf6a4f2ae1db8801e16e039d1ac4">MXL_GRAIN_VALID_SLICES_ANY</a>);</div>
-<div class="line"><span class="lineno">  508</span>                <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(fillValueBefore == 0x00);</div>
-<div class="line"><span class="lineno">  509</span>                <span class="keywordflow">if</span> (this-&gt;hasAlphaChannel())</div>
-<div class="line"><span class="lineno">  510</span>                {</div>
-<div class="line"><span class="lineno">  511</span>                    <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(keyValueBefore == 0x00);</div>
-<div class="line"><span class="lineno">  512</span>                }</div>
-<div class="line"><span class="lineno">  513</span> </div>
-<div class="line"><span class="lineno">  514</span>                <span class="comment">// generate a value for fill and key buffer</span></div>
-<div class="line"><span class="lineno">  515</span>                <span class="keyword">auto</span> fillValue = <span class="keyword">static_cast&lt;</span>std::uint8_t<span class="keyword">&gt;</span>(0xAC &amp; ~middleSlice);</div>
-<div class="line"><span class="lineno">  516</span>                <span class="keyword">auto</span> keyValue = <span class="keyword">static_cast&lt;</span>std::uint8_t<span class="keyword">&gt;</span>(0xAB &amp; ~middleSlice);</div>
-<div class="line"><span class="lineno">  517</span> </div>
-<div class="line"><span class="lineno">  518</span>                <span class="comment">// write to a slice in the middle of the block</span></div>
-<div class="line"><span class="lineno">  519</span>                this-&gt;writeInitiatorGrainSlice(grainIndex, middleSlice, fillValue, keyValue);</div>
-<div class="line"><span class="lineno">  520</span> </div>
-<div class="line"><span class="lineno">  521</span>                <span class="comment">// transfer the slices</span></div>
-<div class="line"><span class="lineno">  522</span>                <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(this-&gt;transferGrainSlices(grainIndex, lastSlice, endSlice) == grainIndex);</div>
-<div class="line"><span class="lineno">  523</span> </div>
-<div class="line"><span class="lineno">  524</span>                <span class="comment">// check that the payload is correct. the whole block up to endSlice has been transferred, so the slice</span></div>
-<div class="line"><span class="lineno">  525</span>                <span class="comment">// in the middle of it must be valid.</span></div>
-<div class="line"><span class="lineno">  526</span>                <span class="keyword">auto</span> [fillValueAfter,</div>
-<div class="line"><span class="lineno">  527</span>                    keyValueAfter] = this-&gt;readTargetGrainSlice(grainIndex, middleSlice, <span class="keyword">static_cast&lt;</span>std::uint16_t<span class="keyword">&gt;</span>(middleSlice + 1));</div>
-<div class="line"><span class="lineno">  528</span>                <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(fillValueAfter == fillValue);</div>
-<div class="line"><span class="lineno">  529</span>                <span class="keywordflow">if</span> (this-&gt;hasAlphaChannel())</div>
-<div class="line"><span class="lineno">  530</span>                {</div>
-<div class="line"><span class="lineno">  531</span>                    <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(keyValueAfter == keyValue);</div>
-<div class="line"><span class="lineno">  532</span>                }</div>
-<div class="line"><span class="lineno">  533</span> </div>
-<div class="line"><span class="lineno">  534</span>                <span class="comment">// check that validSlices was updated</span></div>
-<div class="line"><span class="lineno">  535</span>                <span class="keyword">auto</span> <span class="keyword">const</span> targetGrainInfo = this-&gt;getTargetGrainInfo(grainIndex);</div>
-<div class="line"><span class="lineno">  536</span>                <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(targetGrainInfo.validSlices == endSlice);</div>
-<div class="line"><span class="lineno">  537</span> </div>
-<div class="line"><span class="lineno">  538</span>                startSlice += blockSize;</div>
-<div class="line"><span class="lineno">  539</span>                <span class="keywordflow">if</span> (startSlice &gt;= info.totalSlices)</div>
+<p class="definition">Definition at line <a class="el" href="test__sliced_8cpp_source.html#l00511">511</a> of file <a class="el" href="test__sliced_8cpp_source.html">test_sliced.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  512</span>{</div>
+<div class="line"><span class="lineno">  513</span>    <span class="comment">// test different block sizes</span></div>
+<div class="line"><span class="lineno">  514</span>    <span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="keyword">const</span> blockSizes = std::array{2, 13, 73, 720};</div>
+<div class="line"><span class="lineno">  515</span>    <span class="keywordflow">for</span> (<span class="keyword">auto</span> <span class="keyword">const</span> blockSize : blockSizes)</div>
+<div class="line"><span class="lineno">  516</span>    {</div>
+<div class="line"><span class="lineno">  517</span>        <span class="keyword">auto</span> <span class="keyword">const</span> startGrainIndex = std::uint64_t{140 + <span class="keyword">static_cast&lt;</span>std::uint64_t<span class="keyword">&gt;</span>(blockSize)};</div>
+<div class="line"><span class="lineno">  518</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> iteration = std::size_t{0}; iteration &lt; 4; ++iteration)</div>
+<div class="line"><span class="lineno">  519</span>        {</div>
+<div class="line"><span class="lineno">  520</span>            <span class="keyword">auto</span> lastSlice = std::uint16_t{0};</div>
+<div class="line"><span class="lineno">  521</span>            <span class="keyword">auto</span> <span class="keyword">const</span> grainIndex = startGrainIndex + iteration;</div>
+<div class="line"><span class="lineno">  522</span>            this-&gt;fillInitiatorGrainWithZeros(grainIndex);</div>
+<div class="line"><span class="lineno">  523</span>            this-&gt;fillTargetGrainWithZeros(grainIndex);</div>
+<div class="line"><span class="lineno">  524</span> </div>
+<div class="line"><span class="lineno">  525</span>            <span class="keyword">auto</span> startSlice = std::uint16_t{0};</div>
+<div class="line"><span class="lineno">  526</span>            <span class="keyword">auto</span> info = this-&gt;getInitiatorGrainInfo(grainIndex);</div>
+<div class="line"><span class="lineno">  527</span>            <span class="keywordflow">for</span> (;;)</div>
+<div class="line"><span class="lineno">  528</span>            {</div>
+<div class="line"><span class="lineno">  529</span>                <span class="keyword">auto</span> endSlice = startSlice + blockSize;</div>
+<div class="line"><span class="lineno">  530</span>                <span class="keywordflow">if</span> (endSlice &gt;= info.totalSlices)</div>
+<div class="line"><span class="lineno">  531</span>                {</div>
+<div class="line"><span class="lineno">  532</span>                    endSlice = info.totalSlices;</div>
+<div class="line"><span class="lineno">  533</span>                }</div>
+<div class="line"><span class="lineno">  534</span> </div>
+<div class="line"><span class="lineno">  535</span>                <span class="comment">// find a slice in the middle of the block &lt;= (endSlice - 1)</span></div>
+<div class="line"><span class="lineno">  536</span>                <span class="keyword">auto</span> middleSlice = std::min(startSlice + (blockSize / 2), endSlice - 1);</div>
+<div class="line"><span class="lineno">  537</span>                <span class="keyword">auto</span> [fillValueBefore, keyValueBefore] = this-&gt;readTargetGrainSlice(grainIndex, middleSlice, <a class="code hl_define" href="flow_8h.html#a9f68bf6a4f2ae1db8801e16e039d1ac4">MXL_GRAIN_VALID_SLICES_ANY</a>);</div>
+<div class="line"><span class="lineno">  538</span>                <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(fillValueBefore == 0x00);</div>
+<div class="line"><span class="lineno">  539</span>                <span class="keywordflow">if</span> (this-&gt;hasAlphaChannel())</div>
 <div class="line"><span class="lineno">  540</span>                {</div>
-<div class="line"><span class="lineno">  541</span>                    <span class="keywordflow">break</span>;</div>
+<div class="line"><span class="lineno">  541</span>                    <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(keyValueBefore == 0x00);</div>
 <div class="line"><span class="lineno">  542</span>                }</div>
-<div class="line"><span class="lineno">  543</span>            }</div>
-<div class="line"><span class="lineno">  544</span>        }</div>
-<div class="line"><span class="lineno">  545</span>    }</div>
-<div class="line"><span class="lineno">  546</span>}</div>
+<div class="line"><span class="lineno">  543</span> </div>
+<div class="line"><span class="lineno">  544</span>                <span class="comment">// generate a value for fill and key buffer</span></div>
+<div class="line"><span class="lineno">  545</span>                <span class="keyword">auto</span> fillValue = <span class="keyword">static_cast&lt;</span>std::uint8_t<span class="keyword">&gt;</span>(0xAC &amp; ~middleSlice);</div>
+<div class="line"><span class="lineno">  546</span>                <span class="keyword">auto</span> keyValue = <span class="keyword">static_cast&lt;</span>std::uint8_t<span class="keyword">&gt;</span>(0xAB &amp; ~middleSlice);</div>
+<div class="line"><span class="lineno">  547</span> </div>
+<div class="line"><span class="lineno">  548</span>                <span class="comment">// write to a slice in the middle of the block</span></div>
+<div class="line"><span class="lineno">  549</span>                this-&gt;writeInitiatorGrainSlice(grainIndex, middleSlice, fillValue, keyValue);</div>
+<div class="line"><span class="lineno">  550</span> </div>
+<div class="line"><span class="lineno">  551</span>                <span class="comment">// transfer the slices</span></div>
+<div class="line"><span class="lineno">  552</span>                <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(this-&gt;transferGrainSlices(grainIndex, lastSlice, endSlice) == grainIndex);</div>
+<div class="line"><span class="lineno">  553</span> </div>
+<div class="line"><span class="lineno">  554</span>                <span class="comment">// check that the payload is correct. the whole block up to endSlice has been transferred, so the slice</span></div>
+<div class="line"><span class="lineno">  555</span>                <span class="comment">// in the middle of it must be valid.</span></div>
+<div class="line"><span class="lineno">  556</span>                <span class="keyword">auto</span> [fillValueAfter,</div>
+<div class="line"><span class="lineno">  557</span>                    keyValueAfter] = this-&gt;readTargetGrainSlice(grainIndex, middleSlice, <span class="keyword">static_cast&lt;</span>std::uint16_t<span class="keyword">&gt;</span>(middleSlice + 1));</div>
+<div class="line"><span class="lineno">  558</span>                <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(fillValueAfter == fillValue);</div>
+<div class="line"><span class="lineno">  559</span>                <span class="keywordflow">if</span> (this-&gt;hasAlphaChannel())</div>
+<div class="line"><span class="lineno">  560</span>                {</div>
+<div class="line"><span class="lineno">  561</span>                    <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(keyValueAfter == keyValue);</div>
+<div class="line"><span class="lineno">  562</span>                }</div>
+<div class="line"><span class="lineno">  563</span> </div>
+<div class="line"><span class="lineno">  564</span>                <span class="comment">// check that validSlices was updated</span></div>
+<div class="line"><span class="lineno">  565</span>                <span class="keyword">auto</span> <span class="keyword">const</span> targetGrainInfo = this-&gt;getTargetGrainInfo(grainIndex);</div>
+<div class="line"><span class="lineno">  566</span>                <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(targetGrainInfo.validSlices == endSlice);</div>
+<div class="line"><span class="lineno">  567</span> </div>
+<div class="line"><span class="lineno">  568</span>                startSlice += blockSize;</div>
+<div class="line"><span class="lineno">  569</span>                <span class="keywordflow">if</span> (startSlice &gt;= info.totalSlices)</div>
+<div class="line"><span class="lineno">  570</span>                {</div>
+<div class="line"><span class="lineno">  571</span>                    <span class="keywordflow">break</span>;</div>
+<div class="line"><span class="lineno">  572</span>                }</div>
+<div class="line"><span class="lineno">  573</span>            }</div>
+<div class="line"><span class="lineno">  574</span>        }</div>
+<div class="line"><span class="lineno">  575</span>    }</div>
+<div class="line"><span class="lineno">  576</span>}</div>
 <div class="ttc" id="aflow_8h_html_a9f68bf6a4f2ae1db8801e16e039d1ac4"><div class="ttname"><a href="flow_8h.html#a9f68bf6a4f2ae1db8801e16e039d1ac4">MXL_GRAIN_VALID_SLICES_ANY</a></div><div class="ttdeci">#define MXL_GRAIN_VALID_SLICES_ANY</div><div class="ttdef"><b>Definition</b> <a href="flow_8h_source.html#l00039">flow.h:39</a></div></div>
 <div class="ttc" id="atest__time_8cpp_html_a1a5968f31b011ad005e4618a3d5f10ef"><div class="ttname"><a href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a></div><div class="ttdeci">REQUIRE(timeDelta&lt; 33 '366 '667LL)</div></div>
 </div><!-- fragment -->
 </div>
 </div>
 <a id="a6cfe6728f2d4e0cfe7e19d6ad932d180" name="a6cfe6728f2d4e0cfe7e19d6ad932d180"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6cfe6728f2d4e0cfe7e19d6ad932d180">&#9670;&#160;</a></span>TEMPLATE_TEST_CASE_METHOD() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a6cfe6728f2d4e0cfe7e19d6ad932d180">&#9670;&#160;</a></span>TEMPLATE_TEST_CASE_METHOD() <span class="overload">[2/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -350,48 +352,119 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="test__sliced_8cpp_source.html#l00438">438</a> of file <a class="el" href="test__sliced_8cpp_source.html">test_sliced.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  439</span>{</div>
-<div class="line"><span class="lineno">  440</span>    <span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="keyword">const</span> startGrainIndex = std::uint64_t{140};</div>
-<div class="line"><span class="lineno">  441</span>    <span class="keywordflow">for</span> (<span class="keyword">auto</span> iteration = std::size_t{0}; iteration &lt; 4; ++iteration)</div>
-<div class="line"><span class="lineno">  442</span>    {</div>
-<div class="line"><span class="lineno">  443</span>        <span class="keyword">auto</span> lastSlice = std::uint16_t{0};</div>
-<div class="line"><span class="lineno">  444</span>        <span class="keyword">auto</span> <span class="keyword">const</span> grainIndex = startGrainIndex + iteration;</div>
-<div class="line"><span class="lineno">  445</span>        this-&gt;fillInitiatorGrainWithZeros(grainIndex);</div>
-<div class="line"><span class="lineno">  446</span>        this-&gt;fillTargetGrainWithZeros(grainIndex);</div>
-<div class="line"><span class="lineno">  447</span> </div>
-<div class="line"><span class="lineno">  448</span>        <span class="keyword">auto</span> info = this-&gt;getInitiatorGrainInfo(grainIndex);</div>
-<div class="line"><span class="lineno">  449</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> slice = std::uint16_t{0}; slice &lt; info.totalSlices; ++slice)</div>
-<div class="line"><span class="lineno">  450</span>        {</div>
-<div class="line"><span class="lineno">  451</span>            <span class="comment">// check that the target slice is zeroed</span></div>
-<div class="line"><span class="lineno">  452</span>            <span class="keyword">auto</span> [fillBefore, keyBefore] = this-&gt;readTargetGrainSlice(grainIndex, slice, <a class="code hl_define" href="flow_8h.html#a9f68bf6a4f2ae1db8801e16e039d1ac4">MXL_GRAIN_VALID_SLICES_ANY</a>);</div>
-<div class="line"><span class="lineno">  453</span>            <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(fillBefore == 0x00);</div>
-<div class="line"><span class="lineno">  454</span>            <span class="keywordflow">if</span> (this-&gt;hasAlphaChannel())</div>
-<div class="line"><span class="lineno">  455</span>            {</div>
-<div class="line"><span class="lineno">  456</span>                <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(keyBefore == 0x00);</div>
-<div class="line"><span class="lineno">  457</span>            }</div>
-<div class="line"><span class="lineno">  458</span> </div>
-<div class="line"><span class="lineno">  459</span>            <span class="keyword">auto</span> fillValue = <span class="keyword">static_cast&lt;</span>std::uint8_t<span class="keyword">&gt;</span>(0xAC &amp; ~slice);</div>
-<div class="line"><span class="lineno">  460</span>            <span class="keyword">auto</span> keyValue = <span class="keyword">static_cast&lt;</span>std::uint8_t<span class="keyword">&gt;</span>(0xAB &amp; ~slice);</div>
-<div class="line"><span class="lineno">  461</span> </div>
-<div class="line"><span class="lineno">  462</span>            <span class="comment">// write pattern to initiator grain buffer</span></div>
-<div class="line"><span class="lineno">  463</span>            this-&gt;writeInitiatorGrainSlice(grainIndex, slice, fillValue, keyValue);</div>
-<div class="line"><span class="lineno">  464</span>            <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(this-&gt;transferGrainSlices(grainIndex, lastSlice, slice + 1) == grainIndex);</div>
-<div class="line"><span class="lineno">  465</span> </div>
-<div class="line"><span class="lineno">  466</span>            <span class="comment">// read after transfer, the transferred slice must now be valid</span></div>
-<div class="line"><span class="lineno">  467</span>            <span class="keyword">auto</span> [fillAfter, keyAfter] = this-&gt;readTargetGrainSlice(grainIndex, slice, <span class="keyword">static_cast&lt;</span>std::uint16_t<span class="keyword">&gt;</span>(slice + 1));</div>
-<div class="line"><span class="lineno">  468</span>            <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(fillAfter == fillValue);</div>
-<div class="line"><span class="lineno">  469</span>            <span class="keywordflow">if</span> (this-&gt;hasAlphaChannel())</div>
-<div class="line"><span class="lineno">  470</span>            {</div>
-<div class="line"><span class="lineno">  471</span>                <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(keyAfter == keyValue);</div>
-<div class="line"><span class="lineno">  472</span>            }</div>
-<div class="line"><span class="lineno">  473</span> </div>
-<div class="line"><span class="lineno">  474</span>            <span class="comment">// check that validSlices has been updated</span></div>
-<div class="line"><span class="lineno">  475</span>            <span class="keyword">auto</span> <span class="keyword">const</span> targetGrainInfo = this-&gt;getTargetGrainInfo(grainIndex);</div>
-<div class="line"><span class="lineno">  476</span>            <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(targetGrainInfo.validSlices == slice + 1);</div>
-<div class="line"><span class="lineno">  477</span>        }</div>
-<div class="line"><span class="lineno">  478</span>    }</div>
-<div class="line"><span class="lineno">  479</span>}</div>
+<p class="definition">Definition at line <a class="el" href="test__sliced_8cpp_source.html#l00468">468</a> of file <a class="el" href="test__sliced_8cpp_source.html">test_sliced.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  469</span>{</div>
+<div class="line"><span class="lineno">  470</span>    <span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="keyword">const</span> startGrainIndex = std::uint64_t{140};</div>
+<div class="line"><span class="lineno">  471</span>    <span class="keywordflow">for</span> (<span class="keyword">auto</span> iteration = std::size_t{0}; iteration &lt; 4; ++iteration)</div>
+<div class="line"><span class="lineno">  472</span>    {</div>
+<div class="line"><span class="lineno">  473</span>        <span class="keyword">auto</span> lastSlice = std::uint16_t{0};</div>
+<div class="line"><span class="lineno">  474</span>        <span class="keyword">auto</span> <span class="keyword">const</span> grainIndex = startGrainIndex + iteration;</div>
+<div class="line"><span class="lineno">  475</span>        this-&gt;fillInitiatorGrainWithZeros(grainIndex);</div>
+<div class="line"><span class="lineno">  476</span>        this-&gt;fillTargetGrainWithZeros(grainIndex);</div>
+<div class="line"><span class="lineno">  477</span> </div>
+<div class="line"><span class="lineno">  478</span>        <span class="keyword">auto</span> info = this-&gt;getInitiatorGrainInfo(grainIndex);</div>
+<div class="line"><span class="lineno">  479</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> slice = std::uint16_t{0}; slice &lt; info.totalSlices; ++slice)</div>
+<div class="line"><span class="lineno">  480</span>        {</div>
+<div class="line"><span class="lineno">  481</span>            <span class="comment">// check that the target slice is zeroed</span></div>
+<div class="line"><span class="lineno">  482</span>            <span class="keyword">auto</span> [fillBefore, keyBefore] = this-&gt;readTargetGrainSlice(grainIndex, slice, <a class="code hl_define" href="flow_8h.html#a9f68bf6a4f2ae1db8801e16e039d1ac4">MXL_GRAIN_VALID_SLICES_ANY</a>);</div>
+<div class="line"><span class="lineno">  483</span>            <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(fillBefore == 0x00);</div>
+<div class="line"><span class="lineno">  484</span>            <span class="keywordflow">if</span> (this-&gt;hasAlphaChannel())</div>
+<div class="line"><span class="lineno">  485</span>            {</div>
+<div class="line"><span class="lineno">  486</span>                <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(keyBefore == 0x00);</div>
+<div class="line"><span class="lineno">  487</span>            }</div>
+<div class="line"><span class="lineno">  488</span> </div>
+<div class="line"><span class="lineno">  489</span>            <span class="keyword">auto</span> fillValue = <span class="keyword">static_cast&lt;</span>std::uint8_t<span class="keyword">&gt;</span>(0xAC &amp; ~slice);</div>
+<div class="line"><span class="lineno">  490</span>            <span class="keyword">auto</span> keyValue = <span class="keyword">static_cast&lt;</span>std::uint8_t<span class="keyword">&gt;</span>(0xAB &amp; ~slice);</div>
+<div class="line"><span class="lineno">  491</span> </div>
+<div class="line"><span class="lineno">  492</span>            <span class="comment">// write pattern to initiator grain buffer</span></div>
+<div class="line"><span class="lineno">  493</span>            this-&gt;writeInitiatorGrainSlice(grainIndex, slice, fillValue, keyValue);</div>
+<div class="line"><span class="lineno">  494</span>            <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(this-&gt;transferGrainSlices(grainIndex, lastSlice, slice + 1) == grainIndex);</div>
+<div class="line"><span class="lineno">  495</span> </div>
+<div class="line"><span class="lineno">  496</span>            <span class="comment">// read after transfer, the transferred slice must now be valid</span></div>
+<div class="line"><span class="lineno">  497</span>            <span class="keyword">auto</span> [fillAfter, keyAfter] = this-&gt;readTargetGrainSlice(grainIndex, slice, <span class="keyword">static_cast&lt;</span>std::uint16_t<span class="keyword">&gt;</span>(slice + 1));</div>
+<div class="line"><span class="lineno">  498</span>            <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(fillAfter == fillValue);</div>
+<div class="line"><span class="lineno">  499</span>            <span class="keywordflow">if</span> (this-&gt;hasAlphaChannel())</div>
+<div class="line"><span class="lineno">  500</span>            {</div>
+<div class="line"><span class="lineno">  501</span>                <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(keyAfter == keyValue);</div>
+<div class="line"><span class="lineno">  502</span>            }</div>
+<div class="line"><span class="lineno">  503</span> </div>
+<div class="line"><span class="lineno">  504</span>            <span class="comment">// check that validSlices has been updated</span></div>
+<div class="line"><span class="lineno">  505</span>            <span class="keyword">auto</span> <span class="keyword">const</span> targetGrainInfo = this-&gt;getTargetGrainInfo(grainIndex);</div>
+<div class="line"><span class="lineno">  506</span>            <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(targetGrainInfo.validSlices == slice + 1);</div>
+<div class="line"><span class="lineno">  507</span>        }</div>
+<div class="line"><span class="lineno">  508</span>    }</div>
+<div class="line"><span class="lineno">  509</span>}</div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="a57ebb67475b273e0ff16e0e6fc8d93cc" name="a57ebb67475b273e0ff16e0e6fc8d93cc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a57ebb67475b273e0ff16e0e6fc8d93cc">&#9670;&#160;</a></span>TEMPLATE_TEST_CASE_METHOD() <span class="overload">[3/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">TEMPLATE_TEST_CASE_METHOD </td>
+          <td>(</td>
+          <td class="paramtype">FabricsTestFixture&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&quot;Target commits received grains&quot;&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&quot;&quot;&#160;</td>
+          <td class="paramname">[sliced][target-commit], </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">TCP_V210&#160;</td>
+          <td class="paramname">&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="test__sliced_8cpp_source.html#l00580">580</a> of file <a class="el" href="test__sliced_8cpp_source.html">test_sliced.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  581</span>{</div>
+<div class="line"><span class="lineno">  582</span>    <span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="keyword">const</span> startGrainIndex = std::uint64_t{300};</div>
+<div class="line"><span class="lineno">  583</span>    <span class="keyword">auto</span> <span class="keyword">const</span> sliceCount = this-&gt;totalSlices();</div>
+<div class="line"><span class="lineno">  584</span> </div>
+<div class="line"><span class="lineno">  585</span>    <span class="comment">// Full grain transfers. Each grain is a new grain for the target writer.</span></div>
+<div class="line"><span class="lineno">  586</span>    <span class="keywordflow">for</span> (<span class="keyword">auto</span> iteration = std::uint64_t{0}; iteration &lt; 3; ++iteration)</div>
+<div class="line"><span class="lineno">  587</span>    {</div>
+<div class="line"><span class="lineno">  588</span>        <span class="keyword">auto</span> <span class="keyword">const</span> grainIndex = startGrainIndex + iteration;</div>
+<div class="line"><span class="lineno">  589</span>        this-&gt;writeInitiatorGrainSlice(grainIndex, sliceCount - 1U, 0xAC, 0xAB);</div>
+<div class="line"><span class="lineno">  590</span>        <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(this-&gt;transferGrainSlices(grainIndex, 0, sliceCount) == grainIndex);</div>
+<div class="line"><span class="lineno">  591</span> </div>
+<div class="line"><span class="lineno">  592</span>        <span class="keyword">auto</span> <span class="keyword">const</span> openedInfo = this-&gt;commitReceivedTargetGrain(grainIndex);</div>
+<div class="line"><span class="lineno">  593</span>        <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(openedInfo.validSlices == sliceCount);</div>
+<div class="line"><span class="lineno">  594</span> </div>
+<div class="line"><span class="lineno">  595</span>        <span class="keyword">auto</span> <span class="keyword">const</span> [fill, key] = this-&gt;readTargetGrainSlice(grainIndex, sliceCount - 1U, sliceCount);</div>
+<div class="line"><span class="lineno">  596</span>        <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(fill == 0xAC);</div>
+<div class="line"><span class="lineno">  597</span>    }</div>
+<div class="line"><span class="lineno">  598</span> </div>
+<div class="line"><span class="lineno">  599</span>    <span class="comment">// A header-only transfer of an invalid grain keeps the invalid flag.</span></div>
+<div class="line"><span class="lineno">  600</span>    <span class="keyword">auto</span> <span class="keyword">const</span> invalidGrainIndex = startGrainIndex + 3U;</div>
+<div class="line"><span class="lineno">  601</span>    this-&gt;writeInitiatorInvalidGrain(invalidGrainIndex);</div>
+<div class="line"><span class="lineno">  602</span>    <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>(this-&gt;transferGrainSlices(invalidGrainIndex, 0, 0) == invalidGrainIndex);</div>
+<div class="line"><span class="lineno">  603</span> </div>
+<div class="line"><span class="lineno">  604</span>    <span class="keyword">auto</span> <span class="keyword">const</span> openedInfo = this-&gt;commitReceivedTargetGrain(invalidGrainIndex);</div>
+<div class="line"><span class="lineno">  605</span>    <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>((openedInfo.flags &amp; <a class="code hl_define" href="flow_8h.html#a9266a2a1e1247d4d0aa028eacfd939a5">MXL_GRAIN_FLAG_INVALID</a>) != 0);</div>
+<div class="line"><span class="lineno">  606</span>    <a class="code hl_function" href="test__time_8cpp.html#a1a5968f31b011ad005e4618a3d5f10ef">REQUIRE</a>((this-&gt;getTargetGrainInfo(invalidGrainIndex).<a class="code hl_variable" href="test__flows_8cpp.html#afa74aa239072ff1e3579209a20d6e9a8">flags</a> &amp; <a class="code hl_define" href="flow_8h.html#a9266a2a1e1247d4d0aa028eacfd939a5">MXL_GRAIN_FLAG_INVALID</a>) != 0);</div>
+<div class="line"><span class="lineno">  607</span>}</div>
+<div class="ttc" id="aflow_8h_html_a9266a2a1e1247d4d0aa028eacfd939a5"><div class="ttname"><a href="flow_8h.html#a9266a2a1e1247d4d0aa028eacfd939a5">MXL_GRAIN_FLAG_INVALID</a></div><div class="ttdeci">#define MXL_GRAIN_FLAG_INVALID</div><div class="ttdef"><b>Definition</b> <a href="flow_8h_source.html#l00033">flow.h:33</a></div></div>
+<div class="ttc" id="atest__flows_8cpp_html_afa74aa239072ff1e3579209a20d6e9a8"><div class="ttname"><a href="test__flows_8cpp.html#afa74aa239072ff1e3579209a20d6e9a8">flags</a></div><div class="ttdeci">gInfo flags</div><div class="ttdoc">Mark the grain as invalid.</div><div class="ttdef"><b>Definition</b> <a href="test__flows_8cpp_source.html#l00197">test_flows.cpp:197</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
