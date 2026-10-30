@@ -183,14 +183,14 @@ namespace
     }
 
     /**
-     * Run the reader helper in another process.
+     * Run a program and wait for it.
+     * \param[in] program The program path.
      * \param[in] args The arguments after the program name.
-     * \return The exit status of the helper, or -1 if it could not be run.
+     * \return The exit status, or -1 if it could not be run.
      */
-    int runReaderHelper(std::vector<std::string> const& args)
+    int runProgram(std::string program, std::vector<std::string> const& args)
     {
         auto argv = std::vector<char*>{};
-        auto program = std::string{MXL_CUDA_READER_HELPER};
         argv.push_back(program.data());
         auto copies = args;
         for (auto& arg : copies)
@@ -210,6 +210,16 @@ namespace
             return -1;
         }
         return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+    }
+
+    /**
+     * Run the reader helper in another process.
+     * \param[in] args The arguments after the program name.
+     * \return The exit status of the helper, or -1 if it could not be run.
+     */
+    int runReaderHelper(std::vector<std::string> const& args)
+    {
+        return runProgram(MXL_CUDA_READER_HELPER, args);
     }
 }
 
@@ -280,6 +290,22 @@ TEST_CASE("CUDA payload : Writer and reader in one process", "[cuda payload]")
     mxlDestroyInstance(readerInstance);
 }
 
+TEST_CASE("CUDA payload : Reader in another container", "[cuda container]")
+{
+    auto const script = std::filesystem::path{MXL_CUDA_CROSS_CONTAINER_SCRIPT};
+    if (!std::filesystem::is_regular_file(script))
+    {
+        SKIP("Cross-container script is not available.");
+    }
+    // Exit status 2 means the script found no docker daemon. The test image has no docker client.
+    auto const status = runProgram("/bin/bash", {script.string()});
+    if (status == 2)
+    {
+        SKIP("Docker is not available.");
+    }
+    REQUIRE(status == 0);
+}
+
 TEST_CASE("CUDA payload : Reader in another process", "[cuda payload]")
 {
     if (mxl::tests::cuda::deviceCount() == 0)
@@ -296,7 +322,7 @@ TEST_CASE("CUDA payload : Reader in another process", "[cuda payload]")
     REQUIRE(mxlFlowWriterMapSlots(writer.writer(), layout.slotCount, writerSlots.data()) == MXL_STATUS_OK);
     auto const index = writer.writeGrain(writerSlots, 0x5C);
 
-    // The helper imports the allocation with CUDA IPC.
+    // The helper imports the allocation through the payload socket.
     REQUIRE(runReaderHelper({domain.path().string(), V210_FLOW_ID, std::to_string(index), std::to_string(0x5C)}) == 0);
 
     // A reader can name the device on which it accesses the payload.
@@ -305,6 +331,39 @@ TEST_CASE("CUDA payload : Reader in another process", "[cuda payload]")
                 std::to_string(index),
                 std::to_string(0x5C),
                 R"({"payload": {"deviceUuid": ")" + uuid + R"("}})"}) == 0);
+}
+
+TEST_CASE("CUDA payload : Reader on a peer GPU", "[cuda payload]")
+{
+    if (mxl::tests::cuda::deviceCount() < 2)
+    {
+        SKIP("Need at least two CUDA devices.");
+    }
+    auto canAccess = 0;
+    if ((::cudaDeviceCanAccessPeer(&canAccess, 1, 0) != cudaSuccess) || (canAccess == 0))
+    {
+        (void)::cudaGetLastError();
+        SKIP("Device 1 cannot access peer memory on device 0.");
+    }
+
+    auto const writerUuid = mxl::tests::cuda::deviceUuid(0);
+    auto const readerUuid = mxl::tests::cuda::deviceUuid(1);
+    auto const domain = Domain{};
+    auto writer = CudaWriter{domain.path(), deviceOptions(writerUuid)};
+
+    auto layout = mxlGrainStorageLayout{};
+    REQUIRE(mxlFlowWriterGetStorageLayout(writer.writer(), &layout) == MXL_STATUS_OK);
+    auto writerSlots = std::vector<mxlGrainStorage>(layout.slotCount);
+    REQUIRE(mxlFlowWriterMapSlots(writer.writer(), layout.slotCount, writerSlots.data()) == MXL_STATUS_OK);
+    auto const index = writer.writeGrain(writerSlots, 0xC3);
+
+    // Another process imports the writer's allocation onto device 1.
+    REQUIRE(runReaderHelper({domain.path().string(),
+                V210_FLOW_ID,
+                std::to_string(index),
+                std::to_string(0xC3),
+                R"({"payload": {"deviceUuid": ")" + readerUuid + R"("}})",
+                "1"}) == 0);
 }
 
 TEST_CASE("CUDA payload : Descriptors in an unknown format are refused", "[cuda payload]")
@@ -319,9 +378,15 @@ TEST_CASE("CUDA payload : Descriptors in an unknown format are refused", "[cuda 
     // A writer running another build of the backend could write payload.cuda.json in another format.
     auto const descriptorPath = domain.path() / (std::string{V210_FLOW_ID} + ".mxl-flow") / "payload.cuda.json";
     auto descriptor = readFile(descriptorPath);
-    auto const pos = descriptor.find("\"version\": 1");
+    auto const marker = std::string{"\"version\": 2"};
+    auto const pos = descriptor.find(marker);
     REQUIRE(pos != std::string::npos);
-    descriptor.replace(pos, std::strlen("\"version\": 1"), "\"version\": 2");
+    auto length = marker.size();
+    if (descriptor.compare(pos + length, 2, ".0") == 0)
+    {
+        length += 2;
+    }
+    descriptor.replace(pos, length, "\"version\": 9");
     {
         auto out = std::ofstream{descriptorPath, std::ios::out | std::ios::trunc};
         out << descriptor;

@@ -394,6 +394,63 @@ OPTIONS:
                               MPEGTS media file location
 ```
 
+## mxl-gst-cuda-testsrc
+
+Publishes a progressive `video/v210` test picture whose payload is in CUDA device memory. It is built when `MXL_ENABLE_CUDA_PAYLOAD` is on. `videotestsrc` produces host frames. Each frame is copied with `cudaMemcpy` into the slot from `mxlFlowWriterOpenGrainSlot`, and that copy is finished with `cudaDeviceSynchronize` before `mxlFlowWriterCommitGrain`.
+
+`libmxl-payload-cuda-linear.so` must be next to `libmxl`. The domain directory must be on a tmpfs, such as `/dev/shm`.
+
+```bash
+./mxl-gst-cuda-testsrc [OPTIONS]
+
+OPTIONS:
+  -h,     --help              Print this help message and exit
+  -d,     --domain TEXT:DIR REQUIRED
+                              The MXL domain directory
+  -v,     --video-config-file TEXT:FILE REQUIRED
+                              NMOS video flow JSON
+          --device-uuid TEXT REQUIRED
+                              CUDA device UUID, as printed by nvidia-smi -L
+  -p,     --pattern TEXT [smpte]
+                              videotestsrc pattern name
+  -t,     --overlay-text TEXT [EBU DMF MXL]
+                              Text drawn on the test picture
+  -g,     --group-hint TEXT [mxl-gst-cuda-testsrc]
+                              NMOS group hint stored in the flow definition
+```
+
+```bash
+./mxl-gst-cuda-testsrc \
+  -d /dev/shm/mxl \
+  -v lib/tests/data/v210_flow.json \
+  --device-uuid GPU-88064374-43da-caf5-b332-be5fb39bf2e6
+```
+
+## mxl-gst-cuda-sink
+
+Displays that flow with `autovideosink`. It maps the slots once, waits for each grain with `mxlFlowReaderGetGrainSlot`, and copies the picture to host memory with `cudaMemcpy`. A display is required. `--device-uuid` asks the backend to map the payload on another GPU of the same machine. Leave it unset to use the GPU that holds the payload.
+
+A reader in another container needs the domain directory mounted in both containers. That directory is a tmpfs, and it holds `payload.sock`. The containers do not need a shared IPC namespace or a shared PID namespace.
+
+```bash
+./mxl-gst-cuda-sink [OPTIONS]
+
+OPTIONS:
+  -h,     --help              Print this help message and exit
+  -d,     --domain TEXT:DIR REQUIRED
+                              The MXL domain directory
+  -v,     --video-flow-id TEXT REQUIRED
+                              The video flow id
+          --device-uuid TEXT
+                              CUDA device UUID used to map the payload
+```
+
+```bash
+./mxl-gst-cuda-sink \
+  -d /dev/shm/mxl \
+  -v 5fbec3b1-1b0f-417d-9059-8b94a47197ed
+```
+
 ## Gstreamer filters
 
 MXL Source and Sink filters for GStreamer are available [here](../rust/gst-mxl-rs/README.md).

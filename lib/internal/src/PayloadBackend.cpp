@@ -1,12 +1,24 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+#ifndef _GNU_SOURCE
+#   define _GNU_SOURCE
+#endif
+
 #include "mxl-internal/PayloadBackend.hpp"
+#include <cerrno>
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
+#include <atomic>
+#include <thread>
 #include <utility>
+#include <vector>
 #include <dlfcn.h>
+#include <poll.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/un.h>
 #include <unistd.h>
 #include <fmt/format.h>
 #include "mxl-internal/Logging.hpp"
@@ -99,9 +111,12 @@ namespace mxl::lib
          */
         std::string validateApi(mxlPayloadBackendApiV1 const& api, std::string_view name)
         {
-            if (api.structSize < sizeof(mxlPayloadBackendApiV1))
+            // exportDescriptors and importDescriptors were added at the end. A backend built before them reports a
+            // smaller table and simply does not share file descriptors.
+            constexpr auto minStructSize = offsetof(mxlPayloadBackendApiV1, exportDescriptors);
+            if (api.structSize < minStructSize)
             {
-                return fmt::format("function table is {} bytes, expected at least {}", api.structSize, sizeof(mxlPayloadBackendApiV1));
+                return fmt::format("function table is {} bytes, expected at least {}", api.structSize, minStructSize);
             }
             if (api.abiVersion != MXL_PAYLOAD_BACKEND_ABI_VERSION)
             {
@@ -122,7 +137,316 @@ namespace mxl::lib
             }
             return {};
         }
+
+        /** \return True when the table is large enough to hold the file-descriptor functions. */
+        bool reportsDescriptorFunctions(mxlPayloadBackendApiV1 const& api) noexcept
+        {
+            return api.structSize >= sizeof(mxlPayloadBackendApiV1);
+        }
+
+        /**
+         * Ask a writer backend for the descriptors it shares.
+         * \return The descriptors, owned by the caller. Empty when the backend shares none.
+         */
+        std::vector<int> takeExportedDescriptors(mxlPayloadBackendApiV1 const& api, mxlPayloadBackendInstance instance)
+        {
+            if (!reportsDescriptorFunctions(api) || (api.exportDescriptors == nullptr))
+            {
+                return {};
+            }
+            auto count = std::uint32_t{0};
+            if (auto const status = api.exportDescriptors(instance, &count, nullptr); status != MXL_STATUS_OK)
+            {
+                throw PayloadStorageError{status, fmt::format("Payload backend '{}' failed to export its storage descriptors.", api.name)};
+            }
+            if (count == 0U)
+            {
+                return {};
+            }
+            auto fds = std::vector<int>(count, -1);
+            if (auto const status = api.exportDescriptors(instance, &count, fds.data()); status != MXL_STATUS_OK)
+            {
+                throw PayloadStorageError{status, fmt::format("Payload backend '{}' failed to export its storage descriptors.", api.name)};
+            }
+            fds.resize(count);
+            return fds;
+        }
+
+        /**
+         * Receive the descriptors of a flow from its payload socket.
+         * \param[in] socketPath The published path of payload.sock.
+         * \return The received descriptors. The caller owns them.
+         */
+        std::vector<int> receiveDescriptors(std::filesystem::path const& socketPath)
+        {
+            auto const path = socketPath.string();
+            auto address = sockaddr_un{};
+            address.sun_family = AF_UNIX;
+            if ((path.size() + 1U) > sizeof(address.sun_path))
+            {
+                throw PayloadStorageError{MXL_ERR_INVALID_ARG, "The payload socket path is too long."};
+            }
+            std::memcpy(address.sun_path, path.c_str(), path.size() + 1U);
+
+            auto const connection = ::socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
+            if (connection < 0)
+            {
+                throw PayloadStorageError{MXL_ERR_UNKNOWN, "Could not create a socket for the payload descriptors."};
+            }
+            if (::connect(connection, reinterpret_cast<sockaddr*>(&address), sizeof(address)) != 0)
+            {
+                ::close(connection);
+                throw PayloadStorageError{MXL_ERR_UNKNOWN, fmt::format("Could not connect to the payload socket '{}'.", path)};
+            }
+
+            auto byte = char{0};
+            auto iov = iovec{};
+            iov.iov_base = &byte;
+            iov.iov_len = 1;
+            alignas(cmsghdr) char control[CMSG_SPACE(sizeof(int) * 253U)] = {};
+            auto message = msghdr{};
+            message.msg_iov = &iov;
+            message.msg_iovlen = 1;
+            message.msg_control = control;
+            message.msg_controllen = sizeof(control);
+            auto const received = ::recvmsg(connection, &message, MSG_CMSG_CLOEXEC);
+            ::close(connection);
+            if (received < 0)
+            {
+                throw PayloadStorageError{MXL_ERR_UNKNOWN, "Could not receive the payload descriptors."};
+            }
+
+            auto fds = std::vector<int>{};
+            for (auto* header = CMSG_FIRSTHDR(&message); header != nullptr; header = CMSG_NXTHDR(&message, header))
+            {
+                if ((header->cmsg_level != SOL_SOCKET) || (header->cmsg_type != SCM_RIGHTS))
+                {
+                    continue;
+                }
+                auto const bytes = static_cast<std::size_t>(header->cmsg_len) - CMSG_LEN(0);
+                auto const count = bytes / sizeof(int);
+                auto const* data = reinterpret_cast<int const*>(CMSG_DATA(header));
+                fds.insert(fds.end(), data, data + count);
+            }
+            if (fds.empty())
+            {
+                throw PayloadStorageError{MXL_ERR_UNKNOWN, "The payload socket sent no descriptors."};
+            }
+            return fds;
+        }
     }
+
+    /**
+     * Serves a writer's storage descriptors on the payload socket in the flow directory.
+     * The listening socket is bound before the flow directory is renamed, so the published path reaches the same inode.
+     */
+    struct PayloadFdServer
+    {
+        /** \param[in] publishedPath Path readers connect to, after the flow directory is published. */
+        /** \param[in] bindPath Path to bind now, in the staging directory. */
+        /** \param[in] fds Descriptors to hand out. This object owns them. */
+        PayloadFdServer(std::filesystem::path publishedPath, std::filesystem::path bindPath, std::vector<int> fds)
+            : _publishedPath{std::move(publishedPath)}
+            , _bindPath{std::move(bindPath)}
+            , _fds{std::move(fds)}
+            , _listen{-1}
+            , _stop{false}
+        {
+            auto const path = _bindPath.string();
+            auto address = sockaddr_un{};
+            address.sun_family = AF_UNIX;
+            if ((path.size() + 1U) > sizeof(address.sun_path))
+            {
+                throw PayloadStorageError{MXL_ERR_INVALID_ARG, "The payload socket path is too long."};
+            }
+            std::memcpy(address.sun_path, path.c_str(), path.size() + 1U);
+            ::unlink(path.c_str());
+
+            _listen = ::socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
+            if ((_listen < 0) || (::bind(_listen, reinterpret_cast<sockaddr*>(&address), sizeof(address)) != 0) || (::listen(_listen, 8) != 0))
+            {
+                if (_listen >= 0)
+                {
+                    ::close(_listen);
+                    _listen = -1;
+                }
+                for (auto const fd : _fds)
+                {
+                    if (fd >= 0)
+                    {
+                        ::close(fd);
+                    }
+                }
+                _fds.clear();
+                ::unlink(path.c_str());
+                throw PayloadStorageError{MXL_ERR_UNKNOWN, fmt::format("Could not listen on the payload socket '{}'.", path)};
+            }
+            applySocketMode();
+            try
+            {
+                _thread = std::thread{[this] { serve(); }};
+            }
+            catch (...)
+            {
+                ::close(_listen);
+                _listen = -1;
+                for (auto const fd : _fds)
+                {
+                    if (fd >= 0)
+                    {
+                        ::close(fd);
+                    }
+                }
+                _fds.clear();
+                ::unlink(path.c_str());
+                throw;
+            }
+        }
+
+        ~PayloadFdServer()
+        {
+            _stop.store(true);
+            if (_listen >= 0)
+            {
+                ::shutdown(_listen, SHUT_RDWR);
+            }
+            if (_thread.joinable())
+            {
+                _thread.join();
+            }
+            if (_listen >= 0)
+            {
+                ::close(_listen);
+            }
+            for (auto const fd : _fds)
+            {
+                if (fd >= 0)
+                {
+                    ::close(fd);
+                }
+            }
+            ::unlink(_publishedPath.c_str());
+            ::unlink(_bindPath.c_str());
+        }
+
+        PayloadFdServer(PayloadFdServer const&) = delete;
+        PayloadFdServer& operator=(PayloadFdServer const&) = delete;
+
+    private:
+        /** Match the socket's write permission to the flow directory's read permission. */
+        void applySocketMode()
+        {
+            struct stat info{};
+            if (::stat(_bindPath.parent_path().c_str(), &info) != 0)
+            {
+                return;
+            }
+            auto mode = mode_t{S_IRUSR | S_IWUSR};
+            if ((info.st_mode & S_IRGRP) != 0)
+            {
+                mode |= S_IRGRP | S_IWGRP;
+            }
+            if ((info.st_mode & S_IROTH) != 0)
+            {
+                mode |= S_IROTH | S_IWOTH;
+            }
+            (void)::fchmod(_listen, mode);
+        }
+
+        /** \return True when the connected process may read this flow directory. */
+        bool peerMayRead(int connection) const
+        {
+            auto credentials = ucred{};
+            auto length = socklen_t{sizeof(credentials)};
+            struct stat info{};
+            if ((::getsockopt(connection, SOL_SOCKET, SO_PEERCRED, &credentials, &length) != 0) || (::fstat(_listen, &info) != 0))
+            {
+                return false;
+            }
+            if (credentials.uid == info.st_uid)
+            {
+                return true;
+            }
+            if (((info.st_mode & S_IWGRP) != 0) && (credentials.gid == info.st_gid))
+            {
+                return true;
+            }
+            return (info.st_mode & S_IWOTH) != 0;
+        }
+
+        /** Accept readers until the writer storage is destroyed. */
+        void serve()
+        {
+            while (!_stop.load())
+            {
+                auto ready = pollfd{};
+                ready.fd = _listen;
+                ready.events = POLLIN;
+                if (::poll(&ready, 1, 200) <= 0)
+                {
+                    continue;
+                }
+                auto const connection = ::accept(_listen, nullptr, nullptr);
+                if (connection < 0)
+                {
+                    continue;
+                }
+                if (peerMayRead(connection))
+                {
+                    sendDescriptors(connection);
+                }
+                ::close(connection);
+            }
+        }
+
+        /** Send a duplicate of each stored descriptor. */
+        void sendDescriptors(int connection) const
+        {
+            auto copies = std::vector<int>{};
+            copies.reserve(_fds.size());
+            for (auto const fd : _fds)
+            {
+                auto const copy = ::dup(fd);
+                if (copy < 0)
+                {
+                    for (auto const opened : copies)
+                    {
+                        ::close(opened);
+                    }
+                    return;
+                }
+                copies.push_back(copy);
+            }
+
+            auto byte = char{0};
+            auto iov = iovec{};
+            iov.iov_base = &byte;
+            iov.iov_len = 1;
+            auto control = std::vector<char>(CMSG_SPACE(sizeof(int) * copies.size()));
+            auto message = msghdr{};
+            message.msg_iov = &iov;
+            message.msg_iovlen = 1;
+            message.msg_control = control.data();
+            message.msg_controllen = control.size();
+            auto* header = CMSG_FIRSTHDR(&message);
+            header->cmsg_level = SOL_SOCKET;
+            header->cmsg_type = SCM_RIGHTS;
+            header->cmsg_len = CMSG_LEN(sizeof(int) * copies.size());
+            std::memcpy(CMSG_DATA(header), copies.data(), sizeof(int) * copies.size());
+            (void)::sendmsg(connection, &message, MSG_NOSIGNAL);
+            for (auto const copy : copies)
+            {
+                ::close(copy);
+            }
+        }
+
+        std::filesystem::path _publishedPath;
+        std::filesystem::path _bindPath;
+        std::vector<int> _fds;
+        int _listen;
+        std::atomic<bool> _stop;
+        std::thread _thread;
+    };
 
     PayloadBackendLoader& PayloadBackendLoader::defaultLoader()
     {
@@ -265,9 +589,13 @@ namespace mxl::lib
         {
             throw PayloadStorageError{status, fmt::format("Payload backend '{}' failed to prepare the flow storage.", api.name)};
         }
-        return std::unique_ptr<PluginPayloadStorage>{
-            new PluginPayloadStorage{api, instance, info.grainCount}
-        };
+        auto storage = std::unique_ptr<PluginPayloadStorage>{new PluginPayloadStorage{api, instance, info.grainCount}};
+        auto fds = takeExportedDescriptors(api, instance);
+        if (!fds.empty())
+        {
+            storage->serveDescriptors(finalDir / "payload.sock", stagingDir / "payload.sock", std::move(fds));
+        }
+        return storage;
     }
 
     std::unique_ptr<PluginPayloadStorage> PluginPayloadStorage::open(mxlPayloadBackendApiV1 const& api, mxlPayloadBackendFlowInfo const& info,
@@ -278,19 +606,31 @@ namespace mxl::lib
         {
             throw PayloadStorageError{status, fmt::format("Payload backend '{}' failed to open the flow storage.", api.name)};
         }
-        return std::unique_ptr<PluginPayloadStorage>{
-            new PluginPayloadStorage{api, instance, info.grainCount}
-        };
+        auto storage = std::unique_ptr<PluginPayloadStorage>{new PluginPayloadStorage{api, instance, info.grainCount}};
+        if (reportsDescriptorFunctions(api) && (api.importDescriptors != nullptr))
+        {
+            storage->_descriptorSocket = flowDir / "payload.sock";
+        }
+        return storage;
+    }
+
+    void PluginPayloadStorage::serveDescriptors(std::filesystem::path socketPath, std::filesystem::path bindPath, std::vector<int> fds)
+    {
+        _descriptorSocket = std::move(socketPath);
+        _fdServer.reset(new PayloadFdServer{_descriptorSocket, std::move(bindPath), std::move(fds)});
     }
 
     PluginPayloadStorage::PluginPayloadStorage(mxlPayloadBackendApiV1 const& api, mxlPayloadBackendInstance instance, std::size_t slotCount) noexcept
         : _api{&api}
         , _instance{instance}
         , _slotCount{slotCount}
+        , _descriptorSocket{}
+        , _fdServer{}
     {}
 
     PluginPayloadStorage::~PluginPayloadStorage()
     {
+        _fdServer.reset();
         _api->destroy(_instance);
     }
 
@@ -342,6 +682,16 @@ namespace mxl::lib
 
     void PluginPayloadStorage::mapSlots() const
     {
+        // The writer already holds the memory it exported. Only a reader fetches descriptors.
+        if (reportsDescriptorFunctions(*_api) && (_api->importDescriptors != nullptr) && !_descriptorSocket.empty() && (_fdServer == nullptr))
+        {
+            auto fds = receiveDescriptors(_descriptorSocket);
+            auto const status = _api->importDescriptors(_instance, static_cast<std::uint32_t>(fds.size()), fds.data());
+            if (status != MXL_STATUS_OK)
+            {
+                throw PayloadStorageError{status, fmt::format("Payload backend '{}' rejected the storage descriptors.", _api->name)};
+            }
+        }
         if (auto const status = _api->mapSlots(_instance); status != MXL_STATUS_OK)
         {
             throw PayloadStorageError{status, fmt::format("Payload backend '{}' cannot map the flow storage.", _api->name)};

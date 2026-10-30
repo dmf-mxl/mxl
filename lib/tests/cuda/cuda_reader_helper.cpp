@@ -8,8 +8,9 @@
  * checks that every payload byte has an expected value. Used by test_cuda_payload.cpp to test CUDA IPC between
  * processes.
  *
- * Usage: mxl-cuda-reader-helper \<domain\> \<flow id\> \<grain index\> \<expected byte\> [reader options]
+ * Usage: mxl-cuda-reader-helper \<domain\> \<flow id\> \<grain index\> \<expected byte\> [reader options] [device index]
  * Exit status: 0 if the grain was read and every byte matched, 1 otherwise. Errors are printed to stderr.
+ * When a device index is given, mapping must report that index and the copy runs on that device.
  */
 
 #include <cstdint>
@@ -43,16 +44,20 @@ namespace
  */
 int main(int argc, char** argv)
 {
-    if ((argc != 5) && (argc != 6))
+    if ((argc < 5) || (argc > 7))
     {
-        (void)std::fprintf(stderr, "usage: %s <domain> <flow id> <grain index> <expected byte> [reader options]\n", argv[0]);
+        (void)std::fprintf(stderr,
+            "usage: %s <domain> <flow id> <grain index> <expected byte> [reader options] [device index]\n",
+            argv[0]);
         return 1;
     }
     auto const* const domain = argv[1];
     auto const* const flowId = argv[2];
     auto const index = std::strtoull(argv[3], nullptr, 10);
     auto const expected = static_cast<std::uint8_t>(std::strtoul(argv[4], nullptr, 10));
-    auto const* const options = (argc == 6) ? argv[5] : "";
+    auto const* const options = (argc >= 6) ? argv[5] : "";
+    auto const expectDevice = (argc == 7);
+    auto const deviceIndex = expectDevice ? static_cast<std::int32_t>(std::strtol(argv[6], nullptr, 10)) : std::int32_t{-1};
 
     auto instance = mxlCreateInstance(domain, "");
     if (instance == nullptr)
@@ -80,6 +85,21 @@ int main(int argc, char** argv)
     if (auto const status = mxlFlowReaderMapSlots(reader, layout.slotCount, slots.data()); status != MXL_STATUS_OK)
     {
         return fail("mxlFlowReaderMapSlots", status);
+    }
+    if (expectDevice)
+    {
+        if (auto const status = mxlFlowReaderGetStorageLayout(reader, &layout); status != MXL_STATUS_OK)
+        {
+            return fail("mxlFlowReaderGetStorageLayout", status);
+        }
+        if (layout.deviceIndex != deviceIndex)
+        {
+            return fail("checking the mapped device", layout.deviceIndex);
+        }
+        if (auto const error = ::cudaSetDevice(deviceIndex); error != cudaSuccess)
+        {
+            return fail("cudaSetDevice", static_cast<int>(error));
+        }
     }
 
     auto grainInfo = mxlGrainInfo{};

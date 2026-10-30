@@ -1,0 +1,79 @@
+# SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+# Image with mxl-gst-cuda-testsrc and mxl-gst-cuda-sink. The CUDA toolkit is used only to build.
+# At run time the host NVIDIA driver is mounted by the NVIDIA container toolkit.
+#
+#   docker build -f examples/Dockerfile.cuda-gst -t mxl-cuda-gst .
+#
+# The writer and the sink run in two containers that mount the same tmpfs as the MXL domain.
+# See examples/README.md.
+
+FROM nvidia/cuda:12.8.1-devel-ubuntu24.04 AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        bison \
+        build-essential \
+        ca-certificates \
+        cmake \
+        curl \
+        flex \
+        git \
+        libgstreamer1.0-dev \
+        libgstreamer-plugins-base1.0-dev \
+        ninja-build \
+        pkg-config \
+        tar \
+        unzip \
+        zip \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV HOME=/root
+# Full commit history, blobs on demand. vcpkg reads the builtin-baseline commit from this clone.
+RUN git clone --filter=blob:none https://github.com/microsoft/vcpkg.git /root/vcpkg \
+    && /root/vcpkg/bootstrap-vcpkg.sh -disableMetrics
+
+WORKDIR /src
+COPY . /src
+
+RUN cmake -S /src --preset Linux-GCC-Release \
+        -DMXL_ENABLE_CUDA_PAYLOAD=ON \
+        -DBUILD_DOCS=OFF \
+        -DBUILD_TESTS=OFF \
+        -DBUILD_UTILS=OFF \
+    && cmake --build /src/build/Linux-GCC-Release --target mxl-gst-cuda-testsrc mxl-gst-cuda-sink mxl-payload-cuda-linear
+
+RUN mkdir -p /opt/mxl/bin /opt/mxl/lib /opt/mxl/data \
+    && cp -a /src/build/Linux-GCC-Release/lib/libmxl.so* /opt/mxl/lib/ \
+    && cp -a /src/build/Linux-GCC-Release/lib/libmxl-payload-cuda-linear.so /opt/mxl/lib/ \
+    && cp /src/build/Linux-GCC-Release/tools/mxl-gst/mxl-gst-cuda-testsrc /opt/mxl/bin/ \
+    && cp /src/build/Linux-GCC-Release/tools/mxl-gst/mxl-gst-cuda-sink /opt/mxl/bin/ \
+    && cp /src/lib/tests/data/v210_flow.json /opt/mxl/data/ \
+    && for bin in /opt/mxl/bin/mxl-gst-cuda-testsrc /opt/mxl/bin/mxl-gst-cuda-sink /opt/mxl/lib/libmxl.so; do \
+         ldd "$bin" | awk '/=> \// {print $3}' | while read -r dep; do \
+           case "$dep" in \
+             /lib/*|/lib64/*|/usr/lib/*) ;; \
+             *) cp -an "$dep" /opt/mxl/lib/ ;; \
+           esac \
+         done \
+       done
+
+FROM nvidia/cuda:12.8.1-base-ubuntu24.04
+
+# videotestsrc, videoconvert, videoscale, textoverlay and clockoverlay are in plugins-base.
+# autovideosink is in plugins-good. gstreamer1.0-x has ximagesink and xvimagesink for X11 displays.
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        gstreamer1.0-plugins-base \
+        gstreamer1.0-plugins-good \
+        gstreamer1.0-x \
+        libgcc-s1 \
+        libstdc++6 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /opt/mxl /opt/mxl
+
+ENV LD_LIBRARY_PATH=/opt/mxl/lib
+WORKDIR /opt/mxl
+ENTRYPOINT ["/opt/mxl/bin/mxl-gst-cuda-testsrc"]

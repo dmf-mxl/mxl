@@ -190,6 +190,33 @@ extern "C"
          * \return MXL_STATUS_OK on success, or an error code if the storage cannot be mapped in this process.
          */
         mxlStatus (*mapSlots)(mxlPayloadBackendInstance instance);
+
+        /**
+         * Give libmxl the file descriptors that share this writer's storage with other processes.
+         *
+         * Null when the backend does not share storage through file descriptors. libmxl serves the returned
+         * descriptors on a socket in the flow directory. The caller owns the descriptors and closes them.
+         *
+         * \param[in] instance A writer instance returned by prepare().
+         * \param[in,out] inout_count On input, the number of entries in fds, or 0 to query the count. On output,
+         *      the number of descriptors the backend has.
+         * \param[out] fds Receives one descriptor per entry. Null to query the count.
+         * \return MXL_STATUS_OK on success, or MXL_ERR_INVALID_ARG if fds is too small.
+         */
+        mxlStatus (*exportDescriptors)(mxlPayloadBackendInstance instance, uint32_t* inout_count, int* fds);
+
+        /**
+         * Receive the file descriptors of a flow's storage, obtained by libmxl from the writer's socket.
+         *
+         * Null when the backend does not share storage through file descriptors. Called before mapSlots() for a
+         * reader. The backend owns the descriptors after the call and closes them, whether the call succeeds or not.
+         *
+         * \param[in] instance A reader instance returned by open().
+         * \param[in] count The number of descriptors in fds.
+         * \param[in] fds The descriptors. Not null when count is not 0.
+         * \return MXL_STATUS_OK on success, or an error code.
+         */
+        mxlStatus (*importDescriptors)(mxlPayloadBackendInstance instance, uint32_t count, int const* fds);
     } mxlPayloadBackendApiV1;
 
     /**

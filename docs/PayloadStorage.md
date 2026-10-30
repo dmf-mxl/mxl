@@ -144,10 +144,10 @@ A writer puts a flow's payload on a GPU with:
 
 How the memory is shared:
 
-- The writer makes one `cudaMalloc` for all slots, with each slot starting at a multiple of 256 bytes, and clears it. It exports the allocation once with `cudaIpcGetMemHandle`, and records the handle, the stride and the device UUID in `payload.cuda.json`, next to `payload.json`, before the flow is published. The file records the version of its format, and readers refuse other versions.
-- A reader in another process imports the allocation once, when the application calls `mxlFlowReaderMapSlots`, with `cudaIpcOpenMemHandle`. Opening the reader makes no CUDA call.
-- A reader on another GPU maps the allocation through peer access (`cudaIpcMemLazyEnablePeerAccess`), if `cudaDeviceCanAccessPeer` allows it. Otherwise mapping returns `MXL_ERR_UNSUPPORTED_OPERATION`.
-- CUDA IPC cannot open a handle in the process that exported it. A reader in the writer's own process therefore shares the writer's allocation through a registry inside the process. The allocation is reference counted, so it stays valid for such a reader after the writer is released.
+- The writer creates one CUDA virtual-memory allocation for all slots, with each slot starting at a multiple of 256 bytes, and clears it. It exports that allocation once as a POSIX file descriptor. libmxl serves the descriptor on `payload.sock` in the flow directory. `payload.cuda.json`, next to `payload.json`, records the format version, the export name `posix-fd`, the stride, the allocation size and the device UUID. It does not contain the descriptor. Readers refuse another version.
+- A reader in another process receives the descriptor when the application calls `mxlFlowReaderMapSlots`, and imports it with `cuMemImportFromShareableHandle`. Opening the reader makes no CUDA call.
+- A reader on another GPU maps the allocation through peer access, if `cudaDeviceCanAccessPeer` allows it. Otherwise mapping returns `MXL_ERR_UNSUPPORTED_OPERATION`.
+- A reader in the writer's own process shares the writer's allocation through a registry inside the process. The allocation is reference counted, so it stays valid for such a reader after the writer is released.
 
 The commit contract: device work that writes a grain must be complete before the writer calls `mxlFlowWriterCommitGrain`, for example after `cudaStreamSynchronize` or `cudaEventSynchronize`. A reader can use a slot as soon as `mxlFlowReaderGetGrainSlot` returns it.
 
@@ -155,12 +155,12 @@ Where writer and reader can run:
 
 | Writer and reader | Mechanism | Requirements |
 |---|---|---|
-| Same pod, same GPU | CUDA IPC | One MXL domain. |
-| Same pod, different GPUs | CUDA IPC and peer access | One MXL domain. The reader sees both GPUs, and they support peer access (NVLink or a PCIe path that allows it). |
-| Different pods, same node | CUDA IPC, with peer access for different GPUs | A shared MXL domain, and `hostIPC` for CUDA IPC across pods. The reader sees the writer's GPU. |
+| Same pod, same GPU | POSIX file descriptor | One MXL domain. |
+| Same pod, different GPUs | POSIX file descriptor and peer access | One MXL domain. The reader sees both GPUs, and they support peer access (NVLink or a PCIe path that allows it). |
+| Different pods, same node | POSIX file descriptor, with peer access for different GPUs | A shared MXL domain (a tmpfs both pods mount). No shared IPC or PID namespace. The reader sees the writer's GPU. |
 | Different nodes | Fabrics | One MXL domain per node. RDMA from device memory is later work. |
 
-`lib/tests/cuda` tests the backend through the public API: sharing in one process and between processes, memory staying valid after the writer is released, and option errors. The tests are skipped when no CUDA device is visible. Peer access between two GPUs is not tested yet.
+`lib/tests/cuda` tests the backend through the public API: sharing in one process and between processes, memory staying valid after the writer is released, and option errors. The tests are skipped when no CUDA device is visible. The peer-GPU test runs when two visible devices can access each other.
 
 ## Principles
 
@@ -296,16 +296,16 @@ The first pull request is complete with the `cuda-linear` backend. The sections 
 
 dma-buf, exported Vulkan images and CUDA memory exported as a file descriptor all share memory through file descriptors, which cannot be stored in a file. They need a channel that the writer serves. libmxl owns this channel, so that every backend uses the same code and the same access checks:
 
-- The writer's libmxl serves a Unix socket in the flow directory, `payload.sock`, and sends the descriptors of all slots with `SCM_RIGHTS`. The kernel limits one message to 253 descriptors (`SCM_MAX_FD`), so larger sets are sent in several messages.
-- The writer process already runs an epoll thread for `DomainWatcher`, which can serve the socket.
+- The writer's libmxl serves a Unix socket in the flow directory, `payload.sock`, and sends the descriptors the backend exported with `SCM_RIGHTS`. The kernel limits one message to 253 descriptors (`SCM_MAX_FD`).
+- The writer storage runs a thread that accepts connections on that socket. The socket is bound in the staging directory, so publishing the flow by renaming the directory leaves it in place.
 - The socket checks each peer with `SO_PEERCRED` against the access rules of the domain.
-- Connecting to a Unix socket requires write permission on the socket file, while a reader today only needs read access. The socket mode must therefore follow the read permission of the flow directory.
-- A Unix socket in a tmpfs shared between containers works across pods on one node, without `hostIPC`.
+- Connecting to a Unix socket requires write permission on the socket file, while a reader today only needs read access. The socket mode follows the read permission of the flow directory.
+- A Unix socket in a tmpfs shared between containers works across pods on one node, without a shared IPC or PID namespace.
 - `pidfd_getfd` is not an alternative, because it requires ptrace permission, which containers usually deny.
 
-The backend interface needs a second version for this. After `prepare`, libmxl asks the writer's backend for the descriptors to serve. In a reader, `mapSlots` receives the descriptors that libmxl read from the socket. The public API does not change.
+The functions are optional and sit at the end of the existing backend table. A backend built before them reports a shorter table. After `prepare`, libmxl asks the writer's backend for the descriptors to serve. In a reader, `mapSlots` receives the descriptors that libmxl read from the socket and passes them to the backend. The public API does not change.
 
-This channel is shared infrastructure for every storage type after CUDA IPC. Only legacy CUDA IPC, whose handles are plain bytes, works without it.
+`cuda-linear` uses this channel. It exports one descriptor for the whole allocation. A backend that leaves the two functions null shares no descriptors.
 
 ## Worked example: a dma-buf backend
 

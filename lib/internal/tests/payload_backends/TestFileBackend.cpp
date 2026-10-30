@@ -473,6 +473,8 @@ namespace
         .slotStorage = &slotStorage,
         .describeLayout = &describeLayout,
         .mapSlots = &mapSlots,
+        .exportDescriptors = nullptr,
+        .importDescriptors = nullptr,
     };
 }
 
