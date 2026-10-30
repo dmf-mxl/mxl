@@ -137,8 +137,6 @@ namespace mxl::lib
 
     mxlStatus PosixDiscreteFlowWriter::openGrainImpl(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::size_t* out_slot)
     {
-        auto const reopening = (_currentIndex == in_index);
-
         if ((_lastCommittedIndex != MXL_UNDEFINED_INDEX) && (in_index <= _lastCommittedIndex))
         {
             return MXL_ERR_INVALID_ARG;
@@ -165,10 +163,14 @@ namespace mxl::lib
 
         auto offset = in_index % _flowData->flowInfo()->config.discrete.grainCount;
         auto const grain = _flowData->grainAt(offset);
-        grain->header.info.index = in_index; // Set the absolute grain index associated to that ring buffer entry
-        grain->header.info.flags &= ~MXL_GRAIN_FLAG_INVALID;
-        if (!reopening)
+
+        // If the ring buffer entry already holds this grain index, keep its header. This is the case when an incomplete grain is reopened,
+        // and on a fabrics target, where the remote initiator writes the grain header and the target library sets validSlices before the
+        // application opens the grain to commit it. Otherwise the entry still holds an older grain and its state is reset.
+        if (grain->header.info.index != in_index)
         {
+            grain->header.info.index = in_index;
+            grain->header.info.flags &= ~MXL_GRAIN_FLAG_INVALID;
             grain->header.info.validSlices = 0;
         }
         *out_grainInfo = grain->header.info;

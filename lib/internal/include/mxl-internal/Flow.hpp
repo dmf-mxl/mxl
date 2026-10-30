@@ -1,20 +1,24 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
+/** @file
+ * @brief Internal shared-memory headers for discrete grains and event slots.
+ */
+
 #pragma once
 
 #include <cstddef>
 #include <cstdint>
 #include <iosfwd>
+#include <type_traits>
 #include <mxl/flow.h>
 #include <mxl/platform.h>
-#include "FlowInfo.hpp"
 #include "FlowState.hpp"
 
 namespace mxl::lib
 {
     /// The version of the flow data structs in shared memory that we expect and support.
-    constexpr auto FLOW_DATA_VERSION = 1U;
+    constexpr inline auto FLOW_DATA_VERSION = 1U;
 
     /// The flow data version of discrete flows whose payload is held by a backend library instead of the built-in
     /// host storage. The structs are the same as in version 1, but grain files hold only the grain header, and the
@@ -23,7 +27,7 @@ namespace mxl::lib
     constexpr auto FLOW_DATA_VERSION_PAYLOAD_BACKEND = 2U;
 
     /// The version of the grain header structs in shared memory that we expect an support.
-    constexpr auto GRAIN_HEADER_VERSION = 1U;
+    constexpr inline auto GRAIN_HEADER_VERSION = 1U;
 
     ///
     /// Internal Flow structure stored in shared memory
@@ -37,7 +41,7 @@ namespace mxl::lib
 
     /// The first 8KiB of a grain are reserved for the mxlGrainInfo structure, including user data.  Ample padding is provided
     /// between the header and the payload.  Payload is page aligned AND AVX512 (64 bytes) aligned.
-    constexpr auto const MXL_GRAIN_PAYLOAD_OFFSET = std::size_t{8192};
+    constexpr inline auto const MXL_GRAIN_PAYLOAD_OFFSET = std::size_t{8192};
 
     struct GrainHeader
     {
@@ -57,6 +61,40 @@ namespace mxl::lib
     struct Grain
     {
         GrainHeader header;
+    };
+
+    /// Version stored in the public mxlEventInfo metadata of every published entry.
+    constexpr inline auto EVENT_HEADER_VERSION = std::uint32_t{1};
+
+    /**
+     * @brief 768-byte slot header with layout fields, sequence and metadata on separate 128-byte boundaries.
+     * The fixed padding is part of the shared-memory ABI and must not depend on compiler CPU tuning.
+     */
+    struct EventHeader
+    {
+        /// Immutable EventRingBuffer storage version.
+        std::uint32_t version;
+        /// Immutable size of EventHeader in bytes.
+        std::uint32_t size;
+        /// Explicit padding to the sequence cache line.
+        std::uint8_t layoutPadding[128 - 2 * sizeof(std::uint32_t)];
+        /// Atomic tag: index shifted left one bit, low bit set after publication; EMPTY if unused.
+        std::uint64_t sequence;
+        /// Explicit padding to the metadata cache line.
+        std::uint8_t sequencePadding[128 - sizeof(std::uint64_t)];
+        /// Public metadata accessed through atomic words.
+        std::uint64_t infoWords[sizeof(mxlEventInfo) / sizeof(std::uint64_t)];
+    };
+
+    static_assert(sizeof(EventHeader) == 768);
+    static_assert(offsetof(EventHeader, sequence) == 128);
+    static_assert(offsetof(EventHeader, infoWords) == 256);
+    static_assert(std::has_unique_object_representations_v<EventHeader>);
+
+    /** @brief Fixed part of an event slot; its payload follows immediately in the mapping. */
+    struct Event
+    {
+        EventHeader header; ///< Sequence, layout and metadata fields for this slot.
     };
 
     std::ostream& operator<<(std::ostream& os, Grain const& obj);

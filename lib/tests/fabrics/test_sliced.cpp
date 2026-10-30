@@ -268,6 +268,36 @@ namespace
             REQUIRE(mxlFlowWriterCommitGrain(_initiatorWriter, &grainInfo) == MXL_STATUS_OK);
         }
 
+        // Number of slices in a grain of the flow
+        std::uint16_t totalSlices()
+        {
+            auto grainInfo = mxlGrainInfo{};
+            REQUIRE(mxlFlowWriterGetGrainInfo(_initiatorWriter, 0, &grainInfo) == MXL_STATUS_OK);
+            return grainInfo.totalSlices;
+        }
+
+        // Commit an initiator grain that has no valid slices and carries the invalid flag
+        void writeInitiatorInvalidGrain(std::uint64_t index)
+        {
+            auto grainInfo = mxlGrainInfo{};
+            auto payload = static_cast<std::uint8_t*>(nullptr);
+            REQUIRE(mxlFlowWriterOpenGrain(_initiatorWriter, index, &grainInfo, &payload) == MXL_STATUS_OK);
+            grainInfo.validSlices = 0;
+            grainInfo.flags |= MXL_GRAIN_FLAG_INVALID;
+            REQUIRE(mxlFlowWriterCommitGrain(_initiatorWriter, &grainInfo) == MXL_STATUS_OK);
+        }
+
+        // Open and commit a received grain on the target the way a gateway does: without changing the grain info that open returns.
+        // Returns the grain info that open returned.
+        mxlGrainInfo commitReceivedTargetGrain(std::uint64_t index)
+        {
+            auto grainInfo = mxlGrainInfo{};
+            auto payload = static_cast<std::uint8_t*>(nullptr);
+            REQUIRE(mxlFlowWriterOpenGrain(_targetWriter, index, &grainInfo, &payload) == MXL_STATUS_OK);
+            REQUIRE(mxlFlowWriterCommitGrain(_targetWriter, &grainInfo) == MXL_STATUS_OK);
+            return grainInfo;
+        }
+
         // Run a full grain slice range transfer
         std::uint64_t transferGrainSlices(std::uint64_t grainIndex, std::uint16_t startSlice, std::uint16_t endSlice)
         {
@@ -543,4 +573,35 @@ TEMPLATE_TEST_CASE_METHOD(FabricsTestFixture, "Slice transfer blocks", "[sliced]
             }
         }
     }
+}
+
+// A gateway on the target side opens each received grain and commits the grain info that open returns. Open must return the slice
+// count and flags that the transfer wrote into the grain header, so that the commit publishes them to local readers.
+TEMPLATE_TEST_CASE_METHOD(FabricsTestFixture, "Target commits received grains", "[sliced][target-commit]", TCP_V210 /*, SHM_V210 */)
+{
+    constexpr auto const startGrainIndex = std::uint64_t{300};
+    auto const sliceCount = this->totalSlices();
+
+    // Full grain transfers. Each grain is a new grain for the target writer.
+    for (auto iteration = std::uint64_t{0}; iteration < 3; ++iteration)
+    {
+        auto const grainIndex = startGrainIndex + iteration;
+        this->writeInitiatorGrainSlice(grainIndex, sliceCount - 1U, 0xAC, 0xAB);
+        REQUIRE(this->transferGrainSlices(grainIndex, 0, sliceCount) == grainIndex);
+
+        auto const openedInfo = this->commitReceivedTargetGrain(grainIndex);
+        REQUIRE(openedInfo.validSlices == sliceCount);
+
+        auto const [fill, key] = this->readTargetGrainSlice(grainIndex, sliceCount - 1U, sliceCount);
+        REQUIRE(fill == 0xAC);
+    }
+
+    // A header-only transfer of an invalid grain keeps the invalid flag.
+    auto const invalidGrainIndex = startGrainIndex + 3U;
+    this->writeInitiatorInvalidGrain(invalidGrainIndex);
+    REQUIRE(this->transferGrainSlices(invalidGrainIndex, 0, 0) == invalidGrainIndex);
+
+    auto const openedInfo = this->commitReceivedTargetGrain(invalidGrainIndex);
+    REQUIRE((openedInfo.flags & MXL_GRAIN_FLAG_INVALID) != 0);
+    REQUIRE((this->getTargetGrainInfo(invalidGrainIndex).flags & MXL_GRAIN_FLAG_INVALID) != 0);
 }

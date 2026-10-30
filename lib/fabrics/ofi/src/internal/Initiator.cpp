@@ -22,7 +22,7 @@ namespace mxl::lib::fabrics::ofi
         return reinterpret_cast<mxlFabricsInitiator>(this);
     }
 
-    void InitiatorWrapper::setup(mxlFabricsInitiatorConfig const& config)
+    void InitiatorWrapper::setup(mxlFabricsInitiatorConfig const& config, InitiatorSetupOptions const& options)
     {
         if (_inner)
         {
@@ -32,8 +32,8 @@ namespace mxl::lib::fabrics::ofi
         auto const [info, provierConfig] = selectSourceInterface(config.interface, /* target */ false);
         switch (info.view().endpointType())
         {
-            case FI_EP_MSG: _inner = RCInitiator::setup(config, info.view()); break;
-            case FI_EP_RDM: _inner = RDMInitiator::setup(config, info.view()); break;
+            case FI_EP_MSG: _inner = RCInitiator::setup(config, info.view(), options); break;
+            case FI_EP_RDM: _inner = RDMInitiator::setup(config, info.view(), options); break;
             default:        throw Exception::invalidState("unsupported endpoint type");
         }
     }

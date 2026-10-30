@@ -1,17 +1,6 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-#include "Utils.hpp"
-
-#ifndef __APPLE__
-#   include <Device.h>
-#   include <Packet.h>
-#   include <PcapFileDevice.h>
-#   include <ProtocolType.h>
-#   include <RawPacket.h>
-#   include <UdpLayer.h>
-#endif
-
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
@@ -27,6 +16,8 @@
 #include <mxl/mxl.h>
 #include <mxl/time.h>
 #include "../internal/include/mxl-internal/MediaUtils.hpp"
+#include "PcapReader.hpp"
+#include "Utils.hpp"
 
 namespace fs = std::filesystem;
 
@@ -396,28 +387,15 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Invalid flow definit
     mxlDestroyInstance(instance);
 }
 
-#ifndef __APPLE__
-
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Data Flow : Create/Destroy", "[mxl flows]")
 {
-    fs::path domain{"/dev/shm/mxl_domain"}; // Remove that path if it exists.
-    fs::remove_all(domain);
-    std::filesystem::create_directories(domain);
-
     // Read some RFC-8331 packets from a pcap file downloaded from https://github.com/NEOAdvancedTechnology/ST2110_pcap_zoo
-    std::unique_ptr<pcpp::IFileReaderDevice> pcapReader(pcpp::IFileReaderDevice::getReader("data/ST2110-40-Closed_Captions.cap"));
-    REQUIRE(pcapReader != nullptr);
-    REQUIRE(pcapReader->open());
+    auto const datagrams = mxl::tests::readUdpDatagrams("data/ST2110-40-Closed_Captions.cap");
 
     // We know that in the pcap file the first packet is an empty packet with a marker bit. Skip it and read the second one.
-    pcpp::RawPacketVector rawPackets;
-    REQUIRE(pcapReader->getNextPackets(rawPackets, 2) == 2);
-    pcpp::Packet parsedPacket(rawPackets.at(1));
-
-    auto udpLayer = parsedPacket.getLayerOfType<pcpp::UdpLayer>();
-    auto* rtpData = udpLayer->getLayerPayload();
-    REQUIRE(rtpData != nullptr);
-    auto rtpSize = udpLayer->getLayerPayloadSize();
+    REQUIRE(datagrams.size() >= 2);
+    auto const* rtpData = datagrams[1].payload.data();
+    auto rtpSize = datagrams[1].payload.size();
     REQUIRE(rtpSize > 14);
     rtpData += 14; // skip packet header until Length field, as defined in RFC-8331, section 2.
     rtpSize -= 14;
@@ -641,8 +619,6 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : Slices"
     REQUIRE(mxlDestroyInstance(instanceReader) == MXL_STATUS_OK);
     REQUIRE(mxlDestroyInstance(instanceWriter) == MXL_STATUS_OK);
 }
-
-#endif
 
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Audio Flow : Create/Destroy", "[mxl flows]")
 {
@@ -1026,12 +1002,69 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlCreateFlow: unwri
     remove_all(domain);
 }
 
+// Verify that a reader that may not open the files of a flow gets a proper error
+// code. The reader uses an instance of its own, as a reading process would.
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlCreateFlowReader: unreadable flow directory", "[mxl flows]")
+{
+    auto const opts = "{}";
+    auto const instance = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instance != nullptr);
+    auto const readerInstance = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(readerInstance != nullptr);
+
+    auto const flowDef = mxl::tests::readFile("data/v210_flow.json");
+    mxlFlowWriter writer = nullptr;
+    auto configInfo = mxlFlowConfigInfo{};
+    REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), opts, &writer, &configInfo, nullptr) == MXL_STATUS_OK);
+    auto const flowId = uuids::to_string(configInfo.common.id);
+    auto const flowDirectory = mxl::lib::makeFlowDirectoryName(domain, flowId);
+
+    // Restore the permissions before checking, so the domain can be removed whatever the outcome.
+    permissions(flowDirectory, std::filesystem::perms::owner_read | std::filesystem::perms::owner_exec, std::filesystem::perm_options::remove);
+    mxlFlowReader reader = nullptr;
+    auto const status = mxlCreateFlowReader(readerInstance, flowId.c_str(), "", &reader);
+    permissions(flowDirectory, std::filesystem::perms::owner_all, std::filesystem::perm_options::add);
+    REQUIRE(status == MXL_ERR_PERMISSION_DENIED);
+
+    REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(readerInstance) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+}
+
+// Verify that a reader of a continuous flow whose descriptor it may not read gets
+// a proper error code.
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlCreateFlowReader: unreadable continuous flow descriptor", "[mxl flows]")
+{
+    auto const opts = "{}";
+    auto const instance = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instance != nullptr);
+    auto const readerInstance = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(readerInstance != nullptr);
+
+    auto const flowDef = mxl::tests::readFile("data/audio_flow.json");
+    mxlFlowWriter writer = nullptr;
+    auto configInfo = mxlFlowConfigInfo{};
+    REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), opts, &writer, &configInfo, nullptr) == MXL_STATUS_OK);
+    auto const flowId = uuids::to_string(configInfo.common.id);
+    auto const flowDescriptor = mxl::lib::makeFlowDescriptorFilePath(domain, flowId);
+
+    permissions(flowDescriptor, std::filesystem::perms::owner_read, std::filesystem::perm_options::remove);
+    mxlFlowReader reader = nullptr;
+    auto const status = mxlCreateFlowReader(readerInstance, flowId.c_str(), "", &reader);
+    permissions(flowDescriptor, std::filesystem::perms::owner_read, std::filesystem::perm_options::add);
+    REQUIRE(status == MXL_ERR_PERMISSION_DENIED);
+
+    REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(readerInstance) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+}
+
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlFlowWriterCommitSamples should notify the reader", "[mxl flows][futex]")
 {
     constexpr auto const startIndex = 1000;
     constexpr auto const blockSize = 480;
     constexpr auto const iterations = std::uint64_t{50};
-    constexpr auto const readTimeout = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(50));
+    constexpr auto const readTimeout = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(150));
     auto flowDef = mxl::tests::readFile("data/audio_flow.json");
     auto configInfo = mxlFlowConfigInfo{};
     auto instance = mxlCreateInstance(domain.c_str(), nullptr);

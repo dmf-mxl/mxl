@@ -108,9 +108,14 @@ namespace mxl::lib::fabrics::ofi
     {
     public:
         /** \brief Set up a new RDMInitiator.
+         *
+         * \param config The configuration to use for setting up the initiator.
+         * \param info Fabric info already resolved from the interface config.
+         * \param options Optional tuning parameters (e.g. completion queue depth).
          */
         [[nodiscard]]
-        static std::unique_ptr<RDMInitiator> setup(mxlFabricsInitiatorConfig const& config, FabricInfoView info);
+        static std::unique_ptr<RDMInitiator> setup(mxlFabricsInitiatorConfig const& config, FabricInfoView info,
+            InitiatorSetupOptions const& options = {});
 
         /** \copydoc Initiator::addTarget()
          */

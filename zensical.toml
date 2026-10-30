@@ -41,8 +41,8 @@ site_author = "The MXL Project"
 # (dmf-mxl/mxl) point at the correct repo without config drift.
 #
 # Read more: https://zensical.org/docs/setup/repository/
-repo_name = "__REPO_SLUG__"
-repo_url = "https://github.com/__REPO_SLUG__"
+repo_name = "dmf-mxl/mxl"
+repo_url = "https://github.com/dmf-mxl/mxl"
 
 # The copyright notice appears in the page footer and can contain an HTML
 # fragment.
@@ -61,6 +61,10 @@ Copyright &copy; 2026 Contributors to the Media eXchange Layer project.
 # Read more: https://zensical.org/docs/setup/navigation/
 # nav = []
 
+# The sidebar order lives in docs/nav.md. The literate-nav plugin reads
+# that file. The leading slash limits the exclusion to that file.
+exclude_docs = "/nav.md"
+plugins.literate-nav.nav_file = "nav.md"
 
 # With the "extra_css" option you can add your own CSS styling to customize
 # your Zensical project according to your needs. You can add any number of
@@ -71,6 +75,9 @@ Copyright &copy; 2026 Contributors to the Media eXchange Layer project.
 # Read more: https://zensical.org/docs/customization/#additional-css
 #
 #extra_css = ["stylesheets/extra.css"]
+extra_css = [
+    "stylesheets/extra.css",
+]
 
 # With the `extra_javascript` option you can add your own JavaScript to your
 # project to customize the behavior according to your needs.
@@ -93,6 +100,11 @@ custom_fences = [
 
 [project.markdown_extensions.pymdownx.arithmatex]
 generic = true
+
+# Render GitHub alert blockquotes (`> [!NOTE]` and the other four markers)
+# as admonitions. The marker must be uppercase.
+[project.markdown_extensions.pymdownx.quotes]
+callouts = true
 
 # ----------------------------------------------------------------------------
 # Section for configuring theme options
@@ -281,7 +293,6 @@ features = [
 # option in the "theme" subsection. The logo must be a relative path to a file
 # in your "docs_dir", e.g., to use `docs/assets/logo.png` you would set:
 # ----------------------------------------------------------------------------
-#logo = "assets/logo.png"
 
 # ----------------------------------------------------------------------------
 # If you don't have a dedicated project logo, you can use a built-in icon from
@@ -294,6 +305,12 @@ features = [
 # ----------------------------------------------------------------------------
 #[project.theme.icon]
 #logo = "lucide/smile"
+
+# [!IMPORTANT] and [!CAUTION] are not built-in admonition types. These line
+# icons are the theme's equivalents of GitHub's report and stop marks.
+[project.theme.icon.admonition]
+important = "lucide/message-square-warning"
+caution = "lucide/octagon-alert"
 
 # ----------------------------------------------------------------------------
 # In the "font" subsection you can configure the fonts used. By default, fonts
@@ -316,11 +333,13 @@ features = [
 # ----------------------------------------------------------------------------
 [[project.theme.palette]]
 scheme = "default"
+primary = "custom"
 toggle.icon = "lucide/sun"
 toggle.name = "Switch to dark mode"
 
 [[project.theme.palette]]
 scheme = "slate"
+primary = "custom"
 toggle.icon = "lucide/moon"
 toggle.name = "Switch to light mode"
 

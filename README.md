@@ -10,7 +10,7 @@
 
 [Go straight to documentation](#governance)
 
-# What is MXL?
+## What is MXL?
 
 - MXL is an open-source SDK designed for high-performance and container-friendly shared media exchange across on‑premise or cloud environments.
 - It provides an open and non-proprietary exchange layer, helping to promote interoperability by avoiding the need for conversion between vendors. Such a layer is required by the [EBU Dynamic Media Facility Reference Architecture](https://tech.ebu.ch/dmf/ra).
@@ -18,7 +18,7 @@
 
 ## Key Characteristics
 
-MXL: 
+MXL:
 
 - is implemented in C++, exposed via a C API with Rust bindings available
 - supports for V210 video, Float32 audio and ANC data
@@ -38,14 +38,14 @@ Enables shared-memory access for zero-copy media workflows.
 
 Enables memory sharing through controlled data movement.
 
-# Getting Started
+## Getting Started
 
 - A good hands-on way to start is with the [cbcrc/mxl-hands-on](https://github.com/cbcrc/mxl-hands-on) repo. This provides a guided workshop/tutorial tht helps the user set up and MXL hands-on through exercises.
 - The MXL SDK, can be built using a devcontainer or CMake. For more details see [here](docs/Building.md).
 - Information about example tools to work with MXL, including GStreamer pipelines, are [here](docs/Tools.md)
 - There are some examples of how to use MXL with Docker Compose and Kubernetes [here](examples/README.md).
 
-# Motivation
+## Motivation
 
 Rapid advances in computing power and network infrastructure are transforming the landscape of live media production. The professional broadcast industry is gradually moving away from hardware-centric systems and towards software-defined solutions, promising far greater flexibility, scalability, and operational agility. However, this shift into a more virtualised, “dematerialised” environment also introduces substantial interoperability challenges. Multiple vendors, proprietary frameworks, and disparate technology stacks can prevent diverse systems from integrating seamlessly across distributed networks, potentially inhibiting innovation and restricting the efficiency of modern broadcast workflows.
 
@@ -56,9 +56,6 @@ At the heart of the [DMF architecture](https://tech.ebu.ch/publications/white-pa
 ![docs/Media eXchange Layer.png](https://github.com/dmf-mxl/mxl/blob/53e889c888b2daceb4bf550943f3a194f559f182/docs/Media%20eXchange%20Layer.png "MXL Layer Diagram")
 
 In order to encourage broad industry adoption, the European Broadcasting Union (EBU) and the North American Broadcasters Association (NABA) are pursuing an “implement-first” strategy. This practical, hands-on approach involves close collaboration with broadcasters and technology suppliers to produce an open-source software development kit that promotes interoperability and showcases real-world use cases for the MXL. The first alpha version of this SDK was released in June 2025. Ultimately, the DMF initiative aspires to establish a new baseline for open, interoperable software-based live production, a foundation that is robust, future-proof, and capable of sustaining innovation across the entire media ecosystem.
-
-
-# Learning More
 
 ## Governance
 

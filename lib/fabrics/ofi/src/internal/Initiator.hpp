@@ -4,12 +4,26 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
+#include <optional>
 #include "Endpoint.hpp"
 #include "TargetInfo.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
+
+    /** \brief Provider-independent tuning options for initiator setup.
+     */
+    struct InitiatorSetupOptions
+    {
+        /** \brief Desired completion-queue depth.
+         *
+         * When left empty the implementation default
+         * (CompletionQueue::Attributes::DEFAULT_SIZE) is used.
+         */
+        std::optional<std::size_t> cqDepth;
+    };
 
     /** \brief Abstract base class for Initiator implementations.
      */
@@ -127,8 +141,9 @@ namespace mxl::lib::fabrics::ofi
          * based on the provided configuration.
          *
          * \param config The configuration to use for setting up the initiator.
+         * \param options Optional tuning parameters (e.g. completion queue depth).
          */
-        void setup(mxlFabricsInitiatorConfig const& config);
+        void setup(mxlFabricsInitiatorConfig const& config, InitiatorSetupOptions const& options = {});
 
         /** \copydoc Initiator::addTarget()
          */

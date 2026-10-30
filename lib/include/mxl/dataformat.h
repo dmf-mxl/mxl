@@ -3,8 +3,12 @@
 
 #pragma once
 
+/** @file
+ * @brief Public flow format identifiers and format classification helpers.
+ */
+
 /**
- * Fixed size in bytes of one MXL `video/smpte291` data format grain.
+ * Fixed payload capacity in bytes of an MXL `video/smpte291` data grain or event.
  * This is large enough to hold all the ANC data in a single grain.
  * This size is a usual VFS page; no point in going smaller.
  */
@@ -15,7 +19,7 @@ extern "C"
 {
 #endif
     /**
-     * Source and flow data formats as defined by AMWA NMOS IS-04, excluding `urn:x-nmos:format:data.event`.
+     * Source and flow data formats as defined by AMWA NMOS IS-04.
      */
     typedef enum mxlDataFormat
     {
@@ -23,6 +27,7 @@ extern "C"
         MXL_DATA_FORMAT_VIDEO,
         MXL_DATA_FORMAT_AUDIO,
         MXL_DATA_FORMAT_DATA,
+        MXL_DATA_FORMAT_EVENT, ///< Asynchronous queue of complete events or event fragments.
     } mxlDataFormat;
 
     /**
@@ -36,7 +41,8 @@ extern "C"
         {
             case MXL_DATA_FORMAT_VIDEO:
             case MXL_DATA_FORMAT_AUDIO:
-            case MXL_DATA_FORMAT_DATA:  return 1;
+            case MXL_DATA_FORMAT_DATA:
+            case MXL_DATA_FORMAT_EVENT: return 1;
 
             default:                    return 0;
         }
@@ -53,7 +59,8 @@ extern "C"
         {
             case MXL_DATA_FORMAT_VIDEO:
             case MXL_DATA_FORMAT_AUDIO:
-            case MXL_DATA_FORMAT_DATA:  return 1;
+            case MXL_DATA_FORMAT_DATA:
+            case MXL_DATA_FORMAT_EVENT: return 1;
 
             default:                    return 0;
         }
@@ -72,6 +79,20 @@ extern "C"
             case MXL_DATA_FORMAT_VIDEO:
             case MXL_DATA_FORMAT_DATA:  return 1;
 
+            default:                    return 0;
+        }
+    }
+
+    /**
+     * @brief Test whether a format uses the event queue API.
+     * @param format Data format identifier to inspect.
+     * @return 1 for MXL_DATA_FORMAT_EVENT; 0 for every other value.
+     */
+    inline int mxlIsEventDataFormat(int format)
+    {
+        switch (format)
+        {
+            case MXL_DATA_FORMAT_EVENT: return 1;
             default:                    return 0;
         }
     }

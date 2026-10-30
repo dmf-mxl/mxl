@@ -182,6 +182,12 @@ mxlFabricsInitiatorConfig config = {
 mxlFabricsInitiatorSetup(initiator, &config, NULL);
 ```
 
+The `in_options` parameter accepts a JSON string. Currently the following option is recognized:
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `cqDepth` | number >= 1 | Depth of the initiator's completion queue. Each posted write produces one completion, so increase this when many writes are in flight at once, for example with many targets or many slices per grain. |
+
 Select an interface from `mxlFabricsGetInterfaces()` that is compatible with the target's interface (same provider, matching capabilities).
 
 After setup, connect to one or more targets by adding them:

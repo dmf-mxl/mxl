@@ -3,7 +3,13 @@
 
 use std::{ffi::CString, sync::Arc};
 
-use crate::{Error, FlowConfigInfo, FlowReader, FlowWriter, Result, api::MxlApiHandle};
+use crate::{
+    Error, FlowConfigInfo, FlowReader, FlowWriter, Result, api::MxlApiHandle,
+    reader::FlowReaderResource, writer::FlowWriterResource,
+};
+
+#[cfg(feature = "mxl-fabrics-ofi")]
+use crate::api::MxlFabricsApiHandle;
 
 /// This struct stores the context that is shared by all objects.
 /// It is separated out from `MxlInstance` so that it can be cloned
@@ -40,27 +46,6 @@ impl Drop for InstanceContext {
     }
 }
 
-pub(crate) fn create_flow_reader(
-    context: &Arc<InstanceContext>,
-    flow_id: &str,
-) -> Result<FlowReader> {
-    let flow_id = CString::new(flow_id)?;
-    let options = CString::new("")?;
-    let mut reader: mxl_sys::FlowReader = std::ptr::null_mut();
-    unsafe {
-        Error::from_status(context.api.create_flow_reader(
-            context.instance,
-            flow_id.as_ptr(),
-            options.as_ptr(),
-            &mut reader,
-        ))?;
-    }
-    if reader.is_null() {
-        return Err(Error::Other("Failed to create flow reader.".to_string()));
-    }
-    Ok(FlowReader::new(context.clone(), reader))
-}
-
 #[derive(Clone)]
 pub struct MxlInstance {
     context: Arc<InstanceContext>,
@@ -83,7 +68,8 @@ impl MxlInstance {
     }
 
     pub fn create_flow_reader(&self, flow_id: &str) -> Result<FlowReader> {
-        create_flow_reader(&self.context, flow_id)
+        let reader = FlowReaderResource::new(self.context.clone(), flow_id)?;
+        Ok(FlowReader::new(reader))
     }
 
     pub fn create_flow_writer(
@@ -91,36 +77,10 @@ impl MxlInstance {
         flow_def: &str,
         options: Option<&str>,
     ) -> Result<(FlowWriter, FlowConfigInfo, bool)> {
-        let flow_def = CString::new(flow_def)?;
-        let options = options.map(CString::new).transpose()?;
-        let mut writer: mxl_sys::FlowWriter = std::ptr::null_mut();
-        let mut info_unsafe = std::mem::MaybeUninit::<mxl_sys::FlowConfigInfo>::uninit();
-        let mut was_created = false;
-        unsafe {
-            Error::from_status(self.context.api.create_flow_writer(
-                self.context.instance,
-                flow_def.as_ptr(),
-                options.map(|cs| cs.as_ptr()).unwrap_or(std::ptr::null()),
-                &mut writer,
-                info_unsafe.as_mut_ptr(),
-                &mut was_created,
-            ))?;
-        }
-        if writer.is_null() {
-            return Err(Error::Other("Failed to create flow writer.".to_string()));
-        }
+        let (writer, info, was_created) =
+            FlowWriterResource::new(self.context.clone(), flow_def, options)?;
 
-        let info = unsafe { info_unsafe.assume_init() };
-
-        Ok((
-            FlowWriter::new(
-                self.context.clone(),
-                writer,
-                uuid::Uuid::from_bytes(info.common.id),
-            ),
-            FlowConfigInfo { value: info },
-            was_created,
-        ))
+        Ok((FlowWriter::new(writer, info.clone()), info, was_created))
     }
 
     pub fn get_flow_def(&self, flow_id: &str) -> Result<String> {
@@ -239,5 +199,15 @@ impl MxlInstance {
         let context = Arc::into_inner(self.context)
             .ok_or_else(|| Error::Other("Instance is still in use.".to_string()))?;
         context.destroy()
+    }
+
+    #[cfg(feature = "mxl-fabrics-ofi")]
+    pub fn create_fabrics_instance(
+        &self,
+        fabrics_api: &MxlFabricsApiHandle,
+    ) -> Result<crate::fabrics::FabricsInstance> {
+        use crate::fabrics;
+
+        fabrics::create_instance(self.context.clone(), fabrics_api)
     }
 }
