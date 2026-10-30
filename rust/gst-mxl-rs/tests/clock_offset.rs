@@ -192,6 +192,109 @@ fn concurrently_started_elements_share_one_clock_offset() {
     }
 }
 
+/// Removing an element from a running pipeline must not make its former
+/// siblings sample the offset again. The pipeline clock jumps forward between
+/// two writes, so a second sample would move the remaining sink's next write
+/// back over samples it has already committed.
+#[test]
+fn removed_running_element_keeps_siblings_clock_offset() {
+    init();
+    if let Some(reason) = skip_reason(&["appsrc", "mxlsink"]) {
+        skip!(reason);
+    }
+    let domain_guard = TestDomainGuard::new("offset_removed_running");
+    let domain = domain_guard.domain();
+    let instance = mxl_instance(&domain);
+
+    let flow_id = uuid::Uuid::new_v4().to_string();
+    let pipeline = gst::parse::launch(&format!(
+        "appsrc name=src_a format=time \
+           caps=audio/x-raw,format=F32LE,layout=interleaved,rate=48000,\
+             channels=1,channel-mask=(bitmask)0x1 \
+         ! mxlsink name=sink_a flow-id={flow_id} domain={domain} \
+         appsrc name=src_b format=time \
+           caps=audio/x-raw,format=F32LE,layout=interleaved,rate=48000,\
+             channels=1,channel-mask=(bitmask)0x1 \
+         ! mxlsink name=sink_b flow-id={} domain={domain}",
+        uuid::Uuid::new_v4()
+    ))
+    .expect("parse pipeline")
+    .downcast::<gst::Pipeline>()
+    .expect("pipeline");
+    let clock: gst::Clock = glib::Object::builder::<gst::SystemClock>().build().upcast();
+    pipeline.use_clock(Some(&clock));
+    let appsrc = |name| {
+        pipeline
+            .by_name(name)
+            .expect("appsrc")
+            .downcast::<gst_app::AppSrc>()
+            .expect("AppSrc downcast")
+    };
+    let (src_a, src_b) = (appsrc("src_a"), appsrc("src_b"));
+    let buffer = |pts| {
+        let mut buffer = gst::Buffer::with_size(SAMPLES as usize * 4).expect("buffer");
+        buffer.get_mut().expect("buffer mut").set_pts(pts);
+        buffer
+    };
+
+    pipeline
+        .set_state(gst::State::Playing)
+        .expect("pipeline Playing");
+    src_a
+        .push_buffer(buffer(gst::ClockTime::ZERO))
+        .expect("push");
+    src_b
+        .push_buffer(buffer(gst::ClockTime::ZERO))
+        .expect("push");
+    pipeline
+        .state(gst::ClockTime::from_seconds(5))
+        .0
+        .expect("pipeline Playing");
+
+    let reader = instance
+        .create_flow_reader(&flow_id)
+        .expect("flow reader")
+        .to_samples_reader()
+        .expect("samples reader");
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while reader.get_runtime_info().expect("runtime info").headIndex == u64::MAX {
+        assert!(Instant::now() < deadline, "first buffer was not written");
+        thread::sleep(Duration::from_millis(1));
+    }
+    drop(reader);
+
+    let sink_b = pipeline.by_name("sink_b").expect("mxlsink");
+    pipeline.remove(&sink_b).expect("remove running sink");
+    let (internal, external, num, denom) = clock.calibration();
+    clock.set_calibration(
+        internal,
+        external + gst::ClockTime::from_seconds(1),
+        num,
+        denom,
+    );
+
+    src_a
+        .push_buffer(buffer(gst::ClockTime::from_mseconds(10)))
+        .expect("push");
+    src_a.end_of_stream().expect("end of stream");
+    let msg = pipeline
+        .bus()
+        .expect("bus")
+        .timed_pop_filtered(
+            gst::ClockTime::from_seconds(5),
+            &[gst::MessageType::Eos, gst::MessageType::Error],
+        )
+        .expect("timed out waiting for EOS");
+    pipeline.set_state(gst::State::Null).expect("pipeline Null");
+    sink_b
+        .set_state(gst::State::Null)
+        .expect("removed sink Null");
+
+    if let gst::MessageView::Error(err) = msg.view() {
+        panic!("{} ({:?})", err.error(), err.debug());
+    }
+}
+
 /// An element moved into another pipeline must take that pipeline's offset,
 /// not keep the one it shared in the pipeline it came from.
 #[test]
