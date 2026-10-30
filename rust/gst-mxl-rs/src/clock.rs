@@ -51,7 +51,6 @@ pub(crate) fn clock_offset(clock: Option<gst::Clock>, mxl_now: u64) -> Option<u6
 /// `GstContext` type shared by every MXL element (source and sink) in a pipeline
 /// so they agree on a single [`SharedClockOffset`].
 pub(crate) const CLOCK_OFFSET_CONTEXT: &str = "application/x-mxl-clock-offset";
-
 /// The pipeline-wide `D`, sampled at most once (see [`clock_offset`]) and shared
 /// between the MXL elements of one pipeline through [`CLOCK_OFFSET_CONTEXT`].
 ///
@@ -72,18 +71,23 @@ impl Default for SharedClockOffset {
 }
 
 impl SharedClockOffset {
-    /// The shared `D`, sampling it once against `clock`/`mxl_now` if unset. The
-    /// mutex serialises the first sample so concurrent elements reuse one value.
-    /// `None` only when the element has no clock yet and nothing was sampled.
+    /// The shared `D`, sampling it once against `clock` and `mxl_now()` if unset.
+    /// The mutex serialises the first sample so concurrent elements reuse one
+    /// value. MXL time is read immediately before the pipeline clock, so that
+    /// a stall between the two reads cannot skew `D`. `None` only when the
+    /// element has no clock or MXL instance yet and nothing was sampled.
     pub(crate) fn get_or_sample(
         &self,
         clock: Option<gst::Clock>,
-        mxl_now: u64,
+        mxl_now: impl FnOnce() -> Result<Option<u64>, ClockOffsetError>,
     ) -> Result<Option<u64>, ClockOffsetError> {
         let mut slot = self.0.lock().map_err(|_| ClockOffsetError::Failed)?;
         if let Some(offset) = *slot {
             return Ok(Some(offset));
         }
+        let Some(mxl_now) = mxl_now()? else {
+            return Ok(None);
+        };
         let Some(offset) = clock_offset(clock, mxl_now) else {
             return Ok(None);
         };
@@ -223,11 +227,8 @@ pub(crate) trait ClockOffsetExt: ElementImpl {
     /// The pipeline's shared `D`, sampling it once if needed. `Ok(None)` before
     /// a clock or instance is available.
     fn resolve_clock_offset(&self) -> Result<Option<u64>, ClockOffsetError> {
-        let Some(mxl_now) = self.mxl_now()? else {
-            return Ok(None);
-        };
         let cell = self.ensure_clock_offset()?;
-        cell.get_or_sample(self.element().clock(), mxl_now)
+        cell.get_or_sample(self.element().clock(), || self.mxl_now())
     }
 
     /// Drop the shared sample so it is re-taken against the current clock.
