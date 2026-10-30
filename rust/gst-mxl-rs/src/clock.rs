@@ -160,9 +160,17 @@ pub(crate) trait ClockOffsetExt: ElementImpl {
         Ok(())
     }
 
-    /// Invalidate the sampled offset before delegating a clock change.
+    /// Invalidate the sampled offset before delegating a clock change. A bin
+    /// unsets the clock of an element it removes, which may still be running,
+    /// so unsetting the clock only releases this element's cell and leaves the
+    /// offset its former siblings share.
     fn handle_set_clock(&self, clock: Option<&gst::Clock>) -> bool {
-        if self.invalidate_clock_offset().is_err() {
+        let reset = if clock.is_some() {
+            self.invalidate_clock_offset()
+        } else {
+            self.release_clock_offset()
+        };
+        if reset.is_err() {
             gst::element_imp_error!(
                 self,
                 gst::CoreError::Failed,
