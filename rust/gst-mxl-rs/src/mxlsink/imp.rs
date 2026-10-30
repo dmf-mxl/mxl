@@ -14,7 +14,7 @@
 use gst::glib;
 use gst::prelude::*;
 use gst::subclass::prelude::*;
-use gst_base::prelude::BaseSinkExt;
+use gst_base::prelude::{BaseSinkExt, BaseSinkExtManual};
 use gst_base::subclass::prelude::*;
 use gstreamer as gst;
 use gstreamer_audio as gst_audio;
@@ -377,21 +377,37 @@ impl BaseSinkImpl for MxlSink {
             }
         };
 
+        let pts = buffer.pts().ok_or(gst::FlowError::Error)?;
+        let base_time = self.obj().base_time().ok_or(gst::FlowError::Error)?;
+        let segment = self.obj().segment();
+        let Some(segment) = segment.downcast_ref::<gst::ClockTime>() else {
+            gst::element_imp_error!(
+                self,
+                gst::CoreError::Negotiation,
+                ["Segment is not in TIME format: {:?}", segment.format()]
+            );
+            return Err(gst::FlowError::Error);
+        };
+        let running_time = segment.to_running_time_full(pts);
+        let mxl_ts = running_time.and_then(|running_time| {
+            mxl_timestamp(base_time.nseconds() as i128 + offset as i128, running_time)
+        });
+        let Some(mxl_ts) = mxl_ts else {
+            gst::warning!(
+                CAT,
+                imp = self,
+                "Dropping buffer with PTS {} (running time {:?}) outside MXL timestamp range",
+                pts,
+                running_time
+            );
+            return Ok(gst::FlowSuccess::Ok);
+        };
+
         let mut context = self.context.lock().map_err(|_| gst::FlowError::Error)?;
         let state = context.state.as_mut().ok_or(gst::FlowError::Error)?;
-        // Borrow the element for the duration of this render call so
-        // the format-specific paths can read its base time via
-        // `Element::base_time()` without `State` having to cache a
-        // strong ref (which would form a refcount cycle).
-        let element = self.obj();
-        let element: &gst::Element = element.upcast_ref();
         match &state.flow_state {
-            Some(FlowState::Discrete(_)) => {
-                render_discrete::discrete(state, element, buffer, offset)
-            }
-            Some(FlowState::Continuous(_)) => {
-                render_continuous::continuous(state, element, buffer, offset)
-            }
+            Some(FlowState::Discrete(_)) => render_discrete::discrete(state, buffer, mxl_ts),
+            Some(FlowState::Continuous(_)) => render_continuous::continuous(state, buffer, mxl_ts),
             None => Err(gst::FlowError::Error),
         }
     }
@@ -468,6 +484,17 @@ impl BaseSinkImpl for MxlSink {
     ) -> Result<(), gst::LoggableError> {
         self.parent_propose_allocation(query)
     }
+}
+
+pub(crate) fn mxl_timestamp(
+    anchor: i128,
+    running_time: gst::Signed<gst::ClockTime>,
+) -> Option<u64> {
+    let running_time = match running_time {
+        gst::Signed::Positive(rt) => rt.nseconds() as i128,
+        gst::Signed::Negative(rt) => -(rt.nseconds() as i128),
+    };
+    u64::try_from(anchor.checked_add(running_time)?).ok()
 }
 
 fn init_mxl_instance(
