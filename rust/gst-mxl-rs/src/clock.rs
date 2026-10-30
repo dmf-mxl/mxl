@@ -52,6 +52,9 @@ pub(crate) fn clock_offset(clock: Option<gst::Clock>, mxl_now: u64) -> Option<u6
 /// so they agree on a single [`SharedClockOffset`].
 pub(crate) const CLOCK_OFFSET_CONTEXT: &str = "application/x-mxl-clock-offset";
 
+/// Serialises [`ClockOffsetExt::ensure_clock_offset`] between elements.
+static CLOCK_OFFSET_SETUP: Mutex<()> = Mutex::new(());
+
 /// The pipeline-wide `D`, sampled at most once (see [`clock_offset`]) and shared
 /// between the MXL elements of one pipeline through [`CLOCK_OFFSET_CONTEXT`].
 ///
@@ -72,18 +75,23 @@ impl Default for SharedClockOffset {
 }
 
 impl SharedClockOffset {
-    /// The shared `D`, sampling it once against `clock`/`mxl_now` if unset. The
-    /// mutex serialises the first sample so concurrent elements reuse one value.
-    /// `None` only when the element has no clock yet and nothing was sampled.
+    /// The shared `D`, sampling it once against `clock` and `mxl_now()` if unset.
+    /// The mutex serialises the first sample so concurrent elements reuse one
+    /// value. MXL time is read immediately before the pipeline clock, so that
+    /// a stall between the two reads cannot skew `D`. `None` only when the
+    /// element has no clock or MXL instance yet and nothing was sampled.
     pub(crate) fn get_or_sample(
         &self,
         clock: Option<gst::Clock>,
-        mxl_now: u64,
+        mxl_now: impl FnOnce() -> Result<Option<u64>, ClockOffsetError>,
     ) -> Result<Option<u64>, ClockOffsetError> {
         let mut slot = self.0.lock().map_err(|_| ClockOffsetError::Failed)?;
         if let Some(offset) = *slot {
             return Ok(Some(offset));
         }
+        let Some(mxl_now) = mxl_now()? else {
+            return Ok(None);
+        };
         let Some(offset) = clock_offset(clock, mxl_now) else {
             return Ok(None);
         };
@@ -142,9 +150,27 @@ pub(crate) trait ClockOffsetExt: ElementImpl {
         Ok(())
     }
 
-    /// Invalidate the sampled offset before delegating a clock change.
+    /// Forget the adopted offset cell, so that the element adopts its current
+    /// pipeline's cell the next time it starts.
+    fn release_clock_offset(&self) -> Result<(), ClockOffsetError> {
+        *self
+            .shared_clock_offset()
+            .lock()
+            .map_err(|_| ClockOffsetError::Failed)? = None;
+        Ok(())
+    }
+
+    /// Invalidate the sampled offset before delegating a clock change. A bin
+    /// unsets the clock of an element it removes, which may still be running,
+    /// so unsetting the clock only releases this element's cell and leaves the
+    /// offset its former siblings share.
     fn handle_set_clock(&self, clock: Option<&gst::Clock>) -> bool {
-        if self.invalidate_clock_offset().is_err() {
+        let reset = if clock.is_some() {
+            self.invalidate_clock_offset()
+        } else {
+            self.release_clock_offset()
+        };
+        if reset.is_err() {
             gst::element_imp_error!(
                 self,
                 gst::CoreError::Failed,
@@ -175,6 +201,12 @@ pub(crate) trait ClockOffsetExt: ElementImpl {
         if let Some(cell) = self.cached_clock_offset()? {
             return Ok(cell);
         }
+        // A bin stores a published context but does not pass it to children
+        // that already exist, so elements that start concurrently must not
+        // both get as far as creating their own.
+        let _setup = CLOCK_OFFSET_SETUP
+            .lock()
+            .map_err(|_| ClockOffsetError::Failed)?;
         let element = self.element();
 
         // A peer along our pads may already hold the context.
@@ -204,7 +236,9 @@ pub(crate) trait ClockOffsetExt: ElementImpl {
         // Nobody has one yet: create ours and share it with the pipeline.
         let cell = SharedClockOffset::default();
         self.store_clock_offset(cell.clone())?;
-        let mut context = gst::Context::new(CLOCK_OFFSET_CONTEXT, true);
+        // Not persistent, so that GStreamer drops the context at READY->NULL and
+        // an element moved to another pipeline does not carry this cell with it.
+        let mut context = gst::Context::new(CLOCK_OFFSET_CONTEXT, false);
         let Some(s) = context.get_mut() else {
             return Err(ClockOffsetError::Failed);
         };
@@ -223,11 +257,8 @@ pub(crate) trait ClockOffsetExt: ElementImpl {
     /// The pipeline's shared `D`, sampling it once if needed. `Ok(None)` before
     /// a clock or instance is available.
     fn resolve_clock_offset(&self) -> Result<Option<u64>, ClockOffsetError> {
-        let Some(mxl_now) = self.mxl_now()? else {
-            return Ok(None);
-        };
         let cell = self.ensure_clock_offset()?;
-        cell.get_or_sample(self.element().clock(), mxl_now)
+        cell.get_or_sample(self.element().clock(), || self.mxl_now())
     }
 
     /// Drop the shared sample so it is re-taken against the current clock.
