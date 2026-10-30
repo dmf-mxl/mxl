@@ -150,6 +150,16 @@ pub(crate) trait ClockOffsetExt: ElementImpl {
         Ok(())
     }
 
+    /// Forget the adopted offset cell, so that the element adopts its current
+    /// pipeline's cell the next time it starts.
+    fn release_clock_offset(&self) -> Result<(), ClockOffsetError> {
+        *self
+            .shared_clock_offset()
+            .lock()
+            .map_err(|_| ClockOffsetError::Failed)? = None;
+        Ok(())
+    }
+
     /// Invalidate the sampled offset before delegating a clock change.
     fn handle_set_clock(&self, clock: Option<&gst::Clock>) -> bool {
         if self.invalidate_clock_offset().is_err() {
@@ -218,7 +228,9 @@ pub(crate) trait ClockOffsetExt: ElementImpl {
         // Nobody has one yet: create ours and share it with the pipeline.
         let cell = SharedClockOffset::default();
         self.store_clock_offset(cell.clone())?;
-        let mut context = gst::Context::new(CLOCK_OFFSET_CONTEXT, true);
+        // Not persistent, so that GStreamer drops the context at READY->NULL and
+        // an element moved to another pipeline does not carry this cell with it.
+        let mut context = gst::Context::new(CLOCK_OFFSET_CONTEXT, false);
         let Some(s) = context.get_mut() else {
             return Err(ClockOffsetError::Failed);
         };
