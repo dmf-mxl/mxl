@@ -11,7 +11,7 @@
 - Architecture
     - [Overview](Architecture.md)
     - [Timing Model](Timing.md)
-    - [Event Flows](event-flows.md)
+    - [Event Flows](EventFlows.md)
 - Fabrics
     - [Getting Started](FabricsGettingStarted.md)
     - [Developer Guide](FabricsDeveloperGuide.md)
