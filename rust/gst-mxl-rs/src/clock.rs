@@ -51,6 +51,10 @@ pub(crate) fn clock_offset(clock: Option<gst::Clock>, mxl_now: u64) -> Option<u6
 /// `GstContext` type shared by every MXL element (source and sink) in a pipeline
 /// so they agree on a single [`SharedClockOffset`].
 pub(crate) const CLOCK_OFFSET_CONTEXT: &str = "application/x-mxl-clock-offset";
+
+/// Serialises [`ClockOffsetExt::ensure_clock_offset`] between elements.
+static CLOCK_OFFSET_SETUP: Mutex<()> = Mutex::new(());
+
 /// The pipeline-wide `D`, sampled at most once (see [`clock_offset`]) and shared
 /// between the MXL elements of one pipeline through [`CLOCK_OFFSET_CONTEXT`].
 ///
@@ -179,6 +183,12 @@ pub(crate) trait ClockOffsetExt: ElementImpl {
         if let Some(cell) = self.cached_clock_offset()? {
             return Ok(cell);
         }
+        // A bin stores a published context but does not pass it to children
+        // that already exist, so elements that start concurrently must not
+        // both get as far as creating their own.
+        let _setup = CLOCK_OFFSET_SETUP
+            .lock()
+            .map_err(|_| ClockOffsetError::Failed)?;
         let element = self.element();
 
         // A peer along our pads may already hold the context.
