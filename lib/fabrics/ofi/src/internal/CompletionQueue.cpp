@@ -129,9 +129,19 @@ namespace mxl::lib::fabrics::ofi
 
         if (ret == -FI_EAVAIL)
         {
-            // An entry is available but in the error queue
-            ::fi_cq_err_entry err;
-            fi_cq_readerr(_raw, &err, 0);
+            // An entry is available but in the error queue. Zeroed, because
+            // libfabric reads err_data_size on input: non-zero makes it copy
+            // the provider's error text through err_data, and uninitialized
+            // that was a write of text to a stack-garbage address.
+            ::fi_cq_err_entry err{};
+            if (auto const rc = ::fi_cq_readerr(_raw, &err, 0); rc < 0)
+            {
+                if (rc == -FI_EAGAIN)
+                {
+                    return std::nullopt;
+                }
+                throw FabricException::make(static_cast<int>(rc), "Failed to read completion error: {}", ::fi_strerror(static_cast<int>(-rc)));
+            }
 
             return Completion{
                 Completion::Error{err, this->shared_from_this()}
