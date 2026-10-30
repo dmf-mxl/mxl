@@ -483,6 +483,8 @@ impl BaseSrcImpl for MxlSrc {
         })?;
 
         *context = Default::default();
+        self.release_clock_offset()
+            .map_err(|_| crate::clock::ClockOffsetError::Failed.into_error_message())?;
 
         self.unlock()?;
 
