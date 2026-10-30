@@ -4,8 +4,8 @@
 //! Integration tests for the MXL-time/pipeline-clock offset `D` that the MXL
 //! elements of one pipeline share.
 
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Barrier};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -129,5 +129,64 @@ fn clock_offset_is_not_skewed_by_object_lock_contention() {
             error_us.abs() < 1_000,
             "run {run}: sink D differs from the measured offset by {error_us} us"
         );
+    }
+}
+
+/// Two `mxlsink`s of one pipeline that start on different threads at the same
+/// time must still share one offset, so exactly one of them publishes it.
+#[test]
+fn concurrently_started_elements_share_one_clock_offset() {
+    init();
+    if let Some(reason) = skip_reason(&["mxlsink"]) {
+        skip!(reason);
+    }
+    let domain_guard = TestDomainGuard::new("offset_concurrent_start");
+    let domain = domain_guard.domain();
+
+    for run in 0..50 {
+        let pipeline = gst::Pipeline::new();
+        let sinks: Vec<gst::Element> = (0..2)
+            .map(|_| {
+                gst::ElementFactory::make("mxlsink")
+                    .property("flow-id", uuid::Uuid::new_v4().to_string())
+                    .property("domain", &domain)
+                    .build()
+                    .expect("mxlsink")
+            })
+            .collect();
+        for sink in &sinks {
+            pipeline.add(sink).expect("add mxlsink");
+            sink.set_locked_state(true);
+        }
+        pipeline
+            .set_state(gst::State::Ready)
+            .expect("pipeline Ready");
+
+        let barrier = Arc::new(Barrier::new(sinks.len()));
+        let starters: Vec<_> = sinks
+            .iter()
+            .cloned()
+            .map(|sink| {
+                let barrier = barrier.clone();
+                thread::spawn(move || {
+                    barrier.wait();
+                    sink.set_state(gst::State::Ready).expect("mxlsink Ready");
+                })
+            })
+            .collect();
+        for starter in starters {
+            starter.join().expect("starter thread");
+        }
+
+        let bus = pipeline.bus().expect("bus");
+        let published =
+            std::iter::from_fn(|| bus.pop_filtered(&[gst::MessageType::HaveContext])).count();
+
+        for sink in &sinks {
+            sink.set_locked_state(false);
+        }
+        pipeline.set_state(gst::State::Null).expect("pipeline Null");
+
+        assert_eq!(published, 1, "run {run}: offsets published by the sinks");
     }
 }
