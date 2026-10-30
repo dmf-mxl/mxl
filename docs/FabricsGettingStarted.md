@@ -1,7 +1,7 @@
 <!-- SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project. -->
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 
-# MXL Fabrics — Getting Started
+# Overview
 
 ## What is MXL Fabrics?
 

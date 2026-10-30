@@ -13,8 +13,8 @@
     - [Timing Model](Timing.md)
     - [Event Flows](event-flows.md)
 - Fabrics
-    - [Getting Started](FabricsGettingStarted.md)
-    - [Developer Guide](FabricsDeveloperGuide.md)
+    - [Overview](FabricsGettingStarted.md)
+    - [Usage](FabricsDeveloperGuide.md)
     - [Implementation](Fabrics.md)
     - [Bandwidth](FabricsBandwidth.md)
 - [API Reference](<API Reference.md>)

@@ -3,7 +3,7 @@
 
 # Building
 
-## Option 1 : Devcontainer build environment
+## Option 1: Devcontainer build environment
 
 This is the preferred option for development on WSL2 or native linux desktop. This method is self contained, provides a predictable build environment (through a dynamically built container) and pre-configured set of VSCode extensions defined in the devcontainer definition file.
 
