@@ -1,7 +1,7 @@
 <!-- SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project. -->
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 
-# Fabrics Developer Guide
+# Usage
 
 This guide covers the `mxl-fabrics` C API for transferring MXL flows between hosts over network fabrics (RDMA, TCP, EFA, shared memory). It assumes familiarity with the MXL Flow API (`mxl/flow.h`) and basic flow reader/writer usage as described in [Usage](./Usage.md). For the internal design and implementation details see [Fabrics](./Fabrics.md).
 

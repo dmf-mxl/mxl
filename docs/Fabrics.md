@@ -1,7 +1,7 @@
 <!-- SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project. -->
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 
-# Fabrics
+# Implementation
 
 This page presents the details of the libfabric implementation of the Fabrics API. This page assumes familiarity with the MXL Flow API, with asynchronous networking workflows and RDMA. A good place to start would be to read the proposition [MXL Inter host memory sharing ‐ Proposition](https://github.com/dmf-mxl/mxl/wiki/MXL-Inter-host-memory-sharing-%E2%80%90-Proposition).
 
@@ -279,23 +279,23 @@ The design for the Discrete flow uses Remote Write to transfer grains. This was 
 - Send/Recv Bouncing buffer: We use a bouncing buffer on the receiver side. All receives are posted to the same buffer. Upon completion, we can retrieve the head index associated with the transfer and the data must be copied from this bouncing buffer to the actual buffer.
 - Tag matching: We use tag matching, where the tag corresponds to the head index. With this solution we avoid the bouncing buffer, but then the receiver has to know exactly which head index to expect. *This means we need to keep both the target and initiator synchronized, which can be cumbersome. Also, a copy is involved if hardware tag matching is not correctly leveraged or if the NIC does not support it.*
 
-### 7.2 - Moving an audio (continuous) flow
+### 7.2 Moving an audio (continuous) flow
 
 When moving audio flow samples across hosts, one will typically determine the number of samples per channel to move at once. Since the audio format is planar and not interleave I see many options:
 
-#### 7.2.1 - Remote Write
+#### 7.2.1 Remote Write
 
 This solution allows to re-use the remote write approach that is used for the grains. The solution is to use scatter-gather feature on the source buffers. On the receiver side, we have a bouncing buffer, and upon completion, we need to unpack the samples back to the associated non-contiguous buffers.
 
-#### 7.2.2 - RDM endpoint Scatter-Gather with Tagged Send/Recv
+#### 7.2.2 RDM endpoint Scatter-Gather with Tagged Send/Recv
 
 Leverage the scatter-gather feature to select multiple non-contiguous buffers at the source and use the same feature at the destination. The only caveat with this approach is that the NIC is required to support this feature (RDMA) and operations like Remote Write and Read in RDMA only supports scatter-gather at the initiator side. To have support of the scatter-gather feature at both the initiator and target side, one has to use the Send/Receive or Tagged API. With the tagged API, each message has a tag which ensure that a specific range of samples will end-up in the receive buffer that was called with the associated tag. This means we don’t need the bouncing buffer that would be required with only send and receive. The only caveat to this is that libfabric only supports a scatter-gather list of size 4 when using Verbs over an RDM endpoint. This means that to transfer 64 channels, 16 transfers would be required.
 
-#### 7.2.3 - Send/Recv with DGRAM endpoint
+#### 7.2.3 Send/Recv with DGRAM endpoint
 
 DGRAM Endpoint when used with Verbs it uses UD Queue Pairs. Only Send/Recv API (no tag matching) is supported by this endpoint. The idea is similar to the remote write approach, we use send (with IMM_DATA) with scatter-gather feature with the source buffers. On the receiving side, we always receive in the same buffer, but we unpack the buffer to the associated non-contiguous buffers. We get better capabilities for scatter-gather (up to hardware max_sge value) than RDM endpoint, but the Queue Pair is unreliable, meaning no guarantees on the delivery and ordering. As a comparison with RDM endpoint which only support scatter-gather list of size 4, on both ConnectX-5 and ConnectX-4 the max scatter-gather list size is 30 instead. Also, it is important to note that on libfabric documentation, DGRAM endpoint for Verbs is supposedly “beta”. It is unclear exactly what this entails — whether it implies performance or operational limitations. It is also worth noting that leveraging fabrics multicast in RDMA requires the DGRAM endpoint, or implementing UD queue pairs directly with libibverbs.
 
-#### 7.2.4 - Send/Recv with MSG Endpoint
+#### 7.2.4 Send/Recv with MSG Endpoint
 
 Another solution that would work and is maybe more suited to our requirements is using Send/Recv API with scatter-gather feature but using RC Queue pairs through the MSG Endpoint. We get all the same advantages as with the DGRAM endpoint, but we also get reliability and ordering. The only thing, we are potentially giving up is fabrics multicast, which could be a good compromise.
 
@@ -309,7 +309,7 @@ MSG Send/Recv | Send/Recv | Yes | No | Yes | No
 
 Considering the trade-offs, Remote Write is chosen as the primary protocol, but falls back to Send/Recv if Remote Write is not available.
 
-### 7.3 - Bouncing Buffer Unpacking
+### 7.3 Bouncing Buffer Unpacking
 The transfer will now use the scatter-gather feature on the source buffer to target a ring bouncing buffer on the target side. Upon completion, the target side will copy the entry of the bouncing buffer back to the MXL Audio Flow.
 
 ![cont-flow-rma](./fabrics/img/mxl-fabrics-cont-flow-rma.png)
