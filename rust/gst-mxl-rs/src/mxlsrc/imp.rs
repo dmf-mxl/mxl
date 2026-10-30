@@ -27,6 +27,7 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 use crate::clock::ClockOffsetExt;
+use crate::format::video;
 use crate::mxlsrc;
 use crate::mxlsrc::create_continuous::create_continuous;
 use crate::mxlsrc::create_discrete::create_discrete;
@@ -34,6 +35,7 @@ use crate::mxlsrc::mxl_helper;
 use crate::mxlsrc::state::Context;
 use crate::mxlsrc::state::DEFAULT_DOMAIN;
 use crate::mxlsrc::state::DEFAULT_FLOW_ID;
+use crate::mxlsrc::state::DiscreteFormat;
 use crate::mxlsrc::state::FlowState;
 use crate::mxlsrc::state::Settings;
 use crate::mxlsrc::timing;
@@ -227,7 +229,10 @@ impl ElementImpl for MxlSrc {
 
                     caps_mut.append(
                         gst::Caps::builder("video/x-raw")
-                            .field("format", "v210")
+                            .field(
+                                "format",
+                                gst::List::new([video::GST_V210, video::GST_A422_10LE]),
+                            )
                             .build(),
                     );
                     caps.make_mut().append(
@@ -359,10 +364,10 @@ impl BaseSrcImpl for MxlSrc {
             let format = structure
                 .get::<String>("format")
                 .map_err(|e| gst::loggable_error!(CAT, "Failed to set caps {}", e))?;
-            if format != "v210" {
+            if video::media_type_for_gst_format(&format).is_none() {
                 return Err(gst::loggable_error!(
                     CAT,
-                    "Unsupported video format (expected v210): {}",
+                    "Unsupported video format (expected v210 or A422_10LE): {}",
                     format
                 ));
             }
@@ -628,15 +633,21 @@ impl MxlSrc {
             .context
             .lock()
             .map_err(|e| gst::loggable_error!(CAT, "Failed to lock context mutex {}", e))?;
-        let instance = &context
+        let state = context
             .state
             .as_ref()
-            .ok_or(gst::loggable_error!(CAT, "Failed to get state"))?
-            .instance;
+            .ok_or(gst::loggable_error!(CAT, "Failed to get state"))?;
+        let video_format = match &state.flow_state {
+            Some(FlowState::Discrete(discrete)) => match discrete.format {
+                DiscreteFormat::VideoAlpha(_) => video::GST_A422_10LE,
+                DiscreteFormat::Video | DiscreteFormat::Data => video::GST_V210,
+            },
+            _ => video::GST_V210,
+        };
         let flow_id = mxl_helper::get_flow_type_id(&settings)?;
-        let json_flow_description = mxl_helper::get_mxl_flow_json(instance, flow_id)?;
+        let json_flow_description = mxl_helper::get_mxl_flow_json(&state.instance, flow_id)?;
         let flow_description = mxl_helper::get_flow_def(self, json_flow_description)?;
-        mxl_helper::set_json_caps(self, flow_description)
+        mxl_helper::set_json_caps(self, flow_description, video_format)
     }
 
     /// Live latency to advertise: one grain period of the attached discrete flow.
