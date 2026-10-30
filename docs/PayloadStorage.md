@@ -156,10 +156,10 @@ A writer puts a flow's payload on a GPU with:
 
 How the memory is shared:
 
-- The writer makes one `cudaMalloc` for all slots, with each slot starting at a multiple of 256 bytes, and clears it. It exports the allocation once with `cudaIpcGetMemHandle`, and records the handle, the stride and the device UUID in `payload.cuda.json`, next to `payload.json`, before the flow is published. The file records the version of its format, and readers refuse other versions.
-- A reader in another process imports the allocation once, when the application calls `mxlFlowReaderMapSlots`, with `cudaIpcOpenMemHandle`. Opening the reader makes no CUDA call.
-- A reader on another GPU maps the allocation through peer access (`cudaIpcMemLazyEnablePeerAccess`), if `cudaDeviceCanAccessPeer` allows it. Otherwise mapping returns `MXL_ERR_UNSUPPORTED_OPERATION`.
-- CUDA IPC cannot open a handle in the process that exported it. A reader in the writer's own process therefore shares the writer's allocation through a registry inside the process. The allocation is reference counted, so it stays valid for such a reader after the writer is released.
+- The writer creates one CUDA virtual-memory allocation for all slots, with each slot starting at a multiple of 256 bytes, and clears it. It exports that allocation once as a POSIX file descriptor. libmxl serves the descriptor on `payload.sock` in the flow directory. `payload.cuda.json`, next to `payload.json`, records the format version, the export name `posix-fd`, the device UUID, the slot count, the stride and the allocation size. It does not contain the descriptor. Readers refuse another version.
+- A reader in another process receives the descriptor when the application calls `mxlFlowReaderMapSlots`, and imports it with `cuMemImportFromShareableHandle`. Opening the reader makes no CUDA call.
+- A reader on another GPU maps the allocation through peer access, if `cudaDeviceCanAccessPeer` allows it. Otherwise mapping returns `MXL_ERR_UNSUPPORTED_OPERATION`.
+- A reader in the writer's own process shares the writer's allocation through a registry inside the process. The allocation is reference counted, so it stays valid for such a reader after the writer is released.
 
 The commit contract: device work that writes a grain must be complete before the writer calls `mxlFlowWriterCommitGrain`, for example after `cudaStreamSynchronize` or `cudaEventSynchronize`. A reader can use a slot as soon as `mxlFlowReaderGetGrainSlot` returns it.
 
@@ -167,12 +167,12 @@ Where writer and reader can run:
 
 | Writer and reader | Mechanism | Requirements |
 |---|---|---|
-| Same pod, same GPU | CUDA IPC | One MXL domain. |
-| Same pod, different GPUs | CUDA IPC and peer access | One MXL domain. The reader sees both GPUs, and they support peer access (NVLink or a PCIe path that allows it). |
-| Different pods, same node | CUDA IPC, with peer access for different GPUs | A shared MXL domain, and `hostIPC` for CUDA IPC across pods. The reader sees the writer's GPU. |
+| Same pod, same GPU | POSIX file descriptor | One MXL domain. |
+| Same pod, different GPUs | POSIX file descriptor and peer access | One MXL domain. The reader sees both GPUs, and they support peer access (NVLink or a PCIe path that allows it). |
+| Different pods, same node | POSIX file descriptor, with peer access for different GPUs | A shared MXL domain (a tmpfs both pods mount). No shared IPC or PID namespace. The reader sees the writer's GPU. |
 | Different nodes | Fabrics | One MXL domain per node. RDMA from device memory is later work. |
 
-`lib/payload-backends/cuda-linear/tests` tests the backend through the public API: sharing in one process and between processes, memory staying valid after the writer is released, and option errors. The tests are skipped when no CUDA device is visible. Peer access between two GPUs is not tested yet.
+`lib/payload-backends/cuda-linear/tests` tests the backend through the public API: sharing in one process and between processes, memory staying valid after the writer is released, and option errors. The tests are skipped when no CUDA device is visible. The peer-GPU test runs when two visible devices can access each other.
 
 ## Principles
 
@@ -307,6 +307,8 @@ The API does not change. What changes is when a reader can get at the payload:
 The backend interface moves to version 2 for this. A backend that reports `MXL_PAYLOAD_BACKEND_CAP_SHARE_DESCRIPTORS` exports the descriptors of a writer's instance with `exportDescriptors`, which libmxl serves until the instance is destroyed, and receives a reader's descriptors with `importDescriptors`, which takes ownership of them.
 
 The `test-memfd` backend in `lib/internal/tests/payload_backends` shares one memory file per slot this way, under a storage type of its own, `org.example.test-memfd`, described in `TestMemfdStorage.hpp`, which the tests also include. The tests cover the whole path from a writer's buffers to a reader's mapping without a device, and a reader whose writer is gone.
+
+`cuda-linear` shares its memory this way too. It exports one descriptor for the whole allocation of a flow.
 
 #### Choices made
 
@@ -588,7 +590,6 @@ The examples also reveal gaps, to close when these backends are implemented:
 
 ## Later pull requests
 
-- The GStreamer test source and sink with device memory, from PR #653.
 - RDMA from device memory in fabrics: CUDA memory registered with `FI_HMEM_CUDA`, and dma-buf registered with `FI_MR_DMABUF`, using the storage type and device reported by `PayloadStorage`. Fabrics rejects device memory until then.
 - The dma-buf backend and then the image backend, as worked out above, on top of the descriptor channel.
 - Buffers supplied by the application: dma-bufs allocated by a device, or CUDA memory from an application's memory pool. The backend would still own export and import, and would check the memory before using it.
