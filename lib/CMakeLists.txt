@@ -80,6 +80,10 @@ mxl_enable_target_ipo(mxl)
 add_library(${PROJECT_NAME}::mxl ALIAS mxl)
 
 
+if (MXL_ENABLE_CUDA_PAYLOAD)
+    add_subdirectory(payload-backends/cuda-linear)
+endif ()
+
 if (MXL_ENABLE_FABRICS_OFI)
     add_subdirectory(fabrics)
 endif ()

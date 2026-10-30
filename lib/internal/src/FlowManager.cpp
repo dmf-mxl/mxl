@@ -12,10 +12,13 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <picojson/picojson.h>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include "mxl-internal/Logging.hpp"
 #include "mxl-internal/PathUtils.hpp"
+#include "mxl-internal/PayloadBackend.hpp"
+#include "mxl-internal/PayloadStorage.hpp"
 #include "mxl-internal/SharedMemory.hpp"
 #include "mxl-internal/Timing.hpp"
 #include "Deferred.hpp"
@@ -113,8 +116,7 @@ namespace mxl::lib
             result.maxCommitBatchSizeHint = maxCommitBatchSizeHintOpt;
             result.maxSyncBatchSizeHint = maxSyncBatchSizeHintOpt;
 
-            // FIXME: This should come from the configuration when device memory is supported
-            result.payloadLocation = MXL_PAYLOAD_LOCATION_HOST_MEMORY;
+            // A backend reports its device once it has prepared the storage.
             result.deviceIndex = -1;
 
             return result;
@@ -152,8 +154,132 @@ namespace mxl::lib
         }
     }
 
+    namespace
+    {
+        /** Version of the payload descriptor format written by this SDK. */
+        constexpr auto PAYLOAD_DESCRIPTOR_VERSION = 1.0;
+
+        /**
+         * Contents of the payload descriptor of a flow.
+         */
+        struct PayloadDescriptor
+        {
+            std::string backend;       ///< The backend that holds the payload.
+            std::uint32_t storageType; ///< The mxlPayloadStorageType the backend reported.
+        };
+
+        /**
+         * Write the payload descriptor of a new flow.
+         * \param[in] flowDir The temporary flow directory.
+         * \param[in] storageSpec The storage requested by the writer.
+         * \param[in] storageType The storage type the backend reports.
+         */
+        void writePayloadDescriptor(std::filesystem::path const& flowDir, PayloadStorageSpec const& storageSpec, std::uint32_t storageType)
+        {
+            auto root = picojson::object{};
+            root["version"] = picojson::value{PAYLOAD_DESCRIPTOR_VERSION};
+            root["backend"] = picojson::value{storageSpec.backend};
+            root["storageType"] = picojson::value{static_cast<double>(storageType)};
+
+            auto const path = makePayloadDescriptorFilePath(flowDir);
+            if (auto out = std::ofstream{path, std::ios::out | std::ios::trunc}; out)
+            {
+                out << picojson::value{root}.serialize(true);
+                if (out)
+                {
+                    return;
+                }
+            }
+            throw std::filesystem::filesystem_error{"Failed to write the payload descriptor.", path, std::make_error_code(std::errc::io_error)};
+        }
+
+        /**
+         * Read the payload descriptor of an existing flow.
+         * \param[in] flowDir The flow directory.
+         * \return The descriptor.
+         * \throws PayloadStorageError with MXL_ERR_INVALID_STATE if the descriptor is missing or invalid, or with
+         *     MXL_ERR_UNSUPPORTED_OPERATION if it has a version this SDK does not know.
+         */
+        PayloadDescriptor readPayloadDescriptor(std::filesystem::path const& flowDir)
+        {
+            auto const path = makePayloadDescriptorFilePath(flowDir);
+            auto in = std::ifstream{path, std::ios::in};
+            if (!in)
+            {
+                throw PayloadStorageError{MXL_ERR_INVALID_STATE, fmt::format("The flow has no readable payload descriptor at {}.", path.string())};
+            }
+
+            auto parsed = picojson::value{};
+            auto const error = picojson::parse(parsed, in);
+            if (!error.empty() || !parsed.is<picojson::object>())
+            {
+                throw PayloadStorageError{MXL_ERR_INVALID_STATE, fmt::format("The payload descriptor at {} is not a JSON object.", path.string())};
+            }
+
+            auto const& root = parsed.get<picojson::object>();
+            // Writer and reader can come from different SDK releases, for example in different containers. A descriptor
+            // written in another format is refused instead of misread.
+            if (auto const version = root.find("version");
+                (version == root.end()) || !version->second.is<double>() || (version->second.get<double>() != PAYLOAD_DESCRIPTOR_VERSION))
+            {
+                throw PayloadStorageError{MXL_ERR_UNSUPPORTED_OPERATION,
+                    fmt::format("The payload descriptor at {} has a version this SDK does not support. Supported is: {}.",
+                        path.string(),
+                        PAYLOAD_DESCRIPTOR_VERSION)};
+            }
+
+            auto const backend = root.find("backend");
+            auto const storageType = root.find("storageType");
+            if ((backend == root.end()) || !backend->second.is<std::string>() || (storageType == root.end()) || !storageType->second.is<double>() ||
+                (storageType->second.get<double>() < 0.0))
+            {
+                throw PayloadStorageError{MXL_ERR_INVALID_STATE, fmt::format("The payload descriptor at {} is incomplete.", path.string())};
+            }
+            return PayloadDescriptor{
+                .backend = backend->second.get<std::string>(),
+                .storageType = static_cast<std::uint32_t>(storageType->second.get<double>()),
+            };
+        }
+
+        /**
+         * Describe a discrete flow to a backend.
+         * \param[in] info The flow info.
+         * \param[in] slicesPerGrain The number of slices in a grain.
+         * \param[in] mode The access this process needs.
+         * \param[in] grainPayloadSize The size in bytes of the payload of one grain.
+         * \return The flow description for the backend.
+         */
+        mxlPayloadBackendFlowInfo makeBackendFlowInfo(mxlFlowInfo const& info, std::size_t slicesPerGrain, AccessMode mode,
+            std::uint64_t grainPayloadSize)
+        {
+            auto result = mxlPayloadBackendFlowInfo{};
+            result.structSize = sizeof(mxlPayloadBackendFlowInfo);
+            result.grainCount = info.config.discrete.grainCount;
+            result.grainPayloadSize = grainPayloadSize;
+            result.format = info.config.common.format;
+
+            result.accessMode = (mode == AccessMode::READ_ONLY) ? MXL_PAYLOAD_BACKEND_ACCESS_READ_ONLY : MXL_PAYLOAD_BACKEND_ACCESS_READ_WRITE;
+            result.slicesPerGrain = static_cast<std::uint32_t>(slicesPerGrain);
+            for (auto const sliceSize : info.config.discrete.sliceSizes)
+            {
+                if (sliceSize == 0U)
+                {
+                    break;
+                }
+                result.sliceSizes[result.planeCount] = sliceSize;
+                ++result.planeCount;
+            }
+            return result;
+        }
+    }
+
     FlowManager::FlowManager(std::filesystem::path const& in_mxlDomain)
+        : FlowManager{in_mxlDomain, PayloadBackendLoader::defaultLoader()}
+    {}
+
+    FlowManager::FlowManager(std::filesystem::path const& in_mxlDomain, PayloadBackendLoader& backendLoader)
         : _mxlDomain{std::filesystem::canonical(in_mxlDomain)}
+        , _backendLoader{&backendLoader}
     {
         if (!exists(in_mxlDomain) || !is_directory(in_mxlDomain))
         {
@@ -167,14 +293,53 @@ namespace mxl::lib
         std::array<uint32_t, MXL_MAX_PLANES_PER_GRAIN> grainSliceLengths, std::uint32_t maxSyncBatchSizeHintOpt,
         std::uint32_t maxCommitBatchSizeHintOpt)
     {
+        return createOrOpenDiscreteFlowWithStorage(flowId,
+            flowDef,
+            flowFormat,
+            grainCount,
+            grainRate,
+            grainPayloadSize,
+            grainNumOfSlices,
+            grainSliceLengths,
+            maxSyncBatchSizeHintOpt,
+            maxCommitBatchSizeHintOpt,
+            PayloadStorageSpec{});
+    }
+
+    std::pair<bool, std::unique_ptr<DiscreteFlowData>> FlowManager::createOrOpenDiscreteFlowWithStorage(uuids::uuid const& flowId,
+        std::string const& flowDef, mxlDataFormat flowFormat, std::size_t grainCount, mxlRational const& grainRate, std::size_t grainPayloadSize,
+        std::size_t grainNumOfSlices, std::array<uint32_t, MXL_MAX_PLANES_PER_GRAIN> grainSliceLengths, std::uint32_t maxSyncBatchSizeHintOpt,
+        std::uint32_t maxCommitBatchSizeHintOpt, PayloadStorageSpec const& storageSpec)
+    {
         auto const uuidString = uuids::to_string(flowId);
-        MXL_DEBUG("Create discrete flow. id: {}, grainCount: {}, grain payload size: {}", uuidString, grainCount, grainPayloadSize);
+        MXL_DEBUG("Create discrete flow. id: {}, grainCount: {}, grain payload size: {}, payload backend: {}",
+            uuidString,
+            grainCount,
+            grainPayloadSize,
+            storageSpec.usesBackend() ? storageSpec.backend : std::string{"built-in host"});
 
         flowFormat = sanitizeFlowFormat(flowFormat);
         if (!mxlIsDiscreteDataFormat(flowFormat))
         {
             throw std::runtime_error{"Attempt to create discrete flow with unsupported or non matching format."};
         }
+
+        // Load the backend before touching the file system, so that a missing backend leaves nothing behind.
+        mxlPayloadBackendApiV1 const* backendApi = nullptr;
+        if (storageSpec.usesBackend())
+        {
+            try
+            {
+                backendApi = &_backendLoader->load(storageSpec.backend);
+            }
+            catch (std::exception const& e)
+            {
+                throw PayloadStorageError{MXL_ERR_UNSUPPORTED_OPERATION, e.what()};
+            }
+        }
+
+        // With a backend, grain files hold only the grain header.
+        auto const mappedPayloadSize = storageSpec.usesBackend() ? std::size_t{0} : grainPayloadSize;
 
         auto const tempDirectory = createTemporaryFlowDirectory(_mxlDomain);
         auto _ = defer(
@@ -203,7 +368,7 @@ namespace mxl::lib
         auto flowData = std::make_unique<DiscreteFlowData>(flowDataPath.string().c_str(), AccessMode::CREATE_READ_WRITE, LockMode::Shared);
 
         auto& info = *flowData->flowInfo();
-        info.version = FLOW_DATA_VERSION;
+        info.version = storageSpec.usesBackend() ? FLOW_DATA_VERSION_PAYLOAD_BACKEND : FLOW_DATA_VERSION;
         info.size = sizeof info;
         info.config.common = initCommonFlowConfigInfo(flowId, flowFormat, grainRate, maxSyncBatchSizeHintOpt, maxCommitBatchSizeHintOpt);
         info.config.discrete = {};
@@ -226,8 +391,7 @@ namespace mxl::lib
             auto const grainPath = makeGrainDataFilePath(grainDir, i);
             MXL_TRACE("Creating grain: {}", grainPath.string());
 
-            // \todo Handle payload stored device memory
-            auto const grain = flowData->emplaceGrain(grainPath.string().c_str(), grainPayloadSize);
+            auto const grain = flowData->emplaceGrain(grainPath.string().c_str(), mappedPayloadSize);
             auto& gInfo = grain->header.info;
             gInfo.grainSize = grainPayloadSize;
             gInfo.totalSlices = grainNumOfSlices;
@@ -237,20 +401,42 @@ namespace mxl::lib
         }
 
         auto const finalDir = makeFlowDirectoryName(_mxlDomain, uuidString);
+        if (backendApi != nullptr)
+        {
+            // The backend allocates and writes its files while the flow is still in the temporary directory, so
+            // that the flow is complete when it is published.
+            writePayloadDescriptor(tempDirectory, storageSpec, backendApi->storageType);
+            auto const backendInfo = makeBackendFlowInfo(info, grainNumOfSlices, AccessMode::READ_WRITE, grainPayloadSize);
+            flowData->setPayloadStorage(PluginPayloadStorage::prepare(*backendApi, backendInfo, storageSpec.backendOptions, tempDirectory, finalDir));
+            // The backend chose the device from its own options. Record it for readers and tools.
+            info.config.common.deviceIndex = flowData->payloadStorage().deviceIndex();
+        }
+        else
+        {
+            flowData->setPayloadStorage(std::make_unique<HostPayloadStorage>(*flowData));
+        }
+
         if (publishFlowDirectory(tempDirectory, finalDir))
         {
             return {true, std::move(flowData)};
         }
-        else
-        {
-            auto existingFlowData = dynamic_pointer_cast<DiscreteFlowData>(openFlow(flowId, AccessMode::READ_WRITE));
-            if (!existingFlowData)
-            {
-                throw std::runtime_error("Could not open existing flow because it is of a different format");
-            }
 
-            return {false, std::move(existingFlowData)};
+        // Another writer created the flow first. Release the storage prepared for it before opening the existing one.
+        flowData.reset();
+        auto existingFlowData = dynamic_pointer_cast<DiscreteFlowData>(openFlow(flowId, AccessMode::READ_WRITE));
+        if (!existingFlowData)
+        {
+            throw std::runtime_error("Could not open existing flow because it is of a different format");
         }
+
+        // A flow whose payload is held by a backend has exactly one writer. A writer that asks for a backend cannot
+        // join a flow with built-in storage either.
+        if (storageSpec.usesBackend() || (existingFlowData->flowInfo()->version != FLOW_DATA_VERSION))
+        {
+            throw PayloadStorageError{MXL_ERR_CONFLICT, "A flow whose payload is held by a backend accepts only one writer."};
+        }
+
+        return {false, std::move(existingFlowData)};
     }
 
     std::pair<bool, std::unique_ptr<EventFlowData>> FlowManager::createOrOpenEventFlow(uuids::uuid const& flowId, std::string const& flowDef,
@@ -393,6 +579,12 @@ namespace mxl::lib
 
     std::unique_ptr<FlowData> FlowManager::openFlow(uuids::uuid const& in_flowId, AccessMode in_mode)
     {
+        return openFlowWithPayloadOptions(in_flowId, in_mode, std::string{});
+    }
+
+    std::unique_ptr<FlowData> FlowManager::openFlowWithPayloadOptions(uuids::uuid const& in_flowId, AccessMode in_mode,
+        std::string const& in_payloadOptions)
+    {
         if (in_mode == AccessMode::CREATE_READ_WRITE)
         {
             throw std::invalid_argument{"Attempt to open flow with invalid access mode."};
@@ -405,15 +597,27 @@ namespace mxl::lib
         if (auto const flowFile = makeFlowDataFilePath(base); exists(flowFile))
         {
             auto flowSegment = SharedMemoryInstance<Flow>{flowFile.string().c_str(), in_mode, 0U, LockMode::Shared};
-            if (flowSegment.get()->info.version != FLOW_DATA_VERSION)
+            auto const version = flowSegment.get()->info.version;
+            if ((version != FLOW_DATA_VERSION) && (version != FLOW_DATA_VERSION_PAYLOAD_BACKEND))
             {
-                throw std::invalid_argument{
-                    fmt::format("Unsupported flow data version: {}, supported is: {}", flowSegment.get()->info.version, FLOW_DATA_VERSION)};
+                throw std::invalid_argument{fmt::format(
+                    "Unsupported flow data version: {}, supported are: {} and {}", version, FLOW_DATA_VERSION, FLOW_DATA_VERSION_PAYLOAD_BACKEND)};
+            }
+
+            // MXL writers leave the deprecated payload location at 0. Another value comes from software that keeps the payload
+            // somewhere this library cannot map.
+            if (auto const payloadLocation = flowSegment.get()->info.config.common.payloadLocation; payloadLocation != 0U)
+            {
+                throw std::invalid_argument{fmt::format("Unsupported payload location: {}, supported is: 0", payloadLocation)};
             }
 
             if (auto const flowFormat = flowSegment.get()->info.config.common.format; mxlIsDiscreteDataFormat(flowFormat))
             {
-                return openDiscreteFlow(base, std::move(flowSegment));
+                return openDiscreteFlow(base, std::move(flowSegment), in_payloadOptions);
+            }
+            else if (version != FLOW_DATA_VERSION)
+            {
+                throw std::invalid_argument{"Continuous flows only exist in flow data version 1."};
             }
             else if (flowFormat == MXL_DATA_FORMAT_EVENT)
             {
@@ -438,7 +642,7 @@ namespace mxl::lib
     }
 
     std::unique_ptr<DiscreteFlowData> FlowManager::openDiscreteFlow(std::filesystem::path const& flowDir,
-        SharedMemoryInstance<Flow>&& sharedFlowInstance)
+        SharedMemoryInstance<Flow>&& sharedFlowInstance, std::string const& payloadOptions)
     {
         auto flowData = std::make_unique<DiscreteFlowData>(std::move(sharedFlowInstance));
 
@@ -463,6 +667,34 @@ namespace mxl::lib
                     "Grain directory not found.", grainDir, std::make_error_code(std::errc::no_such_file_or_directory)};
             }
         }
+
+        if (flowData->flowInfo()->version == FLOW_DATA_VERSION)
+        {
+            flowData->setPayloadStorage(std::make_unique<HostPayloadStorage>(*flowData));
+            return flowData;
+        }
+
+        // The payload is held by a backend. Opening must not require the backend's device, so a backend that cannot
+        // be loaded here leaves the flow readable for its metadata, and payload access reports why.
+        auto const descriptor = readPayloadDescriptor(flowDir);
+        auto const grainPayloadSize = (grainCount > 0U) ? flowData->grainInfoAt(0)->grainSize : 0U;
+        auto const slicesPerGrain = (grainCount > 0U) ? flowData->grainInfoAt(0)->totalSlices : 0U;
+        auto const backendInfo = makeBackendFlowInfo(*flowData->flowInfo(), slicesPerGrain, flowData->accessMode(), grainPayloadSize);
+        mxlPayloadBackendApiV1 const* api = nullptr;
+        try
+        {
+            api = &_backendLoader->load(descriptor.backend);
+        }
+        catch (std::exception const& e)
+        {
+            MXL_WARN("The payload of flow {} cannot be accessed in this process: {}", flowDir.string(), e.what());
+            flowData->setPayloadStorage(std::make_unique<UnavailablePayloadStorage>(
+                static_cast<mxlPayloadStorageType>(descriptor.storageType), grainCount, MXL_ERR_UNSUPPORTED_OPERATION, e.what()));
+            return flowData;
+        }
+
+        // Invalid reader options are the caller's error, so a failure to open is reported.
+        flowData->setPayloadStorage(PluginPayloadStorage::open(*api, backendInfo, payloadOptions, flowDir));
 
         return flowData;
     }

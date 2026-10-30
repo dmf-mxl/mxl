@@ -1,0 +1,77 @@
+# SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+# Image that runs the CUDA payload tests. The CUDA toolkit is used only to build.
+# At run time the host NVIDIA driver is mounted by the NVIDIA container toolkit.
+#
+#   docker build -f examples/Dockerfile.cuda-tests -t mxl-cuda-tests .
+#   docker run --rm --gpus all --shm-size=1g mxl-cuda-tests
+
+FROM nvidia/cuda:12.8.1-devel-ubuntu24.04 AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        cmake \
+        curl \
+        git \
+        ninja-build \
+        pkg-config \
+        tar \
+        unzip \
+        zip \
+    && ninja --version \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV HOME=/root
+# Full commit history, blobs on demand. vcpkg reads the builtin-baseline commit from this clone.
+RUN git clone --filter=blob:none https://github.com/microsoft/vcpkg.git /root/vcpkg \
+    && /root/vcpkg/bootstrap-vcpkg.sh -disableMetrics
+
+WORKDIR /src
+COPY . /src
+
+# libpcap, pulled in by pcapplusplus, is generated with bison and flex.
+RUN apt-get update && apt-get install -y --no-install-recommends bison flex \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN cmake -S /src --preset Linux-GCC-Release \
+        -DMXL_ENABLE_CUDA_PAYLOAD=ON \
+        -DMXL_CUDA_READER_HELPER_PATH=/opt/mxl/bin/mxl-cuda-reader-helper \
+        -DMXL_CUDA_TEST_DATA_DIR=/opt/mxl/data \
+        -DMXL_CUDA_CROSS_CONTAINER_SCRIPT=/opt/mxl/bin/mxl-cuda-cross-container.sh \
+        -DBUILD_DOCS=OFF \
+        -DBUILD_TOOLS=OFF \
+        -DBUILD_UTILS=OFF \
+    && cmake --build /src/build/Linux-GCC-Release --target mxl-cuda-tests mxl-cuda-reader-helper mxl-cuda-writer-helper
+
+RUN mkdir -p /opt/mxl/bin /opt/mxl/lib /opt/mxl/data \
+    && cp -a /src/build/Linux-GCC-Release/lib/libmxl.so* /opt/mxl/lib/ \
+    && cp -a /src/build/Linux-GCC-Release/lib/libmxl-payload-cuda-linear.so /opt/mxl/lib/ \
+    && cp /src/build/Linux-GCC-Release/lib/tests/cuda/mxl-cuda-tests /opt/mxl/bin/ \
+    && cp /src/build/Linux-GCC-Release/lib/tests/cuda/mxl-cuda-reader-helper /opt/mxl/bin/ \
+    && cp /src/build/Linux-GCC-Release/lib/tests/cuda/mxl-cuda-writer-helper /opt/mxl/bin/ \
+    && cp /src/examples/cuda-cross-container-test.sh /opt/mxl/bin/mxl-cuda-cross-container.sh \
+    && chmod +x /opt/mxl/bin/mxl-cuda-cross-container.sh \
+    && cp /src/lib/tests/data/*.json /opt/mxl/data/ \
+    && for bin in /opt/mxl/bin/mxl-cuda-tests /opt/mxl/bin/mxl-cuda-reader-helper /opt/mxl/bin/mxl-cuda-writer-helper /opt/mxl/lib/libmxl.so; do \
+         ldd "$bin" | awk '/=> \// {print $3}' | while read -r dep; do \
+           case "$dep" in \
+             /lib/*|/lib64/*|/usr/lib/*) ;; \
+             *) cp -an "$dep" /opt/mxl/lib/ ;; \
+           esac \
+         done \
+       done
+
+FROM nvidia/cuda:12.8.1-base-ubuntu24.04
+
+RUN apt-get update && apt-get install -y --no-install-recommends libstdc++6 libgcc-s1 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /opt/mxl /opt/mxl
+
+ENV LD_LIBRARY_PATH=/opt/mxl/lib
+WORKDIR /opt/mxl
+ENTRYPOINT ["/opt/mxl/bin/mxl-cuda-tests"]
+CMD ["[cuda payload]"]

@@ -21,6 +21,7 @@ target_sources(mxl-tests
             test_flows.cpp
             test_events.cpp
             test_flows_timing.cpp
+            test_grain_storage.cpp
             test_instance.cpp
             test_time.cpp
             test_read_write_conflict.cpp
@@ -32,6 +33,9 @@ target_link_libraries(mxl-tests
             mxl-internal-headers
             mxl-internal-objects
     )
+
+# The flow tests create flows whose payload is held by the test backend built in lib/internal/tests.
+add_dependencies(mxl-tests mxl-test-payload-test-file)
 
 if (NOT TARGET Catch2::Catch2WithMain)
     find_package(Catch2 REQUIRED)
@@ -125,6 +129,10 @@ target_compile_options(mxl-all-headers PRIVATE
     -Wall -Wextra -Werror -pedantic
     -Wstrict-prototypes
 )
+
+if (MXL_ENABLE_CUDA_PAYLOAD)
+    add_subdirectory(cuda)
+endif()
 
 if (MXL_ENABLE_FABRICS_OFI)
     add_subdirectory(fabrics)
