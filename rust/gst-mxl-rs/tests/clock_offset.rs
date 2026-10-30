@@ -13,6 +13,7 @@ use std::time::{Duration, Instant};
 mod common;
 
 use common::{TestDomainGuard, init, skip_reason};
+use gst::glib;
 use gst::prelude::*;
 use gstreamer as gst;
 use gstreamer_app as gst_app;
@@ -189,4 +190,81 @@ fn concurrently_started_elements_share_one_clock_offset() {
 
         assert_eq!(published, 1, "run {run}: offsets published by the sinks");
     }
+}
+
+/// An element moved into another pipeline must take that pipeline's offset,
+/// not keep the one it shared in the pipeline it came from.
+#[test]
+fn moved_element_takes_new_pipeline_clock_offset() {
+    init();
+    if let Some(reason) = skip_reason(&["videotestsrc", "mxlsink"]) {
+        skip!(reason);
+    }
+    let domain_guard = TestDomainGuard::new("offset_moved_element");
+    let domain = domain_guard.domain();
+    let instance = mxl_instance(&domain);
+    let grain_rate = Rational {
+        numerator: 25,
+        denominator: 1,
+    };
+
+    let flows = [
+        uuid::Uuid::new_v4().to_string(),
+        uuid::Uuid::new_v4().to_string(),
+    ];
+    let branches: Vec<gst::Bin> = flows
+        .iter()
+        .map(|flow_id| {
+            gst::parse::bin_from_description(
+                &format!(
+                    "videotestsrc is-live=true \
+                     ! video/x-raw,format=v210,width=2,height=2,framerate=25/1 \
+                     ! mxlsink flow-id={flow_id} domain={domain}"
+                ),
+                false,
+            )
+            .expect("parse branch")
+        })
+        .collect();
+
+    // The first pipeline runs on the realtime clock, so its offset is far from
+    // the offset against the default monotonic clock of the second pipeline.
+    let first = gst::Pipeline::new();
+    let realtime: gst::Clock = glib::Object::builder::<gst::SystemClock>()
+        .property("clock-type", gst::ClockType::Realtime)
+        .build()
+        .upcast();
+    first.use_clock(Some(&realtime));
+    first.add_many(&branches).expect("add branches");
+    first.set_state(gst::State::Playing).expect("first Playing");
+    thread::sleep(Duration::from_millis(500));
+
+    branches[1]
+        .set_state(gst::State::Null)
+        .expect("moved branch Null");
+    first.remove(&branches[1]).expect("remove moved branch");
+    let second = gst::Pipeline::new();
+    second.add(&branches[1]).expect("add moved branch");
+    second
+        .set_state(gst::State::Playing)
+        .expect("second Playing");
+    thread::sleep(Duration::from_millis(500));
+
+    let reader = instance
+        .create_flow_reader(&flows[1])
+        .expect("flow reader")
+        .to_grain_reader()
+        .expect("grain reader");
+    let head = reader.get_runtime_info().expect("runtime info").headIndex as i64;
+    let now = instance.get_current_index(&grain_rate) as i64;
+    drop(reader);
+
+    second.set_state(gst::State::Null).expect("second Null");
+    first.set_state(gst::State::Null).expect("first Null");
+
+    assert!(
+        (head - now).abs() <= 5,
+        "moved element wrote {} grains away from MXL now",
+        head - now
+    );
 }
