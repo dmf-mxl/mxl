@@ -220,6 +220,9 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow Manager : Open,
     auto const flowId1 = *uuids::uuid::from_string("11111111-1111-1111-1111-111111111111");
     auto const flowDef1 = mxl::tests::readFile("data/v210_flow.json");
     auto const grainRate = mxlRational{60000, 1001};
+    // The writers stay open until the flows are deleted. On Windows the data of a flow lives only while something has it open.
+    auto writer1 = std::unique_ptr<DiscreteFlowData>{};
+    auto writer2 = std::unique_ptr<ContinuousFlowData>{};
     {
         auto const payloadSize = 512;
         auto const sliceSizes = std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN>{payloadSize, 0, 0, 0};
@@ -227,8 +230,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow Manager : Open,
         auto [created,
             flowData1] = manager->createOrOpenDiscreteFlow(flowId1, flowDef1, MXL_DATA_FORMAT_VIDEO, 3, grainRate, payloadSize, 0, sliceSizes);
         REQUIRE(flowData1->grainCount() == 3U);
-        // close writer
-        flowData1.reset();
+        writer1 = std::move(flowData1);
     }
     // open in read-only mode
     {
@@ -248,7 +250,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow Manager : Open,
     {
         auto [created, flowData2] = manager->createOrOpenContinuousFlow(flowId2, flowDef2, MXL_DATA_FORMAT_AUDIO, sampleRate, 4, sizeof(float), 2048);
         REQUIRE(flowData2->channelCount() == 4U);
-        flowData2.reset();
+        writer2 = std::move(flowData2);
     }
     {
         auto openData2 = manager->openFlow(flowId2, AccessMode::READ_WRITE);
@@ -277,6 +279,8 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow Manager : Open,
     //
     // 5) delete by ID and verify removal
     //
+    writer1.reset();
+    writer2.reset();
     REQUIRE(manager->deleteFlow(flowId1));
     REQUIRE(manager->listFlows().size() == 1);
     REQUIRE(manager->deleteFlow(flowId2));
@@ -415,8 +419,8 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: corrupt
     // Create and publish
     auto const payloadSize = 512;
     auto const sliceSizes = std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN>{payloadSize, 0, 0, 0};
+    // The writer stays open. On Windows the data of a flow lives only while something has it open.
     auto [created, flow] = mgr->createOrOpenDiscreteFlow(id, def, MXL_DATA_FORMAT_VIDEO, 1, rate, payloadSize, 1, sliceSizes);
-    flow.reset();
     REQUIRE(mgr->listFlows().size() == 1);
 
     // Manually remove the descriptor JSON to simulate corruption
@@ -446,10 +450,14 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: concurr
 
     auto success = std::atomic<int>{0};
     auto failure = std::atomic<int>{0};
-    auto worker = [&](std::uint32_t payloadSize)
+    // The flows stay open until both workers are done. On Windows the data of a flow lives only while something has it open, so a worker
+    // that finds the flow closed would create it again.
+    auto flows = std::array<std::unique_ptr<DiscreteFlowData>, 2>{};
+    auto worker = [&](std::uint32_t payloadSize, std::size_t index)
     {
         auto const sliceSizes = std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN>{payloadSize, 0, 0, 0};
         auto [created, f] = mgr->createOrOpenDiscreteFlow(id, def, MXL_DATA_FORMAT_VIDEO, 1, rate, payloadSize, 1, sliceSizes);
+        flows[index] = std::move(f);
         if (created)
         {
             ++success;
@@ -460,8 +468,8 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: concurr
         }
     };
 
-    auto t1 = std::thread{worker, 64u};
-    auto t2 = std::thread{worker, 128u};
+    auto t1 = std::thread{worker, 64u, std::size_t{0}};
+    auto t2 = std::thread{worker, 128u, std::size_t{1}};
     t1.join();
     t2.join();
 
@@ -474,6 +482,9 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: concurr
 // deleteFlow on read-only domain
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: deleteFlow on read-only domain", "[flow manager][deletion]")
 {
+#ifdef _WIN32
+    SKIP("Windows ignores the read-only attribute of a directory when files are created or deleted in it.");
+#endif
     auto mgr = std::make_shared<FlowManager>(domain);
     auto const id = *uuids::uuid::from_string("dddddddd-dddd-dddd-dddd-dddddddddddd");
     auto const def = mxl::tests::readFile("data/v210_flow.json");
@@ -579,6 +590,9 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: multipl
 // createFlow on unwritable domain
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: createFlow throws on unwritable domain", "[flow manager][error]")
 {
+#ifdef _WIN32
+    SKIP("Windows ignores the read-only attribute of a directory when files are created or deleted in it.");
+#endif
     // remove write perms on domain
     permissions(domain, std::filesystem::perms::owner_write, std::filesystem::perm_options::remove);
 
@@ -602,12 +616,18 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: createF
 
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: parallel flow writer creation", "[flow manager]")
 {
+#ifdef _WIN32
+    // Creating a flow in an NTFS domain takes milliseconds.
+    auto const numIterations = 1'000;
+#else
     auto const numIterations = 10'000;
+#endif
     auto const numWorkers = 3;
 
     struct Worker
     {
         std::unique_ptr<std::atomic<bool>> readySignal;
+        std::unique_ptr<std::atomic<bool>> releaseSignal;
         std::unique_ptr<FlowManager> mgr;
         std::optional<std::thread> thread;
     };
@@ -616,6 +636,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: paralle
     auto workers = std::list<Worker>{};
 
     auto createdSignal = std::atomic<int>{0};        // Signal from each worker that they are done creating/opening the flow.
+    auto releasedSignal = std::atomic<int>{0};       // Signal from each worker that they have closed the flow.
     auto numOpened = std::atomic<std::uint64_t>{0};  // Total number of flows that were opened.
     auto numCreated = std::atomic<std::uint64_t>{0}; // Total number of flows that were created.
 
@@ -644,17 +665,27 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: paralle
 
                 // Increment either numCreated or numOpened.
                 (created ? &numCreated : &numOpened)->fetch_add(1);
+
+                // Signal that we have opened the flow, and keep it open until the main thread has checked it. On Windows the data of a flow
+                // lives only while something has it open.
+                createdSignal.fetch_add(1);
+                while (!worker->releaseSignal->exchange(false))
+                {
+                }
             }
 
-            // Signal that we have completed to iteration
-            createdSignal.fetch_add(1);
+            // Signal that we have closed the flow
+            releasedSignal.fetch_add(1);
         }
     };
 
     // Create and start all the workers.
     for (auto i = 0; i < numWorkers; ++i)
     {
-        auto& w = workers.emplace_back(std::make_unique<std::atomic<bool>>(false), std::make_unique<FlowManager>(domain), std::nullopt);
+        auto& w = workers.emplace_back(std::make_unique<std::atomic<bool>>(false),
+            std::make_unique<std::atomic<bool>>(false),
+            std::make_unique<FlowManager>(domain),
+            std::nullopt);
         w.thread = std::thread{workFn, &w, i};
     }
 
@@ -687,6 +718,13 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: paralle
             }
         }
 
+        // Let the workers close the flow, and wait for them
+        std::ranges::for_each(workers, [](Worker& w) { w.releaseSignal->store(true); });
+        while (releasedSignal.load() != static_cast<int>(workers.size()))
+        {
+        }
+        releasedSignal.store(0);
+
         // Delete the flow.
         flowManager->deleteFlow(id);
     }
@@ -699,3 +737,72 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: paralle
     // In each iteration all workers that did not create the flow should have opened it.
     REQUIRE(numOpened.load() == numIterations * (numWorkers - 1));
 }
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: creating a flow that is being deleted waits for the deletion",
+    "[flow manager]")
+{
+    auto const def = mxl::tests::readFile("data/v210_flow.json");
+    auto const id = *uuids::uuid::from_string("5fbec3b1-1b0f-417d-9059-8b94a47197ed");
+    auto const payloadSize = 512;
+    auto const sliceSizes = std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN>{payloadSize, 0, 0, 0};
+    auto const create = [&](FlowManager& manager)
+    {
+        return manager.createOrOpenDiscreteFlow(id, def, MXL_DATA_FORMAT_VIDEO, 1, mxlRational{50, 1}, payloadSize, 1, sliceSizes);
+    };
+
+    // The last writer of a flow holds it exclusively while it deletes it.
+    auto deleter = FlowManager{domain};
+    auto [created, flow] = create(deleter);
+    REQUIRE(created);
+    REQUIRE(flow->makeExclusive());
+
+    auto creator = FlowManager{domain};
+    auto recreated = std::atomic<int>{-1};
+    auto thread = std::thread{[&]()
+        {
+            auto [createdAgain, flowAgain] = create(creator);
+            recreated = createdAgain ? 1 : 0;
+        }};
+
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
+    CHECK(recreated.load() == -1);
+    deleter.deleteFlow(id);
+    flow.reset();
+    thread.join();
+    REQUIRE(recreated.load() == 1);
+}
+
+#ifdef _WIN32
+// On Windows the data of a flow lives in in-memory sections that exist only while something has them open. Once the last mapping of a flow
+// is closed, the files left in the domain are a stale flow.
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: a flow whose in-memory data is gone is replaced", "[flow manager][windows]")
+{
+    auto const id = *uuids::uuid::from_string("dddddddd-dddd-dddd-dddd-dddddddddddd");
+    auto const def = mxl::tests::readFile("data/v210_flow.json");
+    auto const rate = mxlRational{50, 1};
+    auto const payloadSize = 512;
+    auto const sliceSizes = std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN>{payloadSize, 0, 0, 0};
+    auto mgr = std::make_shared<FlowManager>(domain);
+
+    {
+        auto [created, flow] = mgr->createOrOpenDiscreteFlow(id, def, MXL_DATA_FORMAT_VIDEO, 2, rate, payloadSize, 1, sliceSizes);
+        REQUIRE(created);
+        flow->grainAt(0)->header.info.grainSize = 777U;
+
+        // Another mapping sees the data while the flow is open.
+        auto again = mgr->openFlow(id, AccessMode::READ_ONLY);
+        REQUIRE(again);
+        REQUIRE(dynamic_cast<DiscreteFlowData*>(again.get())->grainAt(0)->header.info.grainSize == 777U);
+    }
+
+    // Nothing holds the data any more, but the anchor files are still in the domain.
+    REQUIRE(exists(makeFlowDirectoryName(domain, uuids::to_string(id))));
+    REQUIRE_THROWS_AS(mgr->openFlow(id, AccessMode::READ_ONLY), SectionMissingError);
+
+    // Creating the flow again replaces the stale one.
+    auto [created, flow] = mgr->createOrOpenDiscreteFlow(id, def, MXL_DATA_FORMAT_VIDEO, 3, rate, payloadSize, 1, sliceSizes);
+    REQUIRE(created);
+    REQUIRE(flow->grainCount() == 3U);
+    REQUIRE(mgr->openFlow(id, AccessMode::READ_ONLY));
+}
+#endif

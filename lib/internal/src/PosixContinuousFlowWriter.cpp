@@ -8,7 +8,6 @@
 #include <stdexcept>
 #include <system_error>
 #include <mxl/time.h>
-#include "mxl-internal/Sync.hpp"
 
 namespace mxl::lib
 {
@@ -172,8 +171,7 @@ namespace mxl::lib
             if (signalCompletedBatch())
             {
                 // Let readers know that the head has moved
-                flow->state.syncCounter++;
-                wakeAll(&flow->state.syncCounter);
+                _flowData->sync().signal();
             }
 
             return MXL_STATUS_OK;

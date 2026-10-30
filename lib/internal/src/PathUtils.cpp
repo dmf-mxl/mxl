@@ -4,6 +4,11 @@
 #include "mxl-internal/PathUtils.hpp"
 #include <fmt/format.h>
 #include <mxl/platform.h>
+#ifdef _WIN32
+#   include <windows.h>
+#else
+#   include <sys/stat.h>
+#endif
 
 namespace mxl::lib
 {
@@ -59,5 +64,35 @@ namespace mxl::lib
     std::filesystem::path makeDomainOptionsFilePath(std::filesystem::path const& domain)
     {
         return domain / (DOMAIN_OPTIONS_FILE_NAME);
+    }
+
+    MXL_EXPORT
+    std::optional<FileIdentity> fileIdentity(std::filesystem::path const& path)
+    {
+#ifdef _WIN32
+        // FILE_FLAG_BACKUP_SEMANTICS is needed to open directories. No access rights are needed to read the file index.
+        auto const file = ::CreateFileW(
+            path.c_str(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr);
+        if (file == INVALID_HANDLE_VALUE)
+        {
+            return std::nullopt;
+        }
+
+        auto info = BY_HANDLE_FILE_INFORMATION{};
+        auto const ok = ::GetFileInformationByHandle(file, &info);
+        ::CloseHandle(file);
+        if (ok == FALSE)
+        {
+            return std::nullopt;
+        }
+        return (static_cast<FileIdentity>(info.nFileIndexHigh) << 32U) | info.nFileIndexLow;
+#else
+        struct ::stat st;
+        if (::stat(path.string().c_str(), &st) != 0)
+        {
+            return std::nullopt;
+        }
+        return st.st_ino;
+#endif
     }
 }

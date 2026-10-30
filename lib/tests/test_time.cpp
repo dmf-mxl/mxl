@@ -41,7 +41,11 @@ TEST_CASE("Test TAI Epoch", "[time]")
 {
     auto ts = std::timespec{0, 0};
     tm t;
+#ifdef _WIN32
+    gmtime_s(&t, &ts.tv_sec);
+#else
     gmtime_r(&ts.tv_sec, &t);
+#endif
 
     REQUIRE(t.tm_year == 70);
     REQUIRE(t.tm_mon == 0);

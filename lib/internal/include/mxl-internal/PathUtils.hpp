@@ -8,6 +8,8 @@
 #pragma once
 
 #include <filesystem>
+#include <optional>
+#include "FlowState.hpp"
 
 namespace mxl::lib
 {
@@ -50,6 +52,13 @@ namespace mxl::lib
     std::filesystem::path makeEventDataFilePath(std::filesystem::path const& flowDirectory);
 
     std::filesystem::path makeDomainOptionsFilePath(std::filesystem::path const& domain);
+
+    /**
+     * Get the identity of a file, which stays the same while the file exists and differs for a file recreated at the same path.
+     * \param[in] path The file path.
+     * \return The identity, or std::nullopt if the file cannot be accessed. errno, or the Windows last error, tells why.
+     */
+    std::optional<FileIdentity> fileIdentity(std::filesystem::path const& path);
 
     /**************************************************************************/
     /* Inline implementation.                                                 */

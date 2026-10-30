@@ -13,7 +13,7 @@ namespace mxl::lib
     class ContinuousFlowData : public FlowData
     {
     public:
-        explicit ContinuousFlowData(SharedMemoryInstance<Flow>&& flowSegement) noexcept;
+        explicit ContinuousFlowData(SharedMemoryInstance<Flow>&& flowSegement);
         ContinuousFlowData(char const* flowFilePath, AccessMode mode, LockMode lockMode);
 
         constexpr std::size_t channelCount() const noexcept;
@@ -21,6 +21,8 @@ namespace mxl::lib
         constexpr std::size_t channelBufferLength() const noexcept;
 
         void openChannelBuffers(char const* channelBuffersFilePath, std::size_t sampleWordSize);
+
+        std::vector<SectionPin> pinSections() const override;
 
         /** The size of the mapped channel data in bytes. */
         constexpr std::size_t channelDataSize() const noexcept;
@@ -40,7 +42,7 @@ namespace mxl::lib
     /* Inline implementation.                                                 */
     /**************************************************************************/
 
-    inline ContinuousFlowData::ContinuousFlowData(SharedMemoryInstance<Flow>&& flowSegement) noexcept
+    inline ContinuousFlowData::ContinuousFlowData(SharedMemoryInstance<Flow>&& flowSegement)
         : FlowData{std::move(flowSegement)}
         , _channelBuffers{}
         , _sampleWordSize{1U}
@@ -67,6 +69,13 @@ namespace mxl::lib
     constexpr std::size_t ContinuousFlowData::sampleWordSize() const noexcept
     {
         return _sampleWordSize;
+    }
+
+    inline std::vector<SectionPin> ContinuousFlowData::pinSections() const
+    {
+        auto pins = FlowData::pinSections();
+        pins.push_back(_channelBuffers.pinSection());
+        return pins;
     }
 
     inline void ContinuousFlowData::openChannelBuffers(char const* grainFilePath, std::size_t sampleWordSize)

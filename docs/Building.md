@@ -73,6 +73,27 @@ PIC is enabled by default and can be disabled with
 3. Install the GStreamer runtime and developement packages according to [these instructions](https://gstreamer.freedesktop.org/documentation/installing/on-mac-osx.html?gi-language=c#download-and-install-the-sdk)
 
 
+## Windows notes
+
+MXL builds on Windows with the MinGW-w64 g++ of [MSYS2](https://www.msys2.org) (UCRT64 environment), as static or shared libraries. There is no preset. Configure with the vcpkg toolchain and the `x64-mingw-static` triplet, with `gcc`, `g++` and Ninja on the `PATH`:
+
+```
+cmake -S . -B build/win -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_TOOLCHAIN_FILE=<vcpkg root>/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-mingw-static -DBUILD_SHARED_LIBS=OFF -DBUILD_DOCS=OFF
+cmake --build build/win
+```
+
+For shared libraries, configure with `-DBUILD_SHARED_LIBS=ON` and the same triplet. The dependencies are then linked into `libmxl.dll`.
+
+The domain is an ordinary directory on an NTFS volume, since Windows has no memory backed file system. The files in it only anchor the flows; the grain data lives in memory, in sections named after the NTFS identities of the files (see [Windows](./Architecture.md#windows) in the architecture document). Other file systems (FAT, exFAT, ReFS, network shares) do not keep these identities unique, and an instance refuses a domain on them. Creating a flow takes a few milliseconds. Windows also differs in these ways:
+
+- At most 256 threads, in all processes together, can wait for the same flow at a time. A further waiter fails with an error.
+- Windows cannot rename a directory while files in it are open. A new flow is published by closing its files, renaming its directory, and opening it again. A garbage collection that runs in between can remove the flow; it is then created again.
+- The read-only attribute of a directory does not prevent file creation or deletion. Use the directory's access control list to make a domain unwritable.
+
+### Fabrics on Windows
+
+The fabrics library is not supported on Windows yet. Leave `MXL_ENABLE_FABRICS_OFI` off.
+
 ## ARM notes
 
 The MXL project is configured to require the `armv8.5-a` architecture on ARM CPUs.  Most modern ARM CPUs meet this requirement.  Notable exceptions are the Raspberry Pis.  For example, the Pi 5 CPU has an architecture level `armv8.2-a` whereas the Pi 4 Model B is at level `armv8.0-a`.  To properly target these CPUs, pass the architecture type as an additional argument to cmake : `-DMXL_TARGET_ARCH=<archname>`.

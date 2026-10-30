@@ -5,15 +5,12 @@
 #include <cstdint>
 #include <algorithm>
 #include <stdexcept>
-#include <fcntl.h>
 #include <uuid.h>
-#include <sys/stat.h>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
 #include "mxl-internal/Flow.hpp"
 #include "mxl-internal/FlowManager.hpp"
-#include "mxl-internal/Sync.hpp"
 #include "mxl-internal/Timing.hpp"
 
 namespace mxl::lib
@@ -180,8 +177,7 @@ namespace mxl::lib
             }
 
             // Let readers know that the head has moved or that new data is available in a partial grain
-            flow->state.syncCounter++;
-            wakeAll(&flow->state.syncCounter);
+            _flowData->sync().signal();
 
             return MXL_STATUS_OK;
         }

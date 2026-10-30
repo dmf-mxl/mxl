@@ -11,12 +11,7 @@
 #include <mutex>
 #include <stdexcept>
 #include <string>
-#include <fcntl.h>
-#include <unistd.h>
 #include <uuid.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <picojson/wrapper.h>
 #include <spdlog/cfg/env.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -30,6 +25,7 @@
 #include "mxl-internal/FlowParser.hpp"
 #include "mxl-internal/Logging.hpp"
 #include "mxl-internal/PathUtils.hpp"
+#include "mxl-internal/SharedMemory.hpp"
 
 namespace mxl::lib
 {
@@ -340,7 +336,7 @@ namespace mxl::lib
 
     std::string Instance::getDomain() const
     {
-        return _flowManager.getDomain();
+        return _flowManager.getDomain().string();
     }
 
     std::string Instance::getFlowDef(uuids::uuid const& flowId) const
@@ -375,15 +371,17 @@ namespace mxl::lib
                     continue;
                 }
 
-#ifdef __APPLE__
-                constexpr auto flags = O_RDONLY | O_CLOEXEC;
-#else
-                constexpr auto flags = O_RDONLY | O_CLOEXEC | O_NOATIME;
-#endif
-                auto const fd = ::open(flowDataFile.c_str(), flags);
-                // An exclusive lock indicates that no producer is using the flow.
-                auto const active = ::flock(fd, LOCK_EX | LOCK_NB) < 0;
-                ::close(fd);
+                // An exclusive lock indicates that no producer is using the flow. A flow whose data file cannot be
+                // probed is treated as active, so it is left alone.
+                auto active = true;
+                try
+                {
+                    active = (mxl::lib::probeLock(flowDataFile.string().c_str()) == mxl::lib::LockProbeResult::Locked);
+                }
+                catch (std::exception const& e)
+                {
+                    MXL_DEBUG("Failed to probe the lock of flow data file {}: {}", flowDataFile.string(), e.what());
+                }
                 if (active)
                 {
                     continue;

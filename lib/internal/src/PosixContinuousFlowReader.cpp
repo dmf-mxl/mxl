@@ -5,9 +5,7 @@
 #include <atomic>
 #include <filesystem>
 #include <system_error>
-#include <sys/stat.h>
 #include "mxl-internal/PathUtils.hpp"
-#include "mxl-internal/Sync.hpp"
 
 namespace mxl::lib
 {
@@ -113,12 +111,8 @@ namespace mxl::lib
         auto const flowState = _flowData->flowState();
         auto const flowDataPath = makeFlowDataFilePath(getDomain(), to_string(getId()));
 
-        struct stat st;
-        if (::stat(flowDataPath.string().c_str(), &st) != 0)
-        {
-            return false;
-        }
-        return (st.st_ino == flowState->inode);
+        auto const identity = fileIdentity(flowDataPath);
+        return identity && (*identity == flowState->inode);
     }
 
     mxlStatus PosixContinuousFlowReader::getSamplesImpl(std::uint64_t index, std::size_t count,
@@ -169,11 +163,7 @@ namespace mxl::lib
         {
             auto const previousSyncCounter = syncObject.load(std::memory_order_acquire);
             auto const result = getSamplesImpl(index, count, payloadBuffersSlices);
-            // NOTE: Before C++26 there is no way to access the address of the object wrapped
-            //      by an atomic_ref. If there were it would be much more appropriate to pass
-            //      syncObject by reference here and only unwrap the underlying integer in the
-            //      implementation of waitUntilChanged.
-            if ((result != MXL_ERR_OUT_OF_RANGE_TOO_EARLY) || !waitUntilChanged(&flow->state.syncCounter, previousSyncCounter, deadline))
+            if ((result != MXL_ERR_OUT_OF_RANGE_TOO_EARLY) || !_flowData->sync().waitUntilChanged(previousSyncCounter, deadline))
             {
                 return result;
             }

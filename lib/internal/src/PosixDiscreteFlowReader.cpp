@@ -10,10 +10,7 @@
 #include <filesystem>
 #include <mutex>
 #include <stdexcept>
-#include <fcntl.h>
-#include <unistd.h>
 #include <uuid.h>
-#include <sys/stat.h>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
@@ -22,46 +19,16 @@
 #include "mxl-internal/Logging.hpp"
 #include "mxl-internal/PathUtils.hpp"
 #include "mxl-internal/SharedMemory.hpp"
-#include "mxl-internal/Sync.hpp"
 
 namespace mxl::lib
 {
-    namespace
-    {
-        bool updateFileAccessTime(int fd) noexcept
-        {
-            auto const times = std::array<timespec, 2>{
-                {{0, UTIME_NOW}, {0, UTIME_OMIT}}
-            };
-            return (::futimens(fd, times.data()) == 0);
-        }
-    }
-
     PosixDiscreteFlowReader::PosixDiscreteFlowReader(FlowManager const& manager, uuids::uuid const& flowId, std::unique_ptr<DiscreteFlowData>&& data)
         : DiscreteFlowReader{flowId, manager.getDomain()}
         , _flowData{std::move(data)}
-        , _accessFileFd{-1}
-    {
-        auto const accessFile = makeFlowAccessFilePath(manager.getDomain(), to_string(flowId));
-        _accessFileFd = ::open(accessFile.string().c_str(), O_RDWR);
+        , _accessFile{makeFlowAccessFilePath(manager.getDomain(), to_string(flowId))}
+    {}
 
-        // Opening the access file may fail if the domain is in a read only volume.
-        // we can still execute properly but the 'lastReadTime' will never be updated.
-        // Ignore failures.
-    }
-
-    PosixDiscreteFlowReader::~PosixDiscreteFlowReader()
-    {
-        if (_accessFileFd != -1)
-        {
-            if (::close(_accessFileFd) != 0)
-            {
-                auto const error = errno;
-                MXL_ERROR("Failed to close access file fd: {}", ::strerror(error));
-            }
-            _accessFileFd = -1;
-        }
-    }
+    PosixDiscreteFlowReader::~PosixDiscreteFlowReader() = default;
 
     FlowData const& PosixDiscreteFlowReader::getFlowData() const
     {
@@ -116,8 +83,8 @@ namespace mxl::lib
             result = getGrainImpl(in_index, in_minValidSlices, in_deadline, out_grainInfo, out_payload);
             if (result == MXL_STATUS_OK)
             {
-                // We ignore the return value of updateFileAccessTime. It may fail if the domain is in a read-only volume.
-                (void)updateFileAccessTime(_accessFileFd);
+                // We ignore the return value of touch(). It may fail if the domain is in a read-only volume.
+                (void)_accessFile.touch();
             }
             else if (result == MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
             {
@@ -142,8 +109,8 @@ namespace mxl::lib
             result = getGrainImpl(in_index, in_minValidSlices, out_grainInfo, out_payload);
             if (result == MXL_STATUS_OK)
             {
-                // We ignore the return value of updateFileAccessTime. It may fail if the domain is in a read-only volume.
-                (void)updateFileAccessTime(_accessFileFd);
+                // We ignore the return value of touch(). It may fail if the domain is in a read-only volume.
+                (void)_accessFile.touch();
             }
             else if (result == MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
             {
@@ -225,11 +192,7 @@ namespace mxl::lib
             // 3. If we used the current value of the counter for the futex, we would delay everything by 1 grain.
             auto const previousSyncCounter = syncObject.load(std::memory_order_acquire);
             auto const result = getGrainImpl(in_index, in_minValidSlices, out_grainInfo, out_payload);
-            // NOTE: Before C++26 there is no way to access the address of the object wrapped
-            //      by an atomic_ref. If there were it would be much more appropriate to pass
-            //      syncObject by reference here and only unwrap the underlying integer in the
-            //      implementation of waitUntilChanged.
-            if ((result != MXL_ERR_OUT_OF_RANGE_TOO_EARLY) || !waitUntilChanged(&flow->state.syncCounter, previousSyncCounter, in_deadline))
+            if ((result != MXL_ERR_OUT_OF_RANGE_TOO_EARLY) || !_flowData->sync().waitUntilChanged(previousSyncCounter, in_deadline))
             {
                 return result;
             }
@@ -246,11 +209,7 @@ namespace mxl::lib
         auto const flowState = _flowData->flowState();
         auto const flowDataPath = makeFlowDataFilePath(getDomain(), to_string(getId()));
 
-        struct stat st;
-        if (::stat(flowDataPath.string().c_str(), &st) != 0)
-        {
-            return false;
-        }
-        return (st.st_ino == flowState->inode);
+        auto const identity = fileIdentity(flowDataPath);
+        return identity && (*identity == flowState->inode);
     }
 }

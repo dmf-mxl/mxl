@@ -4,8 +4,11 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <new>
 #include <stdexcept>
+#include <string>
+#include <system_error>
 #include <utility>
 #include <mxl-internal/Logging.hpp>
 #include <mxl/platform.h>
@@ -24,6 +27,168 @@ namespace mxl::lib
         READ_ONLY,
         READ_WRITE,
         CREATE_READ_WRITE
+    };
+
+    /**
+     * Result of probing the lock of a shared memory file.
+     */
+    enum class LockProbeResult
+    {
+        Unlocked, ///< No shared memory instance holds a lock on the file.
+        Locked,   ///< At least one shared memory instance, in any process, holds a lock on the file.
+        NotFound, ///< The file does not exist.
+    };
+
+    /**
+     * Probe whether any shared memory instance holds a lock on a file, by trying to take an exclusive lock without blocking.
+     * \param[in] path Path of the shared memory file.
+     * \return The probe result.
+     * \throw std::system_error If the file exists but cannot be opened.
+     */
+    MXL_EXPORT
+    LockProbeResult probeLock(char const* path);
+
+    /**
+     * Wait until no process holds an exclusive lock on a file. Only a process that deletes a flow holds one, so this waits for the deletion.
+     * Returns at once if the file does not exist or cannot be opened.
+     * \param[in] path Path of the shared memory file.
+     */
+    MXL_EXPORT
+    void waitWhileExclusivelyLocked(char const* path) noexcept;
+
+    /** \return Whether an error means that a shared memory file could not be locked because another process holds an exclusive lock on it. */
+    MXL_EXPORT
+    bool isLockedError(std::system_error const& e) noexcept;
+
+    /**
+     * Whether a directory can be renamed while files in it are open. Windows cannot, so a new flow is closed while its directory is
+     * renamed to publish it, and opened again afterwards.
+     */
+#ifdef _WIN32
+    constexpr auto canRenameDirectoryWithOpenFiles = false;
+#else
+    constexpr auto canRenameDirectoryWithOpenFiles = true;
+#endif
+
+    /**
+     * Thrown when the in-memory section of a segment no longer exists: every process that had the flow open has closed it (or exited), so the
+     * data is gone and only the anchor file in the domain is left. The flow is stale. Only thrown on Windows, where the data of a segment does not
+     * live in its file.
+     */
+    class MXL_EXPORT SectionMissingError : public std::system_error
+    {
+    public:
+        /**
+         * \param[in] error The Windows error code.
+         * \param[in] what The message.
+         * \param[in] fileIdentity The identity of the anchor file whose section is gone, as returned by fileIdentity().
+         */
+        SectionMissingError(int error, char const* what, std::uint64_t fileIdentity)
+            : std::system_error{error, std::system_category(), what}
+            , _fileIdentity{fileIdentity}
+        {}
+
+        /** \return The identity of the anchor file whose section is gone. */
+        [[nodiscard]]
+        std::uint64_t fileIdentity() const noexcept
+        {
+            return _fileIdentity;
+        }
+
+    private:
+        /** The identity of the anchor file whose section is gone. */
+        std::uint64_t _fileIdentity;
+    };
+
+    /**
+     * An exclusive lock on the file of a stale segment, held until the lock is destroyed.
+     *
+     * Several processes can find the same stale flow and replace it at the same time. Only the process that holds this lock on the flow data
+     * file deletes the flow. A process that waited for the lock finds that the path names the file of the new flow by then, and leaves it alone.
+     * Stale flows only exist on Windows, but the lock works the same way on every platform.
+     *
+     * Waiting for the lock has no timeout. Nobody maps a stale file, so the only other locks on it are taken without waiting and released
+     * right away by processes that try to open the flow, and this lock by another replacer, which holds it while it deletes the flow.
+     */
+    class MXL_EXPORT StaleFileLock
+    {
+    public:
+        /**
+         * Lock the file at a path exclusively if it is the given stale file. Waits while another process holds a lock on the file.
+         * The lock is empty if the path cannot be opened or does not name that file, before or after waiting.
+         * \param[in] path Path of the file.
+         * \param[in] identity The identity of the stale file, from SectionMissingError::fileIdentity().
+         */
+        StaleFileLock(char const* path, std::uint64_t identity) noexcept;
+
+        StaleFileLock(StaleFileLock const&) = delete;
+        StaleFileLock& operator=(StaleFileLock const&) = delete;
+
+        /** Release the lock and close the file. */
+        ~StaleFileLock();
+
+        /** \return Whether the lock is held. */
+        explicit operator bool() const noexcept
+        {
+            return _fd != -1;
+        }
+
+    private:
+        /** The file descriptor of the locked file, or -1. */
+        int _fd = -1;
+    };
+
+    /**
+     * Keeps the in-memory section of a shared memory segment alive after the segment object is gone.
+     *
+     * On Windows the data of a segment lives in a named section object backed by RAM (and the system page file), not by the
+     * file in the MXL domain, which only anchors the segment for discovery, locking and cleanup. A section disappears with
+     * its last handle, but a directory cannot be renamed while files inside it are open. Flow creation therefore pins the
+     * sections, closes the flow files, publishes the directory and reopens the flow, which opens the sections again.
+     *
+     * On other platforms the data lives in the file itself, and a pin is always empty.
+     */
+    class MXL_EXPORT SectionPin
+    {
+    public:
+        /** An empty pin that keeps nothing alive. */
+        SectionPin() noexcept = default;
+
+        /**
+         * Take ownership of a section handle.
+         * \param[in] sectionHandle A handle of the section, which the pin closes.
+         */
+        explicit SectionPin(void* sectionHandle) noexcept
+            : _handle{sectionHandle}
+        {}
+
+        /** Take over the handle of another pin, which becomes empty. */
+        SectionPin(SectionPin&& other) noexcept
+            : _handle{std::exchange(other._handle, nullptr)}
+        {}
+
+        /** Swap the handles of the two pins. The handle this pin held is closed with the other pin. */
+        SectionPin& operator=(SectionPin&& other) noexcept
+        {
+            std::swap(_handle, other._handle);
+            return *this;
+        }
+
+        SectionPin(SectionPin const&) = delete;
+        SectionPin& operator=(SectionPin const&) = delete;
+
+        /** Close the section handle, if any. */
+        ~SectionPin();
+
+        /** \return Whether the pin keeps a section alive. */
+        explicit operator bool() const noexcept
+        {
+            return _handle != nullptr;
+        }
+
+    private:
+        /** The section handle, or null. */
+        void* _handle = nullptr;
     };
 
     class MXL_EXPORT SharedMemoryBase
@@ -61,6 +226,22 @@ namespace mxl::lib
          * Update the attributes of the file
          */
         void touch();
+
+        /**
+         * Duplicate the handle of the in-memory section of this segment, so that the data survives the segment object.
+         * \return The pin, which is empty on platforms where the data lives in the file.
+         */
+        [[nodiscard]]
+        SectionPin pinSection() const;
+
+#ifdef _WIN32
+        /**
+         * \return The name of the in-memory section that holds the data of this segment. Other kernel objects that belong to the segment,
+         *     like the wait queue of a flow, are named after it.
+         */
+        [[nodiscard]]
+        std::wstring sectionName() const;
+#endif
 
         constexpr void swap(SharedMemoryBase& other) noexcept;
 
@@ -144,6 +325,8 @@ namespace mxl::lib
         std::size_t _mappedSize;
         /** The type of advisory lock that is held for the mapped file */
         LockType _lockType;
+        /** Windows: handle of the named in-memory section that holds the data. */
+        void* _section;
     };
 
     struct SharedMemorySegment : SharedMemoryBase
@@ -220,6 +403,7 @@ namespace mxl::lib
         , _data{nullptr}
         , _mappedSize{0}
         , _lockType(LockType::None)
+        , _section{nullptr}
     {}
 
     constexpr SharedMemoryBase::SharedMemoryBase(SharedMemoryBase&& other) noexcept
@@ -268,6 +452,7 @@ namespace mxl::lib
         cx_swap(_data, other._data);
         cx_swap(_mappedSize, other._mappedSize);
         cx_swap(_lockType, other._lockType);
+        cx_swap(_section, other._section);
     }
 
     constexpr void* SharedMemoryBase::data() noexcept

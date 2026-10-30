@@ -67,6 +67,7 @@ target_sources(mxl-internal-objects
             src/EventRingBuffer.cpp
             src/PosixEventFlowReader.cpp
             src/PosixEventFlowWriter.cpp
+            src/FlowAccessFile.cpp
             src/FlowData.cpp
             src/FlowInfo.cpp
             src/FlowIoFactory.cpp
@@ -85,12 +86,28 @@ target_sources(mxl-internal-objects
             src/PosixDiscreteFlowReader.cpp
             src/PosixDiscreteFlowWriter.cpp
             src/PosixFlowIoFactory.cpp
-            src/SharedMemory.cpp
-            src/Sync.cpp
-            src/Thread.cpp
             src/Time.cpp
             src/Timing.cpp
     )
+
+# Platform implementations.
+if (WIN32)
+    target_sources(mxl-internal-objects
+            PRIVATE
+                src/DomainWatcherWindows.cpp
+                src/FlowSyncWindows.cpp
+                src/SharedMemoryWindows.cpp
+                src/ThreadWindows.cpp
+        )
+else()
+    target_sources(mxl-internal-objects
+            PRIVATE
+                src/FlowSync.cpp
+                src/SharedMemory.cpp
+                src/Sync.cpp
+                src/Thread.cpp
+        )
+endif()
 
 if (NOT TARGET stduuid)
     find_package(stduuid CONFIG REQUIRED)

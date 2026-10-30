@@ -6,12 +6,13 @@
 #include <exception>
 #include <filesystem>
 #include <string>
+#include <system_error>
 #include <uuid.h>
-#include <sys/file.h>
 #include <mxl/mxl.h>
 #include "mxl-internal/Instance.hpp"
 #include "mxl-internal/Logging.hpp"
 #include "mxl-internal/PathUtils.hpp"
+#include "mxl-internal/SharedMemory.hpp"
 
 namespace
 {
@@ -44,24 +45,23 @@ mxlStatus mxlIsFlowActive(mxlInstance instance, char const* flowId, bool* isActi
                         // other process is writing to the flow.
                         auto flowDataFile = mxl::lib::makeFlowDataFilePath(domain, flowId);
 
-                        auto const fd = ::open(flowDataFile.c_str(), O_RDONLY | O_CLOEXEC);
-                        if (fd < 0)
+                        auto lockState = mxl::lib::LockProbeResult::NotFound;
+                        try
                         {
-                            auto const error = errno;
-                            if (error == ENOENT)
-                            {
-                                return MXL_ERR_FLOW_NOT_FOUND;
-                            }
-
-                            MXL_ERROR("Failed to open flow data file {} : {}", flowDataFile.string(), std::strerror(error));
+                            lockState = mxl::lib::probeLock(flowDataFile.string().c_str());
+                        }
+                        catch (std::system_error const& e)
+                        {
+                            MXL_ERROR("Failed to open flow data file {} : {}", flowDataFile.string(), e.what());
                             return MXL_ERR_FLOW_NOT_FOUND;
                         }
 
-                        // Try to obtain an exclusive lock on the file descriptor. Do not block if the lock cannot be obtained.
-                        auto const active = ::flock(fd, LOCK_EX | LOCK_NB) < 0;
-                        close(fd);
+                        if (lockState == mxl::lib::LockProbeResult::NotFound)
+                        {
+                            return MXL_ERR_FLOW_NOT_FOUND;
+                        }
 
-                        *isActive = active;
+                        *isActive = (lockState == mxl::lib::LockProbeResult::Locked);
                         return MXL_STATUS_OK;
                     }
                 }
@@ -161,6 +161,22 @@ mxlStatus mxlCreateFlowReader(mxlInstance instance, char const* flowId, char con
 
         MXL_ERROR("Failed to create flow reader: {}", e.what());
         if ((code == std::errc::permission_denied) || (code == std::errc::operation_not_permitted))
+        {
+            return MXL_ERR_PERMISSION_DENIED;
+        }
+        return MXL_ERR_UNKNOWN;
+    }
+    catch (mxl::lib::SectionMissingError const&)
+    {
+        // The flow is stale: its data is gone, because every process that had it open has exited (Windows only).
+        return MXL_ERR_FLOW_NOT_FOUND;
+    }
+    catch (std::system_error const& e)
+    {
+        // Opening a flow file that the process may not read. On Linux a reader is usually stopped earlier, at the flow directory, with a
+        // filesystem_error. Windows does not check traversal, so the open of the file fails.
+        MXL_ERROR("Failed to create flow reader: {}", e.what());
+        if ((e.code() == std::errc::permission_denied) || (e.code() == std::errc::operation_not_permitted))
         {
             return MXL_ERR_PERMISSION_DENIED;
         }

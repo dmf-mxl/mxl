@@ -8,6 +8,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 #include "EventRingBuffer.hpp"
 #include "FlowData.hpp"
 
@@ -21,7 +22,7 @@ namespace mxl::lib
          * @brief Take ownership of an existing common flow mapping.
          * @param flowSegment Mapping to move into the base FlowData object.
          */
-        explicit EventFlowData(SharedMemoryInstance<Flow>&& flowSegment) noexcept
+        explicit EventFlowData(SharedMemoryInstance<Flow>&& flowSegment)
             : FlowData{std::move(flowSegment)}
         {}
 
@@ -35,6 +36,14 @@ namespace mxl::lib
         EventFlowData(char const* flowFilePath, AccessMode mode, LockMode lockMode)
             : FlowData{flowFilePath, mode, lockMode}
         {}
+
+        /** @return Pins for the flow and ring sections, so they outlive closing the flow while it is published. */
+        std::vector<SectionPin> pinSections() const override
+        {
+            auto pins = FlowData::pinSections();
+            pins.push_back(_events.pinSection());
+            return pins;
+        }
 
         /** @return Configured number of slots, or zero before the ring file is open. */
         std::size_t eventCount() const noexcept

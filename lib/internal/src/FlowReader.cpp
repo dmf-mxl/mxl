@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "mxl-internal/FlowReader.hpp"
+#include <fstream>
 #include <utility>
-#include <unistd.h>
+#ifndef _WIN32
+#   include <unistd.h>
+#endif
 #include "mxl-internal/PathUtils.hpp"
 
 namespace mxl::lib
@@ -33,6 +36,11 @@ namespace mxl::lib
     bool FlowReader::checkPermissions() const
     {
         auto const flowDefPath = makeFlowDescriptorFilePath(_domain, uuids::to_string(_flowId));
+#ifdef _WIN32
+        // _waccess() only checks the read-only attribute, not the access control list. Opening the file checks both.
+        return std::filesystem::is_regular_file(flowDefPath) && std::ifstream{flowDefPath, std::ios::binary}.is_open();
+#else
         return std::filesystem::is_regular_file(flowDefPath) && (::access(flowDefPath.c_str(), R_OK) == 0);
+#endif
     }
 }

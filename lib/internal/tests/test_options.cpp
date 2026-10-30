@@ -95,6 +95,8 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : Missing an
     std::filesystem::remove(path); // The persistent fixture is shared between sections.
     SECTION("Missing options use the fallback")
     {}
+#ifndef _WIN32
+    // libstdc++ of MinGW does not implement symbolic links.
     SECTION("A dangling symlink uses the fallback")
     {
         std::filesystem::create_symlink("missing-options.json", path);
@@ -103,6 +105,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Options : Missing an
     {
         std::filesystem::create_symlink(path.filename(), path);
     }
+#endif
     auto domainWatcher = std::make_shared<DomainWatcher>(domain);
     auto flowIoFactory = std::make_unique<mxl::lib::PosixFlowIoFactory>(domainWatcher);
     auto const instance = std::make_shared<Instance>(domain, "", std::move(flowIoFactory), domainWatcher);

@@ -12,10 +12,7 @@
 #include <atomic>
 #include <filesystem>
 #include <stdexcept>
-#include <fcntl.h>
-#include <unistd.h>
 #include <uuid.h>
-#include <sys/stat.h>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
@@ -23,54 +20,20 @@
 #include "mxl-internal/FlowManager.hpp"
 #include "mxl-internal/Logging.hpp"
 #include "mxl-internal/PathUtils.hpp"
-#include "mxl-internal/Sync.hpp"
 
 namespace mxl::lib
 {
-    namespace
-    {
-        /**
-         * @brief Touch the flow access file after a successful read.
-         * @param fd Access file descriptor; a negative descriptor fails harmlessly.
-         * @return True if the access timestamp was updated, false if futimens failed.
-         */
-        bool updateFileAccessTime(int fd) noexcept
-        {
-            auto const times = std::array<timespec, 2>{
-                {{.tv_sec = 0, .tv_nsec = UTIME_NOW}, {.tv_sec = 0, .tv_nsec = UTIME_OMIT}}
-            };
-            return (::futimens(fd, times.data()) == 0);
-        }
-    }
-
     PosixEventFlowReader::PosixEventFlowReader(FlowManager const& manager, uuids::uuid const& flowId, std::unique_ptr<EventFlowData>&& data)
         : EventFlowReader{flowId, manager.getDomain()}
         , _flowData{std::move(data)}
-        , _accessFileFd{-1}
+        , _accessFile{makeFlowAccessFilePath(manager.getDomain(), to_string(flowId))}
         , _nextIndex{0}
         , _snapshot(_flowData->flowInfo()->config.event.eventPayloadSize)
     {
         _nextIndex = _flowData->oldestIndex();
-        auto const accessFile = makeFlowAccessFilePath(manager.getDomain(), to_string(flowId));
-        _accessFileFd = ::open(accessFile.string().c_str(), O_RDWR | O_CLOEXEC);
-
-        // Opening the access file may fail if the domain is in a read only volume.
-        // we can still execute properly but the 'lastReadTime' will never be updated.
-        // Ignore failures.
     }
 
-    PosixEventFlowReader::~PosixEventFlowReader()
-    {
-        if (_accessFileFd != -1)
-        {
-            if (::close(_accessFileFd) != 0)
-            {
-                auto const error = errno;
-                MXL_ERROR("Failed to close access file fd: {}", std::strerror(error));
-            }
-            _accessFileFd = -1;
-        }
-    }
+    PosixEventFlowReader::~PosixEventFlowReader() = default;
 
     FlowData const& PosixEventFlowReader::getFlowData() const
     {
@@ -116,7 +79,7 @@ namespace mxl::lib
                 ++_nextIndex;
                 *info = received;
                 *payload = _snapshot.data();
-                (void)updateFileAccessTime(_accessFileFd);
+                (void)_accessFile.touch();
                 return MXL_STATUS_OK;
             }
             if (result == EventRingBuffer::ReadResult::Overwritten)
@@ -132,7 +95,7 @@ namespace mxl::lib
             {
                 return MXL_ERR_FLOW_INVALID;
             }
-            if ((currentTime(Clock::Realtime) >= deadline) || !waitUntilChanged(&flow->state.syncCounter, previous, deadline))
+            if ((currentTime(Clock::Realtime) >= deadline) || !_flowData->sync().waitUntilChanged(previous, deadline))
             {
                 return MXL_ERR_OUT_OF_RANGE_TOO_EARLY;
             }
@@ -149,12 +112,7 @@ namespace mxl::lib
         auto const flowState = _flowData->flowState();
         auto const flowDataPath = makeFlowDataFilePath(getDomain(), to_string(getId()));
 
-        using FileStatus = struct stat;
-        auto st = FileStatus{};
-        if (::stat(flowDataPath.string().c_str(), &st) != 0)
-        {
-            return false;
-        }
-        return (st.st_ino == flowState->inode);
+        auto const identity = fileIdentity(flowDataPath);
+        return identity && (*identity == flowState->inode);
     }
 }

@@ -14,13 +14,19 @@
 #include <fstream>
 #include <future>
 #include <limits>
+#include <memory>
 #include <span>
+#include <string>
 #include <thread>
 #include <vector>
-#include <poll.h>
-#include <spawn.h>
-#include <unistd.h>
-#include <sys/wait.h>
+#ifdef _WIN32
+#   include <windows.h>
+#else
+#   include <poll.h>
+#   include <spawn.h>
+#   include <unistd.h>
+#   include <sys/wait.h>
+#endif
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 #include <fmt/format.h>
@@ -30,8 +36,8 @@
 #include "mxl-internal/Flow.hpp"
 #include "mxl-internal/FlowManager.hpp"
 #include "mxl-internal/FlowParser.hpp"
+#include "mxl-internal/FlowSync.hpp"
 #include "mxl-internal/PosixFlowIoFactory.hpp"
-#include "mxl-internal/Sync.hpp"
 #include "PcapReader.hpp"
 #include "Utils.hpp"
 
@@ -68,7 +74,7 @@ namespace
         mxlFlowReader reader{};
 
         explicit IndependentEventReader(std::filesystem::path const& domain)
-            : instance{mxlCreateInstance(domain.c_str(), "{}")}
+            : instance{mxlCreateInstance(domain.string().c_str(), "{}")}
         {
             REQUIRE(instance);
             REQUIRE(mxlCreateFlowReader(instance, id, "", &reader) == MXL_STATUS_OK);
@@ -106,8 +112,8 @@ namespace
                 options << domainOptions;
             }
             // Use separate instances so the reader opens an independent mapping of the writer's flow.
-            producer = mxlCreateInstance(domain.c_str(), "{}");
-            consumer = mxlCreateInstance(domain.c_str(), "{}");
+            producer = mxlCreateInstance(domain.string().c_str(), "{}");
+            consumer = mxlCreateInstance(domain.string().c_str(), "{}");
             REQUIRE(producer);
             REQUIRE(consumer);
             REQUIRE(mxlCreateFlowWriter(producer, flowDef.c_str(), nullptr, &writer, &config, nullptr) == MXL_STATUS_OK);
@@ -617,7 +623,9 @@ TEST_CASE("Reopened event writers restore the last committed timestamp", "[event
         REQUIRE(writer->commit(info) == MXL_STATUS_OK);
     }
     auto const before = writer->getFlowRuntimeInfo();
-    // Destroy the internal writer without the instance deleting the flow files.
+    // Destroy the internal writer without the instance deleting the flow files. On Windows the flow data lives only while something maps
+    // it, so a reader mapping keeps it.
+    auto const reader = manager.openFlow(flowId, mxl::lib::AccessMode::READ_ONLY);
     writer.reset();
     writer = createWriter(false);
 
@@ -781,7 +789,7 @@ TEST_CASE_METHOD(EventFixture, "Event overrun recovers at oldest retained event 
 TEST_CASE_METHOD(EventFixture, "Event readers have independent cursors and wake on commit", "[events]")
 {
     // A second instance provides an independent cursor; both readers must receive event 100.
-    auto other = mxlCreateInstance(domain.c_str(), "{}");
+    auto other = mxlCreateInstance(domain.string().c_str(), "{}");
     REQUIRE(other);
     auto otherReader = mxlFlowReader{};
     REQUIRE(mxlCreateFlowReader(other, id, "", &otherReader) == MXL_STATUS_OK);
@@ -928,7 +936,7 @@ TEST_CASE("Event capacity rejects overflow before narrowing", "[events]")
         auto options = std::ofstream{mxl::lib::makeDomainOptionsFilePath(domain)};
         options << R"({"urn:x-mxl:option:history_duration/v1.0":9223372036854775808})";
     }
-    auto instance = mxlCreateInstance(domain.c_str(), nullptr);
+    auto instance = mxlCreateInstance(domain.string().c_str(), nullptr);
     REQUIRE(instance != nullptr);
     auto writer = mxlFlowWriter{};
     // The capacity exceeds 2^64; narrowing first would incorrectly accept 2,361 slots.
@@ -1025,6 +1033,9 @@ TEST_CASE_METHOD(EventFixture, "Event slots occupy one shared memory file", "[ev
 /** @test Event reader validates headers throughout the shared buffer. */
 TEST_CASE_METHOD(EventFixture, "Event reader validates headers throughout the shared buffer", "[events]")
 {
+#ifdef _WIN32
+    SKIP("On Windows the event ring lives in a named section; writing to the domain file does not reach it.");
+#endif
     REQUIRE(mxlReleaseFlowReader(consumer, reader) == MXL_STATUS_OK);
     reader = nullptr;
     auto const eventFile = mxl::lib::makeEventDataFilePath(mxl::lib::makeFlowDirectoryName(domain, id));
@@ -1288,6 +1299,7 @@ TEST_CASE_METHOD(EventFixture, "Event readers never expose torn payloads during 
     checkHead(5999);
 }
 
+#ifndef _WIN32
 /** @test One event writer wakes independent readers in other processes. */
 TEST_CASE("One event writer wakes independent readers in other processes", "[events][concurrency][ipc]")
 {
@@ -1397,6 +1409,195 @@ TEST_CASE("One event writer wakes independent readers in other processes", "[eve
     fixture.write(9000);
     fixture.read(9000);
 }
+#else
+namespace
+{
+    /** @brief Close a Windows handle at scope exit. */
+    struct OwnedHandle
+    {
+        HANDLE handle{nullptr}; ///< The handle, or null.
+
+        OwnedHandle() = default;
+        OwnedHandle(OwnedHandle const&) = delete;
+        OwnedHandle& operator=(OwnedHandle const&) = delete;
+
+        ~OwnedHandle()
+        {
+            reset();
+        }
+
+        /// Close the handle now.
+        void reset() noexcept
+        {
+            if (handle != nullptr)
+            {
+                ::CloseHandle(handle);
+                handle = nullptr;
+            }
+        }
+
+        /// @return The handle value as a command line argument for event_ipc_worker.
+        [[nodiscard]]
+        std::string argument() const
+        {
+            return std::to_string(reinterpret_cast<std::uintptr_t>(handle));
+        }
+    };
+
+    /** @brief A pipe to or from child readers, which inherit one end of it. */
+    struct InheritedPipe
+    {
+        OwnedHandle read;  ///< The read end.
+        OwnedHandle write; ///< The write end.
+
+        /// @param childReads Whether the children inherit the read end. Otherwise they inherit the write end.
+        explicit InheritedPipe(bool childReads)
+        {
+            auto attributes = SECURITY_ATTRIBUTES{.nLength = sizeof(SECURITY_ATTRIBUTES), .lpSecurityDescriptor = nullptr, .bInheritHandle = TRUE};
+            REQUIRE(::CreatePipe(&read.handle, &write.handle, &attributes, 0) != FALSE);
+            REQUIRE(::SetHandleInformation(childReads ? write.handle : read.handle, HANDLE_FLAG_INHERIT, 0) != FALSE);
+        }
+    };
+
+    /** @brief A child reader process, killed if a failed assertion leaves it running. */
+    struct WorkerProcess
+    {
+        PROCESS_INFORMATION info{}; ///< The process and its main thread.
+
+        /// @param arguments The command line, starting with the executable.
+        explicit WorkerProcess(std::vector<std::string> const& arguments)
+        {
+            auto commandLine = std::string{};
+            for (auto const& argument : arguments)
+            {
+                commandLine += '"' + argument + "\" ";
+            }
+            auto startup = STARTUPINFOA{};
+            startup.cb = sizeof startup;
+            // The child inherits the inheritable pipe ends, and the console, where it reports its latency.
+            REQUIRE(::CreateProcessA(nullptr, commandLine.data(), nullptr, nullptr, TRUE, 0, nullptr, nullptr, &startup, &info) != FALSE);
+        }
+
+        WorkerProcess(WorkerProcess const&) = delete;
+        WorkerProcess& operator=(WorkerProcess const&) = delete;
+
+        ~WorkerProcess()
+        {
+            if (info.hProcess != nullptr)
+            {
+                ::TerminateProcess(info.hProcess, 1);
+                ::WaitForSingleObject(info.hProcess, INFINITE);
+                ::CloseHandle(info.hThread);
+                ::CloseHandle(info.hProcess);
+            }
+        }
+
+        /// @return The exit code of the process, or -1 if it did not exit within 10 s.
+        [[nodiscard]]
+        long exitCode() const
+        {
+            auto code = DWORD{0};
+            if ((::WaitForSingleObject(info.hProcess, 10000) != WAIT_OBJECT_0) || (::GetExitCodeProcess(info.hProcess, &code) == FALSE))
+            {
+                return -1;
+            }
+            return static_cast<long>(code);
+        }
+    };
+
+    /**
+     * @brief Start event_ipc_worker processes and release them once they have attached to the flow.
+     * @param fixture The flow the children read.
+     * @param count The number of children.
+     * @param arguments The arguments after the flow ID and before the pipes: first timestamp and entry count.
+     * @param extra The arguments after the pipes.
+     */
+    std::vector<std::unique_ptr<WorkerProcess>> startWorkers(EventFixture const& fixture, std::size_t count,
+        std::vector<std::string> const& arguments, std::vector<std::string> const& extra = {})
+    {
+        auto ready = InheritedPipe{false};
+        auto start = InheritedPipe{true};
+        auto children = std::vector<std::unique_ptr<WorkerProcess>>{};
+        for (auto i = std::size_t{0}; i < count; ++i)
+        {
+            auto commandLine = std::vector<std::string>{MXL_EVENT_IPC_WORKER, fixture.domain.string(), id};
+            commandLine.insert(commandLine.end(), arguments.begin(), arguments.end());
+            commandLine.push_back(ready.write.argument());
+            commandLine.push_back(start.read.argument());
+            commandLine.insert(commandLine.end(), extra.begin(), extra.end());
+            children.push_back(std::make_unique<WorkerProcess>(commandLine));
+        }
+        // Without the parent's copy of the children's ends, a read fails instead of blocking if every child exits.
+        ready.write.reset();
+        start.read.reset();
+
+        // All child readers attach before the parent publishes.
+        for (auto i = std::size_t{0}; i < count; ++i)
+        {
+            auto token = char{};
+            auto transferred = DWORD{0};
+            REQUIRE(::ReadFile(ready.read.handle, &token, 1, &transferred, nullptr) != FALSE);
+            REQUIRE(transferred == 1);
+            REQUIRE(token == 'R');
+        }
+        auto const go = std::string(count, 'G');
+        auto transferred = DWORD{0};
+        REQUIRE(::WriteFile(start.write.handle, go.data(), static_cast<DWORD>(go.size()), &transferred, nullptr) != FALSE);
+        REQUIRE(transferred == go.size());
+        return children;
+    }
+}
+
+/** @test One event writer wakes independent readers in other processes. */
+TEST_CASE("One event writer wakes independent readers in other processes", "[events][concurrency][ipc]")
+{
+    // Separate processes verify wakeups and payload visibility across shared mappings.
+    auto fixture = EventFixture{definitionWithRate(R"({"numerator":2560})")};
+    auto const children = startWorkers(fixture, 2, {"4000", "256"});
+    std::this_thread::sleep_for(std::chrono::milliseconds{10});
+    for (auto i = std::uint64_t{0}; i < 256; ++i)
+    {
+        REQUIRE(writePattern(fixture.writer, 4000 + i) == MXL_STATUS_OK);
+    }
+    for (auto i = std::uint64_t{0}; i < 256; ++i)
+    {
+        auto info = mxlEventInfo{};
+        auto payload = static_cast<std::uint8_t*>(nullptr);
+        REQUIRE(mxlFlowReaderGetEventNonBlocking(fixture.reader, &info, &payload) == MXL_STATUS_OK);
+        REQUIRE(info.timestamp == 4000 + i);
+        REQUIRE(validPattern(info, payload));
+    }
+    for (auto const& child : children)
+    {
+        REQUIRE(child->exitCode() == 0);
+    }
+    fixture.checkHead(255);
+    // Child reader teardown leaves the sole writer usable.
+    fixture.write(9000);
+    fixture.read(9000);
+}
+
+/** @test A reader in another process is woken by each commit, instead of noticing it later. */
+TEST_CASE("Event readers in other processes are woken by each commit", "[events][concurrency][ipc]")
+{
+    // The writer commits one event at a time, so the children wait for every event. A median wake latency of 2 ms leaves room for a loaded
+    // machine, and fails for readers that poll at the default system timer resolution of 15.6 ms.
+    auto fixture = EventFixture{definitionWithRate(R"({"numerator":2560})")};
+    constexpr auto count = 100;
+    auto const children = startWorkers(fixture, 2, {"4000", std::to_string(count)}, {"2000000"});
+    for (auto i = std::uint64_t{0}; i < count; ++i)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds{3});
+        REQUIRE(writePattern(fixture.writer, 4000 + i) == MXL_STATUS_OK);
+    }
+    for (auto const& child : children)
+    {
+        // 8: the median wake latency was above the limit, see the latency the child reported.
+        REQUIRE(child->exitCode() == 0);
+    }
+    fixture.checkHead(count - 1);
+}
+#endif
 
 /** @test Compact event slots preserve adjacent entries and buffer bounds for unaligned payload capacities. */
 TEST_CASE("Compact event slots preserve payload boundaries across wraparound", "[events]")
@@ -1727,7 +1928,7 @@ TEST_CASE("Event writer recovery preserves publication and timestamp order", "[e
         flow->info.runtime.headIndex = i;
     }
     auto const eventFile = makeEventDataFilePath(makeFlowDirectoryName(domain.path, id));
-    auto mapping = SharedMemorySegment{eventFile.c_str(), AccessMode::READ_WRITE, Ring::bufferSize(4, 13), LockMode::None};
+    auto mapping = SharedMemorySegment{eventFile.string().c_str(), AccessMode::READ_WRITE, Ring::bufferSize(4, 13), LockMode::None};
     auto* slot = reinterpret_cast<Event*>(
         static_cast<std::uint8_t*>(mapping.data()) + sizeof(EventRingHeader) + ((initialCount % 4) * Ring::slotStride(13)));
     info.timestamp = 100;
@@ -1745,8 +1946,11 @@ TEST_CASE("Event writer recovery preserves publication and timestamp order", "[e
         }
     }
     auto const previous = flow->state.syncCounter;
+    // Wait through a separate mapping of the flow, like a reader does.
+    auto observed = SharedMemoryInstance<Flow>{makeFlowDataFilePath(domain.path, id).string().c_str(), AccessMode::READ_ONLY, 0U, LockMode::None};
+    auto const sync = FlowSync{observed};
     auto waiter = std::async(std::launch::async,
-        [flow, previous] { return waitUntilChanged(&flow->state.syncCounter, previous, mxl::lib::Duration{1'000'000'000}); });
+        [&sync, previous] { return sync.waitUntilChanged(previous, currentTime(Clock::Realtime) + Duration{1'000'000'000}); });
     auto writer = factory.createEventFlowWriter(manager, flowId, std::move(data));
     auto payload = static_cast<std::uint8_t*>(nullptr);
     REQUIRE(writer->openEvent(&info, &payload) == MXL_STATUS_OK);

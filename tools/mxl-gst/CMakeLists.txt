@@ -108,6 +108,7 @@ if (gstreamer_FOUND)
             PRIVATE
                 mxl
                 stduuid
+                spdlog::spdlog
                 fmt::fmt
                 picojson::picojson
                 CLI11::CLI11

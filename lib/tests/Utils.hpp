@@ -100,8 +100,10 @@ namespace mxl::tests
         {
             throw std::runtime_error{"Environment variable HOME is not set."};
         }
+#elif defined _WIN32
+        return std::filesystem::temp_directory_path() / "mxl_domain";
 #else
-#   error "Unsupported platform. This is only implemented for Linux and macOS."
+#   error "Unsupported platform. This is only implemented for Linux, macOS and Windows."
 #endif
     }
 
@@ -111,8 +113,11 @@ namespace mxl::tests
         char tmpl[] = "/dev/shm/mxl_test_domainXXXXXX";
 #elif __APPLE__
         char tmpl[] = "/tmp/mxl_test_domainXXXXXX";
+#elif defined _WIN32
+        auto tmplString = (std::filesystem::temp_directory_path() / "mxl_test_domainXXXXXX").string();
+        auto* const tmpl = tmplString.data();
 #else
-#   error "Unsupported platform. This is only implemented for Linux and macOS."
+#   error "Unsupported platform. This is only implemented for Linux, macOS and Windows."
 #endif
         if (::mkdtemp(tmpl) == nullptr)
         {

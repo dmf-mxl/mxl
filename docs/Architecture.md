@@ -11,6 +11,16 @@ The MXL library provides APIs for zero-overhead grain _sharing_ using a reader/w
 
 Flows and Grains are _ring buffers_ stored in memory mapped files written in a _tmpfs_ backed volume or filesystem. The base folder where flows are stored is called an _MXL domain_. Multiple MXL domains can co-exist on the same host.
 
+### Windows
+
+Windows has no tmpfs, and Windows may write the dirty pages of a memory mapped file back to disk at any time. The files of an MXL domain are therefore only _anchors_ on Windows: they give a segment its name in the domain (discovery by listing the folder, flow publication by renaming the flow directory), its size, its lock (stale flow detection) and its file times. They are created sparse and never hold data. The data of every segment lives in a named section object, backed by RAM and the page file, in the `Local\` object namespace. The section is named after the NTFS identity of its anchor file, which survives the rename that publishes a flow and is never reused. A domain must therefore be on an NTFS volume.
+
+Consequences:
+- A section exists as long as some process has the flow open, as a writer or a reader. A flow whose last writer is released normally is deleted, as on other platforms. If a writer exits without releasing the flow (for example when it crashes) and no reader has the flow open, the data is gone and the files left in the domain are a stale flow: `mxlCreateFlowReader` returns `MXL_ERR_FLOW_NOT_FOUND` for it, creating a flow writer for it replaces it with a fresh flow, and `mxlGarbageCollectFlows` removes it. On Linux the data of such a flow stays readable until it is removed.
+- Sections are visible to processes in the same logon session. Domains cannot be shared between sessions (for example a service and a desktop user) the way a tmpfs can.
+
+Readers that wait for a grain, samples or an event are woken by the writer's commit. On Linux and macOS the sync counter of a flow is a futex. Windows has no futex that works across processes (`WaitOnAddress()` only wakes threads of the waking process), so every flow has a wait queue of named kernel objects in the same namespace: a table of slots in a small section, and an auto-reset event per slot. A waiting thread takes a slot, checks the counter again and waits on its event. A commit increments the counter and sets the events of the taken slots. Each waiter has its own event, so one waiter cannot consume the wake of another, and a writer never waits for its readers. The wait time out is measured with a high resolution timer, so it is not rounded up to the system timer resolution.
+
 ### Filesystem layout
 
 | Path                                                    | Description                                                                                                                   |

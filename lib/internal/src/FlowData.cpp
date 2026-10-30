@@ -7,6 +7,7 @@ namespace mxl::lib
 {
     FlowData::FlowData(char const* flowFilePath, AccessMode mode, LockMode lockMode)
         : _flow{flowFilePath, mode, 0U, lockMode}
+        , _sync{_flow}
     {
         // see: https://en.cppreference.com/w/cpp/types/has_unique_object_representations.html
         static_assert(std::has_unique_object_representations_v<::mxlFlowInfo>,
@@ -48,6 +49,13 @@ namespace mxl::lib
     }
 
     FlowData::~FlowData() = default;
+
+    std::vector<SectionPin> FlowData::pinSections() const
+    {
+        auto pins = std::vector<SectionPin>{};
+        pins.push_back(_flow.pinSection());
+        return pins;
+    }
 
     bool FlowData::isExclusive() const
     {

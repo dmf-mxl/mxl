@@ -120,6 +120,50 @@ namespace mxl::lib
         }
     }
 
+    // The data lives in the file, so there is no section to keep alive.
+    SectionPin::~SectionPin() = default;
+
+    SectionPin SharedMemoryBase::pinSection() const
+    {
+        return SectionPin{};
+    }
+
+    StaleFileLock::StaleFileLock(char const* path, std::uint64_t identity) noexcept
+    {
+        auto const fd = ::open(path, O_RDONLY | O_CLOEXEC);
+        if (fd == -1)
+        {
+            return;
+        }
+
+        // Without LOCK_NB flock() waits until no other process holds a lock on the file.
+        struct ::stat st;
+        if ((::fstat(fd, &st) != 0) || (static_cast<std::uint64_t>(st.st_ino) != identity) || (::flock(fd, LOCK_EX) != 0))
+        {
+            ::close(fd);
+            return;
+        }
+
+        // While this process waited, the process that held the lock may have deleted the stale file and published a new flow in its place.
+        // Closing the file releases the lock.
+        if ((::stat(path, &st) != 0) || (static_cast<std::uint64_t>(st.st_ino) != identity))
+        {
+            ::close(fd);
+            return;
+        }
+
+        _fd = fd;
+    }
+
+    StaleFileLock::~StaleFileLock()
+    {
+        if (_fd != -1)
+        {
+            (void)::flock(_fd, LOCK_UN);
+            (void)::close(_fd);
+        }
+    }
+
     void SharedMemoryBase::touch()
     {
         // Update the file times
@@ -156,5 +200,56 @@ namespace mxl::lib
 
         _lockType = LockType::Exclusive;
         return true;
+    }
+
+    MXL_EXPORT
+    LockProbeResult probeLock(char const* path)
+    {
+        auto flags = O_RDONLY | O_CLOEXEC;
+#ifdef __linux__
+        // Do not update the access time of the file. Only the owner of a file may ask for this.
+        flags |= O_NOATIME;
+#endif
+        auto fd = ::open(path, flags);
+#ifdef __linux__
+        if ((fd == -1) && (errno == EPERM))
+        {
+            fd = ::open(path, O_RDONLY | O_CLOEXEC);
+        }
+#endif
+        if (fd == -1)
+        {
+            auto const error = errno;
+            if (error == ENOENT)
+            {
+                return LockProbeResult::NotFound;
+            }
+            throw std::system_error(error, std::generic_category(), "Could not open shared memory file to probe its lock.");
+        }
+
+        // Do not block if the lock cannot be obtained. The lock is released when the file is closed.
+        auto const locked = ::flock(fd, LOCK_EX | LOCK_NB) < 0;
+        ::close(fd);
+
+        return locked ? LockProbeResult::Locked : LockProbeResult::Unlocked;
+    }
+
+    MXL_EXPORT
+    void waitWhileExclusivelyLocked(char const* path) noexcept
+    {
+        auto const fd = ::open(path, O_RDONLY | O_CLOEXEC);
+        if (fd == -1)
+        {
+            return;
+        }
+        // Without LOCK_NB flock() waits until no other process holds an exclusive lock on the file. Closing the file releases the lock.
+        (void)::flock(fd, LOCK_SH);
+        ::close(fd);
+    }
+
+    MXL_EXPORT
+    bool isLockedError(std::system_error const& e) noexcept
+    {
+        return e.code() == std::errc::operation_would_block;
     }
 }

@@ -31,23 +31,18 @@
 
 namespace mxl::lib
 {
+#ifdef __APPLE__
     namespace
     {
-        /**
-         * @brief Record a consumer access time using atomic stores for event flows.
-         * @param[in,out] info Shared flow metadata whose lastReadTime is updated.
-         * @param time Access timestamp in TAI nanoseconds.
-         */
-        void updateReadTime(mxlFlowInfo& info, std::uint64_t time) noexcept
-        {
-            std::atomic_ref{info.runtime.lastReadTime}.store(time, std::memory_order_release);
-        }
-
-#ifdef __APPLE__
         constexpr auto VNODE_EVENTS = static_cast<unsigned int>(NOTE_DELETE | NOTE_WRITE | NOTE_ATTRIB);
 
         using KEvent = struct kevent;
+    }
 #endif
+
+    void DomainWatcher::updateReadTime(mxlFlowInfo& info, std::uint64_t time) noexcept
+    {
+        std::atomic_ref{info.runtime.lastReadTime}.store(time, std::memory_order_release);
     }
 
     DomainWatcher::DomainWatcher(std::filesystem::path const& in_domain)
@@ -122,6 +117,8 @@ namespace mxl::lib
             ::close(_eventFd);
             throw std::system_error(error, std::generic_category(), "epoll_ctl ADD eventfd failed");
         }
+#elif defined _WIN32
+        openDirectoryWatch(in_domain);
 #endif
 
         // Start event processing thread
@@ -138,6 +135,8 @@ namespace mxl::lib
             ::close(_inotifyFd);
             ::close(_epollFd);
             ::close(_eventFd);
+#elif defined _WIN32
+            closeDirectoryWatch();
 #endif
             throw;
         }
@@ -150,6 +149,8 @@ namespace mxl::lib
             ::close(_inotifyFd);
             ::close(_epollFd);
             ::close(_eventFd);
+#elif defined _WIN32
+            closeDirectoryWatch();
 #endif
             throw;
         }
@@ -186,6 +187,8 @@ namespace mxl::lib
             auto const error = errno;
             MXL_ERROR("Error closing epoll FD: {}", std::strerror(error));
         }
+#elif defined _WIN32
+        closeDirectoryWatch();
 #endif
     }
 
@@ -211,7 +214,7 @@ namespace mxl::lib
     {
         auto record = DomainWatcherRecord{
             .id = id,
-            .fileName = makeFlowAccessFilePath(makeFlowDirectoryName(_domain, uuids::to_string(id))),
+            .fileName = makeFlowAccessFilePath(makeFlowDirectoryName(_domain, uuids::to_string(id))).string(),
             .fw = writer,
             .flowData = {},
         };
@@ -257,6 +260,8 @@ namespace mxl::lib
 #elif defined __linux__
                 // if not found, add the watch and add it to the maps
                 existingWd = ::inotify_add_watch(_inotifyFd, record.fileName.c_str(), IN_ACCESS | IN_ATTRIB);
+#elif defined _WIN32
+                existingWd = _nextWatchId++;
 #endif
                 if (existingWd == -1)
                 {
@@ -271,7 +276,7 @@ namespace mxl::lib
             }
 
             record.flowData = std::make_shared<SharedMemoryInstance<Flow>>(
-                makeFlowDataFilePath(_domain, uuids::to_string(record.id)).c_str(), AccessMode::READ_WRITE, 0U, LockMode::None);
+                makeFlowDataFilePath(_domain, uuids::to_string(record.id)).string().c_str(), AccessMode::READ_WRITE, 0U, LockMode::None);
             _watches.emplace(existingWd, std::move(record));
         }
     }
@@ -280,7 +285,7 @@ namespace mxl::lib
     {
         auto record = DomainWatcherRecord{
             .id = id,
-            .fileName = makeFlowAccessFilePath(makeFlowDirectoryName(_domain, uuids::to_string(id))),
+            .fileName = makeFlowAccessFilePath(makeFlowDirectoryName(_domain, uuids::to_string(id))).string(),
             .fw = writer,
             .flowData = {},
         };
@@ -408,6 +413,8 @@ namespace mxl::lib
                 }
             }
         }
+#elif defined _WIN32
+        watchDirectory();
 #endif
     }
 

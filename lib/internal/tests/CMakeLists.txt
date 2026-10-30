@@ -17,12 +17,20 @@ set_target_properties(mxl-internal-tests
 
 target_sources(mxl-internal-tests
         PRIVATE
-            test_domainwatcher.cpp
             test_flowmanager.cpp
+            test_flowsync.cpp
             test_instance.cpp
             test_options.cpp
             test_sharedmem.cpp
     )
+
+# The DomainWatcher tests use inotify semantics and mmap().
+if (NOT WIN32)
+    target_sources(mxl-internal-tests
+            PRIVATE
+                test_domainwatcher.cpp
+        )
+endif()
 
 target_link_libraries(mxl-internal-tests
         PRIVATE

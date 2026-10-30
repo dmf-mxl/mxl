@@ -110,6 +110,8 @@ namespace mxl::lib
                     auto const error = errno;
                     MXL_WARN("Failed so signal DomainWatcher stop request: {}", std::strerror(error));
                 }
+#elif defined _WIN32
+                signalStop();
 #endif
 
                 _watchThread.join();
@@ -127,12 +129,31 @@ namespace mxl::lib
         std::size_t size() const noexcept;
 
     private:
+        /// Record a consumer access time with an atomic store.
+        /// \param[in,out] info Shared flow metadata whose lastReadTime is updated.
+        /// \param[in] time Access timestamp in TAI nanoseconds.
+        static void updateReadTime(mxlFlowInfo& info, std::uint64_t time) noexcept;
+
         /// Event loop that waits for inotify file change events and processes them.
         /// (invokes the callback)
         void processEvents();
 
 #if defined __linux__
         void processEventBuffer(struct ::inotify_event const* buffer, std::size_t count);
+#elif defined _WIN32
+        /// Open the domain directory for watching and create the stop event.
+        /// \param[in] domain The domain directory.
+        void openDirectoryWatch(std::filesystem::path const& domain);
+        /// Close the directory handle and the stop event.
+        void closeDirectoryWatch() noexcept;
+        /// The Windows event loop of processEvents(): wait for changes in the domain directory until a stop is requested.
+        void watchDirectory();
+        /// Wake up the watcher thread so it sees that it should stop.
+        void signalStop() noexcept;
+        /// Update the flows whose access file changed.
+        /// \param[in] buffer The FILE_NOTIFY_INFORMATION records returned by ReadDirectoryChangesW().
+        /// \param[in] length The number of valid bytes in the buffer.
+        void processNotifications(void const* buffer, std::size_t length);
 #elif defined __APPLE__
         void setWatch();
         void processPendingEvents(int numEvents);
@@ -152,6 +173,13 @@ namespace mxl::lib
         int _epollFd;
         /// The eventfd fd to wake up the epoll thread when a stop is requested
         int _eventFd;
+#elif defined _WIN32
+        /// Windows has no watch descriptors. Each watched file gets a number instead, so records keep their grouping by file.
+        int _nextWatchId{0};
+        /// Handle of the domain directory, watched for changes to the last write time of access files.
+        void* _directory{nullptr};
+        /// Event that wakes up the watcher thread when a stop is requested.
+        void* _stopEvent{nullptr};
 #endif
 
         /// Map of watch descriptors to file records.  Multiple records could use the same watchfd

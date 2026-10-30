@@ -2,16 +2,25 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "mxl-internal/FlowManager.hpp"
+#include <cerrno>
+#include <chrono>
 #include <cstring>
+#include <array>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <ios>
 #include <memory>
 #include <stdexcept>
+#include <string>
 #include <system_error>
+#include <thread>
 #include <fcntl.h>
-#include <unistd.h>
-#include <sys/stat.h>
+#ifdef _WIN32
+#   include <windows.h>
+#else
+#   include <unistd.h>
+#endif
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include "mxl-internal/Logging.hpp"
@@ -25,6 +34,42 @@ namespace mxl::lib
 {
     namespace
     {
+        // How often the creation running on this thread has created its flow again: a stale flow (see SectionMissingError) was replaced, or
+        // the new flow was removed while it was published (Windows, see publishFlow()). Limited, so that a creation cannot go on forever.
+        thread_local int flowRecreations = 0;
+        constexpr auto MAX_FLOW_RECREATIONS = 3;
+
+#ifdef _WIN32
+        /** \return The name of the file system of the volume that holds a path, like L"NTFS", or an empty string if it cannot be read. */
+        std::wstring fileSystemName(std::filesystem::path const& path)
+        {
+            auto volume = std::array<wchar_t, MAX_PATH + 1>{};
+            auto name = std::array<wchar_t, MAX_PATH + 1>{};
+            if ((::GetVolumePathNameW(path.c_str(), volume.data(), static_cast<DWORD>(volume.size())) == FALSE) ||
+                (::GetVolumeInformationW(volume.data(), nullptr, 0, nullptr, nullptr, nullptr, name.data(), static_cast<DWORD>(name.size())) ==
+                    FALSE))
+            {
+                return {};
+            }
+            return name.data();
+        }
+#endif
+
+        /** \return Whether an error means that a file or directory does not exist. */
+        bool isNotFound(std::system_error const& e)
+        {
+            auto const& code = e.code();
+            if (code == std::errc::no_such_file_or_directory)
+            {
+                return true;
+            }
+#ifdef _WIN32
+            return (code.category() == std::system_category()) && ((code.value() == ERROR_FILE_NOT_FOUND) || (code.value() == ERROR_PATH_NOT_FOUND));
+#else
+            return false;
+#endif
+        }
+
         /**
          * Attempt to create a temporary directory to prepare a new flow.
          * The temporary name is structured in a way that prevents is from
@@ -58,11 +103,37 @@ namespace mxl::lib
                     std::filesystem::perms::others_exec,
                 std::filesystem::perm_options::add);
 
-#if defined __linux__
+#if defined _WIN32
+            // Without MOVEFILE_REPLACE_EXISTING the move fails if the destination exists. Windows cannot rename a directory while files in it
+            // are open, so the caller closes the flow files first. Another program can still open a new file for a moment (a virus scanner,
+            // the search indexer), which makes the rename fail with a sharing or access error. That is retried for about a second.
+            auto delay = std::chrono::milliseconds{1};
+            for (auto attempt = 1;; ++attempt)
+            {
+                if (::MoveFileExW(source.c_str(), dest.c_str(), 0) != FALSE)
+                {
+                    break;
+                }
+                auto const error = ::GetLastError();
+                if ((error == ERROR_ALREADY_EXISTS) || (error == ERROR_FILE_EXISTS) || (error == ERROR_DIR_NOT_EMPTY))
+                {
+                    return false;
+                }
+                bool const transient = (error == ERROR_ACCESS_DENIED) || (error == ERROR_SHARING_VIOLATION) || (error == ERROR_LOCK_VIOLATION);
+                if (!transient || (attempt == 11))
+                {
+                    throw std::system_error{
+                        static_cast<int>(error), std::system_category(), "Failed to publish flow directory by renaming it to its public name."};
+                }
+                std::this_thread::sleep_for(delay);
+                delay *= 2;
+            }
+#else
+#   if defined __linux__
             if (::renameat2(AT_FDCWD, source.c_str(), AT_FDCWD, dest.c_str(), RENAME_NOREPLACE) < 0)
-#elif defined __APPLE__
+#   elif defined __APPLE__
             if (::renamex_np(source.c_str(), dest.c_str(), RENAME_EXCL) < 0)
-#endif
+#   endif
             {
                 auto const error = errno;
                 switch (error)
@@ -73,6 +144,7 @@ namespace mxl::lib
                         throw std::system_error{error, std::system_category(), "Failed to publish flow directory by renaming it to its public name."};
                 }
             }
+#endif
 
             return true;
         }
@@ -89,7 +161,7 @@ namespace mxl::lib
         void writeFlowDescriptor(std::filesystem::path const& flowDir, std::string const& flowDef)
         {
             auto const flowJsonFile = makeFlowDescriptorFilePath(flowDir);
-            if (auto out = std::ofstream{flowJsonFile, std::ios::out | std::ios::trunc}; out)
+            if (auto out = std::ofstream{flowJsonFile, std::ios::out | std::ios::trunc | std::ios::binary}; out)
             {
                 out << flowDef;
             }
@@ -135,18 +207,17 @@ namespace mxl::lib
             auto result = FlowState{};
 
             // Get the inode of the flow data file
-            struct ::stat st;
-            if (::stat(flowDataPath.string().c_str(), &st) != 0)
+            auto const identity = fileIdentity(flowDataPath);
+            if (!identity)
             {
-                auto const error = errno;
-                throw std::filesystem::filesystem_error{
-                    "Could not stat flow data file.", flowDataPath, std::error_code{error, std::generic_category()}
-                };
+#ifdef _WIN32
+                auto const error = std::error_code{static_cast<int>(::GetLastError()), std::system_category()};
+#else
+                auto const error = std::error_code{errno, std::generic_category()};
+#endif
+                throw std::filesystem::filesystem_error{"Could not stat flow data file.", flowDataPath, error};
             }
-            else
-            {
-                result.inode = st.st_ino;
-            }
+            result.inode = *identity;
 
             return result;
         }
@@ -160,6 +231,16 @@ namespace mxl::lib
             throw std::filesystem::filesystem_error{
                 "Path does not exist or is not a directory.", in_mxlDomain, std::make_error_code(std::errc::no_such_file_or_directory)};
         }
+#ifdef _WIN32
+        // The in-memory sections of a domain are named after the identities of its files, which only NTFS keeps unique and stable. On
+        // other file systems (FAT, exFAT, ReFS, network shares) two flows could get the same sections.
+        if (auto const fileSystem = fileSystemName(_mxlDomain); fileSystem != L"NTFS")
+        {
+            throw std::invalid_argument{fmt::format("The MXL domain {} is not on NTFS ({}). On Windows an MXL domain must be on an NTFS volume.",
+                _mxlDomain.string(),
+                fileSystem.empty() ? std::string{"unknown file system"} : std::filesystem::path{fileSystem}.string())};
+        }
+#endif
     }
 
     std::pair<bool, std::unique_ptr<DiscreteFlowData>> FlowManager::createOrOpenDiscreteFlow(uuids::uuid const& flowId, std::string const& flowDef,
@@ -236,21 +317,22 @@ namespace mxl::lib
             gInfo.size = sizeof gInfo;
         }
 
-        auto const finalDir = makeFlowDirectoryName(_mxlDomain, uuidString);
-        if (publishFlowDirectory(tempDirectory, finalDir))
-        {
-            return {true, std::move(flowData)};
-        }
-        else
-        {
-            auto existingFlowData = dynamic_pointer_cast<DiscreteFlowData>(openFlow(flowId, AccessMode::READ_WRITE));
-            if (!existingFlowData)
+        return publishFlow(std::move(flowData),
+            tempDirectory,
+            flowId,
+            [&]()
             {
-                throw std::runtime_error("Could not open existing flow because it is of a different format");
-            }
-
-            return {false, std::move(existingFlowData)};
-        }
+                return createOrOpenDiscreteFlow(flowId,
+                    flowDef,
+                    flowFormat,
+                    grainCount,
+                    grainRate,
+                    grainPayloadSize,
+                    grainNumOfSlices,
+                    grainSliceLengths,
+                    maxSyncBatchSizeHintOpt,
+                    maxCommitBatchSizeHintOpt);
+            });
     }
 
     std::pair<bool, std::unique_ptr<EventFlowData>> FlowManager::createOrOpenEventFlow(uuids::uuid const& flowId, std::string const& flowDef,
@@ -307,21 +389,10 @@ namespace mxl::lib
 
         flowData->openEventBuffer(makeEventDataFilePath(tempDirectory).string().c_str());
 
-        auto const finalDir = makeFlowDirectoryName(_mxlDomain, uuidString);
-        if (publishFlowDirectory(tempDirectory, finalDir))
-        {
-            return {true, std::move(flowData)};
-        }
-        else
-        {
-            auto existingFlowData = dynamic_pointer_cast<EventFlowData>(openFlow(flowId, AccessMode::READ_WRITE));
-            if (!existingFlowData)
-            {
-                throw std::runtime_error("Could not open existing flow because it is of a different format");
-            }
-
-            return {false, std::move(existingFlowData)};
-        }
+        return publishFlow(std::move(flowData),
+            tempDirectory,
+            flowId,
+            [&]() { return createOrOpenEventFlow(flowId, flowDef, eventCount, grainRate, eventPayloadSize); });
     }
 
     std::pair<bool, std::unique_ptr<ContinuousFlowData>> FlowManager::createOrOpenContinuousFlow(uuids::uuid const& flowId,
@@ -374,21 +445,113 @@ namespace mxl::lib
 
         flowData->openChannelBuffers(makeChannelDataFilePath(tempDirectory).string().c_str(), sampleWordSize);
 
+        return publishFlow(std::move(flowData),
+            tempDirectory,
+            flowId,
+            [&]()
+            {
+                return createOrOpenContinuousFlow(flowId,
+                    flowDef,
+                    flowFormat,
+                    sampleRate,
+                    channelCount,
+                    sampleWordSize,
+                    bufferLength,
+                    maxSyncBatchSizeHintOpt,
+                    maxCommitBatchSizeHintOpt);
+            });
+    }
+
+    template<typename FlowDataType>
+    std::pair<bool, std::unique_ptr<FlowDataType>> FlowManager::publishFlow(std::unique_ptr<FlowDataType> flowData,
+        std::filesystem::path const& tempDirectory, uuids::uuid const& flowId,
+        std::type_identity_t<std::function<std::pair<bool, std::unique_ptr<FlowDataType>>()>> const& recreateFlow)
+    {
+        auto const uuidString = uuids::to_string(flowId);
         auto const finalDir = makeFlowDirectoryName(_mxlDomain, uuidString);
-        if (publishFlowDirectory(tempDirectory, finalDir))
+        auto const openExistingFlow = [&]()
         {
-            return {true, std::move(flowData)};
-        }
-        else
-        {
-            auto existingFlowData = dynamic_pointer_cast<ContinuousFlowData>(openFlow(flowId, AccessMode::READ_WRITE));
+            auto existingFlowData = dynamic_pointer_cast<FlowDataType>(openFlow(flowId, AccessMode::READ_WRITE));
             if (!existingFlowData)
             {
                 throw std::runtime_error{"Could not open existing flow because it is of a different format"};
             }
+            return existingFlowData;
+        };
 
-            return {false, std::move(existingFlowData)};
+        // Where a directory with open files cannot be renamed (Windows), close the flow files, publish, and open the published flow. Until it
+        // is open again, the flow holds no lock, so a garbage collection running in that moment may remove it; the flow is then created
+        // again. The in-memory sections that hold the data stay pinned until the published flow has opened them again.
+        auto pins = canRenameDirectoryWithOpenFiles ? std::vector<SectionPin>{} : flowData->pinSections();
+        if constexpr (!canRenameDirectoryWithOpenFiles)
+        {
+            flowData.reset();
         }
+
+        auto const created = publishFlowDirectory(tempDirectory, finalDir);
+        if (created && canRenameDirectoryWithOpenFiles)
+        {
+            return {true, std::move(flowData)};
+        }
+
+        try
+        {
+            // The reopened flow holds its sections now; the pins are released on return.
+            return {created, openExistingFlow()};
+        }
+        catch (SectionMissingError const& e)
+        {
+            // The data of the existing flow lived in memory that is gone, because everything that had it open has exited (Windows only).
+            // Replace the stale flow.
+            if (created || (flowRecreations >= MAX_FLOW_RECREATIONS))
+            {
+                throw;
+            }
+            ++flowRecreations;
+            auto const reset = defer([]() noexcept { --flowRecreations; });
+            deleteStaleFlow(flowId, e.fileIdentity());
+            return recreateFlow();
+        }
+        catch (std::system_error const& e)
+        {
+            if (flowRecreations >= MAX_FLOW_RECREATIONS)
+            {
+                throw;
+            }
+            if (!created && isLockedError(e))
+            {
+                // Another process holds the flow exclusively, which it only does to delete it: it was the last writer of the flow, or it
+                // replaces a stale flow. Wait for the deletion and create the flow again.
+                waitWhileExclusivelyLocked(makeFlowDataFilePath(finalDir).string().c_str());
+            }
+            else if (created && isNotFound(e))
+            {
+                // The flow just published is gone: a garbage collection removed it while it held no lock (Windows only).
+                MXL_WARN("Flow '{}' was removed while it was published, creating it again.", uuidString);
+            }
+            else
+            {
+                throw;
+            }
+            ++flowRecreations;
+            auto const reset = defer([]() noexcept { --flowRecreations; });
+            return recreateFlow();
+        }
+    }
+
+    void FlowManager::deleteStaleFlow(uuids::uuid const& flowId, std::uint64_t staleIdentity)
+    {
+        auto const uuid = uuids::to_string(flowId);
+        auto const flowDataPath = makeFlowDataFilePath(_mxlDomain, uuid).string();
+        auto const lock = StaleFileLock{flowDataPath.c_str(), staleIdentity};
+        if (!lock)
+        {
+            // Another process deleted the stale flow and may have created it again. The creation that follows opens that flow.
+            MXL_DEBUG("Stale flow '{}' was already replaced.", uuid);
+            return;
+        }
+        MXL_WARN("Replacing stale flow '{}' whose in-memory data is gone.", uuid);
+        deleteFlow(flowId);
     }
 
     std::unique_ptr<FlowData> FlowManager::openFlow(uuids::uuid const& in_flowId, AccessMode in_mode)
@@ -553,7 +716,7 @@ namespace mxl::lib
         auto const uuid = uuids::to_string(flowId);
         auto const flowPath = makeFlowDirectoryName(_mxlDomain, uuid);
         auto const flowJsonFile = makeFlowDescriptorFilePath(flowPath);
-        if (auto in = std::ifstream{flowJsonFile, std::ios::in}; in)
+        if (auto in = std::ifstream{flowJsonFile, std::ios::in | std::ios::binary}; in)
         {
             auto const result = std::string{std::istreambuf_iterator<char>{in}, std::istreambuf_iterator<char>{}};
             if (!in)

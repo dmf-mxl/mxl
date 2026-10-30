@@ -3,8 +3,10 @@
 
 #include "mxl/mxl.h"
 #include <exception>
+#include <filesystem>
 #include <memory>
 #include <string>
+#include <system_error>
 #include <mxl/version.h>
 #include "mxl-internal/DomainWatcher.hpp"
 #include "mxl-internal/Instance.hpp"
@@ -88,6 +90,15 @@ mxlStatus mxlIsTmpFs(char const* in_path, bool* out_isTmpFs)
         return MXL_ERR_UNKNOWN;
     }
     *out_isTmpFs = std::strcmp(buf.f_fstypename, "tmpfs") == 0;
+    return MXL_STATUS_OK;
+#elif defined(_WIN32)
+    // Windows has no memory backed file system. Fail for a path that cannot be accessed, like statfs() does.
+    auto ec = std::error_code{};
+    if (!std::filesystem::exists(std::filesystem::path{in_path}, ec))
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+    *out_isTmpFs = false;
     return MXL_STATUS_OK;
 #else
     *out_isTmpFs = false;

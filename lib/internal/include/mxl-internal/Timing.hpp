@@ -240,7 +240,8 @@ namespace mxl::lib
 
     constexpr std::timespec asTimeSpec(Timepoint timepoint) noexcept
     {
-        return std::timespec{static_cast<std::time_t>(timepoint.value / 1'000'000'000LL), timepoint.value % 1'000'000'000LL};
+        return std::timespec{static_cast<std::time_t>(timepoint.value / 1'000'000'000LL),
+            static_cast<decltype(std::timespec::tv_nsec)>(timepoint.value % 1'000'000'000LL)};
     }
 
     struct Duration
@@ -389,6 +390,7 @@ namespace mxl::lib
 
     constexpr std::timespec asTimeSpec(Duration duration) noexcept
     {
-        return std::timespec{static_cast<std::time_t>(duration.value / 1'000'000'000LL), duration.value % 1'000'000'000LL};
+        return std::timespec{static_cast<std::time_t>(duration.value / 1'000'000'000LL),
+            static_cast<decltype(std::timespec::tv_nsec)>(duration.value % 1'000'000'000LL)};
     }
 }

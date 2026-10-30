@@ -16,12 +16,14 @@ namespace mxl::lib
     class DiscreteFlowData : public FlowData
     {
     public:
-        explicit DiscreteFlowData(SharedMemoryInstance<Flow>&& flowSegement) noexcept;
+        explicit DiscreteFlowData(SharedMemoryInstance<Flow>&& flowSegement);
         DiscreteFlowData(char const* flowFilePath, AccessMode mode, LockMode lockMode);
 
         std::size_t grainCount() const noexcept;
 
         Grain* emplaceGrain(char const* grainFilePath, std::size_t grainPayloadSize);
+
+        std::vector<SectionPin> pinSections() const override;
 
         Grain* grainAt(std::size_t i) noexcept;
         Grain const* grainAt(std::size_t i) const noexcept;
@@ -37,7 +39,7 @@ namespace mxl::lib
     /* Inline implementation.                                                 */
     /**************************************************************************/
 
-    inline DiscreteFlowData::DiscreteFlowData(SharedMemoryInstance<Flow>&& flowSegement) noexcept
+    inline DiscreteFlowData::DiscreteFlowData(SharedMemoryInstance<Flow>&& flowSegement)
         : FlowData{std::move(flowSegement)}
         , _grains{}
     {
@@ -54,6 +56,16 @@ namespace mxl::lib
     inline std::size_t DiscreteFlowData::grainCount() const noexcept
     {
         return _grains.size();
+    }
+
+    inline std::vector<SectionPin> DiscreteFlowData::pinSections() const
+    {
+        auto pins = FlowData::pinSections();
+        for (auto const& grain : _grains)
+        {
+            pins.push_back(grain.pinSection());
+        }
+        return pins;
     }
 
     inline Grain* DiscreteFlowData::emplaceGrain(char const* grainFilePath, std::size_t grainPayloadSize)

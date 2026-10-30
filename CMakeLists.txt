@@ -72,6 +72,14 @@ endif()
 set(MXL_C_STANDARD 17)
 set(MXL_CXX_STANDARD 20)
 
+# Keep <windows.h> from defining min() and max() macros and from including the old winsock.h, which conflicts with winsock2.h.
+if(WIN32)
+    add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN)
+    if(MXL_ENABLE_FABRICS_OFI)
+        message(FATAL_ERROR "The fabrics library is not supported on Windows yet. Configure with -DMXL_ENABLE_FABRICS_OFI=OFF.")
+    endif()
+endif()
+
 #-------------------------------------------------------------------------------
 # Helper to conditionally add flags supported by the current compiler
 #-------------------------------------------------------------------------------
@@ -370,6 +378,17 @@ function(mxl_add_common_target_link_options target scope)
     mxl_add_common_target_link_option(${target} ${scope} LINKER_SUPPORTS_AS_NEEDED)
 endfunction()
 
+if(WIN32)
+    # MXL only uses the random UUID generator. With UUID_SYSTEM_GENERATOR, stduuid includes <objbase.h>, which needs ole32 and defines
+    # interface as a macro for COM. Find stduuid here, so all subdirectories see the adjusted target.
+    find_package(stduuid CONFIG REQUIRED)
+    get_target_property(_mxl_stduuid_definitions stduuid INTERFACE_COMPILE_DEFINITIONS)
+    if(_mxl_stduuid_definitions)
+        list(REMOVE_ITEM _mxl_stduuid_definitions UUID_SYSTEM_GENERATOR)
+        set_target_properties(stduuid PROPERTIES INTERFACE_COMPILE_DEFINITIONS "${_mxl_stduuid_definitions}")
+    endif()
+    unset(_mxl_stduuid_definitions)
+endif()
 
 add_subdirectory(lib)
 if (BUILD_UTILS)

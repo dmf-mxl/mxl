@@ -9,6 +9,7 @@
 #include <vector>
 #include "mxl-internal/EventFlowData.hpp"
 #include "mxl-internal/EventFlowReader.hpp"
+#include "FlowAccessFile.hpp"
 
 namespace mxl::lib
 {
@@ -48,7 +49,7 @@ namespace mxl::lib
 
     private:
         std::unique_ptr<EventFlowData> _flowData; ///< Owned common metadata and read-only event mappings.
-        int _accessFileFd;                        ///< Access notification descriptor, or -1 if unavailable.
+        FlowAccessFile _accessFile;               ///< Access file, touched after each successful read.
         std::uint64_t _nextIndex;                 ///< Next queue entry for this reader's owning thread.
         std::vector<std::uint8_t> _snapshot;      ///< Payload storage reused on the next read attempt.
     };

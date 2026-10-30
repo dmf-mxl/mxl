@@ -985,6 +985,9 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlGetFlowDef", "[mx
 // in an unwritable domain.
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlCreateFlow: unwritable domain", "[mxl flows]")
 {
+#ifdef _WIN32
+    SKIP("Windows ignores the read-only attribute of a directory when files are created or deleted in it.");
+#endif
     // remove write perms on domain
     permissions(domain, std::filesystem::perms::owner_write, std::filesystem::perm_options::remove);
 
@@ -1006,6 +1009,9 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlCreateFlow: unwri
 // code. The reader uses an instance of its own, as a reading process would.
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlCreateFlowReader: unreadable flow directory", "[mxl flows]")
 {
+#ifdef _WIN32
+    SKIP("std::filesystem::permissions() only sets the read-only attribute on Windows. test_windows_access.cpp has the Windows test.");
+#endif
     auto const opts = "{}";
     auto const instance = mxlCreateInstance(domain.string().c_str(), opts);
     REQUIRE(instance != nullptr);
@@ -1035,6 +1041,9 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlCreateFlowReader:
 // a proper error code.
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlCreateFlowReader: unreadable continuous flow descriptor", "[mxl flows]")
 {
+#ifdef _WIN32
+    SKIP("std::filesystem::permissions() only sets the read-only attribute on Windows. test_windows_access.cpp has the Windows test.");
+#endif
     auto const opts = "{}";
     auto const instance = mxlCreateInstance(domain.string().c_str(), opts);
     REQUIRE(instance != nullptr);
@@ -1067,7 +1076,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "mxlFlowWriterCommitS
     constexpr auto const readTimeout = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(150));
     auto flowDef = mxl::tests::readFile("data/audio_flow.json");
     auto configInfo = mxlFlowConfigInfo{};
-    auto instance = mxlCreateInstance(domain.c_str(), nullptr);
+    auto instance = mxlCreateInstance(domain.string().c_str(), nullptr);
     mxlFlowWriter writer = nullptr;
     mxlFlowReader reader = nullptr;
 

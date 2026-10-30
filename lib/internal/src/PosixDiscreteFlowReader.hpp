@@ -10,6 +10,7 @@
 #include <mxl/mxl.h>
 #include "mxl-internal/DiscreteFlowData.hpp"
 #include "mxl-internal/DiscreteFlowReader.hpp"
+#include "FlowAccessFile.hpp"
 
 namespace mxl::lib
 {
@@ -93,7 +94,7 @@ namespace mxl::lib
 
     private:
         std::unique_ptr<DiscreteFlowData> _flowData;
-        int _accessFileFd;
+        FlowAccessFile _accessFile;
     };
 
 } // namespace mxl::lib

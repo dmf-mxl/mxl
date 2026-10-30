@@ -14,7 +14,6 @@
 #include <mxl/mxl.h>
 #include "mxl-internal/Flow.hpp"
 #include "mxl-internal/FlowManager.hpp"
-#include "mxl-internal/Sync.hpp"
 #include "mxl-internal/Timing.hpp"
 
 namespace mxl::lib
@@ -65,8 +64,7 @@ namespace mxl::lib
         if (head != MXL_UNDEFINED_INDEX)
         {
             // Also cover a crash after head advancement but before reader notification.
-            std::atomic_ref{flow->state.syncCounter}.fetch_add(1, std::memory_order_release);
-            wakeAll(&flow->state.syncCounter);
+            _flowData->sync().signal();
         }
     }
 
@@ -189,8 +187,7 @@ namespace mxl::lib
         std::atomic_ref{runtime.headIndex}.store(index, std::memory_order_release);
         _lastTimestamp = info.timestamp;
         _open = false;
-        std::atomic_ref{flow->state.syncCounter}.fetch_add(1, std::memory_order_release);
-        wakeAll(&flow->state.syncCounter);
+        _flowData->sync().signal();
         return MXL_STATUS_OK;
     }
 }

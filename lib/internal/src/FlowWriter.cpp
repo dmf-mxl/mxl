@@ -3,6 +3,11 @@
 
 #include "mxl-internal/FlowWriter.hpp"
 #include <utility>
+#ifdef _WIN32
+#   include <io.h>
+#else
+#   include <unistd.h>
+#endif
 
 namespace mxl::lib
 {
@@ -26,6 +31,11 @@ namespace mxl::lib
     bool FlowWriter::checkPermissions() const
     {
         // Verify that the domain exists, is a directory and that we can traverse and write into it.
+#ifdef _WIN32
+        // Windows has no execute permission on directories. _waccess() only reports read only directories as not writable.
+        return std::filesystem::is_directory(_domain) && (::_waccess(_domain.c_str(), W_OK) == 0);
+#else
         return std::filesystem::is_directory(_domain) && (::access(_domain.c_str(), X_OK | W_OK) == 0);
+#endif
     }
 }

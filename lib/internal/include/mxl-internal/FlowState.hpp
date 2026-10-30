@@ -9,6 +9,16 @@
 namespace mxl::lib
 {
     /**
+     * Identity of a file that stays the same while the file exists: the inode number, or the NTFS file index on Windows, where ino_t is
+     * only 16 bits wide.
+     */
+#ifdef _WIN32
+    using FileIdentity = std::uint64_t;
+#else
+    using FileIdentity = ino_t;
+#endif
+
+    /**
      * Internal data relevant to the current state of an active flow.
      * This data is shared among media functions for inter process communication
      * and synchronization.
@@ -20,7 +30,7 @@ namespace mxl::lib
          * the current in-memory mapping of the flow has become stale as a
          * result.
          */
-        ino_t inode;
+        FileIdentity inode;
 
         /**
          * 32 bit word used synchronization between a writer and multiple readers.

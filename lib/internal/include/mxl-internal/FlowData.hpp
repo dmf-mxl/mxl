@@ -4,8 +4,10 @@
 #pragma once
 
 #include <cstddef>
+#include <vector>
 #include <mxl/platform.h>
 #include "Flow.hpp"
+#include "FlowSync.hpp"
 #include "SharedMemory.hpp"
 
 namespace mxl::lib
@@ -33,25 +35,37 @@ namespace mxl::lib
         constexpr FlowState* flowState() noexcept;
         constexpr FlowState const* flowState() const noexcept;
 
+        /** Waits for and signals changes of the sync counter in the flow state. */
+        constexpr FlowSync& sync() noexcept;
+        constexpr FlowSync const& sync() const noexcept;
+
         bool isExclusive() const;
         bool makeExclusive();
+
+        /**
+         * Pins the in-memory sections of every segment of this flow, see SectionPin. Used while the flow directory is renamed.
+         */
+        virtual std::vector<SectionPin> pinSections() const;
 
         virtual ~FlowData();
 
     protected:
-        constexpr explicit FlowData(SharedMemoryInstance<Flow>&& flowSegement) noexcept;
+        explicit FlowData(SharedMemoryInstance<Flow>&& flowSegement);
         FlowData(char const* flowFilePath, AccessMode mode, LockMode lockMode);
 
     private:
         SharedMemoryInstance<Flow> _flow;
+        /** Refers to the sync counter in _flow, so it is declared after it. */
+        FlowSync _sync;
     };
 
     /**************************************************************************/
     /* Inline implementation.                                                 */
     /**************************************************************************/
 
-    constexpr FlowData::FlowData(SharedMemoryInstance<Flow>&& flowSegement) noexcept
+    inline FlowData::FlowData(SharedMemoryInstance<Flow>&& flowSegement)
         : _flow{std::move(flowSegement)}
+        , _sync{_flow}
     {}
 
     constexpr bool FlowData::isValid() const noexcept
@@ -123,5 +137,15 @@ namespace mxl::lib
             return &flow->state;
         }
         return nullptr;
+    }
+
+    constexpr FlowSync& FlowData::sync() noexcept
+    {
+        return _sync;
+    }
+
+    constexpr FlowSync const& FlowData::sync() const noexcept
+    {
+        return _sync;
     }
 }

@@ -6,8 +6,10 @@
 #include <cstddef>
 #include <array>
 #include <filesystem>
+#include <functional>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <vector>
 #include <uuid.h>
 #include <mxl/platform.h>
@@ -148,6 +150,24 @@ namespace mxl::lib
     private:
         std::unique_ptr<DiscreteFlowData> openDiscreteFlow(std::filesystem::path const& flowDir, SharedMemoryInstance<Flow>&& sharedFlowInstance);
         std::unique_ptr<ContinuousFlowData> openContinuousFlow(std::filesystem::path const& flowDir, SharedMemoryInstance<Flow>&& sharedFlowInstance);
+
+        /// Publish a flow prepared in a temporary directory under its final name, or open the flow that already exists under that name.
+        /// \param[in] flowData The new flow, created in tempDirectory.
+        /// \param[in] tempDirectory The temporary directory that holds the new flow.
+        /// \param[in] flowId The ID of the flow.
+        /// \param[in] recreateFlow Creates the flow again, after a stale flow (see SectionMissingError) was deleted, or when the new flow was
+        ///     removed while it was published (Windows).
+        /// \return Whether the flow was created, and its data.
+        template<typename FlowDataType>
+        std::pair<bool, std::unique_ptr<FlowDataType>> publishFlow(std::unique_ptr<FlowDataType> flowData, std::filesystem::path const& tempDirectory,
+            uuids::uuid const& flowId, std::type_identity_t<std::function<std::pair<bool, std::unique_ptr<FlowDataType>>()>> const& recreateFlow);
+
+        /// Delete a stale flow (see SectionMissingError), unless another process has replaced it already.
+        /// Holds a StaleFileLock on the flow data file while the flow is deleted, so that two processes that replace the same stale flow do
+        /// not delete each other's new flow.
+        /// \param[in] flowId The ID of the flow.
+        /// \param[in] staleIdentity The identity of the file whose section is gone, from SectionMissingError::fileIdentity().
+        void deleteStaleFlow(uuids::uuid const& flowId, std::uint64_t staleIdentity);
 
     private:
         std::filesystem::path _mxlDomain;
