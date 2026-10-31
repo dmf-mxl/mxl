@@ -4,17 +4,20 @@
 
 #include "RDMTarget.hpp"
 #include <cstdint>
+#include <algorithm>
 #include <memory>
 #include <mxl-internal/Logging.hpp>
 #include <rdma/fabric.h>
 #include <rdma/fi_eq.h>
 #include "AddressVector.hpp"
+#include "EventQueue.hpp"
 #include "Exception.hpp"
 #include "FabricAddress.hpp"
 #include "FabricInfo.hpp"
 #include "FabricInfoHelpers.hpp"
 #include "Format.hpp" // IWYU pragma: keep; Includes template specializations of fmt::formatter for our types
 #include "Protocol.hpp"
+#include "ProtocolIngressRMA.hpp"
 #include "Provider.hpp"
 #include "Region.hpp"
 
@@ -38,10 +41,10 @@ namespace mxl::lib::fabrics::ofi
         auto endpoint = Endpoint::create(domain);
 
         auto cqAttr = CompletionQueue::Attributes::defaults();
-        if (options.cqDepth)
-        {
-            cqAttr.size = *options.cqDepth;
-        }
+        // The receive window can put that many completions in the queue
+        // before anything reads it, so the queue must be able to
+        // hold them however its depth was chosen.
+        cqAttr.size = std::max(options.cqDepth.value_or(CompletionQueue::Attributes::DEFAULT_SIZE), 2 * DefaultReceiveDepth);
         if (provider == Provider::EFA)
         {
             if (!CompletionQueue::isWaitObjectSupportedForEFA())
@@ -62,11 +65,27 @@ namespace mxl::lib::fabrics::ofi
         auto av = AddressVector::open(domain);
         endpoint.bind(av);
 
+        endpoint.bind(EventQueue::open(fabric));
+
         // Connectionless endpoints must be explictely enabled when they are ready to be used.
         endpoint.enable();
 
         auto mxlRegions = MxlRegions::forWriter(config.writer);
         auto protocol = selectIngressProtocol(mxlRegions.dataLayout(), mxlRegions.regions(), mxlRegions.maxSyncBatchSize());
+
+        // Start receiving. The connected path does this once the peer
+        // arrives; a connectionless endpoint has no such moment, and
+        // leaving it out meant no receive was ever posted here.
+        //
+        // It is not optional where the provider reports FI_RX_CQ_DATA.
+        // Declaring that mode turns off the device's unsolicited write
+        // receive, so every inbound write carrying immediate data has to
+        // consume a receive. With none posted the far side gets no
+        // acknowledgement and retries, and EFA's default retry count for
+        // that condition is infinite -- an unbounded retransmit aimed at
+        // this host, with nothing on either side reporting an error.
+        protocol->start(endpoint);
+
         auto targetInfo = std::make_unique<TargetInfo>(
             endpoint.id(), endpoint.localAddress(), *provider, protocol->registerMemory(domain), protocol->bounceBufferInfo());
 
@@ -101,6 +120,7 @@ namespace mxl::lib::fabrics::ofi
     template<QueueReadMode queueReadMode>
     std::optional<Target::ReadResult> RDMTarget::readNext(std::chrono::steady_clock::duration timeout)
     {
+        drainEventQueue(*_ep.eventQueue());
         try
         {
             auto completion = readCompletionQueue<queueReadMode>(*_ep.completionQueue(), timeout);

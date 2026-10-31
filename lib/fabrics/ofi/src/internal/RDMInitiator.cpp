@@ -6,6 +6,8 @@
 #include <cassert>
 #include <chrono>
 #include <cstdint>
+#include <algorithm>
+#include <exception>
 #include <memory>
 #include <utility>
 #include <variant>
@@ -18,9 +20,11 @@
 #include "AddressVector.hpp"
 #include "CompletionQueue.hpp"
 #include "Endpoint.hpp"
+#include "EventQueue.hpp"
 #include "Exception.hpp"
 #include "Fabric.hpp"
 #include "FabricInfoHelpers.hpp"
+#include "QueueHelpers.hpp"
 #include "Region.hpp"
 #include "TargetInfo.hpp"
 #include "VariantUtils.hpp"
@@ -102,9 +106,16 @@ namespace mxl::lib::fabrics::ofi
 
     void RDMInitiatorTarget::handleCompletion(Endpoint&, Completion completion)
     {
-        if (completion.isErrEntry())
+        if (auto const error = completion.tryErr(); error)
         {
-            MXL_ERROR("Completion error.");
+            // A failed write is finished all the same. Leaving it counted
+            // kept the target reporting pending work for the rest of its
+            // life.
+            MXL_ERROR("Completion error: {}", error->toString());
+            if (std::holds_alternative<Activated>(_state))
+            {
+                _proto->processCompletionError(*error);
+            }
             return;
         }
 
@@ -122,7 +133,11 @@ namespace mxl::lib::fabrics::ofi
     {
         requireCapability(info, FI_WRITE, "Interface is missing required remote write capability");
 
+        // Size the CQ to hold as many completions as the endpoint supports, to avoid
+        // CQ overflow. This assumes one CQ per endpoint; if CQs are ever shared,
+        // this sizing must be revisited. An explicit cqDepth still wins.
         auto cqAttr = CompletionQueue::Attributes::defaults();
+        cqAttr.size = std::max(cqAttr.size, info.txSize());
         if (options.cqDepth)
         {
             cqAttr.size = *options.cqDepth;
@@ -148,6 +163,8 @@ namespace mxl::lib::fabrics::ofi
 
         auto av = AddressVector::open(endpoint.domain());
         endpoint.bind(av);
+
+        endpoint.bind(EventQueue::open(fabric));
 
         endpoint.enable();
 
@@ -200,11 +217,8 @@ namespace mxl::lib::fabrics::ofi
     {
         // Post a transfer work item to all targets. If the target is not in "Added" state
         // this is a no-op.
-        for (auto& [_, target] : _targets)
-        {
-            // A completion will be posted to the completion queue, after which the counter will be decremented again
-            target.transferGrain(_endpoint, grainIndex, grainIndex, MXL_GRAIN_PAYLOAD_OFFSET, SliceRange::make(startSlice, endSlice));
-        }
+        forEachTarget([&](RDMInitiatorTarget& target)
+            { target.transferGrain(_endpoint, grainIndex, grainIndex, MXL_GRAIN_PAYLOAD_OFFSET, SliceRange::make(startSlice, endSlice)); });
     }
 
     void RDMInitiator::transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t payloadOffset,
@@ -216,17 +230,15 @@ namespace mxl::lib::fabrics::ofi
 
     void RDMInitiator::transferSamples(std::uint64_t headIndex, std::size_t count)
     {
-        for (auto& [_, target] : _targets)
-        {
-            target.transferSamples(_endpoint, headIndex, count);
-        }
+        forEachTarget([&](RDMInitiatorTarget& target) { target.transferSamples(_endpoint, headIndex, count); });
     }
 
     // makeProgress
     Initiator::MakeProgressResult RDMInitiator::makeProgress()
     {
         activateIdleEndpoints();
-        pollCQ();
+        drainCQ();
+        drainEventQueue(*_endpoint.eventQueue());
         return afterProgressResult();
     }
 
@@ -255,8 +267,9 @@ namespace mxl::lib::fabrics::ofi
         }
         else
         {
-            pollCQ();
+            drainCQ();
         }
+        drainEventQueue(*_endpoint.eventQueue());
 
         return afterProgressResult();
     }
@@ -303,21 +316,48 @@ namespace mxl::lib::fabrics::ofi
         if (timeout == std::chrono::milliseconds::zero())
         {
             // So just behave exactly like the non-blocking variant.
-            pollCQ();
+            drainCQ();
             return;
         }
 
         if (auto completion = _endpoint.completionQueue()->readBlocking(timeout); completion)
         {
             processCompletion(*completion);
+            drainCQ();
         }
     }
 
-    void RDMInitiator::pollCQ()
+    void RDMInitiator::drainCQ()
     {
-        if (auto completion = _endpoint.completionQueue()->read(); completion)
+        while (auto completion = _endpoint.completionQueue()->read())
         {
             processCompletion(*completion);
+        }
+    }
+
+    template<typename F>
+    void RDMInitiator::forEachTarget(F&& transfer)
+    {
+        // A target that fails (EFA answers EAGAIN for a peer in backoff) must not
+        // stop the others. The first failure is rethrown after all targets were tried.
+        auto failure = std::exception_ptr{};
+        for (auto& [_, target] : _targets)
+        {
+            try
+            {
+                transfer(target);
+            }
+            catch (Exception const&)
+            {
+                if (!failure)
+                {
+                    failure = std::current_exception();
+                }
+            }
+        }
+        if (failure)
+        {
+            std::rethrow_exception(failure);
         }
     }
 
