@@ -9,29 +9,20 @@ use crate::mxlsink::{
     state::{DiscreteFormat, DiscreteState, FlowState},
 };
 
-use gstreamer::{self as gst, prelude::ElementExt};
+use gstreamer as gst;
 use tracing::trace;
 
 pub(crate) fn discrete(
     state: &mut mxlsink::state::State,
-    element: &gst::Element,
     buffer: &gst::Buffer,
-    offset: u64,
+    mxl_ts: u64,
 ) -> Result<gst::FlowSuccess, gst::FlowError> {
-    let base_time = element.base_time().ok_or(gst::FlowError::Error)?;
-    let gst_pts = buffer.pts().ok_or(gst::FlowError::Error)?;
-
     let flow_config = state.flow_config.as_ref().ok_or(gst::FlowError::Error)?;
     let grain_rate = flow_config
         .common()
         .grain_rate()
         .map_err(|_| gst::FlowError::Error)?;
 
-    let mxl_ts = gst_pts
-        .nseconds()
-        .checked_add(base_time.nseconds())
-        .and_then(|timestamp| timestamp.checked_add(offset))
-        .ok_or(gst::FlowError::Error)?;
     let discrete_state = match state.flow_state.as_ref() {
         Some(FlowState::Discrete(discrete)) => discrete,
         _ => return Err(gst::FlowError::Error),
@@ -40,13 +31,15 @@ pub(crate) fn discrete(
         DiscreteFormat::Video => "VIDEO",
         DiscreteFormat::Data => "DATA",
     };
-    trace!("{media} gst PTS: {:#?}", gst_pts);
     trace!("{media} mapped mxl timestamp: {:#?}", mxl_ts);
     let mxl_index = state
         .instance
         .timestamp_to_index(mxl_ts, &grain_rate)
         .map_err(|_| gst::FlowError::Error)?;
-    trace!("{media} mapped mxl_index from pts: {:#?}", mxl_index);
+    trace!(
+        "{media} mapped mxl_index from running time: {:#?}",
+        mxl_index
+    );
 
     let map = buffer.map_readable().map_err(|_| gst::FlowError::Error)?;
     let payload = match discrete_state.format {
