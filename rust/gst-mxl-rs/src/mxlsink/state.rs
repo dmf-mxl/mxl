@@ -170,6 +170,7 @@ pub(crate) enum DiscreteFlowDef {
 pub(crate) struct ContinuousState {
     pub writer: SamplesWriter,
     pub flow_def: FlowDefAudio,
+    pub next_index: Option<u64>,
 }
 
 #[derive(Default)]
@@ -381,6 +382,7 @@ pub(crate) fn init_state_with_audio(
     state.flow_state = Some(FlowState::Continuous(ContinuousState {
         writer,
         flow_def: flow_def_details,
+        next_index: None,
     }));
     state.flow_config = Some(flow);
 
