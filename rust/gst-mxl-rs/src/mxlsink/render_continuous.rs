@@ -6,17 +6,15 @@ use crate::mxlsink::{
     state::{ContinuousState, FlowState},
 };
 
-use gstreamer::{self as gst, prelude::ElementExt};
+use gstreamer as gst;
 use mxl::Rational;
 use tracing::trace;
 
 pub(crate) fn continuous(
     state: &mut mxlsink::state::State,
-    element: &gst::Element,
     buffer: &gst::Buffer,
-    offset: u64,
+    mxl_ts: u64,
 ) -> Result<gst::FlowSuccess, gst::FlowError> {
-    let base_time = element.base_time().ok_or(gst::FlowError::Error)?;
     let map = buffer.map_readable().map_err(|_| gst::FlowError::Error)?;
     let src = map.as_slice();
     let buffer_length = state
@@ -27,8 +25,7 @@ pub(crate) fn continuous(
         .map_err(|_| gst::FlowError::Error)?
         .bufferLength as u64;
     let max_chunk = (buffer_length / 2) as usize;
-    let gst_pts = buffer.pts().ok_or(gst::FlowError::Error)?;
-    trace!("AUDIO gst PTS: {:#?}", gst_pts);
+    trace!("AUDIO mapped mxl timestamp: {:#?}", mxl_ts);
 
     let continuous_state = match state.flow_state.as_mut() {
         Some(FlowState::Continuous(continuous)) => continuous,
@@ -46,11 +43,7 @@ pub(crate) fn continuous(
     let mut src_offset_samples = 0;
     // First chunk's MXL timestamp; each chunk advances by its own duration so
     // consecutive chunks map to consecutive sample indices.
-    let mut base_mxl_ts = gst_pts
-        .nseconds()
-        .checked_add(base_time.nseconds())
-        .and_then(|timestamp| timestamp.checked_add(offset))
-        .ok_or(gst::FlowError::Error)?;
+    let mut base_mxl_ts = mxl_ts;
 
     while remaining > 0 {
         let chunk_mxl_ts = base_mxl_ts;
@@ -80,7 +73,7 @@ pub(crate) fn continuous(
             .instance
             .timestamp_to_index(chunk_mxl_ts, &sample_rate)
             .map_err(|_| gst::FlowError::Error)?;
-        trace!("AUDIO mapped mxl_index from pts: {:#?}", mxl_index);
+        trace!("AUDIO mapped mxl_index from running time: {:#?}", mxl_index);
 
         // GstBaseSink (sync=true) has already waited for this buffer's running
         // time, so commit straight to the ring here: no separate pacing.
