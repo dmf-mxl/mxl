@@ -3,12 +3,65 @@
 
 use crate::mxlsink::{
     self,
+    imp::CAT,
     state::{ContinuousState, FlowState},
 };
 
 use gstreamer as gst;
 use mxl::Rational;
 use tracing::trace;
+
+/// Largest difference between a buffer's timestamp and the end of the previous buffer the the sink
+/// still treats as continuous audio.
+pub(crate) const ALIGNMENT_THRESHOLD_NS: u64 = 40_000_000;
+
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum Placement {
+    /// Write the buffer from `skip` onwards, starting at flow index
+    /// `index`.
+    Write {
+        index: u64,
+        skip: u64,
+    },
+    Drop,
+}
+
+/// Decide where to write a buffer of `samples` samples whose timestamp maps to
+/// flow index `ts_index`.
+pub(crate) fn place_buffer(
+    next_index: Option<u64>,
+    ts_index: u64,
+    samples: u64,
+    threshold: u64,
+) -> Placement {
+    let Some(next_index) = next_index else {
+        return Placement::Write {
+            index: ts_index,
+            skip: 0,
+        };
+    };
+    if ts_index.abs_diff(next_index) <= threshold {
+        return Placement::Write {
+            index: next_index,
+            skip: 0,
+        };
+    }
+    if ts_index > next_index {
+        return Placement::Write {
+            index: ts_index,
+            skip: 0,
+        };
+    }
+    let overlap = next_index - ts_index;
+    if overlap >= samples {
+        Placement::Drop
+    } else {
+        Placement::Write {
+            index: next_index,
+            skip: overlap,
+        }
+    }
+}
 
 pub(crate) fn continuous(
     state: &mut mxlsink::state::State,
@@ -39,14 +92,59 @@ pub(crate) fn continuous(
         denominator: continuous_state.flow_def.sample_rate.denominator as i64,
     };
 
-    let mut remaining = samples_per_buffer;
-    let mut src_offset_samples = 0;
-    // First chunk's MXL timestamp; each chunk advances by its own duration so
-    // consecutive chunks map to consecutive sample indices.
-    let mut base_mxl_ts = mxl_ts;
+    let ts_index = state
+        .instance
+        .timestamp_to_index(mxl_ts, &sample_rate)
+        .map_err(|_| gst::FlowError::Error)?;
+    let threshold = threshold_samples(&sample_rate)?;
+    let samples_u64 = u64::try_from(samples_per_buffer).map_err(|_| gst::FlowError::Error)?;
+    let placement = place_buffer(
+        continuous_state.next_index,
+        ts_index,
+        samples_u64,
+        threshold,
+    );
+    trace!(
+        "AUDIO buffer with timestamp index {} and expected index {:?}: {:?}",
+        ts_index, continuous_state.next_index, placement
+    );
+    let (start_index, skip) = match placement {
+        Placement::Write { index, skip } => (index, skip),
+        Placement::Drop => {
+            gst::warning!(
+                CAT,
+                "Dropping audio buffer at index {} with {} samples.",
+                ts_index,
+                samples_per_buffer,
+            );
+            return Ok(gst::FlowSuccess::Ok);
+        }
+    };
+    if skip > 0 {
+        gst::warning!(
+            CAT,
+            "Audio buffer at index {} overlaps already written samples, dropping its first {} samples",
+            ts_index,
+            skip
+        );
+    } else if continuous_state
+        .next_index
+        .is_some_and(|next| start_index != next)
+    {
+        gst::warning!(
+            CAT,
+            "Discontinuity in audio timestamps: expected index {:?}, got {}",
+            continuous_state.next_index,
+            ts_index
+        );
+    }
+
+    let skip = usize::try_from(skip).map_err(|_| gst::FlowError::Error)?;
+    let mut remaining = samples_per_buffer - skip;
+    let mut src_offset_samples = skip;
+    let mut chunk_index = start_index;
 
     while remaining > 0 {
-        let chunk_mxl_ts = base_mxl_ts;
         let chunk_samples = remaining.min(max_chunk);
         let chunk_bytes = chunk_samples * num_channels * bytes_per_sample;
         let chunk = compute_chunk(
@@ -56,30 +154,16 @@ pub(crate) fn continuous(
             src_offset_samples,
             chunk_bytes,
         );
-        let chunk_duration_ns =
-            (chunk_samples as u128 * sample_rate.denominator as u128 * 1_000_000_000u128)
-                / sample_rate.numerator as u128;
-        let chunk_duration_ns =
-            u64::try_from(chunk_duration_ns).map_err(|_| gst::FlowError::Error)?;
-        base_mxl_ts = base_mxl_ts
-            .checked_add(chunk_duration_ns)
-            .ok_or(gst::FlowError::Error)?;
         trace!(
-            "AUDIO chunk with samples {:#?} with MXL ts: {:#?}",
-            chunk_samples, chunk_mxl_ts
+            "AUDIO chunk with samples {:#?} at MXL index: {:#?}",
+            chunk_samples, chunk_index
         );
-
-        let mxl_index = state
-            .instance
-            .timestamp_to_index(chunk_mxl_ts, &sample_rate)
-            .map_err(|_| gst::FlowError::Error)?;
-        trace!("AUDIO mapped mxl_index from running time: {:#?}", mxl_index);
 
         // GstBaseSink (sync=true) has already waited for this buffer's running
         // time, so commit straight to the ring here: no separate pacing.
-        commit_chunk(
+        chunk_index = commit_chunk(
             continuous_state,
-            mxl_index,
+            chunk_index,
             chunk,
             chunk_samples,
             bytes_per_sample,
@@ -91,6 +175,19 @@ pub(crate) fn continuous(
     Ok(gst::FlowSuccess::Ok)
 }
 
+/// [`ALIGNMENT_THRESHOLD_NS`] in samples at `sample_rate`.
+fn threshold_samples(sample_rate: &Rational) -> Result<u64, gst::FlowError> {
+    let numerator = u128::try_from(sample_rate.numerator).map_err(|_| gst::FlowError::Error)?;
+    let denominator = u128::try_from(sample_rate.denominator).map_err(|_| gst::FlowError::Error)?;
+    if denominator == 0 {
+        return Err(gst::FlowError::Error);
+    }
+    let samples = ALIGNMENT_THRESHOLD_NS as u128 * numerator / (denominator * 1_000_000_000u128);
+    u64::try_from(samples).map_err(|_| gst::FlowError::Error)
+}
+
+/// Write `chunk` starting at flow index `index` and return the index one past
+/// its last sample.
 fn commit_chunk(
     continuous_state: &mut ContinuousState,
     index: u64,
@@ -98,7 +195,7 @@ fn commit_chunk(
     chunk_samples: usize,
     bytes_per_sample: usize,
     num_channels: usize,
-) -> Result<(), gst::FlowError> {
+) -> Result<u64, gst::FlowError> {
     // `open_samples(end, count)` writes the `count` samples at absolute indices
     // `[end - count, end)` (last written is `end - 1`). `index` is this chunk's
     // first sample, so pass `index + chunk_samples` as the end.
@@ -109,7 +206,17 @@ fn commit_chunk(
     let mut access = continuous_state
         .writer
         .open_samples(end, chunk_samples)
-        .map_err(|_| gst::FlowError::Error)?;
+        .map_err(|e| {
+            gst::error!(
+                CAT,
+                "Failed to open {} samples ending at index {} (next index {:?}): {}",
+                chunk_samples,
+                end,
+                continuous_state.next_index,
+                e
+            );
+            gst::FlowError::Error
+        })?;
     write_samples_per_channel(
         bytes_per_sample,
         num_channels,
@@ -117,8 +224,17 @@ fn commit_chunk(
         chunk_samples,
         chunk,
     )?;
-    access.commit().map_err(|_| gst::FlowError::Error)?;
-    Ok(())
+    access.commit().map_err(|e| {
+        gst::error!(
+            CAT,
+            "Failed to commit samples ending at index {}: {}",
+            end,
+            e
+        );
+        gst::FlowError::Error
+    })?;
+    continuous_state.next_index = Some(end);
+    Ok(end)
 }
 
 fn write_samples_per_channel(
