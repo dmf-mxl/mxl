@@ -222,3 +222,62 @@ fn writes_buffer_straddling_segment_start_in_sequence() {
         .set_state(gst::State::Null)
         .expect("producer Null");
 }
+
+/// A frame whose timestamp maps to a grain that was already written, as at an
+/// item boundary in `uriplaylistbin`, must be dropped. The writer rejects such
+/// an index, which used to stop the pipeline with a flow error.
+#[test]
+fn drops_frame_with_already_written_index() {
+    init();
+    if let Some(reason) = skip_reason(&["appsrc", "mxlsink"]) {
+        skip!(reason);
+    }
+    let flow_id = uuid::Uuid::new_v4().to_string();
+    let domain_guard = TestDomainGuard::new("duplicate_grain_index");
+    let domain = domain_guard.domain();
+    let producer = build_producer(&flow_id, &domain);
+
+    producer
+        .pipeline
+        .set_state(gst::State::Playing)
+        .expect("producer Playing");
+    const FRAMES: u64 = 5;
+    const DUPLICATE_MARKER: u8 = 0xff;
+    let pts = |k: u64| SEGMENT_START + gst::ClockTime::from_nseconds(k * FRAME_NS);
+    for k in 0..FRAMES {
+        producer.push(pts(k), k as u8);
+        if k == 2 {
+            producer.push(pts(k), DUPLICATE_MARKER);
+        }
+    }
+    producer.finish();
+
+    let instance = mxl_instance(&domain);
+    let reader = instance
+        .create_flow_reader(&flow_id)
+        .expect("flow reader")
+        .to_grain_reader()
+        .expect("grain reader");
+    let head = reader.get_runtime_info().expect("runtime info").headIndex;
+    // Only the most recent grains are still readable. Frame 2 is the one the
+    // duplicate collided with, so check from there.
+    for k in 2..FRAMES {
+        let index = head - (FRAMES - 1 - k);
+        let grain = reader
+            .get_grain_non_blocking(index)
+            .unwrap_or_else(|e| panic!("grain {index} (frame {k}) not readable: {e:?}"));
+        assert_eq!(
+            grain.index, index,
+            "grain {index} was overwritten or missing"
+        );
+        assert_eq!(
+            grain.payload[0], k as u8,
+            "grain {index} should hold frame {k}"
+        );
+    }
+
+    producer
+        .pipeline
+        .set_state(gst::State::Null)
+        .expect("producer Null");
+}
