@@ -294,4 +294,21 @@ mod tests {
             Placement::Drop
         );
     }
+
+    #[test]
+    fn place_grain_writes_at_timestamp_index() {
+        use crate::mxlsink::render_discrete::place_grain;
+        assert_eq!(place_grain(None, 1000), Some(1000));
+        assert_eq!(place_grain(Some(1000), 1000), Some(1000));
+        // A gap is not closed: the grain keeps its own index.
+        assert_eq!(place_grain(Some(1000), 1001), Some(1001));
+        assert_eq!(place_grain(Some(1000), 5000), Some(5000));
+    }
+
+    #[test]
+    fn place_grain_drops_already_written_index() {
+        use crate::mxlsink::render_discrete::place_grain;
+        assert_eq!(place_grain(Some(1000), 999), None);
+        assert_eq!(place_grain(Some(1000), 10), None);
+    }
 }
