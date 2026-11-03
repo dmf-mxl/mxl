@@ -158,6 +158,8 @@ pub(crate) struct DiscreteState {
     pub format: DiscreteFormat,
     pub writer: GrainWriter,
     pub flow_def: DiscreteFlowDef,
+    /// Index one past the last committed grain; `None` before the first commit.
+    pub next_index: Option<u64>,
 }
 
 /// Video vs data details stored alongside the discrete writer.
@@ -301,6 +303,7 @@ pub(crate) fn init_state_with_video(
         format: DiscreteFormat::Video,
         writer,
         flow_def: DiscreteFlowDef::Video(flow_def_details),
+        next_index: None,
     }));
     state.flow_config = Some(flow);
 
@@ -468,6 +471,7 @@ pub(crate) fn init_state_with_data(
         format: DiscreteFormat::Data,
         writer,
         flow_def: DiscreteFlowDef::Data(flow_def_details),
+        next_index: None,
     }));
     state.flow_config = Some(flow);
 

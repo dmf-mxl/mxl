@@ -6,11 +6,22 @@ use std::borrow::Cow;
 use crate::format;
 use crate::mxlsink::{
     self,
+    imp::CAT,
     state::{DiscreteFormat, DiscreteState, FlowState},
 };
 
 use gstreamer as gst;
 use tracing::trace;
+
+/// Decide which flow index a grain is written to, given the index its timestamp
+/// maps to. Returns `None` when that index was already written, because the
+/// writer only accepts indices after the last committed one.
+pub(crate) fn place_grain(next_index: Option<u64>, ts_index: u64) -> Option<u64> {
+    match next_index {
+        Some(next) if ts_index < next => None,
+        _ => Some(ts_index),
+    }
+}
 
 pub(crate) fn discrete(
     state: &mut mxlsink::state::State,
@@ -23,7 +34,7 @@ pub(crate) fn discrete(
         .grain_rate()
         .map_err(|_| gst::FlowError::Error)?;
 
-    let discrete_state = match state.flow_state.as_ref() {
+    let discrete_state = match state.flow_state.as_mut() {
         Some(FlowState::Discrete(discrete)) => discrete,
         _ => return Err(gst::FlowError::Error),
     };
@@ -40,6 +51,16 @@ pub(crate) fn discrete(
         "{media} mapped mxl_index from running time: {:#?}",
         mxl_index
     );
+    let Some(mxl_index) = place_grain(discrete_state.next_index, mxl_index) else {
+        gst::warning!(
+            CAT,
+            "Dropping {} grain at index {}, which was already written (next index {:?})",
+            media,
+            mxl_index,
+            discrete_state.next_index,
+        );
+        return Ok(gst::FlowSuccess::Ok);
+    };
 
     let map = buffer.map_readable().map_err(|_| gst::FlowError::Error)?;
     let payload = match discrete_state.format {
@@ -58,19 +79,27 @@ pub(crate) fn discrete(
 
 fn commit_grain(
     payload: &[u8],
-    discrete_state: &DiscreteState,
+    discrete_state: &mut DiscreteState,
     index: u64,
 ) -> Result<(), gst::FlowError> {
-    let mut access = discrete_state
-        .writer
-        .open_grain(index)
-        .map_err(|_| gst::FlowError::Error)?;
+    let mut access = discrete_state.writer.open_grain(index).map_err(|e| {
+        gst::error!(
+            CAT,
+            "Failed to open grain at index {} (next index {:?}): {}",
+            index,
+            discrete_state.next_index,
+            e
+        );
+        gst::FlowError::Error
+    })?;
     let destination = access.payload_mut();
     let copy_len = std::cmp::min(destination.len(), payload.len());
     destination[..copy_len].copy_from_slice(&payload[..copy_len]);
     let total_slices = access.total_slices();
-    access
-        .commit(total_slices)
-        .map_err(|_| gst::FlowError::Error)?;
+    access.commit(total_slices).map_err(|e| {
+        gst::error!(CAT, "Failed to commit grain at index {}: {}", index, e);
+        gst::FlowError::Error
+    })?;
+    discrete_state.next_index = Some(index + 1);
     Ok(())
 }
