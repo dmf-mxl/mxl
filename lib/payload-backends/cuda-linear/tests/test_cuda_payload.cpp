@@ -13,6 +13,7 @@
 #include <cuda_runtime_api.h>
 #include <spawn.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <catch2/catch_test_macros.hpp>
 #include <mxl/storage/cuda_device_pointer.h>
@@ -334,6 +335,57 @@ TEST_CASE("CUDA payload : Reader in another process", "[cuda payload]")
                 std::to_string(index),
                 std::to_string(0x5C),
                 R"({"payload": {"deviceUuid": ")" + uuid + R"("}})"}) == 0);
+}
+
+TEST_CASE("CUDA payload : A refused second writer leaves the first writer's payload socket and allocation", "[cuda payload]")
+{
+    if (mxl::tests::cuda::deviceCount() == 0)
+    {
+        SKIP("No CUDA device.");
+    }
+    auto const uuid = mxl::tests::cuda::deviceUuid(0);
+    auto const domain = Domain{};
+    auto writer = CudaWriter{domain.path(), deviceOptions(uuid)};
+
+    auto layout = mxlGrainStorageLayout{};
+    REQUIRE(mxlFlowWriterGetStorageLayout(writer.writer(), &layout) == MXL_STATUS_OK);
+    auto writerSlots = std::vector<mxlGrainStorage>(layout.slotCount);
+    REQUIRE(mxlFlowWriterMapSlots(writer.writer(), layout.slotCount, writerSlots.data()) == MXL_STATUS_OK);
+    auto const index = writer.writeGrain(writerSlots, 0x6D);
+
+    auto const socketPath = domain.path() / (std::string{V210_FLOW_ID} + ".mxl-flow") / "payload.sock";
+    struct stat before{};
+    REQUIRE(::lstat(socketPath.c_str(), &before) == 0);
+
+    // A second writer for the same flow prepares its own storage, fails to publish and is refused.
+    auto* const secondInstance = mxlCreateInstance(domain.path().string().c_str(), "");
+    REQUIRE(secondInstance != nullptr);
+    auto const flowDef = readFile(std::filesystem::path{MXL_TEST_DATA_DIR} / "v210_flow.json");
+    auto secondWriter = mxlFlowWriter{nullptr};
+    auto secondConfig = mxlFlowConfigInfo{};
+    REQUIRE(
+        mxlCreateFlowWriter(secondInstance, flowDef.c_str(), deviceOptions(uuid).c_str(), &secondWriter, &secondConfig, nullptr) == MXL_ERR_CONFLICT);
+    mxlDestroyInstance(secondInstance);
+
+    // The first writer's socket is still the one it bound, and a reader in another process can import the payload.
+    struct stat after{};
+    REQUIRE(::lstat(socketPath.c_str(), &after) == 0);
+    REQUIRE(after.st_ino == before.st_ino);
+    REQUIRE(runReaderHelper({domain.path().string(), V210_FLOW_ID, std::to_string(index), std::to_string(0x6D)}) == 0);
+
+    // A reader in this process still shares the first writer's allocation, not the refused writer's.
+    auto* const readerInstance = mxlCreateInstance(domain.path().string().c_str(), "");
+    REQUIRE(readerInstance != nullptr);
+    auto reader = mxlFlowReader{nullptr};
+    REQUIRE(mxlCreateFlowReader(readerInstance, V210_FLOW_ID, "", &reader) == MXL_STATUS_OK);
+    auto readerSlots = std::vector<mxlGrainStorage>(layout.slotCount);
+    REQUIRE(mxlFlowReaderMapSlots(reader, layout.slotCount, readerSlots.data()) == MXL_STATUS_OK);
+    for (auto i = std::size_t{0}; i < readerSlots.size(); ++i)
+    {
+        REQUIRE(mxlGetCudaGrainStorage(&readerSlots[i]).pointer == mxlGetCudaGrainStorage(&writerSlots[i]).pointer);
+    }
+    REQUIRE(mxlReleaseFlowReader(readerInstance, reader) == MXL_STATUS_OK);
+    mxlDestroyInstance(readerInstance);
 }
 
 TEST_CASE("CUDA payload : Reader on a peer GPU", "[cuda payload]")
