@@ -281,6 +281,7 @@ namespace mxl::lib
                 ::unlink(path.c_str());
                 throw PayloadStorageError{MXL_ERR_UNKNOWN, fmt::format("Could not listen on the payload socket '{}'.", path)};
             }
+            rememberBoundSocket();
             applySocketMode();
             try
             {
@@ -325,14 +326,42 @@ namespace mxl::lib
                     ::close(fd);
                 }
             }
-            ::unlink(_publishedPath.c_str());
-            ::unlink(_bindPath.c_str());
+            // Remove only the socket this server bound. A writer that loses the race to publish its flow is destroyed
+            // with _publishedPath naming the flow it could not publish: that path then holds another writer's socket.
+            unlinkIfOwnSocket(_publishedPath);
+            unlinkIfOwnSocket(_bindPath);
         }
 
         PayloadFdServer(PayloadFdServer const&) = delete;
         PayloadFdServer& operator=(PayloadFdServer const&) = delete;
 
     private:
+        /** Record the identity of the socket just bound, so the destructor can tell it from another writer's. */
+        void rememberBoundSocket()
+        {
+            struct stat info{};
+            if (::lstat(_bindPath.c_str(), &info) == 0)
+            {
+                _boundDevice = info.st_dev;
+                _boundInode = info.st_ino;
+                _boundKnown = true;
+            }
+        }
+
+        /**
+         * Unlink a path only if it is the socket this server bound. Renaming the flow directory keeps the inode, so
+         * the published path matches once the flow is published.
+         */
+        void unlinkIfOwnSocket(std::filesystem::path const& path) const noexcept
+        {
+            struct stat info{};
+            if (_boundKnown && (::lstat(path.c_str(), &info) == 0) && S_ISSOCK(info.st_mode) && (info.st_dev == _boundDevice) &&
+                (info.st_ino == _boundInode))
+            {
+                ::unlink(path.c_str());
+            }
+        }
+
         /** Match the socket's write permission to the flow directory's read permission. */
         void applySocketMode()
         {
@@ -446,6 +475,9 @@ namespace mxl::lib
         int _listen;
         std::atomic<bool> _stop;
         std::thread _thread;
+        dev_t _boundDevice{0};
+        ino_t _boundInode{0};
+        bool _boundKnown{false};
     };
 
     PayloadBackendLoader& PayloadBackendLoader::defaultLoader()
