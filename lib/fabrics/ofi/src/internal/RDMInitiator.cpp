@@ -238,33 +238,41 @@ namespace mxl::lib::fabrics::ofi
     // makeProgressBlocking
     Initiator::MakeProgressResult RDMInitiator::makeProgressBlocking(std::chrono::steady_clock::duration timeout)
     {
-        auto now = std::chrono::steady_clock::now();
-        activateIdleEndpoints();
-        auto elapsed = std::chrono::steady_clock::now() - now;
-
-        auto remaining = timeout - elapsed;
-        if (remaining.count() >= 0)
+        try
         {
-            try
+            if (timeout < Endpoint::EQReadInterval)
             {
-                blockOnCQ(remaining);
+                makeProgress();
+                blockOnCQ(timeout);
+                return afterProgressResult();
             }
-            catch (FabricException const& ex)
+
+            auto const deadline = std::chrono::steady_clock::now() + timeout;
+            for (;;)
             {
-                if (ex.isInterrupted())
+                if (std::holds_alternative<Initiator::Ready>(makeProgress()))
                 {
-                    return Initiator::Interrupted{};
+                    return Initiator::Ready{};
                 }
-                throw;
+
+                auto const timeUntilDeadline = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - std::chrono::steady_clock::now());
+                if (timeUntilDeadline <= std::chrono::milliseconds::zero())
+                {
+                    return afterProgressResult();
+                }
+
+                // Bounded so that makeProgress() reads the event queue at least once per interval.
+                blockOnCQ(std::min(Endpoint::EQReadInterval, timeUntilDeadline));
             }
         }
-        else
+        catch (FabricException const& ex)
         {
-            drainCQ();
+            if (ex.isInterrupted())
+            {
+                return Initiator::Interrupted{};
+            }
+            throw;
         }
-        drainEventQueue(*_endpoint.eventQueue());
-
-        return afterProgressResult();
     }
 
     RDMInitiatorTarget& RDMInitiator::findRemoteByEndpoint(Endpoint::Id id)
