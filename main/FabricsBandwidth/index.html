@@ -24,7 +24,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.73">
+      <meta name="generator" content="zensical-0.1.0">
     
     
       
@@ -713,7 +713,7 @@
   <span class="md-ellipsis">
     
   
-  Getting Started
+  Overview
 
     
   </span>
@@ -740,7 +740,7 @@
   <span class="md-ellipsis">
     
   
-  Developer Guide
+  Usage
 
     
   </span>
@@ -871,12 +871,12 @@
   <a href="#1-media-payload-calculation-protocol-agnostic" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        1) Media Payload Calculation (Protocol-Agnostic)
+        1. Media Payload Calculation (Protocol-Agnostic)
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="1) Media Payload Calculation (Protocol-Agnostic)">
+    <nav class="md-nav" aria-label="1. Media Payload Calculation (Protocol-Agnostic)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -938,12 +938,12 @@
   <a href="#2-mxl-sdklibfabric-provider-transport-model" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        2) MXL SDK/libfabric Provider Transport Model
+        2. MXL SDK/libfabric Provider Transport Model
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="2) MXL SDK&#x2f;libfabric Provider Transport Model">
+    <nav class="md-nav" aria-label="2. MXL SDK&#x2f;libfabric Provider Transport Model">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -988,7 +988,7 @@
   <a href="#3-final-wire-bandwidth-calculation" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        3) Final Wire Bandwidth Calculation
+        3. Final Wire Bandwidth Calculation
       </span>
     </span>
   </a>
@@ -999,12 +999,12 @@
   <a href="#4-worked-examples" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        4) Worked Examples
+        4. Worked Examples
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="4) Worked Examples">
+    <nav class="md-nav" aria-label="4. Worked Examples">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1176,12 +1176,12 @@
   <a href="#1-media-payload-calculation-protocol-agnostic" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        1) Media Payload Calculation (Protocol-Agnostic)
+        1. Media Payload Calculation (Protocol-Agnostic)
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="1) Media Payload Calculation (Protocol-Agnostic)">
+    <nav class="md-nav" aria-label="1. Media Payload Calculation (Protocol-Agnostic)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1243,12 +1243,12 @@
   <a href="#2-mxl-sdklibfabric-provider-transport-model" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        2) MXL SDK/libfabric Provider Transport Model
+        2. MXL SDK/libfabric Provider Transport Model
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="2) MXL SDK&#x2f;libfabric Provider Transport Model">
+    <nav class="md-nav" aria-label="2. MXL SDK&#x2f;libfabric Provider Transport Model">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1293,7 +1293,7 @@
   <a href="#3-final-wire-bandwidth-calculation" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        3) Final Wire Bandwidth Calculation
+        3. Final Wire Bandwidth Calculation
       </span>
     </span>
   </a>
@@ -1304,12 +1304,12 @@
   <a href="#4-worked-examples" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        4) Worked Examples
+        4. Worked Examples
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="4) Worked Examples">
+    <nav class="md-nav" aria-label="4. Worked Examples">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1458,7 +1458,7 @@
 <!-- SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project. -->
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 
-<h1 id="mxl-fabric-media-payload-calculation">MXL Fabric: Media Payload Calculation</h1>
+<h1 id="bandwidth">Bandwidth</h1>
 <h2 id="goal">Goal</h2>
 <p>Estimate wire bandwidth for MXL media streams across libfabric providers.</p>
 <h2 id="assumptions-and-units">Assumptions and Units</h2>
@@ -1469,7 +1469,7 @@
 <li>Rates are presented in decimal units (<code>MB/s = 10^6 B/s</code>, <code>GB/s = 10^9 B/s</code>).</li>
 </ul>
 <hr />
-<h2 id="1-media-payload-calculation-protocol-agnostic">1) Media Payload Calculation (Protocol-Agnostic)</h2>
+<h2 id="1-media-payload-calculation-protocol-agnostic">1. Media Payload Calculation (Protocol-Agnostic)</h2>
 <p>This section calculates raw media byte rate before adding network or protocol overhead.</p>
 <h3 id="video-v210">Video (v210)</h3>
 <div class="arithmatex">\[
@@ -1539,7 +1539,7 @@ bytesPerGrain = 4096
 mediaBytesPerSecond = bytesPerGrain \times grainRate
 \]</div>
 <hr />
-<h2 id="2-mxl-sdklibfabric-provider-transport-model">2) MXL SDK/libfabric Provider Transport Model</h2>
+<h2 id="2-mxl-sdklibfabric-provider-transport-model">2. MXL SDK/libfabric Provider Transport Model</h2>
 <p>This section converts media byte rate into packet rate and adds transport constraints.</p>
 <h3 id="provider-profile-contract">Provider Profile Contract</h3>
 <p>Use these transport constants per libfabric provider:
@@ -1584,12 +1584,12 @@ packetsPerSecond = packetsPerEvent \times eventRate
     - Data: <code>bytesPerGrain</code>
 - <code>eventRate</code> is the number of events per second (<code>fps</code>, <code>1/ptime</code>, or <code>grainRate</code>).</p>
 <hr />
-<h2 id="3-final-wire-bandwidth-calculation">3) Final Wire Bandwidth Calculation</h2>
+<h2 id="3-final-wire-bandwidth-calculation">3. Final Wire Bandwidth Calculation</h2>
 <div class="arithmatex">\[
 wireBytesPerSecond = mediaBytesPerSecond + packetsPerSecond \times providerWireOverheadBytes
 \]</div>
 <hr />
-<h2 id="4-worked-examples">4) Worked Examples</h2>
+<h2 id="4-worked-examples">4. Worked Examples</h2>
 <p>All examples in this section use provider <code>rdma_rocev2</code> with:
 - <code>providerMtuOverheadBytes = 44</code>
 - <code>providerWireOverheadBytes = 82</code></p>
@@ -1808,10 +1808,10 @@ wireBytesPerSecond = mediaBytesPerSecond + packetsPerSecond \times providerWireO
       
         
         
-      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["announce.dismiss","content.code.annotate","content.code.copy","content.code.select","content.footnote.tooltips","content.tabs.link","content.tooltips","navigation.expand","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.prefetch","navigation.path","navigation.sections","navigation.top","navigation.tracking","search.highlight"],"redirect":null,"search":"../assets/javascripts/workers/search.c47bb847.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","clipboard.error":"Could not copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":{"provider":"mike"}}</script>
+      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["announce.dismiss","content.code.annotate","content.code.copy","content.code.select","content.footnote.tooltips","content.tabs.link","content.tooltips","navigation.expand","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.prefetch","navigation.path","navigation.sections","navigation.top","navigation.tracking","search.highlight"],"redirect":null,"search":"../assets/javascripts/workers/search.719e0d91.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","clipboard.error":"Could not copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":{"provider":"mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.77dd0ce9.min.js"></script>
+      <script src="../assets/javascripts/bundle.d31f0ffa.min.js"></script>
       
         <script src="../javascripts/mermaid.js"></script>
       

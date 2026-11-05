@@ -24,7 +24,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="zensical-0.0.73">
+      <meta name="generator" content="zensical-0.1.0">
     
     
       
@@ -713,7 +713,7 @@
   <span class="md-ellipsis">
     
   
-  Getting Started
+  Overview
 
     
   </span>
@@ -740,7 +740,7 @@
   <span class="md-ellipsis">
     
   
-  Developer Guide
+  Usage
 
     
   </span>
@@ -1162,19 +1162,19 @@
   <a href="#72-moving-an-audio-continuous-flow" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        7.2 - Moving an audio (continuous) flow
+        7.2 Moving an audio (continuous) flow
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="7.2 - Moving an audio (continuous) flow">
+    <nav class="md-nav" aria-label="7.2 Moving an audio (continuous) flow">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#721-remote-write" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        7.2.1 - Remote Write
+        7.2.1 Remote Write
       </span>
     </span>
   </a>
@@ -1185,7 +1185,7 @@
   <a href="#722-rdm-endpoint-scatter-gather-with-tagged-sendrecv" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        7.2.2 - RDM endpoint Scatter-Gather with Tagged Send/Recv
+        7.2.2 RDM endpoint Scatter-Gather with Tagged Send/Recv
       </span>
     </span>
   </a>
@@ -1196,7 +1196,7 @@
   <a href="#723-sendrecv-with-dgram-endpoint" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        7.2.3 - Send/Recv with DGRAM endpoint
+        7.2.3 Send/Recv with DGRAM endpoint
       </span>
     </span>
   </a>
@@ -1207,7 +1207,7 @@
   <a href="#724-sendrecv-with-msg-endpoint" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        7.2.4 - Send/Recv with MSG Endpoint
+        7.2.4 Send/Recv with MSG Endpoint
       </span>
     </span>
   </a>
@@ -1234,7 +1234,7 @@
   <a href="#73-bouncing-buffer-unpacking" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        7.3 - Bouncing Buffer Unpacking
+        7.3 Bouncing Buffer Unpacking
       </span>
     </span>
   </a>
@@ -1783,19 +1783,19 @@
   <a href="#72-moving-an-audio-continuous-flow" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        7.2 - Moving an audio (continuous) flow
+        7.2 Moving an audio (continuous) flow
       </span>
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="7.2 - Moving an audio (continuous) flow">
+    <nav class="md-nav" aria-label="7.2 Moving an audio (continuous) flow">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#721-remote-write" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        7.2.1 - Remote Write
+        7.2.1 Remote Write
       </span>
     </span>
   </a>
@@ -1806,7 +1806,7 @@
   <a href="#722-rdm-endpoint-scatter-gather-with-tagged-sendrecv" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        7.2.2 - RDM endpoint Scatter-Gather with Tagged Send/Recv
+        7.2.2 RDM endpoint Scatter-Gather with Tagged Send/Recv
       </span>
     </span>
   </a>
@@ -1817,7 +1817,7 @@
   <a href="#723-sendrecv-with-dgram-endpoint" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        7.2.3 - Send/Recv with DGRAM endpoint
+        7.2.3 Send/Recv with DGRAM endpoint
       </span>
     </span>
   </a>
@@ -1828,7 +1828,7 @@
   <a href="#724-sendrecv-with-msg-endpoint" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        7.2.4 - Send/Recv with MSG Endpoint
+        7.2.4 Send/Recv with MSG Endpoint
       </span>
     </span>
   </a>
@@ -1855,7 +1855,7 @@
   <a href="#73-bouncing-buffer-unpacking" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        7.3 - Bouncing Buffer Unpacking
+        7.3 Bouncing Buffer Unpacking
       </span>
     </span>
   </a>
@@ -2036,7 +2036,7 @@
 <!-- SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project. -->
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 
-<h1 id="fabrics">Fabrics</h1>
+<h1 id="implementation">Implementation</h1>
 <p>This page presents the details of the libfabric implementation of the Fabrics API. This page assumes familiarity with the MXL Flow API, with asynchronous networking workflows and RDMA. A good place to start would be to read the proposition <a href="https://github.com/dmf-mxl/mxl/wiki/MXL-Inter-host-memory-sharing-%E2%80%90-Proposition">MXL Inter host memory sharing ‐ Proposition</a>.</p>
 <h2 id="1-requirements">1. Requirements</h2>
 <ul>
@@ -2359,15 +2359,15 @@ With untagged Send/Recv, the receiver cannot direct an incoming message to a spe
 <li>Send/Recv Bouncing buffer: We use a bouncing buffer on the receiver side. All receives are posted to the same buffer. Upon completion, we can retrieve the head index associated with the transfer and the data must be copied from this bouncing buffer to the actual buffer.</li>
 <li>Tag matching: We use tag matching, where the tag corresponds to the head index. With this solution we avoid the bouncing buffer, but then the receiver has to know exactly which head index to expect. <em>This means we need to keep both the target and initiator synchronized, which can be cumbersome. Also, a copy is involved if hardware tag matching is not correctly leveraged or if the NIC does not support it.</em></li>
 </ul>
-<h3 id="72-moving-an-audio-continuous-flow">7.2 - Moving an audio (continuous) flow</h3>
+<h3 id="72-moving-an-audio-continuous-flow">7.2 Moving an audio (continuous) flow</h3>
 <p>When moving audio flow samples across hosts, one will typically determine the number of samples per channel to move at once. Since the audio format is planar and not interleave I see many options:</p>
-<h4 id="721-remote-write">7.2.1 - Remote Write</h4>
+<h4 id="721-remote-write">7.2.1 Remote Write</h4>
 <p>This solution allows to re-use the remote write approach that is used for the grains. The solution is to use scatter-gather feature on the source buffers. On the receiver side, we have a bouncing buffer, and upon completion, we need to unpack the samples back to the associated non-contiguous buffers.</p>
-<h4 id="722-rdm-endpoint-scatter-gather-with-tagged-sendrecv">7.2.2 - RDM endpoint Scatter-Gather with Tagged Send/Recv</h4>
+<h4 id="722-rdm-endpoint-scatter-gather-with-tagged-sendrecv">7.2.2 RDM endpoint Scatter-Gather with Tagged Send/Recv</h4>
 <p>Leverage the scatter-gather feature to select multiple non-contiguous buffers at the source and use the same feature at the destination. The only caveat with this approach is that the NIC is required to support this feature (RDMA) and operations like Remote Write and Read in RDMA only supports scatter-gather at the initiator side. To have support of the scatter-gather feature at both the initiator and target side, one has to use the Send/Receive or Tagged API. With the tagged API, each message has a tag which ensure that a specific range of samples will end-up in the receive buffer that was called with the associated tag. This means we don’t need the bouncing buffer that would be required with only send and receive. The only caveat to this is that libfabric only supports a scatter-gather list of size 4 when using Verbs over an RDM endpoint. This means that to transfer 64 channels, 16 transfers would be required.</p>
-<h4 id="723-sendrecv-with-dgram-endpoint">7.2.3 - Send/Recv with DGRAM endpoint</h4>
+<h4 id="723-sendrecv-with-dgram-endpoint">7.2.3 Send/Recv with DGRAM endpoint</h4>
 <p>DGRAM Endpoint when used with Verbs it uses UD Queue Pairs. Only Send/Recv API (no tag matching) is supported by this endpoint. The idea is similar to the remote write approach, we use send (with IMM_DATA) with scatter-gather feature with the source buffers. On the receiving side, we always receive in the same buffer, but we unpack the buffer to the associated non-contiguous buffers. We get better capabilities for scatter-gather (up to hardware max_sge value) than RDM endpoint, but the Queue Pair is unreliable, meaning no guarantees on the delivery and ordering. As a comparison with RDM endpoint which only support scatter-gather list of size 4, on both ConnectX-5 and ConnectX-4 the max scatter-gather list size is 30 instead. Also, it is important to note that on libfabric documentation, DGRAM endpoint for Verbs is supposedly “beta”. It is unclear exactly what this entails — whether it implies performance or operational limitations. It is also worth noting that leveraging fabrics multicast in RDMA requires the DGRAM endpoint, or implementing UD queue pairs directly with libibverbs.</p>
-<h4 id="724-sendrecv-with-msg-endpoint">7.2.4 - Send/Recv with MSG Endpoint</h4>
+<h4 id="724-sendrecv-with-msg-endpoint">7.2.4 Send/Recv with MSG Endpoint</h4>
 <p>Another solution that would work and is maybe more suited to our requirements is using Send/Recv API with scatter-gather feature but using RC Queue pairs through the MSG Endpoint. We get all the same advantages as with the DGRAM endpoint, but we also get reliability and ordering. The only thing, we are potentially giving up is fabrics multicast, which could be a good compromise.</p>
 <h4 id="725-summary">7.2.5 Summary</h4>
 <table>
@@ -2417,7 +2417,7 @@ With untagged Send/Recv, the receiver cannot direct an incoming message to a spe
 </tbody>
 </table>
 <p>Considering the trade-offs, Remote Write is chosen as the primary protocol, but falls back to Send/Recv if Remote Write is not available.</p>
-<h3 id="73-bouncing-buffer-unpacking">7.3 - Bouncing Buffer Unpacking</h3>
+<h3 id="73-bouncing-buffer-unpacking">7.3 Bouncing Buffer Unpacking</h3>
 <p>The transfer will now use the scatter-gather feature on the source buffer to target a ring bouncing buffer on the target side. Upon completion, the target side will copy the entry of the bouncing buffer back to the MXL Audio Flow.</p>
 <p><img alt="cont-flow-rma" src=".././fabrics/img/mxl-fabrics-cont-flow-rma.png" /></p>
 <p>To be able to unpack the bouncing buffer entry back to the mxl audio flow, we require some static information found in the ContinuousFlowData type.
@@ -2593,7 +2593,7 @@ applies to target endpoints; it is ignored for initiators.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../FabricsDeveloperGuide/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Developer Guide">
+          <a href="../FabricsDeveloperGuide/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Usage">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
@@ -2603,7 +2603,7 @@ applies to target endpoints; it is ignored for initiators.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Developer Guide
+                Usage
               </div>
             </div>
           </a>
@@ -2662,10 +2662,10 @@ applies to target endpoints; it is ignored for initiators.</p>
       
         
         
-      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["announce.dismiss","content.code.annotate","content.code.copy","content.code.select","content.footnote.tooltips","content.tabs.link","content.tooltips","navigation.expand","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.prefetch","navigation.path","navigation.sections","navigation.top","navigation.tracking","search.highlight"],"redirect":null,"search":"../assets/javascripts/workers/search.c47bb847.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","clipboard.error":"Could not copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":{"provider":"mike"}}</script>
+      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["announce.dismiss","content.code.annotate","content.code.copy","content.code.select","content.footnote.tooltips","content.tabs.link","content.tooltips","navigation.expand","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.prefetch","navigation.path","navigation.sections","navigation.top","navigation.tracking","search.highlight"],"redirect":null,"search":"../assets/javascripts/workers/search.719e0d91.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","clipboard.error":"Could not copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":{"provider":"mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.77dd0ce9.min.js"></script>
+      <script src="../assets/javascripts/bundle.d31f0ffa.min.js"></script>
       
         <script src="../javascripts/mermaid.js"></script>
       
