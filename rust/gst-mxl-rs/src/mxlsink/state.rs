@@ -3,7 +3,9 @@
 
 use std::{collections::HashMap, process, str::FromStr};
 
-use crate::mxlsink::imp::CAT;
+use crate::mxlsink::{
+    imp::CAT, render_continuous::SampleAlignment, render_discrete::GrainAlignment,
+};
 use gst::StructureRef;
 use gst::prelude::*;
 use gst_audio::AudioInfo;
@@ -172,12 +174,7 @@ pub(crate) struct DiscreteState {
     pub format: DiscreteFormat,
     pub writer: GrainWriter,
     pub flow_def: DiscreteFlowDef,
-    /// Index one past the last committed grain; `None` before the first commit.
-    pub next_index: Option<u64>,
-    /// Offset in nanoseconds of the first grain's MXL timestamp from the grain
-    /// it rounds to, subtracted before rounding later grains so that timestamp
-    /// jitter of up to half a grain maps to consecutive indices.
-    pub phase: Option<i64>,
+    pub alignment: GrainAlignment,
 }
 
 /// Video vs data details stored alongside the discrete writer.
@@ -190,10 +187,7 @@ pub(crate) enum DiscreteFlowDef {
 pub(crate) struct ContinuousState {
     pub writer: SamplesWriter,
     pub flow_def: FlowDefAudio,
-    pub next_index: Option<u64>,
-    /// Index at which buffer timestamps first moved beyond the alignment
-    /// threshold; `None` while they are within it.
-    pub discont_start: Option<u64>,
+    pub alignment: SampleAlignment,
 }
 
 #[derive(Default)]
@@ -324,8 +318,7 @@ pub(crate) fn init_state_with_video(
         format: DiscreteFormat::Video,
         writer,
         flow_def: DiscreteFlowDef::Video(flow_def_details),
-        next_index: None,
-        phase: None,
+        alignment: GrainAlignment::default(),
     }));
     state.flow_config = Some(flow);
 
@@ -407,8 +400,7 @@ pub(crate) fn init_state_with_audio(
     state.flow_state = Some(FlowState::Continuous(ContinuousState {
         writer,
         flow_def: flow_def_details,
-        next_index: None,
-        discont_start: None,
+        alignment: SampleAlignment::default(),
     }));
     state.flow_config = Some(flow);
 
@@ -494,8 +486,7 @@ pub(crate) fn init_state_with_data(
         format: DiscreteFormat::Data,
         writer,
         flow_def: DiscreteFlowDef::Data(flow_def_details),
-        next_index: None,
-        phase: None,
+        alignment: GrainAlignment::default(),
     }));
     state.flow_config = Some(flow);
 
