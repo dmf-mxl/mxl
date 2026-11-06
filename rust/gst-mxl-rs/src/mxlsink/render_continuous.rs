@@ -11,7 +11,7 @@ use gstreamer as gst;
 use mxl::Rational;
 use tracing::trace;
 
-/// Largest difference between a buffer's timestamp and the end of the previous buffer the the sink
+/// Largest difference between a buffer's timestamp and the end of the previous buffer that the sink
 /// still treats as continuous audio.
 pub(crate) const ALIGNMENT_THRESHOLD_NS: u64 = 40_000_000;
 
@@ -65,6 +65,7 @@ pub(crate) fn place_buffer(
 
 pub(crate) fn continuous(
     state: &mut mxlsink::state::State,
+    element: &gst::Element,
     buffer: &gst::Buffer,
     mxl_ts: u64,
 ) -> Result<gst::FlowSuccess, gst::FlowError> {
@@ -113,6 +114,7 @@ pub(crate) fn continuous(
         Placement::Drop => {
             gst::warning!(
                 CAT,
+                obj = element,
                 "Dropping audio buffer at index {} with {} samples.",
                 ts_index,
                 samples_per_buffer,
@@ -123,6 +125,7 @@ pub(crate) fn continuous(
     if skip > 0 {
         gst::warning!(
             CAT,
+            obj = element,
             "Audio buffer at index {} overlaps already written samples, dropping its first {} samples",
             ts_index,
             skip
@@ -133,6 +136,7 @@ pub(crate) fn continuous(
     {
         gst::warning!(
             CAT,
+            obj = element,
             "Discontinuity in audio timestamps: expected index {:?}, got {}",
             continuous_state.next_index,
             ts_index
@@ -162,6 +166,7 @@ pub(crate) fn continuous(
         // GstBaseSink (sync=true) has already waited for this buffer's running
         // time, so commit straight to the ring here: no separate pacing.
         chunk_index = commit_chunk(
+            element,
             continuous_state,
             chunk_index,
             chunk,
@@ -189,6 +194,7 @@ fn threshold_samples(sample_rate: &Rational) -> Result<u64, gst::FlowError> {
 /// Write `chunk` starting at flow index `index` and return the index one past
 /// its last sample.
 fn commit_chunk(
+    element: &gst::Element,
     continuous_state: &mut ContinuousState,
     index: u64,
     chunk: &[u8],
@@ -209,6 +215,7 @@ fn commit_chunk(
         .map_err(|e| {
             gst::error!(
                 CAT,
+                obj = element,
                 "Failed to open {} samples ending at index {} (next index {:?}): {}",
                 chunk_samples,
                 end,
@@ -227,6 +234,7 @@ fn commit_chunk(
     access.commit().map_err(|e| {
         gst::error!(
             CAT,
+            obj = element,
             "Failed to commit samples ending at index {}: {}",
             end,
             e
