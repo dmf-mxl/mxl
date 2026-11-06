@@ -385,7 +385,7 @@ impl BaseSinkImpl for MxlSink {
         let Some(segment) = segment.downcast_ref::<gst::ClockTime>() else {
             gst::element_imp_error!(
                 self,
-                gst::CoreError::Negotiation,
+                gst::StreamError::Format,
                 ["Segment is not in TIME format: {:?}", segment.format()]
             );
             return Err(gst::FlowError::Error);
@@ -407,9 +407,15 @@ impl BaseSinkImpl for MxlSink {
 
         let mut context = self.context.lock().map_err(|_| gst::FlowError::Error)?;
         let state = context.state.as_mut().ok_or(gst::FlowError::Error)?;
+        let element = self.obj();
+        let element: &gst::Element = element.upcast_ref();
         match &state.flow_state {
-            Some(FlowState::Discrete(_)) => render_discrete::discrete(state, buffer, mxl_ts),
-            Some(FlowState::Continuous(_)) => render_continuous::continuous(state, buffer, mxl_ts),
+            Some(FlowState::Discrete(_)) => {
+                render_discrete::discrete(state, element, buffer, mxl_ts)
+            }
+            Some(FlowState::Continuous(_)) => {
+                render_continuous::continuous(state, element, buffer, mxl_ts)
+            }
             None => Err(gst::FlowError::Error),
         }
     }
