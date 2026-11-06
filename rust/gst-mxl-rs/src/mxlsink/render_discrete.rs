@@ -25,6 +25,7 @@ pub(crate) fn place_grain(next_index: Option<u64>, ts_index: u64) -> Option<u64>
 
 pub(crate) fn discrete(
     state: &mut mxlsink::state::State,
+    element: &gst::Element,
     buffer: &gst::Buffer,
     mxl_ts: u64,
 ) -> Result<gst::FlowSuccess, gst::FlowError> {
@@ -70,6 +71,7 @@ pub(crate) fn discrete(
     let Some(mxl_index) = place_grain(discrete_state.next_index, mxl_index) else {
         gst::warning!(
             CAT,
+            obj = element,
             "Dropping {} grain at index {}, which was already written (next index {:?})",
             media,
             mxl_index,
@@ -88,12 +90,13 @@ pub(crate) fn discrete(
     };
     // GstBaseSink (sync=true) has already waited for this buffer's running time,
     // so commit straight to the ring here: no separate pacing.
-    commit_grain(payload.as_ref(), discrete_state, mxl_index)?;
+    commit_grain(element, payload.as_ref(), discrete_state, mxl_index)?;
 
     Ok(gst::FlowSuccess::Ok)
 }
 
 fn commit_grain(
+    element: &gst::Element,
     payload: &[u8],
     discrete_state: &mut DiscreteState,
     index: u64,
@@ -101,6 +104,7 @@ fn commit_grain(
     let mut access = discrete_state.writer.open_grain(index).map_err(|e| {
         gst::error!(
             CAT,
+            obj = element,
             "Failed to open grain at index {} (next index {:?}): {}",
             index,
             discrete_state.next_index,
@@ -113,7 +117,13 @@ fn commit_grain(
     destination[..copy_len].copy_from_slice(&payload[..copy_len]);
     let total_slices = access.total_slices();
     access.commit(total_slices).map_err(|e| {
-        gst::error!(CAT, "Failed to commit grain at index {}: {}", index, e);
+        gst::error!(
+            CAT,
+            obj = element,
+            "Failed to commit grain at index {}: {}",
+            index,
+            e
+        );
         gst::FlowError::Error
     })?;
     discrete_state.next_index = Some(index + 1);
