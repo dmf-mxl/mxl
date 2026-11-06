@@ -34,6 +34,8 @@ namespace mxl::lib::fabrics::ofi
          */
         virtual void start(Endpoint const& endpoint) override;
 
+        virtual void shutdown() noexcept override;
+
         /** \copydoc IngressProtocol::processCompletion()
          */
         [[nodiscard]]
@@ -60,6 +62,7 @@ namespace mxl::lib::fabrics::ofi
         std::vector<Region> _regions;
         bool _isMemoryRegistered{false};
         std::optional<Target::ImmediateDataLocation> _immDataBuffer{};
+        bool _isShutdown{false};
     };
 
     /** \brief Ingress protocol for RMA writer endpoint for audio samples.
@@ -85,6 +88,8 @@ namespace mxl::lib::fabrics::ofi
         virtual std::optional<TargetInfoBounceBufferInfo> bounceBufferInfo() const override;
 
         virtual void start(Endpoint const& endpoint) override;
+
+        virtual void shutdown() noexcept override;
 
         /** \copydoc IngressProtocol::processCompletion()
          */
@@ -119,5 +124,6 @@ namespace mxl::lib::fabrics::ofi
         Region _region;
         bool _isMemoryRegistered = false;
         std::optional<Target::ImmediateDataLocation> _immDataBuffer{};
+        bool _isShutdown{false};
     };
 }

@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <algorithm>
 #include <ranges>
+#include <thread>
 #include <uuid.h>
 #include <mxl-internal/Logging.hpp>
 #include <rdma/fabric.h>
@@ -24,9 +25,9 @@
 namespace mxl::lib::fabrics::ofi
 {
     RCInitiatorEndpoint::RCInitiatorEndpoint(Endpoint ep, std::unique_ptr<EgressProtocol> proto, TargetInfo info)
-        : _state(Idle{.ep = std::move(ep), .idleSince = std::chrono::steady_clock::time_point{}})
+        : _proto(std::move(proto))
         , _info(std::move(info))
-        , _proto(std::move(proto))
+        , _state(Idle{.ep = std::move(ep), .idleSince = std::chrono::steady_clock::time_point{}})
     {}
 
     TargetInfo const& RCInitiatorEndpoint::info() const noexcept
@@ -49,12 +50,13 @@ namespace mxl::lib::fabrics::ofi
         return std::visit(
             overloaded{
                 [](std::monostate) { return false; },   // Something went wrong with this target, but there is probably no work to do.
-                [](Idle const&) { return true; },       // An idle target means there is no work to do right now.
+                [](Idle const&) { return false; },      // An idle target has nothing in flight, and is not connected.
                 [](Connecting const&) { return true; }, // In the connecting state, the target is waiting for a connected event.
                 [&](Connected const&) { return _proto->hasPendingWork(); }, // While connected, a target has pending work when
                                                                             // there are transfers that have not yet completed.
-                [](Flushing const&) { return true; },                       // In the shutdown state, the target is waiting for a FI_SHUTDOWN event.
-                [](Done const&) { return false; },                          // In the done state, there is no pending work.
+                [](Flushing const&) { return true; },      // While flushing, the target waits for a shutdown event and outstanding completions.
+                [](Disconnected const&) { return false; }, // A disconnected target only waits to be removed.
+                [](Done const&) { return false; },         // In the done state, there is no pending work.
             },
             _state);
     }
@@ -79,25 +81,69 @@ namespace mxl::lib::fabrics::ofi
                     auto pending = _proto->reset();
                     state.ep.shutdown();
 
-                    return Flushing{.ep = std::move(state.ep), .pending = pending};
+                    return startFlush(std::move(state.ep), pending, false, AfterFlush::Done);
                 },
                 [](Flushing state) -> State
                 {
-                    MXL_WARN("Another shutdown was requested while trying to flush the completion queue, ignoring.");
+                    MXL_INFO("Shutdown requested while the endpoint is already flushing.");
+                    state.next = AfterFlush::Done;
                     return state;
                 },
+                [](Disconnected) -> State { return Done{}; },
                 [](Done state) -> State { return state; },
             },
             std::move(_state));
     }
 
-    void RCInitiatorEndpoint::terminate() noexcept
+    void RCInitiatorEndpoint::finishFlush()
     {
-        if (auto state = std::get_if<Flushing>(&_state); state)
+        auto const state = std::get_if<Flushing>(&_state);
+        if (state == nullptr)
         {
-            MXL_INFO("Flushing complete, transitioning to done state.");
-            _state = Done{};
+            return;
         }
+
+        auto const nextName = [next = state->next]()
+        {
+            switch (next)
+            {
+                case AfterFlush::Reconnect:  return "idle";
+                case AfterFlush::Disconnect: return "disconnected";
+                case AfterFlush::Done:       return "done";
+            }
+            return "unknown";
+        }();
+        if (state->shutdownReceived && (state->pending == 0))
+        {
+            MXL_INFO("Flushing complete, transitioning to {} state.", nextName);
+        }
+        else if (std::chrono::steady_clock::now() >= state->deadline)
+        {
+            MXL_WARN("Flushing timed out with {} outstanding operations, shutdown event received: {}. Transitioning to {} state.",
+                state->pending,
+                state->shutdownReceived,
+                nextName);
+        }
+        else
+        {
+            return;
+        }
+
+        switch (state->next)
+        {
+            case AfterFlush::Reconnect:  _state = restart(state->ep); break;
+            case AfterFlush::Disconnect: _state = Disconnected{}; break;
+            case AfterFlush::Done:       _state = Done{}; break;
+        }
+    }
+
+    RCInitiatorEndpoint::Flushing RCInitiatorEndpoint::startFlush(Endpoint ep, std::size_t pending, bool shutdownReceived, AfterFlush next)
+    {
+        return Flushing{.ep = std::move(ep),
+            .pending = pending,
+            .shutdownReceived = shutdownReceived,
+            .next = next,
+            .deadline = std::chrono::steady_clock::now() + FlushTimeout};
     }
 
     void RCInitiatorEndpoint::activate(std::shared_ptr<CompletionQueue> const& cq, std::shared_ptr<EventQueue> const& eq)
@@ -129,6 +175,7 @@ namespace mxl::lib::fabrics::ofi
                 [](Connecting state) -> State { return state; },
                 [](Connected state) -> State { return state; },
                 [](Flushing state) -> State { return state; },
+                [](Disconnected state) -> State { return state; },
                 [](Done state) -> State { return state; },
             },
             std::move(_state));
@@ -168,13 +215,18 @@ namespace mxl::lib::fabrics::ofi
                 {
                     if (ev.isError())
                     {
-                        MXL_WARN("Received an error event in connected state, going idle. Error: {}", ev.error().toString());
-                        return restart(state.ep);
+                        MXL_WARN("Received an error event in connected state, going idle after flushing. Error: {}", ev.error().toString());
+                        catchAndLogFabricError([&]() { state.ep.shutdown(); }, "Failed to shut down the endpoint after an error event");
+                        return startFlush(std::move(state.ep), _proto->reset(), true, AfterFlush::Reconnect);
                     }
                     else if (ev.isShutdown())
                     {
-                        MXL_INFO("Remote endpoint has closed the connection");
-                        return Flushing{.ep = std::move(state.ep), .pending = _proto->reset()};
+                        // A target closes the connection only when it is destroyed. A restarted target has new target info, so the
+                        // endpoint does not reconnect. The target stays added, so that it can be removed.
+                        MXL_INFO("Remote endpoint has closed the connection.");
+                        catchAndLogFabricError([&]() { state.ep.shutdown(); },
+                            "Failed to shut down the endpoint after the remote endpoint closed it");
+                        return startFlush(std::move(state.ep), _proto->reset(), true, AfterFlush::Disconnect);
                     }
 
                     return state;
@@ -183,12 +235,14 @@ namespace mxl::lib::fabrics::ofi
                 {
                     if (ev.isShutdown())
                     {
-                        MXL_INFO("Received a Shutdown Event while flushing the completion queue");
+                        MXL_INFO("Received a shutdown event while flushing the completion queue");
+                        state.shutdownReceived = true;
                     }
                     else if (ev.isError())
                     {
+                        // The connection is gone and no shutdown event will follow. Outstanding operations can still complete.
                         MXL_ERROR("Received an error while shutting down: {}", ev.error().toString());
-                        return Done{};
+                        state.shutdownReceived = true;
                     }
                     else
                     {
@@ -196,6 +250,7 @@ namespace mxl::lib::fabrics::ofi
                     }
                     return state;
                 },
+                [](Disconnected state) -> State { return state; },
                 [](Done state) -> State { return state; },
             },
             std::move(_state));
@@ -203,14 +258,37 @@ namespace mxl::lib::fabrics::ofi
 
     void RCInitiatorEndpoint::consume(Completion completion)
     {
-        if (auto error = completion.tryErr(); error)
-        {
-            handleCompletionError(*error);
-        }
-        else if (auto data = completion.tryData(); data)
-        {
-            handleCompletionData(*data);
-        }
+        auto const error = completion.tryErr();
+
+        std::visit(
+            overloaded{
+                [](Idle const&) { MXL_WARN("Received a completion event while idle, ignoring."); },
+                [](Connecting const&) { MXL_WARN("Received a completion event while connecting, ignoring."); },
+                [&](Connected const&)
+                {
+                    // A failed operation is finished as well, so it is counted like a successful one.
+                    if (error)
+                    {
+                        MXL_ERROR("Received a completion error: {}", error->toString());
+                    }
+                    _proto->processCompletion(completion);
+                },
+                [&](Flushing& state)
+                {
+                    // Operations that were still queued when the connection was shut down complete with an error. They count as flushed.
+                    if (error)
+                    {
+                        MXL_DEBUG("Received a completion error while flushing: {}", error->toString());
+                    }
+                    if (state.pending > 0)
+                    {
+                        --state.pending;
+                    }
+                },
+                [](Disconnected const&) { MXL_DEBUG("Ignoring completion after the target closed the connection."); },
+                [](Done const&) { MXL_DEBUG("Ignoring completion after shutdown."); },
+            },
+            _state);
     }
 
     void RCInitiatorEndpoint::transferGrain(std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t remotePayloadOffset,
@@ -228,42 +306,6 @@ namespace mxl::lib::fabrics::ofi
         {
             _proto->transferSamples(state->ep, headIndex, count);
         }
-    }
-
-    void RCInitiatorEndpoint::handleCompletionData(Completion::Data completion)
-    {
-        _state = std::visit(
-            overloaded{[](Idle state) -> State
-                {
-                    MXL_WARN("Received a completion event while idle, ignoring.");
-                    return state;
-                },
-                [](Connecting state) -> State
-                {
-                    MXL_WARN("Received a completion event while connecting, ignoring.");
-                    return state;
-                },
-                [&](Connected state) -> State
-                {
-                    _proto->processCompletion(completion);
-                    return state;
-                },
-                [](Flushing state) -> State
-                {
-                    state.pending--; // Decrease the counter of completions that must still be flushed.
-                    return state;
-                },
-                [](Done state) -> State
-                {
-                    MXL_DEBUG("Ignoring completion after shutdown.");
-                    return state;
-                }},
-            std::move(_state));
-    }
-
-    void RCInitiatorEndpoint::handleCompletionError(Completion::Error err)
-    {
-        MXL_ERROR("Received a completion error: {}", err.toString());
     }
 
     RCInitiatorEndpoint::Idle RCInitiatorEndpoint::restart(Endpoint const& old)
@@ -340,6 +382,7 @@ namespace mxl::lib::fabrics::ofi
         // this is a no-op.
         for (auto& [_, target] : _targets)
         {
+            activateIfIdle(target);
             target.transferGrain(grainIndex, grainIndex, MXL_GRAIN_PAYLOAD_OFFSET, SliceRange::make(startSlice, endSlice));
         }
     }
@@ -353,6 +396,7 @@ namespace mxl::lib::fabrics::ofi
             throw Exception::notFound("Target with id {} not found", targetId);
         }
 
+        activateIfIdle(it->second);
         it->second.transferGrain(localIndex, remoteIndex, payloadOffset, SliceRange::make(startSlice, endSlice));
     }
 
@@ -360,7 +404,16 @@ namespace mxl::lib::fabrics::ofi
     {
         for (auto& [_, target] : _targets)
         {
+            activateIfIdle(target);
             target.transferSamples(headIndex, count);
+        }
+    }
+
+    void RCInitiator::activateIfIdle(RCInitiatorEndpoint& target)
+    {
+        if (target.isIdle())
+        {
+            target.activate(_cq, _eq);
         }
     }
 
@@ -393,6 +446,14 @@ namespace mxl::lib::fabrics::ofi
         }
     }
 
+    void RCInitiator::finishFlushingEndpoints()
+    {
+        for (auto& [_, target] : _targets)
+        {
+            target.finishFlush();
+        }
+    }
+
     void RCInitiator::evictDeadEndpoints()
     {
         std::erase_if(_targets, [](auto const& item) { return item.second.canEvict(); });
@@ -416,12 +477,6 @@ namespace mxl::lib::fabrics::ofi
                 auto completion = _cq->readBlocking(timeout);
                 if (!completion)
                 {
-                    // No completion available, if we were flushing any endpoint, transition their state to done.
-                    for (auto& [_, target] : _targets)
-                    {
-                        target.terminate();
-                    }
-
                     return afterProgressResult();
                 }
 
@@ -429,7 +484,10 @@ namespace mxl::lib::fabrics::ofi
                 auto ep = _targets.find(Endpoint::idFromToken(completion->token()));
                 if (ep == _targets.end())
                 {
+                    // The endpoint can already be evicted, for example after a flush timeout.
                     MXL_WARN("Received completion for an unknown endpoint");
+
+                    return afterProgressResult();
                 }
 
                 ep->second.consume(*completion);
@@ -455,11 +513,6 @@ namespace mxl::lib::fabrics::ofi
             auto completion = _cq->read();
             if (!completion)
             {
-                // No completion available, if we were flushing any endpoint, transition their state to done.
-                for (auto& [_, target] : _targets)
-                {
-                    target.terminate();
-                }
                 break;
             }
 
@@ -503,7 +556,7 @@ namespace mxl::lib::fabrics::ofi
     {
         if (!hasTarget())
         {
-            throw Exception::interrupted("No more targets available while calling makeProgress.");
+            return Initiator::Ready{};
         }
 
         // Activate any peers that might be idle and waiting for activation.
@@ -512,6 +565,9 @@ namespace mxl::lib::fabrics::ofi
         // Poll the completion and event queue once and process pending events.
         pollCQ();
         pollEQ();
+
+        // Complete the shutdown of endpoints that have received all outstanding completions and the shutdown event.
+        finishFlushingEndpoints();
 
         // Evict any peers that are dead and no longer will make progress.
         evictDeadEndpoints();
@@ -525,7 +581,10 @@ namespace mxl::lib::fabrics::ofi
         // and block on the completion queue for the rest of the time.
         if (timeout < EQPollInterval)
         {
-            makeProgress();
+            if (std::holds_alternative<Initiator::Ready>(makeProgress()))
+            {
+                return Initiator::Ready{};
+            }
             return blockOnCQ(timeout);
         }
 
@@ -560,9 +619,31 @@ namespace mxl::lib::fabrics::ofi
 
     void RCInitiator::shutdown()
     {
-        for (auto& target : _targets)
+        for (auto& [_, target] : _targets)
         {
-            target.second.shutdown();
+            target.shutdown();
+        }
+
+        auto const deadline = std::chrono::steady_clock::now() + ShutdownTimeout;
+        for (;;)
+        {
+            pollCQ();
+            pollEQ();
+            finishFlushingEndpoints();
+            evictDeadEndpoints();
+
+            if (_targets.empty())
+            {
+                return;
+            }
+
+            if (std::chrono::steady_clock::now() >= deadline)
+            {
+                MXL_WARN("{} endpoints did not shut down in time.", _targets.size());
+                return;
+            }
+
+            std::this_thread::sleep_for(ShutdownPollInterval);
         }
     }
 }

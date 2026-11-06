@@ -38,10 +38,17 @@ namespace mxl::lib::fabrics::ofi
 
     void RMAGrainIngressProtocol::start(Endpoint const& endpoint)
     {
+        _isShutdown = false;
+
         if (endpoint.domain()->usingRecvBufForCqData())
         {
             endpoint.recv(immDataRegion());
         }
+    }
+
+    void RMAGrainIngressProtocol::shutdown() noexcept
+    {
+        _isShutdown = true;
     }
 
     std::optional<Target::ReadResult> RMAGrainIngressProtocol::read(Endpoint const& endpoint, Completion const& completion)
@@ -52,7 +59,7 @@ namespace mxl::lib::fabrics::ofi
             return {};
         }
 
-        if (_immDataBuffer)
+        if (_immDataBuffer && !_isShutdown)
         {
             endpoint.recv(_immDataBuffer->toLocalRegion());
         }
@@ -128,10 +135,17 @@ namespace mxl::lib::fabrics::ofi
 
     void RMASampleIngressProtocol::start(Endpoint const& endpoint)
     {
+        _isShutdown = false;
+
         if (endpoint.domain()->usingRecvBufForCqData())
         {
             endpoint.recv(immDataRegion());
         }
+    }
+
+    void RMASampleIngressProtocol::shutdown() noexcept
+    {
+        _isShutdown = true;
     }
 
     std::optional<Target::ReadResult> RMASampleIngressProtocol::read(Endpoint const& endpoint, Completion const& completion)
@@ -142,7 +156,7 @@ namespace mxl::lib::fabrics::ofi
             return {};
         }
 
-        if (_immDataBuffer)
+        if (_immDataBuffer && !_isShutdown)
         {
             endpoint.recv(immDataRegion());
         }
