@@ -217,12 +217,105 @@ Include dependency graph for test_AudioBounceBuffer.cpp:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:a42a27e181078409f99ab00bd4e1e02a5" id="r_a42a27e181078409f99ab00bd4e1e02a5"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="test__AudioBounceBuffer_8cpp.html#a42a27e181078409f99ab00bd4e1e02a5">TEST_CASE</a> (&quot;ofi: audio bounce <a class="el" href="test__flows_8cpp.html#a0874cc1b420a7df65fa643e8173458b0">buffer</a> rejects a count longer than the ring&quot;, &quot;[ofi][<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html">AudioBounceBuffer</a>]&quot;)</td></tr>
+<tr class="separator:a42a27e181078409f99ab00bd4e1e02a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc29530053c1f5b63c683987f381cf29" id="r_afc29530053c1f5b63c683987f381cf29"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="test__AudioBounceBuffer_8cpp.html#afc29530053c1f5b63c683987f381cf29">TEST_CASE</a> (&quot;ofi: audio bounce <a class="el" href="test__flows_8cpp.html#a0874cc1b420a7df65fa643e8173458b0">buffer</a> unpacks an empty header into nothing&quot;, &quot;[ofi][<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html">AudioBounceBuffer</a>]&quot;)</td></tr>
+<tr class="separator:afc29530053c1f5b63c683987f381cf29"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6513ee9ea641c8fc4f2b7c1a05c45ebe" id="r_a6513ee9ea641c8fc4f2b7c1a05c45ebe"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="test__AudioBounceBuffer_8cpp.html#a6513ee9ea641c8fc4f2b7c1a05c45ebe">TEST_CASE</a> (&quot;ofi: audio bounce <a class="el" href="test__flows_8cpp.html#a0874cc1b420a7df65fa643e8173458b0">buffer</a> unpacks channel-major payload across ring wrap&quot;, &quot;[ofi][<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html">AudioBounceBuffer</a>]&quot;)</td></tr>
 <tr class="separator:a6513ee9ea641c8fc4f2b7c1a05c45ebe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
+<a id="a42a27e181078409f99ab00bd4e1e02a5" name="a42a27e181078409f99ab00bd4e1e02a5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a42a27e181078409f99ab00bd4e1e02a5">&#9670;&#160;</a></span>TEST_CASE() <span class="overload">[1/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">TEST_CASE </td>
+          <td>(</td>
+          <td class="paramtype">&quot;ofi: audio bounce <a class="el" href="test__flows_8cpp.html#a0874cc1b420a7df65fa643e8173458b0">buffer</a> rejects a count longer than the ring&quot;&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&quot;&quot;&#160;</td>
+          <td class="paramname">[ofi][AudioBounceBuffer]&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="test__AudioBounceBuffer_8cpp_source.html#l00106">106</a> of file <a class="el" href="test__AudioBounceBuffer_8cpp_source.html">test_AudioBounceBuffer.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  106</span>              : audio bounce <a class="code hl_variable" href="test__flows_8cpp.html#a0874cc1b420a7df65fa643e8173458b0">buffer</a> rejects a count longer than the ring<span class="stringliteral">&quot;, &quot;</span>[<a class="code hl_namespace" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html">ofi</a>][<a class="code hl_class" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html">AudioBounceBuffer</a>]<span class="stringliteral">&quot;)</span></div>
+<div class="line"><span class="lineno">  107</span><span class="stringliteral">{</span></div>
+<div class="line"><span class="lineno">  108</span><span class="stringliteral">    constexpr auto LongCount = TargetBufferLength + 1;</span></div>
+<div class="line"><span class="lineno">  109</span><span class="stringliteral">    auto target = std::vector&lt;Sample&gt;(ChannelCount * TargetBufferLength, UntouchedSample);</span></div>
+<div class="line"><span class="lineno">  110</span><span class="stringliteral">    auto const targetLayout = DataLayout::Continuous{.sampleSize = sizeof(Sample), .channelCount = ChannelCount, .bufferLength = TargetBufferLength};</span></div>
+<div class="line"><span class="lineno">  111</span><span class="stringliteral">    auto bounceBuffer = AudioBounceBuffer{1, LongCount * ChannelCount * sizeof(Sample), targetLayout};</span></div>
+<div class="line"><span class="lineno">  112</span><span class="stringliteral"></span> </div>
+<div class="line"><span class="lineno">  113</span><span class="stringliteral">    auto* entryData = reinterpret_cast&lt;std::uint8_t*&gt;(bounceBuffer.getRegions().front().base); // NOLINT</span></div>
+<div class="line"><span class="lineno">  114</span><span class="stringliteral">    auto const header = AudioEntryHeader{.headIndex = HeadIndex, .count = LongCount};</span></div>
+<div class="line"><span class="lineno">  115</span><span class="stringliteral">    std::memcpy(entryData, &amp;header, sizeof(header));</span></div>
+<div class="line"><span class="lineno">  116</span><span class="stringliteral"></span> </div>
+<div class="line"><span class="lineno">  117</span><span class="stringliteral">    auto const outRegion = Region{regionBaseOf(target.data()), target.size() * sizeof(Sample), nullptr, nullptr, Region::Location::host()};</span></div>
+<div class="line"><span class="lineno">  118</span><span class="stringliteral">    REQUIRE_THROWS(bounceBuffer.unpack(0, outRegion));</span></div>
+<div class="line"><span class="lineno">  119</span><span class="stringliteral">    REQUIRE(target == std::vector&lt;Sample&gt;(ChannelCount * TargetBufferLength, UntouchedSample));</span></div>
+<div class="line"><span class="lineno">  120</span><span class="stringliteral">}</span></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer_html"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html">mxl::lib::fabrics::ofi::AudioBounceBuffer</a></div><div class="ttdoc">A bounce buffer for audio samples.</div><div class="ttdef"><b>Definition</b> <a href="AudioBounceBuffer_8hpp_source.html#l00063">AudioBounceBuffer.hpp:64</a></div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html">mxl::lib::fabrics::ofi</a></div><div class="ttdef"><b>Definition</b> <a href="fabrics_8cpp_source.html#l00030">fabrics.cpp:31</a></div></div>
+<div class="ttc" id="atest__flows_8cpp_html_a0874cc1b420a7df65fa643e8173458b0"><div class="ttname"><a href="test__flows_8cpp.html#a0874cc1b420a7df65fa643e8173458b0">buffer</a></div><div class="ttdeci">uint8_t * buffer</div><div class="ttdoc">Set a mark at the beginning and the end of the grain payload.</div><div class="ttdef"><b>Definition</b> <a href="test__flows_8cpp_source.html#l00167">test_flows.cpp:167</a></div></div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="afc29530053c1f5b63c683987f381cf29" name="afc29530053c1f5b63c683987f381cf29"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afc29530053c1f5b63c683987f381cf29">&#9670;&#160;</a></span>TEST_CASE() <span class="overload">[2/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">TEST_CASE </td>
+          <td>(</td>
+          <td class="paramtype">&quot;ofi: audio bounce <a class="el" href="test__flows_8cpp.html#a0874cc1b420a7df65fa643e8173458b0">buffer</a> unpacks an empty header into nothing&quot;&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&quot;&quot;&#160;</td>
+          <td class="paramname">[ofi][AudioBounceBuffer]&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="test__AudioBounceBuffer_8cpp_source.html#l00093">93</a> of file <a class="el" href="test__AudioBounceBuffer_8cpp_source.html">test_AudioBounceBuffer.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   93</span>              : audio bounce <a class="code hl_variable" href="test__flows_8cpp.html#a0874cc1b420a7df65fa643e8173458b0">buffer</a> unpacks an empty header into nothing<span class="stringliteral">&quot;, &quot;</span>[<a class="code hl_namespace" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html">ofi</a>][<a class="code hl_class" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html">AudioBounceBuffer</a>]<span class="stringliteral">&quot;)</span></div>
+<div class="line"><span class="lineno">   94</span><span class="stringliteral">{</span></div>
+<div class="line"><span class="lineno">   95</span><span class="stringliteral">    auto target = std::vector&lt;Sample&gt;(ChannelCount * TargetBufferLength, UntouchedSample);</span></div>
+<div class="line"><span class="lineno">   96</span><span class="stringliteral">    auto const targetLayout = DataLayout::Continuous{.sampleSize = sizeof(Sample), .channelCount = ChannelCount, .bufferLength = TargetBufferLength};</span></div>
+<div class="line"><span class="lineno">   97</span><span class="stringliteral">    auto bounceBuffer = AudioBounceBuffer{1, SampleCount * ChannelCount * sizeof(Sample), targetLayout};</span></div>
+<div class="line"><span class="lineno">   98</span><span class="stringliteral"></span> </div>
+<div class="line"><span class="lineno">   99</span><span class="stringliteral">    auto const outRegion = Region{regionBaseOf(target.data()), target.size() * sizeof(Sample), nullptr, nullptr, Region::Location::host()};</span></div>
+<div class="line"><span class="lineno">  100</span><span class="stringliteral">    auto const unpackedHeader = bounceBuffer.unpack(0, outRegion);</span></div>
+<div class="line"><span class="lineno">  101</span><span class="stringliteral">    REQUIRE(unpackedHeader.count == 0U);</span></div>
+<div class="line"><span class="lineno">  102</span><span class="stringliteral">    REQUIRE(target == std::vector&lt;Sample&gt;(ChannelCount * TargetBufferLength, UntouchedSample));</span></div>
+<div class="line"><span class="lineno">  103</span><span class="stringliteral">}</span></div>
+</div><!-- fragment -->
+</div>
+</div>
 <a id="a6513ee9ea641c8fc4f2b7c1a05c45ebe" name="a6513ee9ea641c8fc4f2b7c1a05c45ebe"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6513ee9ea641c8fc4f2b7c1a05c45ebe">&#9670;&#160;</a></span>TEST_CASE()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a6513ee9ea641c8fc4f2b7c1a05c45ebe">&#9670;&#160;</a></span>TEST_CASE() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -295,9 +388,6 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">   88</span><span class="stringliteral"></span> </div>
 <div class="line"><span class="lineno">   89</span><span class="stringliteral">    REQUIRE(target == expectedTarget);</span></div>
 <div class="line"><span class="lineno">   90</span><span class="stringliteral">}</span></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer_html"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html">mxl::lib::fabrics::ofi::AudioBounceBuffer</a></div><div class="ttdoc">A bounce buffer for audio samples.</div><div class="ttdef"><b>Definition</b> <a href="AudioBounceBuffer_8hpp_source.html#l00063">AudioBounceBuffer.hpp:64</a></div></div>
-<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html">mxl::lib::fabrics::ofi</a></div><div class="ttdef"><b>Definition</b> <a href="fabrics_8cpp_source.html#l00030">fabrics.cpp:31</a></div></div>
-<div class="ttc" id="atest__flows_8cpp_html_a0874cc1b420a7df65fa643e8173458b0"><div class="ttname"><a href="test__flows_8cpp.html#a0874cc1b420a7df65fa643e8173458b0">buffer</a></div><div class="ttdeci">uint8_t * buffer</div><div class="ttdoc">Set a mark at the beginning and the end of the grain payload.</div><div class="ttdef"><b>Definition</b> <a href="test__flows_8cpp_source.html#l00167">test_flows.cpp:167</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>

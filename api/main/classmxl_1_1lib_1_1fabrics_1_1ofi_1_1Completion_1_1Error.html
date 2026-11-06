@@ -131,6 +131,8 @@ Private Member Functions</h2></td></tr>
 Private Attributes</h2></td></tr>
 <tr class="memitem:ad0f9869af05f2ca562d1ceec9c514996" id="r_ad0f9869af05f2ca562d1ceec9c514996"><td class="memItemLeft" align="right" valign="top">std::shared_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue.html">CompletionQueue</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#ad0f9869af05f2ca562d1ceec9c514996">_cq</a></td></tr>
 <tr class="separator:ad0f9869af05f2ca562d1ceec9c514996"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a385a758e5d3f809e1e5e265bcf49e9bb" id="r_a385a758e5d3f809e1e5e265bcf49e9bb"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#a385a758e5d3f809e1e5e265bcf49e9bb">_message</a></td></tr>
+<tr class="separator:a385a758e5d3f809e1e5e265bcf49e9bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af0cb1d20127e9dae5318632f1bda9f1d" id="r_af0cb1d20127e9dae5318632f1bda9f1d"><td class="memItemLeft" align="right" valign="top">::fi_cq_err_entry&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#af0cb1d20127e9dae5318632f1bda9f1d">_raw</a></td></tr>
 <tr class="separator:af0cb1d20127e9dae5318632f1bda9f1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -181,7 +183,12 @@ Friends</h2></td></tr>
 <p class="definition">Definition at line <a class="el" href="Completion_8cpp_source.html#l00039">39</a> of file <a class="el" href="Completion_8cpp_source.html">Completion.cpp</a>.</p>
 <div class="fragment"><div class="line"><span class="lineno">   40</span>        : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#af0cb1d20127e9dae5318632f1bda9f1d">_raw</a>(raw)</div>
 <div class="line"><span class="lineno">   41</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#ad0f9869af05f2ca562d1ceec9c514996">_cq</a>(std::move(cq))</div>
-<div class="line"><span class="lineno">   42</span>    {}</div>
+<div class="line"><span class="lineno">   42</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#a385a758e5d3f809e1e5e265bcf49e9bb">_message</a>(::fi_cq_strerror(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#ad0f9869af05f2ca562d1ceec9c514996">_cq</a>-&gt;raw(), <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#af0cb1d20127e9dae5318632f1bda9f1d">_raw</a>.prov_errno, <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#af0cb1d20127e9dae5318632f1bda9f1d">_raw</a>.err_data, <span class="keyword">nullptr</span>, 0))</div>
+<div class="line"><span class="lineno">   43</span>    {</div>
+<div class="line"><span class="lineno">   44</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#af0cb1d20127e9dae5318632f1bda9f1d">_raw</a>.err_data = <span class="keyword">nullptr</span>;</div>
+<div class="line"><span class="lineno">   45</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#af0cb1d20127e9dae5318632f1bda9f1d">_raw</a>.err_data_size = 0;</div>
+<div class="line"><span class="lineno">   46</span>    }</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error_html_a385a758e5d3f809e1e5e265bcf49e9bb"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#a385a758e5d3f809e1e5e265bcf49e9bb">mxl::lib::fabrics::ofi::Completion::Error::_message</a></div><div class="ttdeci">std::string _message</div><div class="ttdef"><b>Definition</b> <a href="Completion_8hpp_source.html#l00088">Completion.hpp:88</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error_html_ad0f9869af05f2ca562d1ceec9c514996"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#ad0f9869af05f2ca562d1ceec9c514996">mxl::lib::fabrics::ofi::Completion::Error::_cq</a></div><div class="ttdeci">std::shared_ptr&lt; CompletionQueue &gt; _cq</div><div class="ttdef"><b>Definition</b> <a href="Completion_8hpp_source.html#l00087">Completion.hpp:87</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error_html_af0cb1d20127e9dae5318632f1bda9f1d"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#af0cb1d20127e9dae5318632f1bda9f1d">mxl::lib::fabrics::ofi::Completion::Error::_raw</a></div><div class="ttdeci">::fi_cq_err_entry _raw</div><div class="ttdef"><b>Definition</b> <a href="Completion_8hpp_source.html#l00086">Completion.hpp:86</a></div></div>
 </div><!-- fragment -->
@@ -213,11 +220,11 @@ Friends</h2></td></tr>
 
 <p>This used to associate a completion entry with an endpoint when multiple endpoints use the same completion queue. </p>
 
-<p class="definition">Definition at line <a class="el" href="Completion_8cpp_source.html#l00049">49</a> of file <a class="el" href="Completion_8cpp_source.html">Completion.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   50</span>    {</div>
-<div class="line"><span class="lineno">   51</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion.html#a36a7c25c386c6a450ca2c4d3c31f77d8">tokenFromContextValue</a>(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#af0cb1d20127e9dae5318632f1bda9f1d">_raw</a>.op_context);</div>
-<div class="line"><span class="lineno">   52</span>    }</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_html_a36a7c25c386c6a450ca2c4d3c31f77d8"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion.html#a36a7c25c386c6a450ca2c4d3c31f77d8">mxl::lib::fabrics::ofi::Completion::tokenFromContextValue</a></div><div class="ttdeci">static constexpr Token tokenFromContextValue(void *contextValue) noexcept</div><div class="ttdoc">Convert between completion tokens and context values that can be written to and read from raw libfabr...</div><div class="ttdef"><b>Definition</b> <a href="Completion_8hpp_source.html#l00108">Completion.hpp:108</a></div></div>
+<p class="definition">Definition at line <a class="el" href="Completion_8cpp_source.html#l00053">53</a> of file <a class="el" href="Completion_8cpp_source.html">Completion.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   54</span>    {</div>
+<div class="line"><span class="lineno">   55</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion.html#a36a7c25c386c6a450ca2c4d3c31f77d8">tokenFromContextValue</a>(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#af0cb1d20127e9dae5318632f1bda9f1d">_raw</a>.op_context);</div>
+<div class="line"><span class="lineno">   56</span>    }</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_html_a36a7c25c386c6a450ca2c4d3c31f77d8"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion.html#a36a7c25c386c6a450ca2c4d3c31f77d8">mxl::lib::fabrics::ofi::Completion::tokenFromContextValue</a></div><div class="ttdeci">static constexpr Token tokenFromContextValue(void *contextValue) noexcept</div><div class="ttdoc">Convert between completion tokens and context values that can be written to and read from raw libfabr...</div><div class="ttdef"><b>Definition</b> <a href="Completion_8hpp_source.html#l00109">Completion.hpp:109</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -238,10 +245,10 @@ Friends</h2></td></tr>
 
 <p>Generate a hman-readable string representation of the error entry. </p>
 
-<p class="definition">Definition at line <a class="el" href="Completion_8cpp_source.html#l00044">44</a> of file <a class="el" href="Completion_8cpp_source.html">Completion.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   45</span>    {</div>
-<div class="line"><span class="lineno">   46</span>        return ::fi_cq_strerror(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#ad0f9869af05f2ca562d1ceec9c514996">_cq</a>-&gt;raw(), <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#af0cb1d20127e9dae5318632f1bda9f1d">_raw</a>.prov_errno, <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#af0cb1d20127e9dae5318632f1bda9f1d">_raw</a>.err_data, <span class="keyword">nullptr</span>, 0);</div>
-<div class="line"><span class="lineno">   47</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="Completion_8cpp_source.html#l00048">48</a> of file <a class="el" href="Completion_8cpp_source.html">Completion.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   49</span>    {</div>
+<div class="line"><span class="lineno">   50</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#a385a758e5d3f809e1e5e265bcf49e9bb">_message</a>;</div>
+<div class="line"><span class="lineno">   51</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -292,6 +299,31 @@ Friends</h2></td></tr>
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="Completion_8hpp_source.html#l00087">87</a> of file <a class="el" href="Completion_8hpp_source.html">Completion.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a385a758e5d3f809e1e5e265bcf49e9bb" name="a385a758e5d3f809e1e5e265bcf49e9bb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a385a758e5d3f809e1e5e265bcf49e9bb">&#9670;&#160;</a></span>_message</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string mxl::lib::fabrics::ofi::Completion::Error::_message</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Copied at construction, since the next read of the CQ invalidates err_data. </p>
+
+<p class="definition">Definition at line <a class="el" href="Completion_8hpp_source.html#l00088">88</a> of file <a class="el" href="Completion_8hpp_source.html">Completion.hpp</a>.</p>
 
 </div>
 </div>

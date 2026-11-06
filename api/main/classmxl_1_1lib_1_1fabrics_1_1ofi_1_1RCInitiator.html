@@ -466,27 +466,29 @@ Additional Inherited Members</h2></td></tr>
 <div class="line"><span class="lineno">  430</span>                <span class="keywordflow">if</span> (ep == <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a79ea836d227dfedde362150ecfb4c8f5">_targets</a>.end())</div>
 <div class="line"><span class="lineno">  431</span>                {</div>
 <div class="line"><span class="lineno">  432</span>                    <a class="code hl_define" href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a>(<span class="stringliteral">&quot;Received completion for an unknown endpoint&quot;</span>);</div>
-<div class="line"><span class="lineno">  433</span>                }</div>
-<div class="line"><span class="lineno">  434</span> </div>
-<div class="line"><span class="lineno">  435</span>                ep-&gt;second.consume(*completion);</div>
+<div class="line"><span class="lineno">  433</span> </div>
+<div class="line"><span class="lineno">  434</span>                    <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a45aad47340fc7db91b1c694609ca97d0">afterProgressResult</a>();</div>
+<div class="line"><span class="lineno">  435</span>                }</div>
 <div class="line"><span class="lineno">  436</span> </div>
-<div class="line"><span class="lineno">  437</span>                <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a45aad47340fc7db91b1c694609ca97d0">afterProgressResult</a>();</div>
-<div class="line"><span class="lineno">  438</span>            }</div>
-<div class="line"><span class="lineno">  439</span>            <span class="keywordflow">catch</span> (FabricException <span class="keyword">const</span>&amp; ex)</div>
-<div class="line"><span class="lineno">  440</span>            {</div>
-<div class="line"><span class="lineno">  441</span>                <span class="keywordflow">if</span> (ex.isInterrupted())</div>
-<div class="line"><span class="lineno">  442</span>                {</div>
-<div class="line"><span class="lineno">  443</span>                    <span class="keywordflow">return</span> Initiator::Interrupted{};</div>
-<div class="line"><span class="lineno">  444</span>                }</div>
-<div class="line"><span class="lineno">  445</span> </div>
-<div class="line"><span class="lineno">  446</span>                <span class="keywordflow">throw</span>;</div>
-<div class="line"><span class="lineno">  447</span>            }</div>
-<div class="line"><span class="lineno">  448</span>        }</div>
-<div class="line"><span class="lineno">  449</span>    }</div>
+<div class="line"><span class="lineno">  437</span>                ep-&gt;second.consume(*completion);</div>
+<div class="line"><span class="lineno">  438</span> </div>
+<div class="line"><span class="lineno">  439</span>                <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a45aad47340fc7db91b1c694609ca97d0">afterProgressResult</a>();</div>
+<div class="line"><span class="lineno">  440</span>            }</div>
+<div class="line"><span class="lineno">  441</span>            <span class="keywordflow">catch</span> (FabricException <span class="keyword">const</span>&amp; ex)</div>
+<div class="line"><span class="lineno">  442</span>            {</div>
+<div class="line"><span class="lineno">  443</span>                <span class="keywordflow">if</span> (ex.isInterrupted())</div>
+<div class="line"><span class="lineno">  444</span>                {</div>
+<div class="line"><span class="lineno">  445</span>                    <span class="keywordflow">return</span> Initiator::Interrupted{};</div>
+<div class="line"><span class="lineno">  446</span>                }</div>
+<div class="line"><span class="lineno">  447</span> </div>
+<div class="line"><span class="lineno">  448</span>                <span class="keywordflow">throw</span>;</div>
+<div class="line"><span class="lineno">  449</span>            }</div>
+<div class="line"><span class="lineno">  450</span>        }</div>
+<div class="line"><span class="lineno">  451</span>    }</div>
 <div class="ttc" id="aLogging_8hpp_html_ac5601472e8ef54d952b767d574a32427"><div class="ttname"><a href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a></div><div class="ttdeci">#define MXL_WARN(...)</div><div class="ttdef"><b>Definition</b> <a href="Logging_8hpp_source.html#l00056">Logging.hpp:56</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint_html_a0d2a53073a8731d1ede222d1e8e4ccdb"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a0d2a53073a8731d1ede222d1e8e4ccdb">mxl::lib::fabrics::ofi::Endpoint::idFromToken</a></div><div class="ttdeci">static constexpr Id idFromToken(Completion::Token token) noexcept</div><div class="ttdoc">Convert a completion token value to an endpoint id value. Convert a completion token to an endpoint i...</div><div class="ttdef"><b>Definition</b> <a href="Endpoint_8hpp_source.html#l00082">Endpoint.hpp:82</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator_html_a45aad47340fc7db91b1c694609ca97d0"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a45aad47340fc7db91b1c694609ca97d0">mxl::lib::fabrics::ofi::RCInitiator::afterProgressResult</a></div><div class="ttdeci">Initiator::MakeProgressResult afterProgressResult() const noexcept</div><div class="ttdoc">Returns true if any of the endpoints contained in this initiator have pending work.</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8cpp_source.html#l00367">RCInitiator.cpp:367</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator_html_a6a4d9e371ffbc893689fe1ca9af72983"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a6a4d9e371ffbc893689fe1ca9af72983">mxl::lib::fabrics::ofi::RCInitiator::makeProgress</a></div><div class="ttdeci">virtual Initiator::MakeProgressResult makeProgress() final</div><div class="ttdoc">Attempts to progress execution, including connection management and data operations.</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8cpp_source.html#l00502">RCInitiator.cpp:502</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator_html_a6a4d9e371ffbc893689fe1ca9af72983"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a6a4d9e371ffbc893689fe1ca9af72983">mxl::lib::fabrics::ofi::RCInitiator::makeProgress</a></div><div class="ttdeci">virtual Initiator::MakeProgressResult makeProgress() final</div><div class="ttdoc">Attempts to progress execution, including connection management and data operations.</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8cpp_source.html#l00504">RCInitiator.cpp:504</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -582,31 +584,31 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Initiator.html#a2ec7d4fa6d62c7a5950ecf17795517dd">mxl::lib::fabrics::ofi::Initiator</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00502">502</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  503</span>    {</div>
-<div class="line"><span class="lineno">  504</span>        <span class="keywordflow">if</span> (!<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#aabbf3aa43f1abc5217c649541cebc4e1">hasTarget</a>())</div>
-<div class="line"><span class="lineno">  505</span>        {</div>
-<div class="line"><span class="lineno">  506</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a0ea4322cb5baa52b571ea5c859efd235">Exception::interrupted</a>(<span class="stringliteral">&quot;No more targets available while calling makeProgress.&quot;</span>);</div>
-<div class="line"><span class="lineno">  507</span>        }</div>
-<div class="line"><span class="lineno">  508</span> </div>
-<div class="line"><span class="lineno">  509</span>        <span class="comment">// Activate any peers that might be idle and waiting for activation.</span></div>
-<div class="line"><span class="lineno">  510</span>        <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a678f8b285ab6ad7a690cca2165e9f241">activateIdleEndpoints</a>();</div>
-<div class="line"><span class="lineno">  511</span> </div>
-<div class="line"><span class="lineno">  512</span>        <span class="comment">// Poll the completion and event queue once and process pending events.</span></div>
-<div class="line"><span class="lineno">  513</span>        <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#ade1e82a844d3aadd4bff75edd4d7cc85">pollCQ</a>();</div>
-<div class="line"><span class="lineno">  514</span>        <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a80c0d6628d2edea3b9735f4ac600607c">pollEQ</a>();</div>
-<div class="line"><span class="lineno">  515</span> </div>
-<div class="line"><span class="lineno">  516</span>        <span class="comment">// Evict any peers that are dead and no longer will make progress.</span></div>
-<div class="line"><span class="lineno">  517</span>        <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a221996949e1d7bbed254c0ea081fc5a0">evictDeadEndpoints</a>();</div>
-<div class="line"><span class="lineno">  518</span> </div>
-<div class="line"><span class="lineno">  519</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a45aad47340fc7db91b1c694609ca97d0">afterProgressResult</a>();</div>
-<div class="line"><span class="lineno">  520</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00504">504</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  505</span>    {</div>
+<div class="line"><span class="lineno">  506</span>        <span class="keywordflow">if</span> (!<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#aabbf3aa43f1abc5217c649541cebc4e1">hasTarget</a>())</div>
+<div class="line"><span class="lineno">  507</span>        {</div>
+<div class="line"><span class="lineno">  508</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a0ea4322cb5baa52b571ea5c859efd235">Exception::interrupted</a>(<span class="stringliteral">&quot;No more targets available while calling makeProgress.&quot;</span>);</div>
+<div class="line"><span class="lineno">  509</span>        }</div>
+<div class="line"><span class="lineno">  510</span> </div>
+<div class="line"><span class="lineno">  511</span>        <span class="comment">// Activate any peers that might be idle and waiting for activation.</span></div>
+<div class="line"><span class="lineno">  512</span>        <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a678f8b285ab6ad7a690cca2165e9f241">activateIdleEndpoints</a>();</div>
+<div class="line"><span class="lineno">  513</span> </div>
+<div class="line"><span class="lineno">  514</span>        <span class="comment">// Poll the completion and event queue once and process pending events.</span></div>
+<div class="line"><span class="lineno">  515</span>        <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#ade1e82a844d3aadd4bff75edd4d7cc85">pollCQ</a>();</div>
+<div class="line"><span class="lineno">  516</span>        <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a80c0d6628d2edea3b9735f4ac600607c">pollEQ</a>();</div>
+<div class="line"><span class="lineno">  517</span> </div>
+<div class="line"><span class="lineno">  518</span>        <span class="comment">// Evict any peers that are dead and no longer will make progress.</span></div>
+<div class="line"><span class="lineno">  519</span>        <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a221996949e1d7bbed254c0ea081fc5a0">evictDeadEndpoints</a>();</div>
+<div class="line"><span class="lineno">  520</span> </div>
+<div class="line"><span class="lineno">  521</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a45aad47340fc7db91b1c694609ca97d0">afterProgressResult</a>();</div>
+<div class="line"><span class="lineno">  522</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception_html_a0ea4322cb5baa52b571ea5c859efd235"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a0ea4322cb5baa52b571ea5c859efd235">mxl::lib::fabrics::ofi::Exception::interrupted</a></div><div class="ttdeci">static Exception interrupted(fmt::format_string&lt; T... &gt; fmt, T &amp;&amp;... args)</div><div class="ttdoc">Make an MXL_ERR_INTERRUPTED exception.</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00083">Exception.hpp:83</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator_html_a221996949e1d7bbed254c0ea081fc5a0"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a221996949e1d7bbed254c0ea081fc5a0">mxl::lib::fabrics::ofi::RCInitiator::evictDeadEndpoints</a></div><div class="ttdeci">void evictDeadEndpoints()</div><div class="ttdoc">Evict any dead endpoints that are no longer used.</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8cpp_source.html#l00396">RCInitiator.cpp:396</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator_html_a678f8b285ab6ad7a690cca2165e9f241"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a678f8b285ab6ad7a690cca2165e9f241">mxl::lib::fabrics::ofi::RCInitiator::activateIdleEndpoints</a></div><div class="ttdeci">void activateIdleEndpoints()</div><div class="ttdoc">Try to activate any idle endpoints.</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8cpp_source.html#l00386">RCInitiator.cpp:386</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator_html_a80c0d6628d2edea3b9735f4ac600607c"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a80c0d6628d2edea3b9735f4ac600607c">mxl::lib::fabrics::ofi::RCInitiator::pollEQ</a></div><div class="ttdeci">void pollEQ()</div><div class="ttdoc">Poll the event queue and process the returned events until the queue is empty.</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8cpp_source.html#l00479">RCInitiator.cpp:479</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator_html_a80c0d6628d2edea3b9735f4ac600607c"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a80c0d6628d2edea3b9735f4ac600607c">mxl::lib::fabrics::ofi::RCInitiator::pollEQ</a></div><div class="ttdeci">void pollEQ()</div><div class="ttdoc">Poll the event queue and process the returned events until the queue is empty.</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8cpp_source.html#l00481">RCInitiator.cpp:481</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator_html_aabbf3aa43f1abc5217c649541cebc4e1"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#aabbf3aa43f1abc5217c649541cebc4e1">mxl::lib::fabrics::ofi::RCInitiator::hasTarget</a></div><div class="ttdeci">bool hasTarget() const noexcept</div><div class="ttdoc">Returns true if the initiator has at least 1 target added no matter what the state is.</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8cpp_source.html#l00381">RCInitiator.cpp:381</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator_html_ade1e82a844d3aadd4bff75edd4d7cc85"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#ade1e82a844d3aadd4bff75edd4d7cc85">mxl::lib::fabrics::ofi::RCInitiator::pollCQ</a></div><div class="ttdeci">void pollCQ()</div><div class="ttdoc">Poll the completion queue and process the events until the queue is empty.</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8cpp_source.html#l00451">RCInitiator.cpp:451</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator_html_ade1e82a844d3aadd4bff75edd4d7cc85"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#ade1e82a844d3aadd4bff75edd4d7cc85">mxl::lib::fabrics::ofi::RCInitiator::pollCQ</a></div><div class="ttdeci">void pollCQ()</div><div class="ttdoc">Poll the completion queue and process the events until the queue is empty.</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8cpp_source.html#l00453">RCInitiator.cpp:453</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -639,44 +641,44 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Initiator.html#ade914da12bb9720a6d49f87ba1c138e3">mxl::lib::fabrics::ofi::Initiator</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00522">522</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  523</span>    {</div>
-<div class="line"><span class="lineno">  524</span>        <span class="comment">// If the timeout is less than our maintainance interval, just check all the queues once, execute all maintainance tasks once</span></div>
-<div class="line"><span class="lineno">  525</span>        <span class="comment">// and block on the completion queue for the rest of the time.</span></div>
-<div class="line"><span class="lineno">  526</span>        <span class="keywordflow">if</span> (timeout &lt; <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a5a3336d8f89dfd6bc1731b0666f80640">EQPollInterval</a>)</div>
-<div class="line"><span class="lineno">  527</span>        {</div>
-<div class="line"><span class="lineno">  528</span>            <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a6a4d9e371ffbc893689fe1ca9af72983">makeProgress</a>();</div>
-<div class="line"><span class="lineno">  529</span>            <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a54b037039cfd9e0c9b27026592a28bcc">blockOnCQ</a>(timeout);</div>
-<div class="line"><span class="lineno">  530</span>        }</div>
-<div class="line"><span class="lineno">  531</span> </div>
-<div class="line"><span class="lineno">  532</span>        <span class="keyword">auto</span> deadline = std::chrono::steady_clock::now() + timeout;</div>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00524">524</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  525</span>    {</div>
+<div class="line"><span class="lineno">  526</span>        <span class="comment">// If the timeout is less than our maintainance interval, just check all the queues once, execute all maintainance tasks once</span></div>
+<div class="line"><span class="lineno">  527</span>        <span class="comment">// and block on the completion queue for the rest of the time.</span></div>
+<div class="line"><span class="lineno">  528</span>        <span class="keywordflow">if</span> (timeout &lt; <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a5a3336d8f89dfd6bc1731b0666f80640">EQPollInterval</a>)</div>
+<div class="line"><span class="lineno">  529</span>        {</div>
+<div class="line"><span class="lineno">  530</span>            <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a6a4d9e371ffbc893689fe1ca9af72983">makeProgress</a>();</div>
+<div class="line"><span class="lineno">  531</span>            <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a54b037039cfd9e0c9b27026592a28bcc">blockOnCQ</a>(timeout);</div>
+<div class="line"><span class="lineno">  532</span>        }</div>
 <div class="line"><span class="lineno">  533</span> </div>
-<div class="line"><span class="lineno">  534</span>        <span class="keywordflow">for</span> (;;)</div>
-<div class="line"><span class="lineno">  535</span>        {</div>
-<div class="line"><span class="lineno">  536</span>            <span class="comment">// Poll all queues, execute all maintainance actions</span></div>
-<div class="line"><span class="lineno">  537</span>            <span class="keywordflow">if</span> (std::holds_alternative&lt;Initiator::Ready&gt;(<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a6a4d9e371ffbc893689fe1ca9af72983">makeProgress</a>()))</div>
-<div class="line"><span class="lineno">  538</span>            {</div>
-<div class="line"><span class="lineno">  539</span>                <span class="keywordflow">return</span> Initiator::Ready{};</div>
-<div class="line"><span class="lineno">  540</span>            }</div>
-<div class="line"><span class="lineno">  541</span> </div>
-<div class="line"><span class="lineno">  542</span>            <span class="comment">// Calculate the remaining time until the user wants the blocking function to return. If there is no time left</span></div>
-<div class="line"><span class="lineno">  543</span>            <span class="comment">// (millisecond precision) return right away.</span></div>
-<div class="line"><span class="lineno">  544</span>            <span class="keyword">auto</span> timeUntilDeadline = std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(deadline - std::chrono::steady_clock::now());</div>
-<div class="line"><span class="lineno">  545</span>            <span class="keywordflow">if</span> (timeUntilDeadline &lt;= <span class="keyword">decltype</span>(timeUntilDeadline){0})</div>
-<div class="line"><span class="lineno">  546</span>            {</div>
-<div class="line"><span class="lineno">  547</span>                <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a45aad47340fc7db91b1c694609ca97d0">afterProgressResult</a>();</div>
-<div class="line"><span class="lineno">  548</span>            }</div>
-<div class="line"><span class="lineno">  549</span> </div>
-<div class="line"><span class="lineno">  550</span>            <span class="comment">// Block on the completion queue until a completion arrives, or the interval timeout occurs.</span></div>
-<div class="line"><span class="lineno">  551</span>            <span class="keyword">auto</span> <span class="keyword">const</span> res = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a54b037039cfd9e0c9b27026592a28bcc">blockOnCQ</a>(std::min(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a5a3336d8f89dfd6bc1731b0666f80640">EQPollInterval</a>, timeUntilDeadline));</div>
-<div class="line"><span class="lineno">  552</span>            <span class="keywordflow">if</span> (std::holds_alternative&lt;Initiator::NotReady&gt;(res))</div>
-<div class="line"><span class="lineno">  553</span>            {</div>
-<div class="line"><span class="lineno">  554</span>                <span class="keywordflow">continue</span>;</div>
-<div class="line"><span class="lineno">  555</span>            }</div>
-<div class="line"><span class="lineno">  556</span> </div>
-<div class="line"><span class="lineno">  557</span>            <span class="keywordflow">return</span> res;</div>
-<div class="line"><span class="lineno">  558</span>        }</div>
-<div class="line"><span class="lineno">  559</span>    }</div>
+<div class="line"><span class="lineno">  534</span>        <span class="keyword">auto</span> deadline = std::chrono::steady_clock::now() + timeout;</div>
+<div class="line"><span class="lineno">  535</span> </div>
+<div class="line"><span class="lineno">  536</span>        <span class="keywordflow">for</span> (;;)</div>
+<div class="line"><span class="lineno">  537</span>        {</div>
+<div class="line"><span class="lineno">  538</span>            <span class="comment">// Poll all queues, execute all maintainance actions</span></div>
+<div class="line"><span class="lineno">  539</span>            <span class="keywordflow">if</span> (std::holds_alternative&lt;Initiator::Ready&gt;(<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a6a4d9e371ffbc893689fe1ca9af72983">makeProgress</a>()))</div>
+<div class="line"><span class="lineno">  540</span>            {</div>
+<div class="line"><span class="lineno">  541</span>                <span class="keywordflow">return</span> Initiator::Ready{};</div>
+<div class="line"><span class="lineno">  542</span>            }</div>
+<div class="line"><span class="lineno">  543</span> </div>
+<div class="line"><span class="lineno">  544</span>            <span class="comment">// Calculate the remaining time until the user wants the blocking function to return. If there is no time left</span></div>
+<div class="line"><span class="lineno">  545</span>            <span class="comment">// (millisecond precision) return right away.</span></div>
+<div class="line"><span class="lineno">  546</span>            <span class="keyword">auto</span> timeUntilDeadline = std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(deadline - std::chrono::steady_clock::now());</div>
+<div class="line"><span class="lineno">  547</span>            <span class="keywordflow">if</span> (timeUntilDeadline &lt;= <span class="keyword">decltype</span>(timeUntilDeadline){0})</div>
+<div class="line"><span class="lineno">  548</span>            {</div>
+<div class="line"><span class="lineno">  549</span>                <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a45aad47340fc7db91b1c694609ca97d0">afterProgressResult</a>();</div>
+<div class="line"><span class="lineno">  550</span>            }</div>
+<div class="line"><span class="lineno">  551</span> </div>
+<div class="line"><span class="lineno">  552</span>            <span class="comment">// Block on the completion queue until a completion arrives, or the interval timeout occurs.</span></div>
+<div class="line"><span class="lineno">  553</span>            <span class="keyword">auto</span> <span class="keyword">const</span> res = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a54b037039cfd9e0c9b27026592a28bcc">blockOnCQ</a>(std::min(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a5a3336d8f89dfd6bc1731b0666f80640">EQPollInterval</a>, timeUntilDeadline));</div>
+<div class="line"><span class="lineno">  554</span>            <span class="keywordflow">if</span> (std::holds_alternative&lt;Initiator::NotReady&gt;(res))</div>
+<div class="line"><span class="lineno">  555</span>            {</div>
+<div class="line"><span class="lineno">  556</span>                <span class="keywordflow">continue</span>;</div>
+<div class="line"><span class="lineno">  557</span>            }</div>
+<div class="line"><span class="lineno">  558</span> </div>
+<div class="line"><span class="lineno">  559</span>            <span class="keywordflow">return</span> res;</div>
+<div class="line"><span class="lineno">  560</span>        }</div>
+<div class="line"><span class="lineno">  561</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator_html_a54b037039cfd9e0c9b27026592a28bcc"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a54b037039cfd9e0c9b27026592a28bcc">mxl::lib::fabrics::ofi::RCInitiator::blockOnCQ</a></div><div class="ttdeci">Initiator::MakeProgressResult blockOnCQ(std::chrono::steady_clock::duration timeout)</div><div class="ttdoc">Block on the completion queue with a timeout.</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8cpp_source.html#l00401">RCInitiator.cpp:401</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator_html_a5a3336d8f89dfd6bc1731b0666f80640"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a5a3336d8f89dfd6bc1731b0666f80640">mxl::lib::fabrics::ofi::RCInitiator::EQPollInterval</a></div><div class="ttdeci">static constexpr auto EQPollInterval</div><div class="ttdoc">When making progress and using blocking queue reads, this is the minimum interval at which the event ...</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8hpp_source.html#l00222">RCInitiator.hpp:222</a></div></div>
 </div><!-- fragment -->
@@ -707,33 +709,33 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Poll the completion queue and process the events until the queue is empty. </p>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00451">451</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  452</span>    {</div>
-<div class="line"><span class="lineno">  453</span>        <span class="keywordflow">for</span> (;;)</div>
-<div class="line"><span class="lineno">  454</span>        {</div>
-<div class="line"><span class="lineno">  455</span>            <span class="keyword">auto</span> completion = <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a6ea040bffb74cdfcaab619d2cc9c2f13">_cq</a>-&gt;read();</div>
-<div class="line"><span class="lineno">  456</span>            <span class="keywordflow">if</span> (!completion)</div>
-<div class="line"><span class="lineno">  457</span>            {</div>
-<div class="line"><span class="lineno">  458</span>                <span class="comment">// No completion available, if we were flushing any endpoint, transition their state to done.</span></div>
-<div class="line"><span class="lineno">  459</span>                <span class="keywordflow">for</span> (<span class="keyword">auto</span>&amp; [_, target] : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a79ea836d227dfedde362150ecfb4c8f5">_targets</a>)</div>
-<div class="line"><span class="lineno">  460</span>                {</div>
-<div class="line"><span class="lineno">  461</span>                    target.terminate();</div>
-<div class="line"><span class="lineno">  462</span>                }</div>
-<div class="line"><span class="lineno">  463</span>                <span class="keywordflow">break</span>;</div>
-<div class="line"><span class="lineno">  464</span>            }</div>
-<div class="line"><span class="lineno">  465</span> </div>
-<div class="line"><span class="lineno">  466</span>            <span class="comment">// Find the endpoint this completion was generated from.</span></div>
-<div class="line"><span class="lineno">  467</span>            <span class="keyword">auto</span> ep = <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a79ea836d227dfedde362150ecfb4c8f5">_targets</a>.find(<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a0d2a53073a8731d1ede222d1e8e4ccdb">Endpoint::idFromToken</a>(completion-&gt;token()));</div>
-<div class="line"><span class="lineno">  468</span>            <span class="keywordflow">if</span> (ep == <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a79ea836d227dfedde362150ecfb4c8f5">_targets</a>.end())</div>
-<div class="line"><span class="lineno">  469</span>            {</div>
-<div class="line"><span class="lineno">  470</span>                <a class="code hl_define" href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a>(<span class="stringliteral">&quot;Received completion for an unknown endpoint&quot;</span>);</div>
-<div class="line"><span class="lineno">  471</span> </div>
-<div class="line"><span class="lineno">  472</span>                <span class="keywordflow">continue</span>;</div>
-<div class="line"><span class="lineno">  473</span>            }</div>
-<div class="line"><span class="lineno">  474</span> </div>
-<div class="line"><span class="lineno">  475</span>            ep-&gt;second.consume(*completion);</div>
-<div class="line"><span class="lineno">  476</span>        }</div>
-<div class="line"><span class="lineno">  477</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00453">453</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  454</span>    {</div>
+<div class="line"><span class="lineno">  455</span>        <span class="keywordflow">for</span> (;;)</div>
+<div class="line"><span class="lineno">  456</span>        {</div>
+<div class="line"><span class="lineno">  457</span>            <span class="keyword">auto</span> completion = <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a6ea040bffb74cdfcaab619d2cc9c2f13">_cq</a>-&gt;read();</div>
+<div class="line"><span class="lineno">  458</span>            <span class="keywordflow">if</span> (!completion)</div>
+<div class="line"><span class="lineno">  459</span>            {</div>
+<div class="line"><span class="lineno">  460</span>                <span class="comment">// No completion available, if we were flushing any endpoint, transition their state to done.</span></div>
+<div class="line"><span class="lineno">  461</span>                <span class="keywordflow">for</span> (<span class="keyword">auto</span>&amp; [_, target] : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a79ea836d227dfedde362150ecfb4c8f5">_targets</a>)</div>
+<div class="line"><span class="lineno">  462</span>                {</div>
+<div class="line"><span class="lineno">  463</span>                    target.terminate();</div>
+<div class="line"><span class="lineno">  464</span>                }</div>
+<div class="line"><span class="lineno">  465</span>                <span class="keywordflow">break</span>;</div>
+<div class="line"><span class="lineno">  466</span>            }</div>
+<div class="line"><span class="lineno">  467</span> </div>
+<div class="line"><span class="lineno">  468</span>            <span class="comment">// Find the endpoint this completion was generated from.</span></div>
+<div class="line"><span class="lineno">  469</span>            <span class="keyword">auto</span> ep = <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a79ea836d227dfedde362150ecfb4c8f5">_targets</a>.find(<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a0d2a53073a8731d1ede222d1e8e4ccdb">Endpoint::idFromToken</a>(completion-&gt;token()));</div>
+<div class="line"><span class="lineno">  470</span>            <span class="keywordflow">if</span> (ep == <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a79ea836d227dfedde362150ecfb4c8f5">_targets</a>.end())</div>
+<div class="line"><span class="lineno">  471</span>            {</div>
+<div class="line"><span class="lineno">  472</span>                <a class="code hl_define" href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a>(<span class="stringliteral">&quot;Received completion for an unknown endpoint&quot;</span>);</div>
+<div class="line"><span class="lineno">  473</span> </div>
+<div class="line"><span class="lineno">  474</span>                <span class="keywordflow">continue</span>;</div>
+<div class="line"><span class="lineno">  475</span>            }</div>
+<div class="line"><span class="lineno">  476</span> </div>
+<div class="line"><span class="lineno">  477</span>            ep-&gt;second.consume(*completion);</div>
+<div class="line"><span class="lineno">  478</span>        }</div>
+<div class="line"><span class="lineno">  479</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -762,28 +764,28 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Poll the event queue and process the returned events until the queue is empty. </p>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00479">479</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  480</span>    {</div>
-<div class="line"><span class="lineno">  481</span>        <span class="keywordflow">for</span> (;;)</div>
-<div class="line"><span class="lineno">  482</span>        {</div>
-<div class="line"><span class="lineno">  483</span>            <span class="keyword">auto</span> <span class="keyword">event</span> = <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a146e56dc85d1964dcbfc17339ddaf368">_eq</a>-&gt;read();</div>
-<div class="line"><span class="lineno">  484</span>            <span class="keywordflow">if</span> (!event)</div>
-<div class="line"><span class="lineno">  485</span>            {</div>
-<div class="line"><span class="lineno">  486</span>                <span class="keywordflow">break</span>;</div>
-<div class="line"><span class="lineno">  487</span>            }</div>
-<div class="line"><span class="lineno">  488</span> </div>
-<div class="line"><span class="lineno">  489</span>            <span class="comment">// Find the endpoint this event was generated from.</span></div>
-<div class="line"><span class="lineno">  490</span>            <span class="keyword">auto</span> ep = <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a79ea836d227dfedde362150ecfb4c8f5">_targets</a>.find(<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a26b612579bc8827b78540829b897452b">Endpoint::idFromFID</a>(event-&gt;fid()));</div>
-<div class="line"><span class="lineno">  491</span>            <span class="keywordflow">if</span> (ep == <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a79ea836d227dfedde362150ecfb4c8f5">_targets</a>.end())</div>
-<div class="line"><span class="lineno">  492</span>            {</div>
-<div class="line"><span class="lineno">  493</span>                <a class="code hl_define" href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a>(<span class="stringliteral">&quot;Received event for an unknown endpoint&quot;</span>);</div>
-<div class="line"><span class="lineno">  494</span> </div>
-<div class="line"><span class="lineno">  495</span>                <span class="keywordflow">continue</span>;</div>
-<div class="line"><span class="lineno">  496</span>            }</div>
-<div class="line"><span class="lineno">  497</span> </div>
-<div class="line"><span class="lineno">  498</span>            ep-&gt;second.consume(*event);</div>
-<div class="line"><span class="lineno">  499</span>        }</div>
-<div class="line"><span class="lineno">  500</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00481">481</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  482</span>    {</div>
+<div class="line"><span class="lineno">  483</span>        <span class="keywordflow">for</span> (;;)</div>
+<div class="line"><span class="lineno">  484</span>        {</div>
+<div class="line"><span class="lineno">  485</span>            <span class="keyword">auto</span> <span class="keyword">event</span> = <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a146e56dc85d1964dcbfc17339ddaf368">_eq</a>-&gt;read();</div>
+<div class="line"><span class="lineno">  486</span>            <span class="keywordflow">if</span> (!event)</div>
+<div class="line"><span class="lineno">  487</span>            {</div>
+<div class="line"><span class="lineno">  488</span>                <span class="keywordflow">break</span>;</div>
+<div class="line"><span class="lineno">  489</span>            }</div>
+<div class="line"><span class="lineno">  490</span> </div>
+<div class="line"><span class="lineno">  491</span>            <span class="comment">// Find the endpoint this event was generated from.</span></div>
+<div class="line"><span class="lineno">  492</span>            <span class="keyword">auto</span> ep = <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a79ea836d227dfedde362150ecfb4c8f5">_targets</a>.find(<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a26b612579bc8827b78540829b897452b">Endpoint::idFromFID</a>(event-&gt;fid()));</div>
+<div class="line"><span class="lineno">  493</span>            <span class="keywordflow">if</span> (ep == <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a79ea836d227dfedde362150ecfb4c8f5">_targets</a>.end())</div>
+<div class="line"><span class="lineno">  494</span>            {</div>
+<div class="line"><span class="lineno">  495</span>                <a class="code hl_define" href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a>(<span class="stringliteral">&quot;Received event for an unknown endpoint&quot;</span>);</div>
+<div class="line"><span class="lineno">  496</span> </div>
+<div class="line"><span class="lineno">  497</span>                <span class="keywordflow">continue</span>;</div>
+<div class="line"><span class="lineno">  498</span>            }</div>
+<div class="line"><span class="lineno">  499</span> </div>
+<div class="line"><span class="lineno">  500</span>            ep-&gt;second.consume(*event);</div>
+<div class="line"><span class="lineno">  501</span>        }</div>
+<div class="line"><span class="lineno">  502</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint_html_a26b612579bc8827b78540829b897452b"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a26b612579bc8827b78540829b897452b">mxl::lib::fabrics::ofi::Endpoint::idFromFID</a></div><div class="ttdeci">static Id idFromFID(::fid_t) noexcept</div><div class="ttdoc">Read the endpoint id from a libfabric object reference.</div><div class="ttdef"><b>Definition</b> <a href="Endpoint_8cpp_source.html#l00041">Endpoint.cpp:41</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -956,13 +958,13 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Initiator.html#a89449bd36ff47574e2cbb6af51d96ad8">mxl::lib::fabrics::ofi::Initiator</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00561">561</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  562</span>    {</div>
-<div class="line"><span class="lineno">  563</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span>&amp; target : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a79ea836d227dfedde362150ecfb4c8f5">_targets</a>)</div>
-<div class="line"><span class="lineno">  564</span>        {</div>
-<div class="line"><span class="lineno">  565</span>            target.second.shutdown();</div>
-<div class="line"><span class="lineno">  566</span>        }</div>
-<div class="line"><span class="lineno">  567</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00563">563</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  564</span>    {</div>
+<div class="line"><span class="lineno">  565</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span>&amp; target : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a79ea836d227dfedde362150ecfb4c8f5">_targets</a>)</div>
+<div class="line"><span class="lineno">  566</span>        {</div>
+<div class="line"><span class="lineno">  567</span>            target.second.shutdown();</div>
+<div class="line"><span class="lineno">  568</span>        }</div>
+<div class="line"><span class="lineno">  569</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>

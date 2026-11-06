@@ -7,5 +7,6 @@ var structmxl_1_1lib_1_1fabrics_1_1ofi_1_1ProviderConfigValues =
     [ "providerName", "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1ProviderConfigValues.html#a9ddca06749ed6d8a8d9b390cc876b0c1", null ],
     [ "requiredCaps", "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1ProviderConfigValues.html#a0d2e52095a96b6b3b6d64112df929590", null ],
     [ "supportedAddressFormats", "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1ProviderConfigValues.html#ab2035374256a2ba18eea108e175d09c9", null ],
+    [ "supportedFabricNames", "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1ProviderConfigValues.html#abc2986d4f4e61166c22f86b3210f4f8b", null ],
     [ "supportedProtocols", "structmxl_1_1lib_1_1fabrics_1_1ofi_1_1ProviderConfigValues.html#ac8e1a7221ee0b50b9a1d989578d00cae", null ]
 ];

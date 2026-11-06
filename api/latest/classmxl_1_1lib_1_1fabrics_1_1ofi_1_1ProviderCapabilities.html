@@ -123,7 +123,7 @@ Public Attributes</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>MXL-level capability description for a provider, converted from the public API type. On the query path this is nullopt (no filtering). On the setup path it carries the user-requested capabilities after normalization. </p>
 
-<p class="definition">Definition at line <a class="el" href="ProviderConfig_8hpp_source.html#l00046">46</a> of file <a class="el" href="ProviderConfig_8hpp_source.html">ProviderConfig.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ProviderConfig_8hpp_source.html#l00048">48</a> of file <a class="el" href="ProviderConfig_8hpp_source.html">ProviderConfig.hpp</a>.</p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="abe6f61b6d19d5b2f8b87d603e15281d9" name="abe6f61b6d19d5b2f8b87d603e15281d9"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abe6f61b6d19d5b2f8b87d603e15281d9">&#9670;&#160;</a></span>fromAPI()</h2>
@@ -149,13 +149,13 @@ Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="ProviderConfig_8cpp_source.html#l00049">49</a> of file <a class="el" href="ProviderConfig_8cpp_source.html">ProviderConfig.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   50</span>    {</div>
-<div class="line"><span class="lineno">   51</span>        <span class="keywordflow">return</span> ProviderCapabilities{</div>
-<div class="line"><span class="lineno">   52</span>            .maxMessageSize = caps.<a class="code hl_variable" href="structmxlFabricsInterfaceCaps__t.html#af23472f47169e0a2c4a85bc21247d32b">maxMessageSize</a>,</div>
-<div class="line"><span class="lineno">   53</span>            .interfaceCaps = caps.<a class="code hl_variable" href="structmxlFabricsInterfaceCaps__t.html#ab32b95ebe931fd19bce81149f597016d">flags</a>,</div>
-<div class="line"><span class="lineno">   54</span>        };</div>
-<div class="line"><span class="lineno">   55</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="ProviderConfig_8cpp_source.html#l00050">50</a> of file <a class="el" href="ProviderConfig_8cpp_source.html">ProviderConfig.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   51</span>    {</div>
+<div class="line"><span class="lineno">   52</span>        <span class="keywordflow">return</span> ProviderCapabilities{</div>
+<div class="line"><span class="lineno">   53</span>            .maxMessageSize = caps.<a class="code hl_variable" href="structmxlFabricsInterfaceCaps__t.html#af23472f47169e0a2c4a85bc21247d32b">maxMessageSize</a>,</div>
+<div class="line"><span class="lineno">   54</span>            .interfaceCaps = caps.<a class="code hl_variable" href="structmxlFabricsInterfaceCaps__t.html#ab32b95ebe931fd19bce81149f597016d">flags</a>,</div>
+<div class="line"><span class="lineno">   55</span>        };</div>
+<div class="line"><span class="lineno">   56</span>    }</div>
 <div class="ttc" id="astructmxlFabricsInterfaceCaps__t_html_ab32b95ebe931fd19bce81149f597016d"><div class="ttname"><a href="structmxlFabricsInterfaceCaps__t.html#ab32b95ebe931fd19bce81149f597016d">mxlFabricsInterfaceCaps_t::flags</a></div><div class="ttdeci">uint64_t flags</div><div class="ttdef"><b>Definition</b> <a href="fabrics_8h_source.html#l00090">fabrics.h:90</a></div></div>
 <div class="ttc" id="astructmxlFabricsInterfaceCaps__t_html_af23472f47169e0a2c4a85bc21247d32b"><div class="ttname"><a href="structmxlFabricsInterfaceCaps__t.html#af23472f47169e0a2c4a85bc21247d32b">mxlFabricsInterfaceCaps_t::maxMessageSize</a></div><div class="ttdeci">uint64_t maxMessageSize</div><div class="ttdef"><b>Definition</b> <a href="fabrics_8h_source.html#l00092">fabrics.h:92</a></div></div>
 </div><!-- fragment -->
@@ -175,7 +175,7 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>Bitmask of MXL_FABRICS_IFACE_CAP_* flags. </p>
 
-<p class="definition">Definition at line <a class="el" href="ProviderConfig_8hpp_source.html#l00052">52</a> of file <a class="el" href="ProviderConfig_8hpp_source.html">ProviderConfig.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ProviderConfig_8hpp_source.html#l00054">54</a> of file <a class="el" href="ProviderConfig_8hpp_source.html">ProviderConfig.hpp</a>.</p>
 
 </div>
 </div>
@@ -192,7 +192,7 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>The maximum message size supported by this provider on this interface </p>
 
-<p class="definition">Definition at line <a class="el" href="ProviderConfig_8hpp_source.html#l00050">50</a> of file <a class="el" href="ProviderConfig_8hpp_source.html">ProviderConfig.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ProviderConfig_8hpp_source.html#l00052">52</a> of file <a class="el" href="ProviderConfig_8hpp_source.html">ProviderConfig.hpp</a>.</p>
 
 </div>
 </div>

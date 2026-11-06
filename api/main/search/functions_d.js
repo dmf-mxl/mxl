@@ -6,7 +6,7 @@ var searchData=
   ['payloadwords_3',['payloadWords',['../classmxl_1_1lib_1_1EventRingBuffer.html#a31967235c7d7b85953389e07c7faf100',1,'mxl::lib::EventRingBuffer']]],
   ['planaudiobatches_4',['planAudioBatches',['../test__flows_8cpp.html#a3faccebae257de975b73fdb5e5594fe7',1,'test_flows.cpp']]],
   ['planepayloadoffset_5',['planePayloadOffset',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Discrete.html#a5d03cd0416ab5e2bbda30be24760e4a9',1,'mxl::lib::fabrics::ofi::DataLayout::Discrete']]],
-  ['pollcq_6',['pollcq',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#ade1e82a844d3aadd4bff75edd4d7cc85',1,'mxl::lib::fabrics::ofi::RCInitiator::pollCQ()'],['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator.html#a4260730968b3776af6aaf9c03129f8c3',1,'mxl::lib::fabrics::ofi::RDMInitiator::pollCQ()']]],
+  ['pollcq_6',['pollCQ',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#ade1e82a844d3aadd4bff75edd4d7cc85',1,'mxl::lib::fabrics::ofi::RCInitiator']]],
   ['polleq_7',['pollEQ',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a80c0d6628d2edea3b9735f4ac600607c',1,'mxl::lib::fabrics::ofi::RCInitiator']]],
   ['posixcontinuousflowreader_8',['PosixContinuousFlowReader',['../classmxl_1_1lib_1_1PosixContinuousFlowReader.html#a52bcf44a9eab53f87252f3f76e8909b5',1,'mxl::lib::PosixContinuousFlowReader']]],
   ['posixcontinuousflowwriter_9',['PosixContinuousFlowWriter',['../classmxl_1_1lib_1_1PosixContinuousFlowWriter.html#a145bea188e783033fb114fc919ec5ddc',1,'mxl::lib::PosixContinuousFlowWriter']]],

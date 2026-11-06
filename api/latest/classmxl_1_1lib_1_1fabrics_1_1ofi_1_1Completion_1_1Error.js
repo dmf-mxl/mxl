@@ -5,5 +5,6 @@ var classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error =
     [ "toString", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#a00de824421cb5000001b894b3dbca4cd", null ],
     [ "CompletionQueue", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#a5dd5ad2a258329e663732343be6048d3", null ],
     [ "_cq", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#ad0f9869af05f2ca562d1ceec9c514996", null ],
+    [ "_message", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#a385a758e5d3f809e1e5e265bcf49e9bb", null ],
     [ "_raw", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html#af0cb1d20127e9dae5318632f1bda9f1d", null ]
 ];

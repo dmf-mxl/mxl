@@ -140,6 +140,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ad071fa063a5d3e9ada4c09d854d02a66" id="r_ad071fa063a5d3e9ada4c09d854d02a66"><td class="memItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html#ad071fa063a5d3e9ada4c09d854d02a66">txIovLimit</a> () const noexcept</td></tr>
 <tr class="memdesc:ad071fa063a5d3e9ada4c09d854d02a66"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the IOV limit for this fabric info, which is the maximum number of iovecs that can be posted in a single send operation.  <br /></td></tr>
 <tr class="separator:ad071fa063a5d3e9ada4c09d854d02a66"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a802a4539cfdc24138fffeba289dd1866" id="r_a802a4539cfdc24138fffeba289dd1866"><td class="memItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html#a802a4539cfdc24138fffeba289dd1866">txSize</a> () const noexcept</td></tr>
+<tr class="memdesc:a802a4539cfdc24138fffeba289dd1866"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the transmit queue size of the endpoint.  <br /></td></tr>
+<tr class="separator:a802a4539cfdc24138fffeba289dd1866"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
@@ -192,7 +195,7 @@ Private Attributes</h2></td></tr>
 <p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00119">119</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
 <div class="fragment"><div class="line"><span class="lineno">  120</span>        : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html#a431d164138c272cbc3c93c2dde4a1a01">_raw</a>(<span class="keyword">const_cast&lt;</span>::fi_info*<span class="keyword">&gt;</span>(<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html#a9fed69d48fe7938e5f825a5ee00f762f">raw</a>))</div>
 <div class="line"><span class="lineno">  121</span>    {}</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView_html_a431d164138c272cbc3c93c2dde4a1a01"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html#a431d164138c272cbc3c93c2dde4a1a01">mxl::lib::fabrics::ofi::FabricInfoView::_raw</a></div><div class="ttdeci">::fi_info * _raw</div><div class="ttdef"><b>Definition</b> <a href="FabricInfo_8hpp_source.html#l00152">FabricInfo.hpp:152</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView_html_a431d164138c272cbc3c93c2dde4a1a01"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html#a431d164138c272cbc3c93c2dde4a1a01">mxl::lib::fabrics::ofi::FabricInfoView::_raw</a></div><div class="ttdeci">::fi_info * _raw</div><div class="ttdef"><b>Definition</b> <a href="FabricInfo_8hpp_source.html#l00159">FabricInfo.hpp:159</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView_html_a9fed69d48fe7938e5f825a5ee00f762f"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html#a9fed69d48fe7938e5f825a5ee00f762f">mxl::lib::fabrics::ofi::FabricInfoView::raw</a></div><div class="ttdeci">::fi_info * raw() noexcept</div><div class="ttdoc">Returns the raw ::fi_info object associated with this view.</div><div class="ttdef"><b>Definition</b> <a href="FabricInfo_8cpp_source.html#l00143">FabricInfo.cpp:143</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -221,10 +224,10 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00163">163</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  164</span>    {</div>
-<div class="line"><span class="lineno">  165</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html#a431d164138c272cbc3c93c2dde4a1a01">_raw</a>-&gt;ep_attr-&gt;type;</div>
-<div class="line"><span class="lineno">  166</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00168">168</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  169</span>    {</div>
+<div class="line"><span class="lineno">  170</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html#a431d164138c272cbc3c93c2dde4a1a01">_raw</a>-&gt;ep_attr-&gt;type;</div>
+<div class="line"><span class="lineno">  171</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -485,6 +488,39 @@ Private Attributes</h2></td></tr>
 </div><!-- fragment -->
 </div>
 </div>
+<a id="a802a4539cfdc24138fffeba289dd1866" name="a802a4539cfdc24138fffeba289dd1866"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a802a4539cfdc24138fffeba289dd1866">&#9670;&#160;</a></span>txSize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::size_t mxl::lib::fabrics::ofi::FabricInfoView::txSize </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Return the transmit queue size of the endpoint. </p>
+<dl class="section return"><dt>Returns</dt><dd>The number of transmit queue entries. A single operation may use more than one. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8cpp_source.html#l00163">163</a> of file <a class="el" href="FabricInfo_8cpp_source.html">FabricInfo.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  164</span>    {</div>
+<div class="line"><span class="lineno">  165</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfoView.html#a431d164138c272cbc3c93c2dde4a1a01">_raw</a>-&gt;tx_attr-&gt;size;</div>
+<div class="line"><span class="lineno">  166</span>    }</div>
+</div><!-- fragment -->
+</div>
+</div>
 <h2 class="groupheader">Member Data Documentation</h2>
 <a id="a431d164138c272cbc3c93c2dde4a1a01" name="a431d164138c272cbc3c93c2dde4a1a01"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a431d164138c272cbc3c93c2dde4a1a01">&#9670;&#160;</a></span>_raw</h2>
@@ -506,7 +542,7 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8hpp_source.html#l00152">152</a> of file <a class="el" href="FabricInfo_8hpp_source.html">FabricInfo.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8hpp_source.html#l00159">159</a> of file <a class="el" href="FabricInfo_8hpp_source.html">FabricInfo.hpp</a>.</p>
 
 </div>
 </div>
@@ -530,7 +566,7 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8hpp_source.html#l00146">146</a> of file <a class="el" href="FabricInfo_8hpp_source.html">FabricInfo.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8hpp_source.html#l00153">153</a> of file <a class="el" href="FabricInfo_8hpp_source.html">FabricInfo.hpp</a>.</p>
 
 </div>
 </div>
@@ -554,7 +590,7 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8hpp_source.html#l00145">145</a> of file <a class="el" href="FabricInfo_8hpp_source.html">FabricInfo.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8hpp_source.html#l00152">152</a> of file <a class="el" href="FabricInfo_8hpp_source.html">FabricInfo.hpp</a>.</p>
 
 </div>
 </div>
@@ -578,7 +614,7 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="FabricInfo_8hpp_source.html#l00144">144</a> of file <a class="el" href="FabricInfo_8hpp_source.html">FabricInfo.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="FabricInfo_8hpp_source.html#l00151">151</a> of file <a class="el" href="FabricInfo_8hpp_source.html">FabricInfo.hpp</a>.</p>
 
 </div>
 </div>

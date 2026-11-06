@@ -18,6 +18,7 @@ var searchData=
   ['storage_5fversion_15',['STORAGE_VERSION',['../classmxl_1_1lib_1_1EventRingBuffer.html#ad7a3fe1c89919588044aaba21fea59fc',1,'mxl::lib::EventRingBuffer']]],
   ['stride_16',['stride',['../structmxlWrappedMultiBufferSlice__t.html#ad111dcac53c787b5e66b170fa569e1ad',1,'mxlWrappedMultiBufferSlice_t::stride'],['../structmxlMutableWrappedMultiBufferSlice__t.html#af3be6f0132e22477c7a3fcdec729a4bd',1,'mxlMutableWrappedMultiBufferSlice_t::stride']]],
   ['supportedaddressformats_17',['supportedAddressFormats',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1ProviderConfigValues.html#ab2035374256a2ba18eea108e175d09c9',1,'mxl::lib::fabrics::ofi::ProviderConfigValues']]],
-  ['supportedprotocols_18',['supportedProtocols',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1ProviderConfigValues.html#ac8e1a7221ee0b50b9a1d989578d00cae',1,'mxl::lib::fabrics::ofi::ProviderConfigValues']]],
-  ['synccounter_19',['syncCounter',['../structmxl_1_1lib_1_1FlowState.html#a29ef741ff5a71b16d5644ff50dbbcbf9',1,'mxl::lib::FlowState']]]
+  ['supportedfabricnames_18',['supportedFabricNames',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1ProviderConfigValues.html#abc2986d4f4e61166c22f86b3210f4f8b',1,'mxl::lib::fabrics::ofi::ProviderConfigValues']]],
+  ['supportedprotocols_19',['supportedProtocols',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1ProviderConfigValues.html#ac8e1a7221ee0b50b9a1d989578d00cae',1,'mxl::lib::fabrics::ofi::ProviderConfigValues']]],
+  ['synccounter_20',['syncCounter',['../structmxl_1_1lib_1_1FlowState.html#a29ef741ff5a71b16d5644ff50dbbcbf9',1,'mxl::lib::FlowState']]]
 ];

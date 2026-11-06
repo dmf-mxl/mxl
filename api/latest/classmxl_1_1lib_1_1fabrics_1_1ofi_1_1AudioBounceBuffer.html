@@ -431,41 +431,53 @@ Private Attributes</h2></td></tr>
 <div class="line"><span class="lineno">   89</span> </div>
 <div class="line"><span class="lineno">   90</span>        <span class="keyword">auto</span> <span class="keyword">const</span> maxCountPerEntry = (<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html#af4d45a40a63692a96e1d185303725157">entrySize</a>() - <span class="keyword">sizeof</span>(AudioEntryHeader)) / (<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html#a42ddca60fe4d1c3ed451b22dd1e956ce">_layout</a>.<a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Continuous.html#a52a54e285a3c33cfa27134a890572ba7">channelCount</a> * <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html#a42ddca60fe4d1c3ed451b22dd1e956ce">_layout</a>.<a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Continuous.html#af00a00acdbf0fff0071b8ba4fb6a36a4">sampleSize</a>);</div>
 <div class="line"><span class="lineno">   91</span> </div>
-<div class="line"><span class="lineno">   92</span>        <span class="keywordflow">if</span> (header-&gt;count &gt; maxCountPerEntry)</div>
+<div class="line"><span class="lineno">   92</span>        <span class="keywordflow">if</span> (header-&gt;count == 0)</div>
 <div class="line"><span class="lineno">   93</span>        {</div>
-<div class="line"><span class="lineno">   94</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a0302e7afea5ec6982664237acc8559f4">Exception::invalidArgument</a>(</div>
-<div class="line"><span class="lineno">   95</span>                <span class="stringliteral">&quot;Invalid &#39;count&#39; {} received in the header. That number of samples per channel would bust the bounce buffer entry.&quot;</span>, header-&gt;count);</div>
+<div class="line"><span class="lineno">   94</span>            <span class="comment">// The header has not arrived yet.</span></div>
+<div class="line"><span class="lineno">   95</span>            <span class="keywordflow">return</span> *header;</div>
 <div class="line"><span class="lineno">   96</span>        }</div>
 <div class="line"><span class="lineno">   97</span> </div>
-<div class="line"><span class="lineno">   98</span>        <span class="comment">// Using the given audio data layout, head index and number of samples recover the slices</span></div>
-<div class="line"><span class="lineno">   99</span>        <a class="code hl_struct" href="structmxlMutableWrappedMultiBufferSlice__t.html">mxlMutableWrappedMultiBufferSlice</a> slices;</div>
-<div class="line"><span class="lineno">  100</span>        <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html#a632fe777f8ce6096af85399b4a161de9">getMutableMultiBufferSlices</a>(header-&gt;headIndex,</div>
-<div class="line"><span class="lineno">  101</span>            header-&gt;count,</div>
-<div class="line"><span class="lineno">  102</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html#a42ddca60fe4d1c3ed451b22dd1e956ce">_layout</a>.<a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Continuous.html#a6ebdbdb45120152c84b56336866c9e39">bufferLength</a>,</div>
-<div class="line"><span class="lineno">  103</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html#a42ddca60fe4d1c3ed451b22dd1e956ce">_layout</a>.<a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Continuous.html#af00a00acdbf0fff0071b8ba4fb6a36a4">sampleSize</a>,</div>
-<div class="line"><span class="lineno">  104</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html#a42ddca60fe4d1c3ed451b22dd1e956ce">_layout</a>.<a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Continuous.html#a52a54e285a3c33cfa27134a890572ba7">channelCount</a>,</div>
-<div class="line"><span class="lineno">  105</span>            <span class="keyword">reinterpret_cast&lt;</span>std::uint8_t*<span class="keyword">&gt;</span>(outRegion.base), <span class="comment">// NOLINT</span></div>
-<div class="line"><span class="lineno">  106</span>            slices);</div>
-<div class="line"><span class="lineno">  107</span> </div>
-<div class="line"><span class="lineno">  108</span>        <span class="keyword">auto</span> srcAddr = entry.samples();</div>
-<div class="line"><span class="lineno">  109</span>        <span class="comment">// The egress side writes the payload in channel-major order: all fragments for one channel are contiguous before the next channel.</span></div>
-<div class="line"><span class="lineno">  110</span>        <span class="comment">// Consume fragments in that same order so wrapped slices do not interleave channel data.</span></div>
-<div class="line"><span class="lineno">  111</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> chan = std::size_t{0}; chan &lt; slices.<a class="code hl_variable" href="structmxlMutableWrappedMultiBufferSlice__t.html#a1c6b83fc652f5c04b8d0b7fe6b5232d2">count</a>; chan++)</div>
-<div class="line"><span class="lineno">  112</span>        {</div>
-<div class="line"><span class="lineno">  113</span>            <span class="keywordflow">for</span> (<span class="keyword">auto</span> <span class="keyword">const</span>&amp; fragment : slices.base.fragments)</div>
-<div class="line"><span class="lineno">  114</span>            {</div>
-<div class="line"><span class="lineno">  115</span>                <span class="comment">// check if the fragment present</span></div>
-<div class="line"><span class="lineno">  116</span>                <span class="keywordflow">if</span> (fragment.size &gt; 0)</div>
-<div class="line"><span class="lineno">  117</span>                {</div>
-<div class="line"><span class="lineno">  118</span>                    <span class="keyword">auto</span> <span class="keyword">const</span> dstAddr = <span class="keyword">reinterpret_cast&lt;</span>std::uint8_t*<span class="keyword">&gt;</span>(fragment.pointer) + (slices.<a class="code hl_variable" href="structmxlMutableWrappedMultiBufferSlice__t.html#af3be6f0132e22477c7a3fcdec729a4bd">stride</a> * chan);</div>
-<div class="line"><span class="lineno">  119</span>                    std::memcpy(dstAddr, srcAddr, fragment.size);</div>
-<div class="line"><span class="lineno">  120</span>                    srcAddr += fragment.size;</div>
-<div class="line"><span class="lineno">  121</span>                }</div>
-<div class="line"><span class="lineno">  122</span>            }</div>
-<div class="line"><span class="lineno">  123</span>        }</div>
-<div class="line"><span class="lineno">  124</span> </div>
-<div class="line"><span class="lineno">  125</span>        <span class="keywordflow">return</span> *header;</div>
-<div class="line"><span class="lineno">  126</span>    }</div>
+<div class="line"><span class="lineno">   98</span>        <span class="keywordflow">if</span> (header-&gt;count &gt; <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html#a42ddca60fe4d1c3ed451b22dd1e956ce">_layout</a>.<a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Continuous.html#a6ebdbdb45120152c84b56336866c9e39">bufferLength</a>)</div>
+<div class="line"><span class="lineno">   99</span>        {</div>
+<div class="line"><span class="lineno">  100</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a0302e7afea5ec6982664237acc8559f4">Exception::invalidArgument</a>(</div>
+<div class="line"><span class="lineno">  101</span>                <span class="stringliteral">&quot;Invalid &#39;count&#39; {} received in the header. More samples per channel than the ring holds ({}).&quot;</span>, header-&gt;count, <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html#a42ddca60fe4d1c3ed451b22dd1e956ce">_layout</a>.<a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Continuous.html#a6ebdbdb45120152c84b56336866c9e39">bufferLength</a>);</div>
+<div class="line"><span class="lineno">  102</span>        }</div>
+<div class="line"><span class="lineno">  103</span> </div>
+<div class="line"><span class="lineno">  104</span>        <span class="keywordflow">if</span> (header-&gt;count &gt; maxCountPerEntry)</div>
+<div class="line"><span class="lineno">  105</span>        {</div>
+<div class="line"><span class="lineno">  106</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a0302e7afea5ec6982664237acc8559f4">Exception::invalidArgument</a>(</div>
+<div class="line"><span class="lineno">  107</span>                <span class="stringliteral">&quot;Invalid &#39;count&#39; {} received in the header. That number of samples per channel would bust the bounce buffer entry.&quot;</span>, header-&gt;count);</div>
+<div class="line"><span class="lineno">  108</span>        }</div>
+<div class="line"><span class="lineno">  109</span> </div>
+<div class="line"><span class="lineno">  110</span>        <span class="comment">// Using the given audio data layout, head index and number of samples recover the slices</span></div>
+<div class="line"><span class="lineno">  111</span>        <a class="code hl_struct" href="structmxlMutableWrappedMultiBufferSlice__t.html">mxlMutableWrappedMultiBufferSlice</a> slices;</div>
+<div class="line"><span class="lineno">  112</span>        <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html#a632fe777f8ce6096af85399b4a161de9">getMutableMultiBufferSlices</a>(header-&gt;headIndex,</div>
+<div class="line"><span class="lineno">  113</span>            header-&gt;count,</div>
+<div class="line"><span class="lineno">  114</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html#a42ddca60fe4d1c3ed451b22dd1e956ce">_layout</a>.<a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Continuous.html#a6ebdbdb45120152c84b56336866c9e39">bufferLength</a>,</div>
+<div class="line"><span class="lineno">  115</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html#a42ddca60fe4d1c3ed451b22dd1e956ce">_layout</a>.<a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Continuous.html#af00a00acdbf0fff0071b8ba4fb6a36a4">sampleSize</a>,</div>
+<div class="line"><span class="lineno">  116</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html#a42ddca60fe4d1c3ed451b22dd1e956ce">_layout</a>.<a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1DataLayout_1_1Continuous.html#a52a54e285a3c33cfa27134a890572ba7">channelCount</a>,</div>
+<div class="line"><span class="lineno">  117</span>            <span class="keyword">reinterpret_cast&lt;</span>std::uint8_t*<span class="keyword">&gt;</span>(outRegion.base), <span class="comment">// NOLINT</span></div>
+<div class="line"><span class="lineno">  118</span>            slices);</div>
+<div class="line"><span class="lineno">  119</span> </div>
+<div class="line"><span class="lineno">  120</span>        <span class="keyword">auto</span> srcAddr = entry.samples();</div>
+<div class="line"><span class="lineno">  121</span>        <span class="comment">// The egress side writes the payload in channel-major order: all fragments for one channel are contiguous before the next channel.</span></div>
+<div class="line"><span class="lineno">  122</span>        <span class="comment">// Consume fragments in that same order so wrapped slices do not interleave channel data.</span></div>
+<div class="line"><span class="lineno">  123</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> chan = std::size_t{0}; chan &lt; slices.<a class="code hl_variable" href="structmxlMutableWrappedMultiBufferSlice__t.html#a1c6b83fc652f5c04b8d0b7fe6b5232d2">count</a>; chan++)</div>
+<div class="line"><span class="lineno">  124</span>        {</div>
+<div class="line"><span class="lineno">  125</span>            <span class="keywordflow">for</span> (<span class="keyword">auto</span> <span class="keyword">const</span>&amp; fragment : slices.base.fragments)</div>
+<div class="line"><span class="lineno">  126</span>            {</div>
+<div class="line"><span class="lineno">  127</span>                <span class="comment">// check if the fragment present</span></div>
+<div class="line"><span class="lineno">  128</span>                <span class="keywordflow">if</span> (fragment.size &gt; 0)</div>
+<div class="line"><span class="lineno">  129</span>                {</div>
+<div class="line"><span class="lineno">  130</span>                    <span class="keyword">auto</span> <span class="keyword">const</span> dstAddr = <span class="keyword">reinterpret_cast&lt;</span>std::uint8_t*<span class="keyword">&gt;</span>(fragment.pointer) + (slices.<a class="code hl_variable" href="structmxlMutableWrappedMultiBufferSlice__t.html#af3be6f0132e22477c7a3fcdec729a4bd">stride</a> * chan);</div>
+<div class="line"><span class="lineno">  131</span>                    std::memcpy(dstAddr, srcAddr, fragment.size);</div>
+<div class="line"><span class="lineno">  132</span>                    srcAddr += fragment.size;</div>
+<div class="line"><span class="lineno">  133</span>                }</div>
+<div class="line"><span class="lineno">  134</span>            }</div>
+<div class="line"><span class="lineno">  135</span>        }</div>
+<div class="line"><span class="lineno">  136</span> </div>
+<div class="line"><span class="lineno">  137</span>        <span class="keywordflow">return</span> *header;</div>
+<div class="line"><span class="lineno">  138</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer_html_a632fe777f8ce6096af85399b4a161de9"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AudioBounceBuffer.html#a632fe777f8ce6096af85399b4a161de9">mxl::lib::fabrics::ofi::AudioBounceBuffer::getMutableMultiBufferSlices</a></div><div class="ttdeci">static void getMutableMultiBufferSlices(std::uint64_t index, std::size_t count, std::size_t bufferLength, std::size_t sampleWordSize, std::size_t channelCount, std::uint8_t *baseBufferPtr, mxlMutableWrappedMultiBufferSlice &amp;slice) noexcept</div><div class="ttdef"><b>Definition</b> <a href="AudioBounceBuffer_8cpp_source.html#l00015">AudioBounceBuffer.cpp:15</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception_html_a0302e7afea5ec6982664237acc8559f4"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a0302e7afea5ec6982664237acc8559f4">mxl::lib::fabrics::ofi::Exception::invalidArgument</a></div><div class="ttdeci">static Exception invalidArgument(fmt::format_string&lt; T... &gt; fmt, T &amp;&amp;... args)</div><div class="ttdoc">Make an MXL_ERR_INVALID_ARG exception.</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00043">Exception.hpp:43</a></div></div>
 <div class="ttc" id="astructmxlMutableWrappedMultiBufferSlice__t_html"><div class="ttname"><a href="structmxlMutableWrappedMultiBufferSlice__t.html">mxlMutableWrappedMultiBufferSlice_t</a></div><div class="ttdef"><b>Definition</b> <a href="flow_8h_source.html#l00115">flow.h:116</a></div></div>

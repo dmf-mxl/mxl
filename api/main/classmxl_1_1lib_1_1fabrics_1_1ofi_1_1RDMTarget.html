@@ -232,10 +232,10 @@ Additional Inherited Members</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="RDMTarget_8cpp_source.html#l00083">83</a> of file <a class="el" href="RDMTarget_8cpp_source.html">RDMTarget.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   84</span>        : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a715e7cd147fabc751ee7c01dd5b1453a">_ep</a>(std::move(ep))</div>
-<div class="line"><span class="lineno">   85</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a38492fb433dbc7f00526bdf495d1b07f">_protocol</a>(std::move(proto))</div>
-<div class="line"><span class="lineno">   86</span>    {}</div>
+<p class="definition">Definition at line <a class="el" href="RDMTarget_8cpp_source.html#l00086">86</a> of file <a class="el" href="RDMTarget_8cpp_source.html">RDMTarget.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   87</span>        : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a715e7cd147fabc751ee7c01dd5b1453a">_ep</a>(std::move(ep))</div>
+<div class="line"><span class="lineno">   88</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a38492fb433dbc7f00526bdf495d1b07f">_protocol</a>(std::move(proto))</div>
+<div class="line"><span class="lineno">   89</span>    {}</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget_html_a38492fb433dbc7f00526bdf495d1b07f"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a38492fb433dbc7f00526bdf495d1b07f">mxl::lib::fabrics::ofi::RDMTarget::_protocol</a></div><div class="ttdeci">std::unique_ptr&lt; IngressProtocol &gt; _protocol</div><div class="ttdef"><b>Definition</b> <a href="RDMTarget_8hpp_source.html#l00061">RDMTarget.hpp:61</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget_html_a715e7cd147fabc751ee7c01dd5b1453a"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a715e7cd147fabc751ee7c01dd5b1453a">mxl::lib::fabrics::ofi::RDMTarget::_ep</a></div><div class="ttdeci">Endpoint _ep</div><div class="ttdef"><b>Definition</b> <a href="RDMTarget_8hpp_source.html#l00060">RDMTarget.hpp:60</a></div></div>
 </div><!-- fragment -->
@@ -306,10 +306,10 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#a6a9273f785c6efbbf77cb79a4262ee40">mxl::lib::fabrics::ofi::Target</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="RDMTarget_8cpp_source.html#l00088">88</a> of file <a class="el" href="RDMTarget_8cpp_source.html">RDMTarget.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   89</span>    {</div>
-<div class="line"><span class="lineno">   90</span>        <span class="keywordflow">return</span> readNext&lt;QueueReadMode::NonBlocking&gt;({});</div>
-<div class="line"><span class="lineno">   91</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="RDMTarget_8cpp_source.html#l00091">91</a> of file <a class="el" href="RDMTarget_8cpp_source.html">RDMTarget.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   92</span>    {</div>
+<div class="line"><span class="lineno">   93</span>        <span class="keywordflow">return</span> readNext&lt;QueueReadMode::NonBlocking&gt;({});</div>
+<div class="line"><span class="lineno">   94</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -341,10 +341,10 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#a2bdf6076581a963dd3f08684a8948314">mxl::lib::fabrics::ofi::Target</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="RDMTarget_8cpp_source.html#l00093">93</a> of file <a class="el" href="RDMTarget_8cpp_source.html">RDMTarget.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   94</span>    {</div>
-<div class="line"><span class="lineno">   95</span>        <span class="keywordflow">return</span> readNext&lt;QueueReadMode::Blocking&gt;(timeout);</div>
-<div class="line"><span class="lineno">   96</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="RDMTarget_8cpp_source.html#l00096">96</a> of file <a class="el" href="RDMTarget_8cpp_source.html">RDMTarget.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   97</span>    {</div>
+<div class="line"><span class="lineno">   98</span>        <span class="keywordflow">return</span> readNext&lt;QueueReadMode::Blocking&gt;(timeout);</div>
+<div class="line"><span class="lineno">   99</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -383,29 +383,32 @@ template&lt;<a class="el" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a188f
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The result of the read operation. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="RDMTarget_8cpp_source.html#l00102">102</a> of file <a class="el" href="RDMTarget_8cpp_source.html">RDMTarget.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  103</span>    {</div>
-<div class="line"><span class="lineno">  104</span>        <span class="keywordflow">try</span></div>
-<div class="line"><span class="lineno">  105</span>        {</div>
-<div class="line"><span class="lineno">  106</span>            <span class="keyword">auto</span> completion = readCompletionQueue&lt;queueReadMode&gt;(*<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a715e7cd147fabc751ee7c01dd5b1453a">_ep</a>.<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a93c710965fcd8aec7a04e34e7cede37c">completionQueue</a>(), timeout);</div>
-<div class="line"><span class="lineno">  107</span>            <span class="keywordflow">if</span> (completion)</div>
-<div class="line"><span class="lineno">  108</span>            {</div>
-<div class="line"><span class="lineno">  109</span>                <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a38492fb433dbc7f00526bdf495d1b07f">_protocol</a>-&gt;read(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a715e7cd147fabc751ee7c01dd5b1453a">_ep</a>, *completion);</div>
-<div class="line"><span class="lineno">  110</span>            }</div>
-<div class="line"><span class="lineno">  111</span>        }</div>
-<div class="line"><span class="lineno">  112</span>        <span class="keywordflow">catch</span> (FabricException <span class="keyword">const</span>&amp; ex)</div>
-<div class="line"><span class="lineno">  113</span>        {</div>
-<div class="line"><span class="lineno">  114</span>            <span class="keywordflow">if</span> (ex.isInterrupted())</div>
-<div class="line"><span class="lineno">  115</span>            {</div>
-<div class="line"><span class="lineno">  116</span>                <span class="keywordflow">return</span> std::make_optional&lt;Target::Interrupted&gt;();</div>
-<div class="line"><span class="lineno">  117</span>            }</div>
-<div class="line"><span class="lineno">  118</span> </div>
-<div class="line"><span class="lineno">  119</span>            <span class="keywordflow">throw</span>;</div>
-<div class="line"><span class="lineno">  120</span>        }</div>
-<div class="line"><span class="lineno">  121</span> </div>
-<div class="line"><span class="lineno">  122</span>        <span class="keywordflow">return</span> {};</div>
-<div class="line"><span class="lineno">  123</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="RDMTarget_8cpp_source.html#l00105">105</a> of file <a class="el" href="RDMTarget_8cpp_source.html">RDMTarget.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  106</span>    {</div>
+<div class="line"><span class="lineno">  107</span>        <a class="code hl_function" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a250ed1e6ff48566ddef2062152f6b1de">drainEventQueue</a>(*<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a715e7cd147fabc751ee7c01dd5b1453a">_ep</a>.<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a96653ce3f2005d594b2fcba298ef45cc">eventQueue</a>());</div>
+<div class="line"><span class="lineno">  108</span>        <span class="keywordflow">try</span></div>
+<div class="line"><span class="lineno">  109</span>        {</div>
+<div class="line"><span class="lineno">  110</span>            <span class="keyword">auto</span> completion = readCompletionQueue&lt;queueReadMode&gt;(*<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a715e7cd147fabc751ee7c01dd5b1453a">_ep</a>.<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a93c710965fcd8aec7a04e34e7cede37c">completionQueue</a>(), timeout);</div>
+<div class="line"><span class="lineno">  111</span>            <span class="keywordflow">if</span> (completion)</div>
+<div class="line"><span class="lineno">  112</span>            {</div>
+<div class="line"><span class="lineno">  113</span>                <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a38492fb433dbc7f00526bdf495d1b07f">_protocol</a>-&gt;read(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#a715e7cd147fabc751ee7c01dd5b1453a">_ep</a>, *completion);</div>
+<div class="line"><span class="lineno">  114</span>            }</div>
+<div class="line"><span class="lineno">  115</span>        }</div>
+<div class="line"><span class="lineno">  116</span>        <span class="keywordflow">catch</span> (FabricException <span class="keyword">const</span>&amp; ex)</div>
+<div class="line"><span class="lineno">  117</span>        {</div>
+<div class="line"><span class="lineno">  118</span>            <span class="keywordflow">if</span> (ex.isInterrupted())</div>
+<div class="line"><span class="lineno">  119</span>            {</div>
+<div class="line"><span class="lineno">  120</span>                <span class="keywordflow">return</span> std::make_optional&lt;Target::Interrupted&gt;();</div>
+<div class="line"><span class="lineno">  121</span>            }</div>
+<div class="line"><span class="lineno">  122</span> </div>
+<div class="line"><span class="lineno">  123</span>            <span class="keywordflow">throw</span>;</div>
+<div class="line"><span class="lineno">  124</span>        }</div>
+<div class="line"><span class="lineno">  125</span> </div>
+<div class="line"><span class="lineno">  126</span>        <span class="keywordflow">return</span> {};</div>
+<div class="line"><span class="lineno">  127</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint_html_a93c710965fcd8aec7a04e34e7cede37c"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a93c710965fcd8aec7a04e34e7cede37c">mxl::lib::fabrics::ofi::Endpoint::completionQueue</a></div><div class="ttdeci">std::shared_ptr&lt; CompletionQueue &gt; completionQueue() const</div><div class="ttdoc">Get the associated completion queue.</div><div class="ttdef"><b>Definition</b> <a href="Endpoint_8cpp_source.html#l00195">Endpoint.cpp:195</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint_html_a96653ce3f2005d594b2fcba298ef45cc"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a96653ce3f2005d594b2fcba298ef45cc">mxl::lib::fabrics::ofi::Endpoint::eventQueue</a></div><div class="ttdeci">std::shared_ptr&lt; EventQueue &gt; eventQueue() const</div><div class="ttdoc">Get the assiociated event queue.</div><div class="ttdef"><b>Definition</b> <a href="Endpoint_8cpp_source.html#l00205">Endpoint.cpp:205</a></div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_a250ed1e6ff48566ddef2062152f6b1de"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a250ed1e6ff48566ddef2062152f6b1de">mxl::lib::fabrics::ofi::drainEventQueue</a></div><div class="ttdeci">void drainEventQueue(EventQueue &amp;eq)</div><div class="ttdoc">Read all entries from a connectionless endpoint's event queue and log the errors among them.</div><div class="ttdef"><b>Definition</b> <a href="QueueHelpers_8hpp_source.html#l00115">QueueHelpers.hpp:115</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -458,76 +461,79 @@ template&lt;<a class="el" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a188f
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>A pair consisting of the newly setup <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html" title="Reliable Datagram (RDM) Target implementation.">RDMTarget</a> and its associated <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html" title="TargetInfo contains all the information required by an initiator to operate transfers to the given ta...">TargetInfo</a>. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="RDMTarget_8cpp_source.html#l00023">23</a> of file <a class="el" href="RDMTarget_8cpp_source.html">RDMTarget.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   25</span>    {</div>
-<div class="line"><span class="lineno">   26</span>        <a class="code hl_function" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#af92ac8383bf87f073adf9518c55a38ae">requireCapability</a>(info, FI_REMOTE_WRITE, <span class="stringliteral">&quot;Interface is missing required remote write capability&quot;</span>);</div>
-<div class="line"><span class="lineno">   27</span>        <span class="keyword">auto</span> <span class="keyword">const</span> provider = <a class="code hl_function" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#aad4aae43cc2f7818e0986173e85b1cd2">providerFromString</a>(info-&gt;fabric_attr-&gt;prov_name);</div>
-<div class="line"><span class="lineno">   28</span>        <span class="keywordflow">if</span> (!provider)</div>
-<div class="line"><span class="lineno">   29</span>        {</div>
-<div class="line"><span class="lineno">   30</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a0302e7afea5ec6982664237acc8559f4">Exception::invalidArgument</a>(<span class="stringliteral">&quot;invalid provider: {}&quot;</span>, info-&gt;fabric_attr-&gt;prov_name);</div>
-<div class="line"><span class="lineno">   31</span>        }</div>
-<div class="line"><span class="lineno">   32</span> </div>
-<div class="line"><span class="lineno">   33</span>        <a class="code hl_define" href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a>(<span class="stringliteral">&quot;Setting up RDM target with source address: {}&quot;</span>, <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#aa356b7392e0bb89509cb208173325d6d">FabricAddress::fromSource</a>(info).toString());</div>
-<div class="line"><span class="lineno">   34</span> </div>
-<div class="line"><span class="lineno">   35</span>        <span class="keyword">auto</span> fabric = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Fabric.html#a4d50284f919c7d58a82a67a1593e9527">Fabric::open</a>(info);</div>
-<div class="line"><span class="lineno">   36</span>        <span class="keyword">auto</span> domain = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Domain.html#a739923db80d5ef0e024caa762df34ea1">Domain::open</a>(fabric);</div>
-<div class="line"><span class="lineno">   37</span> </div>
-<div class="line"><span class="lineno">   38</span>        <span class="keyword">auto</span> endpoint = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a6791533db07b32ea4dc455ada0860392">Endpoint::create</a>(domain);</div>
-<div class="line"><span class="lineno">   39</span> </div>
-<div class="line"><span class="lineno">   40</span>        <span class="keyword">auto</span> cqAttr = <a class="code hl_function" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue_1_1Attributes.html#ac9ae139bfd05f06fcf1be7fa4c93771c">CompletionQueue::Attributes::defaults</a>();</div>
-<div class="line"><span class="lineno">   41</span>        <span class="keywordflow">if</span> (options.cqDepth)</div>
-<div class="line"><span class="lineno">   42</span>        {</div>
-<div class="line"><span class="lineno">   43</span>            cqAttr.size = *options.cqDepth;</div>
-<div class="line"><span class="lineno">   44</span>        }</div>
-<div class="line"><span class="lineno">   45</span>        <span class="keywordflow">if</span> (provider == <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#af4c65c9e8976cf4c6c059bd14589c579a295e051ab46695f1647af082cf335405">Provider::EFA</a>)</div>
-<div class="line"><span class="lineno">   46</span>        {</div>
-<div class="line"><span class="lineno">   47</span>            <span class="keywordflow">if</span> (!<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue.html#a791640fbc1d81dab62c84db5000fb49d">CompletionQueue::isWaitObjectSupportedForEFA</a>())</div>
-<div class="line"><span class="lineno">   48</span>            {</div>
-<div class="line"><span class="lineno">   49</span>                <span class="keywordflow">if</span> ((config.interface.caps.flags &amp; <a class="code hl_enumvalue" href="fabrics_8h.html#a5522ee3c58b0ba511646ddf062b7b90ba5a14bf1a24d136f535d2da1d312ef40b">MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS</a>) != 0)</div>
-<div class="line"><span class="lineno">   50</span>                {</div>
-<div class="line"><span class="lineno">   51</span>                    <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a8f7cd8d4a320b184c955130ad1eb1a68">Exception::make</a>(<a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344faecb46c045efcabb2dd2ca31644006445">MXL_ERR_NO_FABRIC</a>, <span class="stringliteral">&quot;Blocking API support requested, but not available for this fabric/version&quot;</span>);</div>
-<div class="line"><span class="lineno">   52</span>                }</div>
-<div class="line"><span class="lineno">   53</span> </div>
-<div class="line"><span class="lineno">   54</span>                cqAttr.waitObject = FI_WAIT_NONE;</div>
-<div class="line"><span class="lineno">   55</span>            }</div>
-<div class="line"><span class="lineno">   56</span>        }</div>
-<div class="line"><span class="lineno">   57</span> </div>
-<div class="line"><span class="lineno">   58</span>        <span class="keyword">auto</span> cq = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue.html#a14d4255f26462f3f2e1990ca8f181a9a">CompletionQueue::open</a>(domain, cqAttr);</div>
-<div class="line"><span class="lineno">   59</span>        endpoint.bind(cq, FI_RECV | FI_TRANSMIT);</div>
-<div class="line"><span class="lineno">   60</span> </div>
-<div class="line"><span class="lineno">   61</span>        <span class="comment">// Connectionless endpoints must be bound to an address vector. Even if it is not using the address vector.</span></div>
-<div class="line"><span class="lineno">   62</span>        <span class="keyword">auto</span> av = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AddressVector.html#a29e9a303eff9eb3410dffabbfc5c92eb">AddressVector::open</a>(domain);</div>
-<div class="line"><span class="lineno">   63</span>        endpoint.bind(av);</div>
-<div class="line"><span class="lineno">   64</span> </div>
-<div class="line"><span class="lineno">   65</span>        <span class="comment">// Connectionless endpoints must be explictely enabled when they are ready to be used.</span></div>
-<div class="line"><span class="lineno">   66</span>        endpoint.enable();</div>
+<p class="definition">Definition at line <a class="el" href="RDMTarget_8cpp_source.html#l00024">24</a> of file <a class="el" href="RDMTarget_8cpp_source.html">RDMTarget.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   26</span>    {</div>
+<div class="line"><span class="lineno">   27</span>        <a class="code hl_function" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#af92ac8383bf87f073adf9518c55a38ae">requireCapability</a>(info, FI_REMOTE_WRITE, <span class="stringliteral">&quot;Interface is missing required remote write capability&quot;</span>);</div>
+<div class="line"><span class="lineno">   28</span>        <span class="keyword">auto</span> <span class="keyword">const</span> provider = <a class="code hl_function" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#aad4aae43cc2f7818e0986173e85b1cd2">providerFromString</a>(info-&gt;fabric_attr-&gt;prov_name);</div>
+<div class="line"><span class="lineno">   29</span>        <span class="keywordflow">if</span> (!provider)</div>
+<div class="line"><span class="lineno">   30</span>        {</div>
+<div class="line"><span class="lineno">   31</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a0302e7afea5ec6982664237acc8559f4">Exception::invalidArgument</a>(<span class="stringliteral">&quot;invalid provider: {}&quot;</span>, info-&gt;fabric_attr-&gt;prov_name);</div>
+<div class="line"><span class="lineno">   32</span>        }</div>
+<div class="line"><span class="lineno">   33</span> </div>
+<div class="line"><span class="lineno">   34</span>        <a class="code hl_define" href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a>(<span class="stringliteral">&quot;Setting up RDM target with source address: {}&quot;</span>, <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#aa356b7392e0bb89509cb208173325d6d">FabricAddress::fromSource</a>(info).toString());</div>
+<div class="line"><span class="lineno">   35</span> </div>
+<div class="line"><span class="lineno">   36</span>        <span class="keyword">auto</span> fabric = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Fabric.html#a4d50284f919c7d58a82a67a1593e9527">Fabric::open</a>(info);</div>
+<div class="line"><span class="lineno">   37</span>        <span class="keyword">auto</span> domain = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Domain.html#a739923db80d5ef0e024caa762df34ea1">Domain::open</a>(fabric);</div>
+<div class="line"><span class="lineno">   38</span> </div>
+<div class="line"><span class="lineno">   39</span>        <span class="keyword">auto</span> endpoint = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a6791533db07b32ea4dc455ada0860392">Endpoint::create</a>(domain);</div>
+<div class="line"><span class="lineno">   40</span> </div>
+<div class="line"><span class="lineno">   41</span>        <span class="keyword">auto</span> cqAttr = <a class="code hl_function" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue_1_1Attributes.html#ac9ae139bfd05f06fcf1be7fa4c93771c">CompletionQueue::Attributes::defaults</a>();</div>
+<div class="line"><span class="lineno">   42</span>        <span class="keywordflow">if</span> (options.cqDepth)</div>
+<div class="line"><span class="lineno">   43</span>        {</div>
+<div class="line"><span class="lineno">   44</span>            cqAttr.size = *options.cqDepth;</div>
+<div class="line"><span class="lineno">   45</span>        }</div>
+<div class="line"><span class="lineno">   46</span>        <span class="keywordflow">if</span> (provider == <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#af4c65c9e8976cf4c6c059bd14589c579a295e051ab46695f1647af082cf335405">Provider::EFA</a>)</div>
+<div class="line"><span class="lineno">   47</span>        {</div>
+<div class="line"><span class="lineno">   48</span>            <span class="keywordflow">if</span> (!<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue.html#a791640fbc1d81dab62c84db5000fb49d">CompletionQueue::isWaitObjectSupportedForEFA</a>())</div>
+<div class="line"><span class="lineno">   49</span>            {</div>
+<div class="line"><span class="lineno">   50</span>                <span class="keywordflow">if</span> ((config.interface.caps.flags &amp; <a class="code hl_enumvalue" href="fabrics_8h.html#a5522ee3c58b0ba511646ddf062b7b90ba5a14bf1a24d136f535d2da1d312ef40b">MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS</a>) != 0)</div>
+<div class="line"><span class="lineno">   51</span>                {</div>
+<div class="line"><span class="lineno">   52</span>                    <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a8f7cd8d4a320b184c955130ad1eb1a68">Exception::make</a>(<a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344faecb46c045efcabb2dd2ca31644006445">MXL_ERR_NO_FABRIC</a>, <span class="stringliteral">&quot;Blocking API support requested, but not available for this fabric/version&quot;</span>);</div>
+<div class="line"><span class="lineno">   53</span>                }</div>
+<div class="line"><span class="lineno">   54</span> </div>
+<div class="line"><span class="lineno">   55</span>                cqAttr.waitObject = FI_WAIT_NONE;</div>
+<div class="line"><span class="lineno">   56</span>            }</div>
+<div class="line"><span class="lineno">   57</span>        }</div>
+<div class="line"><span class="lineno">   58</span> </div>
+<div class="line"><span class="lineno">   59</span>        <span class="keyword">auto</span> cq = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue.html#a14d4255f26462f3f2e1990ca8f181a9a">CompletionQueue::open</a>(domain, cqAttr);</div>
+<div class="line"><span class="lineno">   60</span>        endpoint.bind(cq, FI_RECV | FI_TRANSMIT);</div>
+<div class="line"><span class="lineno">   61</span> </div>
+<div class="line"><span class="lineno">   62</span>        <span class="comment">// Connectionless endpoints must be bound to an address vector. Even if it is not using the address vector.</span></div>
+<div class="line"><span class="lineno">   63</span>        <span class="keyword">auto</span> av = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AddressVector.html#a29e9a303eff9eb3410dffabbfc5c92eb">AddressVector::open</a>(domain);</div>
+<div class="line"><span class="lineno">   64</span>        endpoint.bind(av);</div>
+<div class="line"><span class="lineno">   65</span> </div>
+<div class="line"><span class="lineno">   66</span>        endpoint.bind(<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EventQueue.html#aaf86f40921907241b1f607c34ac9d67f">EventQueue::open</a>(fabric));</div>
 <div class="line"><span class="lineno">   67</span> </div>
-<div class="line"><span class="lineno">   68</span>        <span class="keyword">auto</span> mxlRegions = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1MxlRegions.html#ac79b2b156ff7e33b57e744d664768a58">MxlRegions::forWriter</a>(config.writer);</div>
-<div class="line"><span class="lineno">   69</span>        <span class="keyword">auto</span> protocol = <a class="code hl_function" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#acaf41e0e0b9579f9f197543e66df1eef">selectIngressProtocol</a>(mxlRegions.dataLayout(), mxlRegions.regions(), mxlRegions.maxSyncBatchSize());</div>
-<div class="line"><span class="lineno">   70</span>        <span class="keyword">auto</span> targetInfo = std::make_unique&lt;TargetInfo&gt;(</div>
-<div class="line"><span class="lineno">   71</span>            endpoint.id(), endpoint.localAddress(), *provider, protocol-&gt;registerMemory(domain), protocol-&gt;bounceBufferInfo());</div>
-<div class="line"><span class="lineno">   72</span> </div>
-<div class="line"><span class="lineno">   73</span>        <span class="keyword">struct </span>MakeUniqueEnabler : <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#aa803cda8e5d1063e18dec86719fcd345">RDMTarget</a></div>
-<div class="line"><span class="lineno">   74</span>        {</div>
-<div class="line"><span class="lineno">   75</span>            MakeUniqueEnabler(Endpoint ep, std::unique_ptr&lt;IngressProtocol&gt; proto)</div>
-<div class="line"><span class="lineno">   76</span>                : RDMTarget(std::move(ep), std::move(proto))</div>
-<div class="line"><span class="lineno">   77</span>            {}</div>
-<div class="line"><span class="lineno">   78</span>        };</div>
-<div class="line"><span class="lineno">   79</span> </div>
-<div class="line"><span class="lineno">   80</span>        <span class="keywordflow">return</span> {std::make_unique&lt;MakeUniqueEnabler&gt;(std::move(endpoint), std::move(protocol)), std::move(targetInfo)};</div>
-<div class="line"><span class="lineno">   81</span>    }</div>
+<div class="line"><span class="lineno">   68</span>        <span class="comment">// Connectionless endpoints must be explictely enabled when they are ready to be used.</span></div>
+<div class="line"><span class="lineno">   69</span>        endpoint.enable();</div>
+<div class="line"><span class="lineno">   70</span> </div>
+<div class="line"><span class="lineno">   71</span>        <span class="keyword">auto</span> mxlRegions = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1MxlRegions.html#ac79b2b156ff7e33b57e744d664768a58">MxlRegions::forWriter</a>(config.writer);</div>
+<div class="line"><span class="lineno">   72</span>        <span class="keyword">auto</span> protocol = <a class="code hl_function" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#acaf41e0e0b9579f9f197543e66df1eef">selectIngressProtocol</a>(mxlRegions.dataLayout(), mxlRegions.regions(), mxlRegions.maxSyncBatchSize());</div>
+<div class="line"><span class="lineno">   73</span>        <span class="keyword">auto</span> targetInfo = std::make_unique&lt;TargetInfo&gt;(</div>
+<div class="line"><span class="lineno">   74</span>            endpoint.id(), endpoint.localAddress(), *provider, protocol-&gt;registerMemory(domain), protocol-&gt;bounceBufferInfo());</div>
+<div class="line"><span class="lineno">   75</span> </div>
+<div class="line"><span class="lineno">   76</span>        <span class="keyword">struct </span>MakeUniqueEnabler : <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#aa803cda8e5d1063e18dec86719fcd345">RDMTarget</a></div>
+<div class="line"><span class="lineno">   77</span>        {</div>
+<div class="line"><span class="lineno">   78</span>            MakeUniqueEnabler(Endpoint ep, std::unique_ptr&lt;IngressProtocol&gt; proto)</div>
+<div class="line"><span class="lineno">   79</span>                : RDMTarget(std::move(ep), std::move(proto))</div>
+<div class="line"><span class="lineno">   80</span>            {}</div>
+<div class="line"><span class="lineno">   81</span>        };</div>
+<div class="line"><span class="lineno">   82</span> </div>
+<div class="line"><span class="lineno">   83</span>        <span class="keywordflow">return</span> {std::make_unique&lt;MakeUniqueEnabler&gt;(std::move(endpoint), std::move(protocol)), std::move(targetInfo)};</div>
+<div class="line"><span class="lineno">   84</span>    }</div>
 <div class="ttc" id="aLogging_8hpp_html_aefc531def12ec69a184941665c6e30ec"><div class="ttname"><a href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a></div><div class="ttdeci">#define MXL_INFO(...)</div><div class="ttdef"><b>Definition</b> <a href="Logging_8hpp_source.html#l00045">Logging.hpp:45</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1AddressVector_html_a29e9a303eff9eb3410dffabbfc5c92eb"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AddressVector.html#a29e9a303eff9eb3410dffabbfc5c92eb">mxl::lib::fabrics::ofi::AddressVector::open</a></div><div class="ttdeci">static std::shared_ptr&lt; AddressVector &gt; open(std::shared_ptr&lt; Domain &gt; domain, Attributes attr=Attributes::defaults())</div><div class="ttdoc">Create an AddressVector.</div><div class="ttdef"><b>Definition</b> <a href="AddressVector_8cpp_source.html#l00035">AddressVector.cpp:35</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue_html_a14d4255f26462f3f2e1990ca8f181a9a"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue.html#a14d4255f26462f3f2e1990ca8f181a9a">mxl::lib::fabrics::ofi::CompletionQueue::open</a></div><div class="ttdeci">static std::shared_ptr&lt; CompletionQueue &gt; open(std::shared_ptr&lt; Domain &gt; domain, Attributes const &amp;attr=Attributes::defaults())</div><div class="ttdoc">Create a new completion queue in the specified domain.</div><div class="ttdef"><b>Definition</b> <a href="CompletionQueue_8cpp_source.html#l00050">CompletionQueue.cpp:50</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue_html_a791640fbc1d81dab62c84db5000fb49d"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue.html#a791640fbc1d81dab62c84db5000fb49d">mxl::lib::fabrics::ofi::CompletionQueue::isWaitObjectSupportedForEFA</a></div><div class="ttdeci">static bool isWaitObjectSupportedForEFA() noexcept</div><div class="ttdoc">Check if wait any wait object type supported by the EFA provider for this libfabric version.</div><div class="ttdef"><b>Definition</b> <a href="CompletionQueue_8cpp_source.html#l00042">CompletionQueue.cpp:42</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Domain_html_a739923db80d5ef0e024caa762df34ea1"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Domain.html#a739923db80d5ef0e024caa762df34ea1">mxl::lib::fabrics::ofi::Domain::open</a></div><div class="ttdeci">static std::shared_ptr&lt; Domain &gt; open(std::shared_ptr&lt; Fabric &gt; fabric)</div><div class="ttdoc">Open a new domain associated with the specified fabric.</div><div class="ttdef"><b>Definition</b> <a href="Domain_8cpp_source.html#l00030">Domain.cpp:30</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint_html_a6791533db07b32ea4dc455ada0860392"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a6791533db07b32ea4dc455ada0860392">mxl::lib::fabrics::ofi::Endpoint::create</a></div><div class="ttdeci">static Endpoint create(std::shared_ptr&lt; Domain &gt; domain, FabricInfoView info)</div><div class="ttdoc">Allocates (active) new endpoint.</div><div class="ttdef"><b>Definition</b> <a href="Endpoint_8cpp_source.html#l00056">Endpoint.cpp:56</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1EventQueue_html_aaf86f40921907241b1f607c34ac9d67f"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EventQueue.html#aaf86f40921907241b1f607c34ac9d67f">mxl::lib::fabrics::ofi::EventQueue::open</a></div><div class="ttdeci">static std::shared_ptr&lt; EventQueue &gt; open(std::shared_ptr&lt; Fabric &gt;, Attributes const &amp;attr=Attributes::defaults())</div><div class="ttdoc">Create a new event queue associated with the specified fabric.</div><div class="ttdef"><b>Definition</b> <a href="EventQueue_8cpp_source.html#l00038">EventQueue.cpp:38</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception_html_a0302e7afea5ec6982664237acc8559f4"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a0302e7afea5ec6982664237acc8559f4">mxl::lib::fabrics::ofi::Exception::invalidArgument</a></div><div class="ttdeci">static Exception invalidArgument(fmt::format_string&lt; T... &gt; fmt, T &amp;&amp;... args)</div><div class="ttdoc">Make an MXL_ERR_INVALID_ARG exception.</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00043">Exception.hpp:43</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception_html_a8f7cd8d4a320b184c955130ad1eb1a68"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Exception.html#a8f7cd8d4a320b184c955130ad1eb1a68">mxl::lib::fabrics::ofi::Exception::make</a></div><div class="ttdeci">static Exception make(mxlStatus status, fmt::format_string&lt; T... &gt; fmt, T &amp;&amp;... args)</div><div class="ttdoc">Make any type of exception.</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00035">Exception.hpp:35</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress_html_aa356b7392e0bb89509cb208173325d6d"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricAddress.html#aa356b7392e0bb89509cb208173325d6d">mxl::lib::fabrics::ofi::FabricAddress::fromSource</a></div><div class="ttdeci">static FabricAddress fromSource(FabricInfoView info) noexcept</div><div class="ttdoc">Build a FabricAddress from the source address of info.</div><div class="ttdef"><b>Definition</b> <a href="FabricAddress_8cpp_source.html#l00231">FabricAddress.cpp:231</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Fabric_html_a4d50284f919c7d58a82a67a1593e9527"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Fabric.html#a4d50284f919c7d58a82a67a1593e9527">mxl::lib::fabrics::ofi::Fabric::open</a></div><div class="ttdeci">static std::shared_ptr&lt; Fabric &gt; open(FabricInfoView info)</div><div class="ttdoc">Open a fabric object based on the provided FabricInfoView.</div><div class="ttdef"><b>Definition</b> <a href="Fabric_8cpp_source.html#l00015">Fabric.cpp:15</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1MxlRegions_html_ac79b2b156ff7e33b57e744d664768a58"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1MxlRegions.html#ac79b2b156ff7e33b57e744d664768a58">mxl::lib::fabrics::ofi::MxlRegions::forWriter</a></div><div class="ttdeci">static MxlRegions forWriter(mxlFlowWriter)</div><div class="ttdef"><b>Definition</b> <a href="Region_8cpp_source.html#l00110">Region.cpp:110</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget_html_aa803cda8e5d1063e18dec86719fcd345"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#aa803cda8e5d1063e18dec86719fcd345">mxl::lib::fabrics::ofi::RDMTarget::RDMTarget</a></div><div class="ttdeci">RDMTarget(Endpoint ep, std::unique_ptr&lt; IngressProtocol &gt; protocol)</div><div class="ttdoc">Construct an RDMTarget with the given endpoint and immediate data location.</div><div class="ttdef"><b>Definition</b> <a href="RDMTarget_8cpp_source.html#l00083">RDMTarget.cpp:83</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget_html_aa803cda8e5d1063e18dec86719fcd345"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMTarget.html#aa803cda8e5d1063e18dec86719fcd345">mxl::lib::fabrics::ofi::RDMTarget::RDMTarget</a></div><div class="ttdeci">RDMTarget(Endpoint ep, std::unique_ptr&lt; IngressProtocol &gt; protocol)</div><div class="ttdoc">Construct an RDMTarget with the given endpoint and immediate data location.</div><div class="ttdef"><b>Definition</b> <a href="RDMTarget_8cpp_source.html#l00086">RDMTarget.cpp:86</a></div></div>
 <div class="ttc" id="afabrics_8h_html_a5522ee3c58b0ba511646ddf062b7b90ba5a14bf1a24d136f535d2da1d312ef40b"><div class="ttname"><a href="fabrics_8h.html#a5522ee3c58b0ba511646ddf062b7b90ba5a14bf1a24d136f535d2da1d312ef40b">MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS</a></div><div class="ttdeci">@ MXL_FABRICS_IFACE_CAP_BLOCKING_OPERATIONS</div><div class="ttdef"><b>Definition</b> <a href="fabrics_8h_source.html#l00078">fabrics.h:78</a></div></div>
 <div class="ttc" id="amxl_8h_html_a3bfda83f31da49dfefeb4c869492344faecb46c045efcabb2dd2ca31644006445"><div class="ttname"><a href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344faecb46c045efcabb2dd2ca31644006445">MXL_ERR_NO_FABRIC</a></div><div class="ttdeci">@ MXL_ERR_NO_FABRIC</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00046">mxl.h:46</a></div></div>
 <div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_aad4aae43cc2f7818e0986173e85b1cd2"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#aad4aae43cc2f7818e0986173e85b1cd2">mxl::lib::fabrics::ofi::providerFromString</a></div><div class="ttdeci">std::optional&lt; Provider &gt; providerFromString(std::string const &amp;s) noexcept</div><div class="ttdoc">Parse a provider name string, and return the enum value.</div><div class="ttdef"><b>Definition</b> <a href="Provider_8cpp_source.html#l00049">Provider.cpp:49</a></div></div>
@@ -565,8 +571,8 @@ template&lt;<a class="el" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a188f
 
 <p>Implements <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Target.html#a26ab148ad8bcd4b5ea2d22d12b70a160">mxl::lib::fabrics::ofi::Target</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="RDMTarget_8cpp_source.html#l00098">98</a> of file <a class="el" href="RDMTarget_8cpp_source.html">RDMTarget.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   99</span>    {}</div>
+<p class="definition">Definition at line <a class="el" href="RDMTarget_8cpp_source.html#l00101">101</a> of file <a class="el" href="RDMTarget_8cpp_source.html">RDMTarget.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  102</span>    {}</div>
 </div><!-- fragment -->
 </div>
 </div>

@@ -344,6 +344,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a20383f3f0b4c212c8f7239ab699a305f" id="r_a20383f3f0b4c212c8f7239ab699a305f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a392e550a79c8db4726aeebe65da5dc9e">FabricAddressFormat</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a20383f3f0b4c212c8f7239ab699a305f">convertAddressFormat</a> (std::uint32_t fiAddrFormat)</td></tr>
 <tr class="memdesc:a20383f3f0b4c212c8f7239ab699a305f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert from libfabric address format value to FabricAddressFormat.  <br /></td></tr>
 <tr class="separator:a20383f3f0b4c212c8f7239ab699a305f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a250ed1e6ff48566ddef2062152f6b1de" id="r_a250ed1e6ff48566ddef2062152f6b1de"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a250ed1e6ff48566ddef2062152f6b1de">drainEventQueue</a> (<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EventQueue.html">EventQueue</a> &amp;eq)</td></tr>
+<tr class="memdesc:a250ed1e6ff48566ddef2062152f6b1de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read all entries from a connectionless endpoint's event queue and log the errors among them.  <br /></td></tr>
+<tr class="separator:a250ed1e6ff48566ddef2062152f6b1de"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac3a4a68b88450dca7e9d46242d0ac652" id="r_ac3a4a68b88450dca7e9d46242d0ac652"><td class="memTemplParams" colspan="2">template&lt;typename F , typename... T&gt; </td></tr>
 <tr class="memitem:ac3a4a68b88450dca7e9d46242d0ac652"><td class="memTemplItemLeft" align="right" valign="top">int&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#ac3a4a68b88450dca7e9d46242d0ac652">fiCall</a> (F &amp;&amp;fun, std::string_view msg, T &amp;&amp;... args)</td></tr>
 <tr class="memdesc:ac3a4a68b88450dca7e9d46242d0ac652"><td class="mdescLeft">&#160;</td><td class="mdescRight">Call a libfabric function and check its return code.  <br /></td></tr>
@@ -581,11 +584,11 @@ Variables</h2></td></tr>
 <tr><td class="fieldname"><a id="a188f54b5d1a88b7ea4a3283314184239a20a6cf714cbf179298b4d850849847b8" name="a188f54b5d1a88b7ea4a3283314184239a20a6cf714cbf179298b4d850849847b8"></a>NonBlocking&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="QueueHelpers_8hpp_source.html#l00020">20</a> of file <a class="el" href="QueueHelpers_8hpp_source.html">QueueHelpers.hpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   21</span>    {</div>
-<div class="line"><span class="lineno">   22</span>        <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a188f54b5d1a88b7ea4a3283314184239abd0ca6be53b0f3d2886fd53fcb52574e">Blocking</a>,</div>
-<div class="line"><span class="lineno">   23</span>        <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a188f54b5d1a88b7ea4a3283314184239a20a6cf714cbf179298b4d850849847b8">NonBlocking</a></div>
-<div class="line"><span class="lineno">   24</span>    };</div>
+<p class="definition">Definition at line <a class="el" href="QueueHelpers_8hpp_source.html#l00024">24</a> of file <a class="el" href="QueueHelpers_8hpp_source.html">QueueHelpers.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   25</span>    {</div>
+<div class="line"><span class="lineno">   26</span>        <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a188f54b5d1a88b7ea4a3283314184239abd0ca6be53b0f3d2886fd53fcb52574e">Blocking</a>,</div>
+<div class="line"><span class="lineno">   27</span>        <a class="code hl_enumvalue" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a188f54b5d1a88b7ea4a3283314184239a20a6cf714cbf179298b4d850849847b8">NonBlocking</a></div>
+<div class="line"><span class="lineno">   28</span>    };</div>
 <div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_a188f54b5d1a88b7ea4a3283314184239a20a6cf714cbf179298b4d850849847b8"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a188f54b5d1a88b7ea4a3283314184239a20a6cf714cbf179298b4d850849847b8">mxl::lib::fabrics::ofi::QueueReadMode::NonBlocking</a></div><div class="ttdeci">@ NonBlocking</div></div>
 <div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_a188f54b5d1a88b7ea4a3283314184239abd0ca6be53b0f3d2886fd53fcb52574e"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a188f54b5d1a88b7ea4a3283314184239abd0ca6be53b0f3d2886fd53fcb52574e">mxl::lib::fabrics::ofi::QueueReadMode::Blocking</a></div><div class="ttdeci">@ Blocking</div></div>
 </div><!-- fragment -->
@@ -675,6 +678,63 @@ template&lt;typename F &gt; </div>
 <div class="line"><span class="lineno">  208</span> </div>
 <div class="line"><span class="lineno">  209</span>        <span class="keywordflow">return</span> val;</div>
 <div class="line"><span class="lineno">  210</span>    }</div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="a250ed1e6ff48566ddef2062152f6b1de" name="a250ed1e6ff48566ddef2062152f6b1de"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a250ed1e6ff48566ddef2062152f6b1de">&#9670;&#160;</a></span>drainEventQueue()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void mxl::lib::fabrics::ofi::drainEventQueue </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EventQueue.html">EventQueue</a> &amp;&#160;</td>
+          <td class="paramname"><em>eq</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Read all entries from a connectionless endpoint's event queue and log the errors among them. </p>
+<p>The errors concern work the provider does on its own behalf, such as EFA's peer handshake, so they are only logged.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">eq</td><td>The event queue to drain. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">Definition at line <a class="el" href="QueueHelpers_8hpp_source.html#l00115">115</a> of file <a class="el" href="QueueHelpers_8hpp_source.html">QueueHelpers.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  116</span>    {</div>
+<div class="line"><span class="lineno">  117</span>        <span class="keywordflow">try</span></div>
+<div class="line"><span class="lineno">  118</span>        {</div>
+<div class="line"><span class="lineno">  119</span>            <span class="keywordflow">while</span> (<span class="keyword">auto</span> event = eq.<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EventQueue.html#ab8e33b79b7e26af8fec68764844b2d95">read</a>())</div>
+<div class="line"><span class="lineno">  120</span>            {</div>
+<div class="line"><span class="lineno">  121</span>                <span class="keywordflow">if</span> (event-&gt;isError())</div>
+<div class="line"><span class="lineno">  122</span>                {</div>
+<div class="line"><span class="lineno">  123</span>                    <span class="keyword">auto</span> <span class="keyword">const</span>&amp; error = <span class="keyword">event</span>-&gt;error();</div>
+<div class="line"><span class="lineno">  124</span>                    <span class="comment">// The provider code is logged as a number: fi_strerror() would name an unrelated error.</span></div>
+<div class="line"><span class="lineno">  125</span>                    <a class="code hl_define" href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a>(<span class="stringliteral">&quot;Event queue error: {} ({}), provider code {}&quot;</span>, ::fi_strerror(error.code()), error.code(), error.providerCode());</div>
+<div class="line"><span class="lineno">  126</span>                }</div>
+<div class="line"><span class="lineno">  127</span>            }</div>
+<div class="line"><span class="lineno">  128</span>        }</div>
+<div class="line"><span class="lineno">  129</span>        <span class="keywordflow">catch</span> (Exception <span class="keyword">const</span>&amp; ex)</div>
+<div class="line"><span class="lineno">  130</span>        {</div>
+<div class="line"><span class="lineno">  131</span>            <a class="code hl_define" href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a>(<span class="stringliteral">&quot;Unhandled entry on the event queue: {}&quot;</span>, ex.what());</div>
+<div class="line"><span class="lineno">  132</span>        }</div>
+<div class="line"><span class="lineno">  133</span>    }</div>
+<div class="ttc" id="aLogging_8hpp_html_ac5601472e8ef54d952b767d574a32427"><div class="ttname"><a href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a></div><div class="ttdeci">#define MXL_WARN(...)</div><div class="ttdef"><b>Definition</b> <a href="Logging_8hpp_source.html#l00056">Logging.hpp:56</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1EventQueue_html_ab8e33b79b7e26af8fec68764844b2d95"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EventQueue.html#ab8e33b79b7e26af8fec68764844b2d95">mxl::lib::fabrics::ofi::EventQueue::read</a></div><div class="ttdeci">std::optional&lt; Event &gt; read()</div><div class="ttdoc">Perform a non-blocking read on the event queue. If no event is available in the queue,...</div><div class="ttdef"><b>Definition</b> <a href="EventQueue_8cpp_source.html#l00056">EventQueue.cpp:56</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -1675,23 +1735,23 @@ template&lt;<a class="el" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a188f
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>An optional <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion.html" title="Type to represent a completion entry from a CompletionQueue.">Completion</a> object read from the completion queue. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="QueueHelpers_8hpp_source.html#l00087">87</a> of file <a class="el" href="QueueHelpers_8hpp_source.html">QueueHelpers.hpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   88</span>    {</div>
-<div class="line"><span class="lineno">   89</span>        <span class="keyword">static_assert</span>((qrm == QueueReadMode::Blocking) || (qrm == QueueReadMode::NonBlocking), <span class="stringliteral">&quot;Unsupported queue behaviour parameter&quot;</span>);</div>
-<div class="line"><span class="lineno">   90</span> </div>
-<div class="line"><span class="lineno">   91</span>        <span class="keyword">auto</span> completion = std::optional&lt;Completion&gt;{};</div>
-<div class="line"><span class="lineno">   92</span> </div>
-<div class="line"><span class="lineno">   93</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (qrm == QueueReadMode::Blocking)</div>
-<div class="line"><span class="lineno">   94</span>        {</div>
-<div class="line"><span class="lineno">   95</span>            completion = eq.<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue.html#a8c57a600a960ae69c6fd20e56bb915e1">readBlocking</a>(timeout);</div>
-<div class="line"><span class="lineno">   96</span>        }</div>
-<div class="line"><span class="lineno">   97</span>        <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (qrm == QueueReadMode::NonBlocking)</div>
+<p class="definition">Definition at line <a class="el" href="QueueHelpers_8hpp_source.html#l00091">91</a> of file <a class="el" href="QueueHelpers_8hpp_source.html">QueueHelpers.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   92</span>    {</div>
+<div class="line"><span class="lineno">   93</span>        <span class="keyword">static_assert</span>((qrm == QueueReadMode::Blocking) || (qrm == QueueReadMode::NonBlocking), <span class="stringliteral">&quot;Unsupported queue behaviour parameter&quot;</span>);</div>
+<div class="line"><span class="lineno">   94</span> </div>
+<div class="line"><span class="lineno">   95</span>        <span class="keyword">auto</span> completion = std::optional&lt;Completion&gt;{};</div>
+<div class="line"><span class="lineno">   96</span> </div>
+<div class="line"><span class="lineno">   97</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (qrm == QueueReadMode::Blocking)</div>
 <div class="line"><span class="lineno">   98</span>        {</div>
-<div class="line"><span class="lineno">   99</span>            completion = eq.<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue.html#afc96df7737ede001936dabd90f63c6b2">read</a>();</div>
+<div class="line"><span class="lineno">   99</span>            completion = eq.<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue.html#a8c57a600a960ae69c6fd20e56bb915e1">readBlocking</a>(timeout);</div>
 <div class="line"><span class="lineno">  100</span>        }</div>
-<div class="line"><span class="lineno">  101</span> </div>
-<div class="line"><span class="lineno">  102</span>        <span class="keywordflow">return</span> completion;</div>
-<div class="line"><span class="lineno">  103</span>    }</div>
+<div class="line"><span class="lineno">  101</span>        <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (qrm == QueueReadMode::NonBlocking)</div>
+<div class="line"><span class="lineno">  102</span>        {</div>
+<div class="line"><span class="lineno">  103</span>            completion = eq.<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue.html#afc96df7737ede001936dabd90f63c6b2">read</a>();</div>
+<div class="line"><span class="lineno">  104</span>        }</div>
+<div class="line"><span class="lineno">  105</span> </div>
+<div class="line"><span class="lineno">  106</span>        <span class="keywordflow">return</span> completion;</div>
+<div class="line"><span class="lineno">  107</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue_html_a8c57a600a960ae69c6fd20e56bb915e1"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue.html#a8c57a600a960ae69c6fd20e56bb915e1">mxl::lib::fabrics::ofi::CompletionQueue::readBlocking</a></div><div class="ttdeci">std::optional&lt; Completion &gt; readBlocking(std::chrono::steady_clock::duration timeout)</div><div class="ttdoc">Perform a blocking read on the completion queue.</div><div class="ttdef"><b>Definition</b> <a href="CompletionQueue_8cpp_source.html#l00077">CompletionQueue.cpp:77</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue_html_afc96df7737ede001936dabd90f63c6b2"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue.html#afc96df7737ede001936dabd90f63c6b2">mxl::lib::fabrics::ofi::CompletionQueue::read</a></div><div class="ttdeci">std::optional&lt; Completion &gt; read()</div><div class="ttdoc">Perform a non-blocking read on the completion queue.</div><div class="ttdef"><b>Definition</b> <a href="CompletionQueue_8cpp_source.html#l00068">CompletionQueue.cpp:68</a></div></div>
 </div><!-- fragment -->
@@ -1742,23 +1802,23 @@ template&lt;<a class="el" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a188f
 <dl class="section return"><dt>Returns</dt><dd>A pair of optional <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion.html" title="Type to represent a completion entry from a CompletionQueue.">Completion</a> and <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Event.html" title="Type to represent an event entry from an EventQueue.">Event</a> objects read from the endpoint queues. </dd></dl>
 <dl class="section note"><dt>Note</dt><dd>To read only one of the queues, use <a class="el" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#af41975e725ddc3b08cf9df23493bb45d" title="Helper to read a completion queue with blocking or non-blocking behaviour.">readCompletionQueue()</a> or <a class="el" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a2a2a1c31c834c9f737267155d892b9ca" title="Helper to read an event queue with blocking or non-blocking behaviour.">readEventQueue()</a>. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="QueueHelpers_8hpp_source.html#l00035">35</a> of file <a class="el" href="QueueHelpers_8hpp_source.html">QueueHelpers.hpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   36</span>    {</div>
-<div class="line"><span class="lineno">   37</span>        <span class="keyword">static_assert</span>((qrm == QueueReadMode::Blocking) || (qrm == QueueReadMode::NonBlocking), <span class="stringliteral">&quot;Unsupported queue behaviour parameter&quot;</span>);</div>
-<div class="line"><span class="lineno">   38</span> </div>
-<div class="line"><span class="lineno">   39</span>        <span class="keyword">auto</span> result = std::pair&lt;std::optional&lt;Completion&gt;, std::optional&lt;Event&gt;&gt;{};</div>
-<div class="line"><span class="lineno">   40</span> </div>
-<div class="line"><span class="lineno">   41</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (qrm == QueueReadMode::Blocking)</div>
-<div class="line"><span class="lineno">   42</span>        {</div>
-<div class="line"><span class="lineno">   43</span>            result = ep.<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a89daa5066540839bec285172993812cf">readQueuesBlocking</a>(timeout);</div>
-<div class="line"><span class="lineno">   44</span>        }</div>
-<div class="line"><span class="lineno">   45</span>        <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (qrm == QueueReadMode::NonBlocking)</div>
+<p class="definition">Definition at line <a class="el" href="QueueHelpers_8hpp_source.html#l00039">39</a> of file <a class="el" href="QueueHelpers_8hpp_source.html">QueueHelpers.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   40</span>    {</div>
+<div class="line"><span class="lineno">   41</span>        <span class="keyword">static_assert</span>((qrm == QueueReadMode::Blocking) || (qrm == QueueReadMode::NonBlocking), <span class="stringliteral">&quot;Unsupported queue behaviour parameter&quot;</span>);</div>
+<div class="line"><span class="lineno">   42</span> </div>
+<div class="line"><span class="lineno">   43</span>        <span class="keyword">auto</span> result = std::pair&lt;std::optional&lt;Completion&gt;, std::optional&lt;Event&gt;&gt;{};</div>
+<div class="line"><span class="lineno">   44</span> </div>
+<div class="line"><span class="lineno">   45</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (qrm == QueueReadMode::Blocking)</div>
 <div class="line"><span class="lineno">   46</span>        {</div>
-<div class="line"><span class="lineno">   47</span>            result = ep.<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a862a22c8cfec40c8b38b220cfebd767a">readQueues</a>();</div>
+<div class="line"><span class="lineno">   47</span>            result = ep.<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a89daa5066540839bec285172993812cf">readQueuesBlocking</a>(timeout);</div>
 <div class="line"><span class="lineno">   48</span>        }</div>
-<div class="line"><span class="lineno">   49</span> </div>
-<div class="line"><span class="lineno">   50</span>        <span class="keywordflow">return</span> result;</div>
-<div class="line"><span class="lineno">   51</span>    }</div>
+<div class="line"><span class="lineno">   49</span>        <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (qrm == QueueReadMode::NonBlocking)</div>
+<div class="line"><span class="lineno">   50</span>        {</div>
+<div class="line"><span class="lineno">   51</span>            result = ep.<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a862a22c8cfec40c8b38b220cfebd767a">readQueues</a>();</div>
+<div class="line"><span class="lineno">   52</span>        }</div>
+<div class="line"><span class="lineno">   53</span> </div>
+<div class="line"><span class="lineno">   54</span>        <span class="keywordflow">return</span> result;</div>
+<div class="line"><span class="lineno">   55</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint_html_a862a22c8cfec40c8b38b220cfebd767a"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a862a22c8cfec40c8b38b220cfebd767a">mxl::lib::fabrics::ofi::Endpoint::readQueues</a></div><div class="ttdeci">std::pair&lt; std::optional&lt; Completion &gt;, std::optional&lt; Event &gt; &gt; readQueues()</div><div class="ttdoc">Do a non-blocking read of both the event and completion queue associated with this endpoint.</div><div class="ttdef"><b>Definition</b> <a href="Endpoint_8cpp_source.html#l00224">Endpoint.cpp:224</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint_html_a89daa5066540839bec285172993812cf"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a89daa5066540839bec285172993812cf">mxl::lib::fabrics::ofi::Endpoint::readQueuesBlocking</a></div><div class="ttdeci">std::pair&lt; std::optional&lt; Completion &gt;, std::optional&lt; Event &gt; &gt; readQueuesBlocking(std::chrono::steady_clock::duration timeout)</div><div class="ttdoc">Do a combined blocking read of both the event and completion queue associated with this endpoint.</div><div class="ttdef"><b>Definition</b> <a href="Endpoint_8cpp_source.html#l00242">Endpoint.cpp:242</a></div></div>
 </div><!-- fragment -->
@@ -1808,25 +1868,24 @@ template&lt;<a class="el" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a188f
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>An optional <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Event.html" title="Type to represent an event entry from an EventQueue.">Event</a> object read from the event queue. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="QueueHelpers_8hpp_source.html#l00061">61</a> of file <a class="el" href="QueueHelpers_8hpp_source.html">QueueHelpers.hpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   62</span>    {</div>
-<div class="line"><span class="lineno">   63</span>        <span class="keyword">static_assert</span>((qrm == QueueReadMode::Blocking) || (qrm == QueueReadMode::NonBlocking), <span class="stringliteral">&quot;Unsupported queue behaviour parameter&quot;</span>);</div>
-<div class="line"><span class="lineno">   64</span> </div>
-<div class="line"><span class="lineno">   65</span>        <span class="keyword">auto</span> <span class="keyword">event</span> = std::optional&lt;Event&gt;{};</div>
-<div class="line"><span class="lineno">   66</span> </div>
-<div class="line"><span class="lineno">   67</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (qrm == QueueReadMode::Blocking)</div>
-<div class="line"><span class="lineno">   68</span>        {</div>
-<div class="line"><span class="lineno">   69</span>            <span class="keyword">event</span> = eq.<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EventQueue.html#a78fc22bd9857c558e1bb9cc3d5756918">readBlocking</a>(timeout);</div>
-<div class="line"><span class="lineno">   70</span>        }</div>
-<div class="line"><span class="lineno">   71</span>        <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (qrm == QueueReadMode::NonBlocking)</div>
+<p class="definition">Definition at line <a class="el" href="QueueHelpers_8hpp_source.html#l00065">65</a> of file <a class="el" href="QueueHelpers_8hpp_source.html">QueueHelpers.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   66</span>    {</div>
+<div class="line"><span class="lineno">   67</span>        <span class="keyword">static_assert</span>((qrm == QueueReadMode::Blocking) || (qrm == QueueReadMode::NonBlocking), <span class="stringliteral">&quot;Unsupported queue behaviour parameter&quot;</span>);</div>
+<div class="line"><span class="lineno">   68</span> </div>
+<div class="line"><span class="lineno">   69</span>        <span class="keyword">auto</span> <span class="keyword">event</span> = std::optional&lt;Event&gt;{};</div>
+<div class="line"><span class="lineno">   70</span> </div>
+<div class="line"><span class="lineno">   71</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (qrm == QueueReadMode::Blocking)</div>
 <div class="line"><span class="lineno">   72</span>        {</div>
-<div class="line"><span class="lineno">   73</span>            <span class="keyword">event</span> = eq.<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EventQueue.html#ab8e33b79b7e26af8fec68764844b2d95">read</a>();</div>
+<div class="line"><span class="lineno">   73</span>            <span class="keyword">event</span> = eq.<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EventQueue.html#a78fc22bd9857c558e1bb9cc3d5756918">readBlocking</a>(timeout);</div>
 <div class="line"><span class="lineno">   74</span>        }</div>
-<div class="line"><span class="lineno">   75</span> </div>
-<div class="line"><span class="lineno">   76</span>        <span class="keywordflow">return</span> event;</div>
-<div class="line"><span class="lineno">   77</span>    }</div>
+<div class="line"><span class="lineno">   75</span>        <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (qrm == QueueReadMode::NonBlocking)</div>
+<div class="line"><span class="lineno">   76</span>        {</div>
+<div class="line"><span class="lineno">   77</span>            <span class="keyword">event</span> = eq.<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EventQueue.html#ab8e33b79b7e26af8fec68764844b2d95">read</a>();</div>
+<div class="line"><span class="lineno">   78</span>        }</div>
+<div class="line"><span class="lineno">   79</span> </div>
+<div class="line"><span class="lineno">   80</span>        <span class="keywordflow">return</span> event;</div>
+<div class="line"><span class="lineno">   81</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1EventQueue_html_a78fc22bd9857c558e1bb9cc3d5756918"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EventQueue.html#a78fc22bd9857c558e1bb9cc3d5756918">mxl::lib::fabrics::ofi::EventQueue::readBlocking</a></div><div class="ttdeci">std::optional&lt; Event &gt; readBlocking(std::chrono::steady_clock::duration timeout)</div><div class="ttdoc">Perform a blocking read on the event queue.</div><div class="ttdef"><b>Definition</b> <a href="EventQueue_8cpp_source.html#l00066">EventQueue.cpp:66</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1EventQueue_html_ab8e33b79b7e26af8fec68764844b2d95"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EventQueue.html#ab8e33b79b7e26af8fec68764844b2d95">mxl::lib::fabrics::ofi::EventQueue::read</a></div><div class="ttdeci">std::optional&lt; Event &gt; read()</div><div class="ttdoc">Perform a non-blocking read on the event queue. If no event is available in the queue,...</div><div class="ttdef"><b>Definition</b> <a href="EventQueue_8cpp_source.html#l00056">EventQueue.cpp:56</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -2068,7 +2127,6 @@ template&lt;<a class="el" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a188f
 <div class="line"><span class="lineno">  196</span> </div>
 <div class="line"><span class="lineno">  197</span>        <span class="keywordflow">return</span> {*sourceInterfaces.begin(), std::move(providerConfig)};</div>
 <div class="line"><span class="lineno">  198</span>    }</div>
-<div class="ttc" id="aLogging_8hpp_html_ac5601472e8ef54d952b767d574a32427"><div class="ttname"><a href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a></div><div class="ttdeci">#define MXL_WARN(...)</div><div class="ttdef"><b>Definition</b> <a href="Logging_8hpp_source.html#l00056">Logging.hpp:56</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>

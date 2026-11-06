@@ -90,6 +90,7 @@ var namespacemxl_1_1lib_1_1fabrics_1_1ofi =
     ] ],
     [ "catchAndLogFabricError", "namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#ab11c9eb5c2a389377ea24c200018a4d0", null ],
     [ "convertAddressFormat", "namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a20383f3f0b4c212c8f7239ab699a305f", null ],
+    [ "drainEventQueue", "namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a250ed1e6ff48566ddef2062152f6b1de", null ],
     [ "fiCall", "namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#ac3a4a68b88450dca7e9d46242d0ac652", null ],
     [ "fiInitLogging", "namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a1c5cd214f348eb10c82e7934203d7929", null ],
     [ "fiToString", "namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#a68046d4681000f9c1e21f56b46d62992", null ],

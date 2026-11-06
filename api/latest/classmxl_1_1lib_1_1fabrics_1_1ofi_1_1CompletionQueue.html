@@ -410,21 +410,29 @@ Private Attributes</h2></td></tr>
 <div class="line"><span class="lineno">  130</span>        <span class="keywordflow">if</span> (ret == -FI_EAVAIL)</div>
 <div class="line"><span class="lineno">  131</span>        {</div>
 <div class="line"><span class="lineno">  132</span>            <span class="comment">// An entry is available but in the error queue</span></div>
-<div class="line"><span class="lineno">  133</span>            ::fi_cq_err_entry err;</div>
-<div class="line"><span class="lineno">  134</span>            fi_cq_readerr(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue.html#afc7adae2d0d93307ae1616f6ab6b2814">_raw</a>, &amp;err, 0);</div>
-<div class="line"><span class="lineno">  135</span> </div>
-<div class="line"><span class="lineno">  136</span>            <span class="keywordflow">return</span> Completion{</div>
-<div class="line"><span class="lineno">  137</span>                Completion::Error{err, this-&gt;shared_from_this()}</div>
-<div class="line"><span class="lineno">  138</span>            };</div>
-<div class="line"><span class="lineno">  139</span>        }</div>
-<div class="line"><span class="lineno">  140</span> </div>
-<div class="line"><span class="lineno">  141</span>        <span class="keywordflow">if</span> (ret &lt; 0)</div>
-<div class="line"><span class="lineno">  142</span>        {</div>
-<div class="line"><span class="lineno">  143</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricException.html#a5d29ecc0c0fe84f62f3ee2be7775d0be">FabricException::make</a>(ret, <span class="stringliteral">&quot;Failed to read completion from queue: {}&quot;</span>, ::fi_strerror(ret));</div>
-<div class="line"><span class="lineno">  144</span>        }</div>
-<div class="line"><span class="lineno">  145</span> </div>
-<div class="line"><span class="lineno">  146</span>        <span class="keywordflow">return</span> Completion{Completion::Data{entry}};</div>
-<div class="line"><span class="lineno">  147</span>    }</div>
+<div class="line"><span class="lineno">  133</span>            <span class="comment">// Zeroed: a non-zero err_data_size makes fi_cq_readerr copy into err_data.</span></div>
+<div class="line"><span class="lineno">  134</span>            ::fi_cq_err_entry err{};</div>
+<div class="line"><span class="lineno">  135</span>            <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> rc = ::fi_cq_readerr(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1CompletionQueue.html#afc7adae2d0d93307ae1616f6ab6b2814">_raw</a>, &amp;err, 0); rc &lt; 0)</div>
+<div class="line"><span class="lineno">  136</span>            {</div>
+<div class="line"><span class="lineno">  137</span>                <span class="keywordflow">if</span> (rc == -FI_EAGAIN)</div>
+<div class="line"><span class="lineno">  138</span>                {</div>
+<div class="line"><span class="lineno">  139</span>                    <span class="keywordflow">return</span> std::nullopt;</div>
+<div class="line"><span class="lineno">  140</span>                }</div>
+<div class="line"><span class="lineno">  141</span>                <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricException.html#a5d29ecc0c0fe84f62f3ee2be7775d0be">FabricException::make</a>(<span class="keyword">static_cast&lt;</span><span class="keywordtype">int</span><span class="keyword">&gt;</span>(rc), <span class="stringliteral">&quot;Failed to read completion error: {}&quot;</span>, ::fi_strerror(<span class="keyword">static_cast&lt;</span><span class="keywordtype">int</span><span class="keyword">&gt;</span>(-rc)));</div>
+<div class="line"><span class="lineno">  142</span>            }</div>
+<div class="line"><span class="lineno">  143</span> </div>
+<div class="line"><span class="lineno">  144</span>            <span class="keywordflow">return</span> Completion{</div>
+<div class="line"><span class="lineno">  145</span>                Completion::Error{err, this-&gt;shared_from_this()}</div>
+<div class="line"><span class="lineno">  146</span>            };</div>
+<div class="line"><span class="lineno">  147</span>        }</div>
+<div class="line"><span class="lineno">  148</span> </div>
+<div class="line"><span class="lineno">  149</span>        <span class="keywordflow">if</span> (ret &lt; 0)</div>
+<div class="line"><span class="lineno">  150</span>        {</div>
+<div class="line"><span class="lineno">  151</span>            <span class="keywordflow">throw</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricException.html#a5d29ecc0c0fe84f62f3ee2be7775d0be">FabricException::make</a>(ret, <span class="stringliteral">&quot;Failed to read completion from queue: {}&quot;</span>, ::fi_strerror(ret));</div>
+<div class="line"><span class="lineno">  152</span>        }</div>
+<div class="line"><span class="lineno">  153</span> </div>
+<div class="line"><span class="lineno">  154</span>        <span class="keywordflow">return</span> Completion{Completion::Data{entry}};</div>
+<div class="line"><span class="lineno">  155</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricException_html_a5d29ecc0c0fe84f62f3ee2be7775d0be"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricException.html#a5d29ecc0c0fe84f62f3ee2be7775d0be">mxl::lib::fabrics::ofi::FabricException::make</a></div><div class="ttdeci">static FabricException make(int fiErrno, fmt::format_string&lt; T... &gt; fmt, T &amp;&amp;... args)</div><div class="ttdoc">Create a new exception object.</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00133">Exception.hpp:133</a></div></div>
 </div><!-- fragment -->
 </div>
