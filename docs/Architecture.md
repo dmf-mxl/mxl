@@ -59,39 +59,52 @@ Discrete (including Events): the tail entry of the ring buffer is reserved for t
 
 Grain I/O can be 'partial'. In other words, a FlowWriter can write the bytes of a grain progressively (as slices for example).
 
-The following example demonstrates how a FlowWriter may write a grain as slices using multiple `mxlFlowWriterCommitGrain()` calls. The important field here is the mxlGrainInfo.committedSize: it tells us how many bytes in the grain are valid. A complete grain will have `mxlGrainInfo.committedSize == mxlGrainInfo.grainSize`. It is imperative that FlowReaders _always_ take into consideration the `mxlGrainInfo.committedSize` field before making use of the grain buffer. The `mxlFlowReaderGetGrain` function will return as soon as new data is committed to the grain.
+The following example demonstrates how a FlowWriter may write a grain as slices using multiple `mxlFlowWriterCommitGrain()` calls. The important field here is `mxlGrainInfo.validSlices`: it tells us how many of the grain's `mxlGrainInfo.totalSlices` are committed and valid. A slice is the smallest unit that can be committed: one picture line for video, one byte for data. A complete grain has `mxlGrainInfo.validSlices == mxlGrainInfo.totalSlices`. It is imperative that FlowReaders _always_ take into consideration the `mxlGrainInfo.validSlices` field before making use of the grain buffer. `mxlFlowReaderGetGrain()` waits for the full grain; to consume a grain progressively, use `mxlFlowReaderGetGrainSlice()`, which returns as soon as `minValidSlices` slices are committed.
 
 ### Example Grain I/O (from the [unit tests](https://github.com/dmf-mxl/mxl/blob/main/lib/tests/test_flows.cpp))
 
 ```c++
-    ///
-    /// Write and read a grain in 8 slices
-    ///
-
     /// Open the grain.
     mxlGrainInfo gInfo;
-    uint8_t *buffer = nullptr;
+    uint8_t* buffer = nullptr;
+    REQUIRE(mxlFlowWriterOpenGrain(writer, index, &gInfo, &buffer) == MXL_STATUS_OK);
 
-    /// Open the grain for writing.
-    REQUIRE( mxlFlowWriterOpenGrain( instanceWriter, writer, index, &gInfo, &buffer ) == MXL_STATUS_OK );
+    /// Get some info about the freshly created flow.  Since no grains have been commited, the head should still be at 0.
+    mxlFlowInfo flowInfo1;
+    REQUIRE(mxlFlowReaderGetInfo(reader, &flowInfo1) == MXL_STATUS_OK);
+    REQUIRE(flowInfo1.runtime.headIndex == 0);
 
-    const size_t maxSlice = 8;
-    auto sliceSize = gInfo.grainSize / maxSlice;
-    for ( size_t slice = 0; slice < maxSlice; slice++ )
+    // Total number of batches that will be written
+    auto const numBatches =
+        (gInfo.totalSlices + flowInfo1.config.common.maxCommitBatchSizeHint - 1U) / flowInfo1.config.common.maxCommitBatchSizeHint;
+    auto defaultBatchSize = std::size_t{flowInfo1.config.common.maxCommitBatchSizeHint};
+
+    for (auto batchIndex = std::size_t{0}; batchIndex < numBatches; batchIndex++)
     {
-        /// Write a slice the grain.
-        gInfo.committedSize += sliceSize;
-        REQUIRE( mxlFlowWriterCommitGrain( instanceWriter, writer, &gInfo ) == MXL_STATUS_OK );
+        auto batchSize = defaultBatchSize;
 
-        mxlFlowRuntimeInfo sliceFlowRuntimeInfo;
-        REQUIRE( mxlFlowReaderGetRuntimeInfo( instanceReader, reader, &sliceFlowRuntimeInfo ) == MXL_STATUS_OK );
-        REQUIRE( sliceFlowRuntimeInfo.headIndex == index );
+        // If the total number of slices is not a multiple of the default batch size, the last batch must
+        // be the number of remaining slices
+        if ((batchIndex + 1) * batchSize > gInfo.totalSlices)
+        {
+            batchSize = gInfo.totalSlices - gInfo.validSlices;
+        }
+
+        /// Write a slice to the grain.
+        gInfo.validSlices += batchSize;
+        REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_STATUS_OK);
+
+        mxlFlowRuntimeInfo sliceRuntimeInfo;
+        REQUIRE(mxlFlowReaderGetRuntimeInfo(reader, &sliceRuntimeInfo) == MXL_STATUS_OK);
+        REQUIRE(sliceRuntimeInfo.headIndex == index);
 
         /// Read back the partial grain using the flow reader.
-        REQUIRE( mxlFlowReaderGetGrain( instanceReader, reader, index, 8, &gInfo, &buffer ) == MXL_STATUS_OK );
+        std::uint8_t* readBuffer = nullptr;
+        auto const expectedValidSlices = std::min(defaultBatchSize * (batchIndex + 1), static_cast<std::size_t>(gInfo.totalSlices));
+        REQUIRE(mxlFlowReaderGetGrainSlice(reader, index, expectedValidSlices, 8, &gInfo, &readBuffer) == MXL_STATUS_OK);
 
-        // Validate the committed size
-        REQUIRE( gInfo.committedSize == sliceSize * ( slice + 1 ) );
+        // Validate the commited size
+        REQUIRE(gInfo.validSlices == expectedValidSlices);
     }
 ```
 
@@ -301,6 +314,8 @@ Video grains can be of two different formats: video/v210 for video without trans
 
 The `video/v210` format is an uncompressed buffer format carrying 10 bit 4:2:2 video. A detailed description of the format can be found [here](https://wiki.multimedia.cx/index.php/V210) and [here](https://developer.apple.com/library/archive/technotes/tn2162/_index.html#//apple_ref/doc/uid/DTS40013070-CH1-TNTAG8-V210__4_2_2_COMPRESSION_TYPE).
 
+When the flow definition does not specify the range of the sample values, the samples are _video range_: Y from 64 to 940, and Cb and Cr from 64 to 960. SMPTE ST 2110-20 calls this range `NARROW`.
+
 ```
 32-bit Word Structure (Little-Endian), 4 words = 1 group of 6 pixels (16 bytes):
 ┌──────┬───────┬───────────────────────────────┬───────────────────────────────┬───────────────────────────────┐
@@ -343,7 +358,7 @@ Key points:
 
 The `video/v210a` format contains both fill and key inside a single grain. The fill part starts at byte 0 of the grain and follows the v210 definition above. The key buffer is found immediately after the fill buffer. Samples are organized in blocks of 32 bit values in little-endian. Each block contains 3 alpha samples, one each in bits 0 - 9, 10 - 19 and 20 - 29, the remaining two bits are unused. The start of each line is aligned to a multiple of 4 bytes, where unused blocks are padded with 0. The last block of a line might have more padding than just the last 2 bits if the width is not divisible by 3. For example, 1280x720 resolution has padding for bits 20 to 31 on the last block.
 
-Alpha samples are 'straight' (not premultiplied) and follow the same data range as the fill.  For example, if the fill is _video range_ (64 to 960) then the samples of the key are also _video range_.
+Alpha samples are 'straight' (not premultiplied) and follow the same data range as the fill.  For example, if the fill is _video range_ then the samples of the key are also _video range_ (64 to 940).
 
 ```
 video/v210a Grain Structure:

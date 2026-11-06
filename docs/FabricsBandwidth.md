@@ -1,7 +1,7 @@
 <!-- SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project. -->
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 
-# MXL Fabric: Media Payload Calculation
+# Bandwidth
 
 ## Goal
 Estimate wire bandwidth for MXL media streams across libfabric providers.
@@ -14,7 +14,7 @@ Estimate wire bandwidth for MXL media streams across libfabric providers.
 
 ---
 
-## 1) Media Payload Calculation (Protocol-Agnostic)
+## 1. Media Payload Calculation (Protocol-Agnostic)
 
 This section calculates raw media byte rate before adding network or protocol overhead.
 
@@ -113,7 +113,7 @@ $$
 
 ---
 
-## 2) MXL SDK/libfabric Provider Transport Model
+## 2. MXL SDK/libfabric Provider Transport Model
 
 This section converts media byte rate into packet rate and adds transport constraints.
 
@@ -176,7 +176,7 @@ Where:
 
 ---
 
-## 3) Final Wire Bandwidth Calculation
+## 3. Final Wire Bandwidth Calculation
 
 $$
 wireBytesPerSecond = mediaBytesPerSecond + packetsPerSecond \times providerWireOverheadBytes
@@ -184,7 +184,7 @@ $$
 
 ---
 
-## 4) Worked Examples
+## 4. Worked Examples
 
 All examples in this section use provider `rdma_rocev2` with:
 - `providerMtuOverheadBytes = 44`
