@@ -31,6 +31,8 @@ use std::sync::MutexGuard;
 use crate::clock::ClockOffsetExt;
 use crate::mxlsink;
 use crate::mxlsink::state::Context;
+use crate::mxlsink::state::DEFAULT_ALIGNMENT_THRESHOLD_NS;
+use crate::mxlsink::state::DEFAULT_DISCONT_WAIT_NS;
 use crate::mxlsink::state::DEFAULT_DOMAIN;
 use crate::mxlsink::state::DEFAULT_FLOW_ID;
 use crate::mxlsink::state::FlowState;
@@ -101,6 +103,32 @@ impl ObjectImpl for MxlSink {
                          <element-name>`.",
                     )
                     .mutable_ready()
+                    .build(),
+                glib::ParamSpecUInt64::builder("alignment-threshold")
+                    .nick("Alignment Threshold")
+                    .blurb(
+                        "Timestamp alignment threshold in nanoseconds. An audio \
+                         buffer whose timestamp is within this of the end of the \
+                         previous buffer is written straight after it.",
+                    )
+                    .minimum(1)
+                    .maximum(u64::MAX - 1)
+                    .default_value(DEFAULT_ALIGNMENT_THRESHOLD_NS)
+                    .mutable_playing()
+                    .build(),
+                glib::ParamSpecUInt64::builder("discont-wait")
+                    .nick("Discont Wait")
+                    .blurb(
+                        "Window of time in nanoseconds to wait before creating a \
+                         discontinuity. Audio timestamps must stay beyond the \
+                         alignment threshold for this long before the sink \
+                         resyncs to them. MXL time keeps running while the \
+                         pipeline is paused or the source stops, so a non-zero \
+                         wait writes the samples that follow behind MXL now.",
+                    )
+                    .maximum(u64::MAX - 1)
+                    .default_value(DEFAULT_DISCONT_WAIT_NS)
+                    .mutable_playing()
                     .build(),
             ]
         });
@@ -180,6 +208,24 @@ impl ObjectImpl for MxlSink {
                         .flatten()
                         .unwrap_or_default();
                 }
+                "alignment-threshold" => {
+                    if let Ok(alignment_threshold) = value.get::<u64>() {
+                        settings.alignment_threshold = alignment_threshold;
+                    } else {
+                        gst::error!(
+                            CAT,
+                            imp = self,
+                            "Invalid type for alignment-threshold property"
+                        );
+                    }
+                }
+                "discont-wait" => {
+                    if let Ok(discont_wait) = value.get::<u64>() {
+                        settings.discont_wait = discont_wait;
+                    } else {
+                        gst::error!(CAT, imp = self, "Invalid type for discont-wait property");
+                    }
+                }
                 other => {
                     gst::error!(CAT, imp = self, "Unknown property '{}'", other);
                 }
@@ -201,6 +247,8 @@ impl ObjectImpl for MxlSink {
                 "label" => settings.label.to_value(),
                 "description" => settings.description.to_value(),
                 "group-hint" => settings.group_hint.to_value(),
+                "alignment-threshold" => settings.alignment_threshold.to_value(),
+                "discont-wait" => settings.discont_wait.to_value(),
                 _ => {
                     gst::error!(CAT, imp = self, "Unknown property {}", pspec.name());
                     glib::Value::from(&"")
@@ -405,6 +453,11 @@ impl BaseSinkImpl for MxlSink {
             return Ok(gst::FlowSuccess::Ok);
         };
 
+        let (alignment_threshold, discont_wait) = {
+            let settings = self.settings.lock().map_err(|_| gst::FlowError::Error)?;
+            (settings.alignment_threshold, settings.discont_wait)
+        };
+
         let mut context = self.context.lock().map_err(|_| gst::FlowError::Error)?;
         let state = context.state.as_mut().ok_or(gst::FlowError::Error)?;
         let element = self.obj();
@@ -413,9 +466,14 @@ impl BaseSinkImpl for MxlSink {
             Some(FlowState::Discrete(_)) => {
                 render_discrete::discrete(state, element, buffer, mxl_ts)
             }
-            Some(FlowState::Continuous(_)) => {
-                render_continuous::continuous(state, element, buffer, mxl_ts)
-            }
+            Some(FlowState::Continuous(_)) => render_continuous::continuous(
+                state,
+                element,
+                buffer,
+                mxl_ts,
+                alignment_threshold,
+                discont_wait,
+            ),
             None => Err(gst::FlowError::Error),
         }
     }
@@ -465,6 +523,19 @@ impl BaseSinkImpl for MxlSink {
         let element = self.obj();
         let element: &gst::Element = element.upcast_ref();
         let name = structure.name();
+        if matches!(name.as_str(), "video/x-raw" | "meta/x-st-2038")
+            && (settings.alignment_threshold != DEFAULT_ALIGNMENT_THRESHOLD_NS
+                || settings.discont_wait != DEFAULT_DISCONT_WAIT_NS)
+        {
+            gst::element_imp_warning!(
+                self,
+                gst::LibraryError::Settings,
+                [
+                    "alignment-threshold and discont-wait apply to audio flows only and are ignored for {}",
+                    name
+                ]
+            );
+        }
         if name == "video/x-raw" {
             init_state_with_video(state, structure, &settings, element)?;
             Ok(())

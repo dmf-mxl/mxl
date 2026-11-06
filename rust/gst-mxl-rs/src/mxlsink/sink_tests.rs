@@ -227,7 +227,7 @@ mod tests {
     fn place_buffer_first_buffer_uses_timestamp() {
         use crate::mxlsink::render_continuous::{Placement, place_buffer};
         assert_eq!(
-            place_buffer(None, 1000, 1024, 1920, false),
+            place_buffer(None, 1000, 1024, 1920, 0, false, &mut None),
             Placement::Write {
                 index: 1000,
                 skip: 0
@@ -239,21 +239,21 @@ mod tests {
     fn place_buffer_small_overlap_and_gap_stay_contiguous() {
         use crate::mxlsink::render_continuous::{Placement, place_buffer};
         assert_eq!(
-            place_buffer(Some(1024), 1008, 1024, 1920, false),
+            place_buffer(Some(1024), 1008, 1024, 1920, 0, false, &mut None),
             Placement::Write {
                 index: 1024,
                 skip: 0
             }
         );
         assert_eq!(
-            place_buffer(Some(3040), 3072, 1024, 1920, false),
+            place_buffer(Some(3040), 3072, 1024, 1920, 0, false, &mut None),
             Placement::Write {
                 index: 3040,
                 skip: 0
             }
         );
         assert_eq!(
-            place_buffer(Some(10_000), 10_000 + 1920, 1024, 1920, false),
+            place_buffer(Some(10_000), 10_000 + 1920, 1024, 1920, 0, false, &mut None),
             Placement::Write {
                 index: 10_000,
                 skip: 0
@@ -265,7 +265,7 @@ mod tests {
     fn place_buffer_large_gap_resyncs_to_timestamp() {
         use crate::mxlsink::render_continuous::{Placement, place_buffer};
         assert_eq!(
-            place_buffer(Some(10_000), 10_000 + 1921, 1024, 1920, false),
+            place_buffer(Some(10_000), 10_000 + 1921, 1024, 1920, 0, false, &mut None),
             Placement::Write {
                 index: 11_921,
                 skip: 0
@@ -278,7 +278,7 @@ mod tests {
         use crate::mxlsink::render_continuous::{Placement, place_buffer};
         // Starts 2000 samples before the next index: the first 2000 are dropped.
         assert_eq!(
-            place_buffer(Some(10_000), 8_000, 4096, 1920, false),
+            place_buffer(Some(10_000), 8_000, 4096, 1920, 0, false, &mut None),
             Placement::Write {
                 index: 10_000,
                 skip: 2000
@@ -286,11 +286,11 @@ mod tests {
         );
         // Ends at or before the next index: nothing is left to write.
         assert_eq!(
-            place_buffer(Some(10_000), 5_000, 4096, 1920, false),
+            place_buffer(Some(10_000), 5_000, 4096, 1920, 0, false, &mut None),
             Placement::Drop
         );
         assert_eq!(
-            place_buffer(Some(10_000), 5_904, 4096, 1920, false),
+            place_buffer(Some(10_000), 5_904, 4096, 1920, 0, false, &mut None),
             Placement::Drop
         );
     }
@@ -299,7 +299,7 @@ mod tests {
     fn place_buffer_discont_resyncs_within_threshold() {
         use crate::mxlsink::render_continuous::{Placement, place_buffer};
         assert_eq!(
-            place_buffer(Some(10_000), 10_960, 1024, 1920, true),
+            place_buffer(Some(10_000), 10_960, 1024, 1920, 0, true, &mut None),
             Placement::Write {
                 index: 10_960,
                 skip: 0
@@ -307,12 +307,111 @@ mod tests {
         );
         // Samples already written are still not written again.
         assert_eq!(
-            place_buffer(Some(10_000), 9_500, 1024, 1920, true),
+            place_buffer(Some(10_000), 9_500, 1024, 1920, 0, true, &mut None),
             Placement::Write {
                 index: 10_000,
                 skip: 500
             }
         );
+    }
+
+    #[test]
+    fn place_buffer_waits_before_resyncing() {
+        use crate::mxlsink::render_continuous::{Placement, place_buffer};
+        let mut discont_start = None;
+        // 2400 samples late, beyond the threshold: still written contiguously,
+        // and the wait starts at the index the buffer should have had.
+        assert_eq!(
+            place_buffer(
+                Some(10_000),
+                12_400,
+                1024,
+                1920,
+                48_000,
+                false,
+                &mut discont_start
+            ),
+            Placement::Write {
+                index: 10_000,
+                skip: 0
+            }
+        );
+        assert_eq!(discont_start, Some(10_000));
+        // Back within the threshold: the wait is abandoned.
+        assert_eq!(
+            place_buffer(
+                Some(11_024),
+                11_024,
+                1024,
+                1920,
+                48_000,
+                false,
+                &mut discont_start
+            ),
+            Placement::Write {
+                index: 11_024,
+                skip: 0
+            }
+        );
+        assert_eq!(discont_start, None);
+    }
+
+    #[test]
+    fn place_buffer_resyncs_after_discont_wait() {
+        use crate::mxlsink::render_continuous::{Placement, place_buffer};
+        // Timestamps have stayed 2400 samples late since index 10 000. While
+        // they are less than 48 000 samples past that, buffers follow on.
+        let mut discont_start = Some(10_000);
+        assert_eq!(
+            place_buffer(
+                Some(55_056),
+                57_456,
+                1024,
+                1920,
+                48_000,
+                false,
+                &mut discont_start
+            ),
+            Placement::Write {
+                index: 55_056,
+                skip: 0
+            }
+        );
+        assert_eq!(discont_start, Some(10_000));
+        // The next buffer is past the wait, so the sink resyncs to it.
+        assert_eq!(
+            place_buffer(
+                Some(56_080),
+                58_480,
+                1024,
+                1920,
+                48_000,
+                false,
+                &mut discont_start
+            ),
+            Placement::Write {
+                index: 58_480,
+                skip: 0
+            }
+        );
+        assert_eq!(discont_start, None);
+        // A single jump of at least the wait resyncs at once.
+        assert_eq!(
+            place_buffer(
+                Some(10_000),
+                58_000,
+                1024,
+                1920,
+                48_000,
+                false,
+                &mut discont_start
+            ),
+            Placement::Write {
+                index: 58_000,
+                skip: 0
+            }
+        );
+        assert_eq!(discont_start, None);
     }
 
     #[test]

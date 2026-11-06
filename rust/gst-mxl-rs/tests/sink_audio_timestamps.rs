@@ -84,21 +84,12 @@ fn read_flow_tail(domain: &str, flow_id: &str, max: usize) -> Vec<Vec<f32>> {
         .collect()
 }
 
-#[test]
-fn millisecond_rounded_audio_timestamps_write_contiguous_samples() {
-    init();
-    if let Some(reason) = skip_reason(&["appsrc", "mxlsink"]) {
-        skip!(reason);
-    }
-    let flow_id = uuid::Uuid::new_v4().to_string();
-    let domain_guard = TestDomainGuard::new("audio_ms_timestamps");
-    let domain = domain_guard.domain();
-
+fn audio_producer(flow_id: &str, domain: &str) -> (gst::Pipeline, gst_app::AppSrc) {
     let desc = format!(
         "appsrc name=src format=time \
            caps=audio/x-raw,format=F32LE,layout=interleaved,rate={SAMPLE_RATE},\
                 channels={CHANNELS},channel-mask=(bitmask)0x3 \
-         ! mxlsink flow-id={flow_id} domain={domain}"
+         ! mxlsink name=sink flow-id={flow_id} domain={domain}"
     );
     let pipeline = gst::parse::launch(&desc)
         .expect("parse producer")
@@ -109,6 +100,26 @@ fn millisecond_rounded_audio_timestamps_write_contiguous_samples() {
         .expect("appsrc")
         .downcast::<gst_app::AppSrc>()
         .expect("AppSrc downcast");
+    (pipeline, appsrc)
+}
+
+/// The PTS of buffer `k` when its samples are timestamped exactly.
+fn exact_pts(k: u64) -> gst::ClockTime {
+    gst::ClockTime::from_nseconds(
+        k * SAMPLES_PER_BUFFER * gst::ClockTime::SECOND.nseconds() / SAMPLE_RATE,
+    )
+}
+
+#[test]
+fn millisecond_rounded_audio_timestamps_write_contiguous_samples() {
+    init();
+    if let Some(reason) = skip_reason(&["appsrc", "mxlsink"]) {
+        skip!(reason);
+    }
+    let flow_id = uuid::Uuid::new_v4().to_string();
+    let domain_guard = TestDomainGuard::new("audio_ms_timestamps");
+    let domain = domain_guard.domain();
+    let (pipeline, appsrc) = audio_producer(&flow_id, &domain);
 
     pipeline
         .set_state(gst::State::Playing)
@@ -156,22 +167,7 @@ fn discont_buffer_resyncs_within_alignment_threshold() {
     let flow_id = uuid::Uuid::new_v4().to_string();
     let domain_guard = TestDomainGuard::new("audio_discont");
     let domain = domain_guard.domain();
-
-    let desc = format!(
-        "appsrc name=src format=time \
-           caps=audio/x-raw,format=F32LE,layout=interleaved,rate={SAMPLE_RATE},\
-                channels={CHANNELS},channel-mask=(bitmask)0x3 \
-         ! mxlsink flow-id={flow_id} domain={domain}"
-    );
-    let pipeline = gst::parse::launch(&desc)
-        .expect("parse producer")
-        .downcast::<gst::Pipeline>()
-        .expect("producer pipeline");
-    let appsrc = pipeline
-        .by_name("src")
-        .expect("appsrc")
-        .downcast::<gst_app::AppSrc>()
-        .expect("AppSrc downcast");
+    let (pipeline, appsrc) = audio_producer(&flow_id, &domain);
 
     pipeline
         .set_state(gst::State::Playing)
@@ -179,10 +175,13 @@ fn discont_buffer_resyncs_within_alignment_threshold() {
     for k in 0..TOTAL {
         let mut buffer = counter_buffer(k);
         let b = buffer.get_mut().expect("buffer mut");
-        let first_sample = k * SAMPLES_PER_BUFFER + if k < GAP_BEFORE { 0 } else { GAP_SAMPLES };
-        b.set_pts(gst::ClockTime::from_nseconds(
-            first_sample * gst::ClockTime::SECOND.nseconds() / SAMPLE_RATE,
-        ));
+        let gap = if k < GAP_BEFORE { 0 } else { GAP_SAMPLES };
+        b.set_pts(
+            exact_pts(k)
+                + gst::ClockTime::from_nseconds(
+                    gap * gst::ClockTime::SECOND.nseconds() / SAMPLE_RATE,
+                ),
+        );
         if k == GAP_BEFORE {
             b.set_flags(gst::BufferFlags::DISCONT);
         }
@@ -206,6 +205,65 @@ fn discont_buffer_resyncs_within_alignment_threshold() {
             1 + GAP_SAMPLES as usize,
             "channel {ch}: the DISCONT buffer was not written at its timestamp"
         );
+    }
+
+    pipeline.set_state(gst::State::Null).expect("producer Null");
+}
+
+/// With a discont wait set, one buffer whose timestamp is off by more than the
+/// alignment threshold, but for less than the wait, does not move the samples
+/// around it.
+#[test]
+fn single_mistimed_buffer_within_discont_wait_keeps_audio_contiguous() {
+    const MISTIMED: u64 = 25;
+    const TOTAL: u64 = 28;
+    init();
+    if let Some(reason) = skip_reason(&["appsrc", "mxlsink"]) {
+        skip!(reason);
+    }
+    let flow_id = uuid::Uuid::new_v4().to_string();
+    let domain_guard = TestDomainGuard::new("audio_mistimed");
+    let domain = domain_guard.domain();
+    let (pipeline, appsrc) = audio_producer(&flow_id, &domain);
+    pipeline
+        .by_name("sink")
+        .expect("mxlsink")
+        .set_property("discont-wait", gst::ClockTime::SECOND.nseconds());
+
+    pipeline
+        .set_state(gst::State::Playing)
+        .expect("producer Playing");
+    for k in 0..TOTAL {
+        let mut buffer = counter_buffer(k);
+        let b = buffer.get_mut().expect("buffer mut");
+        let late = if k == MISTIMED {
+            gst::ClockTime::from_mseconds(50)
+        } else {
+            gst::ClockTime::ZERO
+        };
+        b.set_pts(exact_pts(k) + late);
+        appsrc.push_buffer(buffer).expect("push buffer");
+    }
+    appsrc.end_of_stream().expect("end of stream");
+    wait_for_eos(&pipeline, gst::ClockTime::from_seconds(5), "producer");
+
+    let channels = read_flow_tail(&domain, &flow_id, (TOTAL * SAMPLES_PER_BUFFER) as usize);
+    assert_eq!(channels.len(), CHANNELS);
+    for (ch, values) in channels.iter().enumerate() {
+        assert_eq!(
+            values.last().copied(),
+            Some((TOTAL * SAMPLES_PER_BUFFER - 1) as f32),
+            "channel {ch}: last sample in the flow is not the last one pushed"
+        );
+        for (i, pair) in values.windows(2).enumerate() {
+            assert_eq!(
+                pair[1],
+                pair[0] + 1.0,
+                "channel {ch}: samples {} and {} in the read window are not consecutive",
+                i,
+                i + 1
+            );
+        }
     }
 
     pipeline.set_state(gst::State::Null).expect("producer Null");
