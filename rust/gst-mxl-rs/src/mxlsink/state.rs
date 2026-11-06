@@ -23,6 +23,14 @@ use uuid::Uuid;
 pub(crate) const DEFAULT_FLOW_ID: &str = "";
 pub(crate) const DEFAULT_DOMAIN: &str = "";
 pub(crate) const GROUPHINT_TAG: &str = "urn:x-nmos:tag:grouphint/v1.0";
+/// Largest difference between a buffer's timestamp and the end of the previous
+/// buffer that the sink still treats as continuous audio.
+pub(crate) const DEFAULT_ALIGNMENT_THRESHOLD_NS: u64 = 40_000_000;
+/// How long buffer timestamps must stay further than the alignment threshold
+/// from the end of the previous buffer before the sink resyncs to them. MXL
+/// time keeps running while a pipeline is paused or a source stops, so any
+/// wait writes the samples that follow behind MXL now.
+pub(crate) const DEFAULT_DISCONT_WAIT_NS: u64 = 0;
 
 #[derive(Debug, Clone)]
 pub(crate) struct Settings {
@@ -36,6 +44,10 @@ pub(crate) struct Settings {
     pub description: String,
     /// `urn:x-nmos:tag:grouphint/v1.0` value. Empty keeps the built-in default.
     pub group_hint: String,
+    /// Audio timestamp alignment threshold in nanoseconds.
+    pub alignment_threshold: u64,
+    /// Audio discontinuity wait in nanoseconds.
+    pub discont_wait: u64,
 }
 
 impl Default for Settings {
@@ -46,6 +58,8 @@ impl Default for Settings {
             label: String::new(),
             description: String::new(),
             group_hint: String::new(),
+            alignment_threshold: DEFAULT_ALIGNMENT_THRESHOLD_NS,
+            discont_wait: DEFAULT_DISCONT_WAIT_NS,
         }
     }
 }
@@ -177,6 +191,9 @@ pub(crate) struct ContinuousState {
     pub writer: SamplesWriter,
     pub flow_def: FlowDefAudio,
     pub next_index: Option<u64>,
+    /// Index at which buffer timestamps first moved beyond the alignment
+    /// threshold; `None` while they are within it.
+    pub discont_start: Option<u64>,
 }
 
 #[derive(Default)]
@@ -391,6 +408,7 @@ pub(crate) fn init_state_with_audio(
         writer,
         flow_def: flow_def_details,
         next_index: None,
+        discont_start: None,
     }));
     state.flow_config = Some(flow);
 
