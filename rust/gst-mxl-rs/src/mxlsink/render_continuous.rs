@@ -27,12 +27,14 @@ pub(crate) enum Placement {
 }
 
 /// Decide where to write a buffer of `samples` samples whose timestamp maps to
-/// flow index `ts_index`.
+/// flow index `ts_index`. A buffer flagged `discont` is never moved to follow
+/// on from the previous one.
 pub(crate) fn place_buffer(
     next_index: Option<u64>,
     ts_index: u64,
     samples: u64,
     threshold: u64,
+    discont: bool,
 ) -> Placement {
     let Some(next_index) = next_index else {
         return Placement::Write {
@@ -40,7 +42,7 @@ pub(crate) fn place_buffer(
             skip: 0,
         };
     };
-    if ts_index.abs_diff(next_index) <= threshold {
+    if !discont && ts_index.abs_diff(next_index) <= threshold {
         return Placement::Write {
             index: next_index,
             skip: 0,
@@ -99,11 +101,15 @@ pub(crate) fn continuous(
         .map_err(|_| gst::FlowError::Error)?;
     let threshold = threshold_samples(&sample_rate)?;
     let samples_u64 = u64::try_from(samples_per_buffer).map_err(|_| gst::FlowError::Error)?;
+    let discont = buffer
+        .flags()
+        .intersects(gst::BufferFlags::DISCONT | gst::BufferFlags::RESYNC);
     let placement = place_buffer(
         continuous_state.next_index,
         ts_index,
         samples_u64,
         threshold,
+        discont,
     );
     trace!(
         "AUDIO buffer with timestamp index {} and expected index {:?}: {:?}",
@@ -130,9 +136,10 @@ pub(crate) fn continuous(
             ts_index,
             skip
         );
-    } else if continuous_state
-        .next_index
-        .is_some_and(|next| start_index != next)
+    } else if !discont
+        && continuous_state
+            .next_index
+            .is_some_and(|next| start_index != next)
     {
         gst::warning!(
             CAT,

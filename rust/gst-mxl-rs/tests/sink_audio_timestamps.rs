@@ -142,6 +142,75 @@ fn millisecond_rounded_audio_timestamps_write_contiguous_samples() {
     pipeline.set_state(gst::State::Null).expect("producer Null");
 }
 
+/// A buffer flagged DISCONT is written at its own timestamp, even when the
+/// jump from the end of the previous buffer is within the alignment threshold.
+#[test]
+fn discont_buffer_resyncs_within_alignment_threshold() {
+    const GAP_BEFORE: u64 = 25;
+    const GAP_SAMPLES: u64 = SAMPLE_RATE / 50;
+    const TOTAL: u64 = 28;
+    init();
+    if let Some(reason) = skip_reason(&["appsrc", "mxlsink"]) {
+        skip!(reason);
+    }
+    let flow_id = uuid::Uuid::new_v4().to_string();
+    let domain_guard = TestDomainGuard::new("audio_discont");
+    let domain = domain_guard.domain();
+
+    let desc = format!(
+        "appsrc name=src format=time \
+           caps=audio/x-raw,format=F32LE,layout=interleaved,rate={SAMPLE_RATE},\
+                channels={CHANNELS},channel-mask=(bitmask)0x3 \
+         ! mxlsink flow-id={flow_id} domain={domain}"
+    );
+    let pipeline = gst::parse::launch(&desc)
+        .expect("parse producer")
+        .downcast::<gst::Pipeline>()
+        .expect("producer pipeline");
+    let appsrc = pipeline
+        .by_name("src")
+        .expect("appsrc")
+        .downcast::<gst_app::AppSrc>()
+        .expect("AppSrc downcast");
+
+    pipeline
+        .set_state(gst::State::Playing)
+        .expect("producer Playing");
+    for k in 0..TOTAL {
+        let mut buffer = counter_buffer(k);
+        let b = buffer.get_mut().expect("buffer mut");
+        let first_sample = k * SAMPLES_PER_BUFFER + if k < GAP_BEFORE { 0 } else { GAP_SAMPLES };
+        b.set_pts(gst::ClockTime::from_nseconds(
+            first_sample * gst::ClockTime::SECOND.nseconds() / SAMPLE_RATE,
+        ));
+        if k == GAP_BEFORE {
+            b.set_flags(gst::BufferFlags::DISCONT);
+        }
+        appsrc.push_buffer(buffer).expect("push buffer");
+    }
+    appsrc.end_of_stream().expect("end of stream");
+    wait_for_eos(&pipeline, gst::ClockTime::from_seconds(5), "producer");
+
+    let channels = read_flow_tail(&domain, &flow_id, (TOTAL * SAMPLES_PER_BUFFER) as usize);
+    let last_before = (GAP_BEFORE * SAMPLES_PER_BUFFER - 1) as f32;
+    let first_after = (GAP_BEFORE * SAMPLES_PER_BUFFER) as f32;
+    for (ch, values) in channels.iter().enumerate() {
+        let position = |value: f32| {
+            values
+                .iter()
+                .position(|&v| v == value)
+                .unwrap_or_else(|| panic!("channel {ch}: sample {value} not in the flow"))
+        };
+        assert_eq!(
+            position(first_after) - position(last_before),
+            1 + GAP_SAMPLES as usize,
+            "channel {ch}: the DISCONT buffer was not written at its timestamp"
+        );
+    }
+
+    pipeline.set_state(gst::State::Null).expect("producer Null");
+}
+
 const AAC_MKV_PATH: &str = concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/tests/data/aac_ms_timestamps.mkv"
