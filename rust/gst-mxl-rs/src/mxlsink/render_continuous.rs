@@ -22,68 +22,90 @@ pub(crate) enum Placement {
     Drop,
 }
 
-/// Decide where to write a buffer of `samples` samples whose timestamp maps to
-/// flow index `ts_index`. A buffer flagged `discont` is never moved to follow
-/// on from the previous one.
-///
-/// A buffer further than `threshold` from `next_index` still follows on until
-/// timestamps have been that far out for `discont_wait`, measured from
-/// `discont_start`, the index at which they first were. A jump of at least
-/// `discont_wait` is followed at once. A `discont_wait` of 0 follows every
-/// jump beyond `threshold` at once.
-pub(crate) fn place_buffer(
-    next_index: Option<u64>,
-    ts_index: u64,
-    samples: u64,
-    threshold: u64,
-    discont_wait: u64,
-    discont: bool,
-    discont_start: &mut Option<u64>,
-) -> Placement {
-    let Some(next_index) = next_index else {
-        return Placement::Write {
-            index: ts_index,
-            skip: 0,
+/// Alignment limits for audio buffers, in samples.
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct AlignmentLimits {
+    /// Largest distance between a buffer's timestamp and the next index at
+    /// which the buffer still follows on from the previous one.
+    pub threshold: u64,
+    /// How long timestamps must stay beyond `threshold` before the sink
+    /// follows them. 0 follows every jump beyond `threshold` at once.
+    pub discont_wait: u64,
+}
+
+/// Write position of an audio stream, updated as buffers are placed and
+/// written.
+#[derive(Debug, Default)]
+pub(crate) struct SampleAlignment {
+    /// Index one past the last committed sample; `None` before the first
+    /// commit.
+    pub next_index: Option<u64>,
+    /// Index at which buffer timestamps first moved beyond the alignment
+    /// threshold; `None` while they are within it.
+    pub discont_start: Option<u64>,
+}
+
+impl SampleAlignment {
+    /// Decide where to write a buffer of `samples` samples whose timestamp
+    /// maps to flow index `ts_index`. A buffer flagged `discont` is never moved
+    /// to follow on from the previous one.
+    ///
+    /// A buffer further than `limits.threshold` from `next_index` still
+    /// follows on until timestamps have been that far out for
+    /// `limits.discont_wait`, measured from `discont_start`. A jump of at
+    /// least `limits.discont_wait` is followed at once.
+    pub(crate) fn place(
+        &mut self,
+        ts_index: u64,
+        samples: u64,
+        discont: bool,
+        limits: &AlignmentLimits,
+    ) -> Placement {
+        let Some(next_index) = self.next_index else {
+            return Placement::Write {
+                index: ts_index,
+                skip: 0,
+            };
         };
-    };
-    let distance = ts_index.abs_diff(next_index);
-    let resync = if discont {
-        true
-    } else if distance <= threshold {
-        *discont_start = None;
-        false
-    } else if discont_wait == 0 {
-        true
-    } else {
-        match *discont_start {
-            None if distance >= discont_wait => true,
-            None => {
-                *discont_start = Some(next_index);
-                false
+        let distance = ts_index.abs_diff(next_index);
+        let resync = if discont {
+            true
+        } else if distance <= limits.threshold {
+            self.discont_start = None;
+            false
+        } else if limits.discont_wait == 0 {
+            true
+        } else {
+            match self.discont_start {
+                None if distance >= limits.discont_wait => true,
+                None => {
+                    self.discont_start = Some(next_index);
+                    false
+                }
+                Some(start) => ts_index.abs_diff(start) >= limits.discont_wait,
             }
-            Some(start) => ts_index.abs_diff(start) >= discont_wait,
+        };
+        if !resync {
+            return Placement::Write {
+                index: next_index,
+                skip: 0,
+            };
         }
-    };
-    if !resync {
-        return Placement::Write {
-            index: next_index,
-            skip: 0,
-        };
-    }
-    *discont_start = None;
-    if ts_index > next_index {
-        return Placement::Write {
-            index: ts_index,
-            skip: 0,
-        };
-    }
-    let overlap = next_index - ts_index;
-    if overlap >= samples {
-        Placement::Drop
-    } else {
-        Placement::Write {
-            index: next_index,
-            skip: overlap,
+        self.discont_start = None;
+        if ts_index > next_index {
+            return Placement::Write {
+                index: ts_index,
+                skip: 0,
+            };
+        }
+        let overlap = next_index - ts_index;
+        if overlap >= samples {
+            Placement::Drop
+        } else {
+            Placement::Write {
+                index: next_index,
+                skip: overlap,
+            }
         }
     }
 }
@@ -124,24 +146,20 @@ pub(crate) fn continuous(
         .instance
         .timestamp_to_index(mxl_ts, &sample_rate)
         .map_err(|_| gst::FlowError::Error)?;
-    let threshold = duration_samples(alignment_threshold_ns, &sample_rate)?;
-    let discont_wait = duration_samples(discont_wait_ns, &sample_rate)?;
+    let limits = AlignmentLimits {
+        threshold: duration_samples(alignment_threshold_ns, &sample_rate)?,
+        discont_wait: duration_samples(discont_wait_ns, &sample_rate)?,
+    };
     let samples_u64 = u64::try_from(samples_per_buffer).map_err(|_| gst::FlowError::Error)?;
     let discont = buffer
         .flags()
         .intersects(gst::BufferFlags::DISCONT | gst::BufferFlags::RESYNC);
-    let placement = place_buffer(
-        continuous_state.next_index,
-        ts_index,
-        samples_u64,
-        threshold,
-        discont_wait,
-        discont,
-        &mut continuous_state.discont_start,
-    );
+    let placement = continuous_state
+        .alignment
+        .place(ts_index, samples_u64, discont, &limits);
     trace!(
         "AUDIO buffer with timestamp index {} and expected index {:?}: {:?}",
-        ts_index, continuous_state.next_index, placement
+        ts_index, continuous_state.alignment.next_index, placement
     );
     let (start_index, skip) = match placement {
         Placement::Write { index, skip } => (index, skip),
@@ -166,6 +184,7 @@ pub(crate) fn continuous(
         );
     } else if !discont
         && continuous_state
+            .alignment
             .next_index
             .is_some_and(|next| start_index != next)
     {
@@ -173,7 +192,7 @@ pub(crate) fn continuous(
             CAT,
             obj = element,
             "Discontinuity in audio timestamps: expected index {:?}, got {}",
-            continuous_state.next_index,
+            continuous_state.alignment.next_index,
             ts_index
         );
     }
@@ -254,7 +273,7 @@ fn commit_chunk(
                 "Failed to open {} samples ending at index {} (next index {:?}): {}",
                 chunk_samples,
                 end,
-                continuous_state.next_index,
+                continuous_state.alignment.next_index,
                 e
             );
             gst::FlowError::Error
@@ -276,7 +295,7 @@ fn commit_chunk(
         );
         gst::FlowError::Error
     })?;
-    continuous_state.next_index = Some(end);
+    continuous_state.alignment.next_index = Some(end);
     Ok(end)
 }
 
