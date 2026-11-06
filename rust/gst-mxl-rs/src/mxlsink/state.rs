@@ -160,6 +160,10 @@ pub(crate) struct DiscreteState {
     pub flow_def: DiscreteFlowDef,
     /// Index one past the last committed grain; `None` before the first commit.
     pub next_index: Option<u64>,
+    /// Offset in nanoseconds of the first grain's MXL timestamp from the grain
+    /// it rounds to, subtracted before rounding later grains so that timestamp
+    /// jitter of up to half a grain maps to consecutive indices.
+    pub phase: Option<i64>,
 }
 
 /// Video vs data details stored alongside the discrete writer.
@@ -304,6 +308,7 @@ pub(crate) fn init_state_with_video(
         writer,
         flow_def: DiscreteFlowDef::Video(flow_def_details),
         next_index: None,
+        phase: None,
     }));
     state.flow_config = Some(flow);
 
@@ -472,6 +477,7 @@ pub(crate) fn init_state_with_data(
         writer,
         flow_def: DiscreteFlowDef::Data(flow_def_details),
         next_index: None,
+        phase: None,
     }));
     state.flow_config = Some(flow);
 

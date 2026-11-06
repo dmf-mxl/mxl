@@ -43,9 +43,25 @@ pub(crate) fn discrete(
         DiscreteFormat::Data => "DATA",
     };
     trace!("{media} mapped mxl timestamp: {:#?}", mxl_ts);
+    let phase = match discrete_state.phase {
+        Some(phase) => phase,
+        None => {
+            let index = state
+                .instance
+                .timestamp_to_index(mxl_ts, &grain_rate)
+                .map_err(|_| gst::FlowError::Error)?;
+            let grain_ts = state
+                .instance
+                .index_to_timestamp(index, &grain_rate)
+                .map_err(|_| gst::FlowError::Error)?;
+            let phase = mxl_ts as i64 - grain_ts as i64;
+            discrete_state.phase = Some(phase);
+            phase
+        }
+    };
     let mxl_index = state
         .instance
-        .timestamp_to_index(mxl_ts, &grain_rate)
+        .timestamp_to_index((mxl_ts as i64 - phase) as u64, &grain_rate)
         .map_err(|_| gst::FlowError::Error)?;
     trace!(
         "{media} mapped mxl_index from running time: {:#?}",
