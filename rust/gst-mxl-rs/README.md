@@ -40,6 +40,7 @@ The following elements are included:
 
 The flow's media type is based on the upstream caps.
 `video/x-raw, format=v210` results in a `video/v210` video flow.
+`video/x-raw, format=A422_10LE` results in a `video/v210a` video flow (fill and key).
 `audio/x-raw, format=F32LE` results in an `audio/float32` audio flow.
 `meta/x-st-2038, alignment=frame` results in a `video/smpte291` data flow.
 
@@ -54,8 +55,11 @@ The flow's media type is based on the upstream caps.
 
 The src pad's caps are based on the flow's media type.
 A `video/v210` flow results in `video/x-raw, format=v210`.
+A `video/v210a` flow results in `video/x-raw, format=A422_10LE`, with the key in the alpha plane. The key is video range (64 to 940) in the flow and full range (0 to 1023) in GStreamer, and the elements convert between the two.
 A `audio/float32` flow results in `audio/x-raw, format=F32LE`.
 A `video/smpte291` flow results in `meta/x-st-2038, alignment=frame`.
+
+Only progressive video is supported, as in MXL itself for now: `mxlsink` refuses interlaced caps and `mxlsrc` refuses an interlaced flow.
 
 **Note:** Set exactly one of `video-flow-id`, `audio-flow-id`, or `data-flow-id`. The element sets its output caps based on whichever is set.
 
@@ -123,6 +127,22 @@ gst-launch-1.0 filesrc location="$VIDEO_FILE" ! decodebin name=dv ! videoconvert
 ```sh
 gst-launch-1.0 videotestsrc ! timeoverlay valignment=center ! clockoverlay time-format=\"%F %H:%M:%S %Z\" ! video/x-raw,width=1920,height=1080,framerate=25/1,format=v216 ! videoconvert ! queue ! mxlsink flow-id="$VIDEO_FLOW_ID" domain="$MXL_DOMAIN" audiotestsrc wave=ticks ! audioconvert ! queue ! mxlsink flow-id="$AUDIO_FLOW_ID" domain="$MXL_DOMAIN"
 ```
+
+### Fill and key over a `video/v210a` flow
+
+`A422_10LE` buffers become a `video/v210a` flow, which carries fill and key in one grain. This producer writes a ball on a transparent background:
+
+```sh
+gst-launch-1.0 videotestsrc pattern=ball background-color=0x00000000 ! video/x-raw,format=AYUV64,width=1920,height=1080,framerate=25/1 ! videoconvert ! video/x-raw,format=A422_10LE ! queue ! mxlsink flow-id="$VIDEO_FLOW_ID" domain="$MXL_DOMAIN"
+```
+
+This consumer keys the flow over colour bars:
+
+```sh
+gst-launch-1.0 compositor name=c ! videoconvert ! autovideosink videotestsrc is-live=true pattern=smpte ! video/x-raw,width=1920,height=1080,framerate=25/1 ! c.sink_0 mxlsrc video-flow-id="$VIDEO_FLOW_ID" domain="$MXL_DOMAIN" ! queue ! c.sink_1
+```
+
+The key in the flow is video range (64 to 940) and GStreamer reads alpha as full range (0 to 1023). `mxlsrc` and `mxlsink` convert between the two. An MXL flow definition cannot yet say whether a v210 flow is narrow or full range, so narrow range, the SMPTE ST 2110-20 default, is assumed.
 
 ### Round-trip CEA-608 closed captions over a data flow
 

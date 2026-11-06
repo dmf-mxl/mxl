@@ -10,8 +10,10 @@ use glib::subclass::types::ObjectSubclassExt;
 use gst_base::prelude::*;
 use gstreamer as gst;
 use gstreamer_base as gst_base;
+use gstreamer_video as gst_video;
 use mxl::{FlowReader, MxlInstance, config::get_mxl_so_path, flowdef::*};
 
+use crate::format::video;
 use crate::mxlsrc::{
     imp::*,
     state::{ContinuousState, DiscreteFormat, DiscreteState, FlowState, Settings, State},
@@ -54,11 +56,58 @@ pub(crate) fn get_mxl_flow_json(
     Ok(serde_json)
 }
 
-pub(crate) fn set_json_caps(src: &MxlSrc, json: FlowDefDetails) -> Result<(), gst::LoggableError> {
+/// How `mxlsrc` outputs the grains of a video flow, from its media type.
+pub(crate) fn discrete_video_format(
+    instance: &MxlInstance,
+    flow_id: &str,
+) -> Result<DiscreteFormat, gst::ErrorMessage> {
+    let failed = |msg: String| gst::error_msg!(gst::CoreError::Failed, ["{}", msg]);
+    let json = instance
+        .get_flow_def(flow_id)
+        .map_err(|e| failed(format!("Failed to get flow definition: {e}")))?;
+    let json: serde_json::Value = serde_json::from_str(json.as_str())
+        .map_err(|e| failed(format!("Invalid flow definition: {e}")))?;
+    // Optional NMOS fields may be missing, so only these are read.
+    let media_type = json
+        .get("media_type")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| failed(format!("Flow {flow_id} has no media_type")))?
+        .to_owned();
+    let video: FlowDefVideo = serde_json::from_value(json)
+        .map_err(|e| failed(format!("Invalid video flow definition: {e}")))?;
+    if !matches!(video.interlace_mode, InterlaceMode::Progressive) {
+        return Err(failed(format!(
+            "Flow {flow_id} is interlaced, and interlaced video is not supported"
+        )));
+    }
+    match media_type.as_str() {
+        video::V210_MEDIA_TYPE => Ok(DiscreteFormat::Video),
+        video::V210A_MEDIA_TYPE => {
+            let width = u32::try_from(video.frame_width)
+                .map_err(|e| failed(format!("Invalid frame width: {e}")))?;
+            let height = u32::try_from(video.frame_height)
+                .map_err(|e| failed(format!("Invalid frame height: {e}")))?;
+            let info =
+                gst_video::VideoInfo::builder(gst_video::VideoFormat::A42210le, width, height)
+                    .build()
+                    .map_err(|e| failed(format!("Invalid A422_10LE frame layout: {e}")))?;
+            Ok(DiscreteFormat::VideoAlpha(Box::new(info)))
+        }
+        other => Err(failed(format!("Unsupported video media type: {other}"))),
+    }
+}
+
+/// Sets the src pad caps from the flow definition. `video_format` is the GStreamer
+/// format chosen for the flow when the reader attached.
+pub(crate) fn set_json_caps(
+    src: &MxlSrc,
+    json: FlowDefDetails,
+    video_format: &str,
+) -> Result<(), gst::LoggableError> {
     match json {
         FlowDefDetails::Video(video) => {
             let caps = gst::Caps::builder("video/x-raw")
-                .field("format", "v210")
+                .field("format", video_format)
                 .field("width", video.frame_width)
                 .field("height", video.frame_height)
                 .field(
@@ -307,6 +356,10 @@ pub(crate) fn init(mxlsrc: &MxlSrc) -> Result<Init, gst::ErrorMessage> {
     };
     let binding = reader.get_info();
     let reader_info = binding.as_ref();
+    let video_format = match flow_kind {
+        FlowKind::Video => Some(discrete_video_format(&instance, flow_id.as_str())?),
+        FlowKind::Audio | FlowKind::Data => None,
+    };
 
     let mut context = mxlsrc.context.lock().map_err(|e| {
         gst::error_msg!(
@@ -343,7 +396,7 @@ pub(crate) fn init(mxlsrc: &MxlSrc) -> Result<Init, gst::ErrorMessage> {
             context.state = Some(State {
                 instance,
                 flow_state: Some(FlowState::Discrete(DiscreteState {
-                    format: DiscreteFormat::Video,
+                    format: video_format.unwrap_or(DiscreteFormat::Video),
                     grain_rate,
                     index: 0,
                     is_initialized: false,
