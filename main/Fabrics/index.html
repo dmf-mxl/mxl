@@ -2146,6 +2146,7 @@ With untagged Send/Recv, the receiver cannot direct an incoming message to a spe
 - FI_EP_MSG: reliable connection-oriented data transfer.
 - FI_EP_RDM: reliable connection-less data transfer.
 - FI_EP_DGRAM: unreliable connection-less data transfer.</p>
+<p>Every endpoint is bound to an event queue. Connected endpoints receive their connection management events there, such as connection requests and shutdowns. On connection-less endpoints the provider uses it to report asynchronous errors that do not belong to a single transfer. EFA, for example, reports failures of its peer handshake there, and aborts the process if no event queue is bound.</p>
 <h4 id="512-connection-oriented">5.1.2 Connection oriented</h4>
 <p>Connection-oriented data transfer follows the Berkeley Sockets model. A listener (server) waits to accept incoming connections while a client initiates the connection to that listener. After the connection is established, bidirectional data transfer becomes possible.</p>
 <h4 id="513-connection-less">5.1.3 Connection-less</h4>
