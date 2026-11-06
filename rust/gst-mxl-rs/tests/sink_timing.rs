@@ -488,6 +488,42 @@ fn relay_keeps_grain_indices() {
     );
 }
 
+/// `alignment-threshold` and `discont-wait` apply to audio flows only, so a
+/// video sink with either one set posts a warning.
+#[test]
+fn audio_properties_on_video_sink_post_warning() {
+    init();
+    if let Some(reason) = skip_reason(&["appsrc", "mxlsink"]) {
+        skip!(reason);
+    }
+    let domain_guard = TestDomainGuard::new("audio_props_on_video");
+    let domain = domain_guard.domain();
+    let flow_id = uuid::Uuid::new_v4().to_string();
+    let pipeline = launch(&format!(
+        "appsrc name=src format=time caps={} \
+         ! mxlsink name=sink discont-wait=1000000000 flow-id={flow_id} domain={domain}",
+        video_caps(25, 1)
+    ));
+
+    pipeline.set_state(gst::State::Playing).expect("Playing");
+    push_frames(&appsrc(&pipeline), 0..1, gst::ClockTime::ZERO);
+    let message = pipeline.bus().expect("bus").timed_pop_filtered(
+        gst::ClockTime::from_seconds(TIMEOUT.as_secs()),
+        &[gst::MessageType::Warning, gst::MessageType::Error],
+    );
+    pipeline.set_state(gst::State::Null).expect("Null");
+
+    let message = message.expect("no warning from the video sink");
+    let gst::MessageView::Warning(warning) = message.view() else {
+        panic!("expected a warning, got {message:?}");
+    };
+    assert!(
+        warning.error().matches(gst::LibraryError::Settings),
+        "unexpected warning: {}",
+        warning.error()
+    );
+}
+
 /// Replace a running `mxlsrc` the way `nmossrc` does: set it to NULL, remove
 /// it, and add a new one while the pipeline stays PLAYING. The relay's
 /// `mxlsink` must keep writing at MXL now without an error.

@@ -11,10 +11,6 @@ use gstreamer as gst;
 use mxl::Rational;
 use tracing::trace;
 
-/// Largest difference between a buffer's timestamp and the end of the previous buffer that the sink
-/// still treats as continuous audio.
-pub(crate) const ALIGNMENT_THRESHOLD_NS: u64 = 40_000_000;
-
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) enum Placement {
     /// Write the buffer from `skip` onwards, starting at flow index
@@ -29,12 +25,20 @@ pub(crate) enum Placement {
 /// Decide where to write a buffer of `samples` samples whose timestamp maps to
 /// flow index `ts_index`. A buffer flagged `discont` is never moved to follow
 /// on from the previous one.
+///
+/// A buffer further than `threshold` from `next_index` still follows on until
+/// timestamps have been that far out for `discont_wait`, measured from
+/// `discont_start`, the index at which they first were. A jump of at least
+/// `discont_wait` is followed at once. A `discont_wait` of 0 follows every
+/// jump beyond `threshold` at once.
 pub(crate) fn place_buffer(
     next_index: Option<u64>,
     ts_index: u64,
     samples: u64,
     threshold: u64,
+    discont_wait: u64,
     discont: bool,
+    discont_start: &mut Option<u64>,
 ) -> Placement {
     let Some(next_index) = next_index else {
         return Placement::Write {
@@ -42,12 +46,31 @@ pub(crate) fn place_buffer(
             skip: 0,
         };
     };
-    if !discont && ts_index.abs_diff(next_index) <= threshold {
+    let distance = ts_index.abs_diff(next_index);
+    let resync = if discont {
+        true
+    } else if distance <= threshold {
+        *discont_start = None;
+        false
+    } else if discont_wait == 0 {
+        true
+    } else {
+        match *discont_start {
+            None if distance >= discont_wait => true,
+            None => {
+                *discont_start = Some(next_index);
+                false
+            }
+            Some(start) => ts_index.abs_diff(start) >= discont_wait,
+        }
+    };
+    if !resync {
         return Placement::Write {
             index: next_index,
             skip: 0,
         };
     }
+    *discont_start = None;
     if ts_index > next_index {
         return Placement::Write {
             index: ts_index,
@@ -70,6 +93,8 @@ pub(crate) fn continuous(
     element: &gst::Element,
     buffer: &gst::Buffer,
     mxl_ts: u64,
+    alignment_threshold_ns: u64,
+    discont_wait_ns: u64,
 ) -> Result<gst::FlowSuccess, gst::FlowError> {
     let map = buffer.map_readable().map_err(|_| gst::FlowError::Error)?;
     let src = map.as_slice();
@@ -99,7 +124,8 @@ pub(crate) fn continuous(
         .instance
         .timestamp_to_index(mxl_ts, &sample_rate)
         .map_err(|_| gst::FlowError::Error)?;
-    let threshold = threshold_samples(&sample_rate)?;
+    let threshold = duration_samples(alignment_threshold_ns, &sample_rate)?;
+    let discont_wait = duration_samples(discont_wait_ns, &sample_rate)?;
     let samples_u64 = u64::try_from(samples_per_buffer).map_err(|_| gst::FlowError::Error)?;
     let discont = buffer
         .flags()
@@ -109,7 +135,9 @@ pub(crate) fn continuous(
         ts_index,
         samples_u64,
         threshold,
+        discont_wait,
         discont,
+        &mut continuous_state.discont_start,
     );
     trace!(
         "AUDIO buffer with timestamp index {} and expected index {:?}: {:?}",
@@ -187,14 +215,14 @@ pub(crate) fn continuous(
     Ok(gst::FlowSuccess::Ok)
 }
 
-/// [`ALIGNMENT_THRESHOLD_NS`] in samples at `sample_rate`.
-fn threshold_samples(sample_rate: &Rational) -> Result<u64, gst::FlowError> {
+/// `duration_ns` in samples at `sample_rate`.
+fn duration_samples(duration_ns: u64, sample_rate: &Rational) -> Result<u64, gst::FlowError> {
     let numerator = u128::try_from(sample_rate.numerator).map_err(|_| gst::FlowError::Error)?;
     let denominator = u128::try_from(sample_rate.denominator).map_err(|_| gst::FlowError::Error)?;
     if denominator == 0 {
         return Err(gst::FlowError::Error);
     }
-    let samples = ALIGNMENT_THRESHOLD_NS as u128 * numerator / (denominator * 1_000_000_000u128);
+    let samples = duration_ns as u128 * numerator / (denominator * 1_000_000_000u128);
     u64::try_from(samples).map_err(|_| gst::FlowError::Error)
 }
 
