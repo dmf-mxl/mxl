@@ -491,12 +491,12 @@ namespace
 
             auto grainIndex = std::uint64_t{MXL_UNDEFINED_INDEX};
 
+            constexpr auto pullTimeoutNs = std::uint64_t{100'000'000ULL};
+
             auto slicesPerBatch = _configInfo.common.maxCommitBatchSizeHint;
             while (!g_exit_requested)
             {
-                auto const timeoutNs = (grainIndex != MXL_UNDEFINED_INDEX) ? ::mxlGetNsUntilIndex(grainIndex + 1, &gstPipeline.config().frameRate)
-                                                                           : 100'000'000ULL; // arbitrary high timeout for the first grain
-                if (auto const pipelineSample = gstPipeline.pull(timeoutNs); pipelineSample)
+                if (auto const pipelineSample = gstPipeline.pull(pullTimeoutNs); pipelineSample)
                 {
                     auto const bufferTs = GST_BUFFER_PTS(pipelineSample.buffer()); // PTS was already converted to TAI time in the pull()
                     auto const gstGrainIndex = ::mxlTimestampToIndex(&gstPipeline.config().frameRate, bufferTs);
