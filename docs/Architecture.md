@@ -314,6 +314,8 @@ Video grains can be of two different formats: video/v210 for video without trans
 
 The `video/v210` format is an uncompressed buffer format carrying 10 bit 4:2:2 video. A detailed description of the format can be found [here](https://wiki.multimedia.cx/index.php/V210) and [here](https://developer.apple.com/library/archive/technotes/tn2162/_index.html#//apple_ref/doc/uid/DTS40013070-CH1-TNTAG8-V210__4_2_2_COMPRESSION_TYPE).
 
+When the flow definition does not specify the range of the sample values, the samples are _video range_: Y from 64 to 940, and Cb and Cr from 64 to 960. SMPTE ST 2110-20 calls this range `NARROW`.
+
 ```
 32-bit Word Structure (Little-Endian), 4 words = 1 group of 6 pixels (16 bytes):
 ┌──────┬───────┬───────────────────────────────┬───────────────────────────────┬───────────────────────────────┐
@@ -356,7 +358,7 @@ Key points:
 
 The `video/v210a` format contains both fill and key inside a single grain. The fill part starts at byte 0 of the grain and follows the v210 definition above. The key buffer is found immediately after the fill buffer. Samples are organized in blocks of 32 bit values in little-endian. Each block contains 3 alpha samples, one each in bits 0 - 9, 10 - 19 and 20 - 29, the remaining two bits are unused. The start of each line is aligned to a multiple of 4 bytes, where unused blocks are padded with 0. The last block of a line might have more padding than just the last 2 bits if the width is not divisible by 3. For example, 1280x720 resolution has padding for bits 20 to 31 on the last block.
 
-Alpha samples are 'straight' (not premultiplied) and follow the same data range as the fill.  For example, if the fill is _video range_ (64 to 960) then the samples of the key are also _video range_.
+Alpha samples are 'straight' (not premultiplied) and follow the same data range as the fill.  For example, if the fill is _video range_ then the samples of the key are also _video range_ (64 to 940).
 
 ```
 video/v210a Grain Structure:
