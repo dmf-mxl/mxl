@@ -11,8 +11,9 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
-#include <catch.hpp>
 #include <unistd.h>
+#include <catch2/catch_template_test_macros.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <fmt/base.h>
 #include <mxl/fabrics.h>
 #include "mxl/flow.h"
