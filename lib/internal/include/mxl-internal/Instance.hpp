@@ -72,6 +72,20 @@ namespace mxl::lib
         FlowReader* getFlowReader(std::string const& flowId);
 
         ///
+        /// Create a FlowReader with reader options, or obtain an additional reference to a previously created FlowReader.
+        /// Works like getFlowReader().
+        ///
+        /// \param[in] flowId The id of the flow to obtain a reader for.
+        /// \param[in] options Reader options in JSON, or empty. The keys of the optional "payload" object are passed to the
+        ///     backend that holds the payload of the flow. Only the options of the call that creates the reader are used. Later
+        ///     calls for the same flow return the existing reader.
+        /// \return A pointer to the flow reader. Each successful call must be paired with a call to releaseReader().
+        /// \throws PayloadStorageError with MXL_ERR_INVALID_ARG if the options are invalid, or with the backend's status if the
+        ///     backend rejects them.
+        ///
+        FlowReader* getFlowReaderWithOptions(std::string const& flowId, std::string const& options);
+
+        ///
         /// Release a reference to a FlowReader in order to ultimately free all
         /// resources associated with it, once the last reference is dropped.
         ///

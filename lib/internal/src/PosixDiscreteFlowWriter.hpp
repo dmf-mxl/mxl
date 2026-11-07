@@ -62,6 +62,16 @@ namespace mxl::lib
         /** \see DiscreteFlowWriter::openGrain */
         virtual mxlStatus openGrain(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload) override;
 
+        /** \see DiscreteFlowWriter::openGrainSlot */
+        virtual mxlStatus openGrainSlot(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::uint32_t* out_slot) override;
+
+        /** \see DiscreteFlowWriter::getStorageLayout */
+        [[nodiscard]]
+        virtual mxlGrainStorageLayout getStorageLayout() const override;
+
+        /** \see DiscreteFlowWriter::mapSlots */
+        virtual mxlStatus mapSlots(std::uint32_t in_slotCount, mxlGrainStorage* out_slots) const override;
+
         /** \see DiscreteFlowWriter::commit */
         virtual mxlStatus commit(mxlGrainInfo const& mxlGrainInfo) override;
 
@@ -71,6 +81,18 @@ namespace mxl::lib
         virtual bool isExclusive() const override;
 
         virtual bool makeExclusive() override;
+
+    private:
+        /**
+         * Implementation of openGrain() and openGrainSlot(). The caller must have checked that _flowData is
+         * a valid pointer.
+         *
+         * \param[in] in_index The grain index.
+         * \param[out] out_grainInfo A valid pointer that receives a copy of the grain info.
+         * \param[out] out_slot Receives the slot that holds the grain. Written only on success.
+         * \return A status code describing the outcome of the call.
+         */
+        mxlStatus openGrainImpl(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::size_t* out_slot);
 
     private:
         /** The FlowData for the currently opened flow. null if no flow is opened. */

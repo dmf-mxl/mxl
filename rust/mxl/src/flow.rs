@@ -123,6 +123,7 @@ impl CommonFlowConfigInfo<'_> {
         self.0.maxSyncBatchSizeHint
     }
 
+    #[deprecated(note = "MXL never used the payload location. It is always 0.")]
     pub fn payload_location(&self) -> u32 {
         self.0.payloadLocation
     }

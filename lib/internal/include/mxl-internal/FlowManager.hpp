@@ -14,6 +14,7 @@
 #include "ContinuousFlowData.hpp"
 #include "DiscreteFlowData.hpp"
 #include "EventFlowData.hpp"
+#include "PayloadBackend.hpp"
 
 namespace mxl::lib
 {
@@ -51,6 +52,15 @@ namespace mxl::lib
         FlowManager(std::filesystem::path const& in_mxlDomain);
 
         ///
+        /// Creates a FlowManager that loads payload backends with a specific loader. Used by tests.
+        ///
+        /// \param[in] in_mxlDomain The directory where the flows are stored.
+        /// \param[in] backendLoader The loader for payload backends. Must outlive the manager.
+        /// \throws std::filesystem::filesystem_error if the directory does not exist or is not accessible.
+        ///
+        FlowManager(std::filesystem::path const& in_mxlDomain, PayloadBackendLoader& backendLoader);
+
+        ///
         /// Create a new discrete flow together with its associated grains and open it in read-write mode.
         ///
         /// \param[in] flowId The id of the flow.
@@ -72,6 +82,35 @@ namespace mxl::lib
             std::uint32_t maxSyncBatchSizeHintOpt = 1, std::uint32_t maxCommitBatchSizeHintOpt = 1);
 
         ///
+        /// Create a new discrete flow whose payload uses a specific storage, or open the existing flow. Works like
+        /// createOrOpenDiscreteFlow(), which uses the built-in host storage.
+        ///
+        /// With a backend, the flow uses flow data version 2, grain files hold only their header, libmxl writes the payload
+        /// descriptor, and the backend prepares its storage in the temporary directory before the flow is published. The device
+        /// index the backend reports is recorded in mxlCommonFlowConfigInfo.deviceIndex.
+        ///
+        /// \param[in] flowId The id of the flow.
+        /// \param[in] flowDef The json definition of the flow (NMOS Resource format). Written as is.
+        /// \param[in] flowFormat The flow data format. Must be one of the discrete formats.
+        /// \param[in] grainCount How many individual grains to create.
+        /// \param[in] grainRate The grain rate.
+        /// \param[in] grainPayloadSize Size of the payload of one grain in bytes.
+        /// \param[in] grainNumOfSlices Number of slices per grain.
+        /// \param[in] grainSliceLengths Length of each slice in bytes.
+        /// \param[in] maxSyncBatchSizeHintOpt Max sync batch size hint.
+        /// \param[in] maxCommitBatchSizeHintOpt Max commit batch size hint.
+        /// \param[in] storageSpec Where the payload lives, which backend holds it, and the options for that backend.
+        /// \return (created, flowData) as for createOrOpenDiscreteFlow().
+        /// \throws PayloadStorageError with MXL_ERR_UNSUPPORTED_OPERATION if the storage is not possible for this flow or the backend
+        ///     is not available, with MXL_ERR_CONFLICT if the flow exists and either flow uses a backend, and with the backend's status
+        ///     if the backend fails, for example MXL_ERR_INVALID_ARG for invalid backend options.
+        ///
+        std::pair<bool, std::unique_ptr<DiscreteFlowData>> createOrOpenDiscreteFlowWithStorage(uuids::uuid const& flowId, std::string const& flowDef,
+            mxlDataFormat flowFormat, std::size_t grainCount, mxlRational const& grainRate, std::size_t grainPayloadSize,
+            std::size_t grainNumOfSlices, std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN> grainSliceLengths,
+            std::uint32_t maxSyncBatchSizeHintOpt, std::uint32_t maxCommitBatchSizeHintOpt, PayloadStorageSpec const& storageSpec);
+
+        ///
         /// Create a new continuous flow together with its associated channel store and open it in read-write mode.
         ///
         /// \param[in] flowId The id of the flow.
@@ -83,6 +122,7 @@ namespace mxl::lib
         /// \param[in] bufferLength The length of each channel buffer in samples.
         /// \param[in] maxSyncBatchSizeHintOpt Optional max sync batch size hint.
         /// \param[in] maxCommitBatchSizeHintOpt Optional max commit batch size hint
+
         /// \return (created, flowData) If the flow was created, the first returnd value is true. If the flow was opened instead, false will be
         /// returned. The second returned value is the flow data of the opened or created flow.
         ///
@@ -112,6 +152,15 @@ namespace mxl::lib
         /// \param[in] mode The flow access mode
         ///
         std::unique_ptr<FlowData> openFlow(uuids::uuid const& flowId, AccessMode mode);
+
+        /// Open an existing flow by id, and pass options to the backend that holds its payload. Works like openFlow().
+        ///
+        /// \param[in] flowId The flow to open.
+        /// \param[in] mode The flow access mode.
+        /// \param[in] payloadOptions Options for the backend, as JSON object text, or empty. Ignored for the built-in host storage.
+        /// \throws PayloadStorageError with the backend's status if the backend rejects the options.
+        ///
+        std::unique_ptr<FlowData> openFlowWithPayloadOptions(uuids::uuid const& flowId, AccessMode mode, std::string const& payloadOptions);
 
         ///
         /// Delete all resources associated to a flow
@@ -146,10 +195,13 @@ namespace mxl::lib
         std::filesystem::path const& getDomain() const;
 
     private:
-        std::unique_ptr<DiscreteFlowData> openDiscreteFlow(std::filesystem::path const& flowDir, SharedMemoryInstance<Flow>&& sharedFlowInstance);
+        std::unique_ptr<DiscreteFlowData> openDiscreteFlow(std::filesystem::path const& flowDir, SharedMemoryInstance<Flow>&& sharedFlowInstance,
+            std::string const& payloadOptions);
         std::unique_ptr<ContinuousFlowData> openContinuousFlow(std::filesystem::path const& flowDir, SharedMemoryInstance<Flow>&& sharedFlowInstance);
 
     private:
         std::filesystem::path _mxlDomain;
+        /// Loads the payload backends named by flows. Not owned.
+        PayloadBackendLoader* _backendLoader;
     };
 } // namespace mxl::lib
