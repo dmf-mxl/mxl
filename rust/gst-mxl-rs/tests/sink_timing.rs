@@ -237,9 +237,13 @@ fn pause_and_resume_video_writes_at_mxl_now() {
     let reader = grain_reader(&instance, &flow_id);
     let before = grain_head(&reader);
 
+    // Running time stops for as long as the pipeline is paused, which is
+    // longer than GAP when the sleep overruns.
+    let paused = Instant::now();
     pipeline.set_state(gst::State::Paused).expect("Paused");
     thread::sleep(GAP.into());
     pipeline.set_state(gst::State::Playing).expect("Playing");
+    let paused_for = gst::ClockTime::try_from(paused.elapsed()).expect("pause duration");
     push_frames(&appsrc(&pipeline), 5..10, gst::ClockTime::ZERO);
     finish(&pipeline);
 
@@ -251,7 +255,7 @@ fn pause_and_resume_video_writes_at_mxl_now() {
     assert_near(
         "grains between the frames either side of the pause",
         (after - before) as i64,
-        (5 + GAP / FRAME) as i64,
+        (5 + paused_for / FRAME) as i64,
         2,
     );
     assert_near("head minus MXL now", after as i64 - now as i64, 0, 2);
@@ -281,9 +285,13 @@ fn pause_and_resume_audio_writes_at_mxl_now() {
     let reader = samples_reader(&instance, &flow_id);
     let before = samples_head(&reader);
 
+    // Running time stops for as long as the pipeline is paused, which is
+    // longer than GAP when the sleep overruns.
+    let paused = Instant::now();
     pipeline.set_state(gst::State::Paused).expect("Paused");
     thread::sleep(GAP.into());
     pipeline.set_state(gst::State::Playing).expect("Playing");
+    let paused_for = gst::ClockTime::try_from(paused.elapsed()).expect("pause duration");
     push_audio(&appsrc(&pipeline), 20..40, gst::ClockTime::ZERO);
     finish(&pipeline);
 
@@ -291,7 +299,7 @@ fn pause_and_resume_audio_writes_at_mxl_now() {
     let now = instance.get_current_index(&AUDIO_RATE);
     pipeline.set_state(gst::State::Null).expect("Null");
 
-    let gap_samples = GAP.nseconds() * 48 / 1_000_000;
+    let gap_samples = paused_for.nseconds() * 48 / 1_000_000;
     assert_near(
         "samples between the buffers either side of the pause",
         (after - before) as i64,
