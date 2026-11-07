@@ -5,7 +5,7 @@
 
 This page describes how MXL separates where a grain payload is stored from the ring buffer logic, so that payloads can live in memory other than host shared memory. The first target is `video/v210` and `video/v210a` in CUDA device memory. The design also has to allow devices that share their memory as dma-buf, and sharing exported Vulkan images, OpenGL textures and CUDA arrays.
 
-It covers what is implemented on the `feature/grain-storage-descriptors` branch, the principles behind it, and the work that follows. The design merges this branch with the CUDA work in [PR #653](https://github.com/dmf-mxl/mxl/pull/653).
+It covers what is implemented, the principles behind it, and the work that follows. The design merges this work with the CUDA work in [PR #653](https://github.com/dmf-mxl/mxl/pull/653).
 
 ## Current state
 
@@ -55,18 +55,19 @@ The descriptor sizes are checked at compile time, since they cannot change once 
 Storage types other than host memory are implemented by backend libraries. They are not part of libmxl. This change adds the interface between libmxl and those libraries, and the code that loads them. No backend is shipped yet.
 
 - `lib/internal/include/mxl-internal/PayloadBackendAbi.h` defines the interface.
-  - It is a versioned table of C functions: `prepare`, `open`, `destroy`, `slotStorage`, `describeLayout` and `mapSlots`.
+  - It is a versioned table of C functions: `prepare`, `open`, `destroy`, `slotStorage`, `describeLayout` and `mapSlots`. A capability adds `exportDescriptors` and `importDescriptors`, for a backend that shares descriptors ([The descriptor channel](#the-descriptor-channel)).
   - `prepare` and `open` receive the backend's options from the writer or reader as JSON object text. Options specific to one kind of storage, such as a CUDA device UUID, are never part of the interface itself.
   - The flow description passed to a backend includes the plane geometry (plane count, slices per grain, and slice sizes), so that a backend allocating images or device buffers can size them.
 - `lib/internal/include/mxl-internal/PayloadBackend.hpp` declares three classes:
   - `PayloadBackendLoader` finds and validates backend libraries.
   - `PluginPayloadStorage` implements `PayloadStorage` on top of a backend instance.
   - `PayloadStorageError` carries the status code a backend returned.
-- The tests build four backend libraries from `lib/internal/tests/payload_backends/`:
+- The tests build five backend libraries from `lib/internal/tests/payload_backends/`:
   - A valid backend that keeps the payload in a file.
   - The same backend reporting a wrong name.
   - The same backend reporting a storage type that is not a valid name.
   - A library without the entry point.
+  - A backend that shares one memory file per slot through the descriptor channel, `test-memfd`.
 
   `lib/internal/tests/test_payload_backend.cpp` uses them to check, without a GPU:
   - loading and validation;
@@ -217,10 +218,54 @@ The pointer functions return a payload pointer only for host storage. For other 
 Opening a flow must not require a device, and reading grains must not add latency. The two are separated:
 
 - Opening a reader maps nothing, and describing the layout must not map either. Tools that only read flow metadata, such as `mxl-info`, keep working on machines without a GPU.
-- `mxlFlowReaderMapSlots` maps every slot at once, before the first read, so the first grain costs no more than any other.
+- `mxlFlowReaderMapSlots` maps every slot at once, before the first read, so the first grain costs no more than any other. It is also where a reader receives the descriptors of storage shared through [the descriptor channel](#the-descriptor-channel).
 - The per-grain functions only return a slot, and never map anything.
 
 If a backend is asked for a slot that was not mapped, it maps on that first request. This is a fallback. The public API always maps through `mxlFlowReaderMapSlots` and `mxlFlowWriterMapSlots`.
+
+### The descriptor channel
+
+Some storage can only be shared as file descriptors: dma-bufs, memory files, and the memory that Vulkan or CUDA exports. A descriptor is only valid in the process that holds it, and cannot be written to a file. The writer's libmxl therefore serves the descriptors of a flow's storage on a Unix socket in the flow directory, `payload.sock`, and a reader's libmxl receives duplicates of them from it (`lib/internal/include/mxl-internal/DescriptorChannel.hpp`). Backends that share their storage as descriptors use this channel. Host storage, and storage shared in another way, has no socket.
+
+#### What an application sees
+
+The API does not change. What changes is when a reader can get at the payload:
+
+- A reader receives the descriptors when the application maps its slots with `mxlFlowReaderMapSlots`. Opening a reader and reading its layout never connect to the socket, so tools that only read flow metadata work without it.
+- Mapping needs the writer. The writer serves the socket from the moment its flow is created until the writer is released or its process exits. A reader that maps the slots of a flow whose writer is gone gets `MXL_ERR_INVALID_STATE`. A host flow has no such limit, because its payload stays in the grain files after the writer is gone.
+- A reader that has mapped its slots keeps its descriptors until it is released, whatever happens to the writer. Whether the memory behind them stays valid is up to the storage: a memory file or a dma-buf stays alive as long as any descriptor of it is open. Either way, the reader receives no new grains once the writer is gone.
+- The descriptors in the slot descriptions belong to the library. An application that keeps one beyond the lifetime of its reader, or passes it to an import function that takes ownership, such as those of Vulkan, OpenGL or CUDA, duplicates it first. Received descriptors are close-on-exec, so they do not leak into the processes an application starts.
+
+#### Who can receive the payload
+
+- Connecting to a Unix socket needs write permission on the socket file. libmxl gives the socket write permission for the owner, group and others that may read the flow's `data` file. Whoever may read the flow may receive its payload, and nobody else.
+- The kernel checks that permission when a reader connects, with the reader's user, group and supplementary groups. libmxl does not check the peer itself.
+- libmxl makes every published flow directory readable. Without a mode of its own, the socket would let anyone connect, even when the umask of the writer's process keeps the flow's files private.
+
+#### Where writer and reader can run
+
+- On the same machine. A descriptor can only be passed through the kernel that holds it. Flows between machines use fabrics.
+- In any processes, containers or pods that see the same MXL domain, on a file system that holds Unix sockets, such as a tmpfs. Containers share a flow by mounting the same domain directory. They need no shared IPC or PID namespace, and Kubernetes pods need no `hostIPC`.
+- With users and groups that may read the flow, as for any flow. Containers that run as different users agree on the user and group ids that give them that access.
+
+#### How it works
+
+- The writer's libmxl asks the backend for the descriptors of its storage, and binds the socket while the flow is still in its temporary directory. The socket keeps working when the directory is renamed to publish the flow, so a reader never finds a published flow without it.
+- A thread of the writer accepts connections. A reader sends a request that holds the version of the channel's protocol. The writer replies with all the descriptors, as `SCM_RIGHTS` control data, in messages of at most 250 descriptors, below the kernel's limit of 253 (`SCM_MAX_FD`). Each message has a header with the protocol version, the total number of descriptors, and the position of its first one. Each side refuses a message of another protocol version, so a writer and a reader from releases that disagree fail cleanly. Each side gives up after 5 seconds without progress.
+- The reader's libmxl passes the descriptors to the backend, in the writer's order. The backend owns them from then on, and checks that they match the flow.
+- When the writer's storage is destroyed, libmxl removes the socket from the flow directory, wherever it was renamed to, through a descriptor of the directory. It removes it only while the path still holds the socket it bound, so a writer that fails never removes another writer's socket. The socket of a writer that died stays, and readers then fail to connect to it.
+- A path longer than a Unix socket address holds is reached through `/proc/self/fd`.
+- The mode is set on the socket file. `fchmod` on the socket's descriptor would only change the socket's inode in the kernel.
+
+The backend interface moves to version 2 for this. A backend that reports `MXL_PAYLOAD_BACKEND_CAP_SHARE_DESCRIPTORS` exports the descriptors of a writer's instance with `exportDescriptors`, which libmxl serves until the instance is destroyed, and receives a reader's descriptors with `importDescriptors`, which takes ownership of them.
+
+The `test-memfd` backend in `lib/internal/tests/payload_backends` shares one memory file per slot this way, under a storage type of its own, `org.example.test-memfd`, described in `TestMemfdStorage.hpp`, which the tests also include. The tests cover the whole path from a writer's buffers to a reader's mapping without a device, and a reader whose writer is gone.
+
+#### Choices made
+
+- The socket has its own thread. The `DomainWatcher` epoll thread was the alternative, but it only exists while a process watches the domain.
+- Access follows the permissions of the socket file, not a check of each peer with `SO_PEERCRED`. The kernel's check sees the peer's supplementary groups, which `SO_PEERCRED` does not. A peer check can be added if domains get finer access rules.
+- `pidfd_getfd` is not an alternative to the socket, because it requires ptrace permission, which containers usually deny.
 
 ### Publish complete flows
 
@@ -249,7 +294,8 @@ flowchart TB
     ps["PayloadStorage<br/>slot storage, layout"]
     host["HostPayloadStorage<br/>built in"]
     plugin["PluginPayloadStorage"]
-    loader["PayloadBackendLoader<br/>dlopen by name from the libmxl directory"]
+    loader["PayloadBackendLoader<br/>dlopen by name from MXL_PAYLOAD_PLUGIN_PATH<br/>and the libmxl directory"]
+    channel["DescriptorServer<br/>payload.sock"]
     cuda["libmxl-payload-cuda-linear.so<br/>next step"]
     dmabuf["dma-buf and image backends<br/>later"]
     app --> ptr
@@ -261,6 +307,7 @@ flowchart TB
     ps --> host
     ps --> plugin
     plugin --> loader
+    plugin --> channel
     loader --> cuda
     loader --> dmabuf
 ```
@@ -270,30 +317,15 @@ flowchart TB
 The steps below complete the first pull request. They follow the design agreed with the CUDA work in PR #653.
 
 1. Add the `cuda-linear` backend, built only when a CMake option enables it.
-   - It makes one `cudaMalloc` for all slots of a flow, with each slot aligned to 256 bytes, and exports it once with `cudaIpcGetMemHandle`. It records the handle, the export format and the device UUID in its own file in the flow directory. Each reader then imports the memory once.
-   - A reader on another GPU of the same machine maps the memory through peer access (`cudaIpcMemLazyEnablePeerAccess`).
-   - Readers in the writer's own process share the allocation through a reference count. CUDA IPC cannot open a handle in the process that created it.
+   - It makes one CUDA virtual-memory allocation for all slots of a flow, with each slot aligned to 256 bytes, and exports it once as a POSIX file descriptor, which libmxl serves on [the descriptor channel](#the-descriptor-channel). It records the export format and the device UUID in its own file in the flow directory. Each reader then imports the memory once. Legacy CUDA IPC handles, which are plain bytes, were the first plan, but they need a shared IPC namespace between containers, and cannot be opened in the process that created them.
+   - A reader on another GPU of the same machine maps the memory through peer access.
+   - Readers in the writer's own process share the allocation through a reference count.
 2. Document the commit contract: device work that writes a grain must be complete before `mxlFlowWriterCommitGrain`. Also document the ways to deploy it:
-   - Same pod, same GPU: CUDA IPC.
-   - Same pod, different GPU: IPC and peer access.
-   - Different pods on one node: IPC with a shared domain and `hostIPC`.
+   - Same pod, same GPU: the descriptor channel.
+   - Same pod, different GPU: the descriptor channel and peer access.
+   - Different pods on one node: the descriptor channel, with a shared domain.
    - Different nodes: fabrics.
 3. Test the CUDA backend on machines with a GPU. CI keeps running the whole flow through the test backend.
-
-### Passing file descriptors
-
-dma-buf, exported Vulkan images and CUDA memory exported as a file descriptor all share memory through file descriptors, which cannot be stored in a file. They need a channel that the writer serves. libmxl owns this channel, so that every backend uses the same code and the same access checks:
-
-- The writer's libmxl serves a Unix socket in the flow directory, `payload.sock`, and sends the descriptors of all slots with `SCM_RIGHTS`. The kernel limits one message to 253 descriptors (`SCM_MAX_FD`), so larger sets are sent in several messages.
-- The writer process already runs an epoll thread for `DomainWatcher`, which can serve the socket.
-- The socket checks each peer with `SO_PEERCRED` against the access rules of the domain.
-- Connecting to a Unix socket requires write permission on the socket file, while a reader today only needs read access. The socket mode must therefore follow the read permission of the flow directory.
-- A Unix socket in a tmpfs shared between containers works across pods on one node, without `hostIPC`.
-- `pidfd_getfd` is not an alternative, because it requires ptrace permission, which containers usually deny.
-
-The backend interface needs a second version for this. After `prepare`, libmxl asks the writer's backend for the descriptors to serve. In a reader, `mapSlots` receives the descriptors that libmxl read from the socket. The public API does not change.
-
-This channel is shared infrastructure for every storage type after CUDA IPC. Only legacy CUDA IPC, whose handles are plain bytes, works without it.
 
 ## Worked example: a dma-buf backend
 
@@ -382,12 +414,12 @@ A dma-buf can carry fences (implicit synchronization). Before calling `mxlFlowWr
 Some devices allocate their own buffers: a V4L2 driver exports them with `VIDIOC_EXPBUF`, and a GPU driver exports its allocations. In that case MXL adopts the buffers instead of allocating them.
 
 - The application passes one descriptor per plane and slot to a new creation function, since JSON options cannot carry descriptors. This is an addition to the public API.
-- The second version of the backend interface lets `prepare` accept these descriptors. The backend checks each buffer's size, and reports the offsets and pitches the device chose through `describeLayout`.
+- A later version of the backend interface lets the backend take these descriptors instead of allocating. The backend checks each buffer's size, and reports the offsets and pitches the device chose through `describeLayout`. libmxl then serves the descriptors on [the descriptor channel](#the-descriptor-channel) like any other.
 - The device must provide exactly the slot count of the flow. For V4L2 that means `VIDIOC_REQBUFS` with that count.
 
 ### Lifetime and access
 
-A dma-buf stays alive as long as any descriptor, mapping or import of it exists, so a reader never uses memory the writer freed. If the writer stops, readers that already mapped keep valid memory but receive no new grains. New readers cannot connect to the socket, which matches the current behaviour for a flow whose writer is gone.
+A dma-buf stays alive as long as any descriptor, mapping or import of it exists, so a reader never uses memory the writer freed. If the writer stops, readers that already mapped keep valid memory but receive no new grains. New readers cannot connect to the socket, and mapping their slots fails, as for every storage shared through [the descriptor channel](#the-descriptor-channel).
 
 A dma-buf descriptor carries the access it was created with, and a reader cannot be given less than the writer has. Readers of host flows map the payload read-only. Readers of dma-buf flows can write to it. See [Open questions](#open-questions).
 
@@ -507,7 +539,7 @@ Most of the model holds for both backends without change:
 
 The examples also reveal gaps, to close when these backends are implemented:
 
-1. The file descriptor channel, and a second version of the backend interface through which a writer's backend hands its descriptors to libmxl and a reader's backend receives them.
+1. Done: the file descriptor channel, and version 2 of the backend interface, through which a writer's backend hands its descriptors to libmxl and a reader's backend receives them.
 2. `makeGrainStorageLayout` checks every plane as a linear range of lines. Images with optimal tiling have no pitch. The check has to apply only to storage types with linear addressing, and image types describe their planes in their type-specific part.
 3. Partial grains only make sense for linear storage. Readers need to know whether a flow supports them. A flags field in the layout, taken from its reserved space, can say so without breaking compatibility.
 4. For backends that allocate on their own device, the writer application also imports its slots. `mxlFlowWriterMapSlots` already covers that, and the documentation has to say that it is required for these storage types.
@@ -522,7 +554,7 @@ The examples also reveal gaps, to close when these backends are implemented:
 
 - The GStreamer test source and sink with device memory, from PR #653.
 - RDMA from device memory in fabrics: CUDA memory registered with `FI_HMEM_CUDA`, and dma-buf registered with `FI_MR_DMABUF`, using the storage type and device reported by `PayloadStorage`. Fabrics rejects device memory until then.
-- The file descriptor channel and the second version of the backend interface, followed by the dma-buf backend and then the image backend, as worked out above.
+- The dma-buf backend and then the image backend, as worked out above, on top of the descriptor channel.
 - Buffers supplied by the application: dma-bufs allocated by a device, or CUDA memory from an application's memory pool. The backend would still own export and import, and would check the memory before using it.
 
 ## Open questions

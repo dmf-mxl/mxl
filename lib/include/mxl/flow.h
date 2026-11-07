@@ -679,6 +679,11 @@ extern "C"
      * Opening a reader does not map anything, so a reader that only reads flow metadata does not need the device
      * that holds the payload.
      *
+     * For storage that is shared as file descriptors, this is when the reader receives them from the writer, through
+     * the socket payload.sock in the flow directory. The writer serves them until it is released, so mapping needs
+     * the writer: if it is gone, this function returns MXL_ERR_INVALID_STATE. Once mapped, the descriptions stay valid
+     * until the reader is released, whatever happens to the writer.
+     *
      * If the flow becomes invalid (MXL_ERR_FLOW_INVALID), for example because its writer recreated it, the slot
      * descriptions and any handles in them are stale. Release the reader, create a new one and map it again.
      *
@@ -688,8 +693,9 @@ extern "C"
      *      slot i. Handles in the descriptions are owned by the library and stay valid until the reader is
      *      released.
      * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if slots is NULL or slotCount does not match the
-     *      layout, MXL_ERR_INVALID_FLOW_READER if reader is not a valid discrete flow reader, or another error
-     *      code if the storage cannot be mapped in this process.
+     *      layout, MXL_ERR_INVALID_FLOW_READER if reader is not a valid discrete flow reader, MXL_ERR_INVALID_STATE
+     *      if the descriptors of the storage cannot be received from the writer, for example because it is gone, or
+     *      another error code if the storage cannot be mapped in this process.
      */
     MXL_EXPORT
     mxlStatus mxlFlowReaderMapSlots(mxlFlowReader reader, uint32_t slotCount, mxlGrainStorage* slots);
