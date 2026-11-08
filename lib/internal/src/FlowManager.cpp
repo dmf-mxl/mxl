@@ -302,6 +302,21 @@ namespace mxl::lib
         }
     }
 
+    GrainGeometry FlowManager::describeGrainGeometry(std::string const& backend, std::string const& flowDef, mxlDataFormat format,
+        std::size_t grainLines)
+    {
+        mxlPayloadBackendApi const* api = nullptr;
+        try
+        {
+            api = &_backendLoader->load(backend);
+        }
+        catch (std::exception const& e)
+        {
+            throw PayloadStorageError{MXL_ERR_UNSUPPORTED_OPERATION, e.what()};
+        }
+        return lib::describeGrainGeometry(*api, flowDef, format, grainLines);
+    }
+
     std::pair<bool, std::unique_ptr<DiscreteFlowData>> FlowManager::createOrOpenDiscreteFlow(uuids::uuid const& flowId, std::string const& flowDef,
         mxlDataFormat flowFormat, std::size_t grainCount, mxlRational const& grainRate, std::size_t grainPayloadSize, std::size_t grainNumOfSlices,
         std::array<uint32_t, MXL_MAX_PLANES_PER_GRAIN> grainSliceLengths, std::uint32_t maxSyncBatchSizeHintOpt,

@@ -55,19 +55,21 @@ The descriptor sizes are checked at compile time, since they cannot change once 
 Storage types other than host memory are implemented by backend libraries. They are not part of libmxl. This change adds the interface between libmxl and those libraries, and the code that loads them. No backend is shipped yet.
 
 - `lib/internal/include/mxl-internal/PayloadBackendAbi.h` defines the interface.
-  - It is a versioned table of C functions: `prepare`, `open`, `destroy`, `slotStorage`, `describeLayout` and `mapSlots`. A capability adds `exportDescriptors` and `importDescriptors`, for a backend that shares descriptors ([The descriptor channel](#the-descriptor-channel)).
+  - It is a versioned table of C functions: `prepare`, `open`, `destroy`, `slotStorage`, `describeLayout` and `mapSlots`. Capabilities add optional functions: `exportDescriptors` and `importDescriptors` for a backend that shares descriptors ([The descriptor channel](#the-descriptor-channel)), and `describeGeometry` for a backend that defines media types ([Media types a backend defines](#media-types-a-backend-defines)).
   - `prepare` and `open` receive the backend's options from the writer or reader as JSON object text. Options specific to one kind of storage, such as a CUDA device UUID, are never part of the interface itself.
   - The flow description passed to a backend includes the plane geometry (plane count, slices per grain, and slice sizes), so that a backend allocating images or device buffers can size them.
 - `lib/internal/include/mxl-internal/PayloadBackend.hpp` declares three classes:
   - `PayloadBackendLoader` finds and validates backend libraries.
   - `PluginPayloadStorage` implements `PayloadStorage` on top of a backend instance.
   - `PayloadStorageError` carries the status code a backend returned.
-- The tests build five backend libraries from `lib/internal/tests/payload_backends/`:
+- The tests build seven backend libraries from `lib/internal/tests/payload_backends/`:
   - A valid backend that keeps the payload in a file.
   - The same backend reporting a wrong name.
   - The same backend reporting a storage type that is not a valid name.
+  - The same backend with a storage type of its own, `org.example.test-private`.
+  - The same backend claiming to define media types without the function that describes their geometry, `test-bad-geometry`.
   - A library without the entry point.
-  - A backend that shares one memory file per slot through the descriptor channel, `test-memfd`.
+  - A backend that shares one memory file per slot through the descriptor channel and defines a media type, `test-memfd`.
 
   `lib/internal/tests/test_payload_backend.cpp` uses them to check, without a GPU:
   - loading and validation;
@@ -126,6 +128,17 @@ A flow created with a backend differs from a host flow in four ways:
 A reader opens such a flow by loading the backend named in `payload.json` and opening its storage, which does not map anything. If the backend cannot be used in the reader's process, for example because it is not installed or its device runtime is missing, the reader is still created and can read the flow metadata. `mxlFlowReaderGetStorageLayout` and `mxlFlowReaderMapSlots` then return `MXL_ERR_UNSUPPORTED_OPERATION`.
 
 The tests use the file backed test backend (`test-file`) to run this whole path without a GPU. It is built next to the flow test executable, because libmxl only loads backends from the directory of the binary that contains its code, and never installed.
+
+### Media types a backend defines
+
+libmxl defines the media types `video/v210`, `video/v210a` and `video/smpte291`, and computes the geometry of their grains in `FlowParser`: the planes, the length of a slice of each, and the slices of a grain. Any other media type is defined by a payload backend, so that a new media type never needs a change to libmxl. The application that creates the writer gives only the media type, in the flow definition, and the backend, in the flow options.
+
+- A backend that defines media types reports `MXL_PAYLOAD_BACKEND_CAP_DESCRIBE_GEOMETRY` and implements `describeGeometry()`. Before libmxl creates a flow whose media type it does not define, it asks that function for the geometry, with the flow definition, the data format and, for video, the lines a grain holds: the frame height, or half of it for an interlaced flow, whose grains are fields. The backend answers with the plane count, the slices of a grain and the slice length of each plane, or `MXL_ERR_UNSUPPORTED_OPERATION` for a media type it does not define, or `MXL_ERR_INVALID_ARG` for a flow definition the media type cannot hold, for example an odd width for a format that packs two pixels.
+- libmxl checks the answer, 1 to `MXL_MAX_PLANES_PER_GRAIN` planes, 1 to 65535 slices, a non-zero slice length for every plane and a grain that fits in 32 bits, and refuses the flow with `MXL_ERR_INTERNAL` otherwise. It then sizes the ring buffer and records the geometry in the flow, as for its own media types. The geometry reaches `prepare()` in `mxlPayloadBackendFlowInfo`, and `describeLayout()` can still widen the pitch of a plane. Readers take the geometry from the flow, never from the media type, so a reader needs nothing from the backend to know it.
+- The built-in host storage, and a backend without the capability, store only the media types libmxl defines. A flow of any other media type fails with `MXL_ERR_UNSUPPORTED_OPERATION`.
+- A media type names one layout of the bytes. Two backends that support the same media type report the same geometry, so that a reader, a converter or a fabrics target sees the same bytes whichever backend holds them. The storage type says how the bytes are held and shared, never what they mean ([The storage never defines the media format](#the-storage-never-defines-the-media-format)).
+
+The test-memfd backend of the tests defines `video/x-test-two-plane`, a made-up format of two planes, and claims a few media types whose geometry it describes wrongly, so that the tests cover the path without a GPU: the geometry of a progressive and an interlaced flow, the refusals, and the checks of the answer.
 
 ## Principles
 
@@ -199,11 +212,11 @@ The plane geometry is the same for every slot of a flow.
 
 ### The storage never defines the media format
 
-The media format says which bits the payload holds, for example v210, P210 or RGBA16 half float. It is a property of the flow. The writer declares it in the flow definition, and readers know it before they map anything, from the flow definition and `mxlFlowConfigInfo`. libmxl computes the planes, line sizes and grain size from it, whatever the storage.
+The media format says which bits the payload holds, for example v210, P210 or RGBA16 half float. It is a property of the flow. The writer declares it in the flow definition, as a media type, and readers know it before they map anything, from the flow definition and `mxlFlowConfigInfo`. The planes, line sizes and grain size follow from the media type, whatever the storage: libmxl computes them for the media types it defines, and asks the backend that holds the payload for the media types a backend defines ([Media types a backend defines](#media-types-a-backend-defines)). Either way, a media type names one layout of the bytes, the same in every backend that supports it.
 
 The storage says where the memory is, how it is shared, and how the bits are arranged in memory: line padding, DRM format modifier, Vulkan tiling. It never changes the format. A backend supports a set of formats, and a flow whose format a backend does not support fails with `MXL_ERR_UNSUPPORTED_OPERATION`, as device memory does today for data and audio flows.
 
-MXL does not convert between formats. A writer that produces RGBA16 half float on a GPU writes an RGBA16 half float flow, and a reader that needs v210 uses a converting media function in between, as for any two different media types. The mapping from an MXL media format to the formats of a device API, such as a DRM fourcc or a `VkFormat`, is defined by the SDK, so that every backend and application agrees on it.
+MXL does not convert between formats. A writer that produces RGBA16 half float on a GPU writes an RGBA16 half float flow, and a reader that needs v210 uses a converting media function in between, as for any two different media types. The mapping from an MXL media type to the formats of a device API, such as a DRM fourcc or a `VkFormat`, is defined by whoever defines the media type, the SDK or a backend, and every backend and application that supports the media type follows it.
 
 ### Storage describes its own layout
 
@@ -356,7 +369,7 @@ Which format to use depends on the devices that write and read the flow. These a
 
 v210 has no DRM fourcc, and most dma-buf importers cannot use it. The backend therefore rejects v210 and v210a flows, which keep using host or CUDA storage.
 
-Each of these formats needs an MXL media type, and `FlowParser` support to compute its planes, line sizes and grain size. See [What the examples show](#what-the-examples-show).
+Each of these formats needs an MXL media type, which the backend defines together with the planes, line sizes and grain size of its grains, as [Media types a backend defines](#media-types-a-backend-defines) describes. See [What the examples show](#what-the-examples-show).
 
 ### Creating the flow
 
@@ -433,7 +446,7 @@ Vulkan images, OpenGL textures and CUDA arrays cannot be shared through CUDA IPC
 
 ### Which formats an image holds
 
-The flow definition gives the format, and the SDK maps it to a `VkFormat`. The image holds the flow's samples in that format, without conversion:
+The flow definition gives the format, as a media type the backend defines ([Media types a backend defines](#media-types-a-backend-defines)), and the backend maps it to a `VkFormat`. The image holds the flow's samples in that format, without conversion:
 
 | Media format | Vulkan format | Images per slot |
 |---|---|---|
@@ -547,7 +560,7 @@ The examples also reveal gaps, to close when these backends are implemented:
 6. Readers of dma-buf and image flows can write to the payload, while readers of host flows map it read-only.
 7. OpenGL has no timeline semaphores. `GL_EXT_semaphore` only has binary semaphores, so OpenGL readers either wait on the CPU, or the backend adds a binary semaphore per slot.
 8. Every import function takes ownership of the descriptor it is given. The documentation of each storage type has to repeat that applications duplicate descriptors before importing them.
-9. Neither backend uses v210. Both need new MXL media types, such as P210 and RGBA16 half float, with `FlowParser` support for their planes, line sizes and grain size, and colour and transfer information for RGB formats. Device memory is then no longer limited to v210 and v210a.
+9. Neither backend uses v210. Both define media types of their own, such as P210 and RGBA16 half float, whose planes, line sizes and grain size they report to libmxl ([Media types a backend defines](#media-types-a-backend-defines)), and need colour and transfer information for RGB formats. Device memory is then no longer limited to v210 and v210a.
 10. The backend interface has to pass the flow's media format to the backend, and a backend has to be able to reject formats it does not support. This is an internal change. The public API stays the same.
 
 ## Later pull requests

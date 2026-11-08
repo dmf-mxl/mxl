@@ -82,6 +82,22 @@ namespace mxl::lib
             std::uint32_t maxSyncBatchSizeHintOpt = 1, std::uint32_t maxCommitBatchSizeHintOpt = 1);
 
         ///
+        /// Ask the backend that will hold a flow's payload for the geometry of its grains, for a flow whose media type
+        /// libmxl does not define. See describeGrainGeometry() in PayloadBackend.hpp.
+        ///
+        /// \param[in] backend The name of the backend.
+        /// \param[in] flowDef The json definition of the flow.
+        /// \param[in] format The flow data format. Must be one of the discrete formats.
+        /// \param[in] grainLines For video, the number of lines a grain holds. Zero otherwise.
+        /// \return The geometry.
+        /// \throws PayloadStorageError with MXL_ERR_UNSUPPORTED_OPERATION if the backend is not available or does not define
+        ///     the media type, with MXL_ERR_INTERNAL if its answer is not a valid geometry, or with the backend's status if
+        ///     it fails.
+        ///
+        [[nodiscard]]
+        GrainGeometry describeGrainGeometry(std::string const& backend, std::string const& flowDef, mxlDataFormat format, std::size_t grainLines);
+
+        ///
         /// Create a new discrete flow whose payload uses a specific storage, or open the existing flow. Works like
         /// createOrOpenDiscreteFlow(), which uses the built-in host storage.
         ///

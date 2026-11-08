@@ -326,7 +326,7 @@ Documentation for the events ring buffers is available in [Event Flows](EventFlo
 
 ## Video
 
-Video grains can be of two different formats: video/v210 for video without transparency and video/v210a for fill and key signals (video with alpha transparency).
+Video grains can be of two different formats: video/v210 for video without transparency and video/v210a for fill and key signals (video with alpha transparency). These are the media types the SDK defines. A payload backend can define others, whose grain geometry it reports to the SDK, as [Grain Payload Storage](PayloadStorage.md#media-types-a-backend-defines) describes.
 
 ### video/v210
 

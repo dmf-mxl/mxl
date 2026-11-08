@@ -13,8 +13,10 @@
  * up to it. It must be a multiple of 256. The backend records the resulting stride in payload.test.json, which readers
  * read when they map the slots. Readers accept no backend options.
  *
- * Compile with MXL_TEST_BACKEND_NAME set to the backend name as a string literal. The tests build this file a
- * second time with a name that does not match the library name, to check that libmxl rejects it.
+ * Compile with MXL_TEST_BACKEND_NAME set to the backend name as a string literal. The tests also build this
+ * file with a name that does not match the library name, to check that libmxl rejects it, and with
+ * MXL_TEST_BACKEND_CLAIM_GEOMETRY defined, which makes the backend claim to define media types without providing the
+ * function that describes their geometry, which libmxl rejects too.
  *
  * MXL_TEST_BACKEND_STORAGE_TYPE sets the storage type the backend reports, MXL_PAYLOAD_STORAGE_HOST_POINTER by
  * default. The tests also build this file with a storage type of its own, which this backend defines as follows: the
@@ -502,10 +504,15 @@ namespace
         .slotStorage = &slotStorage,
         .describeLayout = &describeLayout,
         .mapSlots = &mapSlots,
+#ifdef MXL_TEST_BACKEND_CLAIM_GEOMETRY
+        .capabilities = MXL_PAYLOAD_BACKEND_CAP_DESCRIBE_GEOMETRY,
+#else
         .capabilities = 0U,
+#endif
         .reserved2 = 0U,
         .exportDescriptors = nullptr,
         .importDescriptors = nullptr,
+        .describeGeometry = nullptr,
     };
 }
 

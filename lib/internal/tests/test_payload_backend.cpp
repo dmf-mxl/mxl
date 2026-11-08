@@ -9,8 +9,10 @@
 #include <string_view>
 #include <vector>
 #include <catch2/catch_test_macros.hpp>
+#include <fmt/format.h>
 #include <mxl/flow.h>
 #include "mxl-internal/PayloadBackend.hpp"
+#include "payload_backends/TestMemfdStorage.hpp"
 #include "../../tests/Utils.hpp"
 
 using namespace mxl::lib;
@@ -222,6 +224,7 @@ TEST_CASE("Payload backend loader: rejects invalid backends", "[payload backend]
     REQUIRE_THROWS_AS(loader.load("test-no-entry"), std::runtime_error);
     REQUIRE_THROWS_AS(loader.load("test-bad-name"), std::runtime_error);
     REQUIRE_THROWS_AS(loader.load("test-bad-storage-type"), std::runtime_error);
+    REQUIRE_THROWS_AS(loader.load("test-bad-geometry"), std::runtime_error);
 
     // A loader without search directories fails with a clear error.
     auto emptyLoader = PayloadBackendLoader{std::vector<fs::path>{}};
@@ -348,6 +351,54 @@ TEST_CASE("Plugin payload storage: the backend decides which formats it stores",
     catch (PayloadStorageError const& e)
     {
         REQUIRE(e.status() == MXL_ERR_UNSUPPORTED_OPERATION);
+    }
+}
+
+TEST_CASE("Payload backend: a backend describes the geometry of the media types it defines", "[payload backend]")
+{
+    using namespace mxl::tests::memfd;
+    auto const& memfd = testLoader().load("test-memfd");
+    REQUIRE((memfd.capabilities & MXL_PAYLOAD_BACKEND_CAP_DESCRIBE_GEOMETRY) != 0U);
+    auto const flowDef = [](char const* mediaType, unsigned width)
+    {
+        return fmt::format(
+            R"({{"format": "urn:x-nmos:format:video", "media_type": "{}", "frame_width": {}, "frame_height": 1080}})", mediaType, width);
+    };
+    auto const statusOf = [](auto call)
+    {
+        try
+        {
+            static_cast<void>(call());
+            return MXL_STATUS_OK;
+        }
+        catch (PayloadStorageError const& e)
+        {
+            return e.status();
+        }
+    };
+
+    // The geometry of a grain of the backend's media type: two planes, a slice per line.
+    auto const geometry = describeGrainGeometry(memfd, flowDef(MEDIA_TYPE, 1920U), MXL_DATA_FORMAT_VIDEO, 1080U);
+    REQUIRE(geometry.totalSlices == 1080U);
+    REQUIRE(geometry.sliceLengths == std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN>{1920U * 4U, 1920U, 0U, 0U});
+    REQUIRE(geometry.payloadSize == std::size_t{1920U} * 5U * 1080U);
+
+    // libmxl passes the lines of a grain, so a field has half of them.
+    REQUIRE(describeGrainGeometry(memfd, flowDef(MEDIA_TYPE, 1920U), MXL_DATA_FORMAT_VIDEO, 540U).totalSlices == 540U);
+
+    // A media type the backend does not define, a flow the media type cannot hold, and a backend that defines no
+    // media types.
+    REQUIRE(statusOf([&] { return describeGrainGeometry(memfd, flowDef("video/v210", 1920U), MXL_DATA_FORMAT_VIDEO, 1080U); }) ==
+            MXL_ERR_UNSUPPORTED_OPERATION);
+    REQUIRE(statusOf([&] { return describeGrainGeometry(memfd, flowDef(MEDIA_TYPE, 1921U), MXL_DATA_FORMAT_VIDEO, 1080U); }) == MXL_ERR_INVALID_ARG);
+    auto const& file = testLoader().load("test-file");
+    REQUIRE(statusOf([&] { return describeGrainGeometry(file, flowDef(MEDIA_TYPE, 1920U), MXL_DATA_FORMAT_VIDEO, 1080U); }) ==
+            MXL_ERR_UNSUPPORTED_OPERATION);
+
+    // Answers libmxl refuses: too many planes, a slice size of zero, no slices, a grain that does not fit in 32 bits.
+    for (auto const* const mediaType : {BAD_PLANES_MEDIA_TYPE, BAD_SLICE_SIZE_MEDIA_TYPE, BAD_SLICE_COUNT_MEDIA_TYPE, HUGE_GRAIN_MEDIA_TYPE})
+    {
+        REQUIRE(statusOf([&] { return describeGrainGeometry(memfd, flowDef(mediaType, 1920U), MXL_DATA_FORMAT_VIDEO, 1080U); }) == MXL_ERR_INTERNAL);
     }
 }
 

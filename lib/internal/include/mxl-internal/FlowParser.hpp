@@ -5,6 +5,7 @@
 
 #include <cstddef>
 #include <array>
+#include <optional>
 #include <string>
 #include <uuid.h>
 #include <picojson/wrapper.h>
@@ -12,6 +13,7 @@
 #include <mxl/flowinfo.h>
 #include <mxl/platform.h>
 #include <mxl/rational.h>
+#include "GrainGeometry.hpp"
 
 namespace mxl::lib
 {
@@ -56,8 +58,38 @@ namespace mxl::lib
         mxlDataFormat getFormat() const;
 
         /**
+         * Accessor for the 'media_type' field.
+         *
+         * \return The media type.
+         * \throws std::invalid_argument if the flow has none.
+         */
+        [[nodiscard]]
+        std::string getMediaType() const;
+
+        /**
+         * The number of lines a grain of a video flow holds: the frame height, or half of it for an interlaced flow,
+         * whose grains are fields.
+         *
+         * \return The lines of a grain, or 0 if the flow is not video.
+         * \throws std::invalid_argument if the flow is interlaced with an odd frame height.
+         */
+        [[nodiscard]]
+        std::size_t getGrainLines() const;
+
+        /**
+         * Computes the geometry of a grain of a discrete flow, for the media types libmxl defines.
+         *
+         * \return The geometry, or no value if the media type is one libmxl does not define, whose geometry comes from
+         *      the payload backend that holds the flow.
+         * \throws std::invalid_argument if the flow is not discrete, or the frame size is invalid for the media type.
+         */
+        [[nodiscard]]
+        std::optional<GrainGeometry> getGrainGeometry() const;
+
+        /**
          * Computes the grain payload size
          * \return The payload size
+         * \throws std::invalid_argument for a discrete flow whose media type libmxl does not define.
          */
         [[nodiscard]]
         std::size_t getPayloadSize() const;
@@ -65,6 +97,7 @@ namespace mxl::lib
         /**
          *  Computes the length of the slices of each plane of the grain.
          *  \return The length of slices for each plane.
+         *  \throws std::invalid_argument for a discrete flow whose media type libmxl does not define.
          */
         [[nodiscard]]
         std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN> getPayloadSliceLengths() const;
@@ -72,6 +105,7 @@ namespace mxl::lib
         /**
          * Computes the number of slices that make up a full grain.
          * \return The number of slices
+         * \throws std::invalid_argument for a discrete flow whose media type libmxl does not define.
          */
         [[nodiscard]]
         std::size_t getTotalPayloadSlices() const;
@@ -96,6 +130,22 @@ namespace mxl::lib
         T get(std::string const& field) const;
 
     private:
+        /**
+         * Computes the geometry of a grain of a video flow, for the media types libmxl defines.
+         * \return The geometry, or no value for a media type libmxl does not define.
+         * \throws std::invalid_argument if the frame size is invalid for the media type.
+         */
+        [[nodiscard]]
+        std::optional<GrainGeometry> getVideoGrainGeometry() const;
+
+        /**
+         * The geometry of a grain of a discrete flow, for the media types libmxl defines.
+         * \return The geometry.
+         * \throws std::invalid_argument if the flow is not discrete, or its media type is one libmxl does not define.
+         */
+        [[nodiscard]]
+        GrainGeometry requireGrainGeometry() const;
+
         /** The flow id read from the 'id' field. */
         uuids::uuid _id;
         /** The flow format read from the 'format' field. */
