@@ -127,18 +127,15 @@ namespace
                 return false;
             }
 
-            // The initiator has already written the grain info and payload into the ring buffer. Opening a grain resets
-            // its valid slice count and invalid flag, so the grain info is read first and committed as written.
-            auto info = mxlGrainInfo{};
+            // The initiator has already written the grain info and payload into the ring buffer. We just open the already written grain and commit it.
             auto opened = mxlGrainInfo{};
             uint8_t* payload = nullptr;
-            if (!check(mxlFlowWriterGetGrainInfo(t->writer, index, &info), "mxlFlowWriterGetGrainInfo") ||
-                !check(mxlFlowWriterOpenGrain(t->writer, index, &opened, &payload), "mxlFlowWriterOpenGrain") ||
-                !check(mxlFlowWriterCommitGrain(t->writer, &info), "mxlFlowWriterCommitGrain"))
+            if (!check(mxlFlowWriterOpenGrain(t->writer, index, &opened, &payload), "mxlFlowWriterOpenGrain") ||
+                !check(mxlFlowWriterCommitGrain(t->writer, &opened), "mxlFlowWriterCommitGrain"))
             {
                 return false;
             }
-            countTransfer(&counter, info.validSlices, "slices");
+            countTransfer(&counter, opened.validSlices, "slices");
         }
         return true;
     }
