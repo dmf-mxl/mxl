@@ -22,8 +22,10 @@ target_sources(mxl-internal-tests
             test_domainwatcher.cpp
             test_flowmanager.cpp
             test_instance.cpp
+            test_jsonutils.cpp
             test_options.cpp
             test_sharedmem.cpp
+            test_stringutils.cpp
     )
 
 target_link_libraries(mxl-internal-tests

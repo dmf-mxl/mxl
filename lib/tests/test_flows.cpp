@@ -295,6 +295,81 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : Invalid
     mxlDestroyInstance(instanceWriter);
 }
 
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow definitions and options with numbers that do not fit", "[mxl flows]")
+{
+    auto const opts = "{}";
+    auto instance = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instance != nullptr);
+
+    auto parse = [](char const* file)
+    {
+        auto jsonValue = picojson::value{};
+        REQUIRE(picojson::parse(jsonValue, mxl::tests::readFile(file)).empty());
+        return jsonValue.get<picojson::object>();
+    };
+    auto const video = parse("data/v210_flow.json");
+    auto const audio = parse("data/audio_flow.json");
+
+    auto tryCreate = [&](picojson::object const& flowObj, std::string const& options)
+    {
+        auto const flowDef = picojson::value(flowObj).serialize();
+        auto writer = mxlFlowWriter{};
+        auto configInfo = mxlFlowConfigInfo{};
+        auto const status = mxlCreateFlowWriter(instance, flowDef.c_str(), options.c_str(), &writer, &configInfo, nullptr);
+        if (status == MXL_STATUS_OK)
+        {
+            REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
+        }
+        return status;
+    };
+
+    for (auto const value : {1e300, -1.0, 1920.5})
+    {
+        CAPTURE(value);
+        auto flowObj = video;
+        flowObj["frame_width"] = picojson::value{value};
+        REQUIRE(tryCreate(flowObj, opts) != MXL_STATUS_OK);
+
+        flowObj = video;
+        flowObj["frame_height"] = picojson::value{value};
+        REQUIRE(tryCreate(flowObj, opts) != MXL_STATUS_OK);
+
+        flowObj = audio;
+        flowObj["channel_count"] = picojson::value{value};
+        REQUIRE(tryCreate(flowObj, opts) != MXL_STATUS_OK);
+    }
+
+    for (auto const value : {1e20, -1e20, 25.5})
+    {
+        CAPTURE(value);
+        auto flowObj = video;
+        flowObj.find("grain_rate")->second.get<picojson::object>()["numerator"] = picojson::value{value};
+        REQUIRE(tryCreate(flowObj, opts) != MXL_STATUS_OK);
+    }
+
+    for (auto const* key : {"maxCommitBatchSizeHint", "maxSyncBatchSizeHint"})
+    {
+        CAPTURE(key);
+        auto optsObj = picojson::object{};
+        optsObj[key] = picojson::value{1e12};
+        REQUIRE(tryCreate(video, picojson::value(optsObj).serialize()) != MXL_STATUS_OK);
+    }
+
+    // Duplicate keys and trailing content are rejected.
+    auto const flowDef = picojson::value(video).serialize();
+    auto writer = mxlFlowWriter{};
+    auto configInfo = mxlFlowConfigInfo{};
+    auto const duplicate = flowDef.substr(0, flowDef.size() - 1U) + R"(,"label":"other"})";
+    REQUIRE(mxlCreateFlowWriter(instance, duplicate.c_str(), opts, &writer, &configInfo, nullptr) != MXL_STATUS_OK);
+    auto const trailing = flowDef + " {}";
+    REQUIRE(mxlCreateFlowWriter(instance, trailing.c_str(), opts, &writer, &configInfo, nullptr) != MXL_STATUS_OK);
+
+    // The valid definition is still accepted.
+    REQUIRE(tryCreate(video, opts) == MXL_STATUS_OK);
+
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+}
+
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Invalid flow definitions", "[mxl flows]")
 {
     // Create the instance

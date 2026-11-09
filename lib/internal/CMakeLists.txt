@@ -43,6 +43,18 @@ else()
         )
 endif()
 
+# Library code must parse JSON with mxl::lib::parseJson() from mxl-internal/JsonUtils.hpp, which applies input
+# limits. Linking this target makes a call to one of picojson's own parse functions a compile error. Tests and tools
+# do not link it. See mxl-internal/detail/RestrictPicojsonParse.hpp.
+add_library(mxl-restrict-picojson-parse INTERFACE)
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(mxl-restrict-picojson-parse
+            INTERFACE
+                "$<$<COMPILE_LANGUAGE:CXX>:SHELL:-include ${CMAKE_CURRENT_SOURCE_DIR}/include/mxl-internal/detail/RestrictPicojsonParse.hpp>"
+                "$<$<COMPILE_LANGUAGE:CXX>:-Werror=deprecated-declarations>"
+        )
+endif()
+
 # Internal implementation objects. These are consumed by libmxl and by internal
 # tests, but are not installed or exported as a user-visible library.
 add_library(mxl-internal-objects OBJECT)
@@ -110,6 +122,7 @@ target_include_directories(mxl-internal-objects
 target_link_libraries(mxl-internal-objects
         PRIVATE
             mxl-internal-headers
+            $<BUILD_INTERFACE:mxl-restrict-picojson-parse>
     )
 
 # Enable LTO/IPO on target if enabled and supported

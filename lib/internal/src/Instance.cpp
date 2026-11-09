@@ -28,6 +28,7 @@
 #include "mxl-internal/FlowManager.hpp"
 #include "mxl-internal/FlowOptionsParser.hpp"
 #include "mxl-internal/FlowParser.hpp"
+#include "mxl-internal/JsonUtils.hpp"
 #include "mxl-internal/Logging.hpp"
 #include "mxl-internal/PathUtils.hpp"
 
@@ -54,7 +55,7 @@ namespace mxl::lib
         bool parseOptionsJson(std::string const& options, picojson::object& config)
         {
             picojson::value parsed;
-            std::string err = picojson::parse(parsed, options);
+            std::string err = parseJson(parsed, options);
             if (!err.empty())
             {
                 MXL_ERROR("Failed to parse options json: {}", err);
@@ -400,8 +401,16 @@ namespace mxl::lib
                 {
                     if (auto it = config.find(MXL_HISTORY_DURATION_OPTION); it != config.end() && it->second.is<double>())
                     {
-                        MXL_TRACE("Found history duration option in domain specific options: {}ns", it->second.get<double>());
-                        historyDuration = static_cast<std::uint64_t>(it->second.get<double>());
+                        try
+                        {
+                            auto const duration = jsonToInteger<std::uint64_t>(it->second, MXL_HISTORY_DURATION_OPTION);
+                            MXL_TRACE("Found history duration option in domain specific options: {}ns", duration);
+                            historyDuration = duration;
+                        }
+                        catch (std::invalid_argument const& e)
+                        {
+                            MXL_ERROR("Ignoring domain history duration option: {}", e.what());
+                        }
                     }
                 }
                 else

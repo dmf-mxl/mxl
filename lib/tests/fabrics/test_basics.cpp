@@ -8,6 +8,7 @@
 #include <cstring>
 #include <algorithm>
 #include <random>
+#include <string>
 #include <thread>
 #include <vector>
 #include <uuid.h>
@@ -1621,6 +1622,43 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: TargetInfo 
     auto targetInfoOut = ofi::TargetInfo::fromAPI(deserializedTargetInfo);
     REQUIRE(*targetInfoIn == *targetInfoOut);
 
+    // A target info string with an out of range addressFormat, a duplicate key or trailing content is rejected.
+    auto parsed = picojson::value{};
+    REQUIRE(picojson::parse(parsed, std::string{targetInfoStr.c_str()}).empty());
+    auto rootObj = parsed.get<picojson::object>();
+    for (auto const value : {1e300, -1.0, 2.5})
+    {
+        CAPTURE(value);
+        auto badObj = rootObj;
+        badObj["addressFormat"] = picojson::value{value};
+        auto const bad = picojson::value{badObj}.serialize();
+        mxlFabricsTargetInfo badTargetInfo;
+        REQUIRE(mxlFabricsTargetInfoFromString(bad.c_str(), &badTargetInfo) == MXL_ERR_INVALID_ARG);
+    }
+    auto const serialized = picojson::value{rootObj}.serialize();
+    auto const duplicate = serialized.substr(0, serialized.size() - 1U) + R"(,"id":"1"})";
+    auto const trailing = serialized + " {}";
+    mxlFabricsTargetInfo badTargetInfo;
+    REQUIRE(mxlFabricsTargetInfoFromString(duplicate.c_str(), &badTargetInfo) == MXL_ERR_INVALID_ARG);
+    REQUIRE(mxlFabricsTargetInfoFromString(trailing.c_str(), &badTargetInfo) == MXL_ERR_INVALID_ARG);
+
+    // Integers stored as strings must be plain decimal numbers in range. std::stoull accepted "-1" and wrapped it.
+    for (auto const* text : {"-1", " 1", "1x", "", "18446744073709551616"})
+    {
+        CAPTURE(text);
+        auto badObj = rootObj;
+        badObj["id"] = picojson::value{text};
+        auto const bad = picojson::value{badObj}.serialize();
+        REQUIRE(mxlFabricsTargetInfoFromString(bad.c_str(), &badTargetInfo) == MXL_ERR_INVALID_ARG);
+
+        badObj = rootObj;
+        auto& regions = badObj["regions"].get<picojson::array>();
+        REQUIRE_FALSE(regions.empty());
+        regions.front().get<picojson::object>()["addr"] = picojson::value{text};
+        auto const badRegion = picojson::value{badObj}.serialize();
+        REQUIRE(mxlFabricsTargetInfoFromString(badRegion.c_str(), &badTargetInfo) == MXL_ERR_INVALID_ARG);
+    }
+
     // Cleanup
     REQUIRE(mxlFabricsDestroyTarget(fabrics, target) == MXL_STATUS_OK);
     REQUIRE(mxlFabricsDestroyInstance(fabrics) == MXL_STATUS_OK);
@@ -1685,6 +1723,9 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Target setu
         REQUIRE(setupWithOptions(R"({"cqDepth": 0})", &targetInfo) == MXL_ERR_INVALID_ARG);
         // Wrong type.
         REQUIRE(setupWithOptions(R"({"cqDepth": "big"})", &targetInfo) == MXL_ERR_INVALID_ARG);
+        // Not a whole number, or outside the range of size_t.
+        REQUIRE(setupWithOptions(R"({"cqDepth": 1.5})", &targetInfo) == MXL_ERR_INVALID_ARG);
+        REQUIRE(setupWithOptions(R"({"cqDepth": 1e300})", &targetInfo) == MXL_ERR_INVALID_ARG);
         // Malformed JSON.
         REQUIRE(setupWithOptions("{not json", &targetInfo) == MXL_ERR_INVALID_ARG);
     }
@@ -1752,6 +1793,9 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics: Initiator s
         REQUIRE(setupWithOptions(R"({"cqDepth": 0})") == MXL_ERR_INVALID_ARG);
         // Wrong type.
         REQUIRE(setupWithOptions(R"({"cqDepth": "big"})") == MXL_ERR_INVALID_ARG);
+        // Not a whole number, or outside the range of size_t.
+        REQUIRE(setupWithOptions(R"({"cqDepth": 1.5})") == MXL_ERR_INVALID_ARG);
+        REQUIRE(setupWithOptions(R"({"cqDepth": 1e300})") == MXL_ERR_INVALID_ARG);
         // Malformed JSON.
         REQUIRE(setupWithOptions("{not json") == MXL_ERR_INVALID_ARG);
     }
