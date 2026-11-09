@@ -554,6 +554,8 @@ extern "C"
      * the tail IF this grain is the new head.
      *
      * \return The result code. \see mxlStatus
+     * \retval MXL_ERR_INVALID_ARG The grain index is not the open grain, grainSize is larger than the grain payload,
+     *      or validSlices is larger than totalSlices. Nothing is published.
      */
     MXL_EXPORT
     mxlStatus mxlFlowWriterCommitGrain(mxlFlowWriter writer, mxlGrainInfo const* grain);

@@ -242,9 +242,10 @@ namespace mxl::lib
             throw std::domain_error{"Unsupported flow format."};
         }
 
-        if (mxlIsEventDataFormat(_format) && ((_grainRate.numerator <= 0) || (_grainRate.denominator <= 0)))
+        // A rate of zero or below gives a ring buffer with no entries.
+        if ((_grainRate.numerator <= 0) || (_grainRate.denominator <= 0))
         {
-            throw std::invalid_argument{"Event grain_rate must be positive."};
+            throw std::invalid_argument{(_format == MXL_DATA_FORMAT_AUDIO) ? "sample_rate must be positive." : "grain_rate must be positive."};
         }
 
         // Validate that we have a non empty label
