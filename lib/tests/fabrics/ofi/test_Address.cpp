@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cstring>
 #include <array>
+#include <string>
 #include <variant>
 #include <vector>
 #include <endian.h>
@@ -214,4 +215,28 @@ TEST_CASE("ofi: FabricAddress::decode returns an empty address for undecodable i
     auto unknown = ::sockaddr{};
     unknown.sa_family = AF_UNSPEC;
     REQUIRE(FabricAddress::decode(FabricAddressFormat::Sockaddr, &unknown, sizeof(unknown)).empty());
+}
+
+TEST_CASE("ofi: FabricAddress::parse stores the port in network byte order", "[ofi][FabricAddress]")
+{
+    // libfabric reads sin_port and sin6_port in network byte order.
+    auto const addr = FabricAddress::parse(Provider::TCP, "10.130.40.13", "9000");
+    REQUIRE(std::holds_alternative<::sockaddr_in>(addr.native()));
+    REQUIRE(ntohs(std::get<::sockaddr_in>(addr.native()).sin_port) == 9000);
+    REQUIRE(addr.service() == "9000");
+    REQUIRE(addr.toString() == "fi_sockaddr_in://10.130.40.13:9000");
+
+    auto const addr6 = FabricAddress::parse(Provider::TCP, "fd00::1", "9000");
+    REQUIRE(std::holds_alternative<::sockaddr_in6>(addr6.native()));
+    REQUIRE(ntohs(std::get<::sockaddr_in6>(addr6.native()).sin6_port) == 9000);
+    REQUIRE(addr6.service() == "9000");
+}
+
+TEST_CASE("ofi: FabricAddress::service reports the port of a decoded address", "[ofi][FabricAddress]")
+{
+    auto const native = makeSockaddrIn("10.130.40.13", 9000);
+    REQUIRE(FabricAddress::decode(FabricAddressFormat::SockaddrIn, &native, sizeof(native)).service() == "9000");
+
+    auto const native6 = makeSockaddrIn6("fd00::1", 9000);
+    REQUIRE(FabricAddress::decode(FabricAddressFormat::SockaddrIn6, &native6, sizeof(native6)).service() == "9000");
 }
