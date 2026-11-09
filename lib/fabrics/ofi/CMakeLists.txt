@@ -65,6 +65,7 @@ target_sources(mxl-fabrics-objects
 target_link_libraries(mxl-fabrics-objects
         PRIVATE
             mxl-internal-headers
+            $<BUILD_INTERFACE:mxl-restrict-picojson-parse>
             mxl-fabrics-headers
             PkgConfig::libfabric
 )

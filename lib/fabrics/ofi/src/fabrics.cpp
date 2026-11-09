@@ -9,8 +9,10 @@
 #include <cstring>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <mxl-internal/FlowReader.hpp>
 #include <mxl-internal/Instance.hpp>
+#include <mxl-internal/JsonUtils.hpp>
 #include <mxl-internal/Logging.hpp>
 #include <picojson/picojson.h>
 #include <rdma/fabric.h>
@@ -43,7 +45,7 @@ namespace mxl::lib::fabrics::ofi
             }
 
             auto value = picojson::value{};
-            auto const err = picojson::parse(value, options);
+            auto const err = parseJson(value, options);
             if (!err.empty() || !value.is<picojson::object>())
             {
                 throw Exception::invalidArgument("Invalid JSON setup options: {}", err.empty() ? std::string{"expected an object"} : err);
@@ -55,16 +57,20 @@ namespace mxl::lib::fabrics::ofi
             {
                 return std::nullopt;
             }
-            if (!it->second.is<double>())
+            auto depth = std::size_t{0};
+            try
             {
-                throw Exception::invalidArgument("cqDepth must be a number.");
+                depth = jsonToInteger<std::size_t>(it->second, "cqDepth");
             }
-            auto const depth = it->second.get<double>();
-            if (depth < 1.0)
+            catch (std::invalid_argument const& e)
+            {
+                throw Exception::invalidArgument("{}", e.what());
+            }
+            if (depth < 1U)
             {
                 throw Exception::invalidArgument("cqDepth must be greater or equal to 1.");
             }
-            return static_cast<std::size_t>(depth);
+            return depth;
         }
 
         template<typename F>

@@ -8,12 +8,14 @@
 #include <cstring>
 #include <algorithm>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <variant>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <fmt/format.h>
 #include <Format.hpp>
+#include <mxl-internal/StringUtils.hpp>
 #include "Exception.hpp"
 #include "VariantUtils.hpp"
 
@@ -420,7 +422,15 @@ namespace mxl::lib::fabrics::ofi
             {
                 if (service && !service->empty())
                 {
-                    auto port = std::stoi(*service);
+                    auto port = std::uint16_t{0};
+                    try
+                    {
+                        port = stringToInteger<std::uint16_t>(*service, "service");
+                    }
+                    catch (std::invalid_argument const& e)
+                    {
+                        throw Exception::invalidArgument("{}", e.what());
+                    }
                     return FabricAddress{parseInternetAddress(*node, port)};
                 }
                 return FabricAddress{parseInternetAddress(*node)};
