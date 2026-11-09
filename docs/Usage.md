@@ -42,7 +42,7 @@ if (status != MXL_STATUS_OK) {
 
 4. **Read/Write Data**
 
-- For discrete flows, use `mxlFlowReaderGetGrain` and `mxlFlowWriterOpenGrain`/`mxlFlowWriterCommitGrain`.
+- For discrete flows, use `mxlFlowReaderGetGrain` and `mxlFlowWriterOpenGrain`/`mxlFlowWriterCommitGrain`. To handle storage types other than host memory, read the layout with `mxlFlowReaderGetStorageLayout` or `mxlFlowWriterGetStorageLayout`, map all slots once with `mxlFlowReaderMapSlots` or `mxlFlowWriterMapSlots`, then use `mxlFlowReaderGetGrainSlot` and `mxlFlowWriterOpenGrainSlot` per grain (see [Grain storage descriptors](Architecture.md#grain-storage-descriptors)).
 - For continuous flows, use `mxlFlowReaderGetSamples` and `mxlFlowWriterOpenSamples`/`mxlFlowWriterCommitSamples`.
 
 5. **Release Resources**

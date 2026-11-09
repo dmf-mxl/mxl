@@ -1,0 +1,1424 @@
+// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-License-Identifier: Apache-2.0
+
+/**
+ * \file CudaLinearBackend.cpp
+ *
+ * Payload backend "cuda-linear": keeps the payload of a discrete flow in linear CUDA device memory and shares it
+ * with readers in other processes through a POSIX file descriptor.
+ *
+ * - The writer creates one virtual-memory allocation for all slots, with each slot starting at a multiple of 256
+ *   bytes, and exports it once with cuMemExportToShareableHandle as a POSIX file descriptor. The writer serves that
+ *   descriptor on the socket payload.sock in the flow directory. The descriptor file payload.cuda.json records the
+ *   stride, the allocation size and the device UUID. It does not contain the descriptor.
+ * - A reader in another process receives the descriptor from payload.sock when it maps the slots, and imports the
+ *   allocation once with cuMemImportFromShareableHandle. A reader on another GPU of the same machine maps it through
+ *   peer access. A reader is allowed to receive the descriptor only if it may read the flow directory.
+ * - A reader in the writer's own process shares the writer's allocation through a registry inside the process.
+ *   The allocation is reference counted, so it stays valid for such a reader after the writer is released.
+ *
+ * Devices are identified by UUID ("deviceUuid" option), never by index, because CUDA device indices depend on
+ * CUDA_DEVICE_ORDER and CUDA_VISIBLE_DEVICES, and can differ between processes.
+ *
+ * Based on the CudaLinearPayloadAllocator by Thomas True in dmf-mxl/mxl pull request #653, which introduced CUDA
+ * IPC export and import of grain payloads, peer access for readers on another GPU, and the registry for readers
+ * in the writer's process.
+ */
+
+#ifndef _GNU_SOURCE
+#   define _GNU_SOURCE
+#endif
+
+#include <cerrno>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <algorithm>
+#include <array>
+#include <atomic>
+#include <filesystem>
+#include <fstream>
+#include <memory>
+#include <mutex>
+#include <new>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <thread>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+#include <dlfcn.h>
+#include <fcntl.h>
+#include <poll.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/un.h>
+#include <picojson/wrapper.h>
+#include <mxl/dataformat.h>
+#include <mxl/platform.h>
+#include "mxl-internal/PayloadBackendAbi.h"
+#include "CudaLinearStorage.h"
+
+namespace
+{
+    /** Name of this backend. */
+    constexpr auto BACKEND_NAME = "cuda-linear";
+
+    /** Name of the file in the flow directory that describes the exported allocation. */
+    constexpr auto DESCRIPTOR_FILE_NAME = "payload.cuda.json";
+
+    /** Name of the socket in the flow directory that serves the file descriptor of the allocation. */
+    constexpr auto SOCKET_FILE_NAME = "payload.sock";
+
+    /** Version of the descriptor format written by this backend. */
+    constexpr auto DESCRIPTOR_VERSION = 2.0;
+
+    /** Export format recorded in the descriptor. The file descriptor itself travels on payload.sock. */
+    constexpr auto EXPORT_POSIX_FD = "posix-fd";
+
+    /** Alignment of slot starts within the allocation. */
+    constexpr auto SLOT_ALIGNMENT = std::uint64_t{256};
+
+    /** A CUDA device UUID. */
+    using Uuid = std::array<std::uint8_t, 16>;
+
+    /**
+     * Parse a device UUID, as printed by nvidia-smi ("GPU-" followed by 8-4-4-4-12 hexadecimal digits), or as 32
+     * hexadecimal digits with or without hyphens.
+     * \param[in] text The UUID text.
+     * \param[out] out_uuid Receives the UUID on success.
+     * \return true if text is a valid UUID.
+     */
+    bool parseUuid(std::string const& text, Uuid& out_uuid) noexcept
+    {
+        auto digits = std::string_view{text};
+        if (digits.starts_with("GPU-"))
+        {
+            digits.remove_prefix(4);
+        }
+
+        auto const hexValue = [](char c) -> int
+        {
+            if ((c >= '0') && (c <= '9'))
+            {
+                return c - '0';
+            }
+            if ((c >= 'a') && (c <= 'f'))
+            {
+                return c - 'a' + 10;
+            }
+            if ((c >= 'A') && (c <= 'F'))
+            {
+                return c - 'A' + 10;
+            }
+            return -1;
+        };
+
+        auto count = std::size_t{0};
+        auto result = Uuid{};
+        for (auto const c : digits)
+        {
+            if (c == '-')
+            {
+                continue;
+            }
+            auto const value = hexValue(c);
+            if ((value < 0) || (count >= (2U * result.size())))
+            {
+                return false;
+            }
+            result[count / 2U] = static_cast<std::uint8_t>((result[count / 2U] << 4U) | static_cast<unsigned>(value));
+            ++count;
+        }
+        if (count != (2U * result.size()))
+        {
+            return false;
+        }
+        out_uuid = result;
+        return true;
+    }
+
+    /**
+     * \param[in] uuid A device UUID.
+     * \return The UUID in the format nvidia-smi prints.
+     */
+    std::string formatUuid(Uuid const& uuid)
+    {
+        constexpr auto HEX = "0123456789abcdef";
+        auto result = std::string{"GPU-"};
+        for (auto i = std::size_t{0}; i < uuid.size(); ++i)
+        {
+            if ((i == 4U) || (i == 6U) || (i == 8U) || (i == 10U))
+            {
+                result.push_back('-');
+            }
+            result.push_back(HEX[uuid[i] >> 4U]);
+            result.push_back(HEX[uuid[i] & 0x0FU]);
+        }
+        return result;
+    }
+
+    /**
+     * Find the index, in this process, of the CUDA device with a given UUID.
+     * \param[in] uuid The device UUID.
+     * \param[out] out_ordinal Receives the device index on success.
+     * \return MXL_STATUS_OK, MXL_ERR_NOT_FOUND if no visible device has that UUID, or MXL_ERR_UNSUPPORTED_OPERATION if
+     *      the CUDA runtime or driver is not usable in this process.
+     */
+    mxlStatus findDevice(Uuid const& uuid, int& out_ordinal) noexcept
+    {
+        auto count = 0;
+        if (::cudaGetDeviceCount(&count) != cudaSuccess)
+        {
+            (void)::cudaGetLastError();
+            return MXL_ERR_UNSUPPORTED_OPERATION;
+        }
+        for (auto ordinal = 0; ordinal < count; ++ordinal)
+        {
+            auto properties = cudaDeviceProp{};
+            if ((::cudaGetDeviceProperties(&properties, ordinal) == cudaSuccess) &&
+                (std::memcmp(properties.uuid.bytes, uuid.data(), uuid.size()) == 0))
+            {
+                out_ordinal = ordinal;
+                return MXL_STATUS_OK;
+            }
+        }
+        return MXL_ERR_NOT_FOUND;
+    }
+
+    /**
+     * Map a CUDA error to an MXL status, and clear it from the runtime.
+     * \param[in] error The CUDA error.
+     * \return The MXL status.
+     */
+    mxlStatus toStatus(cudaError_t error) noexcept
+    {
+        (void)::cudaGetLastError();
+        switch (error)
+        {
+            case cudaSuccess:                 return MXL_STATUS_OK;
+            case cudaErrorNoDevice:           [[fallthrough]];
+            case cudaErrorInsufficientDriver: [[fallthrough]];
+            case cudaErrorNotSupported:       return MXL_ERR_UNSUPPORTED_OPERATION;
+            case cudaErrorInvalidValue:       return MXL_ERR_INVALID_ARG;
+            default:                          return MXL_ERR_UNKNOWN;
+        }
+    }
+
+    /**
+     * Driver-API entry points for virtual memory, loaded from libcuda.so.1.
+     * cudaMalloc memory cannot be exported as a POSIX file descriptor. cuMemCreate memory can.
+     */
+    class CudaDriver
+    {
+    public:
+        /** Memory mapped into this process, and the writer's exported descriptor when there is one. */
+        struct Mapped
+        {
+            CUdeviceptr base{0};
+            std::size_t bytes{0};
+            int fd{-1};
+        };
+
+        /** \return The driver used by this process. */
+        static CudaDriver& instance() noexcept
+        {
+            static auto driver = CudaDriver{};
+            return driver;
+        }
+
+        /**
+         * Create an allocation on ordinal and export it as a POSIX file descriptor.
+         * \param[in] ordinal The device that holds the memory.
+         * \param[in] bytes The number of bytes the slots need. Rounded up to the device granularity.
+         * \param[out] out_mapped Receives the mapped address, the rounded size and the descriptor.
+         * \return MXL_STATUS_OK, or an error code. On error nothing is returned.
+         */
+        mxlStatus create(int ordinal, std::size_t bytes, Mapped& out_mapped) noexcept
+        {
+            auto prop = CUmemAllocationProp{};
+            if (auto const status = prepare(ordinal, prop); status != MXL_STATUS_OK)
+            {
+                return status;
+            }
+            auto granularity = std::size_t{0};
+            if (auto const result = _granularity(&granularity, &prop, CU_MEM_ALLOC_GRANULARITY_MINIMUM); result != CUDA_SUCCESS)
+            {
+                return fromDriver(result);
+            }
+            if (granularity == 0U)
+            {
+                return MXL_ERR_UNKNOWN;
+            }
+            auto const rounded = ((bytes + granularity - 1U) / granularity) * granularity;
+
+            auto handle = CUmemGenericAllocationHandle{};
+            if (auto const result = _create(&handle, rounded, &prop, 0); result != CUDA_SUCCESS)
+            {
+                return fromDriver(result);
+            }
+
+            auto mapped = Mapped{};
+            if (auto const status = mapHandle(ordinal, handle, rounded, mapped); status != MXL_STATUS_OK)
+            {
+                (void)_release(handle);
+                return status;
+            }
+            if (auto const result = _export(&mapped.fd, handle, CU_MEM_HANDLE_TYPE_POSIX_FILE_DESCRIPTOR, 0); result != CUDA_SUCCESS)
+            {
+                unmap(ordinal, mapped.base, mapped.bytes);
+                (void)_release(handle);
+                return fromDriver(result);
+            }
+            auto const flags = ::fcntl(mapped.fd, F_GETFD);
+            if (flags >= 0)
+            {
+                (void)::fcntl(mapped.fd, F_SETFD, flags | FD_CLOEXEC);
+            }
+            (void)_release(handle);
+            out_mapped = mapped;
+            return MXL_STATUS_OK;
+        }
+
+        /**
+         * Import an allocation from a POSIX file descriptor and map it on ordinal.
+         * \param[in] ordinal The device that will access the memory.
+         * \param[in] bytes The allocation size recorded by the writer.
+         * \param[in] fd The descriptor. This function closes it.
+         * \param[out] out_base Receives the mapped address.
+         * \return MXL_STATUS_OK, or an error code.
+         */
+        mxlStatus import(int ordinal, std::size_t bytes, int fd, CUdeviceptr& out_base) noexcept
+        {
+            auto prop = CUmemAllocationProp{};
+            if (auto const status = prepare(ordinal, prop); status != MXL_STATUS_OK)
+            {
+                ::close(fd);
+                return status;
+            }
+            auto handle = CUmemGenericAllocationHandle{};
+            auto const imported = _import(
+                &handle, reinterpret_cast<void*>(static_cast<std::uintptr_t>(fd)), CU_MEM_HANDLE_TYPE_POSIX_FILE_DESCRIPTOR);
+            ::close(fd);
+            if (imported != CUDA_SUCCESS)
+            {
+                return fromDriver(imported);
+            }
+            auto mapped = Mapped{};
+            if (auto const status = mapHandle(ordinal, handle, bytes, mapped); status != MXL_STATUS_OK)
+            {
+                (void)_release(handle);
+                return status;
+            }
+            (void)_release(handle);
+            out_base = mapped.base;
+            return MXL_STATUS_OK;
+        }
+
+        /**
+         * Unmap an address reserved by create() or import().
+         * \param[in] ordinal The device whose context mapped the address.
+         * \param[in] base The address.
+         * \param[in] bytes The mapped size.
+         */
+        void unmap(int ordinal, CUdeviceptr base, std::size_t bytes) noexcept
+        {
+            if ((base == 0U) || (bytes == 0U) || !_ready)
+            {
+                return;
+            }
+            auto prop = CUmemAllocationProp{};
+            (void)prepare(ordinal, prop);
+            (void)_unmap(base, bytes);
+            (void)_addressFree(base, bytes);
+        }
+
+    private:
+        using InitFn = CUresult (*)(unsigned int);
+        using DeviceGetFn = CUresult (*)(CUdevice*, int);
+        using AttributeFn = CUresult (*)(int*, CUdevice_attribute, CUdevice);
+        using RetainFn = CUresult (*)(CUcontext*, CUdevice);
+        using SetCurrentFn = CUresult (*)(CUcontext);
+        using GranularityFn = CUresult (*)(std::size_t*, CUmemAllocationProp const*, CUmemAllocationGranularity_flags);
+        using CreateFn = CUresult (*)(CUmemGenericAllocationHandle*, std::size_t, CUmemAllocationProp const*, unsigned long long);
+        using ReserveFn = CUresult (*)(CUdeviceptr*, std::size_t, std::size_t, CUdeviceptr, unsigned long long);
+        using MapFn = CUresult (*)(CUdeviceptr, std::size_t, std::size_t, CUmemGenericAllocationHandle, unsigned long long);
+        using SetAccessFn = CUresult (*)(CUdeviceptr, std::size_t, CUmemAccessDesc const*, std::size_t);
+        using ExportFn = CUresult (*)(void*, CUmemGenericAllocationHandle, CUmemAllocationHandleType, unsigned long long);
+        using ImportFn = CUresult (*)(CUmemGenericAllocationHandle*, void*, CUmemAllocationHandleType);
+        using UnmapFn = CUresult (*)(CUdeviceptr, std::size_t);
+        using AddressFreeFn = CUresult (*)(CUdeviceptr, std::size_t);
+        using ReleaseFn = CUresult (*)(CUmemGenericAllocationHandle);
+
+        /** Load libcuda.so.1 once. \return true when every entry point is present. */
+        bool load() noexcept
+        {
+            if (_ready)
+            {
+                return true;
+            }
+            _library = ::dlopen("libcuda.so.1", RTLD_NOW | RTLD_LOCAL);
+            if (_library == nullptr)
+            {
+                return false;
+            }
+            _ready = bind("cuInit", _init) && bind("cuDeviceGet", _deviceGet) && bind("cuDeviceGetAttribute", _attribute) &&
+                     bind("cuDevicePrimaryCtxRetain", _retain) && bind("cuCtxSetCurrent", _setCurrent) &&
+                     bind("cuMemGetAllocationGranularity", _granularity) && bind("cuMemCreate", _create) && bind("cuMemAddressReserve", _reserve) &&
+                     bind("cuMemMap", _map) && bind("cuMemSetAccess", _setAccess) && bind("cuMemExportToShareableHandle", _export) &&
+                     bind("cuMemImportFromShareableHandle", _import) && bind("cuMemUnmap", _unmap) && bind("cuMemAddressFree", _addressFree) &&
+                     bind("cuMemRelease", _release) && (_init(0) == CUDA_SUCCESS);
+            return _ready;
+        }
+
+        /**
+         * Make the device's primary context current, so the CUDA runtime and the driver API share it.
+         * \param[in] ordinal The device index in this process.
+         * \param[out] out_prop Receives the allocation properties for that device.
+         * \return MXL_STATUS_OK, or an error code.
+         */
+        mxlStatus prepare(int ordinal, CUmemAllocationProp& out_prop) noexcept
+        {
+            if (!load())
+            {
+                return MXL_ERR_UNSUPPORTED_OPERATION;
+            }
+            auto device = CUdevice{};
+            if (auto const result = _deviceGet(&device, ordinal); result != CUDA_SUCCESS)
+            {
+                return fromDriver(result);
+            }
+            auto supported = 0;
+            if (auto const result = _attribute(&supported, CU_DEVICE_ATTRIBUTE_HANDLE_TYPE_POSIX_FILE_DESCRIPTOR_SUPPORTED, device);
+                result != CUDA_SUCCESS)
+            {
+                return fromDriver(result);
+            }
+            if (supported == 0)
+            {
+                return MXL_ERR_UNSUPPORTED_OPERATION;
+            }
+            auto context = CUcontext{};
+            if ((_retain(&context, device) != CUDA_SUCCESS) || (_setCurrent(context) != CUDA_SUCCESS))
+            {
+                return MXL_ERR_UNKNOWN;
+            }
+            if (auto const error = ::cudaSetDevice(ordinal); error != cudaSuccess)
+            {
+                return toStatus(error);
+            }
+            out_prop = CUmemAllocationProp{};
+            out_prop.type = CU_MEM_ALLOCATION_TYPE_PINNED;
+            out_prop.requestedHandleTypes = CU_MEM_HANDLE_TYPE_POSIX_FILE_DESCRIPTOR;
+            out_prop.location.type = CU_MEM_LOCATION_TYPE_DEVICE;
+            out_prop.location.id = ordinal;
+            return MXL_STATUS_OK;
+        }
+
+        /**
+         * Reserve a virtual address, map handle there, and grant this device read and write access.
+         * \param[in] ordinal The device that receives access.
+         * \param[in] handle The allocation.
+         * \param[in] bytes The size, already a multiple of the granularity.
+         * \param[out] out_mapped Receives the address and size. fd stays -1.
+         * \return MXL_STATUS_OK, or an error code. On error the handle is still owned by the caller.
+         */
+        mxlStatus mapHandle(int ordinal, CUmemGenericAllocationHandle handle, std::size_t bytes, Mapped& out_mapped) noexcept
+        {
+            auto address = CUdeviceptr{0};
+            if (auto const result = _reserve(&address, bytes, 0, 0, 0); result != CUDA_SUCCESS)
+            {
+                return fromDriver(result);
+            }
+            if (auto const result = _map(address, bytes, 0, handle, 0); result != CUDA_SUCCESS)
+            {
+                (void)_addressFree(address, bytes);
+                return fromDriver(result);
+            }
+            auto access = CUmemAccessDesc{};
+            access.location.type = CU_MEM_LOCATION_TYPE_DEVICE;
+            access.location.id = ordinal;
+            access.flags = CU_MEM_ACCESS_FLAGS_PROT_READWRITE;
+            if (auto const result = _setAccess(address, bytes, &access, 1); result != CUDA_SUCCESS)
+            {
+                (void)_unmap(address, bytes);
+                (void)_addressFree(address, bytes);
+                return fromDriver(result);
+            }
+            out_mapped.base = address;
+            out_mapped.bytes = bytes;
+            return MXL_STATUS_OK;
+        }
+
+        /** \return The MXL status for a driver error. */
+        static mxlStatus fromDriver(CUresult result) noexcept
+        {
+            switch (result)
+            {
+                case CUDA_SUCCESS:              return MXL_STATUS_OK;
+                case CUDA_ERROR_NOT_SUPPORTED:  return MXL_ERR_UNSUPPORTED_OPERATION;
+                case CUDA_ERROR_INVALID_VALUE:  [[fallthrough]];
+                case CUDA_ERROR_INVALID_DEVICE: return MXL_ERR_INVALID_ARG;
+                default:                        return MXL_ERR_UNKNOWN;
+            }
+        }
+
+        /**
+         * \param[in] name The driver entry point.
+         * \param[out] out_fn Receives the function.
+         * \return true if the entry point exists.
+         */
+        template<typename Fn>
+        bool bind(char const* name, Fn& out_fn) noexcept
+        {
+            out_fn = reinterpret_cast<Fn>(::dlsym(_library, name));
+            return out_fn != nullptr;
+        }
+
+        void* _library{nullptr};
+        bool _ready{false};
+        InitFn _init{nullptr};
+        DeviceGetFn _deviceGet{nullptr};
+        AttributeFn _attribute{nullptr};
+        RetainFn _retain{nullptr};
+        SetCurrentFn _setCurrent{nullptr};
+        GranularityFn _granularity{nullptr};
+        CreateFn _create{nullptr};
+        ReserveFn _reserve{nullptr};
+        MapFn _map{nullptr};
+        SetAccessFn _setAccess{nullptr};
+        ExportFn _export{nullptr};
+        ImportFn _import{nullptr};
+        UnmapFn _unmap{nullptr};
+        AddressFreeFn _addressFree{nullptr};
+        ReleaseFn _release{nullptr};
+    };
+
+    /**
+     * Device memory allocated by a writer. Shared by the writer and by readers in the same process, and freed when
+     * the last of them releases it.
+     */
+    struct Allocation
+    {
+        /**
+         * \param[in] ordinal The device whose context mapped the memory.
+         * \param[in] base The device address.
+         * \param[in] bytes The mapped size.
+         */
+        Allocation(int ordinal, CUdeviceptr base, std::size_t bytes) noexcept
+            : ordinal{ordinal}
+            , base{base}
+            , bytes{bytes}
+        {}
+
+        /** Unmap the memory. */
+        ~Allocation()
+        {
+            CudaDriver::instance().unmap(ordinal, base, bytes);
+        }
+
+        Allocation(Allocation const&) = delete;
+        Allocation(Allocation&&) = delete;
+        Allocation& operator=(Allocation const&) = delete;
+        Allocation& operator=(Allocation&&) = delete;
+
+        int ordinal;       ///< The device index in this process.
+        CUdeviceptr base;  ///< The device address of the first slot.
+        std::size_t bytes; ///< The mapped size.
+    };
+
+    /**
+     * Allocations of the writers in this process, by flow directory, so that readers in the same process can share
+     * them. Holds weak references, so it never keeps memory alive.
+     */
+    class LocalRegistry
+    {
+    public:
+        /** \return The registry of this process. */
+        static LocalRegistry& instance()
+        {
+            static auto registry = LocalRegistry{};
+            return registry;
+        }
+
+        /**
+         * \param[in] key The canonical flow directory.
+         * \param[in] allocation The writer's allocation.
+         */
+        void publish(std::string const& key, std::shared_ptr<Allocation> const& allocation)
+        {
+            auto const lock = std::lock_guard{_mutex};
+            _entries[key] = allocation;
+        }
+
+        /**
+         * \param[in] key The canonical flow directory.
+         * \return The writer's allocation if it is still alive, otherwise null.
+         */
+        std::shared_ptr<Allocation> lookup(std::string const& key)
+        {
+            auto const lock = std::lock_guard{_mutex};
+            auto const it = _entries.find(key);
+            return (it != _entries.end()) ? it->second.lock() : nullptr;
+        }
+
+    private:
+        /** Protects _entries. */
+        std::mutex _mutex;
+        /** Allocations by canonical flow directory. */
+        std::unordered_map<std::string, std::weak_ptr<Allocation>> _entries;
+    };
+
+    /**
+     * \param[in] dir A flow directory, which may not exist yet.
+     * \return The key of the flow in the local registry.
+     */
+    std::string registryKey(std::filesystem::path const& dir)
+    {
+        return std::filesystem::weakly_canonical(dir).string();
+    }
+
+    /**
+     * Serves one file descriptor on a Unix socket. A reader connects, and the server sends a duplicate of the
+     * descriptor with SCM_RIGHTS if the reader may read the flow directory.
+     *
+     * The socket is bound in the staging directory and then published with the flow directory. The server keeps the
+     * device and inode of the socket it bound, and unlinks a path only while that path still holds the same socket.
+     * A writer that loses the race to publish its flow is destroyed while its published path names the socket of the
+     * writer that won, so it must not remove that socket.
+     */
+    class PayloadFdServer
+    {
+    public:
+        /**
+         * Bind the socket and start serving. Takes ownership of fd, and closes it on failure.
+         * \param[in] fd The descriptor to serve.
+         * \param[in] publishedPath The path readers connect to once the flow directory is published.
+         * \param[in] bindPath The path to bind now, in the staging directory.
+         * \throws std::runtime_error if the socket cannot be created or bound.
+         */
+        PayloadFdServer(int fd, std::filesystem::path publishedPath, std::filesystem::path bindPath)
+            : _fd{fd}
+            , _publishedPath{std::move(publishedPath)}
+            , _bindPath{std::move(bindPath)}
+        {
+            auto const path = _bindPath.string();
+            auto address = sockaddr_un{};
+            address.sun_family = AF_UNIX;
+            if ((path.size() + 1U) > sizeof(address.sun_path))
+            {
+                closeFd();
+                throw std::runtime_error{"The payload socket path is too long."};
+            }
+            std::memcpy(address.sun_path, path.c_str(), path.size() + 1U);
+            ::unlink(path.c_str());
+
+            _listen = ::socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
+            if ((_listen < 0) || (::bind(_listen, reinterpret_cast<sockaddr*>(&address), sizeof(address)) != 0) || (::listen(_listen, 8) != 0))
+            {
+                if (_listen >= 0)
+                {
+                    ::close(_listen);
+                    _listen = -1;
+                }
+                ::unlink(path.c_str());
+                closeFd();
+                throw std::runtime_error{"Could not listen on the payload socket."};
+            }
+            rememberBoundSocket();
+            applySocketMode();
+            try
+            {
+                _thread = std::thread{[this]
+                    {
+                        serve();
+                    }};
+            }
+            catch (...)
+            {
+                ::close(_listen);
+                _listen = -1;
+                ::unlink(path.c_str());
+                closeFd();
+                throw;
+            }
+        }
+
+        /** Stop serving, and remove the sockets this server bound. */
+        ~PayloadFdServer()
+        {
+            _stop.store(true);
+            if (_listen >= 0)
+            {
+                ::shutdown(_listen, SHUT_RDWR);
+            }
+            if (_thread.joinable())
+            {
+                _thread.join();
+            }
+            if (_listen >= 0)
+            {
+                ::close(_listen);
+            }
+            closeFd();
+            unlinkIfOwnSocket(_publishedPath);
+            unlinkIfOwnSocket(_bindPath);
+        }
+
+        PayloadFdServer(PayloadFdServer const&) = delete;
+        PayloadFdServer& operator=(PayloadFdServer const&) = delete;
+
+    private:
+        /** Close the served descriptor. */
+        void closeFd() noexcept
+        {
+            if (_fd >= 0)
+            {
+                ::close(_fd);
+                _fd = -1;
+            }
+        }
+
+        /** Record the identity of the socket just bound, so the destructor can tell it from another writer's. */
+        void rememberBoundSocket()
+        {
+            struct stat info{};
+            if (::lstat(_bindPath.c_str(), &info) == 0)
+            {
+                _boundDevice = info.st_dev;
+                _boundInode = info.st_ino;
+                _boundKnown = true;
+            }
+        }
+
+        /** Unlink a path only if it is the socket this server bound. */
+        void unlinkIfOwnSocket(std::filesystem::path const& path) const noexcept
+        {
+            struct stat info{};
+            if (_boundKnown && (::lstat(path.c_str(), &info) == 0) && S_ISSOCK(info.st_mode) && (info.st_dev == _boundDevice) &&
+                (info.st_ino == _boundInode))
+            {
+                ::unlink(path.c_str());
+            }
+        }
+
+        /** Match the socket's write permission to the flow directory's read permission. */
+        void applySocketMode()
+        {
+            struct stat info{};
+            if (::stat(_bindPath.parent_path().c_str(), &info) != 0)
+            {
+                return;
+            }
+            auto mode = mode_t{S_IRUSR | S_IWUSR};
+            if ((info.st_mode & S_IRGRP) != 0)
+            {
+                mode |= S_IRGRP | S_IWGRP;
+            }
+            if ((info.st_mode & S_IROTH) != 0)
+            {
+                mode |= S_IROTH | S_IWOTH;
+            }
+            (void)::fchmod(_listen, mode);
+        }
+
+        /** \return True when the connected process may read the flow directory. */
+        bool peerMayRead(int connection) const
+        {
+            auto credentials = ucred{};
+            auto length = socklen_t{sizeof(credentials)};
+            struct stat info{};
+            if ((::getsockopt(connection, SOL_SOCKET, SO_PEERCRED, &credentials, &length) != 0) || (::fstat(_listen, &info) != 0))
+            {
+                return false;
+            }
+            if (credentials.uid == info.st_uid)
+            {
+                return true;
+            }
+            if (((info.st_mode & S_IWGRP) != 0) && (credentials.gid == info.st_gid))
+            {
+                return true;
+            }
+            return (info.st_mode & S_IWOTH) != 0;
+        }
+
+        /** Accept readers until the server is destroyed. */
+        void serve()
+        {
+            while (!_stop.load())
+            {
+                auto ready = pollfd{};
+                ready.fd = _listen;
+                ready.events = POLLIN;
+                if (::poll(&ready, 1, 200) <= 0)
+                {
+                    continue;
+                }
+                auto const connection = ::accept(_listen, nullptr, nullptr);
+                if (connection < 0)
+                {
+                    continue;
+                }
+                if (peerMayRead(connection))
+                {
+                    sendDescriptor(connection);
+                }
+                ::close(connection);
+            }
+        }
+
+        /** Send a duplicate of the served descriptor. */
+        void sendDescriptor(int connection) const
+        {
+            auto const copy = ::dup(_fd);
+            if (copy < 0)
+            {
+                return;
+            }
+            auto byte = char{0};
+            auto iov = iovec{};
+            iov.iov_base = &byte;
+            iov.iov_len = 1;
+            auto control = std::array<char, CMSG_SPACE(sizeof(int))>{};
+            auto message = msghdr{};
+            message.msg_iov = &iov;
+            message.msg_iovlen = 1;
+            message.msg_control = control.data();
+            message.msg_controllen = control.size();
+            auto* header = CMSG_FIRSTHDR(&message);
+            header->cmsg_level = SOL_SOCKET;
+            header->cmsg_type = SCM_RIGHTS;
+            header->cmsg_len = CMSG_LEN(sizeof(int));
+            std::memcpy(CMSG_DATA(header), &copy, sizeof(int));
+            (void)::sendmsg(connection, &message, MSG_NOSIGNAL);
+            ::close(copy);
+        }
+
+        int _fd{-1};                          ///< The served descriptor, owned by this server.
+        std::filesystem::path _publishedPath; ///< Path readers connect to once published.
+        std::filesystem::path _bindPath;      ///< Path bound in the staging directory.
+        int _listen{-1};                      ///< The listening socket.
+        std::atomic<bool> _stop{false};       ///< Set when the server is destroyed.
+        std::thread _thread;                  ///< Serves connections.
+        dev_t _boundDevice{0};                ///< Device of the socket bound by this server.
+        ino_t _boundInode{0};                 ///< Inode of the socket bound by this server.
+        bool _boundKnown{false};              ///< True when _boundDevice and _boundInode are set.
+    };
+
+    /**
+     * Receive the file descriptor that a writer serves on its payload socket.
+     * \param[in] socketPath The published path of payload.sock.
+     * \param[out] out_fd Receives the descriptor. The caller owns it.
+     * \return MXL_STATUS_OK, MXL_ERR_NOT_FOUND if nothing listens on socketPath, or MXL_ERR_UNKNOWN if the socket sends
+     *     no descriptor, for example because this process may not read the flow directory.
+     */
+    mxlStatus receiveDescriptor(std::filesystem::path const& socketPath, int& out_fd) noexcept
+    {
+        auto const path = socketPath.string();
+        auto address = sockaddr_un{};
+        address.sun_family = AF_UNIX;
+        if ((path.size() + 1U) > sizeof(address.sun_path))
+        {
+            return MXL_ERR_INVALID_ARG;
+        }
+        std::memcpy(address.sun_path, path.c_str(), path.size() + 1U);
+
+        auto const connection = ::socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
+        if (connection < 0)
+        {
+            return MXL_ERR_UNKNOWN;
+        }
+        if (::connect(connection, reinterpret_cast<sockaddr*>(&address), sizeof(address)) != 0)
+        {
+            ::close(connection);
+            return MXL_ERR_NOT_FOUND;
+        }
+
+        auto byte = char{0};
+        auto iov = iovec{};
+        iov.iov_base = &byte;
+        iov.iov_len = 1;
+        auto control = std::array<char, CMSG_SPACE(sizeof(int))>{};
+        auto message = msghdr{};
+        message.msg_iov = &iov;
+        message.msg_iovlen = 1;
+        message.msg_control = control.data();
+        message.msg_controllen = control.size();
+        auto const received = ::recvmsg(connection, &message, MSG_CMSG_CLOEXEC);
+        ::close(connection);
+        if (received < 0)
+        {
+            return MXL_ERR_UNKNOWN;
+        }
+
+        auto fds = std::vector<int>{};
+        for (auto* header = CMSG_FIRSTHDR(&message); header != nullptr; header = CMSG_NXTHDR(&message, header))
+        {
+            if ((header->cmsg_level != SOL_SOCKET) || (header->cmsg_type != SCM_RIGHTS))
+            {
+                continue;
+            }
+            auto const count = (static_cast<std::size_t>(header->cmsg_len) - CMSG_LEN(0)) / sizeof(int);
+            auto const* data = reinterpret_cast<int const*>(CMSG_DATA(header));
+            fds.insert(fds.end(), data, data + count);
+        }
+        if (fds.empty())
+        {
+            return MXL_ERR_UNKNOWN;
+        }
+        for (auto i = std::size_t{1}; i < fds.size(); ++i)
+        {
+            ::close(fds[i]);
+        }
+        out_fd = fds[0];
+        return MXL_STATUS_OK;
+    }
+
+    /**
+     * State of one backend instance.
+     */
+    struct Instance
+    {
+        std::string registryKey;                 ///< Canonical final flow directory.
+        std::filesystem::path descriptorPath;    ///< Path of payload.cuda.json in the published flow.
+        std::uint32_t slotCount{0};              ///< Number of slots.
+        std::uint64_t grainPayloadSize{0};       ///< Payload size of one grain.
+        std::uint64_t stride{0};                 ///< Distance between slot starts.
+        std::uint64_t allocSize{0};              ///< Mapped size, a multiple of the device granularity.
+        Uuid ownerUuid{};                        ///< Device that holds the memory.
+        std::optional<Uuid> requestedUuid;       ///< Device on which a reader wants to access the memory.
+        std::filesystem::path socketPath;        ///< Published path of payload.sock, used by readers.
+        std::unique_ptr<PayloadFdServer> server; ///< Serves the writer's descriptor. Null in a reader.
+        int importedFd{-1};                      ///< A descriptor received from payload.sock, until it is imported.
+        int localOrdinal{-1};                    ///< Device index in this process on which the memory is accessed.
+        std::shared_ptr<Allocation> allocation;  ///< The mapped allocation.
+
+        /** Close the descriptor this instance still owns. */
+        ~Instance()
+        {
+            if (importedFd >= 0)
+            {
+                ::close(importedFd);
+            }
+        }
+
+        std::once_flag descriptorOnce;               ///< Reads the descriptor once, in readers.
+        mxlStatus descriptorStatus{MXL_ERR_UNKNOWN}; ///< Result of reading the descriptor.
+        std::once_flag mapOnce;                      ///< Imports the allocation once, in readers.
+        mxlStatus mapStatus{MXL_ERR_UNKNOWN};        ///< Result of the import.
+
+        /** \return The device address of the first slot, or null if the allocation is not mapped. */
+        [[nodiscard]]
+        std::uint8_t* base() const noexcept
+        {
+            return reinterpret_cast<std::uint8_t*>((allocation != nullptr) ? allocation->base : 0U);
+        }
+    };
+
+    /**
+     * Parse backend options.
+     * \param[in] options The options as JSON object text.
+     * \param[out] out_uuid Receives the value of "deviceUuid", if present.
+     * \return MXL_STATUS_OK, or MXL_ERR_INVALID_ARG if the options are not an object with at most a valid "deviceUuid".
+     */
+    mxlStatus parseOptions(char const* options, std::optional<Uuid>& out_uuid) noexcept
+    {
+        try
+        {
+            auto value = picojson::value{};
+            if ((options == nullptr) || !picojson::parse(value, std::string{options}).empty() || !value.is<picojson::object>())
+            {
+                return MXL_ERR_INVALID_ARG;
+            }
+            for (auto const& [key, option] : value.get<picojson::object>())
+            {
+                auto uuid = Uuid{};
+                if ((key != "deviceUuid") || !option.is<std::string>() || !parseUuid(option.get<std::string>(), uuid))
+                {
+                    return MXL_ERR_INVALID_ARG;
+                }
+                out_uuid = uuid;
+            }
+            return MXL_STATUS_OK;
+        }
+        catch (...)
+        {
+            return MXL_ERR_INVALID_ARG;
+        }
+    }
+
+    /**
+     * \param[in] info The flow geometry passed by libmxl.
+     * \return true if the geometry can be served by this backend.
+     */
+    bool isValidFlowInfo(mxlPayloadBackendFlowInfo const* info) noexcept
+    {
+        return (info != nullptr) && (info->structSize >= sizeof(mxlPayloadBackendFlowInfo)) && (info->grainCount > 0U) &&
+               (info->grainPayloadSize > 0U) && (info->planeCount > 0U) && (info->planeCount <= MXL_MAX_PLANES_PER_GRAIN);
+    }
+
+    /**
+     * Write the descriptor of a writer's allocation.
+     * \param[in] instance The writer's instance.
+     * \param[in] path Where to write the descriptor.
+     * \return MXL_STATUS_OK, or MXL_ERR_UNKNOWN if the file cannot be written.
+     */
+    mxlStatus writeDescriptor(Instance const& instance, std::filesystem::path const& path) noexcept
+    {
+        try
+        {
+            auto root = picojson::object{};
+            root["version"] = picojson::value{DESCRIPTOR_VERSION};
+            root["export"] = picojson::value{std::string{EXPORT_POSIX_FD}};
+            root["deviceUuid"] = picojson::value{formatUuid(instance.ownerUuid)};
+            root["slotCount"] = picojson::value{static_cast<double>(instance.slotCount)};
+            root["stride"] = picojson::value{static_cast<double>(instance.stride)};
+            root["allocSize"] = picojson::value{static_cast<double>(instance.allocSize)};
+
+            auto out = std::ofstream{path, std::ios::out | std::ios::trunc};
+            out << picojson::value{root}.serialize(true);
+            return out ? MXL_STATUS_OK : MXL_ERR_UNKNOWN;
+        }
+        catch (...)
+        {
+            return MXL_ERR_UNKNOWN;
+        }
+    }
+
+    /**
+     * Read the descriptor of the writer's allocation into a reader's instance.
+     * \param[in,out] instance The reader's instance.
+     * \return MXL_STATUS_OK, MXL_ERR_NOT_FOUND if the descriptor is missing, MXL_ERR_UNSUPPORTED_OPERATION if it has a
+     *     version this backend does not know, or MXL_ERR_INVALID_STATE if it is invalid.
+     */
+    mxlStatus readDescriptor(Instance& instance) noexcept
+    {
+        try
+        {
+            auto in = std::ifstream{instance.descriptorPath, std::ios::in};
+            if (!in)
+            {
+                return MXL_ERR_NOT_FOUND;
+            }
+            auto value = picojson::value{};
+            if (!picojson::parse(value, in).empty() || !value.is<picojson::object>())
+            {
+                return MXL_ERR_INVALID_STATE;
+            }
+
+            auto const& root = value.get<picojson::object>();
+            auto const text = [&](char const* key) -> std::string
+            {
+                auto const it = root.find(key);
+                return ((it != root.end()) && it->second.is<std::string>()) ? it->second.get<std::string>() : std::string{};
+            };
+            auto const number = [&](char const* key) -> double
+            {
+                auto const it = root.find(key);
+                return ((it != root.end()) && it->second.is<double>()) ? it->second.get<double>() : -1.0;
+            };
+
+            // The writer can run another build of this backend, for example in another container.
+            if (number("version") != DESCRIPTOR_VERSION)
+            {
+                return MXL_ERR_UNSUPPORTED_OPERATION;
+            }
+
+            auto const stride = number("stride");
+            auto const allocSize = number("allocSize");
+            if ((text("export") != EXPORT_POSIX_FD) || !parseUuid(text("deviceUuid"), instance.ownerUuid) ||
+                (number("slotCount") != static_cast<double>(instance.slotCount)) || (stride < static_cast<double>(instance.grainPayloadSize)) ||
+                (allocSize < (stride * static_cast<double>(instance.slotCount))))
+            {
+                return MXL_ERR_INVALID_STATE;
+            }
+            instance.stride = static_cast<std::uint64_t>(stride);
+            instance.allocSize = static_cast<std::uint64_t>(allocSize);
+            return MXL_STATUS_OK;
+        }
+        catch (...)
+        {
+            return MXL_ERR_INVALID_STATE;
+        }
+    }
+
+    /**
+     * Read the descriptor once, and find the device on which this reader accesses the memory, without importing.
+     * \param[in,out] instance The reader's instance.
+     * \return The result of reading the descriptor.
+     */
+    mxlStatus ensureDescriptor(Instance& instance) noexcept
+    {
+        try
+        {
+            std::call_once(instance.descriptorOnce,
+                [&instance]()
+                {
+                    instance.descriptorStatus = readDescriptor(instance);
+                    if (instance.descriptorStatus == MXL_STATUS_OK)
+                    {
+                        // Best effort: without a usable device the index stays -1 until mapping reports why.
+                        auto ordinal = -1;
+                        if (findDevice(instance.requestedUuid.value_or(instance.ownerUuid), ordinal) == MXL_STATUS_OK)
+                        {
+                            instance.localOrdinal = ordinal;
+                        }
+                    }
+                });
+        }
+        catch (...)
+        {
+            return MXL_ERR_UNKNOWN;
+        }
+        return instance.descriptorStatus;
+    }
+
+    /**
+     * Import the writer's allocation into a reader.
+     * \param[in,out] instance The reader's instance.
+     * \return MXL_STATUS_OK, or an error code.
+     */
+    mxlStatus importAllocation(Instance& instance) noexcept
+    {
+        if (auto const status = ensureDescriptor(instance); status != MXL_STATUS_OK)
+        {
+            return status;
+        }
+
+        try
+        {
+            // A reader in the writer's process shares the writer's allocation.
+            if (auto allocation = LocalRegistry::instance().lookup(instance.registryKey); allocation != nullptr)
+            {
+                if (instance.importedFd >= 0)
+                {
+                    ::close(instance.importedFd);
+                    instance.importedFd = -1;
+                }
+                instance.localOrdinal = allocation->ordinal;
+                instance.allocation = std::move(allocation);
+                return MXL_STATUS_OK;
+            }
+        }
+        catch (...)
+        {
+            return MXL_ERR_UNKNOWN;
+        }
+
+        auto ownerOrdinal = -1;
+        if (auto const status = findDevice(instance.ownerUuid, ownerOrdinal); status != MXL_STATUS_OK)
+        {
+            // The device that holds the memory is not visible in this process.
+            return (status == MXL_ERR_NOT_FOUND) ? MXL_ERR_UNSUPPORTED_OPERATION : status;
+        }
+
+        auto localOrdinal = ownerOrdinal;
+        if (instance.requestedUuid.has_value())
+        {
+            if (auto const status = findDevice(*instance.requestedUuid, localOrdinal); status != MXL_STATUS_OK)
+            {
+                return (status == MXL_ERR_NOT_FOUND) ? MXL_ERR_INVALID_ARG : status;
+            }
+        }
+
+        if (instance.importedFd < 0)
+        {
+            if (auto const status = receiveDescriptor(instance.socketPath, instance.importedFd); status != MXL_STATUS_OK)
+            {
+                return status;
+            }
+        }
+
+        if (localOrdinal != ownerOrdinal)
+        {
+            auto canAccess = 0;
+            if ((::cudaDeviceCanAccessPeer(&canAccess, localOrdinal, ownerOrdinal) != cudaSuccess) || (canAccess == 0))
+            {
+                (void)::cudaGetLastError();
+                return MXL_ERR_UNSUPPORTED_OPERATION;
+            }
+        }
+
+        if (auto const error = ::cudaSetDevice(localOrdinal); error != cudaSuccess)
+        {
+            return toStatus(error);
+        }
+        if (localOrdinal != ownerOrdinal)
+        {
+            auto const peer = ::cudaDeviceEnablePeerAccess(ownerOrdinal, 0);
+            if ((peer != cudaSuccess) && (peer != cudaErrorPeerAccessAlreadyEnabled))
+            {
+                return toStatus(peer);
+            }
+            (void)::cudaGetLastError();
+        }
+
+        auto const fd = instance.importedFd;
+        instance.importedFd = -1;
+        auto base = CUdeviceptr{0};
+        if (auto const status = CudaDriver::instance().import(localOrdinal, static_cast<std::size_t>(instance.allocSize), fd, base);
+            status != MXL_STATUS_OK)
+        {
+            return status;
+        }
+        try
+        {
+            instance.allocation = std::make_shared<Allocation>(localOrdinal, base, static_cast<std::size_t>(instance.allocSize));
+        }
+        catch (...)
+        {
+            CudaDriver::instance().unmap(localOrdinal, base, static_cast<std::size_t>(instance.allocSize));
+            return MXL_ERR_UNKNOWN;
+        }
+        instance.localOrdinal = localOrdinal;
+        return MXL_STATUS_OK;
+    }
+
+    /**
+     * Import the allocation once, if it is not mapped yet.
+     * \param[in,out] instance The instance.
+     * \return MXL_STATUS_OK, or the error from the import.
+     */
+    mxlStatus ensureMapped(Instance& instance) noexcept
+    {
+        try
+        {
+            std::call_once(instance.mapOnce, [&instance]() { instance.mapStatus = importAllocation(instance); });
+        }
+        catch (...)
+        {
+            return MXL_ERR_UNKNOWN;
+        }
+        return instance.mapStatus;
+    }
+
+    /** \see mxlPayloadBackendApiV1::prepare */
+    mxlStatus prepare(mxlPayloadBackendFlowInfo const* info, char const* options, char const* stagingDir, char const* finalDir,
+        mxlPayloadBackendInstance* out_instance) noexcept
+    {
+        auto requestedUuid = std::optional<Uuid>{};
+        if (!isValidFlowInfo(info) || (stagingDir == nullptr) || (finalDir == nullptr) || (out_instance == nullptr) ||
+            (parseOptions(options, requestedUuid) != MXL_STATUS_OK) || !requestedUuid.has_value())
+        {
+            // A writer must name the device that holds the payload.
+            return MXL_ERR_INVALID_ARG;
+        }
+        if (info->format != MXL_DATA_FORMAT_VIDEO)
+        {
+            // libmxl leaves the choice of formats to the backend. This one holds video only.
+            return MXL_ERR_UNSUPPORTED_OPERATION;
+        }
+
+        auto ordinal = -1;
+        if (auto const status = findDevice(*requestedUuid, ordinal); status != MXL_STATUS_OK)
+        {
+            return status;
+        }
+
+        auto instance = std::unique_ptr<Instance>{new (std::nothrow) Instance{}};
+        if (instance == nullptr)
+        {
+            return MXL_ERR_UNKNOWN;
+        }
+
+        try
+        {
+            instance->registryKey = registryKey(finalDir);
+            instance->descriptorPath = std::filesystem::path{finalDir} / DESCRIPTOR_FILE_NAME;
+        }
+        catch (...)
+        {
+            return MXL_ERR_UNKNOWN;
+        }
+        instance->slotCount = info->grainCount;
+        instance->grainPayloadSize = info->grainPayloadSize;
+        instance->stride = ((info->grainPayloadSize + SLOT_ALIGNMENT - 1U) / SLOT_ALIGNMENT) * SLOT_ALIGNMENT;
+        instance->ownerUuid = *requestedUuid;
+        instance->localOrdinal = ordinal;
+
+        auto mapped = CudaDriver::Mapped{};
+        auto const bytes = static_cast<std::size_t>(instance->stride * instance->slotCount);
+        if (auto const status = CudaDriver::instance().create(ordinal, bytes, mapped); status != MXL_STATUS_OK)
+        {
+            return status;
+        }
+        instance->allocSize = mapped.bytes;
+
+        // The server takes the descriptor and closes it, also when it fails to start.
+        try
+        {
+            instance->server = std::make_unique<PayloadFdServer>(
+                mapped.fd, std::filesystem::path{finalDir} / SOCKET_FILE_NAME, std::filesystem::path{stagingDir} / SOCKET_FILE_NAME);
+        }
+        catch (...)
+        {
+            CudaDriver::instance().unmap(ordinal, mapped.base, mapped.bytes);
+            return MXL_ERR_UNKNOWN;
+        }
+
+        try
+        {
+            instance->allocation = std::make_shared<Allocation>(ordinal, mapped.base, mapped.bytes);
+        }
+        catch (...)
+        {
+            CudaDriver::instance().unmap(ordinal, mapped.base, mapped.bytes);
+            return MXL_ERR_UNKNOWN;
+        }
+
+        // Start from a defined state, so that readers of grains that were never written see zeros.
+        if (auto const error = ::cudaMemset(reinterpret_cast<void*>(mapped.base), 0, mapped.bytes); error != cudaSuccess)
+        {
+            return toStatus(error);
+        }
+        if (auto const status = writeDescriptor(*instance, std::filesystem::path{stagingDir} / DESCRIPTOR_FILE_NAME); status != MXL_STATUS_OK)
+        {
+            return status;
+        }
+
+        try
+        {
+            LocalRegistry::instance().publish(instance->registryKey, instance->allocation);
+            std::call_once(instance->descriptorOnce, [&]() { instance->descriptorStatus = MXL_STATUS_OK; });
+            std::call_once(instance->mapOnce, [&]() { instance->mapStatus = MXL_STATUS_OK; });
+        }
+        catch (...)
+        {
+            return MXL_ERR_UNKNOWN;
+        }
+
+        *out_instance = reinterpret_cast<mxlPayloadBackendInstance>(instance.release());
+        return MXL_STATUS_OK;
+    }
+
+    /** \see mxlPayloadBackendApiV1::open */
+    mxlStatus open(mxlPayloadBackendFlowInfo const* info, char const* options, char const* flowDir, mxlPayloadBackendInstance* out_instance) noexcept
+    {
+        auto requestedUuid = std::optional<Uuid>{};
+        if (!isValidFlowInfo(info) || (flowDir == nullptr) || (out_instance == nullptr) || (parseOptions(options, requestedUuid) != MXL_STATUS_OK))
+        {
+            return MXL_ERR_INVALID_ARG;
+        }
+
+        auto instance = std::unique_ptr<Instance>{new (std::nothrow) Instance{}};
+        if (instance == nullptr)
+        {
+            return MXL_ERR_UNKNOWN;
+        }
+        try
+        {
+            instance->registryKey = registryKey(flowDir);
+            instance->descriptorPath = std::filesystem::path{flowDir} / DESCRIPTOR_FILE_NAME;
+            instance->socketPath = std::filesystem::path{flowDir} / SOCKET_FILE_NAME;
+        }
+        catch (...)
+        {
+            return MXL_ERR_UNKNOWN;
+        }
+        instance->slotCount = info->grainCount;
+        instance->grainPayloadSize = info->grainPayloadSize;
+        instance->requestedUuid = requestedUuid;
+
+        // Nothing is imported, and no CUDA call is made, until the slots are mapped or the layout is described.
+        *out_instance = reinterpret_cast<mxlPayloadBackendInstance>(instance.release());
+        return MXL_STATUS_OK;
+    }
+
+    /** \see mxlPayloadBackendApiV1::destroy */
+    void destroy(mxlPayloadBackendInstance handle) noexcept
+    {
+        // Dropping the instance closes its descriptors and releases the allocation.
+        delete reinterpret_cast<Instance*>(handle);
+    }
+
+    /** \see mxlPayloadBackendApiV1::slotStorage */
+    mxlStatus slotStorage(mxlPayloadBackendInstance handle, std::uint32_t slot, mxlGrainStorage* out_storage) noexcept
+    {
+        auto* const instance = reinterpret_cast<Instance*>(handle);
+        if ((instance == nullptr) || (out_storage == nullptr) || (slot >= instance->slotCount))
+        {
+            return MXL_ERR_INVALID_ARG;
+        }
+        if (auto const status = ensureMapped(*instance); status != MXL_STATUS_OK)
+        {
+            return status;
+        }
+
+        std::memset(out_storage, 0, sizeof(*out_storage));
+        out_storage->version = 1U;
+        out_storage->size = sizeof(*out_storage);
+        out_storage->slot = slot;
+        auto const slotStorage = mxlCudaLinearSlotStorage{instance->base() + (instance->stride * slot)};
+        std::memcpy(out_storage->reserved, &slotStorage, sizeof(slotStorage));
+        return MXL_STATUS_OK;
+    }
+
+    /** \see mxlPayloadBackendApiV1::describeLayout */
+    mxlStatus describeLayout(mxlPayloadBackendInstance handle, mxlGrainStorageLayout* inout_layout) noexcept
+    {
+        auto* const instance = reinterpret_cast<Instance*>(handle);
+        if ((instance == nullptr) || (inout_layout == nullptr))
+        {
+            return MXL_ERR_INVALID_ARG;
+        }
+        if (auto const status = ensureDescriptor(*instance); status != MXL_STATUS_OK)
+        {
+            return status;
+        }
+
+        // The planes of a slot follow each other without padding, as in host memory, so the default planes apply.
+        auto info = mxlCudaLinearLayoutInfo{};
+        std::memcpy(info.deviceUuid, instance->ownerUuid.data(), instance->ownerUuid.size());
+        info.deviceIndex = instance->localOrdinal;
+        std::memcpy(inout_layout->reserved, &info, sizeof(info));
+        return MXL_STATUS_OK;
+    }
+
+    /** \see mxlPayloadBackendApiV1::mapSlots */
+    mxlStatus mapSlots(mxlPayloadBackendInstance handle) noexcept
+    {
+        auto* const instance = reinterpret_cast<Instance*>(handle);
+        if (instance == nullptr)
+        {
+            return MXL_ERR_INVALID_ARG;
+        }
+        return ensureMapped(*instance);
+    }
+
+    /** The function table of this backend. */
+    constexpr auto API = mxlPayloadBackendApiV1{
+        .structSize = sizeof(mxlPayloadBackendApiV1),
+        .abiVersion = MXL_PAYLOAD_BACKEND_ABI_VERSION,
+        .name = BACKEND_NAME,
+        .storageType = MXL_CUDA_LINEAR_STORAGE_TYPE,
+        .prepare = &prepare,
+        .open = &open,
+        .destroy = &destroy,
+        .slotStorage = &slotStorage,
+        .describeLayout = &describeLayout,
+        .mapSlots = &mapSlots,
+    };
+}
+
+/** \see mxlGetPayloadBackendApiFn */
+extern "C" MXL_EXPORT
+mxlStatus mxlGetPayloadBackendApi(std::uint32_t requestedVersion, mxlPayloadBackendApiV1 const** out_api)
+{
+    if (out_api == nullptr)
+    {
+        return MXL_ERR_INVALID_ARG;
+    }
+    if (requestedVersion != MXL_PAYLOAD_BACKEND_ABI_VERSION)
+    {
+        return MXL_ERR_UNSUPPORTED_OPERATION;
+    }
+    *out_api = &API;
+    return MXL_STATUS_OK;
+}

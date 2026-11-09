@@ -12,6 +12,7 @@
     - [Overview](Architecture.md)
     - [Timing Model](Timing.md)
     - [Event Flows](EventFlows.md)
+    - [Payload Storage](PayloadStorage.md)
 - Fabrics
     - [Overview](FabricsGettingStarted.md)
     - [Usage](FabricsDeveloperGuide.md)

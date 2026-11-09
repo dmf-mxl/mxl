@@ -156,10 +156,12 @@ namespace mxl::lib::fabrics::ofi
             "GrainHeader type size changed! The Fabrics API makes assumptions on the memory layout of a flow, please review the code below if the "
             "change is intended!");
 
-        if (flow.flowInfo()->config.common.payloadLocation != MXL_PAYLOAD_LOCATION_HOST_MEMORY)
+        // The regions below cover the grain header and the payload in one grain file. A flow whose payload is held by a
+        // backend has only the header in its grain files.
+        if (flow.flowInfo()->version == FLOW_DATA_VERSION_PAYLOAD_BACKEND)
         {
-            throw Exception::make(MXL_ERR_UNKNOWN,
-                "GPU memory is not currently supported in the Flow API of MXL. Edit the code below when it is supported");
+            throw Exception::make(MXL_ERR_UNSUPPORTED_OPERATION,
+                "Flows whose payload is held by a payload backend are not currently supported by the Fabrics API.");
         }
 
         if (mxlIsDiscreteDataFormat(static_cast<int>(flow.flowInfo()->config.common.format)))
