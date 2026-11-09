@@ -440,7 +440,10 @@ impl BaseSinkImpl for MxlSink {
         };
         let running_time = segment.to_running_time_full(pts);
         let mxl_ts = running_time.and_then(|running_time| {
-            mxl_timestamp(base_time.nseconds() as i128 + offset as i128, running_time)
+            mxl_timestamp_from_running_time(
+                base_time.nseconds() as i128 + offset as i128,
+                running_time,
+            )
         });
         let Some(mxl_ts) = mxl_ts else {
             gst::warning!(
@@ -565,7 +568,7 @@ impl BaseSinkImpl for MxlSink {
     }
 }
 
-pub(crate) fn mxl_timestamp(
+pub(crate) fn mxl_timestamp_from_running_time(
     anchor: i128,
     running_time: gst::Signed<gst::ClockTime>,
 ) -> Option<u64> {

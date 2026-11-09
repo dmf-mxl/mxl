@@ -147,8 +147,8 @@ pub(crate) fn continuous(
         .timestamp_to_index(mxl_ts, &sample_rate)
         .map_err(|_| gst::FlowError::Error)?;
     let limits = AlignmentLimits {
-        threshold: duration_samples(alignment_threshold_ns, &sample_rate)?,
-        discont_wait: duration_samples(discont_wait_ns, &sample_rate)?,
+        threshold: samples_from_duration(alignment_threshold_ns, &sample_rate)?,
+        discont_wait: samples_from_duration(discont_wait_ns, &sample_rate)?,
     };
     let samples_u64 = u64::try_from(samples_per_buffer).map_err(|_| gst::FlowError::Error)?;
     let discont = buffer
@@ -235,7 +235,7 @@ pub(crate) fn continuous(
 }
 
 /// `duration_ns` in samples at `sample_rate`.
-fn duration_samples(duration_ns: u64, sample_rate: &Rational) -> Result<u64, gst::FlowError> {
+fn samples_from_duration(duration_ns: u64, sample_rate: &Rational) -> Result<u64, gst::FlowError> {
     let numerator = u128::try_from(sample_rate.numerator).map_err(|_| gst::FlowError::Error)?;
     let denominator = u128::try_from(sample_rate.denominator).map_err(|_| gst::FlowError::Error)?;
     if denominator == 0 {
