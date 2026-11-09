@@ -195,29 +195,29 @@ mod tests {
         );
     }
     #[test]
-    fn mxl_timestamp_adds_signed_running_time() {
-        use crate::mxlsink::imp::mxl_timestamp;
+    fn mxl_timestamp_from_running_time_sign_and_range() {
+        use crate::mxlsink::imp::mxl_timestamp_from_running_time;
         let anchor = 1_000_000_000i128;
         let ms = gst::ClockTime::from_mseconds;
         assert_eq!(
-            mxl_timestamp(anchor, gst::Signed::Positive(ms(20))),
+            mxl_timestamp_from_running_time(anchor, gst::Signed::Positive(ms(20))),
             Some(1_020_000_000)
         );
         // A buffer that starts before its segment lands just before the anchor.
         assert_eq!(
-            mxl_timestamp(anchor, gst::Signed::Negative(ms(20))),
+            mxl_timestamp_from_running_time(anchor, gst::Signed::Negative(ms(20))),
             Some(980_000_000)
         );
         // Results outside the u64 MXL timestamp range are rejected, not wrapped.
         assert_eq!(
-            mxl_timestamp(
+            mxl_timestamp_from_running_time(
                 anchor,
                 gst::Signed::Negative(gst::ClockTime::from_seconds(2))
             ),
             None
         );
         assert_eq!(
-            mxl_timestamp(
+            mxl_timestamp_from_running_time(
                 u64::MAX as i128,
                 gst::Signed::Positive(gst::ClockTime::from_nseconds(1))
             ),
