@@ -180,12 +180,24 @@ namespace mxl::lib
                 auto const offset = in_index % grainCount;
                 auto const grain = _flowData->grainAt(offset);
 
-                if ((grain->header.info.validSlices >= std::min(in_minValidSlices, grain->header.info.totalSlices)) ||
-                    ((grain->header.info.flags & MXL_GRAIN_FLAG_INVALID) != 0))
+                // The header lives in shared memory and any process that can open the flow can write it. Check a copy so that the
+                // values tested are the values returned.
+                auto const info = grain->header.info;
+                if ((info.grainSize > _flowData->grainPayloadCapacityAt(offset)) || (info.validSlices > info.totalSlices))
+                {
+                    MXL_ERROR("Grain {} has an inconsistent header: grainSize={}, totalSlices={}, validSlices={}",
+                        in_index,
+                        info.grainSize,
+                        info.totalSlices,
+                        info.validSlices);
+                    return MXL_ERR_INVALID_STATE;
+                }
+
+                if ((info.validSlices >= std::min(in_minValidSlices, info.totalSlices)) || ((info.flags & MXL_GRAIN_FLAG_INVALID) != 0))
                 {
                     if (out_grainInfo != nullptr)
                     {
-                        *out_grainInfo = grain->header.info;
+                        *out_grainInfo = info;
                     }
                     if (out_payload != nullptr)
                     {
