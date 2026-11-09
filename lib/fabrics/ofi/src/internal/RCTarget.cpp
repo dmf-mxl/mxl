@@ -57,10 +57,11 @@ namespace mxl::lib::fabrics::ofi
     }
 
     RCTarget::RCTarget(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain, TargetSetupOptions options)
-        : _proto(std::move(proto))
+        : _pep(std::move(pep))
+        , _proto(std::move(proto))
         , _domain(std::move(domain))
         , _setupOptions(options)
-        , _state(WaitForConnectionRequest{std::move(pep)})
+        , _state(WaitForConnectionRequest{})
     {}
 
     std::optional<Target::ReadResult> RCTarget::read()
@@ -114,7 +115,7 @@ namespace mxl::lib::fabrics::ofi
                 {
                     try
                     {
-                        auto event = readEventQueue<queueReadMode>(*state.pep.eventQueue(), timeout);
+                        auto event = readEventQueue<queueReadMode>(*_pep.eventQueue(), timeout);
 
                         // Check if the entry is available and is a connection request
                         if (event && event->isConnReq())
@@ -125,7 +126,7 @@ namespace mxl::lib::fabrics::ofi
                             auto cqAttr = CompletionQueue::Attributes::defaults();
                             cqAttr.size = _setupOptions.cqDepth.value_or(CompletionQueue::Attributes::DEFAULT_SIZE);
                             auto cq = CompletionQueue::open(_domain, cqAttr);
-                            auto endpoint = Endpoint::create(_domain, state.pep.id(), event->connReq().info());
+                            auto endpoint = Endpoint::create(_domain, _pep.id(), event->connReq().info());
                             endpoint.bind(cq, FI_RECV);
 
                             auto eq = EventQueue::open(_domain->fabric(), EventQueue::Attributes::defaults());
@@ -139,14 +140,14 @@ namespace mxl::lib::fabrics::ofi
                             return RCTarget::WaitForConnection{std::move(endpoint)};
                         }
 
-                        return WaitForConnectionRequest{.pep = std::move(state.pep)};
+                        return state;
                     }
                     catch (FabricException const& ex)
                     {
                         if (ex.isInterrupted())
                         {
                             result = std::make_optional<Target::Interrupted>();
-                            return WaitForConnectionRequest{.pep = std::move(state.pep)};
+                            return state;
                         }
 
                         throw;
@@ -249,7 +250,21 @@ namespace mxl::lib::fabrics::ofi
         }
 
         MXL_INFO("Transitioning to listening to new connection.");
-        return WaitForConnectionRequest{.pep = makeListener(state.ep.domain()->fabric())};
+        rejectPendingConnectionRequests();
+        return WaitForConnectionRequest{};
+    }
+
+    void RCTarget::rejectPendingConnectionRequests()
+    {
+        while (auto event = _pep.eventQueue()->read())
+        {
+            if (event->isConnReq())
+            {
+                MXL_INFO("Reject connection request from {} that arrived while connected.",
+                    FabricAddress::fromDestination(event->connReq().info()).toString());
+                _pep.reject(*event);
+            }
+        }
     }
 
     PassiveEndpoint RCTarget::makeListener(std::shared_ptr<Fabric> const& fabric)
