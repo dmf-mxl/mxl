@@ -45,12 +45,10 @@ namespace mxl::lib::fabrics::ofi
     private:
         /** \brief The wait for connection request state.
          *
-         * The RCTarget has a passive endpoint, and is waiting for an incoming connection request.
+         * The RCTarget is waiting for an incoming connection request on its passive endpoint.
          */
         struct WaitForConnectionRequest
-        {
-            PassiveEndpoint pep;
-        };
+        {};
 
         /** \brief The wait for connection state.
          *
@@ -124,7 +122,18 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         static PassiveEndpoint makeListener(std::shared_ptr<Fabric> const& fabric);
 
+        /** \brief Reject all connection requests that are queued on the passive endpoint.
+         *
+         * The passive endpoint keeps listening while a connection is established. Requests that arrive in that time
+         * are rejected when the target goes back to waiting for a connection request.
+         */
+        void rejectPendingConnectionRequests();
+
     private:
+        /** The passive endpoint lives as long as the target. Its address and id are published in the TargetInfo, so
+         * it is not re-created after a disconnect. A new passive endpoint can bind to a different port.
+         */
+        PassiveEndpoint _pep;
         std::unique_ptr<IngressProtocol> _proto;
         std::shared_ptr<Domain> _domain;
         TargetSetupOptions _setupOptions; /**< Setup options applied when accepting connections. */

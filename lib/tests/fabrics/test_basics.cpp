@@ -276,6 +276,38 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Fabrics connection o
             REQUIRE(mxlFabricsInitiatorRemoveTarget(initiator, targetInfo) == MXL_STATUS_OK);
         }
 
+        // Regression test for dmf-mxl/mxl#844. The target info has no explicit service, so the target listens on a
+        // port chosen by the provider. After the first initiator disconnects, a second initiator must still be able
+        // to connect with the same target info.
+        SECTION("new initiator connects with the same target info after a disconnect")
+        {
+            std::uint64_t dummyIndex;
+
+            REQUIRE(mxlFabricsInitiatorAddTarget(initiator, targetInfo) == MXL_STATUS_OK);
+            waitForConnection([&]() { mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex); },
+                [&]() { return mxlFabricsInitiatorMakeProgressNonBlocking(initiator); });
+
+            // Destroying the initiator closes the connection.
+            REQUIRE(mxlFabricsDestroyInitiator(fabrics, initiator) == MXL_STATUS_OK);
+            initiator = nullptr;
+
+            // Let the target process the shutdown event and go back to waiting for a connection request. A request
+            // that arrives before that is rejected, and the initiator only retries after 5 seconds.
+            auto const deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(200);
+            while (std::chrono::steady_clock::now() < deadline)
+            {
+                mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex);
+            }
+
+            REQUIRE(mxlFabricsCreateInitiator(fabrics, &initiator) == MXL_STATUS_OK);
+            REQUIRE(mxlFabricsInitiatorSetup(initiator, &initiatorConfig, nullptr) == MXL_STATUS_OK);
+            REQUIRE(mxlFabricsInitiatorAddTarget(initiator, targetInfo) == MXL_STATUS_OK);
+            waitForConnection([&]() { mxlFabricsTargetReadGrainNonBlocking(target, &dummyIndex); },
+                [&]() { return mxlFabricsInitiatorMakeProgressNonBlocking(initiator); });
+
+            REQUIRE(mxlFabricsInitiatorRemoveTarget(initiator, targetInfo) == MXL_STATUS_OK);
+        }
+
         REQUIRE(mxlFabricsFreeTargetInfo(targetInfo) == MXL_STATUS_OK);
     }
 
