@@ -68,6 +68,7 @@ target_link_libraries(mxl
         PRIVATE
             mxl-internal-headers # Internal C++ headers in <mxl-internal/*.hpp>
             mxl-internal-objects
+            $<BUILD_INTERFACE:mxl-restrict-picojson-parse>
     )
 
 # Add common linker options
