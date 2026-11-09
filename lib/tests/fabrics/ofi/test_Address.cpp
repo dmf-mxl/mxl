@@ -13,7 +13,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include <netinet/in.h>
 #include "Address.hpp"
+#include "Exception.hpp"
 #include "FabricAddress.hpp"
+#include "Provider.hpp"
 
 using namespace mxl::lib::fabrics::ofi;
 
@@ -214,4 +216,26 @@ TEST_CASE("ofi: FabricAddress::decode returns an empty address for undecodable i
     auto unknown = ::sockaddr{};
     unknown.sa_family = AF_UNSPEC;
     REQUIRE(FabricAddress::decode(FabricAddressFormat::Sockaddr, &unknown, sizeof(unknown)).empty());
+}
+
+TEST_CASE("ofi: FabricAddress::parse checks the TCP port", "[ofi][FabricAddress]")
+{
+    auto const addr = FabricAddress::parse(Provider::TCP, "10.130.40.13", "9000");
+    REQUIRE(std::holds_alternative<::sockaddr_in>(addr.native()));
+    REQUIRE(std::holds_alternative<::sockaddr_in>(FabricAddress::parse(Provider::TCP, "10.130.40.13", "65535").native()));
+
+    // std::stoi accepted these, and the int was then narrowed to a 16-bit port.
+    for (auto const* service : {"65536", "-1", "9000x", " 9000", "+9000"})
+    {
+        CAPTURE(service);
+        try
+        {
+            (void)FabricAddress::parse(Provider::TCP, "10.130.40.13", service);
+            FAIL("parse accepted an invalid port");
+        }
+        catch (Exception const& e)
+        {
+            REQUIRE(e.status() == MXL_ERR_INVALID_ARG);
+        }
+    }
 }

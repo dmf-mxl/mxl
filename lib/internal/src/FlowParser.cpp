@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "mxl-internal/FlowParser.hpp"
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <ranges>
@@ -14,6 +15,7 @@
 #include <picojson/picojson.h>
 #include <mxl/dataformat.h>
 #include <mxl/mxl.h>
+#include "mxl-internal/JsonUtils.hpp"
 #include "mxl-internal/Logging.hpp"
 #include "mxl-internal/MediaUtils.hpp"
 #include "mxl-internal/Rational.hpp"
@@ -96,14 +98,28 @@ namespace mxl::lib
             return it->second.get<T>();
         }
 
+        /**
+         * Get a JSON field as an integer of type T
+         *
+         * \param in_object The json object potentially containing our field.
+         * \param in_field The name of the field to get
+         * \return The field converted to T
+         * \throws std::invalid_argument If the field is not found, or is not a whole number in the range of T.
+         */
+        template<std::integral T>
+        T fetchInteger(picojson::object const& in_object, std::string const& in_field)
+        {
+            return jsonToInteger<T>(testField(in_object, in_field)->second, in_field);
+        }
+
         mxlRational extractRational(picojson::object const& in_object)
         {
             auto result = mxlRational{0, 1};
 
-            result.numerator = static_cast<std::int64_t>(fetchAs<double>(in_object, "numerator"));
+            result.numerator = fetchInteger<std::int64_t>(in_object, "numerator");
             if (auto const it = in_object.find("denominator"); it != in_object.end())
             {
-                result.denominator = static_cast<std::int64_t>(it->second.get<double>());
+                result.denominator = jsonToInteger<std::int64_t>(it->second, "denominator");
             }
 
             // Normalize the rational. We should realistically only see x/1 or x/1001 here.
@@ -207,7 +223,7 @@ namespace mxl::lib
         // Parse the json flow
         //
         auto jsonValue = picojson::value{};
-        auto const err = picojson::parse(jsonValue, in_flowDef);
+        auto const err = parseJson(jsonValue, in_flowDef);
         if (!err.empty())
         {
             throw std::invalid_argument{"Invalid JSON flow definition. " + err};
@@ -268,8 +284,8 @@ namespace mxl::lib
         // Grain rate must be either 30000/1001 or 25/1
         if (_format == MXL_DATA_FORMAT_VIDEO)
         {
-            auto const width = static_cast<std::size_t>(fetchAs<double>(_root, "frame_width"));
-            auto const height = static_cast<std::size_t>(fetchAs<double>(_root, "frame_height"));
+            auto const width = fetchInteger<std::size_t>(_root, "frame_width");
+            auto const height = fetchInteger<std::size_t>(_root, "frame_height");
 
             if ((width < 2) || (width > MAX_WIDTH) || (height < 1) || (height > MAX_HEIGHT))
             {
@@ -334,8 +350,8 @@ namespace mxl::lib
 
         if (_format == MXL_DATA_FORMAT_VIDEO)
         {
-            auto const width = static_cast<std::size_t>(fetchAs<double>(_root, "frame_width"));
-            auto const height = static_cast<std::size_t>(fetchAs<double>(_root, "frame_height"));
+            auto const width = fetchInteger<std::size_t>(_root, "frame_width");
+            auto const height = fetchInteger<std::size_t>(_root, "frame_height");
             auto const mediaType = fetchAs<std::string>(_root, "media_type");
 
             if (mediaType == "video/v210")
@@ -433,7 +449,7 @@ namespace mxl::lib
             {
                 // For video flows the slice length is the byte-length of a single
                 // line of v210 video.
-                auto const width = static_cast<std::size_t>(fetchAs<double>(_root, "frame_width"));
+                auto const width = fetchInteger<std::size_t>(_root, "frame_width");
                 auto const mediaType = fetchAs<std::string>(_root, "media_type");
                 auto const v210fillSize = getV210LineLength(width);
 
@@ -482,7 +498,7 @@ namespace mxl::lib
                 }
 
                 // For v210, the number of slices is always the number of video lines
-                auto h = static_cast<std::size_t>(fetchAs<double>(_root, "frame_height"));
+                auto h = fetchInteger<std::size_t>(_root, "frame_height");
                 if (_interlaced)
                 {
                     return h / 2;
@@ -501,15 +517,11 @@ namespace mxl::lib
     {
         if (auto const it = _root.find("channel_count"); it != _root.end())
         {
-            if (it->second.is<double>())
+            if (auto const value = jsonToInteger<std::size_t>(it->second, "channel_count"); value > 0U)
             {
-                if (auto const value = it->second.get<double>(); (value == std::trunc(value)) && (value > 0))
-                {
-                    return static_cast<std::size_t>(value);
-                }
+                return value;
             }
-            auto msg = fmt::format("Unsupported channel count: {}", it->second.is<std::string>());
-            throw std::invalid_argument{std::move(msg)};
+            throw std::invalid_argument{"Unsupported channel count: 0"};
         }
         return 1U;
     }

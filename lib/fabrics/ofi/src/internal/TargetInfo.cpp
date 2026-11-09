@@ -3,8 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "TargetInfo.hpp"
+#include <cstdint>
 #include <optional>
+#include <stdexcept>
 #include <string>
+#include <mxl-internal/JsonUtils.hpp>
 #include <picojson/wrapper.h>
 #include <uuid/uuid.h>
 #include "Address.hpp"
@@ -61,8 +64,11 @@ namespace mxl::lib::fabrics::ofi
 
     TargetInfo TargetInfo::fromJSON(std::string const& s)
     {
+        // The target info has one region per grain, so it can be much larger than a flow definition.
+        constexpr auto limits = JsonLimits{.maxInputSize = std::size_t{4} * 1024U * 1024U, .maxDepth = 8U, .maxContainerSize = 65536U};
+
         auto parsed = picojson::value{};
-        auto const err = picojson::parse(parsed, s);
+        auto const err = parseJson(parsed, s, limits);
         if (!err.empty())
         {
             throw Exception::invalidArgument("Failure when parsing JSON: {} ", err);
@@ -75,34 +81,42 @@ namespace mxl::lib::fabrics::ofi
 
         auto root = parsed.get<picojson::object>();
 
-        auto const addressFormat = mustConvertAddressFormat(static_cast<std::uint32_t>(root.at("addressFormat").get<double>()));
-        auto const fabricAddress = RawFabricAddress::fromBase64(root.at("fabricAddress").get<std::string>(), addressFormat);
-
-        auto regions = std::vector<RemoteRegion>{};
-        for (auto const& regionValue : root.at("regions").get<picojson::array>())
+        // The conversion helpers throw std::invalid_argument, which the C API would report as MXL_ERR_UNKNOWN.
+        try
         {
-            auto const regionObj = regionValue.get<picojson::object>();
+            auto const addressFormat = mustConvertAddressFormat(jsonToInteger<std::uint32_t>(root.at("addressFormat"), "addressFormat"));
+            auto const fabricAddress = RawFabricAddress::fromBase64(root.at("fabricAddress").get<std::string>(), addressFormat);
 
-            // Conversions of types that represent memory addresses to strings is preferred over converting to float
-            // to make sure nobody can reduce precision when converting on the way.
-            auto const addr = std::stoull(regionObj.at("addr").get<std::string>());
-            auto const len = std::stoull(regionObj.at("len").get<std::string>());
-            auto const rkey = std::stoull(regionObj.at("rkey").get<std::string>());
-            regions.emplace_back(addr, len, rkey);
+            auto regions = std::vector<RemoteRegion>{};
+            for (auto const& regionValue : root.at("regions").get<picojson::array>())
+            {
+                auto const regionObj = regionValue.get<picojson::object>();
+
+                // Conversions of types that represent memory addresses to strings is preferred over converting to float
+                // to make sure nobody can reduce precision when converting on the way.
+                auto const addr = jsonStringToInteger<std::uint64_t>(regionObj.at("addr"), "addr");
+                auto const len = jsonStringToInteger<std::size_t>(regionObj.at("len"), "len");
+                auto const rkey = jsonStringToInteger<std::uint64_t>(regionObj.at("rkey"), "rkey");
+                regions.emplace_back(addr, len, rkey);
+            }
+
+            auto bounceBufferInfo = std::optional<TargetInfoBounceBufferInfo>{std::nullopt};
+            if (root.contains("bounceBufferInfo"))
+            {
+                auto const bounceBufferInfoObj = root.at("bounceBufferInfo").get<picojson::object>();
+                auto const entryCount = jsonStringToInteger<std::size_t>(bounceBufferInfoObj.at("entryCount"), "entryCount");
+                auto const entrySize = jsonStringToInteger<std::size_t>(bounceBufferInfoObj.at("entrySize"), "entrySize");
+                bounceBufferInfo = std::make_optional<TargetInfoBounceBufferInfo>(entryCount, entrySize);
+            }
+
+            auto const id = jsonStringToInteger<Endpoint::Id>(root.at("id"), "id");
+            auto const provider = providerFromString(root.at("provider").get<std::string>()).value_or(Provider::ANY);
+            return {.id = id, .fabricAddress = fabricAddress, .provider = provider, .remoteRegions = regions, .bounceBufferInfo = bounceBufferInfo};
         }
-
-        auto bounceBufferInfo = std::optional<TargetInfoBounceBufferInfo>{std::nullopt};
-        if (root.contains("bounceBufferInfo"))
+        catch (std::invalid_argument const& e)
         {
-            auto const bounceBufferInfoObj = root.at("bounceBufferInfo").get<picojson::object>();
-            auto const entryCount = std::stoull(bounceBufferInfoObj.at("entryCount").get<std::string>());
-            auto const entrySize = std::stoull(bounceBufferInfoObj.at("entrySize").get<std::string>());
-            bounceBufferInfo = std::make_optional<TargetInfoBounceBufferInfo>(entryCount, entrySize);
+            throw Exception::invalidArgument("{}", e.what());
         }
-
-        auto const id = std::stoull(root.at("id").get<std::string>());
-        auto const provider = providerFromString(root.at("provider").get<std::string>()).value_or(Provider::ANY);
-        return {.id = id, .fabricAddress = fabricAddress, .provider = provider, .remoteRegions = regions, .bounceBufferInfo = bounceBufferInfo};
     }
 
     bool TargetInfo::operator==(TargetInfo const& other) const noexcept
