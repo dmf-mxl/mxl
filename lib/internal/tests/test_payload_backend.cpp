@@ -5,6 +5,8 @@
 #include <cstring>
 #include <filesystem>
 #include <stdexcept>
+#include <string>
+#include <string_view>
 #include <vector>
 #include <catch2/catch_test_macros.hpp>
 #include <mxl/flow.h>
@@ -72,16 +74,9 @@ namespace
 
         /** \see PayloadStorage::type() */
         [[nodiscard]]
-        mxlPayloadStorageType type() const noexcept override
+        std::string_view type() const noexcept override
         {
             return MXL_PAYLOAD_STORAGE_HOST_POINTER;
-        }
-
-        /** \see PayloadStorage::deviceIndex() */
-        [[nodiscard]]
-        std::int32_t deviceIndex() const noexcept override
-        {
-            return -1;
         }
 
         /** \see PayloadStorage::slotCount() */
@@ -105,8 +100,6 @@ namespace
         /** \see PayloadStorage::describeLayout() */
         void describeLayout(mxlGrainStorageLayout& layout) const override
         {
-            layout.storageType = type();
-            layout.deviceIndex = deviceIndex();
             _editor(layout);
         }
 
@@ -159,6 +152,23 @@ TEST_CASE("Payload backend loader: backend names", "[payload backend]")
     REQUIRE(PayloadBackendLoader::libraryFileName("cuda-linear") == "libmxl-payload-cuda-linear.so");
 }
 
+TEST_CASE("Payload storage: storage type names", "[payload backend]")
+{
+    REQUIRE(isValidStorageTypeName(MXL_PAYLOAD_STORAGE_HOST_POINTER));
+    REQUIRE(isValidStorageTypeName("org.example.image"));
+    REQUIRE(isValidStorageTypeName("a"));
+    REQUIRE(isValidStorageTypeName("with_underscore"));
+    REQUIRE(isValidStorageTypeName(std::string(MXL_PAYLOAD_STORAGE_TYPE_SIZE - 1, 'a')));
+
+    REQUIRE_FALSE(isValidStorageTypeName(""));
+    REQUIRE_FALSE(isValidStorageTypeName(".leading-dot"));
+    REQUIRE_FALSE(isValidStorageTypeName("trailing-dot."));
+    REQUIRE_FALSE(isValidStorageTypeName("Upper"));
+    REQUIRE_FALSE(isValidStorageTypeName("with space"));
+    REQUIRE_FALSE(isValidStorageTypeName("with/slash"));
+    REQUIRE_FALSE(isValidStorageTypeName(std::string(MXL_PAYLOAD_STORAGE_TYPE_SIZE, 'a')));
+}
+
 TEST_CASE("Payload backend loader: default loader searches the directory of its own binary last", "[payload backend]")
 {
     // In this test binary the loader code is linked into the executable itself, not into libmxl.
@@ -209,6 +219,7 @@ TEST_CASE("Payload backend loader: rejects invalid backends", "[payload backend]
     REQUIRE_THROWS_AS(loader.load("does-not-exist"), std::runtime_error);
     REQUIRE_THROWS_AS(loader.load("test-no-entry"), std::runtime_error);
     REQUIRE_THROWS_AS(loader.load("test-bad-name"), std::runtime_error);
+    REQUIRE_THROWS_AS(loader.load("test-bad-storage-type"), std::runtime_error);
 
     // A loader without search directories fails with a clear error.
     auto emptyLoader = PayloadBackendLoader{std::vector<fs::path>{}};
@@ -222,7 +233,7 @@ TEST_CASE("Payload backend loader: loads a valid backend once", "[payload backen
     auto const& api = loader.load("test-file");
     REQUIRE(api.abiVersion == MXL_PAYLOAD_BACKEND_ABI_VERSION);
     REQUIRE(std::strcmp(api.name, "test-file") == 0);
-    REQUIRE(api.storageType == MXL_PAYLOAD_STORAGE_HOST_POINTER);
+    REQUIRE(std::string_view{api.storageType} == MXL_PAYLOAD_STORAGE_HOST_POINTER);
 
     // A second load returns the same table.
     REQUIRE(&loader.load("test-file") == &api);
@@ -239,7 +250,6 @@ TEST_CASE("Plugin payload storage: prepare, publish and open", "[payload backend
     // The writer prepares the storage while the flow is still in its temporary directory.
     auto writerStorage = PluginPayloadStorage::prepare(api, testFlowInfo(MXL_PAYLOAD_BACKEND_ACCESS_READ_WRITE), "{}", stagingDir, finalDir);
     REQUIRE(writerStorage->type() == MXL_PAYLOAD_STORAGE_HOST_POINTER);
-    REQUIRE(writerStorage->deviceIndex() == -1);
     REQUIRE(writerStorage->slotCount() == 4U);
     REQUIRE(fs::exists(stagingDir / "payload.test"));
 
@@ -347,18 +357,12 @@ TEST_CASE("Plugin payload storage: the backend completes the layout", "[payload 
     auto storage = PluginPayloadStorage::open(api, testFlowInfo(MXL_PAYLOAD_BACKEND_ACCESS_READ_ONLY), "{}", domain.path);
     auto const layout = makeGrainStorageLayout(testDiscreteConfig(), 100U, *storage);
 
-    REQUIRE(layout.storageType == MXL_PAYLOAD_STORAGE_HOST_POINTER);
+    REQUIRE(std::string_view{layout.storageType} == MXL_PAYLOAD_STORAGE_HOST_POINTER);
     REQUIRE(layout.slotCount == 4U);
     REQUIRE(layout.planeCount == 1U);
     REQUIRE(layout.planes[0].offset == 0U);
     REQUIRE(layout.planes[0].pitch == 10U);
     REQUIRE(layout.planes[0].size == 1000U);
-
-    // The UUID comes from the backend.
-    for (auto i = std::size_t{0}; i < sizeof(layout.deviceUuid); ++i)
-    {
-        REQUIRE(layout.deviceUuid[i] == static_cast<std::uint8_t>(0x10U + i));
-    }
 }
 
 TEST_CASE("Payload storage layout: a storage may choose its own plane geometry", "[payload backend]")

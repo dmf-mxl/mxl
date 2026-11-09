@@ -248,6 +248,12 @@ namespace mxl::lib
         }
         else if (format == MXL_DATA_FORMAT_EVENT)
         {
+            // Event flows keep their payload in the built-in host storage.
+            if (optionsParser.getPayloadStorageSpec().usesBackend())
+            {
+                throw PayloadStorageError{MXL_ERR_UNSUPPORTED_OPERATION, "Event flows keep their payload in host memory."};
+            }
+
             auto const grainRate = parser.getGrainRate();
             auto const eventCount = _historyDuration * __int128_t{grainRate.numerator} / (1'000'000'000 * __int128_t{grainRate.denominator});
             if ((eventCount < 2) || (eventCount > 65536))

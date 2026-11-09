@@ -8,6 +8,8 @@
 #include <ios>
 #include <memory>
 #include <stdexcept>
+#include <string>
+#include <string_view>
 #include <system_error>
 #include <fcntl.h>
 #include <unistd.h>
@@ -116,7 +118,6 @@ namespace mxl::lib
             result.maxCommitBatchSizeHint = maxCommitBatchSizeHintOpt;
             result.maxSyncBatchSizeHint = maxSyncBatchSizeHintOpt;
 
-            // A backend reports its device once it has prepared the storage.
             result.deviceIndex = -1;
 
             return result;
@@ -164,8 +165,8 @@ namespace mxl::lib
          */
         struct PayloadDescriptor
         {
-            std::string backend;       ///< The backend that holds the payload.
-            std::uint32_t storageType; ///< The mxlPayloadStorageType the backend reported.
+            std::string backend;     ///< The backend that holds the payload.
+            std::string storageType; ///< The storage type the backend reported.
         };
 
         /**
@@ -174,12 +175,12 @@ namespace mxl::lib
          * \param[in] storageSpec The storage requested by the writer.
          * \param[in] storageType The storage type the backend reports.
          */
-        void writePayloadDescriptor(std::filesystem::path const& flowDir, PayloadStorageSpec const& storageSpec, std::uint32_t storageType)
+        void writePayloadDescriptor(std::filesystem::path const& flowDir, PayloadStorageSpec const& storageSpec, std::string_view storageType)
         {
             auto root = picojson::object{};
             root["version"] = picojson::value{PAYLOAD_DESCRIPTOR_VERSION};
             root["backend"] = picojson::value{storageSpec.backend};
-            root["storageType"] = picojson::value{static_cast<double>(storageType)};
+            root["storageType"] = picojson::value{std::string{storageType}};
 
             auto const path = makePayloadDescriptorFilePath(flowDir);
             if (auto out = std::ofstream{path, std::ios::out | std::ios::trunc}; out)
@@ -230,14 +231,14 @@ namespace mxl::lib
 
             auto const backend = root.find("backend");
             auto const storageType = root.find("storageType");
-            if ((backend == root.end()) || !backend->second.is<std::string>() || (storageType == root.end()) || !storageType->second.is<double>() ||
-                (storageType->second.get<double>() < 0.0))
+            if ((backend == root.end()) || !backend->second.is<std::string>() || (storageType == root.end()) ||
+                !storageType->second.is<std::string>() || !isValidStorageTypeName(storageType->second.get<std::string>()))
             {
                 throw PayloadStorageError{MXL_ERR_INVALID_STATE, fmt::format("The payload descriptor at {} is incomplete.", path.string())};
             }
             return PayloadDescriptor{
                 .backend = backend->second.get<std::string>(),
-                .storageType = static_cast<std::uint32_t>(storageType->second.get<double>()),
+                .storageType = storageType->second.get<std::string>(),
             };
         }
 
@@ -408,8 +409,6 @@ namespace mxl::lib
             writePayloadDescriptor(tempDirectory, storageSpec, backendApi->storageType);
             auto const backendInfo = makeBackendFlowInfo(info, grainNumOfSlices, AccessMode::READ_WRITE, grainPayloadSize);
             flowData->setPayloadStorage(PluginPayloadStorage::prepare(*backendApi, backendInfo, storageSpec.backendOptions, tempDirectory, finalDir));
-            // The backend chose the device from its own options. Record it for readers and tools.
-            info.config.common.deviceIndex = flowData->payloadStorage().deviceIndex();
         }
         else
         {
@@ -688,8 +687,8 @@ namespace mxl::lib
         catch (std::exception const& e)
         {
             MXL_WARN("The payload of flow {} cannot be accessed in this process: {}", flowDir.string(), e.what());
-            flowData->setPayloadStorage(std::make_unique<UnavailablePayloadStorage>(
-                static_cast<mxlPayloadStorageType>(descriptor.storageType), grainCount, MXL_ERR_UNSUPPORTED_OPERATION, e.what()));
+            flowData->setPayloadStorage(
+                std::make_unique<UnavailablePayloadStorage>(descriptor.storageType, grainCount, MXL_ERR_UNSUPPORTED_OPERATION, e.what()));
             return flowData;
         }
 

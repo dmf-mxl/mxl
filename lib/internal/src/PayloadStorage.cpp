@@ -3,6 +3,7 @@
 
 #include "mxl-internal/PayloadStorage.hpp"
 #include <cstring>
+#include <algorithm>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
@@ -15,11 +16,10 @@ namespace mxl::lib
     {
         /**
          * Create a slot description with the fields common to all storage types set.
-         * \param[in] type The storage type of the slot.
          * \param[in] slot The slot index.
-         * \return A slot description with version, size, storage type and slot set, and all other bytes zero.
+         * \return A slot description with version, size and slot set, and all other bytes zero.
          */
-        mxlGrainStorage makeSlotStorageHeader(mxlPayloadStorageType type, std::size_t slot) noexcept
+        mxlGrainStorage makeSlotStorageHeader(std::size_t slot) noexcept
         {
             auto result = mxlGrainStorage{};
             // Value initialization only initializes the first union member. Zero the whole structure so that
@@ -27,7 +27,6 @@ namespace mxl::lib
             std::memset(&result, 0, sizeof(result));
             result.version = 1U;
             result.size = sizeof(mxlGrainStorage);
-            result.storageType = type;
             result.slot = static_cast<std::uint32_t>(slot);
             return result;
         }
@@ -67,6 +66,20 @@ namespace mxl::lib
 
     PayloadStorage::~PayloadStorage() = default;
 
+    bool isValidStorageTypeName(std::string_view name) noexcept
+    {
+        auto const isLowerOrDigit = [](char c)
+        {
+            return ((c >= 'a') && (c <= 'z')) || ((c >= '0') && (c <= '9'));
+        };
+
+        if (name.empty() || (name.size() >= MXL_PAYLOAD_STORAGE_TYPE_SIZE) || !isLowerOrDigit(name.front()) || !isLowerOrDigit(name.back()))
+        {
+            return false;
+        }
+        return std::ranges::all_of(name, [&](char c) { return isLowerOrDigit(c) || (c == '-') || (c == '_') || (c == '.'); });
+    }
+
     HostPayloadStorage::HostPayloadStorage(DiscreteFlowData& flowData)
         : _slotPayloads{}
     {
@@ -79,14 +92,9 @@ namespace mxl::lib
         }
     }
 
-    mxlPayloadStorageType HostPayloadStorage::type() const noexcept
+    std::string_view HostPayloadStorage::type() const noexcept
     {
         return MXL_PAYLOAD_STORAGE_HOST_POINTER;
-    }
-
-    std::int32_t HostPayloadStorage::deviceIndex() const noexcept
-    {
-        return -1;
     }
 
     std::size_t HostPayloadStorage::slotCount() const noexcept
@@ -101,16 +109,14 @@ namespace mxl::lib
             throw std::out_of_range{fmt::format("Slot {} is out of range, the storage has {} slots.", slot, _slotPayloads.size())};
         }
 
-        auto result = makeSlotStorageHeader(type(), slot);
+        auto result = makeSlotStorageHeader(slot);
         result.host.pointer = _slotPayloads[slot];
         return result;
     }
 
-    void HostPayloadStorage::describeLayout(mxlGrainStorageLayout& layout) const
+    void HostPayloadStorage::describeLayout(mxlGrainStorageLayout& /*layout*/) const
     {
-        layout.storageType = type();
-        layout.deviceIndex = deviceIndex();
-        std::memset(layout.deviceUuid, 0, sizeof(layout.deviceUuid));
+        // Host memory has no device, so the default layout is complete.
     }
 
     void HostPayloadStorage::mapSlots() const
@@ -121,8 +127,15 @@ namespace mxl::lib
         auto result = mxlGrainStorageLayout{};
         result.version = 1U;
         result.size = sizeof(mxlGrainStorageLayout);
-        result.deviceIndex = -1;
         result.slotCount = static_cast<std::uint32_t>(storage.slotCount());
+
+        // The storage type is a null terminated name, followed by zeros up to the end of the field.
+        auto const type = storage.type();
+        if (!isValidStorageTypeName(type))
+        {
+            throw std::logic_error{fmt::format("Payload storage reported the invalid storage type '{}'.", type)};
+        }
+        type.copy(result.storageType, type.size());
 
         // The planes in use are the leading entries with a non-zero slice size. By default they follow each
         // other without padding between slices.
@@ -147,7 +160,7 @@ namespace mxl::lib
 
         // The storage may only change the fields it owns.
         if ((result.version != defaults.version) || (result.size != defaults.size) || (result.slotCount != defaults.slotCount) ||
-            (result.planeCount != defaults.planeCount) || (result.storageType != storage.type()))
+            (result.planeCount != defaults.planeCount) || (std::memcmp(result.storageType, defaults.storageType, sizeof(result.storageType)) != 0))
         {
             throw std::logic_error{"Payload storage changed fields of the storage layout that it does not own."};
         }

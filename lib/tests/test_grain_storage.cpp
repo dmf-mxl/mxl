@@ -7,6 +7,7 @@
 #include <fstream>
 #include <regex>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
@@ -122,7 +123,6 @@ namespace
     {
         REQUIRE(lhs.version == rhs.version);
         REQUIRE(lhs.size == rhs.size);
-        REQUIRE(lhs.storageType == rhs.storageType);
         REQUIRE(lhs.slot == rhs.slot);
         REQUIRE(lhs.host.pointer == rhs.host.pointer);
     }
@@ -145,16 +145,14 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Grain storage : Layo
     auto const& discrete = flows.configInfo().discrete;
     REQUIRE(writerLayout.version == 1U);
     REQUIRE(writerLayout.size == sizeof(mxlGrainStorageLayout));
-    REQUIRE(writerLayout.storageType == MXL_PAYLOAD_STORAGE_HOST_POINTER);
-    REQUIRE(writerLayout.deviceIndex == -1);
+    REQUIRE(std::string_view{writerLayout.storageType} == MXL_PAYLOAD_STORAGE_HOST_POINTER);
+    // The name is followed by zeros, so that layouts can be compared byte by byte.
+    for (auto i = sizeof(MXL_PAYLOAD_STORAGE_HOST_POINTER); i < sizeof(writerLayout.storageType); ++i)
+    {
+        REQUIRE(writerLayout.storageType[i] == '\0');
+    }
     REQUIRE(writerLayout.slotCount == discrete.grainCount);
     REQUIRE(writerLayout.planeCount == flowCase.planeCount);
-
-    // Host storage is not tied to a device.
-    for (auto const byte : writerLayout.deviceUuid)
-    {
-        REQUIRE(byte == 0U);
-    }
 
     // Planes follow each other and together cover the whole grain payload.
     auto grainInfo = mxlGrainInfo{};
@@ -191,7 +189,6 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Grain storage : Mapp
         CAPTURE(i);
         REQUIRE(writerSlots[i].version == 1U);
         REQUIRE(writerSlots[i].size == sizeof(mxlGrainStorage));
-        REQUIRE(writerSlots[i].storageType == MXL_PAYLOAD_STORAGE_HOST_POINTER);
         REQUIRE(writerSlots[i].slot == i);
         REQUIRE(writerSlots[i].host.pointer != nullptr);
     }
@@ -359,12 +356,10 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Grain storage : A fl
     REQUIRE(std::filesystem::exists(flowDir / "payload.test"));
     REQUIRE(std::filesystem::file_size(mxl::lib::makeGrainDataFilePath(domain, V210_FLOW_ID, 0U)) == 8192U);
 
-    // The layout comes from the backend, which reports a marker UUID.
+    // The layout comes from the backend, whose file holds the slots like host memory.
     auto layout = mxlGrainStorageLayout{};
     REQUIRE(mxlFlowReaderGetStorageLayout(flows.reader(), &layout) == MXL_STATUS_OK);
-    REQUIRE(layout.storageType == MXL_PAYLOAD_STORAGE_HOST_POINTER);
-    REQUIRE(layout.deviceUuid[0] == 0x10U);
-    REQUIRE(layout.deviceUuid[15] == 0x1FU);
+    REQUIRE(std::string_view{layout.storageType} == MXL_PAYLOAD_STORAGE_HOST_POINTER);
 
     auto writerSlots = std::vector<mxlGrainStorage>(layout.slotCount);
     REQUIRE(mxlFlowWriterMapSlots(flows.writer(), layout.slotCount, writerSlots.data()) == MXL_STATUS_OK);
@@ -399,7 +394,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Grain storage : A da
 
     auto layout = mxlGrainStorageLayout{};
     REQUIRE(mxlFlowReaderGetStorageLayout(flows.reader(), &layout) == MXL_STATUS_OK);
-    REQUIRE(layout.storageType == MXL_PAYLOAD_STORAGE_HOST_POINTER);
+    REQUIRE(std::string_view{layout.storageType} == MXL_PAYLOAD_STORAGE_HOST_POINTER);
     REQUIRE(layout.planeCount == 1U);
 }
 
@@ -448,9 +443,6 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Grain storage : Back
     auto const distance = static_cast<std::uint8_t*>(slots[1].host.pointer) - static_cast<std::uint8_t*>(slots[0].host.pointer);
     REQUIRE((distance % 16384) == 0);
     REQUIRE(static_cast<std::uint64_t>(distance) >= layout.planes[0].size);
-
-    // The backend reports no device, which libmxl records in the flow configuration.
-    REQUIRE(flows.configInfo().common.deviceIndex == -1);
 }
 
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Grain storage : Invalid reader options are rejected", "[mxl flows][grain storage]")
@@ -557,6 +549,20 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Grain storage : Desc
     setVersion(flowDir / "payload.json", "2");
     REQUIRE(mxlCreateFlowReader(instance, V210_FLOW_ID, "", &reader) == MXL_ERR_UNSUPPORTED_OPERATION);
     setVersion(flowDir / "payload.json", "1");
+
+    // The descriptor records the storage type by name, and libmxl refuses a name that is not valid.
+    auto const descriptor = mxl::tests::readFile(flowDir / "payload.json");
+    auto const storageType = std::regex{R"("storageType"\s*:\s*"host-pointer")"};
+    REQUIRE(std::regex_search(descriptor, storageType));
+    {
+        auto out = std::ofstream{flowDir / "payload.json", std::ios::out | std::ios::trunc};
+        out << std::regex_replace(descriptor, storageType, R"("storageType": "Not A Name")");
+    }
+    REQUIRE(mxlCreateFlowReader(instance, V210_FLOW_ID, "", &reader) == MXL_ERR_INVALID_STATE);
+    {
+        auto out = std::ofstream{flowDir / "payload.json", std::ios::out | std::ios::trunc};
+        out << descriptor;
+    }
 
     // The backend refuses its own descriptor when it cannot read it.
     setVersion(flowDir / "payload.test.json", "2");

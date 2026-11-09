@@ -17,15 +17,14 @@ Discrete flow data now owns a `PayloadStorage` object (`lib/internal/include/mxl
 
 The public API in `mxl/flow.h` gains these types:
 
-- `mxlPayloadStorageType`: how a slot is addressed. The only value is `MXL_PAYLOAD_STORAGE_HOST_POINTER`.
+- `MXL_PAYLOAD_STORAGE_HOST_POINTER`, the name of the storage type of host memory, `"host-pointer"`. A storage type says how a slot is addressed. It is a name, as described in [Storage types are names](#storage-types-are-names).
 - `mxlGrainStorageLayout` (512 bytes): the layout shared by all slots of a flow. It holds:
-  - the storage type;
-  - the device index in the calling process, and the device UUID, which identifies the device across processes;
+  - the storage type, as a null terminated name of at most 63 characters;
   - the slot count;
   - the offset, size and pitch of each plane;
-  - reserved space for descriptions specific to a storage type, such as pixel formats and format modifiers.
+  - reserved space for descriptions specific to a storage type, such as the device that holds the payload, pixel formats and format modifiers. The layout has no device fields of its own: [The storage type describes its device](#the-storage-type-describes-its-device) says why.
 - `mxlGrainPlaneLayout` (32 bytes): one plane.
-- `mxlGrainStorage` (256 bytes): the storage of one slot. It is a tagged union, with `host.pointer` for host storage. The reserved part leaves room for one handle per plane and a synchronization object.
+- `mxlGrainStorage` (256 bytes): the storage of one slot. It is a union, with `host.pointer` for host storage, whose member the storage type of the layout selects. The reserved part leaves room for one handle per plane and a synchronization object.
 
 It also gains these functions:
 
@@ -53,19 +52,20 @@ The descriptor sizes are checked at compile time, since they cannot change once 
 
 ### Internal backend interface and loader
 
-Storage types other than host memory are implemented by backend libraries that ship with the SDK. They are not part of libmxl. This change adds the interface between libmxl and those libraries, and the code that loads them. No backend is shipped yet.
+Storage types other than host memory are implemented by backend libraries. They are not part of libmxl. This change adds the interface between libmxl and those libraries, and the code that loads them. No backend is shipped yet.
 
 - `lib/internal/include/mxl-internal/PayloadBackendAbi.h` defines the interface.
-  - It is a versioned table of C functions: `prepare`, `open`, `destroy`, `deviceIndex`, `slotStorage`, `describeLayout` and `mapSlots`.
-  - `prepare` and `open` receive the backend's options from the writer or reader as JSON object text. Options specific to one kind of storage, such as a CUDA device index, are never part of the interface itself.
+  - It is a versioned table of C functions: `prepare`, `open`, `destroy`, `slotStorage`, `describeLayout` and `mapSlots`.
+  - `prepare` and `open` receive the backend's options from the writer or reader as JSON object text. Options specific to one kind of storage, such as a CUDA device UUID, are never part of the interface itself.
   - The flow description passed to a backend includes the plane geometry (plane count, slices per grain, and slice sizes), so that a backend allocating images or device buffers can size them.
 - `lib/internal/include/mxl-internal/PayloadBackend.hpp` declares three classes:
   - `PayloadBackendLoader` finds and validates backend libraries.
   - `PluginPayloadStorage` implements `PayloadStorage` on top of a backend instance.
   - `PayloadStorageError` carries the status code a backend returned.
-- The tests build three backend libraries from `lib/internal/tests/payload_backends/`:
+- The tests build four backend libraries from `lib/internal/tests/payload_backends/`:
   - A valid backend that keeps the payload in a file.
   - The same backend reporting a wrong name.
+  - The same backend reporting a storage type that is not a valid name.
   - A library without the entry point.
 
   `lib/internal/tests/test_payload_backend.cpp` uses them to check, without a GPU:
@@ -74,21 +74,19 @@ Storage types other than host memory are implemented by backend libraries that s
   - explicit mapping of all slots, and mapping on first access when the application did not map;
   - layout completion.
 
-A backend named `cuda-linear` is the library `libmxl-payload-cuda-linear.so`. libmxl searches the directories listed in the `MXL_PAYLOAD_PLUGIN_PATH` environment variable, separated by colons, then the directory that holds libmxl, and uses the first file it finds. If that file is not a valid backend, loading fails and later directories are not searched. Relative directories are ignored, and so is the variable in setuid and setgid processes. The library must export `mxlGetPayloadBackendApi`, implement the interface version of libmxl, report the name it was loaded under, and report a storage type that libmxl knows. Libraries are loaded on first use and stay loaded until the process exits.
+A backend named `cuda-linear` is the library `libmxl-payload-cuda-linear.so`. libmxl searches the directories listed in the `MXL_PAYLOAD_PLUGIN_PATH` environment variable, separated by colons, then the directory that holds libmxl, and uses the first file it finds. If that file is not a valid backend, loading fails and later directories are not searched. Relative directories are ignored, and so is the variable in setuid and setgid processes. The library must export `mxlGetPayloadBackendApi`, implement the interface version of libmxl, report the name it was loaded under, and report a storage type with a valid name. Libraries are loaded on first use and stay loaded until the process exits.
 
 
 ### Storage describes its own layout
 
-libmxl builds a default layout from the flow configuration. In it, the planes follow each other without padding, and the pitch of each plane equals its slice size. The storage then completes that layout through `PayloadStorage::describeLayout`, or `describeLayout` in the backend interface:
+libmxl builds a default layout from the flow configuration. It holds the storage type the storage reports. In it, the planes follow each other without padding, and the pitch of each plane equals its slice size. The storage then completes that layout through `PayloadStorage::describeLayout`, or `describeLayout` in the backend interface:
 
-- It sets the storage type, the device index and the device UUID.
 - It may change the offset, size and pitch of planes, for example when a device chose the pitch of the buffers it allocated.
-- It may fill the part of the reserved space defined for its storage type.
+- It may fill the part of the reserved space defined for its storage type, such as the device that holds the payload.
 
 libmxl then checks the result:
 
-- The storage must not change the version, the size, the slot count or the plane count.
-- It must report its own storage type.
+- The storage must not change the version, the size, the storage type, the slot count or the plane count.
 - Every plane must be able to hold all its slices at the reported pitch.
 
 Host storage keeps the default layout, so host flows report exactly what they did before.
@@ -103,11 +101,11 @@ A writer selects the payload storage with the `payload` object of the options of
 
 libmxl interprets one key, `backend`, which names the backend library. Without it, or with `host`, the payload is in the built-in host storage. There is no default backend for other storage: a writer that wants device memory, dma-buf or images names the backend, and an empty name is an error. libmxl does not restrict which data formats a backend holds. It passes the data format to the backend, which rejects the formats it cannot store.
 
-The deprecated `mxlCommonFlowConfigInfo.payloadLocation` plays no part in this. libmxl leaves it at 0 for every flow, and readers learn the storage from `mxlGrainStorageLayout.storageType`.
+The deprecated `mxlCommonFlowConfigInfo.payloadLocation` and `deviceIndex` play no part in this. libmxl leaves them at 0 and -1 for every flow. Readers learn the storage from `mxlGrainStorageLayout`, and the device from the part of it that the storage type defines.
 
 All other keys belong to the backend. libmxl passes them to it as a JSON object, and the backend validates them. In the example, `deviceUuid` is an option of the CUDA backend. A dma-heap backend would take a heap name instead, and a backend for a capture card a device node. The built-in host storage accepts no other keys.
 
-Backends for GPUs, such as CUDA and Vulkan, identify devices by UUID, not by index. [GPUs are identified by UUID](#gpus-are-identified-by-uuid) explains why. Each backend resolves the UUID to its own device in each process. `mxlCommonFlowConfigInfo.deviceIndex` records the index of the device in the writer's process, for information only. `mxlGrainStorageLayout.deviceUuid` is what identifies the device across processes.
+Backends for GPUs, such as CUDA and Vulkan, identify devices by UUID, not by index. [GPUs are identified by UUID](#gpus-are-identified-by-uuid) explains why. Each backend resolves the UUID to its own device in each process, and reports the device in the reserved bytes of the layout, in the terms of its storage type: the UUID, which identifies the device across processes, and an index only if its device API has one, valid in the calling process.
 
 Readers pass options to the backend of the flow the same way, in the `payload` object of the options of `mxlCreateFlowReader`, for example `{"payload": {"deviceUuid": "GPU-…"}}` to access a CUDA payload on another GPU of the same machine. Readers cannot select the storage, so `backend` is not accepted. Flows with the built-in host storage ignore the other keys, so an application can pass the same reader options to every flow.
 
@@ -121,46 +119,12 @@ A flow created with a backend differs from a host flow in four ways:
 
 - It uses flow data version 2 (`FLOW_DATA_VERSION_PAYLOAD_BACKEND`). SDK releases that only know version 1 refuse to open it, instead of reading past the end of a grain file.
 - Its grain files hold only the 8 KiB grain header.
-- Its directory holds `payload.json`, written by libmxl. It records the version of its format, the backend name and the storage type the backend reports. The backend writes the files it needs next to it, for example the exported memory handle.
+- Its directory holds `payload.json`, written by libmxl. It records the version of its format, the backend name and the name of the storage type the backend reports. The backend writes the files it needs next to it, for example the exported memory handle.
 - The backend prepares its storage in the temporary directory, before the rename that publishes the flow. If the backend cannot be loaded or fails, nothing is published.
 
 A reader opens such a flow by loading the backend named in `payload.json` and opening its storage, which does not map anything. If the backend cannot be used in the reader's process, for example because it is not installed or its device runtime is missing, the reader is still created and can read the flow metadata. `mxlFlowReaderGetStorageLayout` and `mxlFlowReaderMapSlots` then return `MXL_ERR_UNSUPPORTED_OPERATION`.
 
 The tests use the file backed test backend (`test-file`) to run this whole path without a GPU. It is built next to the flow test executable, because libmxl only loads backends from the directory of the binary that contains its code, and never installed.
-
-### The cuda-linear backend
-
-`libmxl-payload-cuda-linear.so` keeps the payload of a video flow in linear CUDA device memory, and refuses flows of other formats. It is built when the CMake option `MXL_ENABLE_CUDA_PAYLOAD` is on, which needs the CUDA toolkit, and is installed next to libmxl. It links the static CUDA runtime, so on an installed system it only needs the NVIDIA driver. libmxl itself does not link against CUDA. It is based on the CUDA work by Thomas True in PR #653.
-
-A writer puts a flow's payload on a GPU with:
-
-```json
-{"payload": {"backend": "cuda-linear", "deviceUuid": "GPU-88064374-43da-caf5-b332-be5fb39bf2e6"}}
-```
-
-- `deviceUuid` is required for writers, in the format `nvidia-smi -L` prints, or as 32 hexadecimal digits. The backend accepts no device index.
-- Readers may pass `{"payload": {"deviceUuid": "..."}}` to access the payload on another GPU of the same machine. By default they use the GPU that holds it.
-- Slots have the storage type `MXL_PAYLOAD_STORAGE_CUDA_DEVICE_POINTER`. `mxlGrainStorage.cuda.pointer` is a device address that is valid in the calling process, on the device given by the layout's `deviceIndex` and `deviceUuid`. The pointer API returns `MXL_ERR_UNSUPPORTED_OPERATION`.
-
-How the memory is shared:
-
-- The writer creates one CUDA virtual-memory allocation for all slots, with each slot starting at a multiple of 256 bytes, and clears it. It exports that allocation once as a POSIX file descriptor. libmxl serves the descriptor on `payload.sock` in the flow directory. `payload.cuda.json`, next to `payload.json`, records the format version, the export name `posix-fd`, the stride, the allocation size and the device UUID. It does not contain the descriptor. Readers refuse another version.
-- A reader in another process receives the descriptor when the application calls `mxlFlowReaderMapSlots`, and imports it with `cuMemImportFromShareableHandle`. Opening the reader makes no CUDA call.
-- A reader on another GPU maps the allocation through peer access, if `cudaDeviceCanAccessPeer` allows it. Otherwise mapping returns `MXL_ERR_UNSUPPORTED_OPERATION`.
-- A reader in the writer's own process shares the writer's allocation through a registry inside the process. The allocation is reference counted, so it stays valid for such a reader after the writer is released.
-
-The commit contract: device work that writes a grain must be complete before the writer calls `mxlFlowWriterCommitGrain`, for example after `cudaStreamSynchronize` or `cudaEventSynchronize`. A reader can use a slot as soon as `mxlFlowReaderGetGrainSlot` returns it.
-
-Where writer and reader can run:
-
-| Writer and reader | Mechanism | Requirements |
-|---|---|---|
-| Same pod, same GPU | POSIX file descriptor | One MXL domain. |
-| Same pod, different GPUs | POSIX file descriptor and peer access | One MXL domain. The reader sees both GPUs, and they support peer access (NVLink or a PCIe path that allows it). |
-| Different pods, same node | POSIX file descriptor, with peer access for different GPUs | A shared MXL domain (a tmpfs both pods mount). No shared IPC or PID namespace. The reader sees the writer's GPU. |
-| Different nodes | Fabrics | One MXL domain per node. RDMA from device memory is later work. |
-
-`lib/tests/cuda` tests the backend through the public API: sharing in one process and between processes, memory staying valid after the writer is released, and option errors. The tests are skipped when no CUDA device is visible. The peer-GPU test runs when two visible devices can access each other.
 
 ## Principles
 
@@ -192,7 +156,7 @@ A change that readers of the old format could still read, such as a new optional
 
 ### GPUs are identified by UUID
 
-This applies to backends for GPUs. CUDA and Vulkan both number devices in an order that depends on the process and its environment, and both give each device a UUID. Other backends name their device the way their API does: a dma-heap backend by heap name, a backend for a capture card by its device node, such as `/dev/video0`, and a DRM backend by its render node. For those backends, `mxlGrainStorageLayout.deviceUuid` is all zeros and the device indices are -1.
+This applies to backends for GPUs. CUDA and Vulkan both number devices in an order that depends on the process and its environment, and both give each device a UUID. Other backends name their device the way their API does: a dma-heap backend by heap name, a backend for a capture card by its device node, such as `/dev/video0`, and a DRM backend by its render node. Each storage type describes its device in its own terms, so those backends record a name or a node where the GPU backends record a UUID.
 
 A flow is created in one process and read in others, often in other containers. A device has to be named the same way in all of them, and a device index does not do that. An index is only the position of a device in the list that one device API returns in one process:
 
@@ -205,9 +169,15 @@ For example, on a machine with two GPUs, a writer pod assigned the second GPU an
 A UUID is assigned to the device itself. It is the value `nvidia-smi -L` prints and `cudaDeviceProp::uuid` reports, and Vulkan reports the same kind of identifier in `VkPhysicalDeviceIDProperties::deviceUUID`. It does not depend on enumeration order, on which devices a process can see, or on the API that reports it. So:
 
 - Writer and reader options of GPU backends name devices by UUID.
-- The backend records the UUID of the device that holds the payload with the flow, and `mxlGrainStorageLayout.deviceUuid` reports it.
+- The backend records the UUID of the device that holds the payload with the flow, and reports it in the part of the layout its storage type defines.
 - Each backend translates the UUID to a device index in each process, only for its own calls to the device API.
-- The device indices MXL reports (`mxlCommonFlowConfigInfo.deviceIndex`, `mxlGrainStorageLayout.deviceIndex`) are valid only in the process that reports them, and only for the API of the backend.
+- A device index a storage type reports, such as CUDA's, is valid only in the process that reports it, and only for the API of the backend. The flow configuration records no device index.
+
+### The storage type describes its device
+
+`mxlGrainStorageLayout` had a device index and a device UUID of its own at first, next to the storage type. They went, because libmxl never read them, and because they fit one device API only. A CUDA device has an index in each process and a UUID. A Vulkan device has a device UUID and a driver UUID, and opaque descriptors can only be imported where both match. A dma-buf heap has a name, a capture card a device node, and a DRM device a render node. Fields for the CUDA case would be empty for the others, and still not enough for Vulkan, whose driver UUID would be in the reserved bytes next to them.
+
+So the layout holds what every storage has: the storage type, the slot count and the planes. What identifies the device is part of what a storage type defines in the reserved bytes, with the rest of its description, and an application reads it once it knows the storage type. The public structure of a storage type the SDK defines names those fields, in `mxl/flow.h`, as the slot description's union names a slot's address.
 
 ### Options belong to the backend that uses them
 
@@ -256,9 +226,16 @@ If a backend is asked for a slot that was not mapped, it maps on that first requ
 
 A backend allocates its memory and writes the files that readers need while the flow is still in its temporary directory. The rename that publishes the flow comes after that. A reader never sees a flow without its payload description. If allocation fails, the temporary directory is removed and nothing is published. Values that must refer to the published location, such as keys of a registry inside the process, are derived from the final directory, which is known before the rename.
 
-### The SDK defines every storage type and export format
+### Storage types are names
 
-Storage types, and the formats in which memory is exported between processes, form closed sets defined by the SDK. New ones are added by the SDK, together with the backend that implements them. The loader rejects a backend that reports a storage type libmxl does not know.
+A storage type is a name, not a number, so that a backend can define one without a change to the SDK and without a registry of numbers. A name has 1 to 63 lowercase ASCII letters, digits, `-`, `_` and `.`, and starts and ends with a letter or digit. The names of the types the SDK defines have no dot, such as `host-pointer`. Other names start with a reversed domain name of whoever defines the type, such as `org.example.image`, so that two parties do not pick the same name.
+
+- A storage type defines how a slot is addressed, what the reserved bytes of the layout and of the slot description hold, and the format in which its memory is exported between processes.
+- libmxl interprets these bytes only for the types the SDK defines. For other types it copies them, and applications read them through definitions that come with the backend, such as a header that declares the name of the type and the structures in the reserved bytes.
+- Several backends can hold the same storage type, for example two allocators of dma-bufs. The backend name selects the library that holds a flow, the storage type tells applications how to use it.
+- The loader rejects a backend whose storage type is not a valid name, and readers reject a `payload.json` whose storage type is not one.
+
+The layout holds the name in a 64-byte field, followed by zeros, so that two layouts of the same flow compare equal byte by byte. The slot description holds no storage type: it is only read together with the layout, and its 256 bytes have no room for a name. An enumeration of the SDK's types with a range of values left to backends was tried first. Every party defining a type then has to pick numbers and hope that nobody else picked them, and nothing can tell two such types apart.
 
 ## How the pieces fit
 
@@ -273,7 +250,7 @@ flowchart TB
     host["HostPayloadStorage<br/>built in"]
     plugin["PluginPayloadStorage"]
     loader["PayloadBackendLoader<br/>dlopen by name from the libmxl directory"]
-    cuda["libmxl-payload-cuda-linear.so<br/>CUDA device memory"]
+    cuda["libmxl-payload-cuda-linear.so<br/>next step"]
     dmabuf["dma-buf and image backends<br/>later"]
     app --> ptr
     app --> desc
@@ -290,22 +267,33 @@ flowchart TB
 
 ## Future work
 
-The first pull request is complete with the `cuda-linear` backend. The sections below describe later work.
+The steps below complete the first pull request. They follow the design agreed with the CUDA work in PR #653.
+
+1. Add the `cuda-linear` backend, built only when a CMake option enables it.
+   - It makes one `cudaMalloc` for all slots of a flow, with each slot aligned to 256 bytes, and exports it once with `cudaIpcGetMemHandle`. It records the handle, the export format and the device UUID in its own file in the flow directory. Each reader then imports the memory once.
+   - A reader on another GPU of the same machine maps the memory through peer access (`cudaIpcMemLazyEnablePeerAccess`).
+   - Readers in the writer's own process share the allocation through a reference count. CUDA IPC cannot open a handle in the process that created it.
+2. Document the commit contract: device work that writes a grain must be complete before `mxlFlowWriterCommitGrain`. Also document the ways to deploy it:
+   - Same pod, same GPU: CUDA IPC.
+   - Same pod, different GPU: IPC and peer access.
+   - Different pods on one node: IPC with a shared domain and `hostIPC`.
+   - Different nodes: fabrics.
+3. Test the CUDA backend on machines with a GPU. CI keeps running the whole flow through the test backend.
 
 ### Passing file descriptors
 
 dma-buf, exported Vulkan images and CUDA memory exported as a file descriptor all share memory through file descriptors, which cannot be stored in a file. They need a channel that the writer serves. libmxl owns this channel, so that every backend uses the same code and the same access checks:
 
-- The writer's libmxl serves a Unix socket in the flow directory, `payload.sock`, and sends the descriptors the backend exported with `SCM_RIGHTS`. The kernel limits one message to 253 descriptors (`SCM_MAX_FD`).
-- The writer storage runs a thread that accepts connections on that socket. The socket is bound in the staging directory, so publishing the flow by renaming the directory leaves it in place.
+- The writer's libmxl serves a Unix socket in the flow directory, `payload.sock`, and sends the descriptors of all slots with `SCM_RIGHTS`. The kernel limits one message to 253 descriptors (`SCM_MAX_FD`), so larger sets are sent in several messages.
+- The writer process already runs an epoll thread for `DomainWatcher`, which can serve the socket.
 - The socket checks each peer with `SO_PEERCRED` against the access rules of the domain.
-- Connecting to a Unix socket requires write permission on the socket file, while a reader today only needs read access. The socket mode follows the read permission of the flow directory.
-- A Unix socket in a tmpfs shared between containers works across pods on one node, without a shared IPC or PID namespace.
+- Connecting to a Unix socket requires write permission on the socket file, while a reader today only needs read access. The socket mode must therefore follow the read permission of the flow directory.
+- A Unix socket in a tmpfs shared between containers works across pods on one node, without `hostIPC`.
 - `pidfd_getfd` is not an alternative, because it requires ptrace permission, which containers usually deny.
 
-The functions are optional and sit at the end of the existing backend table. A backend built before them reports a shorter table. After `prepare`, libmxl asks the writer's backend for the descriptors to serve. In a reader, `mapSlots` receives the descriptors that libmxl read from the socket and passes them to the backend. The public API does not change.
+The backend interface needs a second version for this. After `prepare`, libmxl asks the writer's backend for the descriptors to serve. In a reader, `mapSlots` receives the descriptors that libmxl read from the socket. The public API does not change.
 
-`cuda-linear` uses this channel. It exports one descriptor for the whole allocation. A backend that leaves the two functions null shares no descriptors.
+This channel is shared infrastructure for every storage type after CUDA IPC. Only legacy CUDA IPC, whose handles are plain bytes, works without it.
 
 ## Worked example: a dma-buf backend
 
@@ -348,7 +336,7 @@ The backend writes no file of its own. After `prepare`, libmxl takes the descrip
 
 ### Describing the storage
 
-- The storage type is a new value, `MXL_PAYLOAD_STORAGE_DMABUF`.
+- The storage type is a new one, `MXL_PAYLOAD_STORAGE_DMABUF`, named `"dmabuf"`.
 - `describeLayout` reports the offset, size and pitch of each plane within the slot's buffer. It may pad lines, for example to the 64-byte pitch alignment many display engines need. libmxl checks that the planes still hold their lines.
 - The type-specific part of the layout holds the DRM format of the flow and the format modifier the backend chose. DRM describes a buffer with one format and one modifier for all its planes:
 
@@ -358,7 +346,7 @@ The backend writes no file of its own. After `prepare`, libmxl takes the descrip
       uint32_t drmFormat;  /* DRM fourcc of the flow's media format, as defined by the SDK */
       uint32_t reserved;
       uint64_t modifier;   /* DRM format modifier, DRM_FORMAT_MOD_LINEAR for heap buffers */
-  } mxlDmaBufLayout;       /* 16 bytes of the 344 reserved */
+  } mxlDmaBufLayout;       /* 16 bytes of the 280 reserved */
   ```
 - The slot description holds one descriptor per plane. Planes of the same buffer repeat its descriptor:
 
@@ -450,14 +438,14 @@ It also creates one exportable timeline semaphore for the flow. libmxl serves al
 
 ### Describing the storage
 
-- The storage type is a new value, `MXL_PAYLOAD_STORAGE_EXTERNAL_IMAGE`.
-- The layout's `deviceUuid` is the Vulkan device UUID.
+- The storage type is a new one, `MXL_PAYLOAD_STORAGE_EXTERNAL_IMAGE`, named `"external-image"`.
 - The planes have no linear addressing. The backend reports offset 0, the allocation size, and pitch 0.
-- The type-specific part holds what an importer needs to create an identical image:
+- The type-specific part holds the device and what an importer needs to create an identical image:
 
   ```c
   typedef struct mxlExternalImageLayout_t
   {
+      uint8_t deviceUuid[16];      /* VkPhysicalDeviceIDProperties::deviceUUID */
       uint8_t driverUuid[16];      /* VkPhysicalDeviceIDProperties::driverUUID */
       uint32_t vkFormat;           /* VkFormat of the flow's media format */
       uint32_t width;
@@ -469,7 +457,7 @@ It also creates one exportable timeline semaphore for the flow. libmxl serves al
       uint32_t imageLayout;        /* VkImageLayout the image is always kept in */
       uint64_t allocationSize[MXL_MAX_PLANES_PER_GRAIN]; /* one entry, or one per plane of a disjoint image */
       uint64_t drmModifier;        /* for dma-buf export, otherwise 0 */
-  } mxlExternalImageLayout;        /* 88 bytes of the 344 reserved */
+  } mxlExternalImageLayout;        /* 104 bytes of the 304 reserved */
   ```
 
 - The slot description holds one memory descriptor, or one per plane of a disjoint image, and the descriptor of the flow's timeline semaphore. The semaphore descriptor is the same in every slot, because slot descriptions are the only place that carries handles.
@@ -478,7 +466,7 @@ It also creates one exportable timeline semaphore for the flow. libmxl serves al
 
 Each Vulkan, OpenGL and CUDA import function takes ownership of the descriptor it is given. The application therefore duplicates the descriptor from the slot description with `dup`, and passes the copy, as the rule that libmxl owns its handles requires.
 
-- Vulkan: check that `deviceUuid` and `driverUuid` match the application's device, which opaque descriptors require. Create an image with the parameters from the layout and `VkExternalMemoryImageCreateInfo`. Allocate its memory with `VkImportMemoryFdInfoKHR` and `VkMemoryDedicatedAllocateInfo`, then bind it. Import the semaphore with `vkImportSemaphoreFdKHR`.
+- Vulkan: check that the `deviceUuid` and `driverUuid` of the image layout match the application's device, which opaque descriptors require. Create an image with the parameters from the layout and `VkExternalMemoryImageCreateInfo`. Allocate its memory with `VkImportMemoryFdInfoKHR` and `VkMemoryDedicatedAllocateInfo`, then bind it. Import the semaphore with `vkImportSemaphoreFdKHR`.
 - OpenGL: `glCreateMemoryObjectsEXT`, `glImportMemoryFdEXT`, then `glTextureStorageMem2DEXT` with the matching internal format, for example `GL_RGBA16F`.
 - CUDA: `cudaImportExternalMemory`, then `cudaExternalMemoryGetMappedMipmappedArray` with the matching channel description, for example `cudaCreateChannelDescHalf4()`, and a surface object on level 0. Import the semaphore with `cudaImportExternalSemaphore` as a timeline semaphore.
 
@@ -509,9 +497,9 @@ Images with optimal tiling cannot be sent with RDMA. Images with linear tiling, 
 Most of the model holds for both backends without change:
 
 - The public API: map all slots once, then exchange a slot number per grain. Image and dma-buf imports are expensive, so describing slots once is what makes them usable.
-- The split between a layout shared by all slots and constant slot descriptions, and a closed set of storage types defined by the SDK.
-- The descriptor sizes. The largest type-specific description, for images, uses 88 of the 344 reserved bytes of the layout. Four plane descriptors and a semaphore use less than 64 of the 240 reserved bytes of a slot description.
-- Identifying devices by UUID. Vulkan needs a device UUID and a driver UUID, and a dma-heap needs neither.
+- The split between a layout shared by all slots and constant slot descriptions, and storage types named by whoever defines them.
+- The descriptor sizes. The largest type-specific description, for images, uses 104 of the 304 reserved bytes of the layout. Four plane descriptors and a semaphore use less than 64 of the 240 reserved bytes of a slot description.
+- Identifying devices by UUID, in the part of the layout each storage type defines. Vulkan needs a device UUID and a driver UUID, and a dma-heap needs neither.
 - Passing backend options through libmxl: `heap`, `deviceUuid` and `tiling` need no change to libmxl or its interfaces.
 - Layouts completed by the storage, for pitches that a device or driver chooses.
 - The commit function. dma-buf fences and a timeline semaphore keyed on the grain index both work without a new argument.

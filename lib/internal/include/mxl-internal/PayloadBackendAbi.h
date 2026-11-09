@@ -89,10 +89,13 @@ extern "C"
         uint32_t abiVersion;
         /** Backend name. Must be equal to the name libmxl used to load the library. */
         char const* name;
-        /** The mxlPayloadStorageType of every slot this backend describes. */
-        uint32_t storageType;
-        /** Reserved. Must be zero. */
-        uint32_t reserved;
+        /**
+         * The storage type of every slot this backend describes, a null terminated name as described for
+         * mxlGrainStorageLayout.storageType. Several backends can hold the same storage type. libmxl rejects a
+         * backend whose storage type is not a valid name. It interprets the reserved bytes of mxlGrainStorageLayout
+         * and mxlGrainStorage only for the storage types the SDK defines, and copies them for the others.
+         */
+        char const* storageType;
 
         /**
          * Allocate the payload storage of a new flow and write any files that readers need to import it.
@@ -139,16 +142,6 @@ extern "C"
         void (*destroy)(mxlPayloadBackendInstance instance);
 
         /**
-         * The device on which this process accesses the payload.
-         *
-         * \param[in] instance A valid instance.
-         * \return The index of the device in this process, as numbered by the device API the backend uses, or -1 if
-         *      the payload is not tied to a device or the device is not known yet. libmxl records the writer's value in
-         *      mxlCommonFlowConfigInfo.deviceIndex.
-         */
-        int32_t (*deviceIndex)(mxlPayloadBackendInstance instance);
-
-        /**
          * Describe the storage of one slot, mapping the storage first if mapSlots() was not called.
          *
          * May be called from several threads at the same time, including for the first access. The description
@@ -157,7 +150,7 @@ extern "C"
          * \param[in] instance A valid instance.
          * \param[in] slot The slot to describe. Less than mxlPayloadBackendFlowInfo.grainCount.
          * \param[out] out_storage Receives the description. The backend fills every byte, including version,
-         *      size, storageType and slot.
+         *      size and slot.
          * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if slot is out of range, or another error code
          *      if the payload cannot be imported.
          */
@@ -166,11 +159,11 @@ extern "C"
         /**
          * Complete the storage layout of the flow. Must not import device memory.
          *
-         * libmxl passes a default layout in which the planes follow each other without padding between slices.
-         * The backend sets storageType, deviceIndex and deviceUuid. It may change the offset, size and pitch of
-         * planes, for example to the values a device chose when it allocated its buffers, and may fill the part
-         * of the reserved space defined for its storage type. libmxl checks the result and rejects a layout
-         * whose planes cannot hold their slices.
+         * libmxl passes a default layout in which storageType is set and the planes follow each other without
+         * padding between slices. The backend may change the offset, size and pitch of planes, for example to the
+         * values a device chose when it allocated its buffers, and may fill the part of the reserved space defined
+         * for its storage type, such as the device that holds the payload, in the terms of its own device API.
+         * libmxl checks the result and rejects a layout whose planes cannot hold their slices.
          *
          * \param[in] instance A valid instance.
          * \param[in,out] inout_layout The default layout on input, the complete layout on output.
@@ -190,33 +183,6 @@ extern "C"
          * \return MXL_STATUS_OK on success, or an error code if the storage cannot be mapped in this process.
          */
         mxlStatus (*mapSlots)(mxlPayloadBackendInstance instance);
-
-        /**
-         * Give libmxl the file descriptors that share this writer's storage with other processes.
-         *
-         * Null when the backend does not share storage through file descriptors. libmxl serves the returned
-         * descriptors on a socket in the flow directory. The caller owns the descriptors and closes them.
-         *
-         * \param[in] instance A writer instance returned by prepare().
-         * \param[in,out] inout_count On input, the number of entries in fds, or 0 to query the count. On output,
-         *      the number of descriptors the backend has.
-         * \param[out] fds Receives one descriptor per entry. Null to query the count.
-         * \return MXL_STATUS_OK on success, or MXL_ERR_INVALID_ARG if fds is too small.
-         */
-        mxlStatus (*exportDescriptors)(mxlPayloadBackendInstance instance, uint32_t* inout_count, int* fds);
-
-        /**
-         * Receive the file descriptors of a flow's storage, obtained by libmxl from the writer's socket.
-         *
-         * Null when the backend does not share storage through file descriptors. Called before mapSlots() for a
-         * reader. The backend owns the descriptors after the call and closes them, whether the call succeeds or not.
-         *
-         * \param[in] instance A reader instance returned by open().
-         * \param[in] count The number of descriptors in fds.
-         * \param[in] fds The descriptors. Not null when count is not 0.
-         * \return MXL_STATUS_OK on success, or an error code.
-         */
-        mxlStatus (*importDescriptors)(mxlPayloadBackendInstance instance, uint32_t count, int const* fds);
     } mxlPayloadBackendApiV1;
 
     /**

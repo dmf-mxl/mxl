@@ -713,8 +713,9 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow Manager : Rejec
         flowId, flowDef, MXL_DATA_FORMAT_VIDEO, 3, mxlRational{60000, 1001}, payloadSize, 0, sliceSizes);
     REQUIRE(created);
 
-    // Writers leave the deprecated field at 0.
+    // Writers leave the deprecated fields at 0 and -1.
     REQUIRE(flowData->flowInfo()->config.common.payloadLocation == 0U);
+    REQUIRE(flowData->flowInfo()->config.common.deviceIndex == -1);
 
     // Other software may set it to say that the payload is elsewhere.
     flowData->flowInfo()->config.common.payloadLocation = 1U;

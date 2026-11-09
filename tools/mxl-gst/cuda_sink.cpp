@@ -15,15 +15,17 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <cuda_runtime_api.h>
+#include <CLI/CLI.hpp>
 #include <fmt/format.h>
 #include <gst/app/gstappsrc.h>
 #include <gst/gst.h>
-#include <CLI/CLI.hpp>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
+#include "CudaLinearStorage.h"
 #include "utils.hpp"
 
 namespace
@@ -238,15 +240,15 @@ namespace
 
             auto layout = mxlGrainStorageLayout{};
             requireMxl(::mxlFlowReaderGetStorageLayout(_reader, &layout), "mxlFlowReaderGetStorageLayout");
-            if (layout.storageType != MXL_PAYLOAD_STORAGE_CUDA_DEVICE_POINTER)
+            if (std::string_view{layout.storageType} != MXL_CUDA_LINEAR_STORAGE_TYPE)
             {
                 fail("The flow payload is not in CUDA device memory.");
             }
             _slots.resize(layout.slotCount);
             requireMxl(::mxlFlowReaderMapSlots(_reader, layout.slotCount, _slots.data()), "mxlFlowReaderMapSlots");
             requireMxl(::mxlFlowReaderGetStorageLayout(_reader, &layout), "mxlFlowReaderGetStorageLayout");
-            requireCuda(::cudaSetDevice(layout.deviceIndex), "cudaSetDevice");
-            MXL_INFO("Reading payload on CUDA device {}", layout.deviceIndex);
+            requireCuda(::cudaSetDevice(mxlCudaLinearLayout(layout).deviceIndex), "cudaSetDevice");
+            MXL_INFO("Reading payload on CUDA device {}", mxlCudaLinearLayout(layout).deviceIndex);
         }
 
         CudaReader(CudaReader const&) = delete;
@@ -320,7 +322,7 @@ namespace
             {
                 fail("GetGrainSlot returned a slot outside the mapped range.");
             }
-            return Grain{Take::Ready, _slots[slot].cuda.pointer, info.grainSize};
+            return Grain{Take::Ready, mxlCudaLinearDevicePointer(_slots[slot]), info.grainSize};
         }
 
     private:

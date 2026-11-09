@@ -6,6 +6,8 @@
 #include <cassert>
 #include <chrono>
 #include <cstdint>
+#include <algorithm>
+#include <exception>
 #include <memory>
 #include <utility>
 #include <variant>
@@ -18,9 +20,11 @@
 #include "AddressVector.hpp"
 #include "CompletionQueue.hpp"
 #include "Endpoint.hpp"
+#include "EventQueue.hpp"
 #include "Exception.hpp"
 #include "Fabric.hpp"
 #include "FabricInfoHelpers.hpp"
+#include "QueueHelpers.hpp"
 #include "Region.hpp"
 #include "TargetInfo.hpp"
 #include "VariantUtils.hpp"
@@ -122,7 +126,11 @@ namespace mxl::lib::fabrics::ofi
     {
         requireCapability(info, FI_WRITE, "Interface is missing required remote write capability");
 
+        // Size the CQ to hold as many completions as the endpoint supports, to avoid
+        // CQ overflow. This assumes one CQ per endpoint; if CQs are ever shared,
+        // this sizing must be revisited.
         auto cqAttr = CompletionQueue::Attributes::defaults();
+        cqAttr.size = std::max(cqAttr.size, info.txSize());
         if (options.cqDepth)
         {
             cqAttr.size = *options.cqDepth;
@@ -148,6 +156,8 @@ namespace mxl::lib::fabrics::ofi
 
         auto av = AddressVector::open(endpoint.domain());
         endpoint.bind(av);
+
+        endpoint.bind(EventQueue::open(fabric));
 
         endpoint.enable();
 
@@ -200,11 +210,8 @@ namespace mxl::lib::fabrics::ofi
     {
         // Post a transfer work item to all targets. If the target is not in "Added" state
         // this is a no-op.
-        for (auto& [_, target] : _targets)
-        {
-            // A completion will be posted to the completion queue, after which the counter will be decremented again
-            target.transferGrain(_endpoint, grainIndex, grainIndex, MXL_GRAIN_PAYLOAD_OFFSET, SliceRange::make(startSlice, endSlice));
-        }
+        forEachTarget([&](RDMInitiatorTarget& target)
+            { target.transferGrain(_endpoint, grainIndex, grainIndex, MXL_GRAIN_PAYLOAD_OFFSET, SliceRange::make(startSlice, endSlice)); });
     }
 
     void RDMInitiator::transferGrainToTarget(Endpoint::Id targetId, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t payloadOffset,
@@ -216,49 +223,56 @@ namespace mxl::lib::fabrics::ofi
 
     void RDMInitiator::transferSamples(std::uint64_t headIndex, std::size_t count)
     {
-        for (auto& [_, target] : _targets)
-        {
-            target.transferSamples(_endpoint, headIndex, count);
-        }
+        forEachTarget([&](RDMInitiatorTarget& target) { target.transferSamples(_endpoint, headIndex, count); });
     }
 
     // makeProgress
     Initiator::MakeProgressResult RDMInitiator::makeProgress()
     {
         activateIdleEndpoints();
-        pollCQ();
+        drainCQ();
+        drainEventQueue(*_endpoint.eventQueue());
         return afterProgressResult();
     }
 
     // makeProgressBlocking
     Initiator::MakeProgressResult RDMInitiator::makeProgressBlocking(std::chrono::steady_clock::duration timeout)
     {
-        auto now = std::chrono::steady_clock::now();
-        activateIdleEndpoints();
-        auto elapsed = std::chrono::steady_clock::now() - now;
-
-        auto remaining = timeout - elapsed;
-        if (remaining.count() >= 0)
+        try
         {
-            try
+            if (timeout < Endpoint::EQReadInterval)
             {
-                blockOnCQ(remaining);
+                makeProgress();
+                blockOnCQ(timeout);
+                return afterProgressResult();
             }
-            catch (FabricException const& ex)
+
+            auto const deadline = std::chrono::steady_clock::now() + timeout;
+            for (;;)
             {
-                if (ex.isInterrupted())
+                if (std::holds_alternative<Initiator::Ready>(makeProgress()))
                 {
-                    return Initiator::Interrupted{};
+                    return Initiator::Ready{};
                 }
-                throw;
+
+                auto const timeUntilDeadline = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - std::chrono::steady_clock::now());
+                if (timeUntilDeadline <= std::chrono::milliseconds::zero())
+                {
+                    return afterProgressResult();
+                }
+
+                // Bounded so that makeProgress() reads the event queue at least once per interval.
+                blockOnCQ(std::min(Endpoint::EQReadInterval, timeUntilDeadline));
             }
         }
-        else
+        catch (FabricException const& ex)
         {
-            pollCQ();
+            if (ex.isInterrupted())
+            {
+                return Initiator::Interrupted{};
+            }
+            throw;
         }
-
-        return afterProgressResult();
     }
 
     RDMInitiatorTarget& RDMInitiator::findRemoteByEndpoint(Endpoint::Id id)
@@ -303,21 +317,47 @@ namespace mxl::lib::fabrics::ofi
         if (timeout == std::chrono::milliseconds::zero())
         {
             // So just behave exactly like the non-blocking variant.
-            pollCQ();
+            drainCQ();
             return;
         }
 
         if (auto completion = _endpoint.completionQueue()->readBlocking(timeout); completion)
         {
             processCompletion(*completion);
+            drainCQ();
         }
     }
 
-    void RDMInitiator::pollCQ()
+    void RDMInitiator::drainCQ()
     {
-        if (auto completion = _endpoint.completionQueue()->read(); completion)
+        while (auto completion = _endpoint.completionQueue()->read())
         {
             processCompletion(*completion);
+        }
+    }
+
+    template<typename F>
+    void RDMInitiator::forEachTarget(F&& transfer)
+    {
+        // One failing target, e.g. an EFA peer in backoff answering EAGAIN, must not stop the others.
+        auto failure = std::exception_ptr{};
+        for (auto& [_, target] : _targets)
+        {
+            try
+            {
+                transfer(target);
+            }
+            catch (Exception const&)
+            {
+                if (!failure)
+                {
+                    failure = std::current_exception();
+                }
+            }
+        }
+        if (failure)
+        {
+            std::rethrow_exception(failure);
         }
     }
 

@@ -154,6 +154,10 @@ namespace mxl::lib::fabrics::ofi
         }
 
         auto const header = _bounceBuffer.unpack(*immData, _region);
+        if (header.count == 0)
+        {
+            return {};
+        }
         return std::make_optional<Target::SampleReadResult>(header.headIndex, header.count);
     }
 

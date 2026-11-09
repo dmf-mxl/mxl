@@ -9,6 +9,7 @@
 #include <rdma/fabric.h>
 #include <rdma/fi_eq.h>
 #include "AddressVector.hpp"
+#include "EventQueue.hpp"
 #include "Exception.hpp"
 #include "FabricAddress.hpp"
 #include "FabricInfo.hpp"
@@ -62,6 +63,8 @@ namespace mxl::lib::fabrics::ofi
         auto av = AddressVector::open(domain);
         endpoint.bind(av);
 
+        endpoint.bind(EventQueue::open(fabric));
+
         // Connectionless endpoints must be explictely enabled when they are ready to be used.
         endpoint.enable();
 
@@ -101,6 +104,7 @@ namespace mxl::lib::fabrics::ofi
     template<QueueReadMode queueReadMode>
     std::optional<Target::ReadResult> RDMTarget::readNext(std::chrono::steady_clock::duration timeout)
     {
+        drainEventQueue(*_ep.eventQueue());
         try
         {
             auto completion = readCompletionQueue<queueReadMode>(*_ep.completionQueue(), timeout);

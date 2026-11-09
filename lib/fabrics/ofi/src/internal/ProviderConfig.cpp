@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "ProviderConfig.hpp"
 #include <algorithm>
+#include <string>
 #include "Exception.hpp"
 
 namespace mxl::lib::fabrics::ofi
@@ -77,6 +78,7 @@ namespace mxl::lib::fabrics::ofi
             .supportedProtocols = {FI_PROTO_SOCK_TCP},
             .requiredCaps = libfabricRequiredCaps(capabilities) | FI_MSG,
             .filteredCaps = FI_TAGGED,
+            .supportedFabricNames = {},
         };
         return ProviderConfig{std::move(values), capabilities};
     }
@@ -92,6 +94,7 @@ namespace mxl::lib::fabrics::ofi
             .supportedProtocols = {FI_PROTO_RDMA_CM_IB_RC},
             .requiredCaps = libfabricRequiredCaps(capabilities) | FI_MSG,
             .filteredCaps = FI_HMEM,
+            .supportedFabricNames = {},
         };
         return ProviderConfig{std::move(values), capabilities};
     }
@@ -107,6 +110,7 @@ namespace mxl::lib::fabrics::ofi
             .supportedProtocols = {FI_PROTO_SHM},
             .requiredCaps = libfabricRequiredCaps(capabilities),
             .filteredCaps = FI_HMEM,
+            .supportedFabricNames = {},
         };
         return ProviderConfig{std::move(values), capabilities};
     }
@@ -121,7 +125,9 @@ namespace mxl::lib::fabrics::ofi
             .supportedAddressFormats = {FI_ADDR_EFA},
             .supportedProtocols = {FI_PROTO_EFA},
             .requiredCaps = libfabricRequiredCaps(capabilities),
-            .filteredCaps = FI_HMEM | FI_TAGGED,
+            .filteredCaps = FI_HMEM,
+            // EFA publishes two RDM fabrics for the same device, and only `efa` is supported for now.
+            .supportedFabricNames = {"efa"},
         };
         return ProviderConfig{std::move(values), capabilities};
     }
@@ -144,7 +150,14 @@ namespace mxl::lib::fabrics::ofi
         // Filters out all objects that are not the endpoint type that we are looking for with this provider.
         auto const unsupportedEndpointType = (view->ep_attr->type != _values.endpointType);
 
-        return !(protocolNotSupported || addressFormatNotSupported || containsFilteredCaps || missingRequiredCaps || unsupportedEndpointType);
+        // Filters out all fabrics whose name is not in supportedFabricNames, if any are given.
+        auto const unsupportedFabricName =
+            !_values.supportedFabricNames.empty() &&
+            ((view->fabric_attr->name == nullptr) ||
+                std::ranges::find(_values.supportedFabricNames, std::string{view->fabric_attr->name}) == _values.supportedFabricNames.end());
+
+        return !(protocolNotSupported || addressFormatNotSupported || containsFilteredCaps || missingRequiredCaps || unsupportedEndpointType ||
+                 unsupportedFabricName);
     }
 
     std::string ProviderConfig::getProviderName() const

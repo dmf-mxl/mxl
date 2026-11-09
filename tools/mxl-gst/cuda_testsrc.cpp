@@ -15,16 +15,18 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 #include <cuda_runtime_api.h>
+#include <CLI/CLI.hpp>
 #include <fmt/format.h>
 #include <gst/app/gstappsink.h>
 #include <gst/gst.h>
-#include <CLI/CLI.hpp>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
+#include "CudaLinearStorage.h"
 #include "utils.hpp"
 
 namespace
@@ -272,14 +274,14 @@ namespace
 
             auto layout = mxlGrainStorageLayout{};
             requireMxl(::mxlFlowWriterGetStorageLayout(_writer, &layout), "mxlFlowWriterGetStorageLayout");
-            if (layout.storageType != MXL_PAYLOAD_STORAGE_CUDA_DEVICE_POINTER)
+            if (std::string_view{layout.storageType} != MXL_CUDA_LINEAR_STORAGE_TYPE)
             {
                 fail("The flow payload is not in CUDA device memory.");
             }
             _slots.resize(layout.slotCount);
             requireMxl(::mxlFlowWriterMapSlots(_writer, layout.slotCount, _slots.data()), "mxlFlowWriterMapSlots");
-            requireCuda(::cudaSetDevice(layout.deviceIndex), "cudaSetDevice");
-            MXL_INFO("Payload is on CUDA device {}", layout.deviceIndex);
+            requireCuda(::cudaSetDevice(mxlCudaLinearLayout(layout).deviceIndex), "cudaSetDevice");
+            MXL_INFO("Payload is on CUDA device {}", mxlCudaLinearLayout(layout).deviceIndex);
         }
 
         CudaWriter(CudaWriter const&) = delete;
@@ -319,7 +321,7 @@ namespace
                     fail("OpenGrainSlot returned a slot outside the mapped range.");
                 }
                 auto const bytes = std::min(sourceSize, static_cast<std::size_t>(info.grainSize));
-                requireCuda(::cudaMemcpy(_slots[slot].cuda.pointer, source, bytes, cudaMemcpyHostToDevice), "cudaMemcpy");
+                requireCuda(::cudaMemcpy(mxlCudaLinearDevicePointer(_slots[slot]), source, bytes, cudaMemcpyHostToDevice), "cudaMemcpy");
                 // The commit publishes the grain. Device writes have to be visible before that.
                 requireCuda(::cudaDeviceSynchronize(), "cudaDeviceSynchronize");
                 info.validSlices = info.totalSlices;
@@ -340,8 +342,7 @@ namespace
         auto grainIndex = std::uint64_t{MXL_UNDEFINED_INDEX};
         while (g_exit_requested == 0)
         {
-            auto const timeoutNs =
-                (grainIndex != MXL_UNDEFINED_INDEX) ? ::mxlGetNsUntilIndex(grainIndex + 1U, &source.rate()) : 100'000'000ULL;
+            auto const timeoutNs = (grainIndex != MXL_UNDEFINED_INDEX) ? ::mxlGetNsUntilIndex(grainIndex + 1U, &source.rate()) : 100'000'000ULL;
             auto sample = source.pull(timeoutNs);
             if (!sample)
             {
@@ -384,16 +385,16 @@ namespace
     }
 
     auto const patternIds = std::unordered_map<std::string, std::uint64_t>{
-        {"smpte", 0},
-        {"snow", 1},
-        {"black", 2},
-        {"white", 3},
-        {"red", 4},
-        {"green", 5},
-        {"blue", 6},
-        {"checkers-1", 7},
-        {"checkers-2", 8},
-        {"ball", 18},
+        {"smpte",      0 },
+        {"snow",       1 },
+        {"black",      2 },
+        {"white",      3 },
+        {"red",        4 },
+        {"green",      5 },
+        {"blue",       6 },
+        {"checkers-1", 7 },
+        {"checkers-2", 8 },
+        {"ball",       18},
     };
 }
 

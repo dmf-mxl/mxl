@@ -152,158 +152,6 @@ extern "C"
     } mxlGrainInfo;
 
     /**
-     * How the payload of the grains of a discrete flow is stored and addressed.
-     * The value is fixed when the flow is created.
-     */
-    typedef enum mxlPayloadStorageType
-    {
-        /**
-         * The payload is in host memory. A slot is addressed through a host pointer, which the pointer based
-         * functions such as mxlFlowWriterOpenGrain() and mxlFlowReaderGetGrain() also return.
-         */
-        MXL_PAYLOAD_STORAGE_HOST_POINTER = 0,
-
-        /**
-         * The payload is in CUDA device memory. A slot is addressed through a CUDA device pointer that is valid in the
-         * calling process, on the device reported by mxlGrainStorageLayout.deviceIndex and deviceUuid. Device work that
-         * writes a grain must be complete before mxlFlowWriterCommitGrain() is called, for example after
-         * cudaStreamSynchronize().
-         */
-        MXL_PAYLOAD_STORAGE_CUDA_DEVICE_POINTER = 1,
-    } mxlPayloadStorageType;
-
-    /**
-     * Position and geometry of one plane of a grain payload.
-     *
-     * The fields follow the plane model used by DRM, V4L2 and Vulkan: an offset and a pitch within the memory
-     * object that holds the plane. For pointer based storage types, all planes of a slot are in one memory
-     * object, and offset is relative to the address in the slot description. For storage types whose slot
-     * description carries one handle per plane, offset is relative to the start of that plane's object.
-     * The values are the same for every slot of a flow.
-     */
-    typedef struct mxlGrainPlaneLayout_t
-    {
-        /** Offset in bytes of the first byte of the plane within the memory object that holds it. */
-        uint64_t offset;
-        /** Size of the plane in bytes, from its first byte to the end of its last slice. */
-        uint64_t size;
-        /**
-         * Distance in bytes between the starts of two consecutive slices of the plane. For video, a slice is
-         * a line. At least mxlDiscreteFlowConfigInfo.sliceSizes for the plane. Storage that does not add
-         * padding between slices reports exactly that value.
-         */
-        uint64_t pitch;
-        /** Reserved. Always zero. */
-        uint64_t reserved;
-    } mxlGrainPlaneLayout;
-
-    /**
-     * Describes the storage of the payload of all the slots of a discrete flow.
-     *
-     * A slot is one entry of the ring buffer. The grain at index i is stored in slot (i % slotCount).
-     * The layout does not change for the lifetime of a flow, so it can be read once after the flow reader or
-     * writer is created.
-     *
-     * The library fills all fields, including version and size.
-     */
-    typedef struct mxlGrainStorageLayout_t
-    {
-        /** Version of this structure. The only currently supported value is 1. */
-        uint32_t version;
-        /** Size of this structure in bytes. */
-        uint32_t size;
-        /**
-         * How the payload of the slots is stored.
-         * \see mxlPayloadStorageType
-         */
-        uint32_t storageType;
-        /**
-         * Index, in the calling process, of the device on which this process accesses the payload, or -1 if the
-         * payload is in host memory or is not tied to a device. Device indices can differ between processes,
-         * for example when CUDA_VISIBLE_DEVICES differs. Use deviceUuid to identify a device across processes.
-         */
-        int32_t deviceIndex;
-        /** Number of slots in the ring buffer. Equal to mxlDiscreteFlowConfigInfo.grainCount. */
-        uint32_t slotCount;
-        /** Number of used entries in planes. Video v210 has 1 plane, v210a has 2 (fill, then key). Data has 1. */
-        uint32_t planeCount;
-        /**
-         * UUID of the device that holds the payload, as reported by the device API (for example the CUDA or
-         * Vulkan device UUID). All zeros if the payload is not tied to a device.
-         */
-        uint8_t deviceUuid[16];
-        /** Position and geometry of each plane. Only the first planeCount entries are valid. */
-        mxlGrainPlaneLayout planes[MXL_MAX_PLANES_PER_GRAIN];
-        /**
-         * Reserved for descriptions specific to a storage type, such as the pixel format and format modifier
-         * of each plane or the extent of an image. Always zero for the storage types defined so far. Pads the
-         * total size of this structure to 512 bytes.
-         */
-        uint8_t reserved[344];
-    } mxlGrainStorageLayout;
-
-    /**
-     * Storage of one slot when the storage type is MXL_PAYLOAD_STORAGE_HOST_POINTER.
-     */
-    typedef struct mxlHostGrainStorage_t
-    {
-        /** Host address of the first byte of the slot storage. */
-        void* pointer;
-    } mxlHostGrainStorage;
-
-    /**
-     * Storage of one slot when the storage type is MXL_PAYLOAD_STORAGE_CUDA_DEVICE_POINTER.
-     */
-    typedef struct mxlCudaGrainStorage_t
-    {
-        /** CUDA device address of the first byte of the slot storage, valid in the calling process. */
-        void* pointer;
-    } mxlCudaGrainStorage;
-
-    /**
-     * Describes the storage of the payload of one slot of a discrete flow.
-     *
-     * The description of a slot does not change for the lifetime of a flow. Applications can therefore set up
-     * any per slot resources once. The planes of the payload are located with mxlGrainStorageLayout.planes.
-     *
-     * Pointer based storage types describe a slot with one address. Storage types that share memory through
-     * handles, such as file descriptors, describe a slot with one handle per plane. The library owns such
-     * handles. An application that needs a handle beyond the lifetime of its reader or writer duplicates it.
-     *
-     * The library fills all fields, including version and size. Only the union member that matches storageType
-     * is valid.
-     */
-    typedef struct mxlGrainStorage_t
-    {
-        /** Version of this structure. The only currently supported value is 1. */
-        uint32_t version;
-        /** Size of this structure in bytes. */
-        uint32_t size;
-        /**
-         * How the payload of this slot is stored. Always equal to mxlGrainStorageLayout.storageType.
-         * \see mxlPayloadStorageType
-         */
-        uint32_t storageType;
-        /** The slot described by this structure. */
-        uint32_t slot;
-
-        union
-        {
-            /** Valid if storageType is MXL_PAYLOAD_STORAGE_HOST_POINTER. */
-            mxlHostGrainStorage host;
-
-            /** Valid if storageType is MXL_PAYLOAD_STORAGE_CUDA_DEVICE_POINTER. */
-            mxlCudaGrainStorage cuda;
-
-            /**
-             * Reserved for future storage types, which need room for one handle per plane and a
-             * synchronization object. Pads the total size of this structure to 256 bytes.
-             */
-            uint8_t reserved[240];
-        };
-    } mxlGrainStorage;
-
-    /**
      * @brief Metadata for one event queue entry, either a complete event or a fragment.
      *
      */
@@ -353,6 +201,129 @@ extern "C"
          */
         uint64_t index;
     } mxlEventInfo;
+
+    /**
+     * Size of mxlGrainStorageLayout.storageType, the name of a storage type, including its terminating null character.
+     */
+#define MXL_PAYLOAD_STORAGE_TYPE_SIZE 64
+
+    /**
+     * The storage type of payload in host memory. A slot is addressed through a host pointer, which the pointer based
+     * functions such as mxlFlowWriterOpenGrain() and mxlFlowReaderGetGrain() also return.
+     */
+#define MXL_PAYLOAD_STORAGE_HOST_POINTER "host-pointer"
+
+    /**
+     * Position and geometry of one plane of a grain payload.
+     *
+     * The fields follow the plane model used by DRM, V4L2 and Vulkan: an offset and a pitch within the memory
+     * object that holds the plane. For pointer based storage types, all planes of a slot are in one memory
+     * object, and offset is relative to the address in the slot description. For storage types whose slot
+     * description carries one handle per plane, offset is relative to the start of that plane's object.
+     * The values are the same for every slot of a flow.
+     */
+    typedef struct mxlGrainPlaneLayout_t
+    {
+        /** Offset in bytes of the first byte of the plane within the memory object that holds it. */
+        uint64_t offset;
+        /** Size of the plane in bytes, from its first byte to the end of its last slice. */
+        uint64_t size;
+        /**
+         * Distance in bytes between the starts of two consecutive slices of the plane. For video, a slice is
+         * a line. At least mxlDiscreteFlowConfigInfo.sliceSizes for the plane. Storage that does not add
+         * padding between slices reports exactly that value.
+         */
+        uint64_t pitch;
+        /** Reserved. Always zero. */
+        uint64_t reserved;
+    } mxlGrainPlaneLayout;
+
+    /**
+     * Describes the storage of the payload of all the slots of a discrete flow.
+     *
+     * A slot is one entry of the ring buffer. The grain at index i is stored in slot (i % slotCount).
+     * The layout does not change for the lifetime of a flow, so it can be read once after the flow reader or
+     * writer is created.
+     *
+     * The library fills all fields, including version and size.
+     */
+    typedef struct mxlGrainStorageLayout_t
+    {
+        /** Version of this structure. The only currently supported value is 1. */
+        uint32_t version;
+        /** Size of this structure in bytes. */
+        uint32_t size;
+        /**
+         * How the payload of the slots is stored, as the null terminated name of a storage type, such as
+         * MXL_PAYLOAD_STORAGE_HOST_POINTER. The bytes after the terminating null character are zero.
+         *
+         * A storage type defines how a slot is addressed and what the reserved bytes of this structure and of
+         * mxlGrainStorage hold. The names of the storage types the SDK defines have no dot. Other names start with
+         * a reversed domain name of whoever defines the type, for example "org.example.image", so that they do not
+         * need to be registered with the SDK. Names use lowercase ASCII letters, digits, '-', '_' and '.'.
+         */
+        char storageType[MXL_PAYLOAD_STORAGE_TYPE_SIZE];
+        /** Number of slots in the ring buffer. Equal to mxlDiscreteFlowConfigInfo.grainCount. */
+        uint32_t slotCount;
+        /** Number of used entries in planes. Video v210 has 1 plane, v210a has 2 (fill, then key). Data has 1. */
+        uint32_t planeCount;
+        /** Position and geometry of each plane. Only the first planeCount entries are valid. */
+        mxlGrainPlaneLayout planes[MXL_MAX_PLANES_PER_GRAIN];
+        /**
+         * Reserved for descriptions specific to a storage type, such as the device that holds the payload, the
+         * pixel format and format modifier of each plane or the extent of an image. The library does not interpret
+         * these bytes: what identifies a device, for example, is the storage type's to define, since a CUDA device
+         * has an index in each process and a UUID, a Vulkan device two UUIDs, and a dma-buf heap a name. Always
+         * zero for the storage types defined so far. Pads the total size of this structure to 512 bytes.
+         */
+        uint8_t reserved[304];
+    } mxlGrainStorageLayout;
+
+    /**
+     * Storage of one slot when the storage type is MXL_PAYLOAD_STORAGE_HOST_POINTER.
+     */
+    typedef struct mxlHostGrainStorage_t
+    {
+        /** Host address of the first byte of the slot storage. */
+        void* pointer;
+    } mxlHostGrainStorage;
+
+    /**
+     * Describes the storage of the payload of one slot of a discrete flow.
+     *
+     * The description of a slot does not change for the lifetime of a flow. Applications can therefore set up
+     * any per slot resources once. The planes of the payload are located with mxlGrainStorageLayout.planes.
+     *
+     * Pointer based storage types describe a slot with one address. Storage types that share memory through
+     * handles, such as file descriptors, describe a slot with one handle per plane. The library owns such
+     * handles. An application that needs a handle beyond the lifetime of its reader or writer duplicates it.
+     *
+     * The library fills all fields, including version and size. Only the union member that matches
+     * mxlGrainStorageLayout.storageType is valid.
+     */
+    typedef struct mxlGrainStorage_t
+    {
+        /** Version of this structure. The only currently supported value is 1. */
+        uint32_t version;
+        /** Size of this structure in bytes. */
+        uint32_t size;
+        /** The slot described by this structure. */
+        uint32_t slot;
+        /** Reserved. Always zero. Aligns the union. */
+        uint32_t reserved0;
+
+        union
+        {
+            /** Valid if mxlGrainStorageLayout.storageType is MXL_PAYLOAD_STORAGE_HOST_POINTER. */
+            mxlHostGrainStorage host;
+
+            /**
+             * Reserved for future storage types, which need room for one handle per plane and a
+             * synchronization object. Pads the total size of this structure to 256 bytes.
+             */
+            uint8_t reserved[240];
+        };
+    } mxlGrainStorage;
 
     typedef struct mxlFlowReader_t* mxlFlowReader;
     typedef struct mxlFlowWriter_t* mxlFlowWriter;
@@ -506,6 +477,9 @@ extern "C"
      * Create a reader for an existing flow, or obtain another reference to the reader this instance already has for it.
      * Each successful call must be paired with a call to mxlReleaseFlowReader().
      *
+     * Opening a reader does not access the payload storage, so a reader can be created in a process that cannot access the
+     * payload, for example to read the flow metadata.
+     *
      * \param[in] instance The mxl instance created using mxlCreateInstance
      * \param[in] flowId The id of the flow to read, as a UUID string.
      * \param[in] options (optional) Reader options in JSON, can be NULL. The keys of the optional "payload" object are passed to
@@ -513,12 +487,11 @@ extern "C"
      *     accesses the payload. Readers cannot select the storage, so "backend" is not accepted. Flows with the
      *     built-in host storage ignore these keys. Only the options of the call that creates the reader are used.
      * \param[out] reader A pointer to a memory location where the flow reader will be written.
-     * \retval MXL_STATUS_OK The reader was created.
-     * \retval MXL_ERR_INVALID_ARG The instance, the flow id, the reader pointer, or the options are not valid.
+     * \retval MXL_STATUS_OK The reader was created, or another reference to it obtained.
+     * \retval MXL_ERR_INVALID_ARG The instance, the flow id, the options or the reader pointer is not valid.
      * \retval MXL_ERR_FLOW_NOT_FOUND There is no flow with this id in the domain.
      * \retval MXL_ERR_PERMISSION_DENIED The files of the flow cannot be accessed with the permissions of the process.
-     * \retval MXL_ERR_UNKNOWN Any other failure. Opening a reader does not access the payload storage, so a reader can
-     *     be created in a process that cannot access the payload, for example to read the flow metadata.
+     * \retval MXL_ERR_UNKNOWN Any other failure.
      */
     MXL_EXPORT
     mxlStatus mxlCreateFlowReader(mxlInstance instance, char const* flowId, char const* options, mxlFlowReader* reader);

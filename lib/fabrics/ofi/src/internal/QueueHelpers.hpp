@@ -9,9 +9,13 @@
 #include <utility>
 #include <fmt/base.h>
 #include <fmt/color.h>
+#include <mxl-internal/Logging.hpp>
+#include <rdma/fi_errno.h>
 #include "Completion.hpp"
 #include "Endpoint.hpp"
 #include "Event.hpp"
+#include "EventQueue.hpp"
+#include "Exception.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
@@ -100,5 +104,31 @@ namespace mxl::lib::fabrics::ofi
         }
 
         return completion;
+    }
+
+    /** \brief Read all entries from a connectionless endpoint's event queue and log the errors among them.
+     *
+     * The errors concern work the provider does on its own behalf, such as EFA's peer handshake, so they are only logged.
+     *
+     * \param eq The event queue to drain.
+     */
+    inline void drainEventQueue(EventQueue& eq)
+    {
+        try
+        {
+            while (auto event = eq.read())
+            {
+                if (event->isError())
+                {
+                    auto const& error = event->error();
+                    // The provider code is logged as a number: fi_strerror() would name an unrelated error.
+                    MXL_WARN("Event queue error: {} ({}), provider code {}", ::fi_strerror(error.code()), error.code(), error.providerCode());
+                }
+            }
+        }
+        catch (Exception const& ex)
+        {
+            MXL_WARN("Unhandled entry on the event queue: {}", ex.what());
+        }
     }
 }

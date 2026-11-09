@@ -61,13 +61,6 @@ target_link_libraries(mxl-internal-tests
             Catch2::Catch2WithMain
     )
 
-if (TARGET PcapPlusPlus::Pcap++)
-    target_link_libraries(mxl-internal-tests
-            PRIVATE
-                PcapPlusPlus::Pcap++
-        )
-endif()
-
 # Payload backends used by test_payload_backend.cpp and by the flow tests in lib/tests. libmxl only loads backends
 # from the directory of the binary that contains its code. The flow test executable links the internal objects
 # directly, so that binary is the executable itself, and the backends are built next to it. The internal tests pass
@@ -111,6 +104,14 @@ target_compile_definitions(mxl-test-payload-test-file PRIVATE MXL_TEST_BACKEND_N
 # Same backend in a library whose name does not match the name the backend reports.
 mxl_add_test_payload_backend(test-bad-name payload_backends/TestFileBackend.cpp)
 target_compile_definitions(mxl-test-payload-test-bad-name PRIVATE MXL_TEST_BACKEND_NAME="some-other-name")
+
+# Same backend in a library that reports an invalid storage type.
+mxl_add_test_payload_backend(test-bad-storage-type payload_backends/TestFileBackend.cpp)
+target_compile_definitions(mxl-test-payload-test-bad-storage-type
+        PRIVATE
+            MXL_TEST_BACKEND_NAME="test-bad-storage-type"
+            MXL_TEST_BACKEND_STORAGE_TYPE="Not A Name"
+    )
 
 # A library without the backend entry point.
 mxl_add_test_payload_backend(test-no-entry payload_backends/NoEntryPointBackend.cpp)

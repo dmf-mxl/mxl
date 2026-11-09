@@ -128,6 +128,7 @@ impl CommonFlowConfigInfo<'_> {
         self.0.payloadLocation
     }
 
+    #[deprecated(note = "MXL never used the device index. It is always -1.")]
     pub fn device_index(&self) -> i32 {
         self.0.deviceIndex
     }

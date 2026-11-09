@@ -8,6 +8,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <cuda_runtime_api.h>
 #include <spawn.h>
@@ -18,6 +19,7 @@
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
+#include "CudaLinearStorage.h"
 #include "CudaTestUtils.hpp"
 
 namespace
@@ -153,7 +155,7 @@ namespace
             auto grainInfo = mxlGrainInfo{};
             auto slot = std::uint32_t{0};
             REQUIRE(mxlFlowWriterOpenGrainSlot(_writer, index, &grainInfo, &slot) == MXL_STATUS_OK);
-            REQUIRE(::cudaMemset(slots[slot].cuda.pointer, value, grainInfo.grainSize) == cudaSuccess);
+            REQUIRE(::cudaMemset(mxlCudaLinearDevicePointer(slots[slot]), value, grainInfo.grainSize) == cudaSuccess);
             // Device work that writes a grain must be complete before the commit.
             REQUIRE(::cudaDeviceSynchronize() == cudaSuccess);
             grainInfo.validSlices = grainInfo.totalSlices;
@@ -234,28 +236,29 @@ TEST_CASE("CUDA payload : Writer and reader in one process", "[cuda payload]")
     auto const domain = Domain{};
     auto writer = CudaWriter{domain.path(), deviceOptions(uuid)};
 
-    // The flow records the device the backend chose. The deprecated payload location stays at 0, and the storage
-    // layout says where the payload is.
+    // The deprecated payload location and device index stay at their defaults. The storage layout says where the
+    // payload is.
     REQUIRE(writer.configInfo().common.payloadLocation == 0U);
-    REQUIRE(writer.configInfo().common.deviceIndex == 0);
+    REQUIRE(writer.configInfo().common.deviceIndex == -1);
 
     auto layout = mxlGrainStorageLayout{};
     REQUIRE(mxlFlowWriterGetStorageLayout(writer.writer(), &layout) == MXL_STATUS_OK);
-    REQUIRE(layout.storageType == MXL_PAYLOAD_STORAGE_CUDA_DEVICE_POINTER);
-    REQUIRE(layout.deviceIndex == 0);
+    REQUIRE(std::string_view{layout.storageType} == MXL_CUDA_LINEAR_STORAGE_TYPE);
+    auto const info = mxlCudaLinearLayout(layout);
+    REQUIRE(info.deviceIndex == 0);
     auto properties = cudaDeviceProp{};
     REQUIRE(::cudaGetDeviceProperties(&properties, 0) == cudaSuccess);
-    REQUIRE(std::memcmp(layout.deviceUuid, properties.uuid.bytes, sizeof(layout.deviceUuid)) == 0);
+    REQUIRE(std::memcmp(info.deviceUuid, properties.uuid.bytes, sizeof(info.deviceUuid)) == 0);
 
     // Slots are device memory, 256-byte aligned.
     auto writerSlots = std::vector<mxlGrainStorage>(layout.slotCount);
     REQUIRE(mxlFlowWriterMapSlots(writer.writer(), layout.slotCount, writerSlots.data()) == MXL_STATUS_OK);
     for (auto const& slot : writerSlots)
     {
-        REQUIRE(slot.storageType == MXL_PAYLOAD_STORAGE_CUDA_DEVICE_POINTER);
-        REQUIRE((reinterpret_cast<std::uintptr_t>(slot.cuda.pointer) % 256U) == 0U);
+        auto const pointer = mxlCudaLinearDevicePointer(slot);
+        REQUIRE((reinterpret_cast<std::uintptr_t>(pointer) % 256U) == 0U);
         auto attributes = cudaPointerAttributes{};
-        REQUIRE(::cudaPointerGetAttributes(&attributes, slot.cuda.pointer) == cudaSuccess);
+        REQUIRE(::cudaPointerGetAttributes(&attributes, pointer) == cudaSuccess);
         REQUIRE(attributes.type == cudaMemoryTypeDevice);
     }
 
@@ -277,15 +280,15 @@ TEST_CASE("CUDA payload : Writer and reader in one process", "[cuda payload]")
 
     auto slot = std::uint32_t{0};
     REQUIRE(mxlFlowReaderGetGrainSlot(reader, index, MXL_GRAIN_VALID_SLICES_ALL, 0U, &grainInfo, &slot) == MXL_STATUS_OK);
-    REQUIRE(readerSlots[slot].cuda.pointer == writerSlots[slot].cuda.pointer);
-    requireDeviceBytes(readerSlots[slot].cuda.pointer, grainInfo.grainSize, 0xAB);
+    REQUIRE(mxlCudaLinearDevicePointer(readerSlots[slot]) == mxlCudaLinearDevicePointer(writerSlots[slot]));
+    requireDeviceBytes(mxlCudaLinearDevicePointer(readerSlots[slot]), grainInfo.grainSize, 0xAB);
 
     // The pointer based API refuses device memory for readers too.
     REQUIRE(mxlFlowReaderGetGrain(reader, index, 0U, &grainInfo, &payload) == MXL_ERR_UNSUPPORTED_OPERATION);
 
     // The allocation stays valid for the reader after the writer is released.
     writer.release();
-    requireDeviceBytes(readerSlots[slot].cuda.pointer, grainInfo.grainSize, 0xAB);
+    requireDeviceBytes(mxlCudaLinearDevicePointer(readerSlots[slot]), grainInfo.grainSize, 0xAB);
 
     REQUIRE(mxlReleaseFlowReader(readerInstance, reader) == MXL_STATUS_OK);
     mxlDestroyInstance(readerInstance);
@@ -360,8 +363,8 @@ TEST_CASE("CUDA payload : A refused second writer leaves the first writer's payl
     auto const flowDef = readFile(std::filesystem::path{MXL_TEST_DATA_DIR} / "v210_flow.json");
     auto secondWriter = mxlFlowWriter{nullptr};
     auto secondConfig = mxlFlowConfigInfo{};
-    REQUIRE(mxlCreateFlowWriter(secondInstance, flowDef.c_str(), deviceOptions(uuid).c_str(), &secondWriter, &secondConfig, nullptr) ==
-            MXL_ERR_CONFLICT);
+    REQUIRE(
+        mxlCreateFlowWriter(secondInstance, flowDef.c_str(), deviceOptions(uuid).c_str(), &secondWriter, &secondConfig, nullptr) == MXL_ERR_CONFLICT);
     mxlDestroyInstance(secondInstance);
 
     // The first writer's socket is still the one it bound, and a reader in another process can import the payload.

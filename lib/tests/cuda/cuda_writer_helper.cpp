@@ -19,14 +19,16 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
-#include <signal.h>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <cuda_runtime_api.h>
+#include <signal.h>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
+#include "CudaLinearStorage.h"
 #include "CudaTestUtils.hpp"
 
 namespace
@@ -115,8 +117,7 @@ int main(int argc, char** argv)
     }
     mxlFlowWriter writer = nullptr;
     auto configInfo = mxlFlowConfigInfo{};
-    if (auto const status = mxlCreateFlowWriter(instance, flowDef.c_str(), options.c_str(), &writer, &configInfo, nullptr);
-        status != MXL_STATUS_OK)
+    if (auto const status = mxlCreateFlowWriter(instance, flowDef.c_str(), options.c_str(), &writer, &configInfo, nullptr); status != MXL_STATUS_OK)
     {
         return fail("mxlCreateFlowWriter", status);
     }
@@ -126,7 +127,7 @@ int main(int argc, char** argv)
     {
         return fail("mxlFlowWriterGetStorageLayout", status);
     }
-    if (auto const error = ::cudaSetDevice(layout.deviceIndex); error != cudaSuccess)
+    if (auto const error = ::cudaSetDevice(mxlCudaLinearLayout(layout).deviceIndex); error != cudaSuccess)
     {
         return fail("cudaSetDevice", static_cast<int>(error));
     }
@@ -143,7 +144,7 @@ int main(int argc, char** argv)
     {
         return fail("mxlFlowWriterOpenGrainSlot", status);
     }
-    if (auto const error = ::cudaMemset(slots[slot].cuda.pointer, value, grainInfo.grainSize); error != cudaSuccess)
+    if (auto const error = ::cudaMemset(mxlCudaLinearDevicePointer(slots[slot]), value, grainInfo.grainSize); error != cudaSuccess)
     {
         return fail("cudaMemset", static_cast<int>(error));
     }

@@ -204,7 +204,6 @@ namespace
                << '\n'
                << '\t' << fmt::format("{: >20}: {}", "Commit batch size", info.config.common.maxCommitBatchSizeHint) << '\n'
                << '\t' << fmt::format("{: >20}: {}", "Sync batch size", info.config.common.maxSyncBatchSizeHint) << '\n'
-               << '\t' << fmt::format("{: >20}: {}", "Device Index", info.config.common.deviceIndex) << '\n'
                << '\t' << fmt::format("{: >20}: {:0>8x}", "Flags", info.config.common.flags) << '\n';
 
             if (mxlIsDiscreteDataFormat(info.config.common.format))

@@ -8,6 +8,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
@@ -92,17 +93,11 @@ namespace mxl::lib
 
         /**
          * The storage type of every slot.
-         * \return The storage type.
+         * \return The name of the storage type, shorter than MXL_PAYLOAD_STORAGE_TYPE_SIZE. It stays valid for the
+         *      lifetime of the storage.
          */
         [[nodiscard]]
-        virtual mxlPayloadStorageType type() const noexcept = 0;
-
-        /**
-         * The device that holds the payload.
-         * \return The device index, or -1 if the payload is in host memory.
-         */
-        [[nodiscard]]
-        virtual std::int32_t deviceIndex() const noexcept = 0;
+        virtual std::string_view type() const noexcept = 0;
 
         /**
          * The number of slots in the storage.
@@ -114,7 +109,7 @@ namespace mxl::lib
         /**
          * Describe the storage of one slot.
          * \param[in] slot The slot to describe. Must be less than slotCount().
-         * \return The description of the slot, with version, size, storage type and slot set.
+         * \return The description of the slot, with version, size and slot set.
          * \throws std::out_of_range if slot is not less than slotCount().
          */
         [[nodiscard]]
@@ -123,11 +118,11 @@ namespace mxl::lib
         /**
          * Complete the storage layout of the flow.
          *
-         * The caller passes a default layout: version, size, slot count and plane count set, and planes stored
-         * one after the other without padding between slices. The storage must set storageType, deviceIndex and
-         * deviceUuid. It may change the offset, size and pitch of planes, for example when a device chose the
-         * pitch of the buffers it allocated, and may fill the part of the reserved space defined for its storage
-         * type. It must not change the other fields.
+         * The caller passes a default layout: version, size, storage type, slot count and plane count set, and
+         * planes stored one after the other without padding between slices. The storage may change the offset,
+         * size and pitch of planes, for example when a device chose the pitch of the buffers it allocated, and may
+         * fill the part of the reserved space defined for its storage type, such as the device that holds the
+         * payload. It must not change the other fields.
          *
          * \param[in,out] layout The default layout on input, the complete layout on output.
          * \throws std::exception if the layout cannot be described.
@@ -151,6 +146,17 @@ namespace mxl::lib
     };
 
     /**
+     * Check whether a string can name a storage type: 1 to MXL_PAYLOAD_STORAGE_TYPE_SIZE - 1 characters, lowercase
+     * ASCII letters, digits, '-', '_' and '.', starting and ending with a letter or digit.
+     *
+     * \param[in] name The candidate name.
+     * \return true if name is a valid storage type name.
+     */
+    [[nodiscard]]
+    MXL_EXPORT
+    bool isValidStorageTypeName(std::string_view name) noexcept;
+
+    /**
      * Payload storage in host shared memory. This is the storage used by all flows created before storage types
      * existed, and by all flows created without an explicit storage type.
      *
@@ -170,11 +176,7 @@ namespace mxl::lib
 
         /** \see PayloadStorage::type() */
         [[nodiscard]]
-        mxlPayloadStorageType type() const noexcept override;
-
-        /** \see PayloadStorage::deviceIndex() */
-        [[nodiscard]]
-        std::int32_t deviceIndex() const noexcept override;
+        std::string_view type() const noexcept override;
 
         /** \see PayloadStorage::slotCount() */
         [[nodiscard]]

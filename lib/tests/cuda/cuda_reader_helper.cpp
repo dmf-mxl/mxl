@@ -17,10 +17,12 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <cuda_runtime_api.h>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
+#include "CudaLinearStorage.h"
 
 namespace
 {
@@ -46,9 +48,7 @@ int main(int argc, char** argv)
 {
     if ((argc < 5) || (argc > 7))
     {
-        (void)std::fprintf(stderr,
-            "usage: %s <domain> <flow id> <grain index> <expected byte> [reader options] [device index]\n",
-            argv[0]);
+        (void)std::fprintf(stderr, "usage: %s <domain> <flow id> <grain index> <expected byte> [reader options] [device index]\n", argv[0]);
         return 1;
     }
     auto const* const domain = argv[1];
@@ -76,9 +76,9 @@ int main(int argc, char** argv)
     {
         return fail("mxlFlowReaderGetStorageLayout", status);
     }
-    if (layout.storageType != MXL_PAYLOAD_STORAGE_CUDA_DEVICE_POINTER)
+    if (std::string_view{layout.storageType} != MXL_CUDA_LINEAR_STORAGE_TYPE)
     {
-        return fail("checking the storage type", static_cast<int>(layout.storageType));
+        return fail("checking the storage type", -2);
     }
 
     auto slots = std::vector<mxlGrainStorage>(layout.slotCount);
@@ -92,9 +92,9 @@ int main(int argc, char** argv)
         {
             return fail("mxlFlowReaderGetStorageLayout", status);
         }
-        if (layout.deviceIndex != deviceIndex)
+        if (mxlCudaLinearLayout(layout).deviceIndex != deviceIndex)
         {
-            return fail("checking the mapped device", layout.deviceIndex);
+            return fail("checking the mapped device", mxlCudaLinearLayout(layout).deviceIndex);
         }
         if (auto const error = ::cudaSetDevice(deviceIndex); error != cudaSuccess)
         {
@@ -111,7 +111,8 @@ int main(int argc, char** argv)
     }
 
     auto bytes = std::vector<std::uint8_t>(grainInfo.grainSize);
-    if (auto const error = ::cudaMemcpy(bytes.data(), slots[slot].cuda.pointer, bytes.size(), cudaMemcpyDeviceToHost); error != cudaSuccess)
+    if (auto const error = ::cudaMemcpy(bytes.data(), mxlCudaLinearDevicePointer(slots[slot]), bytes.size(), cudaMemcpyDeviceToHost);
+        error != cudaSuccess)
     {
         return fail("cudaMemcpy", static_cast<int>(error));
     }

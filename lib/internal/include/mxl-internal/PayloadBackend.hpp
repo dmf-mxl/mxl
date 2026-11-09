@@ -164,11 +164,7 @@ namespace mxl::lib
 
         /** \see PayloadStorage::type() */
         [[nodiscard]]
-        mxlPayloadStorageType type() const noexcept override;
-
-        /** \see PayloadStorage::deviceIndex() */
-        [[nodiscard]]
-        std::int32_t deviceIndex() const noexcept override;
+        std::string_view type() const noexcept override;
 
         /** \see PayloadStorage::slotCount() */
         [[nodiscard]]
@@ -201,25 +197,12 @@ namespace mxl::lib
          */
         PluginPayloadStorage(mxlPayloadBackendApiV1 const& api, mxlPayloadBackendInstance instance, std::size_t slotCount) noexcept;
 
-        /**
-         * Listen on socketPath and hand each connected reader a copy of fds.
-         * \param[in] socketPath Path of the socket in the published flow directory. The socket inode is bound at
-         *      bindPath, which is the same file before the flow directory is renamed into place.
-         * \param[in] bindPath Where to bind the socket now.
-         * \param[in] fds Descriptors to serve. This object owns them.
-         */
-        void serveDescriptors(std::filesystem::path socketPath, std::filesystem::path bindPath, std::vector<int> fds);
-
         /** The backend function table. Valid until the process exits. */
         mxlPayloadBackendApiV1 const* _api;
         /** The backend instance owned by this object. */
         mxlPayloadBackendInstance _instance;
         /** The number of slots of the flow. */
         std::size_t _slotCount;
-        /** Path of payload.sock in the published flow directory. Empty when the backend shares no descriptors. */
-        std::filesystem::path _descriptorSocket;
-        /** Serves _descriptorSocket for a writer. */
-        std::unique_ptr<struct PayloadFdServer> _fdServer;
     };
 
     /**
@@ -239,15 +222,11 @@ namespace mxl::lib
          * \param[in] status The status to report for every access to the payload storage.
          * \param[in] reason A description of why the backend is not available.
          */
-        UnavailablePayloadStorage(mxlPayloadStorageType type, std::size_t slotCount, mxlStatus status, std::string reason);
+        UnavailablePayloadStorage(std::string type, std::size_t slotCount, mxlStatus status, std::string reason);
 
         /** \see PayloadStorage::type() */
         [[nodiscard]]
-        mxlPayloadStorageType type() const noexcept override;
-
-        /** \see PayloadStorage::deviceIndex() */
-        [[nodiscard]]
-        std::int32_t deviceIndex() const noexcept override;
+        std::string_view type() const noexcept override;
 
         /** \see PayloadStorage::slotCount() */
         [[nodiscard]]
@@ -274,7 +253,7 @@ namespace mxl::lib
 
     private:
         /** The storage type recorded for the flow. */
-        mxlPayloadStorageType _type;
+        std::string _type;
         /** The number of slots of the flow. */
         std::size_t _slotCount;
         /** The status reported for every access. */

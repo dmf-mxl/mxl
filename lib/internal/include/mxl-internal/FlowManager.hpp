@@ -86,8 +86,7 @@ namespace mxl::lib
         /// createOrOpenDiscreteFlow(), which uses the built-in host storage.
         ///
         /// With a backend, the flow uses flow data version 2, grain files hold only their header, libmxl writes the payload
-        /// descriptor, and the backend prepares its storage in the temporary directory before the flow is published. The device
-        /// index the backend reports is recorded in mxlCommonFlowConfigInfo.deviceIndex.
+        /// descriptor, and the backend prepares its storage in the temporary directory before the flow is published.
         ///
         /// \param[in] flowId The id of the flow.
         /// \param[in] flowDef The json definition of the flow (NMOS Resource format). Written as is.

@@ -26,6 +26,10 @@ foreach(target mxl-cuda-reader-helper mxl-cuda-writer-helper mxl-cuda-tests)
                 mxl
                 CUDA::cudart_static
         )
+    target_include_directories(${target}
+            PRIVATE
+                ${CMAKE_CURRENT_SOURCE_DIR}/../../payload-backends/cuda-linear
+        )
     add_dependencies(${target} mxl-payload-cuda-linear)
 endforeach()
 

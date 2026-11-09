@@ -14,7 +14,8 @@
  * read when they map the slots. Readers accept no backend options.
  *
  * Compile with MXL_TEST_BACKEND_NAME set to the backend name as a string literal. The tests build this file a
- * second time with a name that does not match the library name, to check that libmxl rejects it.
+ * second time with a name that does not match the library name, to check that libmxl rejects it. Define
+ * MXL_TEST_BACKEND_STORAGE_TYPE to report another storage type than MXL_PAYLOAD_STORAGE_HOST_POINTER.
  */
 
 #include <cerrno>
@@ -36,6 +37,10 @@
 
 #ifndef MXL_TEST_BACKEND_NAME
 #   error "MXL_TEST_BACKEND_NAME must be defined."
+#endif
+
+#ifndef MXL_TEST_BACKEND_STORAGE_TYPE
+#   define MXL_TEST_BACKEND_STORAGE_TYPE MXL_PAYLOAD_STORAGE_HOST_POINTER
 #endif
 
 namespace
@@ -372,12 +377,6 @@ namespace
         }
     }
 
-    /** \see mxlPayloadBackendApiV1::deviceIndex */
-    std::int32_t deviceIndex(mxlPayloadBackendInstance) noexcept
-    {
-        return -1;
-    }
-
     /**
      * Map the payload file of an instance if it is not mapped yet.
      * \param[in,out] instance The instance.
@@ -432,17 +431,10 @@ namespace
         std::memset(out_storage, 0, sizeof(*out_storage));
         out_storage->version = 1U;
         out_storage->size = sizeof(*out_storage);
-        out_storage->storageType = MXL_PAYLOAD_STORAGE_HOST_POINTER;
         out_storage->slot = slot;
         out_storage->host.pointer = static_cast<std::uint8_t*>(instance->base) + (instance->stride * slot);
         return MXL_STATUS_OK;
     }
-
-    /**
-     * UUID the test backend reports, so that tests can check that values set by a backend reach the layout.
-     * A real host memory backend would report all zeros.
-     */
-    constexpr std::uint8_t TEST_DEVICE_UUID[16] = {0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F};
 
     /** \see mxlPayloadBackendApiV1::describeLayout */
     mxlStatus describeLayout(mxlPayloadBackendInstance handle, mxlGrainStorageLayout* inout_layout) noexcept
@@ -452,10 +444,8 @@ namespace
             return MXL_ERR_INVALID_ARG;
         }
 
-        // The planes of a slot are stored like host memory, so the default planes apply.
-        inout_layout->storageType = MXL_PAYLOAD_STORAGE_HOST_POINTER;
-        inout_layout->deviceIndex = -1;
-        std::memcpy(inout_layout->deviceUuid, TEST_DEVICE_UUID, sizeof(TEST_DEVICE_UUID));
+        // The planes of a slot are stored like host memory, so the default layout applies, and the host storage
+        // type leaves no room for anything else.
         return MXL_STATUS_OK;
     }
 
@@ -464,17 +454,13 @@ namespace
         .structSize = sizeof(mxlPayloadBackendApiV1),
         .abiVersion = MXL_PAYLOAD_BACKEND_ABI_VERSION,
         .name = MXL_TEST_BACKEND_NAME,
-        .storageType = MXL_PAYLOAD_STORAGE_HOST_POINTER,
-        .reserved = 0U,
+        .storageType = MXL_TEST_BACKEND_STORAGE_TYPE,
         .prepare = &prepare,
         .open = &open,
         .destroy = &destroy,
-        .deviceIndex = &deviceIndex,
         .slotStorage = &slotStorage,
         .describeLayout = &describeLayout,
         .mapSlots = &mapSlots,
-        .exportDescriptors = nullptr,
-        .importDescriptors = nullptr,
     };
 }
 

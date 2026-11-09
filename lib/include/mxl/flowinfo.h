@@ -89,10 +89,10 @@ extern "C"
         uint32_t payloadLocation;
 
         /**
-         * Device index (if payload is in device memory). -1 if on host memory.
-         * This is the index of the device in the writer's process, as numbered by the device API the payload backend
-         * uses. Other processes can number the same device differently, so it is for information only. Use
-         * mxlGrainStorageLayout.deviceUuid to identify the device.
+         * \deprecated MXL never used this field. Writers always set it to -1. A device index is only valid in the
+         * process that reports it, so it cannot describe a flow shared between processes. The field is kept so that
+         * the layout of this structure does not change. The storage type of mxlGrainStorageLayout describes the device
+         * that holds the payload, if any, in its reserved bytes, in the terms of the device API that storage uses.
          */
         int32_t deviceIndex;
 
