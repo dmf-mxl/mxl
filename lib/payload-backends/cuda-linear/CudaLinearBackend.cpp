@@ -635,7 +635,10 @@ namespace
             applySocketMode();
             try
             {
-                _thread = std::thread{[this] { serve(); }};
+                _thread = std::thread{[this]
+                    {
+                        serve();
+                    }};
             }
             catch (...)
             {
