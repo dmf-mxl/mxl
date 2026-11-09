@@ -22,6 +22,12 @@ namespace
 }
 #endif
 
+TEST_CASE("mxlCreateInstance returns NULL for a NULL domain", "[instance]")
+{
+    REQUIRE(mxlCreateInstance(nullptr, "{}") == nullptr);
+    REQUIRE(mxlCreateInstance(nullptr, nullptr) == nullptr);
+}
+
 TEST_CASE("mxlIsTmpFs returns MXL_ERR_INVALID_ARG for NULL path", "[mxlIsTmpFs]")
 {
     bool isTmpFs = true;

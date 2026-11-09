@@ -166,9 +166,15 @@ namespace mxl::lib
             }
 
             auto const flow = _flowData->flow();
-            flow->info.runtime.headIndex = _currentIndex;
-
             auto const offset = _currentIndex % flow->info.config.discrete.grainCount;
+
+            // Readers reject a header with these values, so refuse to publish one.
+            if ((mxlGrainInfo.grainSize > _flowData->grainPayloadCapacityAt(offset)) || (mxlGrainInfo.validSlices > mxlGrainInfo.totalSlices))
+            {
+                return MXL_ERR_INVALID_ARG;
+            }
+
+            flow->info.runtime.headIndex = _currentIndex;
             *_flowData->grainInfoAt(offset) = mxlGrainInfo;
             flow->info.runtime.lastWriteTime = currentTime(mxl::lib::Clock::TAI).value;
 

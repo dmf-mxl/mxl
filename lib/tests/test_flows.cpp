@@ -18,8 +18,11 @@
 #include <cstring>
 #include <ctime>
 #include <filesystem>
+#include <fstream>
 #include <memory>
+#include <string>
 #include <thread>
+#include <utility>
 #include <uuid.h>
 #include <catch2/catch_test_macros.hpp>
 #include <picojson/wrapper.h>
@@ -1263,6 +1266,169 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : Jump fo
 // Verify that opening a new grain resets validSlices to zero when the
 // underlying ring-buffer slot is reused, while reopening the same
 // incomplete grain preserves its existing validSlices value.
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow definitions with a non-positive rate", "[mxl flows]")
+{
+    auto const opts = "{}";
+    auto instance = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instance != nullptr);
+
+    struct RateCase
+    {
+        char const* file;
+        char const* key;
+    };
+
+    for (auto const [file, key] : {
+             RateCase{"data/v210_flow.json",  "grain_rate" },
+             RateCase{"data/data_flow.json",  "grain_rate" },
+             RateCase{"data/audio_flow.json", "sample_rate"}
+    })
+    {
+        auto const flowDef = mxl::tests::readFile(file);
+        auto jsonValue = picojson::value{};
+        REQUIRE(picojson::parse(jsonValue, flowDef).empty());
+        auto const validFlowObj = jsonValue.get<picojson::object>();
+
+        for (auto const [numerator, denominator] : {
+                 std::pair{0.0,   1.0 },
+                 std::pair{-25.0, 1.0 },
+                 std::pair{25.0,  0.0 },
+                 std::pair{25.0,  -1.0}
+        })
+        {
+            CAPTURE(file, numerator, denominator);
+            auto flowObj = validFlowObj;
+            auto& rate = flowObj.find(key)->second.get<picojson::object>();
+            rate["numerator"] = picojson::value{numerator};
+            rate["denominator"] = picojson::value{denominator};
+            auto const invalidRate = picojson::value(flowObj).serialize();
+
+            auto writer = mxlFlowWriter{};
+            auto configInfo = mxlFlowConfigInfo{};
+            REQUIRE(mxlCreateFlowWriter(instance, invalidRate.c_str(), opts, &writer, &configInfo, nullptr) != MXL_STATUS_OK);
+        }
+    }
+
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+}
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : commit rejects an inconsistent grain header", "[mxl flows]")
+{
+    auto const opts = "{}";
+    auto const flowId = "5fbec3b1-1b0f-417d-9059-8b94a47197ed";
+    auto flowDef = mxl::tests::readFile("data/v210_flow.json");
+
+    auto instance = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instance != nullptr);
+
+    auto writer = mxlFlowWriter{};
+    auto configInfo = mxlFlowConfigInfo{};
+    REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), opts, &writer, &configInfo, nullptr) == MXL_STATUS_OK);
+
+    auto reader = mxlFlowReader{};
+    REQUIRE(mxlCreateFlowReader(instance, flowId, "", &reader) == MXL_STATUS_OK);
+
+    auto const index = std::uint64_t{100};
+    auto gInfo = mxlGrainInfo{};
+    auto buffer = static_cast<std::uint8_t*>(nullptr);
+    REQUIRE(mxlFlowWriterOpenGrain(writer, index, &gInfo, &buffer) == MXL_STATUS_OK);
+    auto const validInfo = gInfo;
+
+    // grainSize larger than the mapped payload.
+    gInfo.grainSize = validInfo.grainSize + 1U;
+    gInfo.validSlices = gInfo.totalSlices;
+    REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_ERR_INVALID_ARG);
+    gInfo.grainSize = UINT32_MAX;
+    REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_ERR_INVALID_ARG);
+
+    // validSlices larger than totalSlices.
+    gInfo = validInfo;
+    gInfo.totalSlices = 0;
+    gInfo.validSlices = 8;
+    REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_ERR_INVALID_ARG);
+    gInfo = validInfo;
+    gInfo.validSlices = UINT16_MAX;
+    REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_ERR_INVALID_ARG);
+
+    // A rejected commit publishes nothing.
+    auto readInfo = mxlGrainInfo{};
+    auto readBuffer = static_cast<std::uint8_t*>(nullptr);
+    REQUIRE(mxlFlowReaderGetGrain(reader, index, 16, &readInfo, &readBuffer) == MXL_ERR_OUT_OF_RANGE_TOO_EARLY);
+
+    // The grain stays open and a valid header can still be committed.
+    gInfo = validInfo;
+    gInfo.validSlices = gInfo.totalSlices;
+    REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_STATUS_OK);
+    REQUIRE(mxlFlowReaderGetGrain(reader, index, 16, &readInfo, &readBuffer) == MXL_STATUS_OK);
+
+    REQUIRE(mxlReleaseFlowReader(instance, reader) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+}
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : reader rejects an inconsistent grain header", "[mxl flows]")
+{
+    auto const opts = "{}";
+    auto const flowId = "5fbec3b1-1b0f-417d-9059-8b94a47197ed";
+    auto flowDef = mxl::tests::readFile("data/v210_flow.json");
+
+    auto instance = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instance != nullptr);
+
+    auto writer = mxlFlowWriter{};
+    auto configInfo = mxlFlowConfigInfo{};
+    REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), opts, &writer, &configInfo, nullptr) == MXL_STATUS_OK);
+
+    auto reader = mxlFlowReader{};
+    REQUIRE(mxlCreateFlowReader(instance, flowId, "", &reader) == MXL_STATUS_OK);
+
+    auto const grainCount = static_cast<std::uint64_t>(configInfo.discrete.grainCount);
+
+    // Commit a valid grain, then overwrite its header in the grain file. This is what a process with write access to the
+    // flow files can do without going through the SDK.
+    auto commitAndCorrupt = [&](std::uint64_t index, auto&& corrupt)
+    {
+        auto gInfo = mxlGrainInfo{};
+        auto buffer = static_cast<std::uint8_t*>(nullptr);
+        REQUIRE(mxlFlowWriterOpenGrain(writer, index, &gInfo, &buffer) == MXL_STATUS_OK);
+        gInfo.validSlices = gInfo.totalSlices;
+        REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_STATUS_OK);
+
+        corrupt(gInfo);
+        auto const grainPath = domain / (std::string{flowId} + ".mxl-flow") / "grains" / ("data." + std::to_string(index % grainCount));
+        auto file = std::fstream{grainPath, std::ios::in | std::ios::out | std::ios::binary};
+        REQUIRE(file.is_open());
+        file.write(reinterpret_cast<char const*>(&gInfo), sizeof gInfo);
+        file.close();
+
+        auto readInfo = mxlGrainInfo{};
+        auto readBuffer = static_cast<std::uint8_t*>(nullptr);
+        return mxlFlowReaderGetGrain(reader, index, 16, &readInfo, &readBuffer);
+    };
+
+    auto index = std::uint64_t{100};
+
+    // An unchanged header is returned.
+    REQUIRE(commitAndCorrupt(index++, [](mxlGrainInfo&) {}) == MXL_STATUS_OK);
+
+    // grainSize larger than the mapped payload.
+    REQUIRE(commitAndCorrupt(index++, [](mxlGrainInfo& info) { info.grainSize += 1U; }) == MXL_ERR_INVALID_STATE);
+    REQUIRE(commitAndCorrupt(index++, [](mxlGrainInfo& info) { info.grainSize = UINT32_MAX; }) == MXL_ERR_INVALID_STATE);
+
+    // validSlices larger than totalSlices.
+    REQUIRE(commitAndCorrupt(index++,
+                [](mxlGrainInfo& info)
+                {
+                    info.totalSlices = 0;
+                    info.validSlices = 8;
+                }) == MXL_ERR_INVALID_STATE);
+    REQUIRE(commitAndCorrupt(index++, [](mxlGrainInfo& info) { info.validSlices = UINT16_MAX; }) == MXL_ERR_INVALID_STATE);
+
+    REQUIRE(mxlReleaseFlowReader(instance, reader) == MXL_STATUS_OK);
+    REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+}
+
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : validSlices on grain open", "[mxl flows]")
 {
     auto const opts = "{}";
