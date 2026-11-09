@@ -29,6 +29,9 @@ namespace mxl::lib
         mxlGrainInfo* grainInfoAt(std::size_t i) noexcept;
         mxlGrainInfo const* grainInfoAt(std::size_t i) const noexcept;
 
+        /// Return the number of payload bytes mapped after the header of grain i, or 0 if i is out of range.
+        std::size_t grainPayloadCapacityAt(std::size_t i) const noexcept;
+
     private:
         std::vector<SharedMemoryInstance<Grain>> _grains;
     };
@@ -100,5 +103,15 @@ namespace mxl::lib
             return &grain->header.info;
         }
         return nullptr;
+    }
+
+    inline std::size_t DiscreteFlowData::grainPayloadCapacityAt(std::size_t i) const noexcept
+    {
+        if (i < _grains.size())
+        {
+            auto const mapped = _grains[i].mappedSize();
+            return (mapped > sizeof(Grain)) ? (mapped - sizeof(Grain)) : 0U;
+        }
+        return 0U;
     }
 }
