@@ -66,7 +66,7 @@ We do not require a CLA at this time.
 
 Every commit must be signed off.  That is, every commit log message must include a “`Signed-off-by`” line (generated, for example, with “`git commit --signoff`”), indicating that the Contributor wrote the code and has the right to release it under the [Apache-2.0](LICENSE.txt) license.
 
-Contributors are responsible for providing their email address from the organization's domain that owns the copyright for their committed contribution, ensuring the copyright holder can be tracked.
+Contributors are responsible for providing their email address from the organization's domain that owns the copyright for their committed contribution, ensuring the copyright holder can be tracked. All contributions must be attributed exclusively to a human contributor. AI agents must not be listed as co-authors or contributors. Commit messages must not include attribution lines such as Co-Authored-By: AI Agent x.y noreply@aicompany.com.
 
 # Development Workflow
 
