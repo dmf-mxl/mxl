@@ -795,6 +795,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "mxl-cuda"
+version = "0.2.0"
+dependencies = [
+ "bindgen",
+ "mxl",
+ "mxl-sys",
+]
+
+[[package]]
 name = "mxl-sys"
 version = "1.1.0"
 dependencies = [
