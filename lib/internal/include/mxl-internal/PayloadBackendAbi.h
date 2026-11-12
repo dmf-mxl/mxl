@@ -50,8 +50,59 @@ extern "C"
  */
 #define MXL_PAYLOAD_BACKEND_CAP_SHARE_DESCRIPTORS 0x1U
 
+/**
+ * Capability of a backend that defines media types of its own. libmxl computes the geometry of a grain only for the
+ * media types it defines itself. For a flow of any other media type, it asks the backend that will hold the payload,
+ * through describeGeometry(), before it creates the flow. A backend without this capability stores only the media
+ * types libmxl defines.
+ */
+#define MXL_PAYLOAD_BACKEND_CAP_DESCRIBE_GEOMETRY 0x2U
+
     /** Opaque state that a backend keeps for one flow opened or created in one process. */
     typedef struct mxlPayloadBackendInstance_t* mxlPayloadBackendInstance;
+
+    /**
+     * The flow whose grain geometry libmxl asks a backend for. libmxl fills all fields.
+     */
+    typedef struct mxlPayloadBackendGeometryQuery_t
+    {
+        /** Size of this structure in bytes. */
+        uint32_t structSize;
+        /** The mxlDataFormat of the flow, MXL_DATA_FORMAT_VIDEO or MXL_DATA_FORMAT_DATA. */
+        uint32_t format;
+        /**
+         * For a video flow, the number of lines a grain holds: the frame height, or half of it for an interlaced flow,
+         * whose grains are fields. Zero for other formats.
+         */
+        uint32_t grainLines;
+        /** Reserved. Zero. */
+        uint32_t reserved;
+        /**
+         * The flow definition, NMOS IS-04 flow JSON as null terminated UTF-8, which holds the media type, and for
+         * video the frame size. Never null. Only valid during the call.
+         */
+        char const* flowDefinition;
+    } mxlPayloadBackendGeometryQuery;
+
+    /**
+     * The geometry of a grain of a media type a backend defines: how its bytes are laid out in planes and slices.
+     * The same media type has the same geometry in every backend that supports it, since the media type names the
+     * layout of the bytes, and the storage only says where they are.
+     */
+    typedef struct mxlPayloadBackendGrainGeometry_t
+    {
+        /** Size of this structure in bytes. libmxl sets it. */
+        uint32_t structSize;
+        /** Number of planes in a grain, 1 to MXL_MAX_PLANES_PER_GRAIN. */
+        uint32_t planeCount;
+        /**
+         * Number of slices in each plane of a grain, 1 to 65535. For video, the number of lines, which is
+         * mxlPayloadBackendGeometryQuery.grainLines unless the media type packs several lines in a slice.
+         */
+        uint32_t slicesPerGrain;
+        /** Size in bytes of one slice of each plane, without padding. Non-zero for the first planeCount entries, zero after. */
+        uint32_t sliceSizes[MXL_MAX_PLANES_PER_GRAIN];
+    } mxlPayloadBackendGrainGeometry;
 
     /**
      * Geometry and access of the flow a backend instance serves. libmxl fills all fields.
@@ -80,6 +131,14 @@ extern "C"
          * formats a backend holds, so a backend rejects the formats it cannot store.
          */
         uint32_t format;
+        /** Reserved. Zero. */
+        uint32_t reserved;
+        /**
+         * The flow definition, NMOS IS-04 flow JSON as null terminated UTF-8, from which a backend reads what the
+         * other fields do not hold, for example the media type and frame size of a video flow. Never null. Only valid
+         * during the call that receives this structure.
+         */
+        char const* flowDefinition;
     } mxlPayloadBackendFlowInfo;
 
     /**
@@ -229,6 +288,23 @@ extern "C"
          *      another error code.
          */
         mxlStatus (*importDescriptors)(mxlPayloadBackendInstance instance, int const* descriptors, uint32_t count);
+
+        /**
+         * Report the grain geometry of a flow whose media type the backend defines.
+         *
+         * Required with MXL_PAYLOAD_BACKEND_CAP_DESCRIBE_GEOMETRY, otherwise null. libmxl calls this before it creates a
+         * flow whose media type it does not define itself, and sizes the ring buffer and the slices from the answer,
+         * which it also checks: a geometry outside the documented ranges, or whose grain does not fit in 32 bits, fails
+         * the creation. The geometry reaches prepare() in mxlPayloadBackendFlowInfo. It needs no instance and no device:
+         * it depends on the flow definition alone.
+         *
+         * \param[in] query The flow.
+         * \param[in,out] inout_geometry The geometry. structSize is set on input; the backend fills the other fields.
+         * \return MXL_STATUS_OK on success, MXL_ERR_UNSUPPORTED_OPERATION if the backend does not define the media type,
+         *      MXL_ERR_INVALID_ARG if the flow definition is not valid for the media type, for example a frame size it
+         *      cannot hold, or another error code.
+         */
+        mxlStatus (*describeGeometry)(mxlPayloadBackendGeometryQuery const* query, mxlPayloadBackendGrainGeometry* inout_geometry);
     } mxlPayloadBackendApi;
 
     /**

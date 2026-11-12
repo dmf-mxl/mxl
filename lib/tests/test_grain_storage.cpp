@@ -3,6 +3,8 @@
 
 #include <cstdint>
 #include <cstring>
+#include <algorithm>
+#include <array>
 #include <filesystem>
 #include <fstream>
 #include <regex>
@@ -320,17 +322,16 @@ namespace
     constexpr auto TEST_BACKEND_OPTIONS = R"({"payload": {"backend": "test-file"}})";
 
     /**
-     * Try to create a writer and return the status. Releases the writer if the call succeeds.
+     * Try to create a writer from a flow definition and return the status. Releases the writer if the call succeeds.
      * \param[in] domain The MXL domain.
-     * \param[in] flowDefFile Path of the flow definition to create.
+     * \param[in] flowDef The flow definition to create.
      * \param[in] options Options passed to mxlCreateFlowWriter().
      * \return The status returned by mxlCreateFlowWriter().
      */
-    mxlStatus tryCreateWriter(std::filesystem::path const& domain, char const* flowDefFile, char const* options)
+    mxlStatus tryCreateWriterFromDef(std::filesystem::path const& domain, std::string const& flowDef, char const* options)
     {
         auto instance = mxlCreateInstance(domain.string().c_str(), "");
         REQUIRE(instance != nullptr);
-        auto const flowDef = mxl::tests::readFile(flowDefFile);
         mxlFlowWriter writer = nullptr;
         auto const status = mxlCreateFlowWriter(instance, flowDef.c_str(), options, &writer, nullptr, nullptr);
         if (status == MXL_STATUS_OK)
@@ -339,6 +340,18 @@ namespace
         }
         mxlDestroyInstance(instance);
         return status;
+    }
+
+    /**
+     * Try to create a writer and return the status. Releases the writer if the call succeeds.
+     * \param[in] domain The MXL domain.
+     * \param[in] flowDefFile Path of the flow definition to create.
+     * \param[in] options Options passed to mxlCreateFlowWriter().
+     * \return The status returned by mxlCreateFlowWriter().
+     */
+    mxlStatus tryCreateWriter(std::filesystem::path const& domain, char const* flowDefFile, char const* options)
+    {
+        return tryCreateWriterFromDef(domain, mxl::tests::readFile(flowDefFile), options);
     }
 }
 
@@ -589,6 +602,26 @@ namespace
     /** Flow options that keep the payload in memory files shared through payload.sock. */
     constexpr auto MEMFD_BACKEND_OPTIONS = R"({"payload": {"backend": "test-memfd"}})";
 
+    /** The id of data/two_plane_flow.json, a flow of the media type the test-memfd backend defines. */
+    constexpr auto TWO_PLANE_FLOW_ID = "c1a2e3f4-5b6c-4d7e-8f90-a1b2c3d4e5f6";
+
+    /** The id of data/two_plane_interlaced_flow.json, the same flow interlaced. */
+    constexpr auto TWO_PLANE_INTERLACED_FLOW_ID = "d2b3f4a5-6c7d-4e8f-9a01-b2c3d4e5f6a7";
+
+    /** The length in bytes of a line of each plane of a two-plane flow of 1920 pixels. */
+    constexpr auto TWO_PLANE_LINE_LENGTHS = std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN>{
+        1920U * mxl::tests::memfd::TWO_PLANE_FIRST_BYTES_PER_PIXEL, 1920U * mxl::tests::memfd::TWO_PLANE_SECOND_BYTES_PER_PIXEL, 0U, 0U};
+
+    /**
+     * \param[in] flowDef A flow definition.
+     * \param[in] mediaType A media type.
+     * \return The definition with its media type replaced.
+     */
+    std::string withMediaType(std::string const& flowDef, char const* mediaType)
+    {
+        return std::regex_replace(flowDef, std::regex{R"("media_type"\s*:\s*"[^"]*")"}, std::string{"\"media_type\": \""} + mediaType + "\"");
+    }
+
     /**
      * \param[in] lhs A descriptor.
      * \param[in] rhs Another descriptor.
@@ -620,8 +653,8 @@ namespace
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Grain storage : Readers receive descriptors from the writer",
     "[mxl flows][grain storage]")
 {
-    auto const flows = FlowPair{domain, "data/v210_flow.json", V210_FLOW_ID, MEMFD_BACKEND_OPTIONS};
-    auto const flowDir = mxl::lib::makeFlowDirectoryName(domain, V210_FLOW_ID);
+    auto const flows = FlowPair{domain, "data/two_plane_flow.json", TWO_PLANE_FLOW_ID, MEMFD_BACKEND_OPTIONS};
+    auto const flowDir = mxl::lib::makeFlowDirectoryName(domain, TWO_PLANE_FLOW_ID);
     REQUIRE(std::filesystem::exists(flowDir / "payload.sock"));
 
     // Whoever may read the flow's data may connect to the socket, which needs write permission.
@@ -632,12 +665,14 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Grain storage : Read
     REQUIRE(((socket & perms::group_write) != perms::none) == ((data & perms::group_read) != perms::none));
     REQUIRE(((socket & perms::others_write) != perms::none) == ((data & perms::others_read) != perms::none));
 
-    // The layout carries the backend's storage type.
+    // The layout carries the backend's storage type and the part the backend defines.
     auto layout = mxlGrainStorageLayout{};
     REQUIRE(mxlFlowReaderGetStorageLayout(flows.reader(), &layout) == MXL_STATUS_OK);
     REQUIRE(std::string_view{layout.storageType} == mxl::tests::memfd::STORAGE_TYPE);
-    REQUIRE(layout.planeCount == 1U);
-    REQUIRE(layout.planes[0].pitch == flows.configInfo().discrete.sliceSizes[0]);
+    REQUIRE(std::string{mxl::tests::memfd::layoutOf(layout).mediaType} == mxl::tests::memfd::MEDIA_TYPE);
+    REQUIRE(layout.planeCount == 2U);
+    REQUIRE(layout.planes[0].pitch == TWO_PLANE_LINE_LENGTHS[0]);
+    REQUIRE(layout.planes[1].pitch == TWO_PLANE_LINE_LENGTHS[1]);
 
     auto writerSlots = std::vector<mxlGrainStorage>(layout.slotCount);
     REQUIRE(mxlFlowWriterMapSlots(flows.writer(), layout.slotCount, writerSlots.data()) == MXL_STATUS_OK);
@@ -651,7 +686,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Grain storage : Read
         auto const writerStorage = mxl::tests::memfd::slotStorageOf(writerSlots[slot]);
         REQUIRE(readerStorage.fd != writerStorage.fd);
         REQUIRE(sameBuffer(readerStorage.fd, writerStorage.fd));
-        REQUIRE(readerStorage.fileSize >= layout.planes[0].size);
+        REQUIRE(readerStorage.fileSize >= layout.planes[0].size + layout.planes[1].size);
     }
 
     // A grain written through the writer's mapping is read through the reader's.
@@ -688,6 +723,70 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Grain storage : Read
     REQUIRE(mxlFlowReaderGetGrain(flows.reader(), index, 0U, &grainInfo, &payload) == MXL_ERR_UNSUPPORTED_OPERATION);
 }
 
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Grain storage : A backend reads the media type from the flow definition",
+    "[mxl flows][grain storage]")
+{
+    REQUIRE(tryCreateWriter(domain, "data/v210_flow.json", MEMFD_BACKEND_OPTIONS) == MXL_ERR_UNSUPPORTED_OPERATION);
+    REQUIRE(tryCreateWriter(domain, "data/data_flow.json", MEMFD_BACKEND_OPTIONS) == MXL_ERR_UNSUPPORTED_OPERATION);
+    REQUIRE(tryCreateWriter(domain, "data/two_plane_flow.json", MEMFD_BACKEND_OPTIONS) == MXL_STATUS_OK);
+}
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Grain storage : A backend defines the geometry of its media types",
+    "[mxl flows][grain storage]")
+{
+    // libmxl does not know the media type. The backend reports its geometry, which libmxl records in the flow, for the
+    // writer and for readers alike.
+    {
+        auto const flows = FlowPair{domain, "data/two_plane_flow.json", TWO_PLANE_FLOW_ID, MEMFD_BACKEND_OPTIONS};
+        auto const& discrete = flows.configInfo().discrete;
+        REQUIRE(std::ranges::equal(discrete.sliceSizes, TWO_PLANE_LINE_LENGTHS));
+        REQUIRE(discrete.grainCount > 0U);
+
+        auto info = mxlFlowInfo{};
+        REQUIRE(mxlFlowReaderGetInfo(flows.reader(), &info) == MXL_STATUS_OK);
+        REQUIRE(std::ranges::equal(info.config.discrete.sliceSizes, TWO_PLANE_LINE_LENGTHS));
+
+        auto const rate = flows.configInfo().common.grainRate;
+        auto grainInfo = mxlGrainInfo{};
+        auto slot = std::uint32_t{0};
+        REQUIRE(mxlFlowWriterOpenGrainSlot(flows.writer(), mxlGetCurrentIndex(&rate), &grainInfo, &slot) == MXL_STATUS_OK);
+        REQUIRE(grainInfo.totalSlices == 1080U);
+        REQUIRE(grainInfo.grainSize == (TWO_PLANE_LINE_LENGTHS[0] + TWO_PLANE_LINE_LENGTHS[1]) * 1080U);
+        REQUIRE(mxlFlowWriterCancelGrain(flows.writer()) == MXL_STATUS_OK);
+    }
+
+    // An interlaced flow holds a field per grain. libmxl halves the lines before it asks the backend.
+    {
+        auto const flows = FlowPair{domain, "data/two_plane_interlaced_flow.json", TWO_PLANE_INTERLACED_FLOW_ID, MEMFD_BACKEND_OPTIONS};
+        REQUIRE(std::ranges::equal(flows.configInfo().discrete.sliceSizes, TWO_PLANE_LINE_LENGTHS));
+        REQUIRE(flows.configInfo().common.grainRate.numerator == 60000);
+
+        auto const rate = flows.configInfo().common.grainRate;
+        auto grainInfo = mxlGrainInfo{};
+        auto slot = std::uint32_t{0};
+        REQUIRE(mxlFlowWriterOpenGrainSlot(flows.writer(), mxlGetCurrentIndex(&rate), &grainInfo, &slot) == MXL_STATUS_OK);
+        REQUIRE(grainInfo.totalSlices == 540U);
+        REQUIRE(grainInfo.grainSize == (TWO_PLANE_LINE_LENGTHS[0] + TWO_PLANE_LINE_LENGTHS[1]) * 540U);
+        REQUIRE(mxlFlowWriterCancelGrain(flows.writer()) == MXL_STATUS_OK);
+    }
+
+    // The built-in host storage, and a backend that does not define media types, store only the media types libmxl
+    // defines.
+    REQUIRE(tryCreateWriter(domain, "data/two_plane_flow.json", "") == MXL_ERR_UNSUPPORTED_OPERATION);
+    REQUIRE(tryCreateWriter(domain, "data/two_plane_flow.json", R"({"payload": {"backend": "host"}})") == MXL_ERR_UNSUPPORTED_OPERATION);
+    REQUIRE(tryCreateWriter(domain, "data/two_plane_flow.json", TEST_BACKEND_OPTIONS) == MXL_ERR_UNSUPPORTED_OPERATION);
+
+    // The backend refuses a flow its media type cannot hold, and libmxl refuses a geometry that is not valid.
+    auto const flowDef = mxl::tests::readFile("data/two_plane_flow.json");
+    auto const oddWidth = std::regex_replace(flowDef, std::regex{R"("frame_width"\s*:\s*1920)"}, R"("frame_width": 1921)");
+    REQUIRE(tryCreateWriterFromDef(domain, oddWidth, MEMFD_BACKEND_OPTIONS) == MXL_ERR_INVALID_ARG);
+    REQUIRE(
+        tryCreateWriterFromDef(domain, withMediaType(flowDef, mxl::tests::memfd::BAD_PLANES_MEDIA_TYPE), MEMFD_BACKEND_OPTIONS) == MXL_ERR_INTERNAL);
+    REQUIRE(
+        tryCreateWriterFromDef(domain, withMediaType(flowDef, mxl::tests::memfd::HUGE_GRAIN_MEDIA_TYPE), MEMFD_BACKEND_OPTIONS) == MXL_ERR_INTERNAL);
+    REQUIRE(tryCreateWriterFromDef(domain, withMediaType(flowDef, "video/x-test-unknown"), MEMFD_BACKEND_OPTIONS) == MXL_ERR_UNSUPPORTED_OPERATION);
+}
+
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Grain storage : Mapping fails cleanly when the writer is gone",
     "[mxl flows][grain storage]")
 {
@@ -696,12 +795,12 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Grain storage : Mapp
     REQUIRE(writerInstance != nullptr);
     REQUIRE(readerInstance != nullptr);
 
-    auto const flowDef = mxl::tests::readFile("data/v210_flow.json");
+    auto const flowDef = mxl::tests::readFile("data/two_plane_flow.json");
     mxlFlowWriter writer = nullptr;
     mxlFlowConfigInfo configInfo;
     REQUIRE(mxlCreateFlowWriter(writerInstance, flowDef.c_str(), MEMFD_BACKEND_OPTIONS, &writer, &configInfo, nullptr) == MXL_STATUS_OK);
     mxlFlowReader reader = nullptr;
-    REQUIRE(mxlCreateFlowReader(readerInstance, V210_FLOW_ID, "", &reader) == MXL_STATUS_OK);
+    REQUIRE(mxlCreateFlowReader(readerInstance, TWO_PLANE_FLOW_ID, "", &reader) == MXL_STATUS_OK);
 
     // The writer stops serving its descriptors when it is released. The reader has not received them yet.
     REQUIRE(mxlReleaseFlowWriter(writerInstance, writer) == MXL_STATUS_OK);

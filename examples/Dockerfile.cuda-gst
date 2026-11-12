@@ -33,6 +33,7 @@ ENV HOME=/root
 # Full commit history, blobs on demand. vcpkg reads the builtin-baseline commit from this clone.
 RUN git clone --filter=blob:none https://github.com/microsoft/vcpkg.git /root/vcpkg \
     && /root/vcpkg/bootstrap-vcpkg.sh -disableMetrics
+ENV VCPKG_ROOT=/root/vcpkg
 
 WORKDIR /src
 COPY . /src

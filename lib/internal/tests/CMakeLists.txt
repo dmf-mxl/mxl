@@ -114,11 +114,27 @@ target_compile_definitions(mxl-test-payload-test-bad-storage-type
             MXL_TEST_BACKEND_STORAGE_TYPE="Not A Name"
     )
 
+# Same backend with a storage type it defines itself, named outside the names the SDK uses.
+mxl_add_test_payload_backend(test-private payload_backends/TestFileBackend.cpp)
+target_compile_definitions(mxl-test-payload-test-private
+        PRIVATE
+            MXL_TEST_BACKEND_NAME="test-private"
+            MXL_TEST_BACKEND_STORAGE_TYPE="org.example.test-private"
+    )
+
+# Same backend claiming to define media types, without the function that describes their geometry.
+mxl_add_test_payload_backend(test-bad-geometry payload_backends/TestFileBackend.cpp)
+target_compile_definitions(mxl-test-payload-test-bad-geometry
+        PRIVATE
+            MXL_TEST_BACKEND_NAME="test-bad-geometry"
+            MXL_TEST_BACKEND_CLAIM_GEOMETRY
+    )
+
 # A library without the backend entry point.
 mxl_add_test_payload_backend(test-no-entry payload_backends/NoEntryPointBackend.cpp)
 
 # A backend with its own storage type that shares memory files through payload.sock, as a device backend shares
-# dma-bufs or exported device memory.
+# dma-bufs or exported device memory, and with a media type of its own, whose geometry libmxl asks it for.
 mxl_add_test_payload_backend(test-memfd payload_backends/TestMemfdBackend.cpp)
 
 target_compile_definitions(mxl-internal-tests

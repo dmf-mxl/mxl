@@ -4,14 +4,14 @@
 
 # Run the CUDA payload writer and reader in two containers.
 # Both containers bind-mount one host tmpfs directory and use it as the MXL domain.
-# The payload file descriptor travels on a socket in that directory, so the containers do not
-# share an IPC namespace or a PID namespace.
+# The payload file descriptor travels on a socket in the flow directory, inside that domain, so the
+# containers need not share an IPC namespace or a PID namespace.
 #
 #   examples/cuda-cross-container-test.sh
 #
 # MXL_CUDA_TEST_IMAGE selects the image (default mxl-cuda-tests).
-# MXL_DOCKER_EXTRA is appended to both docker run commands. This host needs
-# MXL_DOCKER_EXTRA=--privileged because --gpus all alone does not initialize NVML.
+# MXL_DOCKER_EXTRA is appended to both docker run commands. A host on which
+# --gpus all alone does not initialize NVML needs MXL_DOCKER_EXTRA=--privileged.
 
 set -euo pipefail
 

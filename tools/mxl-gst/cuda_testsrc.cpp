@@ -23,10 +23,10 @@
 #include <fmt/format.h>
 #include <gst/app/gstappsink.h>
 #include <gst/gst.h>
+#include <mxl/storage/cuda_device_pointer.h>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
-#include "CudaLinearStorage.h"
 #include "utils.hpp"
 
 namespace
@@ -274,14 +274,15 @@ namespace
 
             auto layout = mxlGrainStorageLayout{};
             requireMxl(::mxlFlowWriterGetStorageLayout(_writer, &layout), "mxlFlowWriterGetStorageLayout");
-            if (std::string_view{layout.storageType} != MXL_CUDA_LINEAR_STORAGE_TYPE)
+            if (std::string_view{layout.storageType} != MXL_PAYLOAD_STORAGE_CUDA_DEVICE_POINTER)
             {
                 fail("The flow payload is not in CUDA device memory.");
             }
             _slots.resize(layout.slotCount);
             requireMxl(::mxlFlowWriterMapSlots(_writer, layout.slotCount, _slots.data()), "mxlFlowWriterMapSlots");
-            requireCuda(::cudaSetDevice(mxlCudaLinearLayout(layout).deviceIndex), "cudaSetDevice");
-            MXL_INFO("Payload is on CUDA device {}", mxlCudaLinearLayout(layout).deviceIndex);
+            auto const device = mxlGetCudaGrainStorageLayout(&layout);
+            requireCuda(::cudaSetDevice(device.deviceIndex), "cudaSetDevice");
+            MXL_INFO("Payload is on CUDA device {}", device.deviceIndex);
         }
 
         CudaWriter(CudaWriter const&) = delete;
@@ -321,7 +322,7 @@ namespace
                     fail("OpenGrainSlot returned a slot outside the mapped range.");
                 }
                 auto const bytes = std::min(sourceSize, static_cast<std::size_t>(info.grainSize));
-                requireCuda(::cudaMemcpy(mxlCudaLinearDevicePointer(_slots[slot]), source, bytes, cudaMemcpyHostToDevice), "cudaMemcpy");
+                requireCuda(::cudaMemcpy(mxlGetCudaGrainStorage(&_slots[slot]).pointer, source, bytes, cudaMemcpyHostToDevice), "cudaMemcpy");
                 // The commit publishes the grain. Device writes have to be visible before that.
                 requireCuda(::cudaDeviceSynchronize(), "cudaDeviceSynchronize");
                 info.validSlices = info.totalSlices;

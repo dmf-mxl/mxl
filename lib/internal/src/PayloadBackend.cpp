@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "mxl-internal/PayloadBackend.hpp"
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
+#include <limits>
 #include <utility>
 #include <dlfcn.h>
 #include <unistd.h>
@@ -121,7 +123,7 @@ namespace mxl::lib
             {
                 return "does not provide every function";
             }
-            if ((api.capabilities & ~MXL_PAYLOAD_BACKEND_CAP_SHARE_DESCRIPTORS) != 0U)
+            if ((api.capabilities & ~(MXL_PAYLOAD_BACKEND_CAP_SHARE_DESCRIPTORS | MXL_PAYLOAD_BACKEND_CAP_DESCRIBE_GEOMETRY)) != 0U)
             {
                 return fmt::format("reports unknown capabilities {:#x}", api.capabilities);
             }
@@ -130,8 +132,90 @@ namespace mxl::lib
             {
                 return "shares descriptors but does not provide the functions to export and import them";
             }
+            if (((api.capabilities & MXL_PAYLOAD_BACKEND_CAP_DESCRIBE_GEOMETRY) != 0U) && (api.describeGeometry == nullptr))
+            {
+                return "defines media types but does not provide the function that describes their geometry";
+            }
             return {};
         }
+
+        /**
+         * Check a grain geometry a backend reported.
+         * \param[in] geometry The backend's answer.
+         * \return An empty string if the geometry is valid, otherwise a description of the problem.
+         */
+        std::string validateGeometry(mxlPayloadBackendGrainGeometry const& geometry)
+        {
+            if (geometry.structSize != sizeof(mxlPayloadBackendGrainGeometry))
+            {
+                return "changed the size of the geometry structure";
+            }
+            if ((geometry.planeCount == 0U) || (geometry.planeCount > MXL_MAX_PLANES_PER_GRAIN))
+            {
+                return fmt::format("reported {} planes, expected 1 to {}", geometry.planeCount, MXL_MAX_PLANES_PER_GRAIN);
+            }
+            // mxlGrainInfo counts slices in 16 bits.
+            if ((geometry.slicesPerGrain == 0U) || (geometry.slicesPerGrain > std::numeric_limits<std::uint16_t>::max()))
+            {
+                return fmt::format(
+                    "reported {} slices per grain, expected 1 to {}", geometry.slicesPerGrain, std::numeric_limits<std::uint16_t>::max());
+            }
+            auto grainSize = std::uint64_t{0};
+            for (auto plane = std::uint32_t{0}; plane < MXL_MAX_PLANES_PER_GRAIN; ++plane)
+            {
+                if ((geometry.sliceSizes[plane] == 0U) != (plane >= geometry.planeCount))
+                {
+                    return fmt::format("reported a slice size of {} for plane {} of {}", geometry.sliceSizes[plane], plane, geometry.planeCount);
+                }
+                grainSize += std::uint64_t{geometry.sliceSizes[plane]} * geometry.slicesPerGrain;
+            }
+            // mxlGrainInfo holds the grain size in 32 bits.
+            if (grainSize > std::numeric_limits<std::uint32_t>::max())
+            {
+                return fmt::format("reported a grain of {} bytes, more than {}", grainSize, std::numeric_limits<std::uint32_t>::max());
+            }
+            return {};
+        }
+    }
+
+    GrainGeometry describeGrainGeometry(mxlPayloadBackendApi const& api, std::string const& flowDef, mxlDataFormat format, std::size_t grainLines)
+    {
+        if ((api.capabilities & MXL_PAYLOAD_BACKEND_CAP_DESCRIBE_GEOMETRY) == 0U)
+        {
+            throw PayloadStorageError{MXL_ERR_UNSUPPORTED_OPERATION,
+                fmt::format("Payload backend '{}' stores only the media types libmxl defines, and this flow's media type is not one of them.",
+                    api.name)};
+        }
+
+        auto const query = mxlPayloadBackendGeometryQuery{
+            .structSize = sizeof(mxlPayloadBackendGeometryQuery),
+            .format = static_cast<std::uint32_t>(format),
+            .grainLines = static_cast<std::uint32_t>(grainLines),
+            .reserved = 0U,
+            .flowDefinition = flowDef.c_str(),
+        };
+        auto geometry = mxlPayloadBackendGrainGeometry{};
+        geometry.structSize = sizeof(mxlPayloadBackendGrainGeometry);
+        if (auto const status = api.describeGeometry(&query, &geometry); status != MXL_STATUS_OK)
+        {
+            throw PayloadStorageError{status,
+                (status == MXL_ERR_UNSUPPORTED_OPERATION)
+                    ? fmt::format("Payload backend '{}' does not define this flow's media type.", api.name)
+                    : fmt::format("Payload backend '{}' cannot describe the grain geometry of the flow.", api.name)};
+        }
+        if (auto const problem = validateGeometry(geometry); !problem.empty())
+        {
+            throw PayloadStorageError{
+                MXL_ERR_INTERNAL, fmt::format("Payload backend '{}' returned an invalid grain geometry: it {}.", api.name, problem)};
+        }
+
+        auto result = GrainGeometry{.payloadSize = 0U, .totalSlices = geometry.slicesPerGrain, .sliceLengths = {}};
+        std::ranges::copy(geometry.sliceSizes, result.sliceLengths.begin());
+        for (auto const sliceLength : result.sliceLengths)
+        {
+            result.payloadSize += std::size_t{sliceLength} * result.totalSlices;
+        }
+        return result;
     }
 
     PayloadBackendLoader& PayloadBackendLoader::defaultLoader()

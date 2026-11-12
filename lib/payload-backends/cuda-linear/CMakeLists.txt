@@ -12,6 +12,26 @@ if (NOT TARGET picojson::picojson)
     find_package(picojson REQUIRED)
 endif()
 
+# The header of the storage type the backend reports, cuda-device-pointer, which applications include to read the
+# device and the slots' device pointers from MXL's reserved bytes. It needs MXL's headers, not CUDA's, and is installed
+# with the backend, not with libmxl, whose headers know nothing of CUDA.
+add_library(mxl-cuda-device-pointer-headers INTERFACE)
+target_include_directories(mxl-cuda-device-pointer-headers
+        INTERFACE
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    )
+target_link_libraries(mxl-cuda-device-pointer-headers
+        INTERFACE
+            mxl-headers
+    )
+install(DIRECTORY
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        COMPONENT ${PROJECT_NAME}-dev
+        FILES_MATCHING
+            PATTERN "*.h"
+    )
+
 add_library(mxl-payload-cuda-linear MODULE)
 set_target_properties(mxl-payload-cuda-linear
         PROPERTIES
@@ -48,7 +68,7 @@ target_include_directories(mxl-payload-cuda-linear
 # The static CUDA runtime keeps the backend's only runtime dependency the NVIDIA driver (libcuda.so).
 target_link_libraries(mxl-payload-cuda-linear
         PRIVATE
-            mxl-headers
+            mxl-cuda-device-pointer-headers
             picojson::picojson
             CUDA::cudart_static
     )
@@ -59,3 +79,8 @@ install(TARGETS mxl-payload-cuda-linear
         COMPONENT ${PROJECT_NAME}-lib
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     )
+
+# The backend's tests, which use only the public API and the header of its storage type.
+if (BUILD_TESTS)
+    add_subdirectory(tests)
+endif()

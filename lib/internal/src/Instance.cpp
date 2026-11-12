@@ -17,6 +17,7 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <fmt/format.h>
 #include <picojson/wrapper.h>
 #include <spdlog/cfg/env.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -301,19 +302,33 @@ namespace mxl::lib
         // Compute the grain count based on our configured history duration
         auto const grainCount = _historyDuration * grainRate.numerator / (1'000'000'000ULL * grainRate.denominator);
 
-        auto const batchSizeDefault = parser.getTotalPayloadSlices();
+        // libmxl knows the geometry of the media types it defines. Any other media type is defined by the backend that
+        // holds the payload, which libmxl asks before creating the flow.
+        auto const& storageSpec = optionsParser.getPayloadStorageSpec();
+        auto geometry = parser.getGrainGeometry();
+        if (!geometry.has_value())
+        {
+            if (!storageSpec.usesBackend())
+            {
+                throw PayloadStorageError{MXL_ERR_UNSUPPORTED_OPERATION,
+                    fmt::format("The built-in host storage stores only the media types libmxl defines, not '{}'.", parser.getMediaType())};
+            }
+            geometry = _flowManager.describeGrainGeometry(storageSpec.backend, flowDef, parser.getFormat(), parser.getGrainLines());
+        }
+
+        auto const batchSizeDefault = geometry->totalSlices;
 
         auto [created, flowData] = _flowManager.createOrOpenDiscreteFlowWithStorage(parser.getId(),
             flowDef,
             parser.getFormat(),
             grainCount,
             grainRate,
-            parser.getPayloadSize(),
-            parser.getTotalPayloadSlices(),
-            parser.getPayloadSliceLengths(),
+            geometry->payloadSize,
+            geometry->totalSlices,
+            geometry->sliceLengths,
             optionsParser.getMaxSyncBatchSizeHint().value_or(batchSizeDefault),
             optionsParser.getMaxCommitBatchSizeHint().value_or(batchSizeDefault),
-            optionsParser.getPayloadStorageSpec());
+            storageSpec);
 
         return {std::move(flowData), created};
     }

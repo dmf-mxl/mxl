@@ -14,14 +14,33 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <mxl/dataformat.h>
 #include <mxl/mxl.h>
 #include <mxl/platform.h>
 #include "DescriptorChannel.hpp"
+#include "GrainGeometry.hpp"
 #include "PayloadBackendAbi.h"
 #include "PayloadStorage.hpp"
 
 namespace mxl::lib
 {
+    /**
+     * Ask a backend for the grain geometry of a flow whose media type libmxl does not define, and check the answer.
+     * See mxlPayloadBackendApi::describeGeometry.
+     *
+     * \param[in] api The backend function table.
+     * \param[in] flowDef The flow definition.
+     * \param[in] format The data format of the flow, one of the discrete formats.
+     * \param[in] grainLines For video, the number of lines a grain holds. Zero otherwise.
+     * \return The geometry.
+     * \throws PayloadStorageError with MXL_ERR_UNSUPPORTED_OPERATION if the backend does not define media types or does
+     *      not define this one, with MXL_ERR_INTERNAL if its answer is not a valid geometry, or with the backend's
+     *      status if it fails.
+     */
+    [[nodiscard]]
+    MXL_EXPORT
+    GrainGeometry describeGrainGeometry(mxlPayloadBackendApi const& api, std::string const& flowDef, mxlDataFormat format, std::size_t grainLines);
+
     /**
      * Loads payload storage backends that ship with the SDK.
      *

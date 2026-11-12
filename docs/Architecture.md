@@ -122,7 +122,7 @@ A slot is one entry of the ring buffer. The grain at index `i` is stored in slot
 
 An application calls the map function once, before it reads or writes grains, and sets up any per slot resources from the array. Per grain, `mxlFlowReaderGetGrainSlot()` and `mxlFlowWriterOpenGrainSlot()` return the slot that holds the requested grain, which the application looks up in its array. Apart from that, they behave like `mxlFlowReaderGetGrainSlice()` and `mxlFlowWriterOpenGrain()`. A timeout of 0 makes `mxlFlowReaderGetGrainSlot()` return without waiting.
 
-Storage types other than host memory are implemented by backend libraries that libmxl loads by name, from the directories in `MXL_PAYLOAD_PLUGIN_PATH` and from its own directory. A writer selects one with the `payload` object of its flow options. The interface between libmxl and these libraries is internal. [Grain Payload Storage](PayloadStorage.md) describes the design and the planned work.
+Storage types other than host memory are implemented by backend libraries that ship with the SDK and that libmxl loads by name, from the directories in `MXL_PAYLOAD_PLUGIN_PATH` and from its own directory. A writer selects one with the `payload` object of its flow options. The interface between libmxl and these libraries is internal. [Pluggable payloads](PluggablePayloads.md) summarizes the interface and how an application uses it. [Grain Payload Storage](PayloadStorage.md) describes the design and the planned work.
 
 The pointer based functions (`mxlFlowReaderGetGrain*()` and `mxlFlowWriterOpenGrain()`) return a payload pointer only for host storage. For any other storage type they return `MXL_ERR_UNSUPPORTED_OPERATION`, so that an application never dereferences memory that is not host memory.
 
@@ -326,7 +326,7 @@ Documentation for the events ring buffers is available in [Event Flows](EventFlo
 
 ## Video
 
-Video grains can be of two different formats: video/v210 for video without transparency and video/v210a for fill and key signals (video with alpha transparency).
+Video grains can be of two different formats: video/v210 for video without transparency and video/v210a for fill and key signals (video with alpha transparency). These are the media types the SDK defines. A payload backend can define others, whose grain geometry it reports to the SDK, as [Grain Payload Storage](PayloadStorage.md#media-types-a-backend-defines) describes.
 
 ### video/v210
 

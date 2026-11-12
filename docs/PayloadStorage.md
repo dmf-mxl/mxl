@@ -52,22 +52,24 @@ The descriptor sizes are checked at compile time, since they cannot change once 
 
 ### Internal backend interface and loader
 
-Storage types other than host memory are implemented by backend libraries. They are not part of libmxl. This change adds the interface between libmxl and those libraries, and the code that loads them. No backend is shipped yet.
+Storage types other than host memory are implemented by backend libraries. They are not part of libmxl. This change adds the interface between libmxl and those libraries, and the code that loads them. The SDK ships one backend so far, [cuda-linear](#the-cuda-linear-backend).
 
 - `lib/internal/include/mxl-internal/PayloadBackendAbi.h` defines the interface.
-  - It is a versioned table of C functions: `prepare`, `open`, `destroy`, `slotStorage`, `describeLayout` and `mapSlots`. A capability adds `exportDescriptors` and `importDescriptors`, for a backend that shares descriptors ([The descriptor channel](#the-descriptor-channel)).
+  - It is a versioned table of C functions: `prepare`, `open`, `destroy`, `slotStorage`, `describeLayout` and `mapSlots`. Capabilities add optional functions: `exportDescriptors` and `importDescriptors` for a backend that shares descriptors ([The descriptor channel](#the-descriptor-channel)), and `describeGeometry` for a backend that defines media types ([Media types a backend defines](#media-types-a-backend-defines)).
   - `prepare` and `open` receive the backend's options from the writer or reader as JSON object text. Options specific to one kind of storage, such as a CUDA device UUID, are never part of the interface itself.
   - The flow description passed to a backend includes the plane geometry (plane count, slices per grain, and slice sizes), so that a backend allocating images or device buffers can size them.
 - `lib/internal/include/mxl-internal/PayloadBackend.hpp` declares three classes:
   - `PayloadBackendLoader` finds and validates backend libraries.
   - `PluginPayloadStorage` implements `PayloadStorage` on top of a backend instance.
   - `PayloadStorageError` carries the status code a backend returned.
-- The tests build five backend libraries from `lib/internal/tests/payload_backends/`:
+- The tests build seven backend libraries from `lib/internal/tests/payload_backends/`:
   - A valid backend that keeps the payload in a file.
   - The same backend reporting a wrong name.
   - The same backend reporting a storage type that is not a valid name.
+  - The same backend with a storage type of its own, `org.example.test-private`.
+  - The same backend claiming to define media types without the function that describes their geometry, `test-bad-geometry`.
   - A library without the entry point.
-  - A backend that shares one memory file per slot through the descriptor channel, `test-memfd`.
+  - A backend that shares one memory file per slot through the descriptor channel and defines a media type, `test-memfd`.
 
   `lib/internal/tests/test_payload_backend.cpp` uses them to check, without a GPU:
   - loading and validation;
@@ -126,6 +128,51 @@ A flow created with a backend differs from a host flow in four ways:
 A reader opens such a flow by loading the backend named in `payload.json` and opening its storage, which does not map anything. If the backend cannot be used in the reader's process, for example because it is not installed or its device runtime is missing, the reader is still created and can read the flow metadata. `mxlFlowReaderGetStorageLayout` and `mxlFlowReaderMapSlots` then return `MXL_ERR_UNSUPPORTED_OPERATION`.
 
 The tests use the file backed test backend (`test-file`) to run this whole path without a GPU. It is built next to the flow test executable, because libmxl only loads backends from the directory of the binary that contains its code, and never installed.
+
+### Media types a backend defines
+
+libmxl defines the media types `video/v210`, `video/v210a` and `video/smpte291`, and computes the geometry of their grains in `FlowParser`: the planes, the length of a slice of each, and the slices of a grain. Any other media type is defined by a payload backend, so that a new media type never needs a change to libmxl. The application that creates the writer gives only the media type, in the flow definition, and the backend, in the flow options.
+
+- A backend that defines media types reports `MXL_PAYLOAD_BACKEND_CAP_DESCRIBE_GEOMETRY` and implements `describeGeometry()`. Before libmxl creates a flow whose media type it does not define, it asks that function for the geometry, with the flow definition, the data format and, for video, the lines a grain holds: the frame height, or half of it for an interlaced flow, whose grains are fields. The backend answers with the plane count, the slices of a grain and the slice length of each plane, or `MXL_ERR_UNSUPPORTED_OPERATION` for a media type it does not define, or `MXL_ERR_INVALID_ARG` for a flow definition the media type cannot hold, for example an odd width for a format that packs two pixels.
+- libmxl checks the answer, 1 to `MXL_MAX_PLANES_PER_GRAIN` planes, 1 to 65535 slices, a non-zero slice length for every plane and a grain that fits in 32 bits, and refuses the flow with `MXL_ERR_INTERNAL` otherwise. It then sizes the ring buffer and records the geometry in the flow, as for its own media types. The geometry reaches `prepare()` in `mxlPayloadBackendFlowInfo`, and `describeLayout()` can still widen the pitch of a plane. Readers take the geometry from the flow, never from the media type, so a reader needs nothing from the backend to know it.
+- The built-in host storage, and a backend without the capability, store only the media types libmxl defines. A flow of any other media type fails with `MXL_ERR_UNSUPPORTED_OPERATION`.
+- A media type names one layout of the bytes. Two backends that support the same media type report the same geometry, so that a reader, a converter or a fabrics target sees the same bytes whichever backend holds them. The storage type says how the bytes are held and shared, never what they mean ([The storage never defines the media format](#the-storage-never-defines-the-media-format)).
+
+The test-memfd backend of the tests defines `video/x-test-two-plane`, a made-up format of two planes, and claims a few media types whose geometry it describes wrongly, so that the tests cover the path without a GPU: the geometry of a progressive and an interlaced flow, the refusals, and the checks of the answer.
+
+### The cuda-linear backend
+
+`libmxl-payload-cuda-linear.so` keeps the payload of a video flow in linear CUDA device memory, and refuses flows of other formats. It is built when the CMake option `MXL_ENABLE_CUDA_PAYLOAD` is on, which needs the CUDA toolkit, and is installed next to libmxl. It links the static CUDA runtime, so on an installed system it only needs the NVIDIA driver. libmxl itself does not link against CUDA. It is based on the CUDA work by Thomas True in PR #653.
+
+A writer puts a flow's payload on a GPU with:
+
+```json
+{"payload": {"backend": "cuda-linear", "deviceUuid": "GPU-88064374-43da-caf5-b332-be5fb39bf2e6"}}
+```
+
+- `deviceUuid` is required for writers, in the format `nvidia-smi -L` prints, or as 32 hexadecimal digits. The backend accepts no device index.
+- Readers may pass `{"payload": {"deviceUuid": "..."}}` to access the payload on another GPU of the same machine. By default they use the GPU that holds it.
+- Slots have the storage type `"cuda-device-pointer"`, `MXL_PAYLOAD_STORAGE_CUDA_DEVICE_POINTER`. Its header, `mxl/storage/cuda_device_pointer.h`, is installed with the backend: libmxl's headers know nothing of CUDA. It defines what the storage type keeps in the reserved bytes of the layout and of the slot description, and functions that copy it out and in. `mxlGetCudaGrainStorage()` gives a slot's device address, valid in the calling process, on the device whose index in the calling process `mxlGetCudaGrainStorageLayout()` gives. The same function gives the UUID of the device that holds the payload, which is another device when the reader accesses it from another GPU through peer access. The pointer API returns `MXL_ERR_UNSUPPORTED_OPERATION`.
+
+How the memory is shared:
+
+- The writer creates one CUDA virtual-memory allocation for all slots, with each slot starting at a multiple of 256 bytes, and clears it. It exports that allocation once as a POSIX file descriptor. libmxl serves the descriptor on `payload.sock` in the flow directory. `payload.cuda.json`, next to `payload.json`, records the format version, the export name `posix-fd`, the device UUID, the slot count, the stride and the allocation size. It does not contain the descriptor. Readers refuse another version.
+- A reader in another process receives the descriptor when the application calls `mxlFlowReaderMapSlots`, and imports it with `cuMemImportFromShareableHandle`. Opening the reader makes no CUDA call.
+- A reader on another GPU maps the allocation through peer access, if `cudaDeviceCanAccessPeer` allows it. Otherwise mapping returns `MXL_ERR_UNSUPPORTED_OPERATION`.
+- A reader in the writer's own process shares the writer's allocation through a registry inside the process. The allocation is reference counted, so it stays valid for such a reader after the writer is released.
+
+The commit contract: device work that writes a grain must be complete before the writer calls `mxlFlowWriterCommitGrain`, for example after `cudaStreamSynchronize` or `cudaEventSynchronize`. A reader can use a slot as soon as `mxlFlowReaderGetGrainSlot` returns it.
+
+Where writer and reader can run:
+
+| Writer and reader | Mechanism | Requirements |
+|---|---|---|
+| Same pod, same GPU | POSIX file descriptor | One MXL domain. |
+| Same pod, different GPUs | POSIX file descriptor and peer access | One MXL domain. The reader sees both GPUs, and they support peer access (NVLink or a PCIe path that allows it). |
+| Different pods, same node | POSIX file descriptor, with peer access for different GPUs | A shared MXL domain (a tmpfs both pods mount). No shared IPC or PID namespace. The reader sees the writer's GPU. |
+| Different nodes | Fabrics | One MXL domain per node. RDMA from device memory is later work. |
+
+`lib/payload-backends/cuda-linear/tests` tests the backend through the public API: sharing in one process and between processes, memory staying valid after the writer is released, and option errors. The tests are skipped when no CUDA device is visible. The peer-GPU test runs when two visible devices can access each other.
 
 ## Principles
 
@@ -199,11 +246,11 @@ The plane geometry is the same for every slot of a flow.
 
 ### The storage never defines the media format
 
-The media format says which bits the payload holds, for example v210, P210 or RGBA16 half float. It is a property of the flow. The writer declares it in the flow definition, and readers know it before they map anything, from the flow definition and `mxlFlowConfigInfo`. libmxl computes the planes, line sizes and grain size from it, whatever the storage.
+The media format says which bits the payload holds, for example v210, P210 or RGBA16 half float. It is a property of the flow. The writer declares it in the flow definition, as a media type, and readers know it before they map anything, from the flow definition and `mxlFlowConfigInfo`. The planes, line sizes and grain size follow from the media type, whatever the storage: libmxl computes them for the media types it defines, and asks the backend that holds the payload for the media types a backend defines ([Media types a backend defines](#media-types-a-backend-defines)). Either way, a media type names one layout of the bytes, the same in every backend that supports it.
 
 The storage says where the memory is, how it is shared, and how the bits are arranged in memory: line padding, DRM format modifier, Vulkan tiling. It never changes the format. A backend supports a set of formats, and a flow whose format a backend does not support fails with `MXL_ERR_UNSUPPORTED_OPERATION`, as device memory does today for data and audio flows.
 
-MXL does not convert between formats. A writer that produces RGBA16 half float on a GPU writes an RGBA16 half float flow, and a reader that needs v210 uses a converting media function in between, as for any two different media types. The mapping from an MXL media format to the formats of a device API, such as a DRM fourcc or a `VkFormat`, is defined by the SDK, so that every backend and application agrees on it.
+MXL does not convert between formats. A writer that produces RGBA16 half float on a GPU writes an RGBA16 half float flow, and a reader that needs v210 uses a converting media function in between, as for any two different media types. The mapping from an MXL media type to the formats of a device API, such as a DRM fourcc or a `VkFormat`, is defined by whoever defines the media type, the SDK or a backend, and every backend and application that supports the media type follows it.
 
 ### Storage describes its own layout
 
@@ -261,6 +308,8 @@ The backend interface moves to version 2 for this. A backend that reports `MXL_P
 
 The `test-memfd` backend in `lib/internal/tests/payload_backends` shares one memory file per slot this way, under a storage type of its own, `org.example.test-memfd`, described in `TestMemfdStorage.hpp`, which the tests also include. The tests cover the whole path from a writer's buffers to a reader's mapping without a device, and a reader whose writer is gone.
 
+`cuda-linear` shares its memory this way too. It exports one descriptor for the whole allocation of a flow.
+
 #### Choices made
 
 - The socket has its own thread. The `DomainWatcher` epoll thread was the alternative, but it only exists while a process watches the domain.
@@ -296,7 +345,7 @@ flowchart TB
     plugin["PluginPayloadStorage"]
     loader["PayloadBackendLoader<br/>dlopen by name from MXL_PAYLOAD_PLUGIN_PATH<br/>and the libmxl directory"]
     channel["DescriptorServer<br/>payload.sock"]
-    cuda["libmxl-payload-cuda-linear.so<br/>next step"]
+    cuda["libmxl-payload-cuda-linear.so<br/>CUDA device memory"]
     dmabuf["dma-buf and image backends<br/>later"]
     app --> ptr
     app --> desc
@@ -314,18 +363,7 @@ flowchart TB
 
 ## Future work
 
-The steps below complete the first pull request. They follow the design agreed with the CUDA work in PR #653.
-
-1. Add the `cuda-linear` backend, built only when a CMake option enables it.
-   - It makes one CUDA virtual-memory allocation for all slots of a flow, with each slot aligned to 256 bytes, and exports it once as a POSIX file descriptor, which libmxl serves on [the descriptor channel](#the-descriptor-channel). It records the export format and the device UUID in its own file in the flow directory. Each reader then imports the memory once. Legacy CUDA IPC handles, which are plain bytes, were the first plan, but they need a shared IPC namespace between containers, and cannot be opened in the process that created them.
-   - A reader on another GPU of the same machine maps the memory through peer access.
-   - Readers in the writer's own process share the allocation through a reference count.
-2. Document the commit contract: device work that writes a grain must be complete before `mxlFlowWriterCommitGrain`. Also document the ways to deploy it:
-   - Same pod, same GPU: the descriptor channel.
-   - Same pod, different GPU: the descriptor channel and peer access.
-   - Different pods on one node: the descriptor channel, with a shared domain.
-   - Different nodes: fabrics.
-3. Test the CUDA backend on machines with a GPU. CI keeps running the whole flow through the test backend.
+The first pull request is complete with the `cuda-linear` backend. The sections below describe later work.
 
 ## Worked example: a dma-buf backend
 
@@ -356,13 +394,13 @@ Which format to use depends on the devices that write and read the flow. These a
 
 v210 has no DRM fourcc, and most dma-buf importers cannot use it. The backend therefore rejects v210 and v210a flows, which keep using host or CUDA storage.
 
-Each of these formats needs an MXL media type, and `FlowParser` support to compute its planes, line sizes and grain size. See [What the examples show](#what-the-examples-show).
+Each of these formats needs an MXL media type, which the backend defines together with the planes, line sizes and grain size of its grains, as [Media types a backend defines](#media-types-a-backend-defines) describes. See [What the examples show](#what-the-examples-show).
 
 ### Creating the flow
 
 `prepare` checks that the flow's format has a DRM fourcc, then opens `/dev/dma_heap/<heap>` and allocates one buffer per slot with `DMA_HEAP_IOCTL_ALLOC`. All planes of a slot share its buffer: a P210 buffer holds the luma plane followed by the chroma plane.
 
-This differs from the planned CUDA backend, which makes one allocation for all slots. Importers of dma-buf take one memory object per frame: a V4L2 buffer, a DRM framebuffer or a `VkDeviceMemory`. With one buffer per slot, each slot can be imported on its own, and the plane offsets in the layout are the same for every slot.
+This differs from the `cuda-linear` backend, which makes one allocation for all slots. Importers of dma-buf take one memory object per frame: a V4L2 buffer, a DRM framebuffer or a `VkDeviceMemory`. With one buffer per slot, each slot can be imported on its own, and the plane offsets in the layout are the same for every slot.
 
 The backend writes no file of its own. After `prepare`, libmxl takes the descriptors from the backend and serves them on `payload.sock`.
 
@@ -433,7 +471,7 @@ Vulkan images, OpenGL textures and CUDA arrays cannot be shared through CUDA IPC
 
 ### Which formats an image holds
 
-The flow definition gives the format, and the SDK maps it to a `VkFormat`. The image holds the flow's samples in that format, without conversion:
+The flow definition gives the format, as a media type the backend defines ([Media types a backend defines](#media-types-a-backend-defines)), and the backend maps it to a `VkFormat`. The image holds the flow's samples in that format, without conversion:
 
 | Media format | Vulkan format | Images per slot |
 |---|---|---|
@@ -547,12 +585,11 @@ The examples also reveal gaps, to close when these backends are implemented:
 6. Readers of dma-buf and image flows can write to the payload, while readers of host flows map it read-only.
 7. OpenGL has no timeline semaphores. `GL_EXT_semaphore` only has binary semaphores, so OpenGL readers either wait on the CPU, or the backend adds a binary semaphore per slot.
 8. Every import function takes ownership of the descriptor it is given. The documentation of each storage type has to repeat that applications duplicate descriptors before importing them.
-9. Neither backend uses v210. Both need new MXL media types, such as P210 and RGBA16 half float, with `FlowParser` support for their planes, line sizes and grain size, and colour and transfer information for RGB formats. Device memory is then no longer limited to v210 and v210a.
+9. Neither backend uses v210. Both define media types of their own, such as P210 and RGBA16 half float, whose planes, line sizes and grain size they report to libmxl ([Media types a backend defines](#media-types-a-backend-defines)), and need colour and transfer information for RGB formats. Device memory is then no longer limited to v210 and v210a.
 10. The backend interface has to pass the flow's media format to the backend, and a backend has to be able to reject formats it does not support. This is an internal change. The public API stays the same.
 
 ## Later pull requests
 
-- The GStreamer test source and sink with device memory, from PR #653.
 - RDMA from device memory in fabrics: CUDA memory registered with `FI_HMEM_CUDA`, and dma-buf registered with `FI_MR_DMABUF`, using the storage type and device reported by `PayloadStorage`. Fabrics rejects device memory until then.
 - The dma-buf backend and then the image backend, as worked out above, on top of the descriptor channel.
 - Buffers supplied by the application: dma-bufs allocated by a device, or CUDA memory from an application's memory pool. The backend would still own export and import, and would check the memory before using it.

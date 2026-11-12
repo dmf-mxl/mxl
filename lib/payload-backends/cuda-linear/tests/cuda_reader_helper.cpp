@@ -5,8 +5,8 @@
  * \file cuda_reader_helper.cpp
  *
  * Reads one grain of a flow whose payload is in CUDA device memory, from a process other than the writer's, and
- * checks that every payload byte has an expected value. Used by test_cuda_payload.cpp to test CUDA IPC between
- * processes.
+ * checks that every payload byte has an expected value. Used by test_cuda_payload.cpp and
+ * cuda-cross-container-test.sh to test sharing the payload between processes and containers.
  *
  * Usage: mxl-cuda-reader-helper \<domain\> \<flow id\> \<grain index\> \<expected byte\> [reader options] [device index]
  * Exit status: 0 if the grain was read and every byte matched, 1 otherwise. Errors are printed to stderr.
@@ -16,13 +16,13 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <string>
-#include <string_view>
 #include <vector>
 #include <cuda_runtime_api.h>
+#include <mxl/storage/cuda_device_pointer.h>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
-#include "CudaLinearStorage.h"
 
 namespace
 {
@@ -76,9 +76,9 @@ int main(int argc, char** argv)
     {
         return fail("mxlFlowReaderGetStorageLayout", status);
     }
-    if (std::string_view{layout.storageType} != MXL_CUDA_LINEAR_STORAGE_TYPE)
+    if (std::strcmp(layout.storageType, MXL_PAYLOAD_STORAGE_CUDA_DEVICE_POINTER) != 0)
     {
-        return fail("checking the storage type", -2);
+        return fail("checking the storage type", -1);
     }
 
     auto slots = std::vector<mxlGrainStorage>(layout.slotCount);
@@ -92,9 +92,9 @@ int main(int argc, char** argv)
         {
             return fail("mxlFlowReaderGetStorageLayout", status);
         }
-        if (mxlCudaLinearLayout(layout).deviceIndex != deviceIndex)
+        if (auto const device = mxlGetCudaGrainStorageLayout(&layout); device.deviceIndex != deviceIndex)
         {
-            return fail("checking the mapped device", mxlCudaLinearLayout(layout).deviceIndex);
+            return fail("checking the mapped device", device.deviceIndex);
         }
         if (auto const error = ::cudaSetDevice(deviceIndex); error != cudaSuccess)
         {
@@ -111,7 +111,7 @@ int main(int argc, char** argv)
     }
 
     auto bytes = std::vector<std::uint8_t>(grainInfo.grainSize);
-    if (auto const error = ::cudaMemcpy(bytes.data(), mxlCudaLinearDevicePointer(slots[slot]), bytes.size(), cudaMemcpyDeviceToHost);
+    if (auto const error = ::cudaMemcpy(bytes.data(), mxlGetCudaGrainStorage(&slots[slot]).pointer, bytes.size(), cudaMemcpyDeviceToHost);
         error != cudaSuccess)
     {
         return fail("cudaMemcpy", static_cast<int>(error));

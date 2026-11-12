@@ -5,12 +5,12 @@
  * \file cuda_writer_helper.cpp
  *
  * Creates one flow whose payload is in CUDA device memory, writes one grain, and waits until it is signaled.
- * A reader in another process, including one in another container that shares this process's IPC namespace, can
+ * A reader in another process, including one in another container that mounts the same domain directory, can
  * import the grain while this process is still running.
  *
  * Usage: mxl-cuda-writer-helper \<domain\> \<flow definition\> \<byte\> [writer options]
  * On success it prints "READY \<grain index\>" to stdout and waits for SIGTERM or SIGINT.
- * Exit status: 0 after a signal, 1 if the flow could not be created. Errors are printed to stderr.
+ * Exit status: 0 after a signal, 1 on any failure. Errors are printed to stderr.
  */
 
 #include <cerrno>
@@ -21,14 +21,13 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <vector>
 #include <cuda_runtime_api.h>
 #include <signal.h>
+#include <mxl/storage/cuda_device_pointer.h>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
-#include "CudaLinearStorage.h"
 #include "CudaTestUtils.hpp"
 
 namespace
@@ -127,7 +126,7 @@ int main(int argc, char** argv)
     {
         return fail("mxlFlowWriterGetStorageLayout", status);
     }
-    if (auto const error = ::cudaSetDevice(mxlCudaLinearLayout(layout).deviceIndex); error != cudaSuccess)
+    if (auto const error = ::cudaSetDevice(mxlGetCudaGrainStorageLayout(&layout).deviceIndex); error != cudaSuccess)
     {
         return fail("cudaSetDevice", static_cast<int>(error));
     }
@@ -144,7 +143,7 @@ int main(int argc, char** argv)
     {
         return fail("mxlFlowWriterOpenGrainSlot", status);
     }
-    if (auto const error = ::cudaMemset(mxlCudaLinearDevicePointer(slots[slot]), value, grainInfo.grainSize); error != cudaSuccess)
+    if (auto const error = ::cudaMemset(mxlGetCudaGrainStorage(&slots[slot]).pointer, value, grainInfo.grainSize); error != cudaSuccess)
     {
         return fail("cudaMemset", static_cast<int>(error));
     }

@@ -140,13 +140,10 @@ if (gstreamer_FOUND)
                         C_STANDARD                  ${MXL_C_STANDARD}
                         CXX_STANDARD                ${MXL_CXX_STANDARD}
                 )
-            target_include_directories(${target}
-                    PRIVATE
-                        ${CMAKE_CURRENT_SOURCE_DIR}/../../lib/payload-backends/cuda-linear
-                )
             target_link_libraries(${target}
                     PRIVATE
                         mxl
+                        mxl-cuda-device-pointer-headers
                         CUDA::cudart_static
                         fmt::fmt
                         picojson::picojson

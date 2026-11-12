@@ -16,15 +16,15 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <catch2/catch_test_macros.hpp>
+#include <mxl/storage/cuda_device_pointer.h>
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
-#include "CudaLinearStorage.h"
 #include "CudaTestUtils.hpp"
 
 namespace
 {
-    /** Id of the flow in data/v210_flow.json. */
+    /** Id of the flow in v210_flow.json, in MXL_TEST_DATA_DIR. */
     constexpr auto V210_FLOW_ID = "5fbec3b1-1b0f-417d-9059-8b94a47197ed";
 
     /**
@@ -155,7 +155,7 @@ namespace
             auto grainInfo = mxlGrainInfo{};
             auto slot = std::uint32_t{0};
             REQUIRE(mxlFlowWriterOpenGrainSlot(_writer, index, &grainInfo, &slot) == MXL_STATUS_OK);
-            REQUIRE(::cudaMemset(mxlCudaLinearDevicePointer(slots[slot]), value, grainInfo.grainSize) == cudaSuccess);
+            REQUIRE(::cudaMemset(mxlGetCudaGrainStorage(&slots[slot]).pointer, value, grainInfo.grainSize) == cudaSuccess);
             // Device work that writes a grain must be complete before the commit.
             REQUIRE(::cudaDeviceSynchronize() == cudaSuccess);
             grainInfo.validSlices = grainInfo.totalSlices;
@@ -236,29 +236,29 @@ TEST_CASE("CUDA payload : Writer and reader in one process", "[cuda payload]")
     auto const domain = Domain{};
     auto writer = CudaWriter{domain.path(), deviceOptions(uuid)};
 
-    // The deprecated payload location and device index stay at their defaults. The storage layout says where the
-    // payload is.
+    // The deprecated fields of the flow configuration keep their defaults. The storage layout says where the payload
+    // is.
     REQUIRE(writer.configInfo().common.payloadLocation == 0U);
     REQUIRE(writer.configInfo().common.deviceIndex == -1);
 
     auto layout = mxlGrainStorageLayout{};
     REQUIRE(mxlFlowWriterGetStorageLayout(writer.writer(), &layout) == MXL_STATUS_OK);
-    REQUIRE(std::string_view{layout.storageType} == MXL_CUDA_LINEAR_STORAGE_TYPE);
-    auto const info = mxlCudaLinearLayout(layout);
-    REQUIRE(info.deviceIndex == 0);
+    REQUIRE(std::string_view{layout.storageType} == MXL_PAYLOAD_STORAGE_CUDA_DEVICE_POINTER);
+    auto const device = mxlGetCudaGrainStorageLayout(&layout);
+    REQUIRE(device.deviceIndex == 0);
+    REQUIRE(device.reserved0 == 0U);
     auto properties = cudaDeviceProp{};
     REQUIRE(::cudaGetDeviceProperties(&properties, 0) == cudaSuccess);
-    REQUIRE(std::memcmp(info.deviceUuid, properties.uuid.bytes, sizeof(info.deviceUuid)) == 0);
+    REQUIRE(std::memcmp(device.deviceUuid, properties.uuid.bytes, sizeof(device.deviceUuid)) == 0);
 
     // Slots are device memory, 256-byte aligned.
     auto writerSlots = std::vector<mxlGrainStorage>(layout.slotCount);
     REQUIRE(mxlFlowWriterMapSlots(writer.writer(), layout.slotCount, writerSlots.data()) == MXL_STATUS_OK);
     for (auto const& slot : writerSlots)
     {
-        auto const pointer = mxlCudaLinearDevicePointer(slot);
-        REQUIRE((reinterpret_cast<std::uintptr_t>(pointer) % 256U) == 0U);
+        REQUIRE((reinterpret_cast<std::uintptr_t>(mxlGetCudaGrainStorage(&slot).pointer) % 256U) == 0U);
         auto attributes = cudaPointerAttributes{};
-        REQUIRE(::cudaPointerGetAttributes(&attributes, pointer) == cudaSuccess);
+        REQUIRE(::cudaPointerGetAttributes(&attributes, mxlGetCudaGrainStorage(&slot).pointer) == cudaSuccess);
         REQUIRE(attributes.type == cudaMemoryTypeDevice);
     }
 
@@ -280,15 +280,15 @@ TEST_CASE("CUDA payload : Writer and reader in one process", "[cuda payload]")
 
     auto slot = std::uint32_t{0};
     REQUIRE(mxlFlowReaderGetGrainSlot(reader, index, MXL_GRAIN_VALID_SLICES_ALL, 0U, &grainInfo, &slot) == MXL_STATUS_OK);
-    REQUIRE(mxlCudaLinearDevicePointer(readerSlots[slot]) == mxlCudaLinearDevicePointer(writerSlots[slot]));
-    requireDeviceBytes(mxlCudaLinearDevicePointer(readerSlots[slot]), grainInfo.grainSize, 0xAB);
+    REQUIRE(mxlGetCudaGrainStorage(&readerSlots[slot]).pointer == mxlGetCudaGrainStorage(&writerSlots[slot]).pointer);
+    requireDeviceBytes(mxlGetCudaGrainStorage(&readerSlots[slot]).pointer, grainInfo.grainSize, 0xAB);
 
     // The pointer based API refuses device memory for readers too.
     REQUIRE(mxlFlowReaderGetGrain(reader, index, 0U, &grainInfo, &payload) == MXL_ERR_UNSUPPORTED_OPERATION);
 
     // The allocation stays valid for the reader after the writer is released.
     writer.release();
-    requireDeviceBytes(mxlCudaLinearDevicePointer(readerSlots[slot]), grainInfo.grainSize, 0xAB);
+    requireDeviceBytes(mxlGetCudaGrainStorage(&readerSlots[slot]).pointer, grainInfo.grainSize, 0xAB);
 
     REQUIRE(mxlReleaseFlowReader(readerInstance, reader) == MXL_STATUS_OK);
     mxlDestroyInstance(readerInstance);
@@ -337,7 +337,7 @@ TEST_CASE("CUDA payload : Reader in another process", "[cuda payload]")
                 R"({"payload": {"deviceUuid": ")" + uuid + R"("}})"}) == 0);
 }
 
-TEST_CASE("CUDA payload : A refused second writer leaves the first writer's payload socket", "[cuda payload]")
+TEST_CASE("CUDA payload : A refused second writer leaves the first writer's payload socket and allocation", "[cuda payload]")
 {
     if (mxl::tests::cuda::deviceCount() == 0)
     {
@@ -372,6 +372,20 @@ TEST_CASE("CUDA payload : A refused second writer leaves the first writer's payl
     REQUIRE(::lstat(socketPath.c_str(), &after) == 0);
     REQUIRE(after.st_ino == before.st_ino);
     REQUIRE(runReaderHelper({domain.path().string(), V210_FLOW_ID, std::to_string(index), std::to_string(0x6D)}) == 0);
+
+    // A reader in this process still shares the first writer's allocation, not the refused writer's.
+    auto* const readerInstance = mxlCreateInstance(domain.path().string().c_str(), "");
+    REQUIRE(readerInstance != nullptr);
+    auto reader = mxlFlowReader{nullptr};
+    REQUIRE(mxlCreateFlowReader(readerInstance, V210_FLOW_ID, "", &reader) == MXL_STATUS_OK);
+    auto readerSlots = std::vector<mxlGrainStorage>(layout.slotCount);
+    REQUIRE(mxlFlowReaderMapSlots(reader, layout.slotCount, readerSlots.data()) == MXL_STATUS_OK);
+    for (auto i = std::size_t{0}; i < readerSlots.size(); ++i)
+    {
+        REQUIRE(mxlGetCudaGrainStorage(&readerSlots[i]).pointer == mxlGetCudaGrainStorage(&writerSlots[i]).pointer);
+    }
+    REQUIRE(mxlReleaseFlowReader(readerInstance, reader) == MXL_STATUS_OK);
+    mxlDestroyInstance(readerInstance);
 }
 
 TEST_CASE("CUDA payload : Reader on a peer GPU", "[cuda payload]")

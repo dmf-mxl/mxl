@@ -9,14 +9,18 @@
  * memfd_create(). The backend defines its own storage type, described in TestMemfdStorage.hpp, and has the capability
  * to share descriptors, so that libmxl serves them on payload.sock and readers receive them.
  *
- * The backend stores video flows and accepts no options.
+ * The backend stores flows of the one media type it defines, video/x-test-two-plane, whose geometry libmxl asks it
+ * for. It reads the media type from the flow definition, and accepts no options. It also claims a few media types
+ * whose geometry it describes wrongly, so that the tests can check that libmxl refuses such answers.
  */
 
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <new>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <fcntl.h>
 #include <unistd.h>
@@ -72,6 +76,53 @@ namespace
         }
     }
 
+    /** What the backend reads from a flow definition. */
+    struct FlowFields
+    {
+        std::string mediaType;        ///< The media type, empty if the definition has none.
+        std::uint32_t frameWidth{0U}; ///< The frame width, 0 if the definition has none.
+    };
+
+    /**
+     * \param[in] flowDefinition The flow definition as JSON text.
+     * \return The fields the backend uses, empty if the definition cannot be parsed.
+     */
+    FlowFields readFlowFields(char const* flowDefinition) noexcept
+    {
+        try
+        {
+            auto value = picojson::value{};
+            if ((flowDefinition == nullptr) || !picojson::parse(value, std::string{flowDefinition}).empty() || !value.is<picojson::object>())
+            {
+                return {};
+            }
+            auto const& root = value.get<picojson::object>();
+            auto fields = FlowFields{};
+            if (auto const it = root.find("media_type"); (it != root.end()) && it->second.is<std::string>())
+            {
+                fields.mediaType = it->second.get<std::string>();
+            }
+            if (auto const it = root.find("frame_width"); (it != root.end()) && it->second.is<double>() && (it->second.get<double>() > 0.0))
+            {
+                fields.frameWidth = static_cast<std::uint32_t>(it->second.get<double>());
+            }
+            return fields;
+        }
+        catch (...)
+        {
+            return {};
+        }
+    }
+
+    /**
+     * \param[in] flowDefinition The flow definition as JSON text.
+     * \return true if its media type is the one the backend stores.
+     */
+    bool hasStoredMediaType(char const* flowDefinition) noexcept
+    {
+        return readFlowFields(flowDefinition).mediaType == mxl::tests::memfd::MEDIA_TYPE;
+    }
+
     /**
      * Create a memory file of a given size.
      * \param[in] size The size in bytes.
@@ -112,7 +163,7 @@ namespace
             *out_status = MXL_ERR_INVALID_ARG;
             return nullptr;
         }
-        if (info->format != MXL_DATA_FORMAT_VIDEO)
+        if ((info->format != MXL_DATA_FORMAT_VIDEO) || !hasStoredMediaType(info->flowDefinition))
         {
             *out_status = MXL_ERR_UNSUPPORTED_OPERATION;
             return nullptr;
@@ -230,6 +281,11 @@ namespace
             return MXL_ERR_INVALID_ARG;
         }
         // The planes of a slot follow each other in its buffer, as in the default layout.
+        constexpr auto mediaType = std::string_view{mxl::tests::memfd::MEDIA_TYPE};
+        auto layout = mxl::tests::memfd::Layout{};
+        static_assert(mediaType.size() < sizeof(layout.mediaType));
+        std::memcpy(layout.mediaType, mediaType.data(), mediaType.size());
+        mxl::tests::memfd::setLayout(*inout_layout, layout);
         return MXL_STATUS_OK;
     }
 
@@ -296,6 +352,61 @@ namespace
         return MXL_STATUS_OK;
     }
 
+    /** \see mxlPayloadBackendApi::describeGeometry */
+    mxlStatus describeGeometry(mxlPayloadBackendGeometryQuery const* query, mxlPayloadBackendGrainGeometry* inout_geometry) noexcept
+    {
+        if ((query == nullptr) || (query->structSize < sizeof(mxlPayloadBackendGeometryQuery)) || (inout_geometry == nullptr) ||
+            (inout_geometry->structSize < sizeof(mxlPayloadBackendGrainGeometry)))
+        {
+            return MXL_ERR_INVALID_ARG;
+        }
+        auto const fields = readFlowFields(query->flowDefinition);
+        if (query->format != MXL_DATA_FORMAT_VIDEO)
+        {
+            return MXL_ERR_UNSUPPORTED_OPERATION;
+        }
+
+        using namespace mxl::tests::memfd;
+        auto& geometry = *inout_geometry;
+        geometry.planeCount = 1U;
+        geometry.slicesPerGrain = query->grainLines;
+        std::memset(geometry.sliceSizes, 0, sizeof(geometry.sliceSizes));
+        if (fields.mediaType == MEDIA_TYPE)
+        {
+            if ((fields.frameWidth == 0U) || ((fields.frameWidth % 2U) != 0U))
+            {
+                return MXL_ERR_INVALID_ARG;
+            }
+            geometry.planeCount = 2U;
+            geometry.sliceSizes[0] = fields.frameWidth * TWO_PLANE_FIRST_BYTES_PER_PIXEL;
+            geometry.sliceSizes[1] = fields.frameWidth * TWO_PLANE_SECOND_BYTES_PER_PIXEL;
+        }
+        else if (fields.mediaType == BAD_PLANES_MEDIA_TYPE)
+        {
+            geometry.planeCount = MXL_MAX_PLANES_PER_GRAIN + 1U;
+            geometry.sliceSizes[0] = fields.frameWidth;
+        }
+        else if (fields.mediaType == BAD_SLICE_SIZE_MEDIA_TYPE)
+        {
+            geometry.sliceSizes[0] = 0U;
+        }
+        else if (fields.mediaType == BAD_SLICE_COUNT_MEDIA_TYPE)
+        {
+            geometry.slicesPerGrain = 0U;
+            geometry.sliceSizes[0] = fields.frameWidth;
+        }
+        else if (fields.mediaType == HUGE_GRAIN_MEDIA_TYPE)
+        {
+            geometry.slicesPerGrain = std::numeric_limits<std::uint16_t>::max();
+            geometry.sliceSizes[0] = std::numeric_limits<std::uint32_t>::max();
+        }
+        else
+        {
+            return MXL_ERR_UNSUPPORTED_OPERATION;
+        }
+        return MXL_STATUS_OK;
+    }
+
     /** The function table of this backend. */
     constexpr auto API = mxlPayloadBackendApi{
         .structSize = sizeof(mxlPayloadBackendApi),
@@ -308,10 +419,11 @@ namespace
         .slotStorage = &slotStorage,
         .describeLayout = &describeLayout,
         .mapSlots = &mapSlots,
-        .capabilities = MXL_PAYLOAD_BACKEND_CAP_SHARE_DESCRIPTORS,
+        .capabilities = MXL_PAYLOAD_BACKEND_CAP_SHARE_DESCRIPTORS | MXL_PAYLOAD_BACKEND_CAP_DESCRIBE_GEOMETRY,
         .reserved2 = 0U,
         .exportDescriptors = &exportDescriptors,
         .importDescriptors = &importDescriptors,
+        .describeGeometry = &describeGeometry,
     };
 }
 

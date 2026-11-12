@@ -8,14 +8,11 @@
  * with readers in other processes through a POSIX file descriptor.
  *
  * - The writer creates one virtual-memory allocation for all slots, with each slot starting at a multiple of 256
- *   bytes, and exports it once with cuMemExportToShareableHandle as a POSIX file descriptor. The instance keeps the
- *   descriptor open and returns it from exportDescriptors(). libmxl serves it on payload.sock in the flow directory.
- *   The descriptor file payload.cuda.json records the stride, the allocation size and the device UUID. It does not
- *   contain the descriptor.
- * - A reader in another process gets the descriptor from importDescriptors(), which libmxl calls after it receives
- *   it from payload.sock, and imports the allocation once with cuMemImportFromShareableHandle. A reader on another
- *   GPU of the same machine maps it through peer access. libmxl sends the descriptor only to a process that may read
- *   the flow directory.
+ *   bytes, and exports it once with cuMemExportToShareableHandle as a POSIX file descriptor. libmxl passes that
+ *   descriptor to readers. payload.cuda.json records the format version, the export format posix-fd, the device
+ *   UUID, the slot count, the stride and the allocation size. It does not contain the descriptor.
+ * - A reader in another process imports the allocation once, when the application maps the slots, with
+ *   cuMemImportFromShareableHandle. A reader on another GPU of the same machine maps it through peer access.
  * - A reader in the writer's own process shares the writer's allocation through a registry inside the process.
  *   The allocation is reference counted, so it stays valid for such a reader after the writer is released.
  *
@@ -27,15 +24,9 @@
  * in the writer's process.
  */
 
-#ifndef _GNU_SOURCE
-#   define _GNU_SOURCE
-#endif
-
-#include <cerrno>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <algorithm>
 #include <array>
 #include <filesystem>
 #include <fstream>
@@ -43,23 +34,19 @@
 #include <mutex>
 #include <new>
 #include <optional>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include <utility>
-#include <vector>
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <sys/types.h>
+#include <mxl/storage/cuda_device_pointer.h>
 #include <picojson/wrapper.h>
 #include <mxl/dataformat.h>
 #include <mxl/platform.h>
 #include "mxl-internal/PayloadBackendAbi.h"
-#include "CudaLinearStorage.h"
 
 namespace
 {
@@ -69,10 +56,10 @@ namespace
     /** Name of the file in the flow directory that describes the exported allocation. */
     constexpr auto DESCRIPTOR_FILE_NAME = "payload.cuda.json";
 
-    /** Version of the descriptor format written by this backend. */
+    /** Version of the format of payload.cuda.json written by this backend. */
     constexpr auto DESCRIPTOR_VERSION = 2.0;
 
-    /** Export format recorded in the descriptor. The file descriptor itself travels on payload.sock. */
+    /** Export format recorded in payload.cuda.json. The file descriptor itself travels on payload.sock. */
     constexpr auto EXPORT_POSIX_FD = "posix-fd";
 
     /** Alignment of slot starts within the allocation. */
@@ -541,13 +528,20 @@ namespace
         }
 
         /**
+         * Record a writer's allocation, unless another writer's allocation for the flow is still alive.
+         *
+         * A writer that libmxl refuses because the flow already has one has run prepare() too, and its allocation
+         * is released with it. Keeping the live entry leaves readers sharing the allocation of the flow's writer.
          * \param[in] key The canonical flow directory.
          * \param[in] allocation The writer's allocation.
          */
         void publish(std::string const& key, std::shared_ptr<Allocation> const& allocation)
         {
             auto const lock = std::lock_guard{_mutex};
-            _entries[key] = allocation;
+            if (auto& entry = _entries[key]; entry.expired())
+            {
+                entry = allocation;
+            }
         }
 
         /**
@@ -590,18 +584,17 @@ namespace
         std::uint64_t allocSize{0};             ///< Mapped size, a multiple of the device granularity.
         Uuid ownerUuid{};                       ///< Device that holds the memory.
         std::optional<Uuid> requestedUuid;      ///< Device on which a reader wants to access the memory.
-        bool isWriter{false};                   ///< True for the instance that created the allocation.
-        int exportedFd{-1};                     ///< The writer's descriptor, served by libmxl until destroy().
-        int importedFd{-1};                     ///< A reader's descriptor from importDescriptors(), until it is imported.
+        int exportFd{-1};                       ///< The writer's exported descriptor. -1 in a reader.
+        int importedFd{-1};                     ///< A descriptor received from libmxl, until it is imported.
         int localOrdinal{-1};                   ///< Device index in this process on which the memory is accessed.
         std::shared_ptr<Allocation> allocation; ///< The mapped allocation.
 
-        /** Close the descriptors this instance owns. */
+        /** Close descriptors this instance still owns. */
         ~Instance()
         {
-            if (exportedFd >= 0)
+            if (exportFd >= 0)
             {
-                ::close(exportedFd);
+                ::close(exportFd);
             }
             if (importedFd >= 0)
             {
@@ -609,8 +602,8 @@ namespace
             }
         }
 
-        std::once_flag descriptorOnce;               ///< Reads the descriptor once, in readers.
-        mxlStatus descriptorStatus{MXL_ERR_UNKNOWN}; ///< Result of reading the descriptor.
+        std::once_flag descriptorOnce;               ///< Reads payload.cuda.json once, in readers.
+        mxlStatus descriptorStatus{MXL_ERR_UNKNOWN}; ///< Result of reading payload.cuda.json.
         std::once_flag mapOnce;                      ///< Imports the allocation once, in readers.
         mxlStatus mapStatus{MXL_ERR_UNKNOWN};        ///< Result of the import.
 
@@ -693,9 +686,9 @@ namespace
     }
 
     /**
-     * Read the descriptor of the writer's allocation into a reader's instance.
+     * Read payload.cuda.json, which describes the writer's allocation, into a reader's instance.
      * \param[in,out] instance The reader's instance.
-     * \return MXL_STATUS_OK, MXL_ERR_NOT_FOUND if the descriptor is missing, MXL_ERR_UNSUPPORTED_OPERATION if it has a
+     * \return MXL_STATUS_OK, MXL_ERR_NOT_FOUND if the file is missing, MXL_ERR_UNSUPPORTED_OPERATION if it has a
      *     version this backend does not know, or MXL_ERR_INVALID_STATE if it is invalid.
      */
     mxlStatus readDescriptor(Instance& instance) noexcept
@@ -750,9 +743,9 @@ namespace
     }
 
     /**
-     * Read the descriptor once, and find the device on which this reader accesses the memory, without importing.
+     * Read payload.cuda.json once, and find the device on which this reader accesses the memory, without importing.
      * \param[in,out] instance The reader's instance.
-     * \return The result of reading the descriptor.
+     * \return The result of reading payload.cuda.json.
      */
     mxlStatus ensureDescriptor(Instance& instance) noexcept
     {
@@ -828,7 +821,6 @@ namespace
             }
         }
 
-        // libmxl passes the descriptor with importDescriptors() before it maps the slots.
         if (instance.importedFd < 0)
         {
             return MXL_ERR_INVALID_STATE;
@@ -947,11 +939,8 @@ namespace
         {
             return status;
         }
+        instance->exportFd = mapped.fd;
         instance->allocSize = mapped.bytes;
-
-        // The instance owns the descriptor. libmxl gets it through exportDescriptors() and serves it until destroy().
-        instance->exportedFd = mapped.fd;
-        instance->isWriter = true;
 
         try
         {
@@ -1044,8 +1033,8 @@ namespace
         out_storage->version = 1U;
         out_storage->size = sizeof(*out_storage);
         out_storage->slot = slot;
-        auto const slotStorage = mxlCudaLinearSlotStorage{instance->base() + (instance->stride * slot)};
-        std::memcpy(out_storage->reserved, &slotStorage, sizeof(slotStorage));
+        auto const storage = mxlCudaGrainStorage{.pointer = instance->base() + (instance->stride * slot)};
+        mxlSetCudaGrainStorage(out_storage, &storage);
         return MXL_STATUS_OK;
     }
 
@@ -1063,10 +1052,10 @@ namespace
         }
 
         // The planes of a slot follow each other without padding, as in host memory, so the default planes apply.
-        auto info = mxlCudaLinearLayoutInfo{};
-        std::memcpy(info.deviceUuid, instance->ownerUuid.data(), instance->ownerUuid.size());
-        info.deviceIndex = instance->localOrdinal;
-        std::memcpy(inout_layout->reserved, &info, sizeof(info));
+        auto device = mxlCudaGrainStorageLayout{};
+        device.deviceIndex = instance->localOrdinal;
+        std::memcpy(device.deviceUuid, instance->ownerUuid.data(), instance->ownerUuid.size());
+        mxlSetCudaGrainStorageLayout(inout_layout, &device);
         return MXL_STATUS_OK;
     }
 
@@ -1084,17 +1073,12 @@ namespace
     /** \see mxlPayloadBackendApi::exportDescriptors */
     mxlStatus exportDescriptors(mxlPayloadBackendInstance handle, int* out_descriptors, std::uint32_t capacity, std::uint32_t* out_count) noexcept
     {
-        auto* const instance = reinterpret_cast<Instance*>(handle);
-        if ((instance == nullptr) || (out_count == nullptr))
+        auto const* const instance = reinterpret_cast<Instance const*>(handle);
+        if ((instance == nullptr) || (out_count == nullptr) || (instance->exportFd < 0))
         {
             return MXL_ERR_INVALID_ARG;
         }
-        if (!instance->isWriter || (instance->exportedFd < 0))
-        {
-            return MXL_ERR_INVALID_STATE;
-        }
-
-        // The writer's allocation is one descriptor. The instance keeps it open until destroy().
+        // One descriptor for the whole allocation. It stays the instance's: libmxl serves duplicates of it.
         *out_count = 1U;
         if (out_descriptors == nullptr)
         {
@@ -1104,45 +1088,50 @@ namespace
         {
             return MXL_ERR_INVALID_ARG;
         }
-        out_descriptors[0] = instance->exportedFd;
+        out_descriptors[0] = instance->exportFd;
         return MXL_STATUS_OK;
     }
 
     /** \see mxlPayloadBackendApi::importDescriptors */
-    mxlStatus importDescriptors(mxlPayloadBackendInstance handle, int const* descriptors, std::uint32_t count) noexcept
+    mxlStatus importDescriptors(mxlPayloadBackendInstance handle, int const* fds, std::uint32_t count) noexcept
     {
         auto* const instance = reinterpret_cast<Instance*>(handle);
-
-        // The backend takes ownership of every descriptor, also when it rejects them.
-        auto const closeAll = [descriptors, count]() noexcept
+        auto const closeAll = [&]()
         {
-            if (descriptors != nullptr)
+            if (fds == nullptr)
             {
-                for (auto i = std::uint32_t{0}; i < count; ++i)
+                return;
+            }
+            for (auto i = std::uint32_t{0}; i < count; ++i)
+            {
+                if (fds[i] >= 0)
                 {
-                    ::close(descriptors[i]);
+                    ::close(fds[i]);
                 }
             }
         };
-
-        if ((instance == nullptr) || (descriptors == nullptr) || (count == 0U))
+        if ((instance == nullptr) || (fds == nullptr))
         {
             closeAll();
             return MXL_ERR_INVALID_ARG;
         }
-        // A writer holds its own allocation, and a reader gets exactly one descriptor for it.
-        if (instance->isWriter || (count != 1U) || (descriptors[0] < 0))
+        // The writer exports one descriptor for the whole allocation.
+        if ((count != 1U) || (fds[0] < 0))
         {
             closeAll();
             return MXL_ERR_INVALID_STATE;
         }
-
-        // A descriptor from an earlier attempt that was not imported is replaced.
+        // libmxl passes the descriptor before mapping. If the memory is already mapped, it is not needed.
+        if (instance->allocation != nullptr)
+        {
+            closeAll();
+            return MXL_STATUS_OK;
+        }
         if (instance->importedFd >= 0)
         {
             ::close(instance->importedFd);
         }
-        instance->importedFd = descriptors[0];
+        instance->importedFd = fds[0];
         return MXL_STATUS_OK;
     }
 
@@ -1151,7 +1140,7 @@ namespace
         .structSize = sizeof(mxlPayloadBackendApi),
         .abiVersion = MXL_PAYLOAD_BACKEND_ABI_VERSION,
         .name = BACKEND_NAME,
-        .storageType = MXL_CUDA_LINEAR_STORAGE_TYPE,
+        .storageType = MXL_PAYLOAD_STORAGE_CUDA_DEVICE_POINTER,
         .prepare = &prepare,
         .open = &open,
         .destroy = &destroy,
@@ -1162,6 +1151,7 @@ namespace
         .reserved2 = 0U,
         .exportDescriptors = &exportDescriptors,
         .importDescriptors = &importDescriptors,
+        .describeGeometry = nullptr,
     };
 }
 

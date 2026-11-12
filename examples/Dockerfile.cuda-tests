@@ -28,6 +28,7 @@ ENV HOME=/root
 # Full commit history, blobs on demand. vcpkg reads the builtin-baseline commit from this clone.
 RUN git clone --filter=blob:none https://github.com/microsoft/vcpkg.git /root/vcpkg \
     && /root/vcpkg/bootstrap-vcpkg.sh -disableMetrics
+ENV VCPKG_ROOT=/root/vcpkg
 
 WORKDIR /src
 COPY . /src
@@ -49,9 +50,9 @@ RUN cmake -S /src --preset Linux-GCC-Release \
 RUN mkdir -p /opt/mxl/bin /opt/mxl/lib /opt/mxl/data \
     && cp -a /src/build/Linux-GCC-Release/lib/libmxl.so* /opt/mxl/lib/ \
     && cp -a /src/build/Linux-GCC-Release/lib/libmxl-payload-cuda-linear.so /opt/mxl/lib/ \
-    && cp /src/build/Linux-GCC-Release/lib/tests/cuda/mxl-cuda-tests /opt/mxl/bin/ \
-    && cp /src/build/Linux-GCC-Release/lib/tests/cuda/mxl-cuda-reader-helper /opt/mxl/bin/ \
-    && cp /src/build/Linux-GCC-Release/lib/tests/cuda/mxl-cuda-writer-helper /opt/mxl/bin/ \
+    && cp /src/build/Linux-GCC-Release/lib/payload-backends/cuda-linear/tests/mxl-cuda-tests /opt/mxl/bin/ \
+    && cp /src/build/Linux-GCC-Release/lib/payload-backends/cuda-linear/tests/mxl-cuda-reader-helper /opt/mxl/bin/ \
+    && cp /src/build/Linux-GCC-Release/lib/payload-backends/cuda-linear/tests/mxl-cuda-writer-helper /opt/mxl/bin/ \
     && cp /src/examples/cuda-cross-container-test.sh /opt/mxl/bin/mxl-cuda-cross-container.sh \
     && chmod +x /opt/mxl/bin/mxl-cuda-cross-container.sh \
     && cp /src/lib/tests/data/*.json /opt/mxl/data/ \
