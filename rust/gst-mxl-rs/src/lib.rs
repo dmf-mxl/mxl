@@ -16,6 +16,7 @@ use gst::glib;
 use gstreamer as gst;
 
 mod clock;
+mod colorimetry;
 pub mod format;
 pub mod mxlsink;
 pub mod mxlsrc;

@@ -86,6 +86,8 @@ mod tests {
             frame_height: height,
             interlace_mode,
             colorspace: colorimetry,
+            transfer_characteristic: Some("SDR".into()),
+            component_range: Some("NARROW".into()),
             components: vec![
                 Component {
                     name: "Y".into(),
@@ -138,6 +140,8 @@ mod tests {
             "frame_height": 1080,
             "interlace_mode": "progressive",
             "colorspace": "BT709",
+            "transfer_characteristic": "SDR",
+            "component_range": "NARROW",
             "components": [
                 {
                     "name": "Y",
