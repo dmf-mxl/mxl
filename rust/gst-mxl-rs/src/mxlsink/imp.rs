@@ -19,6 +19,7 @@ use gst_base::subclass::prelude::*;
 use gstreamer as gst;
 use gstreamer_audio as gst_audio;
 use gstreamer_base as gst_base;
+use gstreamer_video as gst_video;
 
 use mxl::MxlInstance;
 use mxl::config::get_mxl_so_path;
@@ -540,7 +541,10 @@ impl BaseSinkImpl for MxlSink {
             );
         }
         if name == "video/x-raw" {
-            init_state_with_video(state, structure, &settings, element)?;
+            let info = gst_video::VideoInfo::from_caps(caps)
+                .map_err(|e| gst::loggable_error!(CAT, "Invalid video caps: {}", e))?;
+
+            init_state_with_video(state, structure, info.colorimetry(), &settings, element)?;
             Ok(())
         } else if name == "audio/x-raw" {
             let info = gst_audio::AudioInfo::from_caps(caps)

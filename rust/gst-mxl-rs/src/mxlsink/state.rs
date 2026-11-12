@@ -3,14 +3,17 @@
 
 use std::{collections::HashMap, process, str::FromStr};
 
+use crate::colorimetry::flow_colorimetry_from_gst;
 use crate::mxlsink::{
     imp::CAT, render_continuous::SampleAlignment, render_discrete::GrainAlignment,
 };
 use gst::StructureRef;
 use gst::prelude::*;
 use gst_audio::AudioInfo;
+use gst_video::VideoColorimetry;
 use gstreamer as gst;
 use gstreamer_audio as gst_audio;
+use gstreamer_video as gst_video;
 use mxl::{
     FlowConfigInfo, GrainWriter, MxlInstance, SamplesWriter,
     flowdef::{
@@ -204,6 +207,7 @@ const RE_SET_CAPS_MEDIA_TYPE_CHANGE: &str =
 pub(crate) fn init_state_with_video(
     state: &mut State,
     structure: &StructureRef,
+    colorimetry: VideoColorimetry,
     settings: &Settings,
     element: &gst::Element,
 ) -> Result<(), gst::LoggableError> {
@@ -220,9 +224,8 @@ pub(crate) fn init_state_with_video(
         .unwrap_or_else(|_| "progressive".to_string());
     let interlace_mode =
         InterlaceMode::from_str(interlace.as_str()).unwrap_or(InterlaceMode::Progressive);
-    let colorimetry = structure
-        .get::<String>("colorimetry")
-        .unwrap_or_else(|_| "BT709".to_string());
+    let flow_colorimetry = flow_colorimetry_from_gst(&colorimetry)
+        .ok_or_else(|| gst::loggable_error!(CAT, "Unsupported colorimetry: {}", colorimetry))?;
     let default_name = format!(
         "MXL Video Flow, {}p{}",
         height,
@@ -238,7 +241,9 @@ pub(crate) fn init_state_with_video(
         frame_width: width,
         frame_height: height,
         interlace_mode,
-        colorspace: colorimetry,
+        colorspace: flow_colorimetry.colorspace.into(),
+        transfer_characteristic: Some(flow_colorimetry.transfer_characteristic.into()),
+        component_range: Some(flow_colorimetry.component_range.into()),
         components: vec![
             Component {
                 name: "Y".into(),
