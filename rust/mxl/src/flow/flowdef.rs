@@ -36,6 +36,10 @@ pub struct FlowDefVideo {
     pub frame_height: i32,
     pub interlace_mode: InterlaceMode,
     pub colorspace: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub transfer_characteristic: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub component_range: Option<String>,
     pub components: Vec<Component>,
 }
 
