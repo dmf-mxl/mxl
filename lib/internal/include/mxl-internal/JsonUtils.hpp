@@ -38,8 +38,8 @@ namespace mxl::lib
         public:
             LimitedJsonParseContext(picojson::value* out, JsonLimits const& limits, std::string& error, std::size_t depth) noexcept
                 : _out{out}
-                , _limits{limits}
-                , _error{error}
+                , _limits{&limits}
+                , _error{&error}
                 , _depth{depth}
             {}
 
@@ -71,7 +71,7 @@ namespace mxl::lib
                 // picojson::value throws std::overflow_error for these. Report them as a parse error instead.
                 if (!std::isfinite(value))
                 {
-                    _error = "JSON number is out of range.";
+                    *_error = "JSON number is out of range.";
                     return false;
                 }
                 *_out = picojson::value{value};
@@ -98,14 +98,14 @@ namespace mxl::lib
             template<typename Iter>
             bool parse_array_item(picojson::input<Iter>& in, std::size_t index)
             {
-                if (index >= _limits.maxContainerSize)
+                if (index >= _limits->maxContainerSize)
                 {
-                    _error = fmt::format("JSON array has more than {} items.", _limits.maxContainerSize);
+                    *_error = fmt::format("JSON array has more than {} items.", _limits->maxContainerSize);
                     return false;
                 }
                 auto& array = _out->get<picojson::array>();
                 array.emplace_back();
-                auto child = LimitedJsonParseContext{&array.back(), _limits, _error, _depth + 1U};
+                auto child = LimitedJsonParseContext{&array.back(), *_limits, *_error, _depth + 1U};
                 return picojson::_parse(child, in);
             }
 
@@ -128,36 +128,37 @@ namespace mxl::lib
             bool parse_object_item(picojson::input<Iter>& in, std::string const& key)
             {
                 auto& object = _out->get<picojson::object>();
-                if (object.size() >= _limits.maxContainerSize)
+                if (object.size() >= _limits->maxContainerSize)
                 {
-                    _error = fmt::format("JSON object has more than {} members.", _limits.maxContainerSize);
+                    *_error = fmt::format("JSON object has more than {} members.", _limits->maxContainerSize);
                     return false;
                 }
                 // picojson keeps the last of several equal keys. Reject them, because other parsers may keep the first.
                 auto const [it, inserted] = object.try_emplace(key);
                 if (!inserted)
                 {
-                    _error = fmt::format("JSON object has the key '{}' more than once.", key);
+                    *_error = fmt::format("JSON object has the key '{}' more than once.", key);
                     return false;
                 }
-                auto child = LimitedJsonParseContext{&it->second, _limits, _error, _depth + 1U};
+                auto child = LimitedJsonParseContext{&it->second, *_limits, *_error, _depth + 1U};
                 return picojson::_parse(child, in);
             }
 
         private:
             bool checkDepth()
             {
-                if (_depth >= _limits.maxDepth)
+                if (_depth >= _limits->maxDepth)
                 {
-                    _error = fmt::format("JSON nesting is deeper than {} levels.", _limits.maxDepth);
+                    *_error = fmt::format("JSON nesting is deeper than {} levels.", _limits->maxDepth);
                     return false;
                 }
                 return true;
             }
 
+        private:
             picojson::value* _out;
-            JsonLimits const& _limits;
-            std::string& _error;
+            JsonLimits const* _limits;
+            std::string* _error;
             /// Number of arrays and objects that enclose the value this context parses.
             std::size_t _depth;
         };
@@ -194,7 +195,7 @@ namespace mxl::lib
             return syntaxError;
         }
 
-        auto const isWhitespace = [](char c)
+        auto const isWhitespace = [](char c) noexcept
         {
             return (c == ' ') || (c == '\t') || (c == '\n') || (c == '\r');
         };
@@ -217,7 +218,7 @@ namespace mxl::lib
      * \throws std::invalid_argument If the value is not a number, not a whole number, or outside the range of T.
      */
     template<std::integral T>
-    T jsonToInteger(picojson::value const& value, std::string_view name)
+    inline T jsonToInteger(picojson::value const& value, std::string_view name)
     {
         if (!value.is<double>())
         {
@@ -251,7 +252,7 @@ namespace mxl::lib
      * \see stringToInteger()
      */
     template<std::integral T>
-    T jsonStringToInteger(picojson::value const& value, std::string_view name)
+    inline T jsonStringToInteger(picojson::value const& value, std::string_view name)
     {
         if (!value.is<std::string>())
         {
