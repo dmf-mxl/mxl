@@ -299,6 +299,64 @@ fn captions_tick_tock_on_pip_frames() {
     );
 }
 
+/// A source restart preserves the complete native frame, including stride
+/// padding, and timing/ANC metadata. A padded width exercises the last packing
+/// group.
+#[test]
+fn restart_preserves_output() {
+    init();
+    for format in ["v210", "UYVP"] {
+        let desc = format!(
+            "avsyncvideotestsrc num-buffers=15 pip-interval={PIP_INTERVAL_NS} \
+               ! video/x-raw,format={format},width=1030,height=1021,framerate=60/1 \
+               ! appsink name=sink sync=false"
+        );
+        let pipeline = gst::parse::launch(&desc)
+            .unwrap()
+            .downcast::<gst::Pipeline>()
+            .unwrap();
+        let sink = appsink(&pipeline);
+        let mut reference = None;
+        for _ in 0..2 {
+            pipeline.set_state(gst::State::Playing).unwrap();
+            let mut samples = Vec::new();
+            while let Some(sample) = sink.try_pull_sample(gst::ClockTime::from_seconds(5)) {
+                samples.push(sample);
+            }
+            let reached_eos = sink.is_eos();
+            let error = pipeline
+                .bus()
+                .unwrap()
+                .pop_filtered(&[gst::MessageType::Error]);
+            pipeline.set_state(gst::State::Null).unwrap();
+            assert!(reached_eos && error.is_none(), "{format}: {error:?}");
+            assert_eq!(samples.len(), 15);
+            let frames: Vec<_> = samples
+                .iter()
+                .map(|s| {
+                    let buffer = s.buffer().unwrap();
+                    assert!(gstavsynctest::ancillary::has_valid_ancillary_metas(buffer));
+                    (
+                        buffer.pts(),
+                        buffer.duration(),
+                        buffer.map_readable().unwrap().as_slice().to_vec(),
+                        gstavsynctest::analyze::ancillary_indices(
+                            buffer,
+                            gstavsynctest::signal::ANC_DID,
+                        ),
+                        gstavsynctest::analyze::caption_cdps(buffer),
+                    )
+                })
+                .collect();
+            if let Some(reference) = &reference {
+                assert_eq!(&frames, reference, "{format}");
+            } else {
+                reference = Some(frames);
+            }
+        }
+    }
+}
+
 /// Every native audio format decodes to a pip whose energy is centred on each
 /// pip instant.
 #[test]
