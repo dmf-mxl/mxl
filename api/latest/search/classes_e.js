@@ -14,10 +14,11 @@ var searchData=
   ['registeredregion_11',['RegisteredRegion',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RegisteredRegion.html',1,'mxl::lib::fabrics::ofi']]],
   ['remoteregion_12',['RemoteRegion',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RemoteRegion.html',1,'mxl::lib::fabrics::ofi']]],
   ['remoteregiongroup_13',['RemoteRegionGroup',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RemoteRegionGroup.html',1,'mxl::lib::fabrics::ofi']]],
-  ['rmagrainegressprotocol_14',['RMAGrainEgressProtocol',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMAGrainEgressProtocol.html',1,'mxl::lib::fabrics::ofi']]],
-  ['rmagrainegressprotocoltemplate_15',['RMAGrainEgressProtocolTemplate',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMAGrainEgressProtocolTemplate.html',1,'mxl::lib::fabrics::ofi']]],
-  ['rmagrainingressprotocol_16',['RMAGrainIngressProtocol',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMAGrainIngressProtocol.html',1,'mxl::lib::fabrics::ofi']]],
-  ['rmasampleegressprotocol_17',['RMASampleEgressProtocol',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocol.html',1,'mxl::lib::fabrics::ofi']]],
-  ['rmasampleegressprotocoltemplate_18',['RMASampleEgressProtocolTemplate',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate.html',1,'mxl::lib::fabrics::ofi']]],
-  ['rmasampleingressprotocol_19',['RMASampleIngressProtocol',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleIngressProtocol.html',1,'mxl::lib::fabrics::ofi']]]
+  ['removing_14',['Removing',['../structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiatorTarget_1_1Removing.html',1,'mxl::lib::fabrics::ofi::RDMInitiatorTarget']]],
+  ['rmagrainegressprotocol_15',['RMAGrainEgressProtocol',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMAGrainEgressProtocol.html',1,'mxl::lib::fabrics::ofi']]],
+  ['rmagrainegressprotocoltemplate_16',['RMAGrainEgressProtocolTemplate',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMAGrainEgressProtocolTemplate.html',1,'mxl::lib::fabrics::ofi']]],
+  ['rmagrainingressprotocol_17',['RMAGrainIngressProtocol',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMAGrainIngressProtocol.html',1,'mxl::lib::fabrics::ofi']]],
+  ['rmasampleegressprotocol_18',['RMASampleEgressProtocol',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocol.html',1,'mxl::lib::fabrics::ofi']]],
+  ['rmasampleegressprotocoltemplate_19',['RMASampleEgressProtocolTemplate',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocolTemplate.html',1,'mxl::lib::fabrics::ofi']]],
+  ['rmasampleingressprotocol_20',['RMASampleIngressProtocol',['../classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleIngressProtocol.html',1,'mxl::lib::fabrics::ofi']]]
 ];

@@ -1308,14 +1308,14 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>This function must be called regularly for the initiator to make progress on queued transfer operations, connection establishment operations and connection shutdown operations. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>This function must be called regularly for the initiator to make progress on queued transfer operations, connection establishment operations and connection shutdown operations. If a connection fails, the target is connected again during a later call to this function or to a transfer function. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">in_initiator</td><td>The initiator that should make progress. </td></tr>
     <tr><td class="paramname">in_timeoutMs</td><td>The maximum time to wait for progress to be made (in milliseconds). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>The result code. Returns MXL_ERR_NOT_READY if there is still progress to be made and not all operations have completed before the timeout. Some providers return MXL_ERR_INTERRUPTED if the operation is interrupted by the arrival of a POSIX signal. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The result code. Returns MXL_ERR_NOT_READY if there is still progress to be made and not all operations have completed before the timeout. Returns MXL_STATUS_OK if no transfer, connection setup or shutdown is pending, which includes the case that no target is added. Some providers return MXL_ERR_INTERRUPTED if the operation is interrupted by the arrival of a POSIX signal. </dd></dl>
 
 <p class="definition">Definition at line <a class="el" href="fabrics_8cpp_source.html#l00523">523</a> of file <a class="el" href="fabrics_8cpp_source.html">fabrics.cpp</a>.</p>
 <div class="fragment"><div class="line"><span class="lineno">  524</span>{</div>
@@ -1359,13 +1359,13 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>This function must be called regularly for the initiator to make progress on queued transfer operations, connection establishment operations and connection shutdown operations. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>This function must be called regularly for the initiator to make progress on queued transfer operations, connection establishment operations and connection shutdown operations. If a connection fails, the target is connected again during a later call to this function or to a mxlFabricsInitiatorTransferGrain or mxlFabricsInitiatorTransferSamples function. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">in_initiator</td><td>The initiator that should make progress. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>The result code. Returns MXL_ERR_NOT_READY if there is still progress to be made, and not all operations have completed. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The result code. Returns MXL_ERR_NOT_READY if there is still progress to be made, and not all operations have completed. Returns MXL_STATUS_OK if no transfer, connection setup or shutdown is pending. </dd></dl>
 
 <p class="definition">Definition at line <a class="el" href="fabrics_8cpp_source.html#l00500">500</a> of file <a class="el" href="fabrics_8cpp_source.html">fabrics.cpp</a>.</p>
 <div class="fragment"><div class="line"><span class="lineno">  501</span>{</div>
@@ -1416,7 +1416,7 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Remove a target from the initiator. This function is always non-blocking. If any additional communication for a graceful shutdown is required it will happend during a call to mxlFabricsInitiatorMakeProgress*(). It is guaranteed that no new grain transfer operations will be queued for this target during calls to <a class="el" href="fabrics_8h.html#a3ab99e5bb35dac0504c1c381ff7cc244">mxlFabricsInitiatorTransferGrain()</a> after the target was removed, but it is only guaranteed that the connection shutdown has completed after mxlFabricsInitiatorMakeProgress*() no longer returns MXL_ERR_NOT_READY. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Remove a target from the initiator. This function is always non-blocking. If any additional communication for a graceful shutdown is required it will happend during a call to mxlFabricsInitiatorMakeProgress*(). It is guaranteed that no new grain transfer operations will be queued for this target during calls to <a class="el" href="fabrics_8h.html#a3ab99e5bb35dac0504c1c381ff7cc244">mxlFabricsInitiatorTransferGrain()</a> after the target was removed, but it is only guaranteed that the connection shutdown has completed after mxlFabricsInitiatorMakeProgress*() no longer returns MXL_ERR_NOT_READY. If a connection oriented target closes its connection, for example because it was destroyed, it stays added until it is removed with this function. The initiator does not connect to it again, because a new target has new target information with new keys, and potentially a new port. The user needs to remove the old target and add the target information of the new one. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">in_initiator</td><td>A valid fabrics initiator </td></tr>
     <tr><td class="paramname">in_targetInfo</td><td>The target information. This should be the same as the one returned from "mxlFabricsTargetSetup". </td></tr>

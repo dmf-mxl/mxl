@@ -127,9 +127,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ab86828061b8e297cf9a6d67dd0c35937" id="r_ab86828061b8e297cf9a6d67dd0c35937"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html#ab86828061b8e297cf9a6d67dd0c35937">hasPendingWork</a> () const =0</td></tr>
 <tr class="memdesc:ab86828061b8e297cf9a6d67dd0c35937"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if there is uncompleted requests.  <br /></td></tr>
 <tr class="separator:ab86828061b8e297cf9a6d67dd0c35937"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0954f020a5de9ab809234e81d27f2fdb" id="r_a0954f020a5de9ab809234e81d27f2fdb"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html#a0954f020a5de9ab809234e81d27f2fdb">processCompletion</a> (<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Data.html">Completion::Data</a> const &amp;completion)=0</td></tr>
-<tr class="memdesc:a0954f020a5de9ab809234e81d27f2fdb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Process a completion event. Any post-processing after a transfer should be done here.  <br /></td></tr>
-<tr class="separator:a0954f020a5de9ab809234e81d27f2fdb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6fc8a2167f5445669301515dbc51edc7" id="r_a6fc8a2167f5445669301515dbc51edc7"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html#a6fc8a2167f5445669301515dbc51edc7">processCompletion</a> (<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion.html">Completion</a> const &amp;completion)=0</td></tr>
+<tr class="memdesc:a6fc8a2167f5445669301515dbc51edc7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Process a completion event. Any post-processing after a transfer should be done here.  <br /></td></tr>
+<tr class="separator:a6fc8a2167f5445669301515dbc51edc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:affd274ad449a7f90e19caff3ff59dc6c" id="r_affd274ad449a7f90e19caff3ff59dc6c"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html#affd274ad449a7f90e19caff3ff59dc6c">registerMemory</a> (std::shared_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Domain.html">Domain</a> &gt; domain)=0</td></tr>
 <tr class="memdesc:affd274ad449a7f90e19caff3ff59dc6c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register local memory regions used in this protocol.  <br /></td></tr>
 <tr class="separator:affd274ad449a7f90e19caff3ff59dc6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -206,8 +206,8 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a0954f020a5de9ab809234e81d27f2fdb" name="a0954f020a5de9ab809234e81d27f2fdb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0954f020a5de9ab809234e81d27f2fdb">&#9670;&#160;</a></span>processCompletion()</h2>
+<a id="a6fc8a2167f5445669301515dbc51edc7" name="a6fc8a2167f5445669301515dbc51edc7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6fc8a2167f5445669301515dbc51edc7">&#9670;&#160;</a></span>processCompletion()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -218,7 +218,7 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname">virtual void mxl::lib::fabrics::ofi::EgressProtocol::processCompletion </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Data.html">Completion::Data</a> const &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion.html">Completion</a> const &amp;&#160;</td>
           <td class="paramname"><em>completion</em></td><td>)</td>
           <td></td>
         </tr>
@@ -232,7 +232,7 @@ Public Member Functions</h2></td></tr>
 
 <p>Process a completion event. Any post-processing after a transfer should be done here. </p>
 
-<p>Implemented in <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMAGrainEgressProtocol.html#a34577eef834523f7cd74602a8329f63b">mxl::lib::fabrics::ofi::RMAGrainEgressProtocol</a>, and <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocol.html#a2160a3e768586d9dc0851e15c5f3715a">mxl::lib::fabrics::ofi::RMASampleEgressProtocol</a>.</p>
+<p>Implemented in <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMAGrainEgressProtocol.html#a43b7e5332ac1e0c60463f7ec84ee0ca7">mxl::lib::fabrics::ofi::RMAGrainEgressProtocol</a>, and <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleEgressProtocol.html#a349651ddb65db405d6b5dd07b38296bd">mxl::lib::fabrics::ofi::RMASampleEgressProtocol</a>.</p>
 
 </div>
 </div>

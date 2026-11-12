@@ -1,5 +1,7 @@
 var classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper =
 [
+    [ "~TargetWrapper", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a21d3faf10b4e110b4a78d0c574a685df", null ],
+    [ "destroyInner", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a9e33ff000d72c24b2aac61b965c00234", null ],
     [ "fromAPI", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#acbe0e80c2c5cdd7d65dad83294c28043", null ],
     [ "read", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a137ab902ca660725f88bb3ff756fa220", null ],
     [ "readBlocking", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetWrapper.html#a6c374da4092f1bb6402373bd7fdbadf8", null ],

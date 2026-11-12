@@ -1,6 +1,8 @@
 var classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper =
 [
+    [ "~InitiatorWrapper", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#a4739e7e2a25f3b7a80ee02b8d61b6092", null ],
     [ "addTarget", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#a04fadc602c1ae7ba5c7da8a1f01a17dc", null ],
+    [ "destroyInner", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#ae2246cff75ee57239d384b74688eae93", null ],
     [ "fromAPI", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#a53a35806f137b6fac01ba2fcef4abc3d", null ],
     [ "makeProgress", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#acb28fe766e20c95e180d0d0362411260", null ],
     [ "makeProgressBlocking", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1InitiatorWrapper.html#a030aaa2d45ff005eab2cddb8145237ad", null ],

@@ -2,10 +2,12 @@ var classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator =
 [
     [ "RCInitiator", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a3c17fc729806d778f3a2194b32f4f723", null ],
     [ "activateIdleEndpoints", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a678f8b285ab6ad7a690cca2165e9f241", null ],
+    [ "activateIfIdle", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a17fefc9ee7c3353be50fbb1ba1a2d0cf", null ],
     [ "addTarget", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a4828f65e65c3b5b0a42a428bda64117b", null ],
     [ "afterProgressResult", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a45aad47340fc7db91b1c694609ca97d0", null ],
     [ "blockOnCQ", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a54b037039cfd9e0c9b27026592a28bcc", null ],
     [ "evictDeadEndpoints", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a221996949e1d7bbed254c0ea081fc5a0", null ],
+    [ "finishFlushingEndpoints", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a6d7942412591a04c4d39795455d0918d", null ],
     [ "hasTarget", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#aabbf3aa43f1abc5217c649541cebc4e1", null ],
     [ "makeProgress", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a6a4d9e371ffbc893689fe1ca9af72983", null ],
     [ "makeProgressBlocking", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a51125067156b36ec8b1d06d003c0a1c8", null ],
@@ -22,5 +24,7 @@ var classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator =
     [ "_eq", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a146e56dc85d1964dcbfc17339ddaf368", null ],
     [ "_proto", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a2411be246def4569179768081f9cab93", null ],
     [ "_targets", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a79ea836d227dfedde362150ecfb4c8f5", null ],
-    [ "EQPollInterval", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a5a3336d8f89dfd6bc1731b0666f80640", null ]
+    [ "EQPollInterval", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a5a3336d8f89dfd6bc1731b0666f80640", null ],
+    [ "ShutdownPollInterval", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#a6156a43c1004714e80cd95c3d8e5c481", null ],
+    [ "ShutdownTimeout", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiator.html#ad14a1d137551371dbceffcdf42d00c7f", null ]
 ];

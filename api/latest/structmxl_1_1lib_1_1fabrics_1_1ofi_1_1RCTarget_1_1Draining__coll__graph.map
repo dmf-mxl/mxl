@@ -1,0 +1,7 @@
+<map id="mxl::lib::fabrics::ofi::RCTarget::Draining" name="mxl::lib::fabrics::ofi::RCTarget::Draining">
+<area shape="rect" id="Node000001" title="The draining state." alt="" coords="5,211,172,251"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html" title="RAII Wrapper around a libfabric endpoint (fi_ep)." alt="" coords="23,108,154,148"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="91,162,91,211,86,211,86,162"/>
+<area shape="rect" id="Node000003" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1FabricInfo.html" title="RAII wrapper around a libfabric fi_info` structure." alt="" coords="23,5,154,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="91,59,91,108,86,108,86,59"/>
+</map>

@@ -101,8 +101,10 @@ $(document).ready(function(){initNavTree('classmxl_1_1lib_1_1fabrics_1_1ofi_1_1R
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="#pri-types">Private Types</a> &#124;
 <a href="#pri-methods">Private Member Functions</a> &#124;
+<a href="#pri-static-methods">Static Private Member Functions</a> &#124;
 <a href="#pri-attribs">Private Attributes</a> &#124;
 <a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">mxl::lib::fabrics::ofi::RCInitiatorEndpoint Class Reference</div></div>
@@ -134,6 +136,9 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Connecting.html">Connecting</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The connecting state.  <a href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Connecting.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Disconnected.html">Disconnected</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The disconnected state.  <a href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Disconnected.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Done.html">Done</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The endpoint is done and can be evicted from the initiator.  <a href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Done.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -158,6 +163,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a499f7a4948695d04be92589743b4f743" id="r_a499f7a4948695d04be92589743b4f743"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a499f7a4948695d04be92589743b4f743">consume</a> (<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Event.html">Event</a> event)</td></tr>
 <tr class="memdesc:a499f7a4948695d04be92589743b4f743"><td class="mdescLeft">&#160;</td><td class="mdescRight">Consume an event that was posted to the associated event queue.  <br /></td></tr>
 <tr class="separator:a499f7a4948695d04be92589743b4f743"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa448f1fae2027b989419036b333688b5" id="r_aa448f1fae2027b989419036b333688b5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#aa448f1fae2027b989419036b333688b5">finishFlush</a> ()</td></tr>
+<tr class="memdesc:aa448f1fae2027b989419036b333688b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move the endpoint out of the flushing state when the flush is complete.  <br /></td></tr>
+<tr class="separator:aa448f1fae2027b989419036b333688b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afc51b47d87e6ea36e54dc9614a89c67d" id="r_afc51b47d87e6ea36e54dc9614a89c67d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#afc51b47d87e6ea36e54dc9614a89c67d">hasPendingWork</a> () const noexcept</td></tr>
 <tr class="memdesc:afc51b47d87e6ea36e54dc9614a89c67d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if there is any pending events that the endpoint is waiting for, and for which the queues must be polled.  <br /></td></tr>
 <tr class="separator:afc51b47d87e6ea36e54dc9614a89c67d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -173,9 +181,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a1bd8319f280d755d6b8a9b3490a17e25" id="r_a1bd8319f280d755d6b8a9b3490a17e25"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a1bd8319f280d755d6b8a9b3490a17e25">shutdown</a> ()</td></tr>
 <tr class="memdesc:a1bd8319f280d755d6b8a9b3490a17e25"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initiate a shutdown process.  <br /></td></tr>
 <tr class="separator:a1bd8319f280d755d6b8a9b3490a17e25"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afa6a248e0f2a5aa9de83527b72782bd4" id="r_afa6a248e0f2a5aa9de83527b72782bd4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#afa6a248e0f2a5aa9de83527b72782bd4">terminate</a> () noexcept</td></tr>
-<tr class="memdesc:afa6a248e0f2a5aa9de83527b72782bd4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called to transition the endpoint out of the flushing state to the done state. If the endpoint is in any other state, this is a no-op.  <br /></td></tr>
-<tr class="separator:afa6a248e0f2a5aa9de83527b72782bd4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1a87b0bbfe50e2b9796ac925ce907b7b" id="r_a1a87b0bbfe50e2b9796ac925ce907b7b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a1a87b0bbfe50e2b9796ac925ce907b7b">transferGrain</a> (std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint64_t remotePayloadOffset, <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1SliceRange.html">SliceRange</a> const &amp;sliceRange)</td></tr>
 <tr class="memdesc:a1a87b0bbfe50e2b9796ac925ce907b7b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Post a data transfer request to this endpoint.  <br /></td></tr>
 <tr class="separator:a1a87b0bbfe50e2b9796ac925ce907b7b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -183,23 +188,35 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a72be498441645d809119a69570c3fc67"><td class="mdescLeft">&#160;</td><td class="mdescRight">Post a data transfer request to this endpoint.  <br /></td></tr>
 <tr class="separator:a72be498441645d809119a69570c3fc67"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
+Static Public Attributes</h2></td></tr>
+<tr class="memitem:a355fbbcab6b9cc0d971c9db0611386d5" id="r_a355fbbcab6b9cc0d971c9db0611386d5"><td class="memItemLeft" align="right" valign="top">static constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a355fbbcab6b9cc0d971c9db0611386d5">FlushTimeout</a> = std::chrono::seconds(2)</td></tr>
+<tr class="memdesc:a355fbbcab6b9cc0d971c9db0611386d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Upper bound for the flushing state. Some providers do not report a local shutdown event, and a peer that disappears may never complete the outstanding operations.  <br /></td></tr>
+<tr class="separator:a355fbbcab6b9cc0d971c9db0611386d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-types" name="pri-types"></a>
 Private Types</h2></td></tr>
-<tr class="memitem:a837e24bae61fc0d229d8d30e56edcc81" id="r_a837e24bae61fc0d229d8d30e56edcc81"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a> = std::variant&lt; <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Idle.html">Idle</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Connecting.html">Connecting</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Connected.html">Connected</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Flushing.html">Flushing</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Done.html">Done</a> &gt;</td></tr>
-<tr class="memdesc:a837e24bae61fc0d229d8d30e56edcc81"><td class="mdescLeft">&#160;</td><td class="mdescRight">The various states that the endpoint can be in are stored inside a variant that we move from and then back into when processing events.  <br /></td></tr>
-<tr class="separator:a837e24bae61fc0d229d8d30e56edcc81"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2db3d739cae9e4dde55c548ea4c65eab" id="r_a2db3d739cae9e4dde55c548ea4c65eab"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eab">AfterFlush</a> { <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eaba880b8461cba2e295e1828be8d6eedb0a">Reconnect</a>
+, <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eaba42ae25231906c83927831e0ef7c317ac">Disconnect</a>
+, <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eabaf92965e2c8a7afb3c1b9a5c09a263636">Done</a>
+ }</td></tr>
+<tr class="memdesc:a2db3d739cae9e4dde55c548ea4c65eab"><td class="mdescLeft">&#160;</td><td class="mdescRight">The state that the endpoint goes to when a flush is complete.  <a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eab">More...</a><br /></td></tr>
+<tr class="separator:a2db3d739cae9e4dde55c548ea4c65eab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a144c51e5b4718c4d8c801c0ffa032d5a" id="r_a144c51e5b4718c4d8c801c0ffa032d5a"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">State</a> = std::variant&lt; <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Idle.html">Idle</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Connecting.html">Connecting</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Connected.html">Connected</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Flushing.html">Flushing</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Disconnected.html">Disconnected</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Done.html">Done</a> &gt;</td></tr>
+<tr class="memdesc:a144c51e5b4718c4d8c801c0ffa032d5a"><td class="mdescLeft">&#160;</td><td class="mdescRight">The various states that the endpoint can be in are stored inside a variant that we move from and then back into when processing events.  <br /></td></tr>
+<tr class="separator:a144c51e5b4718c4d8c801c0ffa032d5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
-<tr class="memitem:a6187dfaed99bec653ff94b159a6b7e5f" id="r_a6187dfaed99bec653ff94b159a6b7e5f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a6187dfaed99bec653ff94b159a6b7e5f">handleCompletionData</a> (<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Data.html">Completion::Data</a> data)</td></tr>
-<tr class="memdesc:a6187dfaed99bec653ff94b159a6b7e5f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handle a completion data event.  <br /></td></tr>
-<tr class="separator:a6187dfaed99bec653ff94b159a6b7e5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a137105139beec8c2b3acc0863b4f8045" id="r_a137105139beec8c2b3acc0863b4f8045"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a137105139beec8c2b3acc0863b4f8045">handleCompletionError</a> (<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html">Completion::Error</a> error)</td></tr>
-<tr class="memdesc:a137105139beec8c2b3acc0863b4f8045"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handle a completion error event.  <br /></td></tr>
-<tr class="separator:a137105139beec8c2b3acc0863b4f8045"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a612ed40d6b12673123a0f616b9f51e1d" id="r_a612ed40d6b12673123a0f616b9f51e1d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Idle.html">Idle</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a612ed40d6b12673123a0f616b9f51e1d">restart</a> (<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html">Endpoint</a> const &amp;endpoint)</td></tr>
 <tr class="memdesc:a612ed40d6b12673123a0f616b9f51e1d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Restarts the endpoint. Produces a new <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Idle.html" title="The idle state.">Idle</a> state from any previous state.  <br /></td></tr>
 <tr class="separator:a612ed40d6b12673123a0f616b9f51e1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-static-methods" name="pri-static-methods"></a>
+Static Private Member Functions</h2></td></tr>
+<tr class="memitem:a4e78ba6d2d35314cbcecd75235f0ad04" id="r_a4e78ba6d2d35314cbcecd75235f0ad04"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Flushing.html">Flushing</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a4e78ba6d2d35314cbcecd75235f0ad04">startFlush</a> (<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html">Endpoint</a> ep, std::size_t pending, bool shutdownReceived, <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eab">AfterFlush</a> next)</td></tr>
+<tr class="memdesc:a4e78ba6d2d35314cbcecd75235f0ad04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a flushing state that waits for the given number of outstanding operations.  <br /></td></tr>
+<tr class="separator:a4e78ba6d2d35314cbcecd75235f0ad04"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
@@ -207,16 +224,16 @@ Private Attributes</h2></td></tr>
 <tr class="separator:ad0deda9d9df1349aa6e98c75d6070707"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab86514f6147c37969d08e6066e9cec79" id="r_ab86514f6147c37969d08e6066e9cec79"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html">EgressProtocol</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab86514f6147c37969d08e6066e9cec79">_proto</a></td></tr>
 <tr class="separator:ab86514f6147c37969d08e6066e9cec79"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab06bd2cdccf1e3a70b9577a8923f2f19" id="r_ab06bd2cdccf1e3a70b9577a8923f2f19"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a></td></tr>
+<tr class="memitem:ab06bd2cdccf1e3a70b9577a8923f2f19" id="r_ab06bd2cdccf1e3a70b9577a8923f2f19"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">State</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a></td></tr>
 <tr class="separator:ab06bd2cdccf1e3a70b9577a8923f2f19"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A single endpoint connected to a target that will be created when the user adds a target to an initiator. </p>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8hpp_source.html#l00022">22</a> of file <a class="el" href="RCInitiator_8hpp_source.html">RCInitiator.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8hpp_source.html#l00023">23</a> of file <a class="el" href="RCInitiator_8hpp_source.html">RCInitiator.hpp</a>.</p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
-<a id="a837e24bae61fc0d229d8d30e56edcc81" name="a837e24bae61fc0d229d8d30e56edcc81"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a837e24bae61fc0d229d8d30e56edcc81">&#9670;&#160;</a></span>State</h2>
+<a id="a144c51e5b4718c4d8c801c0ffa032d5a" name="a144c51e5b4718c4d8c801c0ffa032d5a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a144c51e5b4718c4d8c801c0ffa032d5a">&#9670;&#160;</a></span>State</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -225,7 +242,7 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">mxl::lib::fabrics::ofi::RCInitiatorEndpoint::State</a> =  std::variant&lt;<a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Idle.html">Idle</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Connecting.html">Connecting</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Connected.html">Connected</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Flushing.html">Flushing</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Done.html">Done</a>&gt;</td>
+          <td class="memname">using <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">mxl::lib::fabrics::ofi::RCInitiatorEndpoint::State</a> =  std::variant&lt;<a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Idle.html">Idle</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Connecting.html">Connecting</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Connected.html">Connected</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Flushing.html">Flushing</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Disconnected.html">Disconnected</a>, <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Done.html">Done</a>&gt;</td>
         </tr>
       </table>
   </td>
@@ -237,8 +254,50 @@ Private Attributes</h2></td></tr>
 
 <p>The various states that the endpoint can be in are stored inside a variant that we move from and then back into when processing events. </p>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8hpp_source.html#l00137">137</a> of file <a class="el" href="RCInitiator_8hpp_source.html">RCInitiator.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8hpp_source.html#l00167">167</a> of file <a class="el" href="RCInitiator_8hpp_source.html">RCInitiator.hpp</a>.</p>
 
+</div>
+</div>
+<h2 class="groupheader">Member Enumeration Documentation</h2>
+<a id="a2db3d739cae9e4dde55c548ea4c65eab" name="a2db3d739cae9e4dde55c548ea4c65eab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2db3d739cae9e4dde55c548ea4c65eab">&#9670;&#160;</a></span>AfterFlush</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eab">mxl::lib::fabrics::ofi::RCInitiatorEndpoint::AfterFlush</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>The state that the endpoint goes to when a flush is complete. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a2db3d739cae9e4dde55c548ea4c65eaba880b8461cba2e295e1828be8d6eedb0a" name="a2db3d739cae9e4dde55c548ea4c65eaba880b8461cba2e295e1828be8d6eedb0a"></a>Reconnect&#160;</td><td class="fielddoc"><p>Go to the idle state and connect again. Used after an error event, when the target can still be running. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a2db3d739cae9e4dde55c548ea4c65eaba42ae25231906c83927831e0ef7c317ac" name="a2db3d739cae9e4dde55c548ea4c65eaba42ae25231906c83927831e0ef7c317ac"></a>Disconnect&#160;</td><td class="fielddoc"><p>Go to the disconnected state. Used after the target has closed the connection. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a2db3d739cae9e4dde55c548ea4c65eabaf92965e2c8a7afb3c1b9a5c09a263636" name="a2db3d739cae9e4dde55c548ea4c65eabaf92965e2c8a7afb3c1b9a5c09a263636"></a>Done&#160;</td><td class="fielddoc"><p>Go to the done state, so that the endpoint is evicted. Used after the target was removed. </p>
+</td></tr>
+</table>
+
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8hpp_source.html#l00130">130</a> of file <a class="el" href="RCInitiator_8hpp_source.html">RCInitiator.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  131</span>        {</div>
+<div class="line"><span class="lineno">  132</span>            <a class="code hl_enumvalue" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eaba880b8461cba2e295e1828be8d6eedb0a">Reconnect</a>,  </div>
+<div class="line"><span class="lineno">  133</span>            <a class="code hl_enumvalue" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eaba42ae25231906c83927831e0ef7c317ac">Disconnect</a>, </div>
+<div class="line"><span class="lineno">  134</span>            Done,       </div>
+<div class="line"><span class="lineno">  135</span>        };</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_html_a2db3d739cae9e4dde55c548ea4c65eaba42ae25231906c83927831e0ef7c317ac"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eaba42ae25231906c83927831e0ef7c317ac">mxl::lib::fabrics::ofi::RCInitiatorEndpoint::AfterFlush::Disconnect</a></div><div class="ttdeci">@ Disconnect</div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_html_a2db3d739cae9e4dde55c548ea4c65eaba880b8461cba2e295e1828be8d6eedb0a"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eaba880b8461cba2e295e1828be8d6eedb0a">mxl::lib::fabrics::ofi::RCInitiatorEndpoint::AfterFlush::Reconnect</a></div><div class="ttdeci">@ Reconnect</div></div>
+</div><!-- fragment -->
 </div>
 </div>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
@@ -284,15 +343,15 @@ Private Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00026">26</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   27</span>        : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a>(Idle{.ep = std::move(ep), .idleSince = std::chrono::steady_clock::time_point{}})</div>
-<div class="line"><span class="lineno">   28</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ad0deda9d9df1349aa6e98c75d6070707">_info</a>(std::move(<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a7f212bd7268a29f31e44301639f4732b">info</a>))</div>
-<div class="line"><span class="lineno">   29</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab86514f6147c37969d08e6066e9cec79">_proto</a>(std::move(proto))</div>
-<div class="line"><span class="lineno">   30</span>    {}</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_html_a7f212bd7268a29f31e44301639f4732b"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a7f212bd7268a29f31e44301639f4732b">mxl::lib::fabrics::ofi::RCInitiatorEndpoint::info</a></div><div class="ttdeci">TargetInfo const &amp; info() const noexcept</div><div class="ttdoc">Get the target info of the remote endpoint.</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8cpp_source.html#l00032">RCInitiator.cpp:32</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_html_ab06bd2cdccf1e3a70b9577a8923f2f19"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">mxl::lib::fabrics::ofi::RCInitiatorEndpoint::_state</a></div><div class="ttdeci">State _state</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8hpp_source.html#l00154">RCInitiator.hpp:154</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_html_ab86514f6147c37969d08e6066e9cec79"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab86514f6147c37969d08e6066e9cec79">mxl::lib::fabrics::ofi::RCInitiatorEndpoint::_proto</a></div><div class="ttdeci">std::unique_ptr&lt; EgressProtocol &gt; _proto</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8hpp_source.html#l00156">RCInitiator.hpp:156</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_html_ad0deda9d9df1349aa6e98c75d6070707"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ad0deda9d9df1349aa6e98c75d6070707">mxl::lib::fabrics::ofi::RCInitiatorEndpoint::_info</a></div><div class="ttdeci">TargetInfo _info</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8hpp_source.html#l00155">RCInitiator.hpp:155</a></div></div>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00027">27</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   28</span>        : <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab86514f6147c37969d08e6066e9cec79">_proto</a>(std::move(proto))</div>
+<div class="line"><span class="lineno">   29</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ad0deda9d9df1349aa6e98c75d6070707">_info</a>(std::move(<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a7f212bd7268a29f31e44301639f4732b">info</a>))</div>
+<div class="line"><span class="lineno">   30</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a>(Idle{.ep = std::move(ep), .idleSince = std::chrono::steady_clock::time_point{}})</div>
+<div class="line"><span class="lineno">   31</span>    {}</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_html_a7f212bd7268a29f31e44301639f4732b"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a7f212bd7268a29f31e44301639f4732b">mxl::lib::fabrics::ofi::RCInitiatorEndpoint::info</a></div><div class="ttdeci">TargetInfo const &amp; info() const noexcept</div><div class="ttdoc">Get the target info of the remote endpoint.</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8cpp_source.html#l00033">RCInitiator.cpp:33</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_html_ab06bd2cdccf1e3a70b9577a8923f2f19"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">mxl::lib::fabrics::ofi::RCInitiatorEndpoint::_state</a></div><div class="ttdeci">State _state</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8hpp_source.html#l00187">RCInitiator.hpp:187</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_html_ab86514f6147c37969d08e6066e9cec79"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab86514f6147c37969d08e6066e9cec79">mxl::lib::fabrics::ofi::RCInitiatorEndpoint::_proto</a></div><div class="ttdeci">std::unique_ptr&lt; EgressProtocol &gt; _proto</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8hpp_source.html#l00185">RCInitiator.hpp:185</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_html_ad0deda9d9df1349aa6e98c75d6070707"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ad0deda9d9df1349aa6e98c75d6070707">mxl::lib::fabrics::ofi::RCInitiatorEndpoint::_info</a></div><div class="ttdeci">TargetInfo _info</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8hpp_source.html#l00186">RCInitiator.hpp:186</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -326,41 +385,42 @@ Private Attributes</h2></td></tr>
 <p>Try to activate the endpoint. </p>
 <p>The endpoint has an internal timer to slow down repeated failures to activate and/or connect. Until this timer has elapsed, the activation function will do nothing, and <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#aac0947444c84d90be27f42b0b8f4672d" title="Returns true if the endpoint is idle and could be actived.">RCInitiatorEndpoint::isIdle()</a> will return true. When the endpoint is eventually actived, it will have pending work until it is connected. </p>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00103">103</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  104</span>    {</div>
-<div class="line"><span class="lineno">  105</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a> = std::visit(</div>
-<div class="line"><span class="lineno">  106</span>            overloaded{</div>
-<div class="line"><span class="lineno">  107</span>                [&amp;](Idle state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a></div>
-<div class="line"><span class="lineno">  108</span>                {</div>
-<div class="line"><span class="lineno">  109</span>                    <span class="comment">// If the target is in the idle state for more than 5 seconds, it will be restarted.</span></div>
-<div class="line"><span class="lineno">  110</span>                    <span class="keyword">auto</span> idleDuration = std::chrono::steady_clock::now() - state.idleSince;</div>
-<div class="line"><span class="lineno">  111</span>                    <span class="keywordflow">if</span> (idleDuration &lt; std::chrono::seconds(5))</div>
-<div class="line"><span class="lineno">  112</span>                    {</div>
-<div class="line"><span class="lineno">  113</span>                        <span class="keywordflow">return</span> state;</div>
-<div class="line"><span class="lineno">  114</span>                    }</div>
-<div class="line"><span class="lineno">  115</span> </div>
-<div class="line"><span class="lineno">  116</span>                    <a class="code hl_define" href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a>(<span class="stringliteral">&quot;Endpoint has been idle for {}ms, activating&quot;</span>,</div>
-<div class="line"><span class="lineno">  117</span>                        std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(idleDuration).count());</div>
-<div class="line"><span class="lineno">  118</span> </div>
-<div class="line"><span class="lineno">  119</span>                    <span class="comment">// The endpoint in an idle target is always fresh and thus needs to be bound the the queues.</span></div>
-<div class="line"><span class="lineno">  120</span>                    state.ep.bind(eq);</div>
-<div class="line"><span class="lineno">  121</span>                    state.ep.bind(cq, FI_TRANSMIT);</div>
-<div class="line"><span class="lineno">  122</span> </div>
-<div class="line"><span class="lineno">  123</span>                    <span class="comment">// Transition into the connecting state</span></div>
-<div class="line"><span class="lineno">  124</span>                    <span class="keyword">auto</span> <span class="keyword">const</span> faddr = <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ad0deda9d9df1349aa6e98c75d6070707">_info</a>.<a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html#ac694cd30e356892f35ff994d3d5b68ef">fabricAddress</a>.<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RawFabricAddress.html#a862e6d77692372d44be9d20b4a5080d4">decode</a>();</div>
-<div class="line"><span class="lineno">  125</span>                    <a class="code hl_define" href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a>(<span class="stringliteral">&quot;Connecting to {}&quot;</span>, faddr.toString());</div>
-<div class="line"><span class="lineno">  126</span>                    state.ep.connect(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ad0deda9d9df1349aa6e98c75d6070707">_info</a>.<a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html#ac694cd30e356892f35ff994d3d5b68ef">fabricAddress</a>);</div>
-<div class="line"><span class="lineno">  127</span>                    <span class="keywordflow">return</span> Connecting{.ep = std::move(state.ep)};</div>
-<div class="line"><span class="lineno">  128</span>                },</div>
-<div class="line"><span class="lineno">  129</span>                [](Connecting state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a> { <span class="keywordflow">return</span> state; },</div>
-<div class="line"><span class="lineno">  130</span>                [](Connected state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a> { <span class="keywordflow">return</span> state; },</div>
-<div class="line"><span class="lineno">  131</span>                [](Flushing state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a> { <span class="keywordflow">return</span> state; },</div>
-<div class="line"><span class="lineno">  132</span>                [](Done state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a> { <span class="keywordflow">return</span> state; },</div>
-<div class="line"><span class="lineno">  133</span>            },</div>
-<div class="line"><span class="lineno">  134</span>            std::move(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a>));</div>
-<div class="line"><span class="lineno">  135</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00149">149</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  150</span>    {</div>
+<div class="line"><span class="lineno">  151</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a> = std::visit(</div>
+<div class="line"><span class="lineno">  152</span>            overloaded{</div>
+<div class="line"><span class="lineno">  153</span>                [&amp;](Idle state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">State</a></div>
+<div class="line"><span class="lineno">  154</span>                {</div>
+<div class="line"><span class="lineno">  155</span>                    <span class="comment">// If the target is in the idle state for more than 5 seconds, it will be restarted.</span></div>
+<div class="line"><span class="lineno">  156</span>                    <span class="keyword">auto</span> idleDuration = std::chrono::steady_clock::now() - state.idleSince;</div>
+<div class="line"><span class="lineno">  157</span>                    <span class="keywordflow">if</span> (idleDuration &lt; std::chrono::seconds(5))</div>
+<div class="line"><span class="lineno">  158</span>                    {</div>
+<div class="line"><span class="lineno">  159</span>                        <span class="keywordflow">return</span> state;</div>
+<div class="line"><span class="lineno">  160</span>                    }</div>
+<div class="line"><span class="lineno">  161</span> </div>
+<div class="line"><span class="lineno">  162</span>                    <a class="code hl_define" href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a>(<span class="stringliteral">&quot;Endpoint has been idle for {}ms, activating&quot;</span>,</div>
+<div class="line"><span class="lineno">  163</span>                        std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(idleDuration).count());</div>
+<div class="line"><span class="lineno">  164</span> </div>
+<div class="line"><span class="lineno">  165</span>                    <span class="comment">// The endpoint in an idle target is always fresh and thus needs to be bound the the queues.</span></div>
+<div class="line"><span class="lineno">  166</span>                    state.ep.bind(eq);</div>
+<div class="line"><span class="lineno">  167</span>                    state.ep.bind(cq, FI_TRANSMIT);</div>
+<div class="line"><span class="lineno">  168</span> </div>
+<div class="line"><span class="lineno">  169</span>                    <span class="comment">// Transition into the connecting state</span></div>
+<div class="line"><span class="lineno">  170</span>                    <span class="keyword">auto</span> <span class="keyword">const</span> faddr = <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ad0deda9d9df1349aa6e98c75d6070707">_info</a>.<a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html#ac694cd30e356892f35ff994d3d5b68ef">fabricAddress</a>.<a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RawFabricAddress.html#a862e6d77692372d44be9d20b4a5080d4">decode</a>();</div>
+<div class="line"><span class="lineno">  171</span>                    <a class="code hl_define" href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a>(<span class="stringliteral">&quot;Connecting to {}&quot;</span>, faddr.toString());</div>
+<div class="line"><span class="lineno">  172</span>                    state.ep.connect(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ad0deda9d9df1349aa6e98c75d6070707">_info</a>.<a class="code hl_variable" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html#ac694cd30e356892f35ff994d3d5b68ef">fabricAddress</a>);</div>
+<div class="line"><span class="lineno">  173</span>                    <span class="keywordflow">return</span> Connecting{.ep = std::move(state.ep)};</div>
+<div class="line"><span class="lineno">  174</span>                },</div>
+<div class="line"><span class="lineno">  175</span>                [](Connecting state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">State</a> { <span class="keywordflow">return</span> state; },</div>
+<div class="line"><span class="lineno">  176</span>                [](Connected state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">State</a> { <span class="keywordflow">return</span> state; },</div>
+<div class="line"><span class="lineno">  177</span>                [](Flushing state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">State</a> { <span class="keywordflow">return</span> state; },</div>
+<div class="line"><span class="lineno">  178</span>                [](Disconnected state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">State</a> { <span class="keywordflow">return</span> state; },</div>
+<div class="line"><span class="lineno">  179</span>                [](Done state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">State</a> { <span class="keywordflow">return</span> state; },</div>
+<div class="line"><span class="lineno">  180</span>            },</div>
+<div class="line"><span class="lineno">  181</span>            std::move(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a>));</div>
+<div class="line"><span class="lineno">  182</span>    }</div>
 <div class="ttc" id="aLogging_8hpp_html_aefc531def12ec69a184941665c6e30ec"><div class="ttname"><a href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a></div><div class="ttdeci">#define MXL_INFO(...)</div><div class="ttdef"><b>Definition</b> <a href="Logging_8hpp_source.html#l00045">Logging.hpp:45</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_html_a837e24bae61fc0d229d8d30e56edcc81"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">mxl::lib::fabrics::ofi::RCInitiatorEndpoint::State</a></div><div class="ttdeci">std::variant&lt; Idle, Connecting, Connected, Flushing, Done &gt; State</div><div class="ttdoc">The various states that the endpoint can be in are stored inside a variant that we move from and then...</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8hpp_source.html#l00137">RCInitiator.hpp:137</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_html_a144c51e5b4718c4d8c801c0ffa032d5a"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">mxl::lib::fabrics::ofi::RCInitiatorEndpoint::State</a></div><div class="ttdeci">std::variant&lt; Idle, Connecting, Connected, Flushing, Disconnected, Done &gt; State</div><div class="ttdoc">The various states that the endpoint can be in are stored inside a variant that we move from and then...</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8hpp_source.html#l00167">RCInitiator.hpp:167</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RawFabricAddress_html_a862e6d77692372d44be9d20b4a5080d4"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RawFabricAddress.html#a862e6d77692372d44be9d20b4a5080d4">mxl::lib::fabrics::ofi::RawFabricAddress::decode</a></div><div class="ttdeci">FabricAddress decode() const</div><div class="ttdoc">Decode into a strongly typed FabricAddress.</div><div class="ttdef"><b>Definition</b> <a href="Address_8cpp_source.html#l00062">Address.cpp:62</a></div></div>
 <div class="ttc" id="astructmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo_html_ac694cd30e356892f35ff994d3d5b68ef"><div class="ttname"><a href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1TargetInfo.html#ac694cd30e356892f35ff994d3d5b68ef">mxl::lib::fabrics::ofi::TargetInfo::fabricAddress</a></div><div class="ttdeci">RawFabricAddress fabricAddress</div><div class="ttdef"><b>Definition</b> <a href="TargetInfo_8hpp_source.html#l00055">TargetInfo.hpp:55</a></div></div>
 </div><!-- fragment -->
@@ -391,10 +451,10 @@ Private Attributes</h2></td></tr>
 
 <p>Returns true if the endpoint was shut down and can be evicted from the initiator. </p>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00042">42</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   43</span>    {</div>
-<div class="line"><span class="lineno">   44</span>        <span class="keywordflow">return</span> std::holds_alternative&lt;Done&gt;(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a>);</div>
-<div class="line"><span class="lineno">   45</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00043">43</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   44</span>    {</div>
+<div class="line"><span class="lineno">   45</span>        <span class="keywordflow">return</span> std::holds_alternative&lt;Done&gt;(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a>);</div>
+<div class="line"><span class="lineno">   46</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -416,19 +476,43 @@ Private Attributes</h2></td></tr>
 
 <p>Consume a completion that was posted to the associated completion queue. </p>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00204">204</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  205</span>    {</div>
-<div class="line"><span class="lineno">  206</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> error = completion.tryErr(); error)</div>
-<div class="line"><span class="lineno">  207</span>        {</div>
-<div class="line"><span class="lineno">  208</span>            <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a137105139beec8c2b3acc0863b4f8045">handleCompletionError</a>(*error);</div>
-<div class="line"><span class="lineno">  209</span>        }</div>
-<div class="line"><span class="lineno">  210</span>        <span class="keywordflow">else</span> <span class="keywordflow">if</span> (<span class="keyword">auto</span> data = completion.tryData(); data)</div>
-<div class="line"><span class="lineno">  211</span>        {</div>
-<div class="line"><span class="lineno">  212</span>            <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a6187dfaed99bec653ff94b159a6b7e5f">handleCompletionData</a>(*data);</div>
-<div class="line"><span class="lineno">  213</span>        }</div>
-<div class="line"><span class="lineno">  214</span>    }</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_html_a137105139beec8c2b3acc0863b4f8045"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a137105139beec8c2b3acc0863b4f8045">mxl::lib::fabrics::ofi::RCInitiatorEndpoint::handleCompletionError</a></div><div class="ttdeci">void handleCompletionError(Completion::Error error)</div><div class="ttdoc">Handle a completion error event.</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8cpp_source.html#l00264">RCInitiator.cpp:264</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_html_a6187dfaed99bec653ff94b159a6b7e5f"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a6187dfaed99bec653ff94b159a6b7e5f">mxl::lib::fabrics::ofi::RCInitiatorEndpoint::handleCompletionData</a></div><div class="ttdeci">void handleCompletionData(Completion::Data data)</div><div class="ttdoc">Handle a completion data event.</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8cpp_source.html#l00233">RCInitiator.cpp:233</a></div></div>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00259">259</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  260</span>    {</div>
+<div class="line"><span class="lineno">  261</span>        <span class="keyword">auto</span> <span class="keyword">const</span> error = completion.tryErr();</div>
+<div class="line"><span class="lineno">  262</span> </div>
+<div class="line"><span class="lineno">  263</span>        std::visit(</div>
+<div class="line"><span class="lineno">  264</span>            overloaded{</div>
+<div class="line"><span class="lineno">  265</span>                [](Idle <span class="keyword">const</span>&amp;) { <a class="code hl_define" href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a>(<span class="stringliteral">&quot;Received a completion event while idle, ignoring.&quot;</span>); },</div>
+<div class="line"><span class="lineno">  266</span>                [](Connecting <span class="keyword">const</span>&amp;) { <a class="code hl_define" href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a>(<span class="stringliteral">&quot;Received a completion event while connecting, ignoring.&quot;</span>); },</div>
+<div class="line"><span class="lineno">  267</span>                [&amp;](Connected <span class="keyword">const</span>&amp;)</div>
+<div class="line"><span class="lineno">  268</span>                {</div>
+<div class="line"><span class="lineno">  269</span>                    <span class="comment">// A failed operation is finished as well, so it is counted like a successful one.</span></div>
+<div class="line"><span class="lineno">  270</span>                    <span class="keywordflow">if</span> (error)</div>
+<div class="line"><span class="lineno">  271</span>                    {</div>
+<div class="line"><span class="lineno">  272</span>                        <a class="code hl_define" href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a>(<span class="stringliteral">&quot;Received a completion error: {}&quot;</span>, error-&gt;toString());</div>
+<div class="line"><span class="lineno">  273</span>                    }</div>
+<div class="line"><span class="lineno">  274</span>                    <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab86514f6147c37969d08e6066e9cec79">_proto</a>-&gt;processCompletion(completion);</div>
+<div class="line"><span class="lineno">  275</span>                },</div>
+<div class="line"><span class="lineno">  276</span>                [&amp;](Flushing&amp; state)</div>
+<div class="line"><span class="lineno">  277</span>                {</div>
+<div class="line"><span class="lineno">  278</span>                    <span class="comment">// Operations that were still queued when the connection was shut down complete with an error. They count as flushed.</span></div>
+<div class="line"><span class="lineno">  279</span>                    <span class="keywordflow">if</span> (error)</div>
+<div class="line"><span class="lineno">  280</span>                    {</div>
+<div class="line"><span class="lineno">  281</span>                        <a class="code hl_define" href="Logging_8hpp.html#ada673532b5c2d25942321c46eb95553b">MXL_DEBUG</a>(<span class="stringliteral">&quot;Received a completion error while flushing: {}&quot;</span>, error-&gt;toString());</div>
+<div class="line"><span class="lineno">  282</span>                    }</div>
+<div class="line"><span class="lineno">  283</span>                    <span class="keywordflow">if</span> (state.pending &gt; 0)</div>
+<div class="line"><span class="lineno">  284</span>                    {</div>
+<div class="line"><span class="lineno">  285</span>                        --state.pending;</div>
+<div class="line"><span class="lineno">  286</span>                    }</div>
+<div class="line"><span class="lineno">  287</span>                },</div>
+<div class="line"><span class="lineno">  288</span>                [](Disconnected <span class="keyword">const</span>&amp;) { <a class="code hl_define" href="Logging_8hpp.html#ada673532b5c2d25942321c46eb95553b">MXL_DEBUG</a>(<span class="stringliteral">&quot;Ignoring completion after the target closed the connection.&quot;</span>); },</div>
+<div class="line"><span class="lineno">  289</span>                [](Done <span class="keyword">const</span>&amp;) { <a class="code hl_define" href="Logging_8hpp.html#ada673532b5c2d25942321c46eb95553b">MXL_DEBUG</a>(<span class="stringliteral">&quot;Ignoring completion after shutdown.&quot;</span>); },</div>
+<div class="line"><span class="lineno">  290</span>            },</div>
+<div class="line"><span class="lineno">  291</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a>);</div>
+<div class="line"><span class="lineno">  292</span>    }</div>
+<div class="ttc" id="aLogging_8hpp_html_ac235c0b6be0299ec9671f7bd4551b0ad"><div class="ttname"><a href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a></div><div class="ttdeci">#define MXL_ERROR(...)</div><div class="ttdef"><b>Definition</b> <a href="Logging_8hpp_source.html#l00067">Logging.hpp:67</a></div></div>
+<div class="ttc" id="aLogging_8hpp_html_ac5601472e8ef54d952b767d574a32427"><div class="ttname"><a href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a></div><div class="ttdeci">#define MXL_WARN(...)</div><div class="ttdef"><b>Definition</b> <a href="Logging_8hpp_source.html#l00056">Logging.hpp:56</a></div></div>
+<div class="ttc" id="aLogging_8hpp_html_ada673532b5c2d25942321c46eb95553b"><div class="ttname"><a href="Logging_8hpp.html#ada673532b5c2d25942321c46eb95553b">MXL_DEBUG</a></div><div class="ttdeci">#define MXL_DEBUG(...)</div><div class="ttdef"><b>Definition</b> <a href="Logging_8hpp_source.html#l00034">Logging.hpp:34</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -450,168 +534,146 @@ Private Attributes</h2></td></tr>
 
 <p>Consume an event that was posted to the associated event queue. </p>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00137">137</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  138</span>    {</div>
-<div class="line"><span class="lineno">  139</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a> = std::visit(</div>
-<div class="line"><span class="lineno">  140</span>            overloaded{</div>
-<div class="line"><span class="lineno">  141</span>                [](Idle state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a> { <span class="keywordflow">return</span> state; }, <span class="comment">// Nothing to do when idle.</span></div>
-<div class="line"><span class="lineno">  142</span>                [&amp;](Connecting state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a></div>
-<div class="line"><span class="lineno">  143</span>                {</div>
-<div class="line"><span class="lineno">  144</span>                    <span class="keywordflow">if</span> (ev.isError())</div>
-<div class="line"><span class="lineno">  145</span>                    {</div>
-<div class="line"><span class="lineno">  146</span>                        <a class="code hl_define" href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a>(<span class="stringliteral">&quot;Failed to connect endpoint: {}&quot;</span>, ev.error().toString());</div>
-<div class="line"><span class="lineno">  147</span> </div>
-<div class="line"><span class="lineno">  148</span>                        <span class="comment">// Go into the idle state with a new endpoint</span></div>
-<div class="line"><span class="lineno">  149</span>                        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a612ed40d6b12673123a0f616b9f51e1d">restart</a>(state.ep);</div>
-<div class="line"><span class="lineno">  150</span>                    }</div>
-<div class="line"><span class="lineno">  151</span>                    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (ev.isConnected())</div>
-<div class="line"><span class="lineno">  152</span>                    {</div>
-<div class="line"><span class="lineno">  153</span>                        <a class="code hl_define" href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a>(<span class="stringliteral">&quot;Endpoint is now connected&quot;</span>);</div>
-<div class="line"><span class="lineno">  154</span>                        <span class="keywordflow">return</span> Connected{.ep = std::move(state.ep)};</div>
-<div class="line"><span class="lineno">  155</span>                    }</div>
-<div class="line"><span class="lineno">  156</span>                    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (ev.isShutdown())</div>
-<div class="line"><span class="lineno">  157</span>                    {</div>
-<div class="line"><span class="lineno">  158</span>                        <a class="code hl_define" href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a>(<span class="stringliteral">&quot;Received a shutdown event while connecting, going idle&quot;</span>);</div>
-<div class="line"><span class="lineno">  159</span> </div>
-<div class="line"><span class="lineno">  160</span>                        <span class="comment">// Go to idle state with a new endpoint</span></div>
-<div class="line"><span class="lineno">  161</span>                        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a612ed40d6b12673123a0f616b9f51e1d">restart</a>(state.ep);</div>
-<div class="line"><span class="lineno">  162</span>                    }</div>
-<div class="line"><span class="lineno">  163</span> </div>
-<div class="line"><span class="lineno">  164</span>                    <a class="code hl_define" href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a>(<span class="stringliteral">&quot;Received an unexpected event while establishing a connection&quot;</span>);</div>
-<div class="line"><span class="lineno">  165</span>                    <span class="keywordflow">return</span> state;</div>
-<div class="line"><span class="lineno">  166</span>                },</div>
-<div class="line"><span class="lineno">  167</span>                [&amp;](Connected state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a></div>
-<div class="line"><span class="lineno">  168</span>                {</div>
-<div class="line"><span class="lineno">  169</span>                    <span class="keywordflow">if</span> (ev.isError())</div>
-<div class="line"><span class="lineno">  170</span>                    {</div>
-<div class="line"><span class="lineno">  171</span>                        <a class="code hl_define" href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a>(<span class="stringliteral">&quot;Received an error event in connected state, going idle. Error: {}&quot;</span>, ev.error().toString());</div>
-<div class="line"><span class="lineno">  172</span>                        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a612ed40d6b12673123a0f616b9f51e1d">restart</a>(state.ep);</div>
-<div class="line"><span class="lineno">  173</span>                    }</div>
-<div class="line"><span class="lineno">  174</span>                    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (ev.isShutdown())</div>
-<div class="line"><span class="lineno">  175</span>                    {</div>
-<div class="line"><span class="lineno">  176</span>                        <a class="code hl_define" href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a>(<span class="stringliteral">&quot;Remote endpoint has closed the connection&quot;</span>);</div>
-<div class="line"><span class="lineno">  177</span>                        <span class="keywordflow">return</span> Flushing{.ep = std::move(state.ep), .pending = <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab86514f6147c37969d08e6066e9cec79">_proto</a>-&gt;reset()};</div>
-<div class="line"><span class="lineno">  178</span>                    }</div>
-<div class="line"><span class="lineno">  179</span> </div>
-<div class="line"><span class="lineno">  180</span>                    <span class="keywordflow">return</span> state;</div>
-<div class="line"><span class="lineno">  181</span>                },</div>
-<div class="line"><span class="lineno">  182</span>                [&amp;](Flushing state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a></div>
-<div class="line"><span class="lineno">  183</span>                {</div>
-<div class="line"><span class="lineno">  184</span>                    <span class="keywordflow">if</span> (ev.isShutdown())</div>
-<div class="line"><span class="lineno">  185</span>                    {</div>
-<div class="line"><span class="lineno">  186</span>                        <a class="code hl_define" href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a>(<span class="stringliteral">&quot;Received a Shutdown Event while flushing the completion queue&quot;</span>);</div>
-<div class="line"><span class="lineno">  187</span>                    }</div>
-<div class="line"><span class="lineno">  188</span>                    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (ev.isError())</div>
-<div class="line"><span class="lineno">  189</span>                    {</div>
-<div class="line"><span class="lineno">  190</span>                        <a class="code hl_define" href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a>(<span class="stringliteral">&quot;Received an error while shutting down: {}&quot;</span>, ev.error().toString());</div>
-<div class="line"><span class="lineno">  191</span>                        <span class="keywordflow">return</span> Done{};</div>
-<div class="line"><span class="lineno">  192</span>                    }</div>
-<div class="line"><span class="lineno">  193</span>                    <span class="keywordflow">else</span></div>
-<div class="line"><span class="lineno">  194</span>                    {</div>
-<div class="line"><span class="lineno">  195</span>                        <a class="code hl_define" href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a>(<span class="stringliteral">&quot;Received an unexpected event while shutting down&quot;</span>);</div>
-<div class="line"><span class="lineno">  196</span>                    }</div>
-<div class="line"><span class="lineno">  197</span>                    <span class="keywordflow">return</span> state;</div>
-<div class="line"><span class="lineno">  198</span>                },</div>
-<div class="line"><span class="lineno">  199</span>                [](Done state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a> { <span class="keywordflow">return</span> state; },</div>
-<div class="line"><span class="lineno">  200</span>            },</div>
-<div class="line"><span class="lineno">  201</span>            std::move(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a>));</div>
-<div class="line"><span class="lineno">  202</span>    }</div>
-<div class="ttc" id="aLogging_8hpp_html_ac235c0b6be0299ec9671f7bd4551b0ad"><div class="ttname"><a href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a></div><div class="ttdeci">#define MXL_ERROR(...)</div><div class="ttdef"><b>Definition</b> <a href="Logging_8hpp_source.html#l00067">Logging.hpp:67</a></div></div>
-<div class="ttc" id="aLogging_8hpp_html_ac5601472e8ef54d952b767d574a32427"><div class="ttname"><a href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a></div><div class="ttdeci">#define MXL_WARN(...)</div><div class="ttdef"><b>Definition</b> <a href="Logging_8hpp_source.html#l00056">Logging.hpp:56</a></div></div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_html_a612ed40d6b12673123a0f616b9f51e1d"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a612ed40d6b12673123a0f616b9f51e1d">mxl::lib::fabrics::ofi::RCInitiatorEndpoint::restart</a></div><div class="ttdeci">Idle restart(Endpoint const &amp;endpoint)</div><div class="ttdoc">Restarts the endpoint. Produces a new Idle state from any previous state.</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8cpp_source.html#l00269">RCInitiator.cpp:269</a></div></div>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00184">184</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  185</span>    {</div>
+<div class="line"><span class="lineno">  186</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a> = std::visit(</div>
+<div class="line"><span class="lineno">  187</span>            overloaded{</div>
+<div class="line"><span class="lineno">  188</span>                [](Idle state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">State</a> { <span class="keywordflow">return</span> state; }, <span class="comment">// Nothing to do when idle.</span></div>
+<div class="line"><span class="lineno">  189</span>                [&amp;](Connecting state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">State</a></div>
+<div class="line"><span class="lineno">  190</span>                {</div>
+<div class="line"><span class="lineno">  191</span>                    <span class="keywordflow">if</span> (ev.isError())</div>
+<div class="line"><span class="lineno">  192</span>                    {</div>
+<div class="line"><span class="lineno">  193</span>                        <a class="code hl_define" href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a>(<span class="stringliteral">&quot;Failed to connect endpoint: {}&quot;</span>, ev.error().toString());</div>
+<div class="line"><span class="lineno">  194</span> </div>
+<div class="line"><span class="lineno">  195</span>                        <span class="comment">// Go into the idle state with a new endpoint</span></div>
+<div class="line"><span class="lineno">  196</span>                        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a612ed40d6b12673123a0f616b9f51e1d">restart</a>(state.ep);</div>
+<div class="line"><span class="lineno">  197</span>                    }</div>
+<div class="line"><span class="lineno">  198</span>                    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (ev.isConnected())</div>
+<div class="line"><span class="lineno">  199</span>                    {</div>
+<div class="line"><span class="lineno">  200</span>                        <a class="code hl_define" href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a>(<span class="stringliteral">&quot;Endpoint is now connected&quot;</span>);</div>
+<div class="line"><span class="lineno">  201</span>                        <span class="keywordflow">return</span> Connected{.ep = std::move(state.ep)};</div>
+<div class="line"><span class="lineno">  202</span>                    }</div>
+<div class="line"><span class="lineno">  203</span>                    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (ev.isShutdown())</div>
+<div class="line"><span class="lineno">  204</span>                    {</div>
+<div class="line"><span class="lineno">  205</span>                        <a class="code hl_define" href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a>(<span class="stringliteral">&quot;Received a shutdown event while connecting, going idle&quot;</span>);</div>
+<div class="line"><span class="lineno">  206</span> </div>
+<div class="line"><span class="lineno">  207</span>                        <span class="comment">// Go to idle state with a new endpoint</span></div>
+<div class="line"><span class="lineno">  208</span>                        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a612ed40d6b12673123a0f616b9f51e1d">restart</a>(state.ep);</div>
+<div class="line"><span class="lineno">  209</span>                    }</div>
+<div class="line"><span class="lineno">  210</span> </div>
+<div class="line"><span class="lineno">  211</span>                    <a class="code hl_define" href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a>(<span class="stringliteral">&quot;Received an unexpected event while establishing a connection&quot;</span>);</div>
+<div class="line"><span class="lineno">  212</span>                    <span class="keywordflow">return</span> state;</div>
+<div class="line"><span class="lineno">  213</span>                },</div>
+<div class="line"><span class="lineno">  214</span>                [&amp;](Connected state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">State</a></div>
+<div class="line"><span class="lineno">  215</span>                {</div>
+<div class="line"><span class="lineno">  216</span>                    <span class="keywordflow">if</span> (ev.isError())</div>
+<div class="line"><span class="lineno">  217</span>                    {</div>
+<div class="line"><span class="lineno">  218</span>                        <a class="code hl_define" href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a>(<span class="stringliteral">&quot;Received an error event in connected state, going idle after flushing. Error: {}&quot;</span>, ev.error().toString());</div>
+<div class="line"><span class="lineno">  219</span>                        <a class="code hl_function" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#ab11c9eb5c2a389377ea24c200018a4d0">catchAndLogFabricError</a>([&amp;]() { state.ep.shutdown(); }, <span class="stringliteral">&quot;Failed to shut down the endpoint after an error event&quot;</span>);</div>
+<div class="line"><span class="lineno">  220</span>                        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a4e78ba6d2d35314cbcecd75235f0ad04">startFlush</a>(std::move(state.ep), <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab86514f6147c37969d08e6066e9cec79">_proto</a>-&gt;reset(), <span class="keyword">true</span>, <a class="code hl_enumvalue" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eaba880b8461cba2e295e1828be8d6eedb0a">AfterFlush::Reconnect</a>);</div>
+<div class="line"><span class="lineno">  221</span>                    }</div>
+<div class="line"><span class="lineno">  222</span>                    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (ev.isShutdown())</div>
+<div class="line"><span class="lineno">  223</span>                    {</div>
+<div class="line"><span class="lineno">  224</span>                        <span class="comment">// A target closes the connection only when it is destroyed. A restarted target has new target info, so the</span></div>
+<div class="line"><span class="lineno">  225</span>                        <span class="comment">// endpoint does not reconnect. The target stays added, so that it can be removed.</span></div>
+<div class="line"><span class="lineno">  226</span>                        <a class="code hl_define" href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a>(<span class="stringliteral">&quot;Remote endpoint has closed the connection.&quot;</span>);</div>
+<div class="line"><span class="lineno">  227</span>                        <a class="code hl_function" href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#ab11c9eb5c2a389377ea24c200018a4d0">catchAndLogFabricError</a>([&amp;]() { state.ep.shutdown(); },</div>
+<div class="line"><span class="lineno">  228</span>                            <span class="stringliteral">&quot;Failed to shut down the endpoint after the remote endpoint closed it&quot;</span>);</div>
+<div class="line"><span class="lineno">  229</span>                        <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a4e78ba6d2d35314cbcecd75235f0ad04">startFlush</a>(std::move(state.ep), <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab86514f6147c37969d08e6066e9cec79">_proto</a>-&gt;reset(), <span class="keyword">true</span>, <a class="code hl_enumvalue" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eaba42ae25231906c83927831e0ef7c317ac">AfterFlush::Disconnect</a>);</div>
+<div class="line"><span class="lineno">  230</span>                    }</div>
+<div class="line"><span class="lineno">  231</span> </div>
+<div class="line"><span class="lineno">  232</span>                    <span class="keywordflow">return</span> state;</div>
+<div class="line"><span class="lineno">  233</span>                },</div>
+<div class="line"><span class="lineno">  234</span>                [&amp;](Flushing state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">State</a></div>
+<div class="line"><span class="lineno">  235</span>                {</div>
+<div class="line"><span class="lineno">  236</span>                    <span class="keywordflow">if</span> (ev.isShutdown())</div>
+<div class="line"><span class="lineno">  237</span>                    {</div>
+<div class="line"><span class="lineno">  238</span>                        <a class="code hl_define" href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a>(<span class="stringliteral">&quot;Received a shutdown event while flushing the completion queue&quot;</span>);</div>
+<div class="line"><span class="lineno">  239</span>                        state.shutdownReceived = <span class="keyword">true</span>;</div>
+<div class="line"><span class="lineno">  240</span>                    }</div>
+<div class="line"><span class="lineno">  241</span>                    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (ev.isError())</div>
+<div class="line"><span class="lineno">  242</span>                    {</div>
+<div class="line"><span class="lineno">  243</span>                        <span class="comment">// The connection is gone and no shutdown event will follow. Outstanding operations can still complete.</span></div>
+<div class="line"><span class="lineno">  244</span>                        <a class="code hl_define" href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a>(<span class="stringliteral">&quot;Received an error while shutting down: {}&quot;</span>, ev.error().toString());</div>
+<div class="line"><span class="lineno">  245</span>                        state.shutdownReceived = <span class="keyword">true</span>;</div>
+<div class="line"><span class="lineno">  246</span>                    }</div>
+<div class="line"><span class="lineno">  247</span>                    <span class="keywordflow">else</span></div>
+<div class="line"><span class="lineno">  248</span>                    {</div>
+<div class="line"><span class="lineno">  249</span>                        <a class="code hl_define" href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a>(<span class="stringliteral">&quot;Received an unexpected event while shutting down&quot;</span>);</div>
+<div class="line"><span class="lineno">  250</span>                    }</div>
+<div class="line"><span class="lineno">  251</span>                    <span class="keywordflow">return</span> state;</div>
+<div class="line"><span class="lineno">  252</span>                },</div>
+<div class="line"><span class="lineno">  253</span>                [](Disconnected state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">State</a> { <span class="keywordflow">return</span> state; },</div>
+<div class="line"><span class="lineno">  254</span>                [](Done state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">State</a> { <span class="keywordflow">return</span> state; },</div>
+<div class="line"><span class="lineno">  255</span>            },</div>
+<div class="line"><span class="lineno">  256</span>            std::move(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a>));</div>
+<div class="line"><span class="lineno">  257</span>    }</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_html_a4e78ba6d2d35314cbcecd75235f0ad04"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a4e78ba6d2d35314cbcecd75235f0ad04">mxl::lib::fabrics::ofi::RCInitiatorEndpoint::startFlush</a></div><div class="ttdeci">static Flushing startFlush(Endpoint ep, std::size_t pending, bool shutdownReceived, AfterFlush next)</div><div class="ttdoc">Create a flushing state that waits for the given number of outstanding operations.</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8cpp_source.html#l00140">RCInitiator.cpp:140</a></div></div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_html_a612ed40d6b12673123a0f616b9f51e1d"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a612ed40d6b12673123a0f616b9f51e1d">mxl::lib::fabrics::ofi::RCInitiatorEndpoint::restart</a></div><div class="ttdeci">Idle restart(Endpoint const &amp;endpoint)</div><div class="ttdoc">Restarts the endpoint. Produces a new Idle state from any previous state.</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8cpp_source.html#l00311">RCInitiator.cpp:311</a></div></div>
+<div class="ttc" id="anamespacemxl_1_1lib_1_1fabrics_1_1ofi_html_ab11c9eb5c2a389377ea24c200018a4d0"><div class="ttname"><a href="namespacemxl_1_1lib_1_1fabrics_1_1ofi.html#ab11c9eb5c2a389377ea24c200018a4d0">mxl::lib::fabrics::ofi::catchAndLogFabricError</a></div><div class="ttdeci">void catchAndLogFabricError(F &amp;&amp;fun, std::string_view msg)</div><div class="ttdef"><b>Definition</b> <a href="Exception_8hpp_source.html#l00168">Exception.hpp:168</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
-<a id="a6187dfaed99bec653ff94b159a6b7e5f" name="a6187dfaed99bec653ff94b159a6b7e5f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6187dfaed99bec653ff94b159a6b7e5f">&#9670;&#160;</a></span>handleCompletionData()</h2>
+<a id="aa448f1fae2027b989419036b333688b5" name="aa448f1fae2027b989419036b333688b5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa448f1fae2027b989419036b333688b5">&#9670;&#160;</a></span>finishFlush()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void mxl::lib::fabrics::ofi::RCInitiatorEndpoint::handleCompletionData </td>
+          <td class="memname">void mxl::lib::fabrics::ofi::RCInitiatorEndpoint::finishFlush </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Data.html">Completion::Data</a>&#160;</td>
-          <td class="paramname"><em>data</em></td><td>)</td>
+          <td class="paramname"></td><td>)</td>
           <td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">private</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
-<p>Handle a completion data event. </p>
+<p>Move the endpoint out of the flushing state when the flush is complete. </p>
+<p>The flush is complete when a shutdown or error event was received and all operations that were outstanding at shutdown have completed, or when FlushTimeout has elapsed since the flush started. The endpoint then goes to the state that <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Flushing.html#a40bd2326337d32515620af5555d71742">Flushing::next</a> selects. In any other state, this is a no-op. </p>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00233">233</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  234</span>    {</div>
-<div class="line"><span class="lineno">  235</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a> = std::visit(</div>
-<div class="line"><span class="lineno">  236</span>            overloaded{[](Idle state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a></div>
-<div class="line"><span class="lineno">  237</span>                {</div>
-<div class="line"><span class="lineno">  238</span>                    <a class="code hl_define" href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a>(<span class="stringliteral">&quot;Received a completion event while idle, ignoring.&quot;</span>);</div>
-<div class="line"><span class="lineno">  239</span>                    <span class="keywordflow">return</span> state;</div>
-<div class="line"><span class="lineno">  240</span>                },</div>
-<div class="line"><span class="lineno">  241</span>                [](Connecting state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a></div>
-<div class="line"><span class="lineno">  242</span>                {</div>
-<div class="line"><span class="lineno">  243</span>                    <a class="code hl_define" href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a>(<span class="stringliteral">&quot;Received a completion event while connecting, ignoring.&quot;</span>);</div>
-<div class="line"><span class="lineno">  244</span>                    <span class="keywordflow">return</span> state;</div>
-<div class="line"><span class="lineno">  245</span>                },</div>
-<div class="line"><span class="lineno">  246</span>                [&amp;](Connected state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a></div>
-<div class="line"><span class="lineno">  247</span>                {</div>
-<div class="line"><span class="lineno">  248</span>                    <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab86514f6147c37969d08e6066e9cec79">_proto</a>-&gt;processCompletion(completion);</div>
-<div class="line"><span class="lineno">  249</span>                    <span class="keywordflow">return</span> state;</div>
-<div class="line"><span class="lineno">  250</span>                },</div>
-<div class="line"><span class="lineno">  251</span>                [](Flushing state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a></div>
-<div class="line"><span class="lineno">  252</span>                {</div>
-<div class="line"><span class="lineno">  253</span>                    state.pending--; <span class="comment">// Decrease the counter of completions that must still be flushed.</span></div>
-<div class="line"><span class="lineno">  254</span>                    <span class="keywordflow">return</span> state;</div>
-<div class="line"><span class="lineno">  255</span>                },</div>
-<div class="line"><span class="lineno">  256</span>                [](Done state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a></div>
-<div class="line"><span class="lineno">  257</span>                {</div>
-<div class="line"><span class="lineno">  258</span>                    <a class="code hl_define" href="Logging_8hpp.html#ada673532b5c2d25942321c46eb95553b">MXL_DEBUG</a>(<span class="stringliteral">&quot;Ignoring completion after shutdown.&quot;</span>);</div>
-<div class="line"><span class="lineno">  259</span>                    <span class="keywordflow">return</span> state;</div>
-<div class="line"><span class="lineno">  260</span>                }},</div>
-<div class="line"><span class="lineno">  261</span>            std::move(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a>));</div>
-<div class="line"><span class="lineno">  262</span>    }</div>
-<div class="ttc" id="aLogging_8hpp_html_ada673532b5c2d25942321c46eb95553b"><div class="ttname"><a href="Logging_8hpp.html#ada673532b5c2d25942321c46eb95553b">MXL_DEBUG</a></div><div class="ttdeci">#define MXL_DEBUG(...)</div><div class="ttdef"><b>Definition</b> <a href="Logging_8hpp_source.html#l00034">Logging.hpp:34</a></div></div>
-</div><!-- fragment -->
-</div>
-</div>
-<a id="a137105139beec8c2b3acc0863b4f8045" name="a137105139beec8c2b3acc0863b4f8045"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a137105139beec8c2b3acc0863b4f8045">&#9670;&#160;</a></span>handleCompletionError()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void mxl::lib::fabrics::ofi::RCInitiatorEndpoint::handleCompletionError </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion_1_1Error.html">Completion::Error</a>&#160;</td>
-          <td class="paramname"><em>error</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">private</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Handle a completion error event. </p>
-
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00264">264</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  265</span>    {</div>
-<div class="line"><span class="lineno">  266</span>        <a class="code hl_define" href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a>(<span class="stringliteral">&quot;Received a completion error: {}&quot;</span>, err.toString());</div>
-<div class="line"><span class="lineno">  267</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00098">98</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   99</span>    {</div>
+<div class="line"><span class="lineno">  100</span>        <span class="keyword">auto</span> <span class="keyword">const</span> state = std::get_if&lt;Flushing&gt;(&amp;<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a>);</div>
+<div class="line"><span class="lineno">  101</span>        <span class="keywordflow">if</span> (state == <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">  102</span>        {</div>
+<div class="line"><span class="lineno">  103</span>            <span class="keywordflow">return</span>;</div>
+<div class="line"><span class="lineno">  104</span>        }</div>
+<div class="line"><span class="lineno">  105</span> </div>
+<div class="line"><span class="lineno">  106</span>        <span class="keyword">auto</span> <span class="keyword">const</span> nextName = [next = state-&gt;next]()</div>
+<div class="line"><span class="lineno">  107</span>        {</div>
+<div class="line"><span class="lineno">  108</span>            <span class="keywordflow">switch</span> (next)</div>
+<div class="line"><span class="lineno">  109</span>            {</div>
+<div class="line"><span class="lineno">  110</span>                <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eaba880b8461cba2e295e1828be8d6eedb0a">AfterFlush::Reconnect</a>:  <span class="keywordflow">return</span> <span class="stringliteral">&quot;idle&quot;</span>;</div>
+<div class="line"><span class="lineno">  111</span>                <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eaba42ae25231906c83927831e0ef7c317ac">AfterFlush::Disconnect</a>: <span class="keywordflow">return</span> <span class="stringliteral">&quot;disconnected&quot;</span>;</div>
+<div class="line"><span class="lineno">  112</span>                <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eabaf92965e2c8a7afb3c1b9a5c09a263636">AfterFlush::Done</a>:       <span class="keywordflow">return</span> <span class="stringliteral">&quot;done&quot;</span>;</div>
+<div class="line"><span class="lineno">  113</span>            }</div>
+<div class="line"><span class="lineno">  114</span>            <span class="keywordflow">return</span> <span class="stringliteral">&quot;unknown&quot;</span>;</div>
+<div class="line"><span class="lineno">  115</span>        }();</div>
+<div class="line"><span class="lineno">  116</span>        <span class="keywordflow">if</span> (state-&gt;shutdownReceived &amp;&amp; (state-&gt;pending == 0))</div>
+<div class="line"><span class="lineno">  117</span>        {</div>
+<div class="line"><span class="lineno">  118</span>            <a class="code hl_define" href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a>(<span class="stringliteral">&quot;Flushing complete, transitioning to {} state.&quot;</span>, nextName);</div>
+<div class="line"><span class="lineno">  119</span>        }</div>
+<div class="line"><span class="lineno">  120</span>        <span class="keywordflow">else</span> <span class="keywordflow">if</span> (std::chrono::steady_clock::now() &gt;= state-&gt;deadline)</div>
+<div class="line"><span class="lineno">  121</span>        {</div>
+<div class="line"><span class="lineno">  122</span>            <a class="code hl_define" href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a>(<span class="stringliteral">&quot;Flushing timed out with {} outstanding operations, shutdown event received: {}. Transitioning to {} state.&quot;</span>,</div>
+<div class="line"><span class="lineno">  123</span>                state-&gt;pending,</div>
+<div class="line"><span class="lineno">  124</span>                state-&gt;shutdownReceived,</div>
+<div class="line"><span class="lineno">  125</span>                nextName);</div>
+<div class="line"><span class="lineno">  126</span>        }</div>
+<div class="line"><span class="lineno">  127</span>        <span class="keywordflow">else</span></div>
+<div class="line"><span class="lineno">  128</span>        {</div>
+<div class="line"><span class="lineno">  129</span>            <span class="keywordflow">return</span>;</div>
+<div class="line"><span class="lineno">  130</span>        }</div>
+<div class="line"><span class="lineno">  131</span> </div>
+<div class="line"><span class="lineno">  132</span>        <span class="keywordflow">switch</span> (state-&gt;next)</div>
+<div class="line"><span class="lineno">  133</span>        {</div>
+<div class="line"><span class="lineno">  134</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eaba880b8461cba2e295e1828be8d6eedb0a">AfterFlush::Reconnect</a>:  <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a> = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a612ed40d6b12673123a0f616b9f51e1d">restart</a>(state-&gt;ep); <span class="keywordflow">break</span>;</div>
+<div class="line"><span class="lineno">  135</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eaba42ae25231906c83927831e0ef7c317ac">AfterFlush::Disconnect</a>: <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a> = Disconnected{}; <span class="keywordflow">break</span>;</div>
+<div class="line"><span class="lineno">  136</span>            <span class="keywordflow">case</span> <a class="code hl_enumvalue" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eabaf92965e2c8a7afb3c1b9a5c09a263636">AfterFlush::Done</a>:       <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a> = Done{}; <span class="keywordflow">break</span>;</div>
+<div class="line"><span class="lineno">  137</span>        }</div>
+<div class="line"><span class="lineno">  138</span>    }</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_html_a2db3d739cae9e4dde55c548ea4c65eabaf92965e2c8a7afb3c1b9a5c09a263636"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eabaf92965e2c8a7afb3c1b9a5c09a263636">mxl::lib::fabrics::ofi::RCInitiatorEndpoint::AfterFlush::Done</a></div><div class="ttdeci">@ Done</div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -640,20 +702,21 @@ Private Attributes</h2></td></tr>
 
 <p>Returns true if there is any pending events that the endpoint is waiting for, and for which the queues must be polled. </p>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00047">47</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   48</span>    {</div>
-<div class="line"><span class="lineno">   49</span>        <span class="keywordflow">return</span> std::visit(</div>
-<div class="line"><span class="lineno">   50</span>            overloaded{</div>
-<div class="line"><span class="lineno">   51</span>                [](std::monostate) { <span class="keywordflow">return</span> <span class="keyword">false</span>; },   <span class="comment">// Something went wrong with this target, but there is probably no work to do.</span></div>
-<div class="line"><span class="lineno">   52</span>                [](Idle <span class="keyword">const</span>&amp;) { <span class="keywordflow">return</span> <span class="keyword">true</span>; },       <span class="comment">// An idle target means there is no work to do right now.</span></div>
-<div class="line"><span class="lineno">   53</span>                [](Connecting <span class="keyword">const</span>&amp;) { <span class="keywordflow">return</span> <span class="keyword">true</span>; }, <span class="comment">// In the connecting state, the target is waiting for a connected event.</span></div>
-<div class="line"><span class="lineno">   54</span>                [&amp;](Connected <span class="keyword">const</span>&amp;) { <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab86514f6147c37969d08e6066e9cec79">_proto</a>-&gt;hasPendingWork(); }, <span class="comment">// While connected, a target has pending work when</span></div>
-<div class="line"><span class="lineno">   55</span>                                                                            <span class="comment">// there are transfers that have not yet completed.</span></div>
-<div class="line"><span class="lineno">   56</span>                [](Flushing <span class="keyword">const</span>&amp;) { <span class="keywordflow">return</span> <span class="keyword">true</span>; },                       <span class="comment">// In the shutdown state, the target is waiting for a FI_SHUTDOWN event.</span></div>
-<div class="line"><span class="lineno">   57</span>                [](Done <span class="keyword">const</span>&amp;) { <span class="keywordflow">return</span> <span class="keyword">false</span>; },                          <span class="comment">// In the done state, there is no pending work.</span></div>
-<div class="line"><span class="lineno">   58</span>            },</div>
-<div class="line"><span class="lineno">   59</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a>);</div>
-<div class="line"><span class="lineno">   60</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00048">48</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   49</span>    {</div>
+<div class="line"><span class="lineno">   50</span>        <span class="keywordflow">return</span> std::visit(</div>
+<div class="line"><span class="lineno">   51</span>            overloaded{</div>
+<div class="line"><span class="lineno">   52</span>                [](std::monostate) { <span class="keywordflow">return</span> <span class="keyword">false</span>; },   <span class="comment">// Something went wrong with this target, but there is probably no work to do.</span></div>
+<div class="line"><span class="lineno">   53</span>                [](Idle <span class="keyword">const</span>&amp;) { <span class="keywordflow">return</span> <span class="keyword">false</span>; },      <span class="comment">// An idle target has nothing in flight, and is not connected.</span></div>
+<div class="line"><span class="lineno">   54</span>                [](Connecting <span class="keyword">const</span>&amp;) { <span class="keywordflow">return</span> <span class="keyword">true</span>; }, <span class="comment">// In the connecting state, the target is waiting for a connected event.</span></div>
+<div class="line"><span class="lineno">   55</span>                [&amp;](Connected <span class="keyword">const</span>&amp;) { <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab86514f6147c37969d08e6066e9cec79">_proto</a>-&gt;hasPendingWork(); }, <span class="comment">// While connected, a target has pending work when</span></div>
+<div class="line"><span class="lineno">   56</span>                                                                            <span class="comment">// there are transfers that have not yet completed.</span></div>
+<div class="line"><span class="lineno">   57</span>                [](Flushing <span class="keyword">const</span>&amp;) { <span class="keywordflow">return</span> <span class="keyword">true</span>; },      <span class="comment">// While flushing, the target waits for a shutdown event and outstanding completions.</span></div>
+<div class="line"><span class="lineno">   58</span>                [](Disconnected <span class="keyword">const</span>&amp;) { <span class="keywordflow">return</span> <span class="keyword">false</span>; }, <span class="comment">// A disconnected target only waits to be removed.</span></div>
+<div class="line"><span class="lineno">   59</span>                [](Done <span class="keyword">const</span>&amp;) { <span class="keywordflow">return</span> <span class="keyword">false</span>; },         <span class="comment">// In the done state, there is no pending work.</span></div>
+<div class="line"><span class="lineno">   60</span>            },</div>
+<div class="line"><span class="lineno">   61</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a>);</div>
+<div class="line"><span class="lineno">   62</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -682,10 +745,10 @@ Private Attributes</h2></td></tr>
 
 <p>Get the target info of the remote endpoint. </p>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00032">32</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   33</span>    {</div>
-<div class="line"><span class="lineno">   34</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ad0deda9d9df1349aa6e98c75d6070707">_info</a>;</div>
-<div class="line"><span class="lineno">   35</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00033">33</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   34</span>    {</div>
+<div class="line"><span class="lineno">   35</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ad0deda9d9df1349aa6e98c75d6070707">_info</a>;</div>
+<div class="line"><span class="lineno">   36</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -714,10 +777,10 @@ Private Attributes</h2></td></tr>
 
 <p>Returns true if the endpoint is idle and could be actived. </p>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00037">37</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   38</span>    {</div>
-<div class="line"><span class="lineno">   39</span>        <span class="keywordflow">return</span> std::holds_alternative&lt;Idle&gt;(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a>);</div>
-<div class="line"><span class="lineno">   40</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00038">38</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   39</span>    {</div>
+<div class="line"><span class="lineno">   40</span>        <span class="keywordflow">return</span> std::holds_alternative&lt;Idle&gt;(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a>);</div>
+<div class="line"><span class="lineno">   41</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -746,11 +809,12 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Restarts the endpoint. Produces a new <a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Idle.html" title="The idle state.">Idle</a> state from any previous state. </p>
+<p>The new endpoint has the same id as the old one, so completions of the old endpoint must not be in the completion queue anymore. </p>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00269">269</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  270</span>    {</div>
-<div class="line"><span class="lineno">  271</span>        <span class="keywordflow">return</span> Idle{.ep = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a6791533db07b32ea4dc455ada0860392">Endpoint::create</a>(old.domain(), old.id(), old.info()), .idleSince = std::chrono::steady_clock::now()};</div>
-<div class="line"><span class="lineno">  272</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00311">311</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  312</span>    {</div>
+<div class="line"><span class="lineno">  313</span>        <span class="keywordflow">return</span> Idle{.ep = <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a6791533db07b32ea4dc455ada0860392">Endpoint::create</a>(old.domain(), old.id(), old.info()), .idleSince = std::chrono::steady_clock::now()};</div>
+<div class="line"><span class="lineno">  314</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint_html_a6791533db07b32ea4dc455ada0860392"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html#a6791533db07b32ea4dc455ada0860392">mxl::lib::fabrics::ofi::Endpoint::create</a></div><div class="ttdeci">static Endpoint create(std::shared_ptr&lt; Domain &gt; domain, FabricInfoView info)</div><div class="ttdoc">Allocates (active) new endpoint.</div><div class="ttdef"><b>Definition</b> <a href="Endpoint_8cpp_source.html#l00056">Endpoint.cpp:56</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -773,42 +837,44 @@ Private Attributes</h2></td></tr>
 <p>Initiate a shutdown process. </p>
 <p>The endpoint will have pending work until a shutdown or error event will be received. After which it can be evicted from the initiator. </p>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00062">62</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   63</span>    {</div>
-<div class="line"><span class="lineno">   64</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a> = std::visit(</div>
-<div class="line"><span class="lineno">   65</span>            overloaded{</div>
-<div class="line"><span class="lineno">   66</span>                [](Idle) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a></div>
-<div class="line"><span class="lineno">   67</span>                {</div>
-<div class="line"><span class="lineno">   68</span>                    <a class="code hl_define" href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a>(<span class="stringliteral">&quot;Shutdown requested while waiting to activate, aborting.&quot;</span>);</div>
-<div class="line"><span class="lineno">   69</span>                    <span class="keywordflow">return</span> Done{};</div>
-<div class="line"><span class="lineno">   70</span>                },</div>
-<div class="line"><span class="lineno">   71</span>                [](Connecting) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a></div>
-<div class="line"><span class="lineno">   72</span>                {</div>
-<div class="line"><span class="lineno">   73</span>                    <a class="code hl_define" href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a>(<span class="stringliteral">&quot;Shutdown requested while trying to connect, aborting.&quot;</span>);</div>
-<div class="line"><span class="lineno">   74</span>                    <span class="keywordflow">return</span> Done{};</div>
-<div class="line"><span class="lineno">   75</span>                },</div>
-<div class="line"><span class="lineno">   76</span>                [&amp;](Connected state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a></div>
-<div class="line"><span class="lineno">   77</span>                {</div>
-<div class="line"><span class="lineno">   78</span>                    <a class="code hl_define" href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a>(<span class="stringliteral">&quot;Shutting down&quot;</span>);</div>
-<div class="line"><span class="lineno">   79</span>                    <span class="keyword">auto</span> pending = <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab86514f6147c37969d08e6066e9cec79">_proto</a>-&gt;reset();</div>
-<div class="line"><span class="lineno">   80</span>                    state.ep.shutdown();</div>
-<div class="line"><span class="lineno">   81</span> </div>
-<div class="line"><span class="lineno">   82</span>                    <span class="keywordflow">return</span> Flushing{.ep = std::move(state.ep), .pending = pending};</div>
-<div class="line"><span class="lineno">   83</span>                },</div>
-<div class="line"><span class="lineno">   84</span>                [](Flushing state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a></div>
-<div class="line"><span class="lineno">   85</span>                {</div>
-<div class="line"><span class="lineno">   86</span>                    <a class="code hl_define" href="Logging_8hpp.html#ac5601472e8ef54d952b767d574a32427">MXL_WARN</a>(<span class="stringliteral">&quot;Another shutdown was requested while trying to flush the completion queue, ignoring.&quot;</span>);</div>
-<div class="line"><span class="lineno">   87</span>                    <span class="keywordflow">return</span> state;</div>
-<div class="line"><span class="lineno">   88</span>                },</div>
-<div class="line"><span class="lineno">   89</span>                [](Done state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a> { <span class="keywordflow">return</span> state; },</div>
-<div class="line"><span class="lineno">   90</span>            },</div>
-<div class="line"><span class="lineno">   91</span>            std::move(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a>));</div>
-<div class="line"><span class="lineno">   92</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00064">64</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   65</span>    {</div>
+<div class="line"><span class="lineno">   66</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a> = std::visit(</div>
+<div class="line"><span class="lineno">   67</span>            overloaded{</div>
+<div class="line"><span class="lineno">   68</span>                [](Idle) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">State</a></div>
+<div class="line"><span class="lineno">   69</span>                {</div>
+<div class="line"><span class="lineno">   70</span>                    <a class="code hl_define" href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a>(<span class="stringliteral">&quot;Shutdown requested while waiting to activate, aborting.&quot;</span>);</div>
+<div class="line"><span class="lineno">   71</span>                    <span class="keywordflow">return</span> Done{};</div>
+<div class="line"><span class="lineno">   72</span>                },</div>
+<div class="line"><span class="lineno">   73</span>                [](Connecting) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">State</a></div>
+<div class="line"><span class="lineno">   74</span>                {</div>
+<div class="line"><span class="lineno">   75</span>                    <a class="code hl_define" href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a>(<span class="stringliteral">&quot;Shutdown requested while trying to connect, aborting.&quot;</span>);</div>
+<div class="line"><span class="lineno">   76</span>                    <span class="keywordflow">return</span> Done{};</div>
+<div class="line"><span class="lineno">   77</span>                },</div>
+<div class="line"><span class="lineno">   78</span>                [&amp;](Connected state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">State</a></div>
+<div class="line"><span class="lineno">   79</span>                {</div>
+<div class="line"><span class="lineno">   80</span>                    <a class="code hl_define" href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a>(<span class="stringliteral">&quot;Shutting down&quot;</span>);</div>
+<div class="line"><span class="lineno">   81</span>                    <span class="keyword">auto</span> pending = <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab86514f6147c37969d08e6066e9cec79">_proto</a>-&gt;reset();</div>
+<div class="line"><span class="lineno">   82</span>                    state.ep.shutdown();</div>
+<div class="line"><span class="lineno">   83</span> </div>
+<div class="line"><span class="lineno">   84</span>                    <span class="keywordflow">return</span> <a class="code hl_function" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a4e78ba6d2d35314cbcecd75235f0ad04">startFlush</a>(std::move(state.ep), pending, <span class="keyword">false</span>, <a class="code hl_enumvalue" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eabaf92965e2c8a7afb3c1b9a5c09a263636">AfterFlush::Done</a>);</div>
+<div class="line"><span class="lineno">   85</span>                },</div>
+<div class="line"><span class="lineno">   86</span>                [](Flushing state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">State</a></div>
+<div class="line"><span class="lineno">   87</span>                {</div>
+<div class="line"><span class="lineno">   88</span>                    <a class="code hl_define" href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a>(<span class="stringliteral">&quot;Shutdown requested while the endpoint is already flushing.&quot;</span>);</div>
+<div class="line"><span class="lineno">   89</span>                    state.next = <a class="code hl_enumvalue" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eabaf92965e2c8a7afb3c1b9a5c09a263636">AfterFlush::Done</a>;</div>
+<div class="line"><span class="lineno">   90</span>                    <span class="keywordflow">return</span> state;</div>
+<div class="line"><span class="lineno">   91</span>                },</div>
+<div class="line"><span class="lineno">   92</span>                [](Disconnected) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">State</a> { <span class="keywordflow">return</span> Done{}; },</div>
+<div class="line"><span class="lineno">   93</span>                [](Done state) -&gt; <a class="code hl_typedef" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">State</a> { <span class="keywordflow">return</span> state; },</div>
+<div class="line"><span class="lineno">   94</span>            },</div>
+<div class="line"><span class="lineno">   95</span>            std::move(<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a>));</div>
+<div class="line"><span class="lineno">   96</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
-<a id="afa6a248e0f2a5aa9de83527b72782bd4" name="afa6a248e0f2a5aa9de83527b72782bd4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afa6a248e0f2a5aa9de83527b72782bd4">&#9670;&#160;</a></span>terminate()</h2>
+<a id="a4e78ba6d2d35314cbcecd75235f0ad04" name="a4e78ba6d2d35314cbcecd75235f0ad04"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4e78ba6d2d35314cbcecd75235f0ad04">&#9670;&#160;</a></span>startFlush()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -817,29 +883,53 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void mxl::lib::fabrics::ofi::RCInitiatorEndpoint::terminate </td>
+          <td class="memname"><a class="el" href="structmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_1_1Flushing.html">RCInitiatorEndpoint::Flushing</a> mxl::lib::fabrics::ofi::RCInitiatorEndpoint::startFlush </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
+          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html">Endpoint</a>&#160;</td>
+          <td class="paramname"><em>ep</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">std::size_t&#160;</td>
+          <td class="paramname"><em>pending</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>shutdownReceived</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a2db3d739cae9e4dde55c548ea4c65eab">AfterFlush</a>&#160;</td>
+          <td class="paramname"><em>next</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Called to transition the endpoint out of the flushing state to the done state. If the endpoint is in any other state, this is a no-op. </p>
+<p>Create a flushing state that waits for the given number of outstanding operations. </p>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00094">94</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   95</span>    {</div>
-<div class="line"><span class="lineno">   96</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> state = std::get_if&lt;Flushing&gt;(&amp;<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a>); state)</div>
-<div class="line"><span class="lineno">   97</span>        {</div>
-<div class="line"><span class="lineno">   98</span>            <a class="code hl_define" href="Logging_8hpp.html#aefc531def12ec69a184941665c6e30ec">MXL_INFO</a>(<span class="stringliteral">&quot;Flushing complete, transitioning to done state.&quot;</span>);</div>
-<div class="line"><span class="lineno">   99</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a> = Done{};</div>
-<div class="line"><span class="lineno">  100</span>        }</div>
-<div class="line"><span class="lineno">  101</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00140">140</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  141</span>    {</div>
+<div class="line"><span class="lineno">  142</span>        <span class="keywordflow">return</span> Flushing{.ep = std::move(ep),</div>
+<div class="line"><span class="lineno">  143</span>            .pending = pending,</div>
+<div class="line"><span class="lineno">  144</span>            .shutdownReceived = shutdownReceived,</div>
+<div class="line"><span class="lineno">  145</span>            .next = next,</div>
+<div class="line"><span class="lineno">  146</span>            .deadline = std::chrono::steady_clock::now() + <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a355fbbcab6b9cc0d971c9db0611386d5">FlushTimeout</a>};</div>
+<div class="line"><span class="lineno">  147</span>    }</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint_html_a355fbbcab6b9cc0d971c9db0611386d5"><div class="ttname"><a href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a355fbbcab6b9cc0d971c9db0611386d5">mxl::lib::fabrics::ofi::RCInitiatorEndpoint::FlushTimeout</a></div><div class="ttdeci">static constexpr auto FlushTimeout</div><div class="ttdoc">Upper bound for the flushing state. Some providers do not report a local shutdown event,...</div><div class="ttdef"><b>Definition</b> <a href="RCInitiator_8hpp_source.html#l00096">RCInitiator.hpp:96</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -883,13 +973,13 @@ Private Attributes</h2></td></tr>
 
 <p>Post a data transfer request to this endpoint. </p>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00216">216</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  218</span>    {</div>
-<div class="line"><span class="lineno">  219</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> state = std::get_if&lt;Connected&gt;(&amp;<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a>); state != <span class="keyword">nullptr</span>)</div>
-<div class="line"><span class="lineno">  220</span>        {</div>
-<div class="line"><span class="lineno">  221</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab86514f6147c37969d08e6066e9cec79">_proto</a>-&gt;transferGrain(state-&gt;ep, localIndex, remoteIndex, remotePayloadOffset, sliceRange);</div>
-<div class="line"><span class="lineno">  222</span>        }</div>
-<div class="line"><span class="lineno">  223</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00294">294</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  296</span>    {</div>
+<div class="line"><span class="lineno">  297</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> state = std::get_if&lt;Connected&gt;(&amp;<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a>); state != <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">  298</span>        {</div>
+<div class="line"><span class="lineno">  299</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab86514f6147c37969d08e6066e9cec79">_proto</a>-&gt;transferGrain(state-&gt;ep, localIndex, remoteIndex, remotePayloadOffset, sliceRange);</div>
+<div class="line"><span class="lineno">  300</span>        }</div>
+<div class="line"><span class="lineno">  301</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -921,13 +1011,13 @@ Private Attributes</h2></td></tr>
 
 <p>Post a data transfer request to this endpoint. </p>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00225">225</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  226</span>    {</div>
-<div class="line"><span class="lineno">  227</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> state = std::get_if&lt;Connected&gt;(&amp;<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a>); state != <span class="keyword">nullptr</span>)</div>
-<div class="line"><span class="lineno">  228</span>        {</div>
-<div class="line"><span class="lineno">  229</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab86514f6147c37969d08e6066e9cec79">_proto</a>-&gt;transferSamples(state-&gt;ep, headIndex, count);</div>
-<div class="line"><span class="lineno">  230</span>        }</div>
-<div class="line"><span class="lineno">  231</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8cpp_source.html#l00303">303</a> of file <a class="el" href="RCInitiator_8cpp_source.html">RCInitiator.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  304</span>    {</div>
+<div class="line"><span class="lineno">  305</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> state = std::get_if&lt;Connected&gt;(&amp;<a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab06bd2cdccf1e3a70b9577a8923f2f19">_state</a>); state != <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">  306</span>        {</div>
+<div class="line"><span class="lineno">  307</span>            <a class="code hl_variable" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#ab86514f6147c37969d08e6066e9cec79">_proto</a>-&gt;transferSamples(state-&gt;ep, headIndex, count);</div>
+<div class="line"><span class="lineno">  308</span>        }</div>
+<div class="line"><span class="lineno">  309</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -953,7 +1043,7 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>The target info of the remote endpoint </p>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8hpp_source.html#l00155">155</a> of file <a class="el" href="RCInitiator_8hpp_source.html">RCInitiator.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8hpp_source.html#l00186">186</a> of file <a class="el" href="RCInitiator_8hpp_source.html">RCInitiator.hpp</a>.</p>
 
 </div>
 </div>
@@ -977,7 +1067,7 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8hpp_source.html#l00156">156</a> of file <a class="el" href="RCInitiator_8hpp_source.html">RCInitiator.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8hpp_source.html#l00185">185</a> of file <a class="el" href="RCInitiator_8hpp_source.html">RCInitiator.hpp</a>.</p>
 
 </div>
 </div>
@@ -991,7 +1081,7 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a837e24bae61fc0d229d8d30e56edcc81">State</a> mxl::lib::fabrics::ofi::RCInitiatorEndpoint::_state</td>
+          <td class="memname"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RCInitiatorEndpoint.html#a144c51e5b4718c4d8c801c0ffa032d5a">State</a> mxl::lib::fabrics::ofi::RCInitiatorEndpoint::_state</td>
         </tr>
       </table>
   </td>
@@ -1002,7 +1092,33 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>The internal state object. </p>
 
-<p class="definition">Definition at line <a class="el" href="RCInitiator_8hpp_source.html#l00154">154</a> of file <a class="el" href="RCInitiator_8hpp_source.html">RCInitiator.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8hpp_source.html#l00187">187</a> of file <a class="el" href="RCInitiator_8hpp_source.html">RCInitiator.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a355fbbcab6b9cc0d971c9db0611386d5" name="a355fbbcab6b9cc0d971c9db0611386d5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a355fbbcab6b9cc0d971c9db0611386d5">&#9670;&#160;</a></span>FlushTimeout</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr auto mxl::lib::fabrics::ofi::RCInitiatorEndpoint::FlushTimeout = std::chrono::seconds(2)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Upper bound for the flushing state. Some providers do not report a local shutdown event, and a peer that disappears may never complete the outstanding operations. </p>
+
+<p class="definition">Definition at line <a class="el" href="RCInitiator_8hpp_source.html#l00096">96</a> of file <a class="el" href="RCInitiator_8hpp_source.html">RCInitiator.hpp</a>.</p>
 
 </div>
 </div>

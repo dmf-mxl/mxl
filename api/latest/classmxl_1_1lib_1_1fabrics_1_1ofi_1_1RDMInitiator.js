@@ -6,6 +6,7 @@ var classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator =
     [ "afterProgressResult", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator.html#a21d55a4108d34e7b92a9805f864d8fea", null ],
     [ "blockOnCQ", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator.html#a3e248c37975b3b2d95798f274e6f5a04", null ],
     [ "drainCQ", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator.html#a8b273a72872365f850916f188854583d", null ],
+    [ "evictRemovedTargets", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator.html#a44027006733b22949a62824900877c4e", null ],
     [ "findRemoteByEndpoint", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator.html#a88c4339502aca74f595628b723111fd2", null ],
     [ "findRemoteByToken", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator.html#aea6f17376174bb0a99940777b0360305", null ],
     [ "forEachTarget", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator.html#ac39c1dc65105fa7bee25df975cd6ec98", null ],
@@ -23,5 +24,7 @@ var classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator =
     [ "_endpoint", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator.html#a16e95043dfc14f0ba48c681fa51739fa", null ],
     [ "_proto", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator.html#a140d6f4c253ef6f557f2e399b95db112", null ],
     [ "_remoteEndpoints", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator.html#a1e06b9d04756568fcb67198834002be3", null ],
-    [ "_targets", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator.html#a093504aae7ab231f1e901ce7539c71c4", null ]
+    [ "_targets", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator.html#a093504aae7ab231f1e901ce7539c71c4", null ],
+    [ "ShutdownPollInterval", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator.html#a315ba354878a1a00056fc29205a0a990", null ],
+    [ "ShutdownTimeout", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RDMInitiator.html#a77f953c514f1fe04457e8b5b997be4d9", null ]
 ];
