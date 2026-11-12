@@ -150,6 +150,9 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a7f99e69ddd909286bb1468ced7389aad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aabbe56ea3e970e843f0678579245062d" id="r_aabbe56ea3e970e843f0678579245062d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="flow_8h.html#a33342a4bf46bd9c15c58779146960b67">mxlGrainInfo</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1DiscreteFlowData.html#aabbe56ea3e970e843f0678579245062d">grainInfoAt</a> (std::size_t i) noexcept</td></tr>
 <tr class="separator:aabbe56ea3e970e843f0678579245062d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc464b919dbed914f722a0d42e5887e2" id="r_afc464b919dbed914f722a0d42e5887e2"><td class="memItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1DiscreteFlowData.html#afc464b919dbed914f722a0d42e5887e2">grainPayloadCapacityAt</a> (std::size_t i) const noexcept</td></tr>
+<tr class="memdesc:afc464b919dbed914f722a0d42e5887e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the number of payload bytes mapped after the header of grain i, or 0 if i is out of range.  <br /></td></tr>
+<tr class="separator:afc464b919dbed914f722a0d42e5887e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classmxl_1_1lib_1_1FlowData"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classmxl_1_1lib_1_1FlowData')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classmxl_1_1lib_1_1FlowData.html">mxl::lib::FlowData</a></td></tr>
 <tr class="memitem:a3b08c247b16ecb0b7a21c10e826acb58 inherit pub_methods_classmxl_1_1lib_1_1FlowData" id="r_a3b08c247b16ecb0b7a21c10e826acb58"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="namespacemxl_1_1lib.html#ac7a6dcbc0a5565d4a6700dbc4cef02b1">AccessMode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowData.html#a3b08c247b16ecb0b7a21c10e826acb58">accessMode</a> () const noexcept</td></tr>
 <tr class="separator:a3b08c247b16ecb0b7a21c10e826acb58 inherit pub_methods_classmxl_1_1lib_1_1FlowData"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -222,13 +225,13 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="DiscreteFlowData_8hpp_source.html#l00040">40</a> of file <a class="el" href="DiscreteFlowData_8hpp_source.html">DiscreteFlowData.hpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   41</span>        : <a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a5388bbb383656a5568548d3d19e36b8e">FlowData</a>{std::move(flowSegement)}</div>
-<div class="line"><span class="lineno">   42</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">_grains</a>{}</div>
-<div class="line"><span class="lineno">   43</span>    {</div>
-<div class="line"><span class="lineno">   44</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">_grains</a>.reserve(<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">flowInfo</a>()-&gt;config.discrete.grainCount);</div>
-<div class="line"><span class="lineno">   45</span>    }</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1DiscreteFlowData_html_ac911a7e201ee6a07db3c4f8285a548fc"><div class="ttname"><a href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">mxl::lib::DiscreteFlowData::_grains</a></div><div class="ttdeci">std::vector&lt; SharedMemoryInstance&lt; Grain &gt; &gt; _grains</div><div class="ttdef"><b>Definition</b> <a href="DiscreteFlowData_8hpp_source.html#l00033">DiscreteFlowData.hpp:33</a></div></div>
+<p class="definition">Definition at line <a class="el" href="DiscreteFlowData_8hpp_source.html#l00043">43</a> of file <a class="el" href="DiscreteFlowData_8hpp_source.html">DiscreteFlowData.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   44</span>        : <a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a5388bbb383656a5568548d3d19e36b8e">FlowData</a>{std::move(flowSegement)}</div>
+<div class="line"><span class="lineno">   45</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">_grains</a>{}</div>
+<div class="line"><span class="lineno">   46</span>    {</div>
+<div class="line"><span class="lineno">   47</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">_grains</a>.reserve(<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">flowInfo</a>()-&gt;config.discrete.grainCount);</div>
+<div class="line"><span class="lineno">   48</span>    }</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1DiscreteFlowData_html_ac911a7e201ee6a07db3c4f8285a548fc"><div class="ttname"><a href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">mxl::lib::DiscreteFlowData::_grains</a></div><div class="ttdeci">std::vector&lt; SharedMemoryInstance&lt; Grain &gt; &gt; _grains</div><div class="ttdef"><b>Definition</b> <a href="DiscreteFlowData_8hpp_source.html#l00036">DiscreteFlowData.hpp:36</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1FlowData_html_a5388bbb383656a5568548d3d19e36b8e"><div class="ttname"><a href="classmxl_1_1lib_1_1FlowData.html#a5388bbb383656a5568548d3d19e36b8e">mxl::lib::FlowData::FlowData</a></div><div class="ttdeci">constexpr FlowData(SharedMemoryInstance&lt; Flow &gt; &amp;&amp;flowSegement) noexcept</div><div class="ttdef"><b>Definition</b> <a href="FlowData_8hpp_source.html#l00053">FlowData.hpp:53</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1FlowData_html_a789a71b8f1538ba04f195bb4d2f27913"><div class="ttname"><a href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">mxl::lib::FlowData::flowInfo</a></div><div class="ttdeci">constexpr mxlFlowInfo * flowInfo() noexcept</div><div class="ttdef"><b>Definition</b> <a href="FlowData_8hpp_source.html#l00092">FlowData.hpp:92</a></div></div>
 </div><!-- fragment -->
@@ -274,12 +277,12 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="DiscreteFlowData_8hpp_source.html#l00047">47</a> of file <a class="el" href="DiscreteFlowData_8hpp_source.html">DiscreteFlowData.hpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   48</span>        : <a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a5388bbb383656a5568548d3d19e36b8e">FlowData</a>{flowFilePath, mode, lockMode}</div>
-<div class="line"><span class="lineno">   49</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">_grains</a>{}</div>
-<div class="line"><span class="lineno">   50</span>    {</div>
-<div class="line"><span class="lineno">   51</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">_grains</a>.reserve(<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">flowInfo</a>()-&gt;config.discrete.grainCount);</div>
-<div class="line"><span class="lineno">   52</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="DiscreteFlowData_8hpp_source.html#l00050">50</a> of file <a class="el" href="DiscreteFlowData_8hpp_source.html">DiscreteFlowData.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   51</span>        : <a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a5388bbb383656a5568548d3d19e36b8e">FlowData</a>{flowFilePath, mode, lockMode}</div>
+<div class="line"><span class="lineno">   52</span>        , <a class="code hl_variable" href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">_grains</a>{}</div>
+<div class="line"><span class="lineno">   53</span>    {</div>
+<div class="line"><span class="lineno">   54</span>        <a class="code hl_variable" href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">_grains</a>.reserve(<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a789a71b8f1538ba04f195bb4d2f27913">flowInfo</a>()-&gt;config.discrete.grainCount);</div>
+<div class="line"><span class="lineno">   55</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -318,23 +321,23 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="DiscreteFlowData_8hpp_source.html#l00059">59</a> of file <a class="el" href="DiscreteFlowData_8hpp_source.html">DiscreteFlowData.hpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   60</span>    {</div>
-<div class="line"><span class="lineno">   61</span>        <span class="keyword">auto</span> <span class="keyword">const</span> mode = this-&gt;<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a3df61733c3a0e1390580e93554679226">created</a>() ? <a class="code hl_enumvalue" href="namespacemxl_1_1lib.html#ac7a6dcbc0a5565d4a6700dbc4cef02b1a75139f51d6c8f471e006c04eab46548c">AccessMode::CREATE_READ_WRITE</a> : this-&gt;<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a3b08c247b16ecb0b7a21c10e826acb58">accessMode</a>();</div>
-<div class="line"><span class="lineno">   62</span>        <span class="keyword">auto</span> grain = SharedMemoryInstance&lt;Grain&gt;{grainFilePath, mode, grainPayloadSize, <a class="code hl_enumvalue" href="namespacemxl_1_1lib.html#adeb5fbd2d14765f3eda2a85e6e4af3acaa6156ea9d66fef24e87e841fbabf7cca">LockMode::Shared</a>};</div>
-<div class="line"><span class="lineno">   63</span> </div>
-<div class="line"><span class="lineno">   64</span>        <span class="keywordflow">if</span> (!this-&gt;<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a3df61733c3a0e1390580e93554679226">created</a>())</div>
-<div class="line"><span class="lineno">   65</span>        {</div>
-<div class="line"><span class="lineno">   66</span>            <span class="comment">// Check for the version of the grain data structure in the memory that was just mapped.</span></div>
-<div class="line"><span class="lineno">   67</span>            <span class="keywordflow">if</span> (grain.get()-&gt;header.info.version != <a class="code hl_variable" href="namespacemxl_1_1lib.html#a6076a01d36bc842093ae85faf1a9d7d7">GRAIN_HEADER_VERSION</a>)</div>
-<div class="line"><span class="lineno">   68</span>            {</div>
-<div class="line"><span class="lineno">   69</span>                <span class="keywordflow">throw</span> std::invalid_argument{</div>
-<div class="line"><span class="lineno">   70</span>                    fmt::format(<span class="stringliteral">&quot;Unsupported grain version: {}, supported version is: {}&quot;</span>, grain.get()-&gt;header.info.version, <a class="code hl_variable" href="namespacemxl_1_1lib.html#a6076a01d36bc842093ae85faf1a9d7d7">GRAIN_HEADER_VERSION</a>)};</div>
-<div class="line"><span class="lineno">   71</span>            }</div>
-<div class="line"><span class="lineno">   72</span>        }</div>
-<div class="line"><span class="lineno">   73</span> </div>
-<div class="line"><span class="lineno">   74</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">_grains</a>.emplace_back(std::move(grain)).get();</div>
-<div class="line"><span class="lineno">   75</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="DiscreteFlowData_8hpp_source.html#l00062">62</a> of file <a class="el" href="DiscreteFlowData_8hpp_source.html">DiscreteFlowData.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   63</span>    {</div>
+<div class="line"><span class="lineno">   64</span>        <span class="keyword">auto</span> <span class="keyword">const</span> mode = this-&gt;<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a3df61733c3a0e1390580e93554679226">created</a>() ? <a class="code hl_enumvalue" href="namespacemxl_1_1lib.html#ac7a6dcbc0a5565d4a6700dbc4cef02b1a75139f51d6c8f471e006c04eab46548c">AccessMode::CREATE_READ_WRITE</a> : this-&gt;<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a3b08c247b16ecb0b7a21c10e826acb58">accessMode</a>();</div>
+<div class="line"><span class="lineno">   65</span>        <span class="keyword">auto</span> grain = SharedMemoryInstance&lt;Grain&gt;{grainFilePath, mode, grainPayloadSize, <a class="code hl_enumvalue" href="namespacemxl_1_1lib.html#adeb5fbd2d14765f3eda2a85e6e4af3acaa6156ea9d66fef24e87e841fbabf7cca">LockMode::Shared</a>};</div>
+<div class="line"><span class="lineno">   66</span> </div>
+<div class="line"><span class="lineno">   67</span>        <span class="keywordflow">if</span> (!this-&gt;<a class="code hl_function" href="classmxl_1_1lib_1_1FlowData.html#a3df61733c3a0e1390580e93554679226">created</a>())</div>
+<div class="line"><span class="lineno">   68</span>        {</div>
+<div class="line"><span class="lineno">   69</span>            <span class="comment">// Check for the version of the grain data structure in the memory that was just mapped.</span></div>
+<div class="line"><span class="lineno">   70</span>            <span class="keywordflow">if</span> (grain.get()-&gt;header.info.version != <a class="code hl_variable" href="namespacemxl_1_1lib.html#a6076a01d36bc842093ae85faf1a9d7d7">GRAIN_HEADER_VERSION</a>)</div>
+<div class="line"><span class="lineno">   71</span>            {</div>
+<div class="line"><span class="lineno">   72</span>                <span class="keywordflow">throw</span> std::invalid_argument{</div>
+<div class="line"><span class="lineno">   73</span>                    fmt::format(<span class="stringliteral">&quot;Unsupported grain version: {}, supported version is: {}&quot;</span>, grain.get()-&gt;header.info.version, <a class="code hl_variable" href="namespacemxl_1_1lib.html#a6076a01d36bc842093ae85faf1a9d7d7">GRAIN_HEADER_VERSION</a>)};</div>
+<div class="line"><span class="lineno">   74</span>            }</div>
+<div class="line"><span class="lineno">   75</span>        }</div>
+<div class="line"><span class="lineno">   76</span> </div>
+<div class="line"><span class="lineno">   77</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">_grains</a>.emplace_back(std::move(grain)).get();</div>
+<div class="line"><span class="lineno">   78</span>    }</div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1FlowData_html_a3b08c247b16ecb0b7a21c10e826acb58"><div class="ttname"><a href="classmxl_1_1lib_1_1FlowData.html#a3b08c247b16ecb0b7a21c10e826acb58">mxl::lib::FlowData::accessMode</a></div><div class="ttdeci">constexpr AccessMode accessMode() const noexcept</div><div class="ttdef"><b>Definition</b> <a href="FlowData_8hpp_source.html#l00067">FlowData.hpp:67</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1FlowData_html_a3df61733c3a0e1390580e93554679226"><div class="ttname"><a href="classmxl_1_1lib_1_1FlowData.html#a3df61733c3a0e1390580e93554679226">mxl::lib::FlowData::created</a></div><div class="ttdeci">constexpr bool created() const noexcept</div><div class="ttdef"><b>Definition</b> <a href="FlowData_8hpp_source.html#l00072">FlowData.hpp:72</a></div></div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_a6076a01d36bc842093ae85faf1a9d7d7"><div class="ttname"><a href="namespacemxl_1_1lib.html#a6076a01d36bc842093ae85faf1a9d7d7">mxl::lib::GRAIN_HEADER_VERSION</a></div><div class="ttdeci">constexpr auto GRAIN_HEADER_VERSION</div><div class="ttdoc">The version of the grain header structs in shared memory that we expect an support.</div><div class="ttdef"><b>Definition</b> <a href="Flow_8hpp_source.html#l00024">Flow.hpp:24</a></div></div>
@@ -367,10 +370,10 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="DiscreteFlowData_8hpp_source.html#l00082">82</a> of file <a class="el" href="DiscreteFlowData_8hpp_source.html">DiscreteFlowData.hpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   83</span>    {</div>
-<div class="line"><span class="lineno">   84</span>        <span class="keywordflow">return</span> (i &lt; <a class="code hl_variable" href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">_grains</a>.size()) ? <a class="code hl_variable" href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">_grains</a>[i].get() : <span class="keyword">nullptr</span>;</div>
-<div class="line"><span class="lineno">   85</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="DiscreteFlowData_8hpp_source.html#l00085">85</a> of file <a class="el" href="DiscreteFlowData_8hpp_source.html">DiscreteFlowData.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   86</span>    {</div>
+<div class="line"><span class="lineno">   87</span>        <span class="keywordflow">return</span> (i &lt; <a class="code hl_variable" href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">_grains</a>.size()) ? <a class="code hl_variable" href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">_grains</a>[i].get() : <span class="keyword">nullptr</span>;</div>
+<div class="line"><span class="lineno">   88</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -398,10 +401,10 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="DiscreteFlowData_8hpp_source.html#l00077">77</a> of file <a class="el" href="DiscreteFlowData_8hpp_source.html">DiscreteFlowData.hpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   78</span>    {</div>
-<div class="line"><span class="lineno">   79</span>        <span class="keywordflow">return</span> (i &lt; <a class="code hl_variable" href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">_grains</a>.size()) ? <a class="code hl_variable" href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">_grains</a>[i].get() : <span class="keyword">nullptr</span>;</div>
-<div class="line"><span class="lineno">   80</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="DiscreteFlowData_8hpp_source.html#l00080">80</a> of file <a class="el" href="DiscreteFlowData_8hpp_source.html">DiscreteFlowData.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   81</span>    {</div>
+<div class="line"><span class="lineno">   82</span>        <span class="keywordflow">return</span> (i &lt; <a class="code hl_variable" href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">_grains</a>.size()) ? <a class="code hl_variable" href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">_grains</a>[i].get() : <span class="keyword">nullptr</span>;</div>
+<div class="line"><span class="lineno">   83</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -428,10 +431,10 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="DiscreteFlowData_8hpp_source.html#l00054">54</a> of file <a class="el" href="DiscreteFlowData_8hpp_source.html">DiscreteFlowData.hpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   55</span>    {</div>
-<div class="line"><span class="lineno">   56</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">_grains</a>.size();</div>
-<div class="line"><span class="lineno">   57</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="DiscreteFlowData_8hpp_source.html#l00057">57</a> of file <a class="el" href="DiscreteFlowData_8hpp_source.html">DiscreteFlowData.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   58</span>    {</div>
+<div class="line"><span class="lineno">   59</span>        <span class="keywordflow">return</span> <a class="code hl_variable" href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">_grains</a>.size();</div>
+<div class="line"><span class="lineno">   60</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -459,15 +462,15 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="DiscreteFlowData_8hpp_source.html#l00096">96</a> of file <a class="el" href="DiscreteFlowData_8hpp_source.html">DiscreteFlowData.hpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   97</span>    {</div>
-<div class="line"><span class="lineno">   98</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> grain = <a class="code hl_function" href="classmxl_1_1lib_1_1DiscreteFlowData.html#a8150747854c5899eb147697df1270ff1">grainAt</a>(i); grain != <span class="keyword">nullptr</span>)</div>
-<div class="line"><span class="lineno">   99</span>        {</div>
-<div class="line"><span class="lineno">  100</span>            <span class="keywordflow">return</span> &amp;grain-&gt;header.info;</div>
-<div class="line"><span class="lineno">  101</span>        }</div>
-<div class="line"><span class="lineno">  102</span>        <span class="keywordflow">return</span> <span class="keyword">nullptr</span>;</div>
-<div class="line"><span class="lineno">  103</span>    }</div>
-<div class="ttc" id="aclassmxl_1_1lib_1_1DiscreteFlowData_html_a8150747854c5899eb147697df1270ff1"><div class="ttname"><a href="classmxl_1_1lib_1_1DiscreteFlowData.html#a8150747854c5899eb147697df1270ff1">mxl::lib::DiscreteFlowData::grainAt</a></div><div class="ttdeci">Grain * grainAt(std::size_t i) noexcept</div><div class="ttdef"><b>Definition</b> <a href="DiscreteFlowData_8hpp_source.html#l00077">DiscreteFlowData.hpp:77</a></div></div>
+<p class="definition">Definition at line <a class="el" href="DiscreteFlowData_8hpp_source.html#l00099">99</a> of file <a class="el" href="DiscreteFlowData_8hpp_source.html">DiscreteFlowData.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  100</span>    {</div>
+<div class="line"><span class="lineno">  101</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> grain = <a class="code hl_function" href="classmxl_1_1lib_1_1DiscreteFlowData.html#a8150747854c5899eb147697df1270ff1">grainAt</a>(i); grain != <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">  102</span>        {</div>
+<div class="line"><span class="lineno">  103</span>            <span class="keywordflow">return</span> &amp;grain-&gt;header.info;</div>
+<div class="line"><span class="lineno">  104</span>        }</div>
+<div class="line"><span class="lineno">  105</span>        <span class="keywordflow">return</span> <span class="keyword">nullptr</span>;</div>
+<div class="line"><span class="lineno">  106</span>    }</div>
+<div class="ttc" id="aclassmxl_1_1lib_1_1DiscreteFlowData_html_a8150747854c5899eb147697df1270ff1"><div class="ttname"><a href="classmxl_1_1lib_1_1DiscreteFlowData.html#a8150747854c5899eb147697df1270ff1">mxl::lib::DiscreteFlowData::grainAt</a></div><div class="ttdeci">Grain * grainAt(std::size_t i) noexcept</div><div class="ttdef"><b>Definition</b> <a href="DiscreteFlowData_8hpp_source.html#l00080">DiscreteFlowData.hpp:80</a></div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -495,14 +498,52 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="DiscreteFlowData_8hpp_source.html#l00087">87</a> of file <a class="el" href="DiscreteFlowData_8hpp_source.html">DiscreteFlowData.hpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   88</span>    {</div>
-<div class="line"><span class="lineno">   89</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> grain = <a class="code hl_function" href="classmxl_1_1lib_1_1DiscreteFlowData.html#a8150747854c5899eb147697df1270ff1">grainAt</a>(i); grain != <span class="keyword">nullptr</span>)</div>
-<div class="line"><span class="lineno">   90</span>        {</div>
-<div class="line"><span class="lineno">   91</span>            <span class="keywordflow">return</span> &amp;grain-&gt;header.info;</div>
-<div class="line"><span class="lineno">   92</span>        }</div>
-<div class="line"><span class="lineno">   93</span>        <span class="keywordflow">return</span> <span class="keyword">nullptr</span>;</div>
-<div class="line"><span class="lineno">   94</span>    }</div>
+<p class="definition">Definition at line <a class="el" href="DiscreteFlowData_8hpp_source.html#l00090">90</a> of file <a class="el" href="DiscreteFlowData_8hpp_source.html">DiscreteFlowData.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   91</span>    {</div>
+<div class="line"><span class="lineno">   92</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> grain = <a class="code hl_function" href="classmxl_1_1lib_1_1DiscreteFlowData.html#a8150747854c5899eb147697df1270ff1">grainAt</a>(i); grain != <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">   93</span>        {</div>
+<div class="line"><span class="lineno">   94</span>            <span class="keywordflow">return</span> &amp;grain-&gt;header.info;</div>
+<div class="line"><span class="lineno">   95</span>        }</div>
+<div class="line"><span class="lineno">   96</span>        <span class="keywordflow">return</span> <span class="keyword">nullptr</span>;</div>
+<div class="line"><span class="lineno">   97</span>    }</div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="afc464b919dbed914f722a0d42e5887e2" name="afc464b919dbed914f722a0d42e5887e2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afc464b919dbed914f722a0d42e5887e2">&#9670;&#160;</a></span>grainPayloadCapacityAt()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::size_t mxl::lib::DiscreteFlowData::grainPayloadCapacityAt </td>
+          <td>(</td>
+          <td class="paramtype">std::size_t&#160;</td>
+          <td class="paramname"><em>i</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Return the number of payload bytes mapped after the header of grain i, or 0 if i is out of range. </p>
+
+<p class="definition">Definition at line <a class="el" href="DiscreteFlowData_8hpp_source.html#l00108">108</a> of file <a class="el" href="DiscreteFlowData_8hpp_source.html">DiscreteFlowData.hpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  109</span>    {</div>
+<div class="line"><span class="lineno">  110</span>        <span class="keywordflow">if</span> (i &lt; <a class="code hl_variable" href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">_grains</a>.size())</div>
+<div class="line"><span class="lineno">  111</span>        {</div>
+<div class="line"><span class="lineno">  112</span>            <span class="keyword">auto</span> <span class="keyword">const</span> mapped = <a class="code hl_variable" href="classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc">_grains</a>[i].mappedSize();</div>
+<div class="line"><span class="lineno">  113</span>            <span class="keywordflow">return</span> (mapped &gt; <span class="keyword">sizeof</span>(Grain)) ? (mapped - <span class="keyword">sizeof</span>(Grain)) : 0U;</div>
+<div class="line"><span class="lineno">  114</span>        }</div>
+<div class="line"><span class="lineno">  115</span>        <span class="keywordflow">return</span> 0U;</div>
+<div class="line"><span class="lineno">  116</span>    }</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -527,7 +568,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="DiscreteFlowData_8hpp_source.html#l00033">33</a> of file <a class="el" href="DiscreteFlowData_8hpp_source.html">DiscreteFlowData.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="DiscreteFlowData_8hpp_source.html#l00036">36</a> of file <a class="el" href="DiscreteFlowData_8hpp_source.html">DiscreteFlowData.hpp</a>.</p>
 
 </div>
 </div>

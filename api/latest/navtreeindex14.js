@@ -1,5 +1,7 @@
 var NAVTREEINDEX14 =
 {
+"namespacemxl_1_1lib.html#af5cc5553c6cc15f6f44a399bdf478d8f":[2,0,1,0,134],
+"namespacemxl_1_1lib.html#af648525bfa3cdeaa4fc55b52f1f35e5d":[2,0,1,0,68],
 "namespacemxl_1_1lib.html#af9352fbfb0a5df8146a76d162635d8b8":[2,0,1,0,61],
 "namespacemxl_1_1lib.html#afb4e9ad1ecc0bed1cc0ed623b7ef7b25":[2,0,1,0,84],
 "namespacemxl_1_1lib.html#afbf526f877caed88af4aac9b0543e6f8":[2,0,1,0,106],
@@ -247,7 +249,5 @@ var NAVTREEINDEX14 =
 "structmxl_1_1lib_1_1DomainWatcherRecord.html#ac525997032294ea11d46b0f8b2008355":[2,0,1,0,11,2],
 "structmxl_1_1lib_1_1DomainWatcherRecord.html#ac525997032294ea11d46b0f8b2008355":[3,0,1,0,9,2],
 "structmxl_1_1lib_1_1DomainWatcherRecord.html#ac58fa0bf3e696415e38ab0cfe1a5b8e5":[2,0,1,0,11,0],
-"structmxl_1_1lib_1_1DomainWatcherRecord.html#ac58fa0bf3e696415e38ab0cfe1a5b8e5":[3,0,1,0,9,0],
-"structmxl_1_1lib_1_1DomainWatcherRecord.html#ade2f37e4d420199c0da8bf76d6f62ea6":[2,0,1,0,11,1],
-"structmxl_1_1lib_1_1DomainWatcherRecord.html#ade2f37e4d420199c0da8bf76d6f62ea6":[3,0,1,0,9,1]
+"structmxl_1_1lib_1_1DomainWatcherRecord.html#ac58fa0bf3e696415e38ab0cfe1a5b8e5":[3,0,1,0,9,0]
 };

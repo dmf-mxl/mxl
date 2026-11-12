@@ -8,5 +8,6 @@ var classmxl_1_1lib_1_1DiscreteFlowData =
     [ "grainCount", "classmxl_1_1lib_1_1DiscreteFlowData.html#a85280c3df49d6ded0ae577fc5f5b5c69", null ],
     [ "grainInfoAt", "classmxl_1_1lib_1_1DiscreteFlowData.html#a7f99e69ddd909286bb1468ced7389aad", null ],
     [ "grainInfoAt", "classmxl_1_1lib_1_1DiscreteFlowData.html#aabbe56ea3e970e843f0678579245062d", null ],
+    [ "grainPayloadCapacityAt", "classmxl_1_1lib_1_1DiscreteFlowData.html#afc464b919dbed914f722a0d42e5887e2", null ],
     [ "_grains", "classmxl_1_1lib_1_1DiscreteFlowData.html#ac911a7e201ee6a07db3c4f8285a548fc", null ]
 ];

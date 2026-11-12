@@ -536,28 +536,34 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A pointer to the MXL instance or NULL if the instance could not be created. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the MXL instance or NULL if the instance could not be created or in_mxlDomain is NULL. </dd></dl>
 
 <p class="definition">Definition at line <a class="el" href="mxl_8cpp_source.html#l00045">45</a> of file <a class="el" href="mxl_8cpp_source.html">mxl.cpp</a>.</p>
 <div class="fragment"><div class="line"><span class="lineno">   46</span>{</div>
-<div class="line"><span class="lineno">   47</span>    <span class="keywordflow">try</span></div>
+<div class="line"><span class="lineno">   47</span>    <span class="keywordflow">if</span> (in_mxlDomain == <span class="keyword">nullptr</span>)</div>
 <div class="line"><span class="lineno">   48</span>    {</div>
-<div class="line"><span class="lineno">   49</span>        <span class="keyword">auto</span> <span class="keyword">const</span> opts = (in_options != <span class="keyword">nullptr</span>) ? in_options : <span class="stringliteral">&quot;&quot;</span>;</div>
-<div class="line"><span class="lineno">   50</span>        <span class="keyword">auto</span> domainWatcher = std::make_shared&lt;mxl::lib::DomainWatcher&gt;(in_mxlDomain);</div>
-<div class="line"><span class="lineno">   51</span>        <span class="keyword">auto</span> flowIoFactory = std::make_unique&lt;mxl::lib::PosixFlowIoFactory&gt;(domainWatcher);</div>
-<div class="line"><span class="lineno">   52</span>        <span class="keywordflow">return</span> <span class="keyword">reinterpret_cast&lt;</span><a class="code hl_typedef" href="mxl_8h.html#ad04f4b76a64c48df90f25b3eaac399fa">mxlInstance</a><span class="keyword">&gt;</span>(<span class="keyword">new</span> <a class="code hl_class" href="classmxl_1_1lib_1_1Instance.html">mxl::lib::Instance</a>{in_mxlDomain, opts, std::move(flowIoFactory), std::move(domainWatcher)});</div>
-<div class="line"><span class="lineno">   53</span>    }</div>
-<div class="line"><span class="lineno">   54</span>    <span class="keywordflow">catch</span> (std::exception&amp; e)</div>
-<div class="line"><span class="lineno">   55</span>    {</div>
-<div class="line"><span class="lineno">   56</span>        <a class="code hl_define" href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a>(<span class="stringliteral">&quot;Failed to create instance : {}&quot;</span>, e.what());</div>
-<div class="line"><span class="lineno">   57</span>        <span class="keywordflow">return</span> <span class="keyword">nullptr</span>;</div>
-<div class="line"><span class="lineno">   58</span>    }</div>
-<div class="line"><span class="lineno">   59</span>    <span class="keywordflow">catch</span> (...)</div>
-<div class="line"><span class="lineno">   60</span>    {</div>
-<div class="line"><span class="lineno">   61</span>        <a class="code hl_define" href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a>(<span class="stringliteral">&quot;Failed to create instance&quot;</span>);</div>
-<div class="line"><span class="lineno">   62</span>        <span class="keywordflow">return</span> <span class="keyword">nullptr</span>;</div>
-<div class="line"><span class="lineno">   63</span>    }</div>
-<div class="line"><span class="lineno">   64</span>}</div>
+<div class="line"><span class="lineno">   49</span>        <a class="code hl_define" href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a>(<span class="stringliteral">&quot;Failed to create instance : the domain is NULL&quot;</span>);</div>
+<div class="line"><span class="lineno">   50</span>        <span class="keywordflow">return</span> <span class="keyword">nullptr</span>;</div>
+<div class="line"><span class="lineno">   51</span>    }</div>
+<div class="line"><span class="lineno">   52</span> </div>
+<div class="line"><span class="lineno">   53</span>    <span class="keywordflow">try</span></div>
+<div class="line"><span class="lineno">   54</span>    {</div>
+<div class="line"><span class="lineno">   55</span>        <span class="keyword">auto</span> <span class="keyword">const</span> opts = (in_options != <span class="keyword">nullptr</span>) ? in_options : <span class="stringliteral">&quot;&quot;</span>;</div>
+<div class="line"><span class="lineno">   56</span>        <span class="keyword">auto</span> domainWatcher = std::make_shared&lt;mxl::lib::DomainWatcher&gt;(in_mxlDomain);</div>
+<div class="line"><span class="lineno">   57</span>        <span class="keyword">auto</span> flowIoFactory = std::make_unique&lt;mxl::lib::PosixFlowIoFactory&gt;(domainWatcher);</div>
+<div class="line"><span class="lineno">   58</span>        <span class="keywordflow">return</span> <span class="keyword">reinterpret_cast&lt;</span><a class="code hl_typedef" href="mxl_8h.html#ad04f4b76a64c48df90f25b3eaac399fa">mxlInstance</a><span class="keyword">&gt;</span>(<span class="keyword">new</span> <a class="code hl_class" href="classmxl_1_1lib_1_1Instance.html">mxl::lib::Instance</a>{in_mxlDomain, opts, std::move(flowIoFactory), std::move(domainWatcher)});</div>
+<div class="line"><span class="lineno">   59</span>    }</div>
+<div class="line"><span class="lineno">   60</span>    <span class="keywordflow">catch</span> (std::exception&amp; e)</div>
+<div class="line"><span class="lineno">   61</span>    {</div>
+<div class="line"><span class="lineno">   62</span>        <a class="code hl_define" href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a>(<span class="stringliteral">&quot;Failed to create instance : {}&quot;</span>, e.what());</div>
+<div class="line"><span class="lineno">   63</span>        <span class="keywordflow">return</span> <span class="keyword">nullptr</span>;</div>
+<div class="line"><span class="lineno">   64</span>    }</div>
+<div class="line"><span class="lineno">   65</span>    <span class="keywordflow">catch</span> (...)</div>
+<div class="line"><span class="lineno">   66</span>    {</div>
+<div class="line"><span class="lineno">   67</span>        <a class="code hl_define" href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a>(<span class="stringliteral">&quot;Failed to create instance&quot;</span>);</div>
+<div class="line"><span class="lineno">   68</span>        <span class="keywordflow">return</span> <span class="keyword">nullptr</span>;</div>
+<div class="line"><span class="lineno">   69</span>    }</div>
+<div class="line"><span class="lineno">   70</span>}</div>
 <div class="ttc" id="aLogging_8hpp_html_ac235c0b6be0299ec9671f7bd4551b0ad"><div class="ttname"><a href="Logging_8hpp.html#ac235c0b6be0299ec9671f7bd4551b0ad">MXL_ERROR</a></div><div class="ttdeci">#define MXL_ERROR(...)</div><div class="ttdef"><b>Definition</b> <a href="Logging_8hpp_source.html#l00067">Logging.hpp:67</a></div></div>
 <div class="ttc" id="aclassmxl_1_1lib_1_1Instance_html"><div class="ttname"><a href="classmxl_1_1lib_1_1Instance.html">mxl::lib::Instance</a></div><div class="ttdef"><b>Definition</b> <a href="Instance_8hpp_source.html#l00031">Instance.hpp:32</a></div></div>
 <div class="ttc" id="amxl_8h_html_ad04f4b76a64c48df90f25b3eaac399fa"><div class="ttname"><a href="mxl_8h.html#ad04f4b76a64c48df90f25b3eaac399fa">mxlInstance</a></div><div class="ttdeci">struct mxlInstance_t * mxlInstance</div><div class="ttdef"><b>Definition</b> <a href="mxl_8h_source.html#l00074">mxl.h:74</a></div></div>
@@ -588,18 +594,18 @@ Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>MXL_STATUS_OK if the instance was successfully destroyed, MXL_ERR_INVALID_ARG if the pointer passed was NULL. MXL_ERR_UNKNOWN if an error occurred during destruction. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="mxl_8cpp_source.html#l00100">100</a> of file <a class="el" href="mxl_8cpp_source.html">mxl.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  101</span>{</div>
-<div class="line"><span class="lineno">  102</span>    <span class="keywordflow">try</span></div>
-<div class="line"><span class="lineno">  103</span>    {</div>
-<div class="line"><span class="lineno">  104</span>        <span class="keyword">delete</span> <a class="code hl_function" href="namespacemxl_1_1lib.html#ad7ae9445f7502d4d1ffcc5af64c8f1a5">mxl::lib::to_Instance</a>(in_instance);</div>
-<div class="line"><span class="lineno">  105</span>        <span class="keywordflow">return</span> (in_instance != <span class="keyword">nullptr</span>) ? <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a> : <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
-<div class="line"><span class="lineno">  106</span>    }</div>
-<div class="line"><span class="lineno">  107</span>    <span class="keywordflow">catch</span> (...)</div>
-<div class="line"><span class="lineno">  108</span>    {</div>
-<div class="line"><span class="lineno">  109</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
-<div class="line"><span class="lineno">  110</span>    }</div>
-<div class="line"><span class="lineno">  111</span>}</div>
+<p class="definition">Definition at line <a class="el" href="mxl_8cpp_source.html#l00106">106</a> of file <a class="el" href="mxl_8cpp_source.html">mxl.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  107</span>{</div>
+<div class="line"><span class="lineno">  108</span>    <span class="keywordflow">try</span></div>
+<div class="line"><span class="lineno">  109</span>    {</div>
+<div class="line"><span class="lineno">  110</span>        <span class="keyword">delete</span> <a class="code hl_function" href="namespacemxl_1_1lib.html#ad7ae9445f7502d4d1ffcc5af64c8f1a5">mxl::lib::to_Instance</a>(in_instance);</div>
+<div class="line"><span class="lineno">  111</span>        <span class="keywordflow">return</span> (in_instance != <span class="keyword">nullptr</span>) ? <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a> : <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
+<div class="line"><span class="lineno">  112</span>    }</div>
+<div class="line"><span class="lineno">  113</span>    <span class="keywordflow">catch</span> (...)</div>
+<div class="line"><span class="lineno">  114</span>    {</div>
+<div class="line"><span class="lineno">  115</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">  116</span>    }</div>
+<div class="line"><span class="lineno">  117</span>}</div>
 <div class="ttc" id="anamespacemxl_1_1lib_html_ad7ae9445f7502d4d1ffcc5af64c8f1a5"><div class="ttname"><a href="namespacemxl_1_1lib.html#ad7ae9445f7502d4d1ffcc5af64c8f1a5">mxl::lib::to_Instance</a></div><div class="ttdeci">Instance * to_Instance(mxlInstance instance) noexcept</div><div class="ttdoc">Utility function to convert from a C mxlInstance handle to a C++ Instance class.</div><div class="ttdef"><b>Definition</b> <a href="Instance_8hpp_source.html#l00247">Instance.hpp:247</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -621,28 +627,28 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 <p>Iterates over all flows in the MXL domain and deletes any flows that are no longer active (in other words, no readers or writers are using them. This typically happens when an application creating flows writers crashes or exits without cleaning up. A flow is considered active if a shared advisory lock is held on the data file of the flow. </p>
 
-<p class="definition">Definition at line <a class="el" href="mxl_8cpp_source.html#l00115">115</a> of file <a class="el" href="mxl_8cpp_source.html">mxl.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">  116</span>{</div>
-<div class="line"><span class="lineno">  117</span>    <span class="keywordflow">try</span></div>
-<div class="line"><span class="lineno">  118</span>    {</div>
-<div class="line"><span class="lineno">  119</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> instance = <a class="code hl_function" href="namespacemxl_1_1lib.html#ad7ae9445f7502d4d1ffcc5af64c8f1a5">mxl::lib::to_Instance</a>(in_instance); instance != <span class="keyword">nullptr</span>)</div>
-<div class="line"><span class="lineno">  120</span>        {</div>
-<div class="line"><span class="lineno">  121</span>            <a class="code hl_define" href="Logging_8hpp.html#ada673532b5c2d25942321c46eb95553b">MXL_DEBUG</a>(<span class="stringliteral">&quot;Starting garbage collection of flows&quot;</span>);</div>
-<div class="line"><span class="lineno">  122</span>            [[maybe_unused]]</div>
-<div class="line"><span class="lineno">  123</span>            <span class="keyword">auto</span> count = instance-&gt;garbageCollect();</div>
-<div class="line"><span class="lineno">  124</span>            <a class="code hl_define" href="Logging_8hpp.html#ada673532b5c2d25942321c46eb95553b">MXL_DEBUG</a>(<span class="stringliteral">&quot;Garbage collected {} flows&quot;</span>, count);</div>
-<div class="line"><span class="lineno">  125</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
-<div class="line"><span class="lineno">  126</span>        }</div>
-<div class="line"><span class="lineno">  127</span>        <span class="keywordflow">else</span></div>
-<div class="line"><span class="lineno">  128</span>        {</div>
-<div class="line"><span class="lineno">  129</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
-<div class="line"><span class="lineno">  130</span>        }</div>
-<div class="line"><span class="lineno">  131</span>    }</div>
-<div class="line"><span class="lineno">  132</span>    <span class="keywordflow">catch</span> (...)</div>
-<div class="line"><span class="lineno">  133</span>    {</div>
-<div class="line"><span class="lineno">  134</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
-<div class="line"><span class="lineno">  135</span>    }</div>
-<div class="line"><span class="lineno">  136</span>}</div>
+<p class="definition">Definition at line <a class="el" href="mxl_8cpp_source.html#l00121">121</a> of file <a class="el" href="mxl_8cpp_source.html">mxl.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  122</span>{</div>
+<div class="line"><span class="lineno">  123</span>    <span class="keywordflow">try</span></div>
+<div class="line"><span class="lineno">  124</span>    {</div>
+<div class="line"><span class="lineno">  125</span>        <span class="keywordflow">if</span> (<span class="keyword">auto</span> <span class="keyword">const</span> instance = <a class="code hl_function" href="namespacemxl_1_1lib.html#ad7ae9445f7502d4d1ffcc5af64c8f1a5">mxl::lib::to_Instance</a>(in_instance); instance != <span class="keyword">nullptr</span>)</div>
+<div class="line"><span class="lineno">  126</span>        {</div>
+<div class="line"><span class="lineno">  127</span>            <a class="code hl_define" href="Logging_8hpp.html#ada673532b5c2d25942321c46eb95553b">MXL_DEBUG</a>(<span class="stringliteral">&quot;Starting garbage collection of flows&quot;</span>);</div>
+<div class="line"><span class="lineno">  128</span>            [[maybe_unused]]</div>
+<div class="line"><span class="lineno">  129</span>            <span class="keyword">auto</span> count = instance-&gt;garbageCollect();</div>
+<div class="line"><span class="lineno">  130</span>            <a class="code hl_define" href="Logging_8hpp.html#ada673532b5c2d25942321c46eb95553b">MXL_DEBUG</a>(<span class="stringliteral">&quot;Garbage collected {} flows&quot;</span>, count);</div>
+<div class="line"><span class="lineno">  131</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
+<div class="line"><span class="lineno">  132</span>        }</div>
+<div class="line"><span class="lineno">  133</span>        <span class="keywordflow">else</span></div>
+<div class="line"><span class="lineno">  134</span>        {</div>
+<div class="line"><span class="lineno">  135</span>            <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
+<div class="line"><span class="lineno">  136</span>        }</div>
+<div class="line"><span class="lineno">  137</span>    }</div>
+<div class="line"><span class="lineno">  138</span>    <span class="keywordflow">catch</span> (...)</div>
+<div class="line"><span class="lineno">  139</span>    {</div>
+<div class="line"><span class="lineno">  140</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">  141</span>    }</div>
+<div class="line"><span class="lineno">  142</span>}</div>
 <div class="ttc" id="aLogging_8hpp_html_ada673532b5c2d25942321c46eb95553b"><div class="ttname"><a href="Logging_8hpp.html#ada673532b5c2d25942321c46eb95553b">MXL_DEBUG</a></div><div class="ttdeci">#define MXL_DEBUG(...)</div><div class="ttdef"><b>Definition</b> <a href="Logging_8hpp_source.html#l00034">Logging.hpp:34</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -731,36 +737,36 @@ Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if in_path or out_isTmpFs is NULL, MXL_ERR_UNKNOWN if the filesystem type could not be determined. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="mxl_8cpp_source.html#l00067">67</a> of file <a class="el" href="mxl_8cpp_source.html">mxl.cpp</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   68</span>{</div>
-<div class="line"><span class="lineno">   69</span>    <span class="keywordflow">if</span> ((in_path == <span class="keyword">nullptr</span>) || (out_isTmpFs == <span class="keyword">nullptr</span>))</div>
-<div class="line"><span class="lineno">   70</span>    {</div>
-<div class="line"><span class="lineno">   71</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
-<div class="line"><span class="lineno">   72</span>    }</div>
-<div class="line"><span class="lineno">   73</span> </div>
-<div class="line"><span class="lineno">   74</span><span class="preprocessor">#ifdef __linux__</span></div>
-<div class="line"><span class="lineno">   75</span>    <span class="keyword">using </span>statfs_t = <span class="keyword">struct </span>statfs;</div>
-<div class="line"><span class="lineno">   76</span>    <span class="keyword">auto</span> buf = statfs_t{};</div>
-<div class="line"><span class="lineno">   77</span>    <span class="keywordflow">if</span> (::statfs(in_path, &amp;buf) != 0)</div>
-<div class="line"><span class="lineno">   78</span>    {</div>
-<div class="line"><span class="lineno">   79</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
-<div class="line"><span class="lineno">   80</span>    }</div>
-<div class="line"><span class="lineno">   81</span>    *out_isTmpFs = (buf.f_type == TMPFS_MAGIC) || (buf.f_type == RAMFS_MAGIC);</div>
-<div class="line"><span class="lineno">   82</span>    <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
-<div class="line"><span class="lineno">   83</span><span class="preprocessor">#elif defined(__APPLE__)</span></div>
-<div class="line"><span class="lineno">   84</span>    <span class="keyword">using </span>statfs_t = <span class="keyword">struct </span>statfs;</div>
-<div class="line"><span class="lineno">   85</span>    <span class="keyword">auto</span> buf = statfs_t{};</div>
-<div class="line"><span class="lineno">   86</span>    <span class="keywordflow">if</span> (::statfs(in_path, &amp;buf) != 0)</div>
-<div class="line"><span class="lineno">   87</span>    {</div>
-<div class="line"><span class="lineno">   88</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
-<div class="line"><span class="lineno">   89</span>    }</div>
-<div class="line"><span class="lineno">   90</span>    *out_isTmpFs = std::strcmp(buf.f_fstypename, <span class="stringliteral">&quot;tmpfs&quot;</span>) == 0;</div>
-<div class="line"><span class="lineno">   91</span>    <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
-<div class="line"><span class="lineno">   92</span><span class="preprocessor">#else</span></div>
-<div class="line"><span class="lineno">   93</span>    *out_isTmpFs = <span class="keyword">false</span>;</div>
-<div class="line"><span class="lineno">   94</span>    <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
-<div class="line"><span class="lineno">   95</span><span class="preprocessor">#endif</span></div>
-<div class="line"><span class="lineno">   96</span>}</div>
+<p class="definition">Definition at line <a class="el" href="mxl_8cpp_source.html#l00073">73</a> of file <a class="el" href="mxl_8cpp_source.html">mxl.cpp</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   74</span>{</div>
+<div class="line"><span class="lineno">   75</span>    <span class="keywordflow">if</span> ((in_path == <span class="keyword">nullptr</span>) || (out_isTmpFs == <span class="keyword">nullptr</span>))</div>
+<div class="line"><span class="lineno">   76</span>    {</div>
+<div class="line"><span class="lineno">   77</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa7110c797397ad126214b4a756082aa48">MXL_ERR_INVALID_ARG</a>;</div>
+<div class="line"><span class="lineno">   78</span>    }</div>
+<div class="line"><span class="lineno">   79</span> </div>
+<div class="line"><span class="lineno">   80</span><span class="preprocessor">#ifdef __linux__</span></div>
+<div class="line"><span class="lineno">   81</span>    <span class="keyword">using </span>statfs_t = <span class="keyword">struct </span>statfs;</div>
+<div class="line"><span class="lineno">   82</span>    <span class="keyword">auto</span> buf = statfs_t{};</div>
+<div class="line"><span class="lineno">   83</span>    <span class="keywordflow">if</span> (::statfs(in_path, &amp;buf) != 0)</div>
+<div class="line"><span class="lineno">   84</span>    {</div>
+<div class="line"><span class="lineno">   85</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">   86</span>    }</div>
+<div class="line"><span class="lineno">   87</span>    *out_isTmpFs = (buf.f_type == TMPFS_MAGIC) || (buf.f_type == RAMFS_MAGIC);</div>
+<div class="line"><span class="lineno">   88</span>    <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
+<div class="line"><span class="lineno">   89</span><span class="preprocessor">#elif defined(__APPLE__)</span></div>
+<div class="line"><span class="lineno">   90</span>    <span class="keyword">using </span>statfs_t = <span class="keyword">struct </span>statfs;</div>
+<div class="line"><span class="lineno">   91</span>    <span class="keyword">auto</span> buf = statfs_t{};</div>
+<div class="line"><span class="lineno">   92</span>    <span class="keywordflow">if</span> (::statfs(in_path, &amp;buf) != 0)</div>
+<div class="line"><span class="lineno">   93</span>    {</div>
+<div class="line"><span class="lineno">   94</span>        <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fa233b875e32b69b2ded4697e14efbf440">MXL_ERR_UNKNOWN</a>;</div>
+<div class="line"><span class="lineno">   95</span>    }</div>
+<div class="line"><span class="lineno">   96</span>    *out_isTmpFs = std::strcmp(buf.f_fstypename, <span class="stringliteral">&quot;tmpfs&quot;</span>) == 0;</div>
+<div class="line"><span class="lineno">   97</span>    <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
+<div class="line"><span class="lineno">   98</span><span class="preprocessor">#else</span></div>
+<div class="line"><span class="lineno">   99</span>    *out_isTmpFs = <span class="keyword">false</span>;</div>
+<div class="line"><span class="lineno">  100</span>    <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="mxl_8h.html#a3bfda83f31da49dfefeb4c869492344fabc93182223dcf7ccb25d1eabb0aab9e9">MXL_STATUS_OK</a>;</div>
+<div class="line"><span class="lineno">  101</span><span class="preprocessor">#endif</span></div>
+<div class="line"><span class="lineno">  102</span>}</div>
 </div><!-- fragment -->
 </div>
 </div>

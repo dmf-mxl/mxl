@@ -1,5 +1,6 @@
 var tests_2test__instance_8cpp =
 [
+    [ "TEST_CASE", "tests_2test__instance_8cpp.html#ab0b944bc9bfcae9bd82bec496c47df80", null ],
     [ "TEST_CASE", "tests_2test__instance_8cpp.html#adfde4b5ca9ff49898ce93c9bbb436413", null ],
     [ "TEST_CASE", "tests_2test__instance_8cpp.html#a6e7ca3498e0881de7f0aaed04278c3fb", null ],
     [ "TEST_CASE", "tests_2test__instance_8cpp.html#a4d85ad7bece83d8f3175d2ed5b2b1016", null ],
