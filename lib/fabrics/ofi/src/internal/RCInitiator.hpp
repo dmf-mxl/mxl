@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -51,10 +52,13 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         bool canEvict() const noexcept;
 
-        /** \brief Called to transition the endpoint out of the flushing state to the done state. If the endpoint is in any other state, this is a
-         * no-op.
+        /** \brief Move the endpoint out of the flushing state when the flush is complete.
+         *
+         * The flush is complete when a shutdown or error event was received and all operations that were outstanding at shutdown have
+         * completed, or when FlushTimeout has elapsed since the flush started. The endpoint then goes to the state that Flushing::next
+         * selects. In any other state, this is a no-op.
          */
-        void terminate() noexcept;
+        void finishFlush();
 
         /** \brief Initiate a shutdown process.
          *
@@ -86,6 +90,11 @@ namespace mxl::lib::fabrics::ofi
          */
         void transferSamples(std::uint64_t headIndex, std::size_t count);
 
+        /** \brief Upper bound for the flushing state. Some providers do not report a local shutdown event, and a peer that disappears
+         * may never complete the outstanding operations.
+         */
+        constexpr static auto FlushTimeout = std::chrono::seconds(2);
+
     private:
         /** \brief The idle state.
          *
@@ -116,15 +125,36 @@ namespace mxl::lib::fabrics::ofi
             Endpoint ep;
         };
 
+        /** \brief The state that the endpoint goes to when a flush is complete.
+         */
+        enum class AfterFlush
+        {
+            Reconnect,  /**< Go to the idle state and connect again. Used after an error event, when the target can still be running. */
+            Disconnect, /**< Go to the disconnected state. Used after the target has closed the connection. */
+            Done,       /**< Go to the done state, so that the endpoint is evicted. Used after the target was removed. */
+        };
+
         /** \brief The flushing state.
          *
-         * The endpoint is shutting down and is waiting for a Event::Shutdown event.
+         * The endpoint is shutting down. It waits for an Event::Shutdown or error event and for a completion of every operation that was
+         * outstanding when the shutdown started. Operations that were cancelled by the shutdown complete with an error.
          */
         struct Flushing
         {
             Endpoint ep;
-            std::size_t pending;
+            std::size_t pending;                            /**< Number of outstanding operations that have not completed yet. */
+            bool shutdownReceived;                          /**< True once a shutdown or error event was received. */
+            AfterFlush next;                                /**< The state to go to after the flush. */
+            std::chrono::steady_clock::time_point deadline; /**< The flush is abandoned after this point in time. */
         };
+
+        /** \brief The disconnected state.
+         *
+         * The target has closed the connection. A target only does this when it is destroyed, so its target info is no longer valid and the
+         * endpoint does not reconnect. The target stays added until it is removed, and transfers to it are skipped.
+         */
+        struct Disconnected
+        {};
 
         /** \brief The endpoint is done and can be evicted from the initiator.
          */
@@ -134,26 +164,27 @@ namespace mxl::lib::fabrics::ofi
         /** \brief The various states that the endpoint can be in are stored inside a variant that we move from and then back into when processing
          * events.
          */
-        using State = std::variant<Idle, Connecting, Connected, Flushing, Done>;
+        using State = std::variant<Idle, Connecting, Connected, Flushing, Disconnected, Done>;
 
     private:
-        /** \brief Handle a completion error event.
+        /** \brief Create a flushing state that waits for the given number of outstanding operations.
          */
-        void handleCompletionError(Completion::Error error);
-
-        /** \brief Handle a completion data event.
-         */
-        void handleCompletionData(Completion::Data data);
+        [[nodiscard]]
+        static Flushing startFlush(Endpoint ep, std::size_t pending, bool shutdownReceived, AfterFlush next);
 
         /** \brief Restarts the endpoint. Produces a new Idle state from any previous state.
+         *
+         * The new endpoint has the same id as the old one, so completions of the old endpoint must not be in the completion queue anymore.
          */
         [[nodiscard]]
         Idle restart(Endpoint const& endpoint);
 
     private:
-        State _state;     /**< The internal state object. */
-        TargetInfo _info; /**< The target info of the remote endpoint */
+        // The protocol is declared first so that it is destroyed after the endpoint in _state. Writes can read from memory that the
+        // protocol owns until the endpoint is closed.
         std::unique_ptr<EgressProtocol> _proto;
+        TargetInfo _info; /**< The target info of the remote endpoint */
+        State _state;     /**< The internal state object. */
     };
 
     /** \brief An initiator that uses reliable connected endpoints to transfer data to targets.
@@ -204,6 +235,10 @@ namespace mxl::lib::fabrics::ofi
          */
         virtual Initiator::MakeProgressResult makeProgressBlocking(std::chrono::steady_clock::duration) final;
 
+        /** \copydoc Initiator::shutdown()
+         *
+         * Shuts down all endpoints and makes progress until each one has finished flushing.
+         */
         virtual void shutdown() final;
 
     private:
@@ -220,6 +255,14 @@ namespace mxl::lib::fabrics::ofi
         /** \brief When making progress and using blocking queue reads, this is the minimum interval at which the event queue will be read.
          */
         constexpr static auto EQPollInterval = std::chrono::milliseconds(100);
+
+        /** \brief Upper bound for shutdown(). It is longer than RCInitiatorEndpoint::FlushTimeout, so that each flush ends on its own.
+         */
+        constexpr static auto ShutdownTimeout = RCInitiatorEndpoint::FlushTimeout + std::chrono::seconds(1);
+
+        /** \brief Sleep time between two queue reads in shutdown().
+         */
+        constexpr static auto ShutdownPollInterval = std::chrono::milliseconds(1);
 
         /*\brief Construct the RCInitiator.
          *
@@ -246,6 +289,14 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Try to activate any idle endpoints.
          */
         void activateIdleEndpoints();
+
+        /** \brief Try to activate the endpoint if it is idle. Called before a transfer is posted to the endpoint.
+         */
+        void activateIfIdle(RCInitiatorEndpoint& target);
+
+        /** \brief Move endpoints that have finished flushing to the done state.
+         */
+        void finishFlushingEndpoints();
 
         /** \brief Evict any dead endpoints that are no longer used.
          */

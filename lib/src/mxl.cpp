@@ -44,6 +44,12 @@ mxlStatus mxlGetVersion(mxlVersionType* out_version)
 extern "C" MXL_EXPORT
 mxlInstance mxlCreateInstance(char const* in_mxlDomain, char const* in_options)
 {
+    if (in_mxlDomain == nullptr)
+    {
+        MXL_ERROR("Failed to create instance : the domain is NULL");
+        return nullptr;
+    }
+
     try
     {
         auto const opts = (in_options != nullptr) ? in_options : "";

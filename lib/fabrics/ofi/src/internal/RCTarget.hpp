@@ -36,19 +36,19 @@ namespace mxl::lib::fabrics::ofi
         virtual std::optional<Target::ReadResult> read();
         virtual std::optional<Target::ReadResult> readBlocking(std::chrono::steady_clock::duration timeout) final;
 
-        /** \brief Shut down the target.
+        /** \copydoc Target::shutdown()
+         *
+         * Closes the connection if there is one and waits for the local shutdown event. The target can no longer be used afterwards.
          */
         virtual void shutdown() final;
 
     private:
         /** \brief The wait for connection request state.
          *
-         * The RCTarget has a passive endpoint, and is waiting for an incoming connection request.
+         * The RCTarget is waiting for an incoming connection request on its passive endpoint.
          */
         struct WaitForConnectionRequest
-        {
-            PassiveEndpoint pep;
-        };
+        {};
 
         /** \brief The wait for connection state.
          *
@@ -68,9 +68,30 @@ namespace mxl::lib::fabrics::ofi
             Endpoint ep;
         };
 
+        /** \brief The draining state.
+         *
+         * The Initiator has closed the connection. The RCTarget reads the completions that are still in the completion queue, and then
+         * listens for a new connection request.
+         */
+        struct Draining
+        {
+            Endpoint ep;
+        };
+
+        /** \brief The closed state.
+         *
+         * The target was shut down and can no longer be used.
+         */
+        struct Closed
+        {};
+
         /** \brief The internal state of the RCTarget.
          */
-        using State = std::variant<WaitForConnectionRequest, WaitForConnection, Connected>;
+        using State = std::variant<WaitForConnectionRequest, WaitForConnection, Connected, Draining, Closed>;
+
+        /** \brief Upper bound for waiting on the local shutdown event in shutdown().
+         */
+        constexpr static auto ShutdownTimeout = std::chrono::seconds(2);
 
     private:
         /** \brief Construct a new RCTarget associated with the given domain and passive endpoint.
@@ -89,10 +110,30 @@ namespace mxl::lib::fabrics::ofi
         template<QueueReadMode>
         std::optional<Target::ReadResult> readNext(std::chrono::steady_clock::duration timeout);
 
+        /** \brief Read the completions that are left after the Initiator closed the connection.
+         *
+         * \param state The draining state.
+         * \param result Receives the result of the first completion that produces one.
+         * \return The draining state if a result was found, otherwise a new WaitForConnectionRequest state.
+         */
+        [[nodiscard]]
+        State drain(Draining state, std::optional<Target::ReadResult>& result);
+
         [[nodiscard]]
         static PassiveEndpoint makeListener(std::shared_ptr<Fabric> const& fabric);
 
+        /** \brief Reject all connection requests that are queued on the passive endpoint.
+         *
+         * The passive endpoint keeps listening while a connection is established. Requests that arrive in that time
+         * are rejected when the target goes back to waiting for a connection request.
+         */
+        void rejectPendingConnectionRequests();
+
     private:
+        /** The passive endpoint lives as long as the target. Its address and id are published in the TargetInfo, so
+         * it is not re-created after a disconnect. A new passive endpoint can bind to a different port.
+         */
+        PassiveEndpoint _pep;
         std::unique_ptr<IngressProtocol> _proto;
         std::shared_ptr<Domain> _domain;
         TargetSetupOptions _setupOptions; /**< Setup options applied when accepting connections. */

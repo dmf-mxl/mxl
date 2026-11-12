@@ -4,6 +4,7 @@
 #include "mxl-internal/FlowOptionsParser.hpp"
 #include <picojson/picojson.h>
 #include <mxl/mxl.h>
+#include "mxl-internal/JsonUtils.hpp"
 #include "mxl-internal/Logging.hpp"
 
 namespace mxl::lib
@@ -19,7 +20,7 @@ namespace mxl::lib
         // Parse the json options
         //
         auto jsonValue = picojson::value{};
-        auto const err = picojson::parse(jsonValue, in_options);
+        auto const err = parseJson(jsonValue, in_options);
         if (!err.empty())
         {
             throw std::invalid_argument{"Invalid JSON options. " + err};
@@ -40,12 +41,12 @@ namespace mxl::lib
                 throw std::invalid_argument{"maxCommitBatchSizeHint must be a number."};
             }
 
-            auto const v = maxCommitBatchSizeHintIt->second.get<double>();
-            if (v < 1)
+            auto const v = jsonToInteger<std::uint32_t>(maxCommitBatchSizeHintIt->second, "maxCommitBatchSizeHint");
+            if (v < 1U)
             {
                 throw std::invalid_argument{"maxCommitBatchSizeHint must be greater or equal to 1."};
             }
-            _maxCommitBatchSizeHint = static_cast<std::uint32_t>(v);
+            _maxCommitBatchSizeHint = v;
         }
 
         auto maxSyncBatchSizeHintIt = _root.find("maxSyncBatchSizeHint");
@@ -56,12 +57,12 @@ namespace mxl::lib
                 throw std::invalid_argument{"maxSyncBatchSizeHint must be a number."};
             }
 
-            auto const v = maxSyncBatchSizeHintIt->second.get<double>();
-            if (v < 1)
+            auto const v = jsonToInteger<std::uint32_t>(maxSyncBatchSizeHintIt->second, "maxSyncBatchSizeHint");
+            if (v < 1U)
             {
                 throw std::invalid_argument{"maxSyncBatchSizeHint must be greater or equal to 1."};
             }
-            _maxSyncBatchSizeHint = static_cast<std::uint32_t>(v);
+            _maxSyncBatchSizeHint = v;
             if ((_maxSyncBatchSizeHint.value() % _maxCommitBatchSizeHint.value_or(1) != 0))
             {
                 throw std::invalid_argument{"maxSyncBatchSizeHint must be a multiple of maxCommitBatchSizeHint."};

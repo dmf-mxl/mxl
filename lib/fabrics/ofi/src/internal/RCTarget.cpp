@@ -57,10 +57,11 @@ namespace mxl::lib::fabrics::ofi
     }
 
     RCTarget::RCTarget(PassiveEndpoint pep, std::unique_ptr<IngressProtocol> proto, std::shared_ptr<Domain> domain, TargetSetupOptions options)
-        : _proto(std::move(proto))
+        : _pep(std::move(pep))
+        , _proto(std::move(proto))
         , _domain(std::move(domain))
         , _setupOptions(options)
-        , _state(WaitForConnectionRequest{std::move(pep)})
+        , _state(WaitForConnectionRequest{})
     {}
 
     std::optional<Target::ReadResult> RCTarget::read()
@@ -74,7 +75,33 @@ namespace mxl::lib::fabrics::ofi
     }
 
     void RCTarget::shutdown()
-    {}
+    {
+        if (auto state = std::get_if<Connected>(&_state); state != nullptr)
+        {
+            MXL_INFO("Shutting down the connection.");
+            state->ep.shutdown();
+
+            auto const deadline = std::chrono::steady_clock::now() + ShutdownTimeout;
+            for (;;)
+            {
+                auto const remaining = deadline - std::chrono::steady_clock::now();
+                if (remaining <= std::chrono::steady_clock::duration::zero())
+                {
+                    MXL_WARN("Did not receive a shutdown event within {} ms.",
+                        std::chrono::duration_cast<std::chrono::milliseconds>(ShutdownTimeout).count());
+                    break;
+                }
+
+                auto const event = state->ep.eventQueue()->readBlocking(remaining);
+                if (event && (event->isShutdown() || event->isError()))
+                {
+                    break;
+                }
+            }
+        }
+
+        _state = Closed{};
+    }
 
     template<QueueReadMode queueReadMode>
     std::optional<Target::ReadResult> RCTarget::readNext(std::chrono::steady_clock::duration timeout)
@@ -82,12 +109,13 @@ namespace mxl::lib::fabrics::ofi
         auto result = std::optional<Target::ReadResult>{std::nullopt};
 
         _state = std::visit(
-            overloaded{[](std::monostate) -> State { throw Exception::invalidState("Target is in an invalid state an can no longer make progress"); },
+            overloaded{
+                [](std::monostate) -> State { throw Exception::invalidState("Target is in an invalid state and can no longer make progress"); },
                 [&](WaitForConnectionRequest state) -> State
                 {
                     try
                     {
-                        auto event = readEventQueue<queueReadMode>(*state.pep.eventQueue(), timeout);
+                        auto event = readEventQueue<queueReadMode>(*_pep.eventQueue(), timeout);
 
                         // Check if the entry is available and is a connection request
                         if (event && event->isConnReq())
@@ -98,7 +126,7 @@ namespace mxl::lib::fabrics::ofi
                             auto cqAttr = CompletionQueue::Attributes::defaults();
                             cqAttr.size = _setupOptions.cqDepth.value_or(CompletionQueue::Attributes::DEFAULT_SIZE);
                             auto cq = CompletionQueue::open(_domain, cqAttr);
-                            auto endpoint = Endpoint::create(_domain, state.pep.id(), event->connReq().info());
+                            auto endpoint = Endpoint::create(_domain, _pep.id(), event->connReq().info());
                             endpoint.bind(cq, FI_RECV);
 
                             auto eq = EventQueue::open(_domain->fabric(), EventQueue::Attributes::defaults());
@@ -112,14 +140,14 @@ namespace mxl::lib::fabrics::ofi
                             return RCTarget::WaitForConnection{std::move(endpoint)};
                         }
 
-                        return WaitForConnectionRequest{.pep = std::move(state.pep)};
+                        return state;
                     }
                     catch (FabricException const& ex)
                     {
                         if (ex.isInterrupted())
                         {
                             result = std::make_optional<Target::Interrupted>();
-                            return WaitForConnectionRequest{.pep = std::move(state.pep)};
+                            return state;
                         }
 
                         throw;
@@ -162,15 +190,19 @@ namespace mxl::lib::fabrics::ofi
                     try
                     {
                         auto [completion, event] = readEndpointQueues<queueReadMode>(state.ep, timeout);
-                        if (event && event.value().isShutdown())
-                        {
-                            MXL_INFO("Remote endpoint has shutdown the connection. Transitioning to listening to new connection.");
-                            return WaitForConnectionRequest{.pep = makeListener(state.ep.domain()->fabric())};
-                        }
 
+                        // A completion that was read together with the shutdown event belongs to data that has already arrived.
                         if (completion)
                         {
                             result = _proto->read(state.ep, *completion);
+                        }
+
+                        if (event && event.value().isShutdown())
+                        {
+                            MXL_INFO("Remote endpoint has shutdown the connection.");
+                            catchAndLogFabricError([&]() { state.ep.shutdown(); },
+                                "Failed to shut down the endpoint after the remote endpoint closed it");
+                            return Draining{.ep = std::move(state.ep)};
                         }
 
                         return Connected{.ep = std::move(state.ep)};
@@ -185,10 +217,54 @@ namespace mxl::lib::fabrics::ofi
 
                         throw;
                     }
-                }},
+                },
+                [&](RCTarget::Draining state) -> State { return drain(std::move(state), result); },
+                [](RCTarget::Closed) -> State { throw Exception::invalidState("Target has been shut down and can no longer be used."); },
+            },
             std::move(_state));
 
         return result;
+    }
+
+    RCTarget::State RCTarget::drain(Draining state, std::optional<Target::ReadResult>& result)
+    {
+        // The connection is closed, so no new completions are expected. Read the queue without blocking until it returns a result or is
+        // empty. Completions of receive buffers that were cancelled by the shutdown produce no result.
+        while (auto completion = state.ep.completionQueue()->read())
+        {
+            try
+            {
+                result = _proto->read(state.ep, *completion);
+            }
+            catch (FabricException const& ex)
+            {
+                // The protocol posts a new receive buffer before it decodes the completion. Some providers refuse new receive buffers on a
+                // closed connection.
+                MXL_WARN("Failed to read a completion after the connection was shut down: {}", ex.what());
+            }
+
+            if (result)
+            {
+                return state;
+            }
+        }
+
+        MXL_INFO("Transitioning to listening to new connection.");
+        rejectPendingConnectionRequests();
+        return WaitForConnectionRequest{};
+    }
+
+    void RCTarget::rejectPendingConnectionRequests()
+    {
+        while (auto event = _pep.eventQueue()->read())
+        {
+            if (event->isConnReq())
+            {
+                MXL_INFO("Reject connection request from {} that arrived while connected.",
+                    FabricAddress::fromDestination(event->connReq().info()).toString());
+                _pep.reject(*event);
+            }
+        }
     }
 
     PassiveEndpoint RCTarget::makeListener(std::shared_ptr<Fabric> const& fabric)
