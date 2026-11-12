@@ -131,8 +131,8 @@ namespace
          * @param[in] headIndex Head index to measure from.
          * @param[in] nowNs TAI time in ns at which to measure.
          * @param[in] grainRate Grain or sample rate of the flow.
-         * @param[in] limit Ring length of the flow in indices. A latency above it is red, and a latency equal to it is
-         *            yellow.
+         * @param[in] limit Number of indices a reader can reach behind the head. A latency above it is red, and a
+         *            latency above half of it is yellow.
          * @param[in] atCommit True when @p nowNs is the time the reader saw the commit of @p headIndex. The line then
          *            has one ms value. False for a snapshot, where the line has a ms range.
          */
@@ -174,13 +174,11 @@ namespace
             if (isTerminal(os))
             {
                 auto color = fmt::color::green;
-                if (latencyGrains > limit || inTheFuture)
+                switch (mxl::info::latencyLevel(latencyGrains, limit, inTheFuture))
                 {
-                    color = fmt::color::red;
-                }
-                else if (latencyGrains == limit)
-                {
-                    color = fmt::color::yellow;
+                    case mxl::info::LatencyLevel::Error:   color = fmt::color::red; break;
+                    case mxl::info::LatencyLevel::Warning: color = fmt::color::yellow; break;
+                    case mxl::info::LatencyLevel::Normal:  break;
                 }
 
                 os << '\t' << fmt::format(fmt::fg(color), "{: >20}: {}{}, {}", "Latency (grains, ms)", sign, latencyGrains, latencyText) << std::endl;
@@ -281,7 +279,7 @@ namespace
                 return os;
             }
 
-            auto const limit = mxl::info::ringLength(info);
+            auto const limit = mxl::info::historyLength(info);
             auto const nowNs = sample ? sample->nowNs : ::mxlGetTime();
             outputLatency(os, info.runtime.headIndex, nowNs, info.config.common.grainRate, limit, sample.has_value());
             if (!sample)

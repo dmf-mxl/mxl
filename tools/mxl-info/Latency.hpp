@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /** @file
- * @brief Latency measurement for mxl-info: ring and history lengths, and waiting for the next commit.
+ * @brief Latency measurement for mxl-info: ring and history lengths, waiting for the next commit, and the
+ *        level used to color the latency line.
  */
 
 #pragma once
@@ -124,5 +125,34 @@ namespace mxl::info
             return std::nullopt;
         }
         return CommitSample{.runtime = runtime, .nowNs = nowNs};
+    }
+
+    /// Level of a latency value compared to the reader history.
+    enum class LatencyLevel
+    {
+        Normal,  ///< At most half of the history.
+        Warning, ///< More than half of the history, up to the full history.
+        Error,   ///< More than the history, or the head index is ahead of the current time.
+    };
+
+    /**
+     * @brief Compare a latency with the reader history.
+     * @param[in] latency Latency in grains or samples.
+     * @param[in] history Number of indices a reader can reach behind the head. See historyLength().
+     * @param[in] inTheFuture True when the head index is ahead of the current time.
+     * @return The level of @p latency.
+     */
+    [[nodiscard]]
+    constexpr LatencyLevel latencyLevel(std::uint64_t latency, std::uint64_t history, bool inTheFuture) noexcept
+    {
+        if (inTheFuture || (latency > history))
+        {
+            return LatencyLevel::Error;
+        }
+        if (latency > history / 2U)
+        {
+            return LatencyLevel::Warning;
+        }
+        return LatencyLevel::Normal;
     }
 }

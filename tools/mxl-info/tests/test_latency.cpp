@@ -63,6 +63,28 @@ TEST_CASE("Ring and history length", "[mxl-info][latency]")
     CHECK(historyLength(oneGrain) == 0);
 }
 
+TEST_CASE("Latency level thresholds", "[mxl-info][latency]")
+{
+    using mxl::info::LatencyLevel;
+    using mxl::info::latencyLevel;
+
+    // Video with 5 grains has a history of 4: normal up to 2, warning for 3 and 4, error from 5.
+    CHECK(latencyLevel(0, 4, false) == LatencyLevel::Normal);
+    CHECK(latencyLevel(2, 4, false) == LatencyLevel::Normal);
+    CHECK(latencyLevel(3, 4, false) == LatencyLevel::Warning);
+    CHECK(latencyLevel(4, 4, false) == LatencyLevel::Warning);
+    CHECK(latencyLevel(5, 4, false) == LatencyLevel::Error);
+
+    // Audio with a 19456-sample buffer has a history of 9728 samples.
+    CHECK(latencyLevel(4864, 9728, false) == LatencyLevel::Normal);
+    CHECK(latencyLevel(4865, 9728, false) == LatencyLevel::Warning);
+    CHECK(latencyLevel(9728, 9728, false) == LatencyLevel::Warning);
+    CHECK(latencyLevel(9729, 9728, false) == LatencyLevel::Error);
+
+    // A head ahead of the current time is an error at any latency.
+    CHECK(latencyLevel(0, 4, true) == LatencyLevel::Error);
+}
+
 TEST_CASE("Wait timeout", "[mxl-info][latency]")
 {
     using mxl::info::waitTimeoutNs;
