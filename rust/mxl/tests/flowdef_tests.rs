@@ -26,6 +26,8 @@ fn flow_def_roundtrip_video() {
             frame_height: 1080,
             interlace_mode: mxl::flowdef::InterlaceMode::Progressive,
             colorspace: "BT709".into(),
+            transfer_characteristic: Some("SDR".into()),
+            component_range: Some("NARROW".into()),
             components: vec![
                 Component {
                     name: "Y".into(),
