@@ -314,7 +314,7 @@ Video grains can be of two different formats: video/v210 for video without trans
 
 The `video/v210` format is an uncompressed buffer format carrying 10 bit 4:2:2 video. A detailed description of the format can be found [here](https://wiki.multimedia.cx/index.php/V210) and [here](https://developer.apple.com/library/archive/technotes/tn2162/_index.html#//apple_ref/doc/uid/DTS40013070-CH1-TNTAG8-V210__4_2_2_COMPRESSION_TYPE).
 
-When the flow definition does not specify the range of the sample values, the samples are _video range_: Y from 64 to 940, and Cb and Cr from 64 to 960. SMPTE ST 2110-20 calls this range `NARROW`.
+The flow definition can specify the range of the sample values with the [`component_range`](https://specs.amwa.tv/nmos-parameter-registers/latest/flow-attributes/#component-range) Flow attribute, whose values are `NARROW`, `FULLPROTECT` and `FULL`. When the flow definition does not specify the range, the samples are _video range_: Y from 64 to 940, and Cb and Cr from 64 to 960. SMPTE ST 2110-20 calls this range `NARROW`.
 
 ```
 32-bit Word Structure (Little-Endian), 4 words = 1 group of 6 pixels (16 bytes):
