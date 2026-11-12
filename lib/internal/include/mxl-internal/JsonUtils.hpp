@@ -36,6 +36,9 @@ namespace mxl::lib
         class LimitedJsonParseContext
         {
         public:
+            /** \brief Construct a new LimitedJsonParseContext for a value, with given limits. Refuses to parse any contexts that are nested if `depth
+             * == limits.maxDepth`
+             */
             LimitedJsonParseContext(picojson::value* out, JsonLimits const& limits, std::string& error, std::size_t depth) noexcept
                 : _out{out}
                 , _limits{&limits}
@@ -46,12 +49,14 @@ namespace mxl::lib
             LimitedJsonParseContext(LimitedJsonParseContext const&) = delete;
             LimitedJsonParseContext& operator=(LimitedJsonParseContext const&) = delete;
 
+            /** \brief Set the current value to null. Called by picojson when parsing */
             bool set_null()
             {
                 *_out = picojson::value{};
                 return true;
             }
 
+            /** \brief Set the current value to the boolean value `value`. Called by picojson when parsing */
             bool set_bool(bool value)
             {
                 *_out = picojson::value{value};
@@ -59,6 +64,7 @@ namespace mxl::lib
             }
 
 #ifdef PICOJSON_USE_INT64
+            /** \brief Set the current value to the 64-bit signed integer value `value`. Called by picojson when parsing */
             bool set_int64(std::int64_t value)
             {
                 *_out = picojson::value{value};
@@ -66,6 +72,7 @@ namespace mxl::lib
             }
 #endif
 
+            /** \brief Set the current value to a numerical value `value`. Called by picojson when parsing */
             bool set_number(double value)
             {
                 // picojson::value throws std::overflow_error for these. Report them as a parse error instead.
@@ -78,6 +85,7 @@ namespace mxl::lib
                 return true;
             }
 
+            /** \brief Start parsing a string. Called by picojson, delegates to picojsons internal string parser.  */
             template<typename Iter>
             bool parse_string(picojson::input<Iter>& in)
             {
@@ -85,6 +93,7 @@ namespace mxl::lib
                 return picojson::_parse_string(_out->get<std::string>(), in);
             }
 
+            /** \brief Start parsing an array. Called by picojson. Throws an error if already nested to the configured limit. */
             bool parse_array_start()
             {
                 if (!checkDepth())
@@ -95,6 +104,7 @@ namespace mxl::lib
                 return true;
             }
 
+            /** \brief Parse an array item. Called by picojson. Throws an error if index exceeded the configured maximum container length */
             template<typename Iter>
             bool parse_array_item(picojson::input<Iter>& in, std::size_t index)
             {
@@ -109,11 +119,13 @@ namespace mxl::lib
                 return picojson::_parse(child, in);
             }
 
+            /** Stop parsing an array. Called by picojson. */
             bool parse_array_stop(std::size_t)
             {
                 return true;
             }
 
+            /** Start parsing an object. Throws an error if the maximum configured object depth is already reached. */
             bool parse_object_start()
             {
                 if (!checkDepth())
@@ -124,6 +136,8 @@ namespace mxl::lib
                 return true;
             }
 
+            /** Parse and item in an object. Called by picojson. Throws an error if there is a duplicate key, of if the number of items in this object
+             * already exceeds the limit. */
             template<typename Iter>
             bool parse_object_item(picojson::input<Iter>& in, std::string const& key)
             {
@@ -145,6 +159,7 @@ namespace mxl::lib
             }
 
         private:
+            /** Check if any further nesting would exceed the limit. */
             bool checkDepth()
             {
                 if (_depth >= _limits->maxDepth)
