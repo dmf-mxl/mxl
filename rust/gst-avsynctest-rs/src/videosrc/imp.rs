@@ -117,20 +117,22 @@ fn fill_v210(data: &mut [u8], info: &gst_video::VideoInfo, bar_centre: u32, bar_
     let stride = info.stride()[0] as usize;
     let groups = width.div_ceil(6) as usize;
     let c = signal::CHROMA_NEUTRAL;
-    for y in 0..info.height() as usize {
-        let row = &mut data[y * stride..][..stride];
-        for g in 0..groups {
-            let l = |i: usize| luma_at(6 * g + i, width, bar_centre, bar_width);
-            let words = [
-                v210_word(c, l(0), c),
-                v210_word(l(1), c, l(2)),
-                v210_word(c, l(3), c),
-                v210_word(l(4), c, l(5)),
-            ];
-            for (w, chunk) in words.iter().zip(row[g * 16..].chunks_exact_mut(4)) {
-                chunk.copy_from_slice(&w.to_le_bytes());
-            }
+    let (row, rest) = data[..stride * info.height() as usize].split_at_mut(stride);
+    for g in 0..groups {
+        let l = |i: usize| luma_at(6 * g + i, width, bar_centre, bar_width);
+        let words = [
+            v210_word(c, l(0), c),
+            v210_word(l(1), c, l(2)),
+            v210_word(c, l(3), c),
+            v210_word(l(4), c, l(5)),
+        ];
+        for (w, chunk) in words.iter().zip(row[g * 16..][..16].chunks_exact_mut(4)) {
+            chunk.copy_from_slice(&w.to_le_bytes());
         }
+    }
+    row[groups * 16..].fill(0);
+    for dst in rest.chunks_exact_mut(stride) {
+        dst.copy_from_slice(row);
     }
 }
 
@@ -139,20 +141,22 @@ fn fill_uyvp(data: &mut [u8], info: &gst_video::VideoInfo, bar_centre: u32, bar_
     let stride = info.stride()[0] as usize;
     let pairs = width.div_ceil(2) as usize;
     let c = signal::CHROMA_NEUTRAL as u64;
-    for y in 0..info.height() as usize {
-        let row = &mut data[y * stride..][..stride];
-        for p in 0..pairs {
-            let y0 = luma_at(2 * p, width, bar_centre, bar_width) as u64;
-            let y1 = luma_at(2 * p + 1, width, bar_centre, bar_width) as u64;
-            // MSB-first 40-bit [U, Y0, V, Y1] over 5 bytes (GStreamer UYVP).
-            let val = (c << 30) | (y0 << 20) | (c << 10) | y1;
-            let base = p * 5;
-            row[base] = (val >> 32) as u8;
-            row[base + 1] = (val >> 24) as u8;
-            row[base + 2] = (val >> 16) as u8;
-            row[base + 3] = (val >> 8) as u8;
-            row[base + 4] = val as u8;
-        }
+    let (row, rest) = data[..stride * info.height() as usize].split_at_mut(stride);
+    for p in 0..pairs {
+        let y0 = luma_at(2 * p, width, bar_centre, bar_width) as u64;
+        let y1 = luma_at(2 * p + 1, width, bar_centre, bar_width) as u64;
+        // MSB-first 40-bit [U, Y0, V, Y1] over 5 bytes (GStreamer UYVP).
+        let val = (c << 30) | (y0 << 20) | (c << 10) | y1;
+        let base = p * 5;
+        row[base] = (val >> 32) as u8;
+        row[base + 1] = (val >> 24) as u8;
+        row[base + 2] = (val >> 16) as u8;
+        row[base + 3] = (val >> 8) as u8;
+        row[base + 4] = val as u8;
+    }
+    row[pairs * 5..].fill(0);
+    for dst in rest.chunks_exact_mut(stride) {
+        dst.copy_from_slice(row);
     }
 }
 
