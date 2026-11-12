@@ -273,8 +273,8 @@ extern "C"
          * Reserved for descriptions specific to a storage type, such as the device that holds the payload, the
          * pixel format and format modifier of each plane or the extent of an image. The library does not interpret
          * these bytes: what identifies a device, for example, is the storage type's to define, since a CUDA device
-         * has an index in each process and a UUID, a Vulkan device two UUIDs, and a dma-buf heap a name. Always
-         * zero for the storage types defined so far. Pads the total size of this structure to 512 bytes.
+         * has an index in each process and a UUID, a Vulkan device two UUIDs, and a dma-buf heap a name. Zero for
+         * MXL_PAYLOAD_STORAGE_HOST_POINTER. Pads the total size of this structure to 512 bytes.
          */
         uint8_t reserved[304];
     } mxlGrainStorageLayout;
@@ -318,8 +318,9 @@ extern "C"
             mxlHostGrainStorage host;
 
             /**
-             * Reserved for future storage types, which need room for one handle per plane and a
-             * synchronization object. Pads the total size of this structure to 256 bytes.
+             * The storage of a slot of any other storage type, as that storage type defines it, for example a
+             * device address, or one handle per plane and a synchronization object. Pads the total size of this
+             * structure to 256 bytes.
              */
             uint8_t reserved[240];
         };
@@ -491,6 +492,10 @@ extern "C"
      * \retval MXL_ERR_INVALID_ARG The instance, the flow id, the options or the reader pointer is not valid.
      * \retval MXL_ERR_FLOW_NOT_FOUND There is no flow with this id in the domain.
      * \retval MXL_ERR_PERMISSION_DENIED The files of the flow cannot be accessed with the permissions of the process.
+     * \retval MXL_ERR_INVALID_STATE The payload of the flow is held by a backend, and its payload descriptor, payload.json in
+     *     the flow directory, is missing or invalid.
+     * \retval MXL_ERR_UNSUPPORTED_OPERATION The payload descriptor of the flow is in a format this SDK does not know, written by
+     *     another release.
      * \retval MXL_ERR_UNKNOWN Any other failure.
      */
     MXL_EXPORT
@@ -654,8 +659,10 @@ extern "C"
      *
      * \param[in] reader A valid discrete flow reader.
      * \param[out] layout A valid pointer to a structure that receives the layout.
-     * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if layout is NULL, or MXL_ERR_INVALID_FLOW_READER if
-     *      reader is not a valid discrete flow reader.
+     * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if layout is NULL, MXL_ERR_INVALID_FLOW_READER if
+     *      reader is not a valid discrete flow reader, or MXL_ERR_UNSUPPORTED_OPERATION if the backend that holds the
+     *      payload cannot be used in this process, for example because it is not installed. The reader can still read
+     *      the flow metadata.
      */
     MXL_EXPORT
     mxlStatus mxlFlowReaderGetStorageLayout(mxlFlowReader reader, mxlGrainStorageLayout* layout);
@@ -672,6 +679,11 @@ extern "C"
      * Opening a reader does not map anything, so a reader that only reads flow metadata does not need the device
      * that holds the payload.
      *
+     * For storage that is shared as file descriptors, this is when the reader receives them from the writer, through
+     * the socket payload.sock in the flow directory. The writer serves them until it is released, so mapping needs
+     * the writer: if it is gone, this function returns MXL_ERR_INVALID_STATE. Once mapped, the descriptions stay valid
+     * until the reader is released, whatever happens to the writer.
+     *
      * If the flow becomes invalid (MXL_ERR_FLOW_INVALID), for example because its writer recreated it, the slot
      * descriptions and any handles in them are stale. Release the reader, create a new one and map it again.
      *
@@ -681,8 +693,9 @@ extern "C"
      *      slot i. Handles in the descriptions are owned by the library and stay valid until the reader is
      *      released.
      * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if slots is NULL or slotCount does not match the
-     *      layout, MXL_ERR_INVALID_FLOW_READER if reader is not a valid discrete flow reader, or another error
-     *      code if the storage cannot be mapped in this process.
+     *      layout, MXL_ERR_INVALID_FLOW_READER if reader is not a valid discrete flow reader, MXL_ERR_INVALID_STATE
+     *      if the descriptors of the storage cannot be received from the writer, for example because it is gone, or
+     *      another error code if the storage cannot be mapped in this process.
      */
     MXL_EXPORT
     mxlStatus mxlFlowReaderMapSlots(mxlFlowReader reader, uint32_t slotCount, mxlGrainStorage* slots);
@@ -776,8 +789,8 @@ extern "C"
      *
      * \param[in] writer A valid discrete flow writer.
      * \param[out] layout A valid pointer to a structure that receives the layout.
-     * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if layout is NULL, or MXL_ERR_INVALID_FLOW_WRITER if
-     *      writer is not a valid discrete flow writer.
+     * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if layout is NULL, MXL_ERR_INVALID_FLOW_WRITER if
+     *      writer is not a valid discrete flow writer, or another error code if the storage cannot describe its layout.
      */
     MXL_EXPORT
     mxlStatus mxlFlowWriterGetStorageLayout(mxlFlowWriter writer, mxlGrainStorageLayout* layout);

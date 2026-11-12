@@ -22,6 +22,9 @@ Flows and Grains are _ring buffers_ stored in memory mapped files written in a _
 | \${mxlDomain}/\${flowId}.mxl-flow/access                | File 'touched' by readers (if permissions allow it) to notify flow access. Enables reliable 'lastReadTime' metadata update.   |
 | \${mxlDomain}/\${flowId}.mxl-flow/grains/               | Directory where individual grains are stored.                                                                                 |
 | \${mxlDomain}/\${flowId}.mxl-flow/grains/\${grainIndex} | Grain Header and optional payload (if payload is in host memory and not device memory ). Memory mapped by readers and writers |
+| \${mxlDomain}/\${flowId}.mxl-flow/payload.json          | Only in a flow whose payload is held by a backend: the payload descriptor, with its format version, the backend's name and the storage type. Written before the flow is published. |
+| \${mxlDomain}/\${flowId}.mxl-flow/payload.sock          | Only in a flow whose backend shares its storage as file descriptors: the Unix socket on which the writer serves them to readers, from the flow's creation until the writer is released. See [The descriptor channel](PayloadStorage.md#the-descriptor-channel). |
+| \${mxlDomain}/\${flowId}.mxl-flow/payload.\*            | Only in a flow whose payload is held by a backend: the files that backend needs to share its storage, for example the exported handle of its memory. Written before the flow is published, and read only by the backend. |
 
 ### Note
 
@@ -110,7 +113,7 @@ The following example demonstrates how a FlowWriter may write a grain as slices 
 
 ### Grain storage descriptors
 
-The grain headers of a discrete flow are always in host shared memory. The payload is held by a storage whose type is fixed when the flow is created. The type is reported by `mxlGrainStorageLayout.storageType`, as a name. The default, `MXL_PAYLOAD_STORAGE_HOST_POINTER` (`"host-pointer"`), keeps the payload of each grain after its header in host shared memory. A backend can hold a storage type the SDK does not define, named with a reversed domain name, together with the meaning of the reserved bytes of the layout and of the slot description, which libmxl passes through without interpreting them.
+The grain headers of a discrete flow are always in host shared memory. The payload is held by a storage whose type is fixed when the flow is created. The type is reported by `mxlGrainStorageLayout.storageType`, as a name. The default, `MXL_PAYLOAD_STORAGE_HOST_POINTER` (`"host-pointer"`), keeps the payload of each grain after its header in host shared memory. A backend can hold a storage type the SDK does not define, named with a reversed domain name, together with the meaning of the reserved bytes of the layout and of the slot description, which libmxl passes through without interpreting them. Backends that share their storage as file descriptors, such as dma-bufs, memory files or exported GPU memory, hand them to readers through a Unix socket in the flow directory, `payload.sock`, which the writer serves. A reader receives them when it maps its slots, so the writer must still be there then: mapping the slots of a flow whose writer is gone returns `MXL_ERR_INVALID_STATE`. Writer and reader must run on the same machine, and see the same domain, for example a tmpfs mounted in both containers. [The descriptor channel](PayloadStorage.md#the-descriptor-channel) describes it.
 
 A slot is one entry of the ring buffer. The grain at index `i` is stored in slot `i % slotCount`. The storage of a flow is described in two parts, and neither changes for the lifetime of the flow:
 

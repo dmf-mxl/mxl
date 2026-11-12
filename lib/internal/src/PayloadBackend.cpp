@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <fmt/format.h>
 #include "mxl-internal/Logging.hpp"
+#include "mxl-internal/PathUtils.hpp"
 
 namespace mxl::lib
 {
@@ -24,7 +25,7 @@ namespace mxl::lib
         /** Longest accepted backend name. */
         constexpr auto MAX_BACKEND_NAME_LENGTH = std::size_t{64};
 
-        /** Storage types built into libmxl. Their names cannot be used by a backend library. */
+        /** Name of the built-in host storage in the payload options. No backend library can have it. */
         constexpr auto BUILT_IN_STORAGE_NAME_HOST = std::string_view{"host"};
 
         /**
@@ -97,11 +98,11 @@ namespace mxl::lib
          * \param[in] name The name the backend was loaded under.
          * \return An empty string if the table is valid, otherwise a description of the problem.
          */
-        std::string validateApi(mxlPayloadBackendApiV1 const& api, std::string_view name)
+        std::string validateApi(mxlPayloadBackendApi const& api, std::string_view name)
         {
-            if (api.structSize < sizeof(mxlPayloadBackendApiV1))
+            if (api.structSize < sizeof(mxlPayloadBackendApi))
             {
-                return fmt::format("function table is {} bytes, expected at least {}", api.structSize, sizeof(mxlPayloadBackendApiV1));
+                return fmt::format("function table is {} bytes, expected at least {}", api.structSize, sizeof(mxlPayloadBackendApi));
             }
             if (api.abiVersion != MXL_PAYLOAD_BACKEND_ABI_VERSION)
             {
@@ -119,6 +120,15 @@ namespace mxl::lib
                 (api.describeLayout == nullptr) || (api.mapSlots == nullptr))
             {
                 return "does not provide every function";
+            }
+            if ((api.capabilities & ~MXL_PAYLOAD_BACKEND_CAP_SHARE_DESCRIPTORS) != 0U)
+            {
+                return fmt::format("reports unknown capabilities {:#x}", api.capabilities);
+            }
+            if (((api.capabilities & MXL_PAYLOAD_BACKEND_CAP_SHARE_DESCRIPTORS) != 0U) &&
+                ((api.exportDescriptors == nullptr) || (api.importDescriptors == nullptr)))
+            {
+                return "shares descriptors but does not provide the functions to export and import them";
             }
             return {};
         }
@@ -138,7 +148,7 @@ namespace mxl::lib
 
     PayloadBackendLoader::~PayloadBackendLoader() = default;
 
-    mxlPayloadBackendApiV1 const& PayloadBackendLoader::load(std::string const& name)
+    mxlPayloadBackendApi const& PayloadBackendLoader::load(std::string const& name)
     {
         if (!isValidBackendName(name))
         {
@@ -193,7 +203,7 @@ namespace mxl::lib
 
         // Converting the object pointer returned by dlsym to a function pointer is required to work on POSIX systems.
         auto const entryPoint = reinterpret_cast<mxlGetPayloadBackendApiFn>(symbol);
-        mxlPayloadBackendApiV1 const* api = nullptr;
+        mxlPayloadBackendApi const* api = nullptr;
         if (auto const status = entryPoint(MXL_PAYLOAD_BACKEND_ABI_VERSION, &api); (status != MXL_STATUS_OK) || (api == nullptr))
         {
             ::dlclose(handle);
@@ -256,7 +266,7 @@ namespace mxl::lib
         return fmt::format("{}{}{}", BACKEND_LIBRARY_PREFIX, name, BACKEND_LIBRARY_SUFFIX);
     }
 
-    std::unique_ptr<PluginPayloadStorage> PluginPayloadStorage::prepare(mxlPayloadBackendApiV1 const& api, mxlPayloadBackendFlowInfo const& info,
+    std::unique_ptr<PluginPayloadStorage> PluginPayloadStorage::prepare(mxlPayloadBackendApi const& api, mxlPayloadBackendFlowInfo const& info,
         std::string const& options, std::filesystem::path const& stagingDir, std::filesystem::path const& finalDir)
     {
         mxlPayloadBackendInstance instance = nullptr;
@@ -265,12 +275,17 @@ namespace mxl::lib
         {
             throw PayloadStorageError{status, fmt::format("Payload backend '{}' failed to prepare the flow storage.", api.name)};
         }
-        return std::unique_ptr<PluginPayloadStorage>{
-            new PluginPayloadStorage{api, instance, info.grainCount}
+        auto result = std::unique_ptr<PluginPayloadStorage>{
+            new PluginPayloadStorage{api, instance, info.grainCount, {}}
         };
+        if (result->sharesDescriptors())
+        {
+            result->serveDescriptors(stagingDir / PAYLOAD_SOCKET_FILE_NAME);
+        }
+        return result;
     }
 
-    std::unique_ptr<PluginPayloadStorage> PluginPayloadStorage::open(mxlPayloadBackendApiV1 const& api, mxlPayloadBackendFlowInfo const& info,
+    std::unique_ptr<PluginPayloadStorage> PluginPayloadStorage::open(mxlPayloadBackendApi const& api, mxlPayloadBackendFlowInfo const& info,
         std::string const& options, std::filesystem::path const& flowDir)
     {
         mxlPayloadBackendInstance instance = nullptr;
@@ -279,19 +294,97 @@ namespace mxl::lib
             throw PayloadStorageError{status, fmt::format("Payload backend '{}' failed to open the flow storage.", api.name)};
         }
         return std::unique_ptr<PluginPayloadStorage>{
-            new PluginPayloadStorage{api, instance, info.grainCount}
+            new PluginPayloadStorage{api, instance, info.grainCount, flowDir}
         };
     }
 
-    PluginPayloadStorage::PluginPayloadStorage(mxlPayloadBackendApiV1 const& api, mxlPayloadBackendInstance instance, std::size_t slotCount) noexcept
+    PluginPayloadStorage::PluginPayloadStorage(mxlPayloadBackendApi const& api, mxlPayloadBackendInstance instance, std::size_t slotCount,
+        std::filesystem::path readerFlowDir) noexcept
         : _api{&api}
         , _instance{instance}
         , _slotCount{slotCount}
+        , _readerFlowDir{std::move(readerFlowDir)}
+        , _server{}
+        , _descriptorsMutex{}
+        , _descriptorsReceived{false}
     {}
 
     PluginPayloadStorage::~PluginPayloadStorage()
     {
+        // Stop serving before the backend closes the descriptors.
+        _server.reset();
         _api->destroy(_instance);
+    }
+
+    bool PluginPayloadStorage::sharesDescriptors() const noexcept
+    {
+        return (_api->capabilities & MXL_PAYLOAD_BACKEND_CAP_SHARE_DESCRIPTORS) != 0U;
+    }
+
+    void PluginPayloadStorage::serveDescriptors(std::filesystem::path const& socketPath)
+    {
+        auto count = std::uint32_t{0};
+        auto descriptors = std::vector<int>{};
+        auto status = _api->exportDescriptors(_instance, nullptr, 0U, &count);
+        if (status == MXL_STATUS_OK)
+        {
+            descriptors.resize(count, -1);
+            status = _api->exportDescriptors(_instance, descriptors.data(), count, &count);
+        }
+        if ((status != MXL_STATUS_OK) || (count != descriptors.size()))
+        {
+            throw PayloadStorageError{(status != MXL_STATUS_OK) ? status : MXL_ERR_INTERNAL,
+                fmt::format("Payload backend '{}' cannot export its descriptors.", _api->name)};
+        }
+
+        try
+        {
+            // Whoever may read the flow's data may receive its payload.
+            _server = std::make_unique<DescriptorServer>(socketPath, std::move(descriptors), makeFlowDataFilePath(socketPath.parent_path()));
+        }
+        catch (std::exception const& e)
+        {
+            throw PayloadStorageError{MXL_ERR_UNKNOWN, e.what()};
+        }
+    }
+
+    void PluginPayloadStorage::ensureDescriptors() const
+    {
+        if (!sharesDescriptors() || _readerFlowDir.empty() || _descriptorsReceived.load(std::memory_order_acquire))
+        {
+            return;
+        }
+
+        auto const lock = std::lock_guard{_descriptorsMutex};
+        if (_descriptorsReceived.load(std::memory_order_relaxed))
+        {
+            return;
+        }
+
+        auto received = std::vector<UniqueFd>{};
+        try
+        {
+            received = receiveDescriptors(_readerFlowDir / PAYLOAD_SOCKET_FILE_NAME);
+        }
+        catch (std::exception const& e)
+        {
+            // The usual cause is a writer that is gone, which no longer serves the socket.
+            throw PayloadStorageError{MXL_ERR_INVALID_STATE, fmt::format("Cannot receive the payload descriptors from the writer: {}", e.what())};
+        }
+
+        // The backend takes ownership of every descriptor, whatever it returns.
+        auto descriptors = std::vector<int>{};
+        descriptors.reserve(received.size());
+        for (auto& fd : received)
+        {
+            descriptors.push_back(fd.release());
+        }
+        if (auto const status = _api->importDescriptors(_instance, descriptors.data(), static_cast<std::uint32_t>(descriptors.size()));
+            status != MXL_STATUS_OK)
+        {
+            throw PayloadStorageError{status, fmt::format("Payload backend '{}' rejected the payload descriptors.", _api->name)};
+        }
+        _descriptorsReceived.store(true, std::memory_order_release);
     }
 
     std::string_view PluginPayloadStorage::type() const noexcept
@@ -310,6 +403,7 @@ namespace mxl::lib
         {
             throw std::out_of_range{fmt::format("Slot {} is out of range, the storage has {} slots.", slot, _slotCount)};
         }
+        ensureDescriptors();
 
         auto result = mxlGrainStorage{};
         std::memset(&result, 0, sizeof(result));
@@ -337,6 +431,7 @@ namespace mxl::lib
 
     void PluginPayloadStorage::mapSlots() const
     {
+        ensureDescriptors();
         if (auto const status = _api->mapSlots(_instance); status != MXL_STATUS_OK)
         {
             throw PayloadStorageError{status, fmt::format("Payload backend '{}' cannot map the flow storage.", _api->name)};

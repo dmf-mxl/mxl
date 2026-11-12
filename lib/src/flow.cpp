@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <exception>
 #include <filesystem>
+#include <stdexcept>
 #include <string>
 #include <uuid.h>
 #include <sys/file.h>
@@ -171,6 +172,12 @@ mxlStatus mxlCreateFlowReader(mxlInstance instance, char const* flowId, char con
     {
         MXL_ERROR("Failed to create flow reader: {}", e.what());
         return e.status();
+    }
+    catch (std::invalid_argument const& e)
+    {
+        // The options are not a JSON object.
+        MXL_ERROR("Failed to create flow reader: {}", e.what());
+        return MXL_ERR_INVALID_ARG;
     }
     catch (...)
     {

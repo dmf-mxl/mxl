@@ -42,8 +42,8 @@ namespace mxl::lib
         /**
          * Accessor for the storage that holds the grain payloads.
          * \return The payload storage.
-         * \throws std::logic_error if no storage was set. This is the case for flow data that is only used to
-         *      read grain headers, such as the copy held by the domain watcher.
+         * \throws std::logic_error if no storage was set. The flow manager sets one on every discrete flow it
+         *      creates or opens.
          */
         [[nodiscard]]
         PayloadStorage const& payloadStorage() const;

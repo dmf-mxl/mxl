@@ -291,7 +291,7 @@ TEST_CASE("Plugin payload storage: open does not import the payload", "[payload 
     auto const& api = testLoader().load("test-file");
     auto const domain = TempDirectory{};
 
-    // There is no payload file. Opening still succeeds, because the backend only imports on first slot access.
+    // There is no payload file. Opening still succeeds, because the backend only imports when the slots are mapped or first accessed.
     auto storage = PluginPayloadStorage::open(api, testFlowInfo(MXL_PAYLOAD_BACKEND_ACCESS_READ_ONLY), "{}", domain.path);
     REQUIRE(storage->slotCount() == 4U);
     REQUIRE(storage->type() == MXL_PAYLOAD_STORAGE_HOST_POINTER);

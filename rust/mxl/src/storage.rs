@@ -6,8 +6,8 @@
 //! The payload of a discrete flow is in host memory, or in storage that a payload backend holds,
 //! such as device memory. The layout describes the storage of all the slots of a flow, and each
 //! slot has its own description. The storage type of the layout, a name, says how to read both.
-//! Storage types other than host memory keep their own fields, such as handles and the device, in the reserved
-//! bytes of both, which `reserved` and `reserved_mut` give access to.
+//! Storage types other than host memory keep their own fields, such as handles and the device, in
+//! the reserved bytes of both, which `reserved` and `reserved_mut` give access to.
 
 use std::{ffi::CStr, sync::Arc};
 
@@ -176,7 +176,8 @@ impl std::fmt::Debug for GrainStorage {
     }
 }
 
-/// Keeps the reader or the writer whose library owns the handles in mapped slot descriptions.
+/// Keeps alive the reader or the writer whose release would close the handles in mapped slot
+/// descriptions.
 enum SlotOwner {
     Reader(#[allow(dead_code)] Arc<FlowReaderResource>),
     Writer(#[allow(dead_code)] Arc<FlowWriterResource>),

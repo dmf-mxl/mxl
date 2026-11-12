@@ -80,8 +80,9 @@ namespace mxl::lib
         ///     backend that holds the payload of the flow. Only the options of the call that creates the reader are used. Later
         ///     calls for the same flow return the existing reader.
         /// \return A pointer to the flow reader. Each successful call must be paired with a call to releaseReader().
-        /// \throws PayloadStorageError with MXL_ERR_INVALID_ARG if the options are invalid, or with the backend's status if the
-        ///     backend rejects them.
+        /// \throws std::invalid_argument if the options are not a JSON object.
+        /// \throws PayloadStorageError with MXL_ERR_INVALID_ARG if the "payload" object is invalid, with the backend's status if
+        ///     the backend rejects it, or as FlowManager::openFlowWithPayloadOptions().
         ///
         FlowReader* getFlowReaderWithOptions(std::string const& flowId, std::string const& options);
 

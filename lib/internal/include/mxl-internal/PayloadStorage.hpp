@@ -158,7 +158,7 @@ namespace mxl::lib
 
     /**
      * Payload storage in host shared memory. This is the storage used by all flows created before storage types
-     * existed, and by all flows created without an explicit storage type.
+     * existed, and by all flows whose writer names no backend, or names "host".
      *
      * The payload of each slot directly follows its grain header in the shared memory segment of the grain.
      * The storage does not own that memory. The segments belong to the DiscreteFlowData the storage was built

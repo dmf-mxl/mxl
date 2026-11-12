@@ -156,7 +156,7 @@ impl GrainReader {
     /// Maps the storage of every slot into this process, for example by receiving the file
     /// descriptors of a backend's storage from the writer. Call it once, before reading grains with
     /// `get_grain_slot`. If a read later returns `Error::FlowInvalid`, the descriptions are stale:
-    /// create a new reader and map it again.
+    /// drop this reader and the `MappedSlots` it returned, then create a new reader and map it again.
     pub fn map_slots(&self) -> Result<MappedSlots> {
         let layout = self.storage_layout()?;
         let slot_count = layout.slot_count();
@@ -176,7 +176,8 @@ impl GrainReader {
     /// slices, and returns the slot that holds it. `GRAIN_VALID_SLICES_ALL` waits for the complete
     /// grain. Works for every storage type: the payload is in the slot's storage, in `MappedSlots`.
     ///
-    /// Returns `Error::OutOfRangeTooEarly` if the grain is not available in time.
+    /// Returns `Error::OutOfRangeTooEarly` if the grain is not available in time,
+    /// `Error::OutOfRangeTooLate` if it was overwritten, and `Error::FlowInvalid` if the flow is stale.
     pub fn get_grain_slot(
         &self,
         index: u64,

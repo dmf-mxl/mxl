@@ -68,16 +68,18 @@ A backend flow has one writer. A second writer returns `MXL_ERR_CONFLICT`. Inval
 
 The interface is the internal header `lib/internal/include/mxl-internal/PayloadBackendAbi.h`. It is not installed, and an application cannot register a backend. Only C types cross the boundary. A backend function must not throw a C++ exception.
 
-Each library exports one symbol, `mxlGetPayloadBackendApi`. libmxl calls it with interface version 1 (`MXL_PAYLOAD_BACKEND_ABI_VERSION`) and receives `mxlPayloadBackendApiV1`. The table's `name` must equal the name used to load the library. `storageType` must be a valid storage type name. The functions must all be set.
+Each library exports one symbol, `mxlGetPayloadBackendApi`. libmxl calls it with interface version 2 (`MXL_PAYLOAD_BACKEND_ABI_VERSION`) and receives `mxlPayloadBackendApi`. The table's `name` must equal the name used to load the library. `storageType` must be a valid storage type name. The functions must all be set.
 
 | Entry | Role |
 |---|---|
-| `prepare` | Writer. Allocate the payload, write import files in the staging flow directory, and start serving what readers need. Before the flow is published. |
+| `prepare` | Writer. Allocate the payload and write import files in the staging flow directory. Before the flow is published. |
 | `open` | Reader, or a flow that already exists. Must not import device memory. |
-| `destroy` | Release the instance, its allocations, and its imports. |
+| `destroy` | Release the instance, its allocations, its imports, and the descriptors it exported. |
 | `describeLayout` | Complete the layout. Set the device in the reserved bytes. May change plane pitch. Must not import memory. |
 | `mapSlots` | Import every slot. Later calls return success and do no further work. |
 | `slotStorage` | Fill `mxlGrainStorage` for one slot. Imports first if `mapSlots` was not called. |
+| `exportDescriptors` | Writer, with the `MXL_PAYLOAD_BACKEND_CAP_SHARE_DESCRIPTORS` capability. Return the file descriptors that readers need. The instance keeps them open until `destroy`. |
+| `importDescriptors` | Reader, with the same capability. Take the descriptors libmxl received from `payload.sock`. The backend owns them, also when it returns an error. |
 
 libmxl passes a `mxlPayloadBackendFlowInfo`: slot count, grain payload size, access mode, plane count, slices per grain, slice sizes, and the flow's `mxlDataFormat`. libmxl does not choose which formats a backend may store. The backend rejects a format it cannot hold.
 
@@ -87,9 +89,9 @@ libmxl passes a `mxlPayloadBackendFlowInfo`: slot count, grain payload size, acc
 
 `libmxl-payload-cuda-linear.so` is built when `MXL_ENABLE_CUDA_PAYLOAD` is on. It links the static CUDA runtime. libmxl does not link CUDA. The backend stores video flows only. It rejects other formats.
 
-The writer resolves `deviceUuid` to a CUDA device in its own process, creates one virtual-memory allocation for every slot, aligns each slot to 256 bytes, and exports the allocation once as a POSIX file descriptor. The writer serves that descriptor on `payload.sock` in the flow directory. A reader in another process connects to `payload.sock` in `mapSlots`, receives the descriptor, and imports it. A reader in the writer's process shares the allocation through a registry inside the process. The allocation stays alive for that reader after the writer is released.
+The writer resolves `deviceUuid` to a CUDA device in its own process, creates one virtual-memory allocation for every slot, aligns each slot to 256 bytes, and exports the allocation once as a POSIX file descriptor. The instance keeps that descriptor open and returns it from `exportDescriptors`. libmxl serves it on `payload.sock` in the flow directory. A reader in another process gets the descriptor from libmxl, which receives it from `payload.sock`, and passes it to `importDescriptors`. The backend imports it in `mapSlots`. A reader in the writer's process shares the allocation through a registry inside the process. The allocation stays alive for that reader after the writer is released.
 
-The socket sends the descriptor only to a process that may read the flow directory. A writer whose publish fails removes only the socket it bound.
+libmxl sends the descriptor only to a process that may read the flow directory. A writer whose publish fails removes only the socket it bound.
 
 A reader that passes a different visible `deviceUuid` maps the allocation with peer access when `cudaDeviceCanAccessPeer` allows it. Device writes for a grain must be finished before `mxlFlowWriterCommitGrain`.
 

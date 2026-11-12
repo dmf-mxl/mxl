@@ -3,7 +3,9 @@
 
 use std::{collections::HashMap, process, str::FromStr};
 
-use crate::mxlsink::imp::CAT;
+use crate::mxlsink::{
+    imp::CAT, render_continuous::SampleAlignment, render_discrete::GrainAlignment,
+};
 use gst::StructureRef;
 use gst::prelude::*;
 use gst_audio::AudioInfo;
@@ -23,6 +25,14 @@ use uuid::Uuid;
 pub(crate) const DEFAULT_FLOW_ID: &str = "";
 pub(crate) const DEFAULT_DOMAIN: &str = "";
 pub(crate) const GROUPHINT_TAG: &str = "urn:x-nmos:tag:grouphint/v1.0";
+/// Largest difference between a buffer's timestamp and the end of the previous
+/// buffer that the sink still treats as continuous audio.
+pub(crate) const DEFAULT_ALIGNMENT_THRESHOLD_NS: u64 = 40_000_000;
+/// How long buffer timestamps must stay further than the alignment threshold
+/// from the end of the previous buffer before the sink resyncs to them. MXL
+/// time keeps running while a pipeline is paused or a source stops, so any
+/// wait writes the samples that follow behind MXL now.
+pub(crate) const DEFAULT_DISCONT_WAIT_NS: u64 = 0;
 
 #[derive(Debug, Clone)]
 pub(crate) struct Settings {
@@ -36,6 +46,10 @@ pub(crate) struct Settings {
     pub description: String,
     /// `urn:x-nmos:tag:grouphint/v1.0` value. Empty keeps the built-in default.
     pub group_hint: String,
+    /// Audio timestamp alignment threshold in nanoseconds.
+    pub alignment_threshold: u64,
+    /// Audio discontinuity wait in nanoseconds.
+    pub discont_wait: u64,
 }
 
 impl Default for Settings {
@@ -46,6 +60,8 @@ impl Default for Settings {
             label: String::new(),
             description: String::new(),
             group_hint: String::new(),
+            alignment_threshold: DEFAULT_ALIGNMENT_THRESHOLD_NS,
+            discont_wait: DEFAULT_DISCONT_WAIT_NS,
         }
     }
 }
@@ -158,6 +174,7 @@ pub(crate) struct DiscreteState {
     pub format: DiscreteFormat,
     pub writer: GrainWriter,
     pub flow_def: DiscreteFlowDef,
+    pub alignment: GrainAlignment,
 }
 
 /// Video vs data details stored alongside the discrete writer.
@@ -170,6 +187,7 @@ pub(crate) enum DiscreteFlowDef {
 pub(crate) struct ContinuousState {
     pub writer: SamplesWriter,
     pub flow_def: FlowDefAudio,
+    pub alignment: SampleAlignment,
 }
 
 #[derive(Default)]
@@ -300,6 +318,7 @@ pub(crate) fn init_state_with_video(
         format: DiscreteFormat::Video,
         writer,
         flow_def: DiscreteFlowDef::Video(flow_def_details),
+        alignment: GrainAlignment::default(),
     }));
     state.flow_config = Some(flow);
 
@@ -381,6 +400,7 @@ pub(crate) fn init_state_with_audio(
     state.flow_state = Some(FlowState::Continuous(ContinuousState {
         writer,
         flow_def: flow_def_details,
+        alignment: SampleAlignment::default(),
     }));
     state.flow_config = Some(flow);
 
@@ -466,6 +486,7 @@ pub(crate) fn init_state_with_data(
         format: DiscreteFormat::Data,
         writer,
         flow_def: DiscreteFlowDef::Data(flow_def_details),
+        alignment: GrainAlignment::default(),
     }));
     state.flow_config = Some(flow);
 

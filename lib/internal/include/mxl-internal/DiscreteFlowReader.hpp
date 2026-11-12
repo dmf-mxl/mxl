@@ -90,7 +90,8 @@ namespace mxl::lib
          * Map the storage of every slot into this process and describe each slot. See mxlFlowReaderMapSlots().
          * \param[in] in_slotCount The number of entries in out_slots. Must be equal to the slot count of the layout.
          * \param[out] out_slots A valid pointer to in_slotCount structures. Entry i receives the description of slot i.
-         * \return MXL_STATUS_OK on success, or MXL_ERR_INVALID_ARG if in_slotCount does not match the layout.
+         * \return MXL_STATUS_OK on success, or MXL_ERR_INVALID_ARG if out_slots is null or in_slotCount does not match
+         *      the layout.
          * \throws PayloadStorageError if the storage cannot be mapped in this process.
          */
         virtual mxlStatus mapSlots(std::uint32_t in_slotCount, mxlGrainStorage* out_slots) const = 0;
