@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <ada.h>
@@ -17,10 +18,13 @@
 #include <fmt/format.h>
 #include <gsl/span>
 #include <picojson/wrapper.h>
+#include <mxl/dataformat.h>
 #include <mxl/flow.h>
 #include <mxl/flowinfo.h>
 #include <mxl/mxl.h>
+#include <mxl/rational.h>
 #include <mxl/time.h>
+#include "Latency.hpp"
 
 namespace
 {
@@ -92,13 +96,20 @@ namespace
             picojson::value _doc;
         };
 
+        /// Holds a flow's info and its open reader so that operator<< can print the info and measure latency.
         struct LatencyPrinter
         {
-            constexpr explicit LatencyPrinter(::mxlFlowInfo const& info) noexcept
-                : flowInfo{&info}
+            /**
+             * @param[in] reader Reader open on the flow. It must stay open while the printer is used.
+             * @param[in] info Flow info to print. It must outlive the printer.
+             */
+            constexpr LatencyPrinter(::mxlFlowReader reader, ::mxlFlowInfo const& info) noexcept
+                : flowReader{reader}
+                , flowInfo{&info}
             {}
 
-            ::mxlFlowInfo const* flowInfo;
+            ::mxlFlowReader flowReader;    ///< Reader used to wait for the next commit.
+            ::mxlFlowInfo const* flowInfo; ///< Flow info to print. Not owned.
         };
 
         bool isTerminal(std::ostream& os) noexcept
@@ -114,13 +125,25 @@ namespace
             return false; // treat all other ostreams as non-terminal
         }
 
-        void outputLatency(std::ostream& os, std::uint64_t headIndex, ::mxlRational const& grainRate, std::uint64_t limit)
+        /**
+         * @brief Print the latency line of a flow.
+         * @param[in,out] os Stream to print to. The line is colored when the stream is a terminal.
+         * @param[in] headIndex Head index to measure from.
+         * @param[in] nowNs TAI time in ns at which to measure.
+         * @param[in] grainRate Grain or sample rate of the flow.
+         * @param[in] limit Ring length of the flow in indices. A latency above it is red, and a latency equal to it is
+         *            yellow.
+         * @param[in] atCommit True when @p nowNs is the time the reader saw the commit of @p headIndex. The line then
+         *            has one ms value. False for a snapshot, where the line has a ms range.
+         */
+        void outputLatency(std::ostream& os, std::uint64_t headIndex, std::uint64_t nowNs, ::mxlRational const& grainRate, std::uint64_t limit,
+            bool atCommit)
         {
-            auto const now = ::mxlGetTime();
-            auto const currentIndex = ::mxlTimestampToIndex(&grainRate, now);
+            auto const currentIndex = ::mxlTimestampToIndex(&grainRate, nowNs);
 
             // Grain headIndex spans [timestamp(headIndex), timestamp(headIndex + 1)).
-            // The actual event time is somewhere in that interval, so the latency is a range.
+            // A snapshot is taken at any point in that interval, so its latency is a range. At a commit, the latency
+            // is the time from the head grain's timestamp, which is its start, to when the reader saw the commit.
             auto const grainStartNs = mxlIndexToTimestamp(&grainRate, headIndex);
             auto const grainEndNs = mxlIndexToTimestamp(&grainRate, headIndex + 1);
 
@@ -142,8 +165,9 @@ namespace
                 return (a >= b) ? static_cast<double>(a - b) / 1'000'000.0 : -static_cast<double>(b - a) / 1'000'000.0;
             };
 
-            auto const latencyMinMs = signedDiffMs(now, grainEndNs);
-            auto const latencyMaxMs = signedDiffMs(now, grainStartNs);
+            auto const latencyMinMs = signedDiffMs(nowNs, grainEndNs);
+            auto const latencyMaxMs = signedDiffMs(nowNs, grainStartNs);
+            auto const latencyText = atCommit ? fmt::format("{:.2f}", latencyMaxMs) : fmt::format("[{:.2f} .. {:.2f}]", latencyMinMs, latencyMaxMs);
 
             char const* sign = (inTheFuture ? "-" : "");
 
@@ -159,16 +183,11 @@ namespace
                     color = fmt::color::yellow;
                 }
 
-                os << '\t'
-                   << fmt::format(
-                          fmt::fg(color), "{: >20}: {}{}, [{:.2f} .. {:.2f}]", "Latency (grains, ms)", sign, latencyGrains, latencyMinMs, latencyMaxMs)
-                   << std::endl;
+                os << '\t' << fmt::format(fmt::fg(color), "{: >20}: {}{}, {}", "Latency (grains, ms)", sign, latencyGrains, latencyText) << std::endl;
             }
             else
             {
-                os << '\t'
-                   << fmt::format("{: >20}: {}{}, [{:.2f} .. {:.2f}]", "Latency (grains, ms)", sign, latencyGrains, latencyMinMs, latencyMaxMs)
-                   << std::endl;
+                os << '\t' << fmt::format("{: >20}: {}{}, {}", "Latency (grains, ms)", sign, latencyGrains, latencyText) << std::endl;
             }
         }
 
@@ -246,23 +265,42 @@ namespace
 
         std::ostream& operator<<(std::ostream& os, LatencyPrinter const& lp)
         {
-            os << *lp.flowInfo;
-
-            if (::mxlIsDiscreteDataFormat(lp.flowInfo->config.common.format))
+            // Wait before printing, so the head index and write time printed above the latency line are the ones
+            // the latency is measured from.
+            auto info = *lp.flowInfo;
+            auto const sample = mxl::info::waitForNextCommit(lp.flowReader, info);
+            if (sample)
             {
-                outputLatency(os, lp.flowInfo->runtime.headIndex, lp.flowInfo->config.common.grainRate, lp.flowInfo->config.discrete.grainCount);
+                info.runtime = sample->runtime;
             }
-            else if (::mxlIsContinuousDataFormat(lp.flowInfo->config.common.format))
+            os << info;
+
+            // Event flows have no rings of grains or samples, so they have no latency line.
+            if (mxl::info::ringLength(info) == 0)
             {
-                outputLatency(os, lp.flowInfo->runtime.headIndex, lp.flowInfo->config.common.grainRate, lp.flowInfo->config.continuous.bufferLength);
+                return os;
+            }
+
+            auto const limit = mxl::info::ringLength(info);
+            auto const nowNs = sample ? sample->nowNs : ::mxlGetTime();
+            outputLatency(os, info.runtime.headIndex, nowNs, info.config.common.grainRate, limit, sample.has_value());
+            if (!sample)
+            {
+                os << '\t' << fmt::format("{: >20}: {}", "Next commit", "not seen, latency is a snapshot") << std::endl;
             }
             return os;
         }
     }
 
-    detail::LatencyPrinter formatWithLatency(::mxlFlowInfo const& info)
+    /**
+     * @brief Wrap a flow for printing with its latency line.
+     * @param[in] reader Reader open on the flow. It must stay open until the result is printed.
+     * @param[in] info Flow info to print. It must outlive the result.
+     * @return Printer object for operator<<.
+     */
+    detail::LatencyPrinter formatWithLatency(::mxlFlowReader reader, ::mxlFlowInfo const& info)
     {
-        return detail::LatencyPrinter{info};
+        return detail::LatencyPrinter{reader, info};
     }
 
     class ScopedMxlInstance
@@ -301,6 +339,44 @@ namespace
 
     private:
         ::mxlInstance _instance;
+    };
+
+    /// Release a flow reader when it goes out of scope.
+    /// The reader must already be created. Creation stays with the caller so it can report its own error.
+    class ScopedFlowReader
+    {
+    public:
+        /**
+         * @brief Take over the release of a reader that is already created.
+         * @param[in] instance Instance that created the reader. It must outlive this object.
+         * @param[in] reader Reader to release when this object is destroyed.
+         */
+        ScopedFlowReader(::mxlInstance instance, ::mxlFlowReader reader) noexcept
+            : _instance{instance}
+            , _reader{reader}
+        {}
+
+        ScopedFlowReader(ScopedFlowReader&&) = delete;
+        ScopedFlowReader(ScopedFlowReader const&) = delete;
+
+        ScopedFlowReader& operator=(ScopedFlowReader&&) = delete;
+        ScopedFlowReader& operator=(ScopedFlowReader const&) = delete;
+
+        /// Release the reader.
+        ~ScopedFlowReader()
+        {
+            ::mxlReleaseFlowReader(_instance, _reader);
+        }
+
+        /// @return The reader handle. It is valid while this object exists.
+        constexpr operator ::mxlFlowReader() const noexcept
+        {
+            return _reader;
+        }
+
+    private:
+        ::mxlInstance _instance; ///< Instance that created the reader.
+        ::mxlFlowReader _reader; ///< Reader released by the destructor.
     };
 
     /// Generate an MXL URI for a given domain and list of flow ids.  This is useful for users to copy and paste into the command line to quickly
@@ -509,8 +585,9 @@ namespace
         return EXIT_SUCCESS;
     }
 
-    /// Print detailed information about a specific flow in the MXL domain, including its configuration and runtime status.  Also print the latency of
-    /// the flow in grains/samples.
+    /// Print detailed information about a specific flow in the MXL domain, including its configuration and runtime status. For discrete and
+    /// continuous flows, also print the latency, measured when the writer commits its next grain or samples. If no commit arrives within one
+    /// history duration, the latency is taken from the current state of the flow.
     /// \param in_domain The MXL domain the flow belongs to.
     /// \param in_id The id of the flow to print information about.
     /// \return EXIT_SUCCESS if the operation was successful, EXIT_FAILURE otherwise.
@@ -525,12 +602,12 @@ namespace
         {
             // Extract the mxlFlowInfo structure.
             auto info = ::mxlFlowInfo{};
+            auto const readerGuard = ScopedFlowReader{instance, reader};
             auto const getInfoStatus = ::mxlFlowReaderGetInfo(reader, &info);
-            ::mxlReleaseFlowReader(instance, reader);
 
             if (getInfoStatus == MXL_STATUS_OK)
             {
-                std::cout << formatWithLatency(info);
+                std::cout << formatWithLatency(reader, info);
 
                 auto active = false;
                 if (auto const status = ::mxlIsFlowActive(instance, in_id.c_str(), &active); status == MXL_STATUS_OK)
