@@ -6,6 +6,9 @@ var annotated_dup =
     ] ],
     [ "mxl", "namespacemxl.html", [
       [ "lib", "namespacemxl_1_1lib.html", [
+        [ "detail", "namespacemxl_1_1lib_1_1detail.html", [
+          [ "LimitedJsonParseContext", "classmxl_1_1lib_1_1detail_1_1LimitedJsonParseContext.html", "classmxl_1_1lib_1_1detail_1_1LimitedJsonParseContext" ]
+        ] ],
         [ "fabrics", "namespacemxl_1_1lib_1_1fabrics.html", [
           [ "ofi", "namespacemxl_1_1lib_1_1fabrics_1_1ofi.html", [
             [ "AddressVector", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AddressVector.html", "classmxl_1_1lib_1_1fabrics_1_1ofi_1_1AddressVector" ],
@@ -107,6 +110,7 @@ var annotated_dup =
         [ "Grain", "structmxl_1_1lib_1_1Grain.html", "structmxl_1_1lib_1_1Grain" ],
         [ "GrainHeader", "structmxl_1_1lib_1_1GrainHeader.html", "structmxl_1_1lib_1_1GrainHeader" ],
         [ "Instance", "classmxl_1_1lib_1_1Instance.html", "classmxl_1_1lib_1_1Instance" ],
+        [ "JsonLimits", "structmxl_1_1lib_1_1JsonLimits.html", "structmxl_1_1lib_1_1JsonLimits" ],
         [ "PosixContinuousFlowReader", "classmxl_1_1lib_1_1PosixContinuousFlowReader.html", "classmxl_1_1lib_1_1PosixContinuousFlowReader" ],
         [ "PosixContinuousFlowWriter", "classmxl_1_1lib_1_1PosixContinuousFlowWriter.html", "classmxl_1_1lib_1_1PosixContinuousFlowWriter" ],
         [ "PosixDiscreteFlowReader", "classmxl_1_1lib_1_1PosixDiscreteFlowReader.html", "classmxl_1_1lib_1_1PosixDiscreteFlowReader" ],

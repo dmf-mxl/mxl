@@ -124,25 +124,25 @@ Inheritance diagram for mxl::lib::fabrics::ofi::EgressProtocol:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ab86828061b8e297cf9a6d67dd0c35937" id="r_ab86828061b8e297cf9a6d67dd0c35937"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html#ab86828061b8e297cf9a6d67dd0c35937">hasPendingWork</a> () const =0</td></tr>
+<tr class="memitem:ab86828061b8e297cf9a6d67dd0c35937" id="r_ab86828061b8e297cf9a6d67dd0c35937"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">virtual</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html#ab86828061b8e297cf9a6d67dd0c35937">hasPendingWork</a> () <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> =0</td></tr>
 <tr class="memdesc:ab86828061b8e297cf9a6d67dd0c35937"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if there is uncompleted requests.  <br /></td></tr>
 <tr class="separator:ab86828061b8e297cf9a6d67dd0c35937"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6fc8a2167f5445669301515dbc51edc7" id="r_a6fc8a2167f5445669301515dbc51edc7"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html#a6fc8a2167f5445669301515dbc51edc7">processCompletion</a> (<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion.html">Completion</a> const &amp;completion)=0</td></tr>
+<tr class="memitem:a6fc8a2167f5445669301515dbc51edc7" id="r_a6fc8a2167f5445669301515dbc51edc7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">virtual</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html#a6fc8a2167f5445669301515dbc51edc7">processCompletion</a> (<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion.html">Completion</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;<a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">completion</a>)=0</td></tr>
 <tr class="memdesc:a6fc8a2167f5445669301515dbc51edc7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Process a completion event. Any post-processing after a transfer should be done here.  <br /></td></tr>
 <tr class="separator:a6fc8a2167f5445669301515dbc51edc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:affd274ad449a7f90e19caff3ff59dc6c" id="r_affd274ad449a7f90e19caff3ff59dc6c"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html#affd274ad449a7f90e19caff3ff59dc6c">registerMemory</a> (std::shared_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Domain.html">Domain</a> &gt; domain)=0</td></tr>
+<tr class="memitem:affd274ad449a7f90e19caff3ff59dc6c" id="r_affd274ad449a7f90e19caff3ff59dc6c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">virtual</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html#affd274ad449a7f90e19caff3ff59dc6c">registerMemory</a> (std::shared_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Domain.html">Domain</a> &gt; domain)=0</td></tr>
 <tr class="memdesc:affd274ad449a7f90e19caff3ff59dc6c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register local memory regions used in this protocol.  <br /></td></tr>
 <tr class="separator:affd274ad449a7f90e19caff3ff59dc6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abb7a9432653984f9213aaaac8ae5ff88" id="r_abb7a9432653984f9213aaaac8ae5ff88"><td class="memItemLeft" align="right" valign="top">virtual std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html#abb7a9432653984f9213aaaac8ae5ff88">reset</a> ()=0</td></tr>
+<tr class="memitem:abb7a9432653984f9213aaaac8ae5ff88" id="r_abb7a9432653984f9213aaaac8ae5ff88"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">virtual</a> std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html#abb7a9432653984f9213aaaac8ae5ff88">reset</a> ()=0</td></tr>
 <tr class="memdesc:abb7a9432653984f9213aaaac8ae5ff88"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy the protocol object.  <br /></td></tr>
 <tr class="separator:abb7a9432653984f9213aaaac8ae5ff88"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aca084ca7e05cd34b88c1b9ad74f08e97" id="r_aca084ca7e05cd34b88c1b9ad74f08e97"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html#aca084ca7e05cd34b88c1b9ad74f08e97">transferGrain</a> (<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html">Endpoint</a> const &amp;ep, std::uint64_t localIndex, std::uint64_t remoteIndex, std::uint32_t payloadOffset, <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1SliceRange.html">SliceRange</a> const &amp;sliceRange, ::fi_addr_t destAddr=FI_ADDR_UNSPEC)=0</td></tr>
+<tr class="memitem:aca084ca7e05cd34b88c1b9ad74f08e97" id="r_aca084ca7e05cd34b88c1b9ad74f08e97"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">virtual</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html#aca084ca7e05cd34b88c1b9ad74f08e97">transferGrain</a> (<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html">Endpoint</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;ep, std::uint64_t <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">localIndex</a>, std::uint64_t <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">remoteIndex</a>, std::uint32_t <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">payloadOffset</a>, <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1SliceRange.html">SliceRange</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;<a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">sliceRange</a>, <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">::fi_addr_t</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">destAddr</a>=<a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">FI_ADDR_UNSPEC</a>)=0</td></tr>
 <tr class="memdesc:aca084ca7e05cd34b88c1b9ad74f08e97"><td class="mdescLeft">&#160;</td><td class="mdescRight">Transfer a grain to a remote target.  <br /></td></tr>
 <tr class="separator:aca084ca7e05cd34b88c1b9ad74f08e97"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afa82c2a1984823e6735ddecbdc6f9d0e" id="r_afa82c2a1984823e6735ddecbdc6f9d0e"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html#afa82c2a1984823e6735ddecbdc6f9d0e">transferSamples</a> (<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html">Endpoint</a> const &amp;ep, std::uint64_t headIndex, std::size_t count, ::fi_addr_t destAddr=FI_ADDR_UNSPEC)=0</td></tr>
+<tr class="memitem:afa82c2a1984823e6735ddecbdc6f9d0e" id="r_afa82c2a1984823e6735ddecbdc6f9d0e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">virtual</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html#afa82c2a1984823e6735ddecbdc6f9d0e">transferSamples</a> (<a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html">Endpoint</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;ep, std::uint64_t headIndex, std::size_t count, <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">::fi_addr_t</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">destAddr</a>=<a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">FI_ADDR_UNSPEC</a>)=0</td></tr>
 <tr class="memdesc:afa82c2a1984823e6735ddecbdc6f9d0e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Transfer samples to a remote target.  <br /></td></tr>
 <tr class="separator:afa82c2a1984823e6735ddecbdc6f9d0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8799ab0ec57e7c99ceb2fa991b842f29" id="r_a8799ab0ec57e7c99ceb2fa991b842f29"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html#a8799ab0ec57e7c99ceb2fa991b842f29">~EgressProtocol</a> ()=default</td></tr>
+<tr class="memitem:a8799ab0ec57e7c99ceb2fa991b842f29" id="r_a8799ab0ec57e7c99ceb2fa991b842f29"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">virtual</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1EgressProtocol.html#a8799ab0ec57e7c99ceb2fa991b842f29">~EgressProtocol</a> ()=<a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">default</a></td></tr>
 <tr class="separator:a8799ab0ec57e7c99ceb2fa991b842f29"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -161,7 +161,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual mxl::lib::fabrics::ofi::EgressProtocol::~EgressProtocol </td>
+          <td class="memname"><a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">virtual</a> mxl::lib::fabrics::ofi::EgressProtocol::~EgressProtocol </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -187,7 +187,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual bool mxl::lib::fabrics::ofi::EgressProtocol::hasPendingWork </td>
+          <td class="memname"><a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">virtual</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">bool</a> mxl::lib::fabrics::ofi::EgressProtocol::hasPendingWork </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -216,9 +216,9 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual void mxl::lib::fabrics::ofi::EgressProtocol::processCompletion </td>
+          <td class="memname"><a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">virtual</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">void</a> mxl::lib::fabrics::ofi::EgressProtocol::processCompletion </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion.html">Completion</a> const &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Completion.html">Completion</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;&#160;</td>
           <td class="paramname"><em>completion</em></td><td>)</td>
           <td></td>
         </tr>
@@ -246,7 +246,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual void mxl::lib::fabrics::ofi::EgressProtocol::registerMemory </td>
+          <td class="memname"><a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">virtual</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">void</a> mxl::lib::fabrics::ofi::EgressProtocol::registerMemory </td>
           <td>(</td>
           <td class="paramtype">std::shared_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Domain.html">Domain</a> &gt;&#160;</td>
           <td class="paramname"><em>domain</em></td><td>)</td>
@@ -283,7 +283,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual std::size_t mxl::lib::fabrics::ofi::EgressProtocol::reset </td>
+          <td class="memname"><a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">virtual</a> std::size_t mxl::lib::fabrics::ofi::EgressProtocol::reset </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -313,9 +313,9 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual void mxl::lib::fabrics::ofi::EgressProtocol::transferGrain </td>
+          <td class="memname"><a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">virtual</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">void</a> mxl::lib::fabrics::ofi::EgressProtocol::transferGrain </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html">Endpoint</a> const &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html">Endpoint</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;&#160;</td>
           <td class="paramname"><em>ep</em>, </td>
         </tr>
         <tr>
@@ -339,14 +339,14 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1SliceRange.html">SliceRange</a> const &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1SliceRange.html">SliceRange</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;&#160;</td>
           <td class="paramname"><em>sliceRange</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">::fi_addr_t&#160;</td>
-          <td class="paramname"><em>destAddr</em> = <code>FI_ADDR_UNSPEC</code>&#160;</td>
+          <td class="paramtype"><a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">::fi_addr_t</a>&#160;</td>
+          <td class="paramname"><em>destAddr</em> = <code><a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">FI_ADDR_UNSPEC</a></code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -387,9 +387,9 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual void mxl::lib::fabrics::ofi::EgressProtocol::transferSamples </td>
+          <td class="memname"><a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">virtual</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">void</a> mxl::lib::fabrics::ofi::EgressProtocol::transferSamples </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html">Endpoint</a> const &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classmxl_1_1lib_1_1fabrics_1_1ofi_1_1Endpoint.html">Endpoint</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;&#160;</td>
           <td class="paramname"><em>ep</em>, </td>
         </tr>
         <tr>
@@ -407,8 +407,8 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">::fi_addr_t&#160;</td>
-          <td class="paramname"><em>destAddr</em> = <code>FI_ADDR_UNSPEC</code>&#160;</td>
+          <td class="paramtype"><a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">::fi_addr_t</a>&#160;</td>
+          <td class="paramname"><em>destAddr</em> = <code><a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">FI_ADDR_UNSPEC</a></code>&#160;</td>
         </tr>
         <tr>
           <td></td>

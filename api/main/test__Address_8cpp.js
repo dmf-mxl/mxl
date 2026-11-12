@@ -8,5 +8,6 @@ var test__Address_8cpp =
     [ "TEST_CASE", "test__Address_8cpp.html#a94089101b50b67d770e3a429066d7b96", null ],
     [ "TEST_CASE", "test__Address_8cpp.html#a119a7569a5cd3d46a675fb768267d8a1", null ],
     [ "TEST_CASE", "test__Address_8cpp.html#aff7145c6c0acbf8d8dfb00b6931db77b", null ],
-    [ "TEST_CASE", "test__Address_8cpp.html#a3c33fadc94c63f8751a9cf263fe65553", null ]
+    [ "TEST_CASE", "test__Address_8cpp.html#a3c33fadc94c63f8751a9cf263fe65553", null ],
+    [ "TEST_CASE", "test__Address_8cpp.html#a63cecb0b01bec244b967d6ed15e6b286", null ]
 ];

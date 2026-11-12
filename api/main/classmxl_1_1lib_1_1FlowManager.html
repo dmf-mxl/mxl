@@ -111,33 +111,33 @@ $(document).ready(function(){initNavTree('classmxl_1_1lib_1_1FlowManager.html','
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ab76b674a2de78839b4d8002159bda7b7" id="r_ab76b674a2de78839b4d8002159bda7b7"><td class="memItemLeft" align="right" valign="top">std::pair&lt; bool, std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1ContinuousFlowData.html">ContinuousFlowData</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#ab76b674a2de78839b4d8002159bda7b7">createOrOpenContinuousFlow</a> (uuids::uuid const &amp;<a class="el" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, std::string const &amp;<a class="el" href="test__flows_8cpp.html#ab521c2c3a0e0004467a645a8946301df">flowDef</a>, <a class="el" href="dataformat_8h.html#ae0d6ccb052d9f48c3d6f1eb8644a0d7b">mxlDataFormat</a> flowFormat, <a class="el" href="rational_8h.html#a3b934ae488ba78054d02ca4d2205c8b8">mxlRational</a> const &amp;sampleRate, std::size_t channelCount, std::size_t sampleWordSize, std::size_t bufferLength, std::uint32_t maxSyncBatchSizeHintOpt=1, std::uint32_t maxCommitBatchSizeHintOpt=1)</td></tr>
+<tr class="memitem:ab76b674a2de78839b4d8002159bda7b7" id="r_ab76b674a2de78839b4d8002159bda7b7"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">bool</a>, std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1ContinuousFlowData.html">ContinuousFlowData</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#ab76b674a2de78839b4d8002159bda7b7">createOrOpenContinuousFlow</a> (uuids::uuid <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;<a class="el" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, std::string <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;<a class="el" href="test__flows_8cpp.html#ab521c2c3a0e0004467a645a8946301df">flowDef</a>, <a class="el" href="dataformat_8h.html#ae0d6ccb052d9f48c3d6f1eb8644a0d7b">mxlDataFormat</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">flowFormat</a>, <a class="el" href="rational_8h.html#a3b934ae488ba78054d02ca4d2205c8b8">mxlRational</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;<a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">sampleRate</a>, std::size_t channelCount, std::size_t sampleWordSize, std::size_t bufferLength, std::uint32_t <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">maxSyncBatchSizeHintOpt</a>=1, std::uint32_t <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">maxCommitBatchSizeHintOpt</a>=1)</td></tr>
 <tr class="separator:ab76b674a2de78839b4d8002159bda7b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a88cff4cbf0d597602f126965064744f7" id="r_a88cff4cbf0d597602f126965064744f7"><td class="memItemLeft" align="right" valign="top">std::pair&lt; bool, std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowData.html">DiscreteFlowData</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#a88cff4cbf0d597602f126965064744f7">createOrOpenDiscreteFlow</a> (uuids::uuid const &amp;<a class="el" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, std::string const &amp;<a class="el" href="test__flows_8cpp.html#ab521c2c3a0e0004467a645a8946301df">flowDef</a>, <a class="el" href="dataformat_8h.html#ae0d6ccb052d9f48c3d6f1eb8644a0d7b">mxlDataFormat</a> flowFormat, std::size_t grainCount, <a class="el" href="rational_8h.html#a3b934ae488ba78054d02ca4d2205c8b8">mxlRational</a> const &amp;grainRate, std::size_t grainPayloadSize, std::size_t grainNumOfSlices, std::array&lt; std::uint32_t, <a class="el" href="flowinfo_8h.html#ad748e8ffdc270b5c66f2638deee6d373">MXL_MAX_PLANES_PER_GRAIN</a> &gt; grainSliceLengths, std::uint32_t maxSyncBatchSizeHintOpt=1, std::uint32_t maxCommitBatchSizeHintOpt=1)</td></tr>
+<tr class="memitem:a88cff4cbf0d597602f126965064744f7" id="r_a88cff4cbf0d597602f126965064744f7"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">bool</a>, std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowData.html">DiscreteFlowData</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#a88cff4cbf0d597602f126965064744f7">createOrOpenDiscreteFlow</a> (uuids::uuid <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;<a class="el" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, std::string <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;<a class="el" href="test__flows_8cpp.html#ab521c2c3a0e0004467a645a8946301df">flowDef</a>, <a class="el" href="dataformat_8h.html#ae0d6ccb052d9f48c3d6f1eb8644a0d7b">mxlDataFormat</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">flowFormat</a>, std::size_t grainCount, <a class="el" href="rational_8h.html#a3b934ae488ba78054d02ca4d2205c8b8">mxlRational</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;grainRate, std::size_t <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">grainPayloadSize</a>, std::size_t <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">grainNumOfSlices</a>, std::array&lt; std::uint32_t, <a class="el" href="flowinfo_8h.html#ad748e8ffdc270b5c66f2638deee6d373">MXL_MAX_PLANES_PER_GRAIN</a> &gt; <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">grainSliceLengths</a>, std::uint32_t <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">maxSyncBatchSizeHintOpt</a>=1, std::uint32_t <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">maxCommitBatchSizeHintOpt</a>=1)</td></tr>
 <tr class="separator:a88cff4cbf0d597602f126965064744f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6380563ace20c2f710df306fdea30620" id="r_a6380563ace20c2f710df306fdea30620"><td class="memItemLeft" align="right" valign="top">std::pair&lt; bool, std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1EventFlowData.html">EventFlowData</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#a6380563ace20c2f710df306fdea30620">createOrOpenEventFlow</a> (uuids::uuid const &amp;<a class="el" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, std::string const &amp;<a class="el" href="test__flows_8cpp.html#ab521c2c3a0e0004467a645a8946301df">flowDef</a>, std::size_t eventCount, <a class="el" href="rational_8h.html#a3b934ae488ba78054d02ca4d2205c8b8">mxlRational</a> const &amp;grainRate, std::size_t eventPayloadSize)</td></tr>
+<tr class="memitem:a6380563ace20c2f710df306fdea30620" id="r_a6380563ace20c2f710df306fdea30620"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">bool</a>, std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1EventFlowData.html">EventFlowData</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#a6380563ace20c2f710df306fdea30620">createOrOpenEventFlow</a> (uuids::uuid <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;<a class="el" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, std::string <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;<a class="el" href="test__flows_8cpp.html#ab521c2c3a0e0004467a645a8946301df">flowDef</a>, std::size_t eventCount, <a class="el" href="rational_8h.html#a3b934ae488ba78054d02ca4d2205c8b8">mxlRational</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;grainRate, std::size_t eventPayloadSize)</td></tr>
 <tr class="memdesc:a6380563ace20c2f710df306fdea30620"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an event flow atomically, or open the existing flow with the same ID.  <br /></td></tr>
 <tr class="separator:a6380563ace20c2f710df306fdea30620"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a15f7e50f602f9df2fa87e57db0321081" id="r_a15f7e50f602f9df2fa87e57db0321081"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#a15f7e50f602f9df2fa87e57db0321081">deleteFlow</a> (std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1FlowData.html">FlowData</a> &gt; &amp;&amp;flowData)</td></tr>
+<tr class="memitem:a15f7e50f602f9df2fa87e57db0321081" id="r_a15f7e50f602f9df2fa87e57db0321081"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#a15f7e50f602f9df2fa87e57db0321081">deleteFlow</a> (std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1FlowData.html">FlowData</a> &gt; &amp;&amp;flowData)</td></tr>
 <tr class="separator:a15f7e50f602f9df2fa87e57db0321081"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aefc154e3b9aa2df1bde4f75c02d55b9f" id="r_aefc154e3b9aa2df1bde4f75c02d55b9f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#aefc154e3b9aa2df1bde4f75c02d55b9f">deleteFlow</a> (uuids::uuid const &amp;<a class="el" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>)</td></tr>
+<tr class="memitem:aefc154e3b9aa2df1bde4f75c02d55b9f" id="r_aefc154e3b9aa2df1bde4f75c02d55b9f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#aefc154e3b9aa2df1bde4f75c02d55b9f">deleteFlow</a> (uuids::uuid <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;<a class="el" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>)</td></tr>
 <tr class="separator:aefc154e3b9aa2df1bde4f75c02d55b9f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a737c167c8361185f91b7ed626a1fbe7d" id="r_a737c167c8361185f91b7ed626a1fbe7d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#a737c167c8361185f91b7ed626a1fbe7d">FlowManager</a> (std::filesystem::path const &amp;in_mxlDomain)</td></tr>
+<tr class="memitem:a737c167c8361185f91b7ed626a1fbe7d" id="r_a737c167c8361185f91b7ed626a1fbe7d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#a737c167c8361185f91b7ed626a1fbe7d">FlowManager</a> (std::filesystem::path <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;<a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">in_mxlDomain</a>)</td></tr>
 <tr class="separator:a737c167c8361185f91b7ed626a1fbe7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a98e9f817db419c2f2628a07617566f9c" id="r_a98e9f817db419c2f2628a07617566f9c"><td class="memItemLeft" align="right" valign="top">std::filesystem::path const &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#a98e9f817db419c2f2628a07617566f9c">getDomain</a> () const</td></tr>
+<tr class="memitem:a98e9f817db419c2f2628a07617566f9c" id="r_a98e9f817db419c2f2628a07617566f9c"><td class="memItemLeft" align="right" valign="top">std::filesystem::path <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#a98e9f817db419c2f2628a07617566f9c">getDomain</a> () <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a></td></tr>
 <tr class="separator:a98e9f817db419c2f2628a07617566f9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a85d25e6ddda85db861ad6cc4e034fe0b" id="r_a85d25e6ddda85db861ad6cc4e034fe0b"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#a85d25e6ddda85db861ad6cc4e034fe0b">getFlowDef</a> (uuids::uuid const &amp;<a class="el" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>) const</td></tr>
+<tr class="memitem:a85d25e6ddda85db861ad6cc4e034fe0b" id="r_a85d25e6ddda85db861ad6cc4e034fe0b"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#a85d25e6ddda85db861ad6cc4e034fe0b">getFlowDef</a> (uuids::uuid <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;<a class="el" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>) <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a></td></tr>
 <tr class="separator:a85d25e6ddda85db861ad6cc4e034fe0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a59ba4e94e87532a6ff03db438cc56791" id="r_a59ba4e94e87532a6ff03db438cc56791"><td class="memItemLeft" align="right" valign="top">std::vector&lt; uuids::uuid &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#a59ba4e94e87532a6ff03db438cc56791">listFlows</a> () const</td></tr>
+<tr class="memitem:a59ba4e94e87532a6ff03db438cc56791" id="r_a59ba4e94e87532a6ff03db438cc56791"><td class="memItemLeft" align="right" valign="top">std::vector&lt; uuids::uuid &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#a59ba4e94e87532a6ff03db438cc56791">listFlows</a> () <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a></td></tr>
 <tr class="separator:a59ba4e94e87532a6ff03db438cc56791"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad5d2f7f72dffe19af2479ce202dd1c93" id="r_ad5d2f7f72dffe19af2479ce202dd1c93"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1FlowData.html">FlowData</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#ad5d2f7f72dffe19af2479ce202dd1c93">openFlow</a> (uuids::uuid const &amp;<a class="el" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, <a class="el" href="namespacemxl_1_1lib.html#ac7a6dcbc0a5565d4a6700dbc4cef02b1">AccessMode</a> mode)</td></tr>
+<tr class="memitem:ad5d2f7f72dffe19af2479ce202dd1c93" id="r_ad5d2f7f72dffe19af2479ce202dd1c93"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1FlowData.html">FlowData</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#ad5d2f7f72dffe19af2479ce202dd1c93">openFlow</a> (uuids::uuid <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;<a class="el" href="test__flows_8cpp.html#a8120482e2d040fcf08a3008238ee95e8">flowId</a>, <a class="el" href="namespacemxl_1_1lib.html#ac7a6dcbc0a5565d4a6700dbc4cef02b1">AccessMode</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">mode</a>)</td></tr>
 <tr class="separator:ad5d2f7f72dffe19af2479ce202dd1c93"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
-<tr class="memitem:a49a3bacb024034b621e386cceef7ddae" id="r_a49a3bacb024034b621e386cceef7ddae"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1ContinuousFlowData.html">ContinuousFlowData</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#a49a3bacb024034b621e386cceef7ddae">openContinuousFlow</a> (std::filesystem::path const &amp;flowDir, <a class="el" href="structmxl_1_1lib_1_1SharedMemoryInstance.html">SharedMemoryInstance</a>&lt; <a class="el" href="structmxl_1_1lib_1_1Flow.html">Flow</a> &gt; &amp;&amp;sharedFlowInstance)</td></tr>
+<tr class="memitem:a49a3bacb024034b621e386cceef7ddae" id="r_a49a3bacb024034b621e386cceef7ddae"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1ContinuousFlowData.html">ContinuousFlowData</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#a49a3bacb024034b621e386cceef7ddae">openContinuousFlow</a> (std::filesystem::path <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;<a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">flowDir</a>, <a class="el" href="structmxl_1_1lib_1_1SharedMemoryInstance.html">SharedMemoryInstance</a>&lt; <a class="el" href="structmxl_1_1lib_1_1Flow.html">Flow</a> &gt; &amp;&amp;<a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">sharedFlowInstance</a>)</td></tr>
 <tr class="separator:a49a3bacb024034b621e386cceef7ddae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1a7f9f7233a7a88147fcabcde4c94587" id="r_a1a7f9f7233a7a88147fcabcde4c94587"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowData.html">DiscreteFlowData</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#a1a7f9f7233a7a88147fcabcde4c94587">openDiscreteFlow</a> (std::filesystem::path const &amp;flowDir, <a class="el" href="structmxl_1_1lib_1_1SharedMemoryInstance.html">SharedMemoryInstance</a>&lt; <a class="el" href="structmxl_1_1lib_1_1Flow.html">Flow</a> &gt; &amp;&amp;sharedFlowInstance)</td></tr>
+<tr class="memitem:a1a7f9f7233a7a88147fcabcde4c94587" id="r_a1a7f9f7233a7a88147fcabcde4c94587"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowData.html">DiscreteFlowData</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmxl_1_1lib_1_1FlowManager.html#a1a7f9f7233a7a88147fcabcde4c94587">openDiscreteFlow</a> (std::filesystem::path <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;<a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">flowDir</a>, <a class="el" href="structmxl_1_1lib_1_1SharedMemoryInstance.html">SharedMemoryInstance</a>&lt; <a class="el" href="structmxl_1_1lib_1_1Flow.html">Flow</a> &gt; &amp;&amp;<a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">sharedFlowInstance</a>)</td></tr>
 <tr class="separator:a1a7f9f7233a7a88147fcabcde4c94587"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
@@ -170,7 +170,7 @@ Private Attributes</h2></td></tr>
         <tr>
           <td class="memname">mxl::lib::FlowManager::FlowManager </td>
           <td>(</td>
-          <td class="paramtype">std::filesystem::path const &amp;&#160;</td>
+          <td class="paramtype">std::filesystem::path <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;&#160;</td>
           <td class="paramname"><em>in_mxlDomain</em></td><td>)</td>
           <td></td>
         </tr>
@@ -205,15 +205,15 @@ Private Attributes</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::pair&lt; bool, std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1ContinuousFlowData.html">ContinuousFlowData</a> &gt; &gt; mxl::lib::FlowManager::createOrOpenContinuousFlow </td>
+          <td class="memname">std::pair&lt; <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">bool</a>, std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1ContinuousFlowData.html">ContinuousFlowData</a> &gt; &gt; mxl::lib::FlowManager::createOrOpenContinuousFlow </td>
           <td>(</td>
-          <td class="paramtype">uuids::uuid const &amp;&#160;</td>
+          <td class="paramtype">uuids::uuid <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;&#160;</td>
           <td class="paramname"><em>flowId</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">std::string const &amp;&#160;</td>
+          <td class="paramtype">std::string <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;&#160;</td>
           <td class="paramname"><em>flowDef</em>, </td>
         </tr>
         <tr>
@@ -225,7 +225,7 @@ Private Attributes</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="rational_8h.html#a3b934ae488ba78054d02ca4d2205c8b8">mxlRational</a> const &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="rational_8h.html#a3b934ae488ba78054d02ca4d2205c8b8">mxlRational</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;&#160;</td>
           <td class="paramname"><em>sampleRate</em>, </td>
         </tr>
         <tr>
@@ -370,15 +370,15 @@ Private Attributes</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::pair&lt; bool, std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowData.html">DiscreteFlowData</a> &gt; &gt; mxl::lib::FlowManager::createOrOpenDiscreteFlow </td>
+          <td class="memname">std::pair&lt; <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">bool</a>, std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowData.html">DiscreteFlowData</a> &gt; &gt; mxl::lib::FlowManager::createOrOpenDiscreteFlow </td>
           <td>(</td>
-          <td class="paramtype">uuids::uuid const &amp;&#160;</td>
+          <td class="paramtype">uuids::uuid <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;&#160;</td>
           <td class="paramname"><em>flowId</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">std::string const &amp;&#160;</td>
+          <td class="paramtype">std::string <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;&#160;</td>
           <td class="paramname"><em>flowDef</em>, </td>
         </tr>
         <tr>
@@ -396,7 +396,7 @@ Private Attributes</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="rational_8h.html#a3b934ae488ba78054d02ca4d2205c8b8">mxlRational</a> const &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="rational_8h.html#a3b934ae488ba78054d02ca4d2205c8b8">mxlRational</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;&#160;</td>
           <td class="paramname"><em>grainRate</em>, </td>
         </tr>
         <tr>
@@ -563,15 +563,15 @@ Private Attributes</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::pair&lt; bool, std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1EventFlowData.html">EventFlowData</a> &gt; &gt; mxl::lib::FlowManager::createOrOpenEventFlow </td>
+          <td class="memname">std::pair&lt; <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">bool</a>, std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1EventFlowData.html">EventFlowData</a> &gt; &gt; mxl::lib::FlowManager::createOrOpenEventFlow </td>
           <td>(</td>
-          <td class="paramtype">uuids::uuid const &amp;&#160;</td>
+          <td class="paramtype">uuids::uuid <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;&#160;</td>
           <td class="paramname"><em>flowId</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">std::string const &amp;&#160;</td>
+          <td class="paramtype">std::string <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;&#160;</td>
           <td class="paramname"><em>flowDef</em>, </td>
         </tr>
         <tr>
@@ -583,7 +583,7 @@ Private Attributes</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="rational_8h.html#a3b934ae488ba78054d02ca4d2205c8b8">mxlRational</a> const &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="rational_8h.html#a3b934ae488ba78054d02ca4d2205c8b8">mxlRational</a> <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;&#160;</td>
           <td class="paramname"><em>grainRate</em>, </td>
         </tr>
         <tr>
@@ -705,7 +705,7 @@ Private Attributes</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">bool mxl::lib::FlowManager::deleteFlow </td>
+          <td class="memname"><a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">bool</a> mxl::lib::FlowManager::deleteFlow </td>
           <td>(</td>
           <td class="paramtype">std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1FlowData.html">FlowData</a> &gt; &amp;&amp;&#160;</td>
           <td class="paramname"><em>flowData</em></td><td>)</td>
@@ -749,9 +749,9 @@ Private Attributes</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">bool mxl::lib::FlowManager::deleteFlow </td>
+          <td class="memname"><a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">bool</a> mxl::lib::FlowManager::deleteFlow </td>
           <td>(</td>
-          <td class="paramtype">uuids::uuid const &amp;&#160;</td>
+          <td class="paramtype">uuids::uuid <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;&#160;</td>
           <td class="paramname"><em>flowId</em></td><td>)</td>
           <td></td>
         </tr>
@@ -799,7 +799,7 @@ Private Attributes</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::filesystem::path const  &amp; mxl::lib::FlowManager::getDomain </td>
+          <td class="memname">std::filesystem::path <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a>  &amp; mxl::lib::FlowManager::getDomain </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -824,7 +824,7 @@ Private Attributes</h2></td></tr>
         <tr>
           <td class="memname">std::string mxl::lib::FlowManager::getFlowDef </td>
           <td>(</td>
-          <td class="paramtype">uuids::uuid const &amp;&#160;</td>
+          <td class="paramtype">uuids::uuid <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;&#160;</td>
           <td class="paramname"><em>flowId</em></td><td>)</td>
           <td> const</td>
         </tr>
@@ -932,7 +932,7 @@ Private Attributes</h2></td></tr>
         <tr>
           <td class="memname">std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1ContinuousFlowData.html">ContinuousFlowData</a> &gt; mxl::lib::FlowManager::openContinuousFlow </td>
           <td>(</td>
-          <td class="paramtype">std::filesystem::path const &amp;&#160;</td>
+          <td class="paramtype">std::filesystem::path <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;&#160;</td>
           <td class="paramname"><em>flowDir</em>, </td>
         </tr>
         <tr>
@@ -977,7 +977,7 @@ Private Attributes</h2></td></tr>
         <tr>
           <td class="memname">std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1DiscreteFlowData.html">DiscreteFlowData</a> &gt; mxl::lib::FlowManager::openDiscreteFlow </td>
           <td>(</td>
-          <td class="paramtype">std::filesystem::path const &amp;&#160;</td>
+          <td class="paramtype">std::filesystem::path <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;&#160;</td>
           <td class="paramname"><em>flowDir</em>, </td>
         </tr>
         <tr>
@@ -1039,7 +1039,7 @@ Private Attributes</h2></td></tr>
         <tr>
           <td class="memname">std::unique_ptr&lt; <a class="el" href="classmxl_1_1lib_1_1FlowData.html">FlowData</a> &gt; mxl::lib::FlowManager::openFlow </td>
           <td>(</td>
-          <td class="paramtype">uuids::uuid const &amp;&#160;</td>
+          <td class="paramtype">uuids::uuid <a class="el" href="namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9">const</a> &amp;&#160;</td>
           <td class="paramname"><em>flowId</em>, </td>
         </tr>
         <tr>

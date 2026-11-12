@@ -1,9 +1,6 @@
 var namespacemxl_1_1lib =
 [
-    [ "detail", "namespacemxl_1_1lib_1_1detail.html", [
-      [ "clockToId", "namespacemxl_1_1lib_1_1detail.html#a3b965bb80cadedc3cade3dfe76512834", null ],
-      [ "getClockOffset", "namespacemxl_1_1lib_1_1detail.html#a5ff7ab6956c757e5995f48a13efeb919", null ]
-    ] ],
+    [ "detail", "namespacemxl_1_1lib_1_1detail.html", "namespacemxl_1_1lib_1_1detail" ],
     [ "fabrics", "namespacemxl_1_1lib_1_1fabrics.html", "namespacemxl_1_1lib_1_1fabrics" ],
     [ "this_thread", "namespacemxl_1_1lib_1_1this__thread.html", [
       [ "sleep", "namespacemxl_1_1lib_1_1this__thread.html#a53a192cbaed063c9991960ae1ae309a8", null ],
@@ -43,6 +40,7 @@ var namespacemxl_1_1lib =
     [ "Grain", "structmxl_1_1lib_1_1Grain.html", "structmxl_1_1lib_1_1Grain" ],
     [ "GrainHeader", "structmxl_1_1lib_1_1GrainHeader.html", "structmxl_1_1lib_1_1GrainHeader" ],
     [ "Instance", "classmxl_1_1lib_1_1Instance.html", "classmxl_1_1lib_1_1Instance" ],
+    [ "JsonLimits", "structmxl_1_1lib_1_1JsonLimits.html", "structmxl_1_1lib_1_1JsonLimits" ],
     [ "PosixContinuousFlowReader", "classmxl_1_1lib_1_1PosixContinuousFlowReader.html", "classmxl_1_1lib_1_1PosixContinuousFlowReader" ],
     [ "PosixContinuousFlowWriter", "classmxl_1_1lib_1_1PosixContinuousFlowWriter.html", "classmxl_1_1lib_1_1PosixContinuousFlowWriter" ],
     [ "PosixDiscreteFlowReader", "classmxl_1_1lib_1_1PosixDiscreteFlowReader.html", "classmxl_1_1lib_1_1PosixDiscreteFlowReader" ],
@@ -91,6 +89,8 @@ var namespacemxl_1_1lib =
     [ "inMilliSeconds", "namespacemxl_1_1lib.html#a2da3944fd952e83604bbc1b93acdaf6e", null ],
     [ "inNanoSeconds", "namespacemxl_1_1lib.html#a32664a363e5eff6646f5c10212ca1d12", null ],
     [ "inSeconds", "namespacemxl_1_1lib.html#af648525bfa3cdeaa4fc55b52f1f35e5d", null ],
+    [ "jsonStringToInteger", "namespacemxl_1_1lib.html#a79761cadfb82446136176afe6408fb36", null ],
+    [ "jsonToInteger", "namespacemxl_1_1lib.html#ab2b45a55471ec348f3260cf2d14f30e9", null ],
     [ "makeChannelDataFilePath", "namespacemxl_1_1lib.html#ac56568c9b90aa7900cafd0c54bf6b43e", null ],
     [ "makeChannelDataFilePath", "namespacemxl_1_1lib.html#a2da47d2e220490d45401e923a7a68c18", null ],
     [ "makeDomainOptionsFilePath", "namespacemxl_1_1lib.html#a9ac9d4b5caf62bff41480e66c6f6719f", null ],
@@ -128,6 +128,8 @@ var namespacemxl_1_1lib =
     [ "operator>", "namespacemxl_1_1lib.html#a767c437226b55f827e95f745ea2e3711", null ],
     [ "operator>=", "namespacemxl_1_1lib.html#a50e3d3f59479691b2bbac4044b7635e0", null ],
     [ "operator>=", "namespacemxl_1_1lib.html#ae2664b5d2a2cc316313bca302b042f0c", null ],
+    [ "parseJson", "namespacemxl_1_1lib.html#ac6d9bcb5a4ff6c159734d59334c0d791", null ],
+    [ "stringToInteger", "namespacemxl_1_1lib.html#a54aec5c809fe55b5da1d6d798542f44c", null ],
     [ "swap", "namespacemxl_1_1lib.html#afbf526f877caed88af4aac9b0543e6f8", null ],
     [ "swap", "namespacemxl_1_1lib.html#a262503b3a0f6af2247e2beef90a46f53", null ],
     [ "swap", "namespacemxl_1_1lib.html#a2bdaff3a2ed7b16a9999701417ec2943", null ],

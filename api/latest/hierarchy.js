@@ -5,6 +5,7 @@ var hierarchy =
     [ "fmt::formatter< ofi::Provider >", "structfmt_1_1formatter_3_01ofi_1_1Provider_01_4.html", null ],
     [ "MockFlowFiles", "structMockFlowFiles.html", null ],
     [ "mxl::lib::Deferred< F >", "classmxl_1_1lib_1_1Deferred.html", null ],
+    [ "mxl::lib::detail::LimitedJsonParseContext", "classmxl_1_1lib_1_1detail_1_1LimitedJsonParseContext.html", null ],
     [ "mxl::lib::DomainWatcher", "classmxl_1_1lib_1_1DomainWatcher.html", null ],
     [ "mxl::lib::DomainWatcherRecord", "structmxl_1_1lib_1_1DomainWatcherRecord.html", null ],
     [ "mxl::lib::Duration", "structmxl_1_1lib_1_1Duration.html", null ],
@@ -161,6 +162,7 @@ var hierarchy =
     [ "mxl::lib::GrainHeader", "structmxl_1_1lib_1_1GrainHeader.html", null ],
     [ "mxl::lib::Instance", "classmxl_1_1lib_1_1Instance.html", null ],
     [ "mxl::lib::Instance::RefCounted< T >", "classmxl_1_1lib_1_1Instance_1_1RefCounted.html", null ],
+    [ "mxl::lib::JsonLimits", "structmxl_1_1lib_1_1JsonLimits.html", null ],
     [ "mxl::lib::SharedMemoryBase", "classmxl_1_1lib_1_1SharedMemoryBase.html", [
       [ "mxl::lib::SharedMemoryInstance< mxl::lib::Flow >", "structmxl_1_1lib_1_1SharedMemoryInstance.html", null ],
       [ "mxl::lib::SharedMemoryInstance< T >", "structmxl_1_1lib_1_1SharedMemoryInstance.html", null ],
