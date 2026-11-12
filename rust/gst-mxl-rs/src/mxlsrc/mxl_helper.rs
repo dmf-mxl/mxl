@@ -12,6 +12,7 @@ use gstreamer as gst;
 use gstreamer_base as gst_base;
 use mxl::{FlowReader, MxlInstance, config::get_mxl_so_path, flowdef::*};
 
+use crate::colorimetry::gst_colorimetry_from_flow;
 use crate::mxlsrc::{
     imp::*,
     state::{ContinuousState, DiscreteFormat, DiscreteState, FlowState, Settings, State},
@@ -57,6 +58,21 @@ pub(crate) fn get_mxl_flow_json(
 pub(crate) fn set_json_caps(src: &MxlSrc, json: FlowDefDetails) -> Result<(), gst::LoggableError> {
     match json {
         FlowDefDetails::Video(video) => {
+            let colorimetry = gst_colorimetry_from_flow(
+                &video.colorspace,
+                video.transfer_characteristic.as_deref(),
+                video.component_range.as_deref(),
+                video.components.iter().map(|c| c.bit_depth).max(),
+            )
+            .ok_or_else(|| {
+                gst::loggable_error!(
+                    CAT,
+                    "Unsupported flow colorimetry: colorspace {}, transfer_characteristic {:?}, component_range {:?}",
+                    video.colorspace,
+                    video.transfer_characteristic,
+                    video.component_range
+                )
+            })?;
             let caps = gst::Caps::builder("video/x-raw")
                 .field("format", "v210")
                 .field("width", video.frame_width)
@@ -66,7 +82,7 @@ pub(crate) fn set_json_caps(src: &MxlSrc, json: FlowDefDetails) -> Result<(), gs
                     gst::Fraction::new(video.grain_rate.numerator, video.grain_rate.denominator),
                 )
                 .field("interlace-mode", video.interlace_mode.as_str())
-                .field("colorimetry", video.colorspace.to_lowercase())
+                .field("colorimetry", colorimetry.to_string())
                 .build();
 
             src.obj()
