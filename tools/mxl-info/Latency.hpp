@@ -76,6 +76,28 @@ namespace mxl::info
     };
 
     /**
+     * @brief Wait for the grain or sample at @p index to be committed.
+     * @param[in] reader Reader open on the flow.
+     * @param[in] format Data format of the flow. It must be a discrete or a continuous format.
+     * @param[in] index Grain or sample index to wait for.
+     * @param[in] timeoutNs Longest time to wait, in ns.
+     * @return The status of the read.
+     */
+    [[nodiscard]]
+    inline ::mxlStatus waitForIndex(::mxlFlowReader reader, int format, std::uint64_t index, std::uint64_t timeoutNs) noexcept
+    {
+        // The public functions reject null out pointers. The values written here are not used.
+        if (::mxlIsDiscreteDataFormat(format))
+        {
+            auto grainInfo = ::mxlGrainInfo{};
+            auto* payload = static_cast<std::uint8_t*>(nullptr);
+            return ::mxlFlowReaderGetGrain(reader, index, timeoutNs, &grainInfo, &payload);
+        }
+        auto slices = ::mxlWrappedMultiBufferSlice{};
+        return ::mxlFlowReaderGetSamples(reader, index, 1U, timeoutNs, &slices);
+    }
+
+    /**
      * @brief Wait until the writer commits past the head index in @p info, then read the runtime info again.
      * @param[in] reader Reader open on the flow.
      * @param[in] info Flow info read before the wait. Its head index is the starting point.
@@ -98,18 +120,7 @@ namespace mxl::info
         }
 
         auto const nextIndex = info.runtime.headIndex + 1U;
-        auto const status = [&]()
-        {
-            // The public functions reject null out pointers. The values written here are not used.
-            if (::mxlIsDiscreteDataFormat(format))
-            {
-                auto grainInfo = ::mxlGrainInfo{};
-                auto* payload = static_cast<std::uint8_t*>(nullptr);
-                return ::mxlFlowReaderGetGrain(reader, nextIndex, timeoutNs, &grainInfo, &payload);
-            }
-            auto slices = ::mxlWrappedMultiBufferSlice{};
-            return ::mxlFlowReaderGetSamples(reader, nextIndex, 1U, timeoutNs, &slices);
-        }();
+        auto const status = waitForIndex(reader, format, nextIndex, timeoutNs);
         auto const nowNs = ::mxlGetTime();
 
         // TOO_LATE means the writer moved more than a ring length past the nextIndex during the wait.

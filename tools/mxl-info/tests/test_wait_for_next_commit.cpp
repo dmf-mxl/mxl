@@ -105,7 +105,10 @@ namespace
          * @throws std::runtime_error if a step fails. Members already created are cleaned up by their destructors.
          */
         FlowFixture(std::filesystem::path const& flowFile, char const* flowId)
-            : _instance{::mxlCreateInstance(_domain.path().c_str(), ""), &::mxlDestroyInstance}
+            : _domain{}
+            , _instance{::mxlCreateInstance(_domain.path().c_str(), ""), &::mxlDestroyInstance}
+            , _writer{nullptr}
+            , _reader{nullptr}
         {
             if (!_instance)
             {
@@ -196,8 +199,8 @@ namespace
     private:
         TempDomain _domain;                                                          ///< Domain directory. Declared first so it is removed last.
         std::unique_ptr<::mxlInstance_t, decltype(&::mxlDestroyInstance)> _instance; ///< Instance for writer and reader.
-        ::mxlFlowWriter _writer{};                                                   ///< Writer that creates the flow.
-        ::mxlFlowReader _reader{};                                                   ///< Reader passed to waitForNextCommit.
+        ::mxlFlowWriter _writer;                                                     ///< Writer that creates the flow.
+        ::mxlFlowReader _reader;                                                     ///< Reader passed to waitForNextCommit.
     };
 
     /// Time to wait before the writer thread commits. Well below the shortest timeout used here (133 ms).

@@ -18,15 +18,15 @@ namespace
      *            other formats.
      * @return The flow info.
      */
-    mxlFlowInfo makeFlowInfo(std::uint32_t format, std::uint32_t length)
+    ::mxlFlowInfo makeFlowInfo(std::uint32_t format, std::uint32_t length) noexcept
     {
-        auto info = mxlFlowInfo{};
+        auto info = ::mxlFlowInfo{};
         info.config.common.format = format;
-        if (mxlIsDiscreteDataFormat(static_cast<int>(format)))
+        if (::mxlIsDiscreteDataFormat(static_cast<int>(format)))
         {
             info.config.discrete.grainCount = length;
         }
-        else if (mxlIsContinuousDataFormat(static_cast<int>(format)))
+        else if (::mxlIsContinuousDataFormat(static_cast<int>(format)))
         {
             info.config.continuous.bufferLength = length;
         }
@@ -91,17 +91,17 @@ TEST_CASE("Wait timeout", "[mxl-info][latency]")
 
     // 4 grains at 30000/1001 is 133466666.7 ns.
     auto video = makeFlowInfo(MXL_DATA_FORMAT_VIDEO, 5);
-    video.config.common.grainRate = mxlRational{30000, 1001};
+    video.config.common.grainRate = ::mxlRational{30000, 1001};
     CHECK(waitTimeoutNs(video) == 133'466'667U);
 
     // 9728 samples at 48 kHz is 202666666.7 ns.
     auto audio = makeFlowInfo(MXL_DATA_FORMAT_AUDIO, 19456);
-    audio.config.common.grainRate = mxlRational{48000, 1};
+    audio.config.common.grainRate = ::mxlRational{48000, 1};
     CHECK(waitTimeoutNs(audio) == 202'666'667U);
 
     // A one-grain ring has no history, so the read does not block.
     auto oneGrain = makeFlowInfo(MXL_DATA_FORMAT_VIDEO, 1);
-    oneGrain.config.common.grainRate = mxlRational{30000, 1001};
+    oneGrain.config.common.grainRate = ::mxlRational{30000, 1001};
     CHECK(waitTimeoutNs(oneGrain) == 0U);
 
     // A zero grain rate cannot be converted.
