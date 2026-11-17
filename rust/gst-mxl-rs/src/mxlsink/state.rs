@@ -245,6 +245,8 @@ pub(crate) fn init_state_with_video(
             frame_width,
             frame_height,
         )
+        // The grain conversion takes the key range from this colorimetry.
+        .colorimetry(&colorimetry)
         .build()
         .map_err(|e| gst::loggable_error!(CAT, "Invalid A422_10LE frame layout: {}", e))?;
         DiscreteFormat::VideoAlpha(Box::new(info))

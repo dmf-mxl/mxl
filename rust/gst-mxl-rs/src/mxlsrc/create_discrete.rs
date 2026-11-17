@@ -143,10 +143,15 @@ fn a422_10le_buffer_from_grain(
         let [y, u, v, a] = frame.planes_data_mut();
         let mut planes = [(y, sy), (u, su), (v, sv), (a, sa)]
             .map(|(data, stride)| video::PlaneMut { data, stride });
+        let key_range = match info.colorimetry().range() {
+            gst_video::VideoColorRange::Range0_255 => video::KeyRange::Full,
+            _ => video::KeyRange::Narrow,
+        };
         video::gst_a422_10le_from_mxl_v210a_grain(
             grain,
             info.width() as usize,
             info.height() as usize,
+            key_range,
             &mut planes,
         )
         .map_err(|err| {

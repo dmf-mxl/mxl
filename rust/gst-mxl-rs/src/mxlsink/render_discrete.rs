@@ -202,6 +202,10 @@ fn commit_v210a_grain(
         Ok(video::Plane { data, stride })
     };
     let planes = [plane(0)?, plane(1)?, plane(2)?, plane(3)?];
+    let key_range = match frame.info().colorimetry().range() {
+        gst_video::VideoColorRange::Range0_255 => video::KeyRange::Full,
+        _ => video::KeyRange::Narrow,
+    };
 
     let mut access = discrete_state.writer.open_grain(index).map_err(|e| {
         gst::error!(
@@ -218,6 +222,7 @@ fn commit_v210a_grain(
         &planes,
         frame.width() as usize,
         frame.height() as usize,
+        key_range,
         access.payload_mut(),
     )
     .map_err(|err| {

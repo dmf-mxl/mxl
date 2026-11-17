@@ -64,7 +64,7 @@ The flow's media type is based on the upstream caps.
 
 The src pad's caps are based on the flow's media type.
 A `video/v210` flow results in `video/x-raw, format=v210`.
-A `video/v210a` flow results in `video/x-raw, format=A422_10LE`, with the key in the alpha plane. The key is video range (64 to 940) in the flow and full range (0 to 1023) in GStreamer, and the elements convert between the two.
+A `video/v210a` flow results in `video/x-raw, format=A422_10LE`, with the key in the alpha plane.
 A `audio/float32` flow results in `audio/x-raw, format=F32LE`.
 A `video/smpte291` flow results in `meta/x-st-2038, alignment=frame`.
 
@@ -151,7 +151,7 @@ This consumer keys the flow over colour bars:
 gst-launch-1.0 compositor name=c ! videoconvert ! autovideosink videotestsrc is-live=true pattern=smpte ! video/x-raw,width=1920,height=1080,framerate=25/1 ! c.sink_0 mxlsrc video-flow-id="$VIDEO_FLOW_ID" domain="$MXL_DOMAIN" ! queue ! c.sink_1
 ```
 
-The key in the flow is video range (64 to 940) and GStreamer reads alpha as full range (0 to 1023). `mxlsrc` and `mxlsink` convert between the two. An MXL flow definition cannot yet say whether a v210 flow is narrow or full range, so narrow range, the SMPTE ST 2110-20 default, is assumed.
+The key in the flow has the same range as the fill, given by the flow definition's `component_range`, and GStreamer reads alpha as full range (0 to 1023) whatever the colorimetry. `mxlsrc` and `mxlsink` convert a `NARROW` key (64 to 940) to and from full range alpha, and copy a `FULL` key unchanged. `mxlsrc` also copies a `FULLPROTECT` key unchanged, as it reads the fill of such a flow as full range.
 
 ### Round-trip CEA-608 closed captions over a data flow
 

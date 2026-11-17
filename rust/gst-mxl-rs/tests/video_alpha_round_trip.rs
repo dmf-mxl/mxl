@@ -5,8 +5,9 @@
 //!
 //! `A422_10LE` frames go through `mxlsink` into a `video/v210a` flow in a per-test
 //! MXL domain under `/dev/shm`, and are read back through `mxlsrc`. Every fill sample
-//! must come back unchanged, and every alpha sample as it survives the flow's
-//! video-range key (`gst_alpha_from_mxl_key(mxl_key_from_gst_alpha(a))`).
+//! must come back unchanged, and every alpha sample as it survives the flow's key
+//! (`gst_alpha_from_mxl_key(mxl_key_from_gst_alpha(a, range), range)`), which is
+//! unchanged for a full range flow.
 //!
 //! ```text
 //! appsrc (A422_10LE) ! mxlsink          (video/v210a flow)
@@ -23,7 +24,7 @@ use std::collections::BTreeSet;
 
 use common::{FRAME_PERIOD_NS, FRAMERATE_DEN, FRAMERATE_NUM, init, skip_reason};
 use gst::prelude::*;
-use gstmxl::format::video::{gst_alpha_from_mxl_key, mxl_key_from_gst_alpha};
+use gstmxl::format::video::{KeyRange, gst_alpha_from_mxl_key, mxl_key_from_gst_alpha};
 use gstreamer as gst;
 use gstreamer_app as gst_app;
 use gstreamer_video::{self as gst_video, VideoFrameExt};
@@ -139,9 +140,23 @@ fn push_frames(appsrc: &gst_app::AppSrc) {
     }
 }
 
-/// A422_10LE → `mxlsink` → `video/v210a` → `mxlsrc` → A422_10LE, bit for bit.
+/// A422_10LE → `mxlsink` → `video/v210a` → `mxlsrc` → A422_10LE, bit for bit, with
+/// a narrow range key. Caps without a colorimetry get GStreamer's default, which
+/// is narrow range.
 #[test]
 fn a422_10le_round_trip_via_v210a_flow() {
+    a422_10le_round_trip("", KeyRange::Narrow, "NARROW");
+}
+
+/// As `a422_10le_round_trip_via_v210a_flow`, with full range colorimetry, so the
+/// key is full range and every alpha sample comes back unchanged.
+#[test]
+fn a422_10le_round_trip_via_full_range_v210a_flow() {
+    a422_10le_round_trip(",colorimetry=1:3:5:1", KeyRange::Full, "FULL");
+}
+
+/// `colorimetry_field` is appended to the producer caps.
+fn a422_10le_round_trip(colorimetry_field: &str, range: KeyRange, component_range: &str) {
     init();
     const FACTORIES: &[&str] = &["appsink", "appsrc", "mxlsink", "mxlsrc", "queue"];
     if let Some(reason) = skip_reason(FACTORIES) {
@@ -155,7 +170,7 @@ fn a422_10le_round_trip_via_v210a_flow() {
     let producer_desc = format!(
         "appsrc name=src format=time \
            caps=video/x-raw,format=A422_10LE,width={WIDTH},height={HEIGHT},\
-                framerate={FRAMERATE_NUM}/{FRAMERATE_DEN} \
+                framerate={FRAMERATE_NUM}/{FRAMERATE_DEN}{colorimetry_field} \
            ! queue \
            ! mxlsink flow-id={flow_id} domain={domain}"
     );
@@ -213,7 +228,7 @@ fn a422_10le_round_trip_via_v210a_flow() {
         assert!(index < PUSH_COUNT, "frame index {index} out of range");
         let mut want = expected_samples(index);
         for alpha in want[3].iter_mut() {
-            *alpha = gst_alpha_from_mxl_key(mxl_key_from_gst_alpha(*alpha));
+            *alpha = gst_alpha_from_mxl_key(mxl_key_from_gst_alpha(*alpha, range), range);
         }
         for (p, name) in ["Y", "U", "V", "A"].iter().enumerate() {
             assert!(got[p] == want[p], "frame {index}: {name} plane differs");
@@ -222,13 +237,14 @@ fn a422_10le_round_trip_via_v210a_flow() {
     }
     pusher.join().expect("push thread");
 
-    // The flow definition lists the key plane as component "A".
+    // The flow definition gives the range and lists the key plane as component "A".
     let flow_def_path = format!("{domain}/{flow_id}.mxl-flow/flow_def.json");
     let flow_def: serde_json::Value = serde_json::from_str(
         &std::fs::read_to_string(&flow_def_path).expect("read the flow definition"),
     )
     .expect("parse the flow definition");
     assert_eq!(flow_def["media_type"], "video/v210a");
+    assert_eq!(flow_def["component_range"], component_range);
     let names: Vec<&str> = flow_def["components"]
         .as_array()
         .expect("components")
