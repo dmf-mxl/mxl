@@ -23,4 +23,9 @@ ignore = [
     # futures-util, which glib and gstreamer require. Remove this entry once
     # futures-util stops depending on pin-utils.
     { id = "RUSTSEC-2026-0441", reason = "unmaintained transitive dependency of futures-util, no replacement available" },
+    # chrono is unmaintained and has no safe upgrade. It is a build dependency of
+    # gst-plugin-version-helper, which sets the commit ID and release date of the
+    # GStreamer plugins. Remove this entry once gst-plugin-version-helper stops
+    # depending on chrono.
+    { id = "RUSTSEC-2026-0543", reason = "unmaintained build dependency of gst-plugin-version-helper, no safe upgrade available" },
 ]
