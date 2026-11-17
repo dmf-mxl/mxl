@@ -8,22 +8,30 @@
 //! `mxlsink` exchange these grains as `A422_10LE`: planar 4:2:2 Y, U, V and A, each
 //! 10-bit sample in the low bits of a little-endian 16-bit word.
 //!
-//! Fill samples are copied unchanged in both directions. Key samples change range:
-//! `docs/Architecture.md` gives the key the same range as the fill. A v210 fill may
-//! be narrow or full range, but an MXL flow definition cannot yet say which, so the
-//! fill is taken to be narrow range, the SMPTE ST 2110-20 default, and the key runs
-//! from 64 (transparent) to 940 (opaque). GStreamer reads alpha as full range, 0 to
-//! 1023, whatever the colorimetry. Each of the 877 key values maps to its own alpha
-//! value, so a grain converted to a frame and back is identical to the original
-//! apart from padding bytes, which are written as zero. A frame converted to a grain
-//! keeps 877 of its 1024 alpha levels.
+//! Fill samples are copied unchanged in both directions. `docs/Architecture.md`
+//! gives the key the same range as the fill, but GStreamer reads alpha as full
+//! range, 0 to 1023, whatever the colorimetry. A full range key is therefore copied
+//! unchanged too. A narrow range key, which runs from 64 (transparent) to 940
+//! (opaque), is converted: each of its 877 values maps to its own alpha value, so a
+//! grain converted to a frame and back is identical to the original apart from
+//! padding bytes, which are written as zero. A frame converted to a grain with a
+//! narrow range key keeps 877 of its 1024 alpha levels.
+
+/// Range of the key samples in a `video/v210a` grain, which is the range of its fill.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum KeyRange {
+    /// 64 (transparent) to 940 (opaque).
+    Narrow,
+    /// 0 (transparent) to 1023 (opaque), as GStreamer alpha.
+    Full,
+}
 
 const KEY_TRANSPARENT: u32 = 64;
 const KEY_OPAQUE: u32 = 940;
 const ALPHA_OPAQUE: u32 = 1023;
 
-/// GStreamer alpha for each 10-bit MXL key sample. Values outside the video range
-/// are clamped to it first.
+/// GStreamer alpha for each 10-bit narrow range key sample. Values outside the
+/// narrow range are clamped to it first.
 const GST_ALPHA_FROM_KEY: [u16; 1024] = {
     let mut table = [0u16; 1024];
     let mut key = 0;
@@ -42,7 +50,7 @@ const GST_ALPHA_FROM_KEY: [u16; 1024] = {
     table
 };
 
-/// MXL key sample for each 10-bit GStreamer alpha value.
+/// Narrow range key sample for each 10-bit GStreamer alpha value.
 const MXL_KEY_FROM_ALPHA: [u16; 1024] = {
     let mut table = [0u16; 1024];
     let mut alpha = 0;
@@ -55,14 +63,22 @@ const MXL_KEY_FROM_ALPHA: [u16; 1024] = {
     table
 };
 
-/// GStreamer alpha (full range) for an MXL key sample (video range).
-pub fn gst_alpha_from_mxl_key(key: u16) -> u16 {
-    GST_ALPHA_FROM_KEY[usize::from(key & SAMPLE_MASK as u16)]
+/// GStreamer alpha for an MXL key sample. Only the low 10 bits of `key` are read.
+pub fn gst_alpha_from_mxl_key(key: u16, range: KeyRange) -> u16 {
+    let key = key & SAMPLE_MASK as u16;
+    match range {
+        KeyRange::Narrow => GST_ALPHA_FROM_KEY[usize::from(key)],
+        KeyRange::Full => key,
+    }
 }
 
-/// MXL key sample (video range) for a GStreamer alpha value (full range).
-pub fn mxl_key_from_gst_alpha(alpha: u16) -> u16 {
-    MXL_KEY_FROM_ALPHA[usize::from(alpha & SAMPLE_MASK as u16)]
+/// MXL key sample for a GStreamer alpha value. Only the low 10 bits of `alpha` are read.
+pub fn mxl_key_from_gst_alpha(alpha: u16, range: KeyRange) -> u16 {
+    let alpha = alpha & SAMPLE_MASK as u16;
+    match range {
+        KeyRange::Narrow => MXL_KEY_FROM_ALPHA[usize::from(alpha)],
+        KeyRange::Full => alpha,
+    }
 }
 
 pub const V210_MEDIA_TYPE: &str = "video/v210";
@@ -131,6 +147,7 @@ pub fn gst_a422_10le_from_mxl_v210a_grain(
     grain: &[u8],
     width: usize,
     height: usize,
+    key_range: KeyRange,
     planes: &mut [PlaneMut<'_>; 4],
 ) -> Result<(), VideoLayoutError> {
     let fill_line = v210_line_length(width);
@@ -156,6 +173,7 @@ pub fn gst_a422_10le_from_mxl_v210a_grain(
         unpack_alpha_line(
             &key[line * key_line..][..key_line],
             width,
+            key_range,
             &mut a.data[line * a.stride..][..width * 2],
         );
     }
@@ -167,6 +185,7 @@ pub fn mxl_v210a_grain_from_gst_a422_10le(
     planes: &[Plane<'_>; 4],
     width: usize,
     height: usize,
+    key_range: KeyRange,
     grain: &mut [u8],
 ) -> Result<(), VideoLayoutError> {
     let fill_line = v210_line_length(width);
@@ -194,7 +213,12 @@ pub fn mxl_v210a_grain_from_gst_a422_10le(
             width,
             &mut fill[line * fill_line..][..fill_line],
         );
-        pack_alpha_line(a16, width, &mut key[line * key_line..][..key_line]);
+        pack_alpha_line(
+            a16,
+            width,
+            key_range,
+            &mut key[line * key_line..][..key_line],
+        );
     }
     Ok(())
 }
@@ -411,15 +435,15 @@ fn pack_v210_line(y: &[u16], u: &[u16], v: &[u16], width: usize, dst: &mut [u8])
 }
 
 /// GStreamer alpha for the key sample in the low 10 bits of `word`.
-fn alpha_of(word: u32) -> u32 {
-    u32::from(gst_alpha_from_mxl_key((word & SAMPLE_MASK) as u16))
+fn alpha_of(word: u32, range: KeyRange) -> u32 {
+    u32::from(gst_alpha_from_mxl_key((word & SAMPLE_MASK) as u16, range))
 }
 
-fn key_of(alpha: u16) -> u32 {
-    u32::from(mxl_key_from_gst_alpha(alpha))
+fn key_of(alpha: u16, range: KeyRange) -> u32 {
+    u32::from(mxl_key_from_gst_alpha(alpha, range))
 }
 
-fn unpack_alpha_line(src: &[u8], width: usize, a: &mut [u8]) {
+fn unpack_alpha_line(src: &[u8], width: usize, range: KeyRange, a: &mut [u8]) {
     let full_words = width / ALPHA_SAMPLES_PER_WORD;
     let words = src
         .chunks_exact(4)
@@ -433,19 +457,26 @@ fn unpack_alpha_line(src: &[u8], width: usize, a: &mut [u8]) {
             continue;
         };
         let [w] = get_words(word);
-        put_samples(samples, [alpha_of(w), alpha_of(w >> 10), alpha_of(w >> 20)]);
+        put_samples(
+            samples,
+            [
+                alpha_of(w, range),
+                alpha_of(w >> 10, range),
+                alpha_of(w >> 20, range),
+            ],
+        );
     }
     for n in full_words * ALPHA_SAMPLES_PER_WORD..width {
         let shift = 10 * (n % ALPHA_SAMPLES_PER_WORD);
         write_sample(
             a,
             n,
-            alpha_of(read_word(src, n / ALPHA_SAMPLES_PER_WORD) >> shift),
+            alpha_of(read_word(src, n / ALPHA_SAMPLES_PER_WORD) >> shift, range),
         );
     }
 }
 
-fn pack_alpha_line(a: &[u16], width: usize, dst: &mut [u8]) {
+fn pack_alpha_line(a: &[u16], width: usize, range: KeyRange, dst: &mut [u8]) {
     let full_words = width / ALPHA_SAMPLES_PER_WORD;
     let words = dst
         .chunks_exact_mut(4)
@@ -458,7 +489,14 @@ fn pack_alpha_line(a: &[u16], width: usize, dst: &mut [u8]) {
         ) else {
             continue;
         };
-        put_words(word, [pack3(key_of(s0), key_of(s1), key_of(s2))]);
+        put_words(
+            word,
+            [pack3(
+                key_of(s0, range),
+                key_of(s1, range),
+                key_of(s2, range),
+            )],
+        );
     }
 
     // The last word may be partial; it and any padding are built up from zero.
@@ -474,7 +512,7 @@ fn pack_alpha_line(a: &[u16], width: usize, dst: &mut [u8]) {
         write_word(
             dst,
             index,
-            read_word(dst, index) | (key_of(sample) << shift),
+            read_word(dst, index) | (key_of(sample, range) << shift),
         );
     }
 }
@@ -537,15 +575,15 @@ mod tests {
         }
 
         /// This frame with each alpha sample replaced by what survives a trip
-        /// through a video-range key.
-        fn alpha_through_key(&self) -> Self {
+        /// through a key of `range`.
+        fn alpha_through_key(&self, range: KeyRange) -> Self {
             let mut out = Frame {
                 planes: self.planes.clone(),
                 strides: self.strides,
             };
             for b in out.planes[3].chunks_exact_mut(2) {
                 let alpha = u16::from_le_bytes([b[0], b[1]]);
-                let back = gst_alpha_from_mxl_key(mxl_key_from_gst_alpha(alpha));
+                let back = gst_alpha_from_mxl_key(mxl_key_from_gst_alpha(alpha, range), range);
                 b.copy_from_slice(&back.to_le_bytes());
             }
             out
@@ -581,36 +619,61 @@ mod tests {
     #[test]
     fn frame_survives_a_round_trip_through_a_grain() {
         // Widths that end on a full group, on each partial group, and on an odd pixel.
-        for &width in &[2usize, 6, 8, 10, 12, 46, 48, 50, 1280, 1920, 7] {
-            let height = 3;
-            let frame = Frame::random(width, height, width as u32 * 7 + 1);
-            let mut grain = vec![0xaa; grain_size(width, height)];
-            mxl_v210a_grain_from_gst_a422_10le(&frame.planes(), width, height, &mut grain).unwrap();
-
-            let mut back = Frame::zeroed_like(&frame);
-            gst_a422_10le_from_mxl_v210a_grain(&grain, width, height, &mut back.planes_mut())
+        for range in [KeyRange::Narrow, KeyRange::Full] {
+            for &width in &[2usize, 6, 8, 10, 12, 46, 48, 50, 1280, 1920, 7] {
+                let height = 3;
+                let frame = Frame::random(width, height, width as u32 * 7 + 1);
+                let mut grain = vec![0xaa; grain_size(width, height)];
+                mxl_v210a_grain_from_gst_a422_10le(
+                    &frame.planes(),
+                    width,
+                    height,
+                    range,
+                    &mut grain,
+                )
                 .unwrap();
-            assert_eq!(
-                back.lines(width, height),
-                frame.alpha_through_key().lines(width, height),
-                "width {width}"
-            );
+
+                let mut back = Frame::zeroed_like(&frame);
+                gst_a422_10le_from_mxl_v210a_grain(
+                    &grain,
+                    width,
+                    height,
+                    range,
+                    &mut back.planes_mut(),
+                )
+                .unwrap();
+                assert_eq!(
+                    back.lines(width, height),
+                    frame.alpha_through_key(range).lines(width, height),
+                    "{range:?} width {width}"
+                );
+            }
         }
     }
 
     #[test]
     fn grain_survives_a_round_trip_through_a_frame() {
         let (width, height) = (1280, 4);
-        let frame = Frame::random(width, height, 99);
-        let mut grain = vec![0; grain_size(width, height)];
-        mxl_v210a_grain_from_gst_a422_10le(&frame.planes(), width, height, &mut grain).unwrap();
+        for range in [KeyRange::Narrow, KeyRange::Full] {
+            let frame = Frame::random(width, height, 99);
+            let mut grain = vec![0; grain_size(width, height)];
+            mxl_v210a_grain_from_gst_a422_10le(&frame.planes(), width, height, range, &mut grain)
+                .unwrap();
 
-        let mut middle = Frame::zeroed_like(&frame);
-        gst_a422_10le_from_mxl_v210a_grain(&grain, width, height, &mut middle.planes_mut())
+            let mut middle = Frame::zeroed_like(&frame);
+            gst_a422_10le_from_mxl_v210a_grain(
+                &grain,
+                width,
+                height,
+                range,
+                &mut middle.planes_mut(),
+            )
             .unwrap();
-        let mut again = vec![0xff; grain.len()];
-        mxl_v210a_grain_from_gst_a422_10le(&middle.planes(), width, height, &mut again).unwrap();
-        assert_eq!(again, grain);
+            let mut again = vec![0xff; grain.len()];
+            mxl_v210a_grain_from_gst_a422_10le(&middle.planes(), width, height, range, &mut again)
+                .unwrap();
+            assert_eq!(again, grain, "{range:?}");
+        }
     }
 
     #[test]
@@ -643,7 +706,8 @@ mod tests {
             },
         ];
         let mut grain = vec![0; grain_size(width, 1)];
-        mxl_v210a_grain_from_gst_a422_10le(&planes, width, 1, &mut grain).unwrap();
+        mxl_v210a_grain_from_gst_a422_10le(&planes, width, 1, KeyRange::Narrow, &mut grain)
+            .unwrap();
 
         let word = |n: usize| read_word(&grain, n);
         let pack = |a: u32, b: u32, c: u32| a | (b << 10) | (c << 20);
@@ -654,7 +718,7 @@ mod tests {
         assert!(grain[16..128].iter().all(|&b| b == 0), "fill line padding");
 
         let key = 128 / 4;
-        let k = |alpha: u16| u32::from(mxl_key_from_gst_alpha(alpha));
+        let k = |alpha: u16| u32::from(mxl_key_from_gst_alpha(alpha, KeyRange::Narrow));
         assert_eq!(word(key), pack(k(31), k(32), k(33)));
         assert_eq!(word(key + 1), pack(k(34), k(35), k(36)));
     }
@@ -664,36 +728,51 @@ mod tests {
         let (width, height) = (1280, 1);
         let mut frame = Frame::random(width, height, 5);
         frame.planes[3].iter_mut().for_each(|b| *b = 0xff);
-        let mut grain = vec![0xaa; grain_size(width, height)];
-        mxl_v210a_grain_from_gst_a422_10le(&frame.planes(), width, height, &mut grain).unwrap();
+        for (range, opaque) in [(KeyRange::Narrow, 940), (KeyRange::Full, 1023)] {
+            let mut grain = vec![0xaa; grain_size(width, height)];
+            mxl_v210a_grain_from_gst_a422_10le(&frame.planes(), width, height, range, &mut grain)
+                .unwrap();
 
-        // 1280 = 426 * 3 + 2: the last word holds two samples and zero in bits 20 to 31.
-        let last = read_word(&grain, grain.len() / 4 - 1);
-        assert_eq!(
-            last,
-            940 | (940 << 10),
-            "opaque is 940 in a video-range key"
-        );
+            // 1280 = 426 * 3 + 2: the last word holds two samples and zero in bits 20 to 31.
+            let last = read_word(&grain, grain.len() / 4 - 1);
+            assert_eq!(
+                last,
+                opaque | (opaque << 10),
+                "opaque is {opaque} in a {range:?} key"
+            );
+        }
     }
 
     #[test]
-    fn key_range_maps_to_full_range_alpha() {
-        assert_eq!(gst_alpha_from_mxl_key(64), 0, "transparent");
-        assert_eq!(gst_alpha_from_mxl_key(940), 1023, "opaque");
-        assert_eq!(mxl_key_from_gst_alpha(0), 64);
-        assert_eq!(mxl_key_from_gst_alpha(1023), 940);
+    fn narrow_key_range_maps_to_full_range_alpha() {
+        let narrow = KeyRange::Narrow;
+        assert_eq!(gst_alpha_from_mxl_key(64, narrow), 0, "transparent");
+        assert_eq!(gst_alpha_from_mxl_key(940, narrow), 1023, "opaque");
+        assert_eq!(mxl_key_from_gst_alpha(0, narrow), 64);
+        assert_eq!(mxl_key_from_gst_alpha(1023, narrow), 940);
         // Out of range keys are clamped, and only the low 10 bits are read.
-        assert_eq!(gst_alpha_from_mxl_key(4), 0);
-        assert_eq!(gst_alpha_from_mxl_key(1000), 1023);
-        assert_eq!(gst_alpha_from_mxl_key(0xffff), 1023);
+        assert_eq!(gst_alpha_from_mxl_key(4, narrow), 0);
+        assert_eq!(gst_alpha_from_mxl_key(1000, narrow), 1023);
+        assert_eq!(gst_alpha_from_mxl_key(0xffff, narrow), 1023);
         // Every key value survives a trip through alpha, and the map is monotonic.
         let mut previous = 0;
         for key in 64..=940u16 {
-            let alpha = gst_alpha_from_mxl_key(key);
-            assert_eq!(mxl_key_from_gst_alpha(alpha), key, "key {key}");
+            let alpha = gst_alpha_from_mxl_key(key, narrow);
+            assert_eq!(mxl_key_from_gst_alpha(alpha, narrow), key, "key {key}");
             assert!(key == 64 || alpha > previous, "key {key}");
             previous = alpha;
         }
+    }
+
+    #[test]
+    fn full_key_range_is_alpha() {
+        for value in 0..=1023u16 {
+            assert_eq!(gst_alpha_from_mxl_key(value, KeyRange::Full), value);
+            assert_eq!(mxl_key_from_gst_alpha(value, KeyRange::Full), value);
+        }
+        // Only the low 10 bits are read.
+        assert_eq!(gst_alpha_from_mxl_key(0xffff, KeyRange::Full), 1023);
+        assert_eq!(mxl_key_from_gst_alpha(0xfc00, KeyRange::Full), 0);
     }
 
     #[test]
@@ -702,7 +781,13 @@ mod tests {
         let frame = Frame::random(width, height, 3);
         let mut grain = vec![0; grain_size(width, height) - 1];
         assert!(matches!(
-            mxl_v210a_grain_from_gst_a422_10le(&frame.planes(), width, height, &mut grain),
+            mxl_v210a_grain_from_gst_a422_10le(
+                &frame.planes(),
+                width,
+                height,
+                KeyRange::Narrow,
+                &mut grain
+            ),
             Err(VideoLayoutError::TooShort {
                 what: "v210a grain",
                 ..
@@ -712,14 +797,26 @@ mod tests {
         let grain = vec![0; grain_size(width, height)];
         let mut small = Frame::random(width, height - 1, 3);
         assert!(matches!(
-            gst_a422_10le_from_mxl_v210a_grain(&grain, width, height, &mut small.planes_mut()),
+            gst_a422_10le_from_mxl_v210a_grain(
+                &grain,
+                width,
+                height,
+                KeyRange::Narrow,
+                &mut small.planes_mut()
+            ),
             Err(VideoLayoutError::TooShort { .. })
         ));
 
         let mut narrow = Frame::random(width, height, 3);
         narrow.strides[1] = 2;
         assert!(matches!(
-            gst_a422_10le_from_mxl_v210a_grain(&grain, width, height, &mut narrow.planes_mut()),
+            gst_a422_10le_from_mxl_v210a_grain(
+                &grain,
+                width,
+                height,
+                KeyRange::Narrow,
+                &mut narrow.planes_mut()
+            ),
             Err(VideoLayoutError::TooShort {
                 what: "U plane",
                 ..

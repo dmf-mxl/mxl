@@ -88,8 +88,22 @@ pub(crate) fn discrete_video_format(
                 .map_err(|e| failed(format!("Invalid frame width: {e}")))?;
             let height = u32::try_from(video.frame_height)
                 .map_err(|e| failed(format!("Invalid frame height: {e}")))?;
+            // The grain conversion takes the key range from this colorimetry.
+            let colorimetry = gst_colorimetry_from_flow(
+                &video.colorspace,
+                video.transfer_characteristic.as_deref(),
+                video.component_range.as_deref(),
+                video.components.iter().map(|c| c.bit_depth).max(),
+            )
+            .ok_or_else(|| {
+                failed(format!(
+                    "Unsupported flow colorimetry: colorspace {}, transfer_characteristic {:?}, component_range {:?}",
+                    video.colorspace, video.transfer_characteristic, video.component_range
+                ))
+            })?;
             let info =
                 gst_video::VideoInfo::builder(gst_video::VideoFormat::A42210le, width, height)
+                    .colorimetry(&colorimetry)
                     .build()
                     .map_err(|e| failed(format!("Invalid A422_10LE frame layout: {e}")))?;
             Ok(DiscreteFormat::VideoAlpha(Box::new(info)))
