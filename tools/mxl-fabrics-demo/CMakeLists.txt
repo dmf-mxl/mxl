@@ -21,8 +21,8 @@ target_sources(mxl-fabrics-demo
     )
 target_link_libraries(mxl-fabrics-demo 
         PRIVATE
-            mxl
-            mxl-fabrics
+            mxl::mxl
+            mxl::mxl-fabrics
             mxl-internal-headers
             stduuid
             CLI11::CLI11

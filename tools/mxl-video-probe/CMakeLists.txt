@@ -34,7 +34,7 @@ endif ()
 
 target_link_libraries(mxl-video-probe
         PRIVATE
-            mxl
+            mxl::mxl
             mxl-tools-common
             ada::ada
             CLI11::CLI11
