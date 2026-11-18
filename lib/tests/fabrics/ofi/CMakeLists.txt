@@ -34,9 +34,9 @@ target_sources(mxl-fabrics-ofi-tests
 
 target_link_libraries(mxl-fabrics-ofi-tests
         PRIVATE
-            mxl
+            mxl::mxl
             mxl-internal-headers
-            mxl-fabrics
+            mxl::mxl-fabrics
             mxl-fabrics-objects
             Catch2::Catch2WithMain
             stduuid

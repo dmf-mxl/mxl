@@ -108,7 +108,7 @@ set_target_properties(mxl-fabrics
 
 target_link_libraries(mxl-fabrics
         PUBLIC
-            mxl
+            mxl::mxl
             mxl-fabrics-headers
             PkgConfig::libfabric
         PRIVATE
