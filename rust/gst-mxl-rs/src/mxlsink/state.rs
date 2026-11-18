@@ -262,7 +262,25 @@ pub(crate) fn init_state_with_video(
     );
     let (label, description, tags) =
         resolve_flow_metadata(settings, default_name, default_group_hint("Video", element));
-    let mut flow_def_details = FlowDefVideo {
+    let components = {
+        let component = |name: &str, width| Component {
+            name: name.into(),
+            width,
+            height,
+            bit_depth: 10,
+        };
+        let mut components = vec![
+            component("Y", width),
+            component("Cb", width / 2),
+            component("Cr", width / 2),
+        ];
+        if matches!(discrete_format, DiscreteFormat::VideoAlpha(_)) {
+            // The key plane, named "A" as in the NMOS flow schema.
+            components.push(component("A", width));
+        }
+        components
+    };
+    let flow_def_details = FlowDefVideo {
         grain_rate: Rate {
             numerator: framerate.numer(),
             denominator: framerate.denom(),
@@ -273,46 +291,21 @@ pub(crate) fn init_state_with_video(
         colorspace: flow_colorimetry.colorspace.into(),
         transfer_characteristic: Some(flow_colorimetry.transfer_characteristic.into()),
         component_range: Some(flow_colorimetry.component_range.into()),
-        components: vec![
-            Component {
-                name: "Y".into(),
-                width,
-                height,
-                bit_depth: 10,
-            },
-            Component {
-                name: "Cb".into(),
-                width: width / 2,
-                height,
-                bit_depth: 10,
-            },
-            Component {
-                name: "Cr".into(),
-                width: width / 2,
-                height,
-                bit_depth: 10,
-            },
-        ],
+        components,
     };
-    if matches!(discrete_format, DiscreteFormat::VideoAlpha(_)) {
-        // The key plane, named "A" as in the NMOS flow schema.
-        flow_def_details.components.push(Component {
-            name: "A".into(),
-            width,
-            height,
-            bit_depth: 10,
-        });
-    }
     if let Some(prev_state) = &state.flow_state {
+        let is_same_format_as = |prev: &DiscreteFormat| {
+            matches!(
+                (prev, &discrete_format),
+                (DiscreteFormat::Video, DiscreteFormat::Video)
+                    | (DiscreteFormat::VideoAlpha(_), DiscreteFormat::VideoAlpha(_))
+            )
+        };
         return match prev_state {
             FlowState::Discrete(prev_discrete) => match &prev_discrete.flow_def {
                 DiscreteFlowDef::Video(prev_def_details)
                     if prev_def_details == &flow_def_details
-                        && matches!(
-                            (&prev_discrete.format, &discrete_format),
-                            (DiscreteFormat::Video, DiscreteFormat::Video)
-                                | (DiscreteFormat::VideoAlpha(_), DiscreteFormat::VideoAlpha(_))
-                        ) =>
+                        && is_same_format_as(&prev_discrete.format) =>
                 {
                     trace!(RE_SET_CAPS_NO_CHANGE);
                     Ok(())
