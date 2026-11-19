@@ -17,6 +17,9 @@ This page is a collection of resources, references, and tools related to MXL.
 * **MXL + NvNmos C API Example**
   Example applications combining the MXL SDK and [NvNmos](https://github.com/NVIDIA/nvnmos) to support AMWA [BCP-007-03](https://specs.amwa.tv/new/bcp-007-03/latest/) NMOS With MXL for connecting MXL readers and writers. [https://github.com/garethsb/mxl-nmos-c-example](https://github.com/garethsb/mxl-nmos-c-example)
 
+* **MXL API BENCH tool**
+  A bench tool to explore, test and scale the public MXL API calls. Can run predefined scenarios build in JSON format. [https://github.com/cbcrc/mxl-api-bench](https://github.com/cbcrc/mxl-api-bench)
+
 \* Please note that the items here are not maintained by the MXL project, have not been validated for quality and are outside of the project.
 
 
