@@ -368,3 +368,59 @@ jobs:
             printf '### Runtime tests skipped (%s)\n\n```text\n%s\n```\n' "${count}" "${skipped}" >> "${GITHUB_STEP_SUMMARY}"
           fi
           exit "${status}"
+
+  build_rust_macos:
+    name: Build Rust bindings on macOS
+    strategy:
+      matrix:
+        os-version: [26]
+        architecture: [arm64]
+        build-type: [Darwin-Clang-Release]
+    runs-on: macos-${{ matrix.os-version }}
+    env:
+      RUST_VERSION: 1.90.0
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          path: 'mxl'
+          submodules: true
+
+      - name: Restore vcpkg cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ github.workspace }}/vcpkg_cache
+          key: vcpkg-macos-${{ matrix.os-version }}-${{ matrix.architecture }}-${{ matrix.build-type }}-${{ hashFiles('mxl/vcpkg.json') }}
+          restore-keys: vcpkg-macos-${{ matrix.os-version }}-${{ matrix.architecture }}-${{ matrix.build-type }}-
+
+      - name: Install build dependencies
+        run: brew install cmake gstreamer ninja pkgconf
+
+      - name: Install Rust
+        run: |
+          rustup toolchain install "${RUST_VERSION}" --profile minimal --component clippy --component rustfmt
+          rustup default "${RUST_VERSION}"
+
+      - name: Install vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg '${{ github.workspace }}/vcpkg'
+          '${{ github.workspace }}/vcpkg/bootstrap-vcpkg.sh' -disableMetrics
+          printf 'VCPKG_ROOT=%s\n' '${{ github.workspace }}/vcpkg' >> "${GITHUB_ENV}"
+          printf 'VCPKG_BINARY_SOURCES=clear;files,${{ github.workspace }}/vcpkg_cache,read\n' >> "${GITHUB_ENV}"
+          printf 'VCPKG_DEFAULT_TRIPLET=${{ matrix.architecture }}-osx\n' >> "${GITHUB_ENV}"
+
+      - name: Check the Rust bindings
+        working-directory: mxl/rust
+        env:
+          RUSTFLAGS: "-Dwarnings"
+        run: |
+          cargo fmt -- --check
+          cargo clippy --all-targets --locked -- -D warnings
+
+      - name: Build Rust bindings
+        working-directory: mxl/rust
+        run: cargo build --release --all-targets --locked
+
+      - name: Test the Rust bindings
+        working-directory: mxl/rust
+        run: cargo test --release --all-targets --locked --workspace --exclude gst-mxl-rs -- --test-threads=1
