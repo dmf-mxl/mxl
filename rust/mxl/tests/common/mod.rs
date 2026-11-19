@@ -12,10 +12,18 @@ pub struct TestDomainGuard {
     dir: std::path::PathBuf,
 }
 
+fn test_domain_root() -> std::path::PathBuf {
+    if cfg!(target_os = "linux") {
+        "/dev/shm".into()
+    } else {
+        std::env::temp_dir()
+    }
+}
+
 impl TestDomainGuard {
     fn new(test: &str) -> Self {
-        let dir = std::path::PathBuf::from(format!(
-            "/dev/shm/mxl_rust_tests_domain_{}_{}",
+        let dir = test_domain_root().join(format!(
+            "mxl_rust_tests_domain_{}_{}",
             test,
             uuid::Uuid::new_v4()
         ));
