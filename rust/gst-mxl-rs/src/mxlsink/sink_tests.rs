@@ -169,6 +169,37 @@ mod tests {
     }
 
     #[test]
+    fn sink_template_accepts_any_channel_mask() {
+        use gst::subclass::prelude::ElementImpl;
+        gst::init().unwrap();
+        let template = crate::mxlsink::imp::MxlSink::pad_templates()[0].caps();
+        for (channels, mask) in [
+            (1, None),
+            (1, Some(0x0)),
+            (2, Some(0x3)),
+            (2, Some(0x0)),
+            (8, Some(0x0)),
+            (8, Some(0xc3f)),
+            (8, Some(0xff)),
+            (16, Some(0x0)),
+            (63, Some(0x0)),
+            (64, Some(0x0)),
+            (65, Some(0x0)),
+        ] {
+            let mut builder = gst::Caps::builder("audio/x-raw")
+                .field("format", "F32LE")
+                .field("layout", "interleaved")
+                .field("rate", 48000)
+                .field("channels", channels);
+            if let Some(mask) = mask {
+                builder = builder.field("channel-mask", gst::Bitmask::new(mask));
+            }
+            let caps = builder.build();
+            assert!(caps.is_subset(template), "{caps} not accepted");
+        }
+    }
+
+    #[test]
     fn resolve_flow_metadata_keeps_defaults_when_unset() {
         let settings = Settings::default();
         let (label, description, tags) =

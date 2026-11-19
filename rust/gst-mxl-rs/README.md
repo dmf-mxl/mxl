@@ -70,6 +70,10 @@ A `video/smpte291` flow results in `meta/x-st-2038, alignment=frame`.
 
 Only progressive video is supported, as in MXL itself for now: `mxlsink` refuses interlaced caps and `mxlsrc` refuses an interlaced flow.
 
+An audio flow does not record channel positions, so `mxlsink` accepts any `channel-mask`.
+`mxlsrc` gives mono and stereo no `channel-mask`, which GStreamer reads as mono and as front left and right.
+It gives more channels `channel-mask=0x0` (unpositioned), so `audioconvert` needs a `mix-matrix` to convert them to a positioned layout such as stereo.
+
 **Note:** Set exactly one of `video-flow-id`, `audio-flow-id`, or `data-flow-id`. The element sets its output caps based on whichever is set.
 
 ## Example Pipelines

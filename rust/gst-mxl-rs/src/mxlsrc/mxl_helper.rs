@@ -156,14 +156,19 @@ pub(crate) fn set_json_caps(
             Ok(())
         }
         FlowDefDetails::Audio(audio) => {
+            // The flow definition records no channel positions. GStreamer
+            // reads mono and stereo without a channel-mask as mono and front
+            // left and right, and requires a mask for more channels, so those
+            // are unpositioned.
             let caps = gst::Caps::builder("audio/x-raw")
                 .field("format", "F32LE")
                 .field("rate", audio.sample_rate.numerator)
                 .field("channels", audio.channel_count)
                 .field("layout", "interleaved")
-                .field(
+                .field_if(
                     "channel-mask",
-                    generate_channel_mask_from_channels(audio.channel_count as u32),
+                    gst::Bitmask::new(0),
+                    audio.channel_count > 2,
                 )
                 .build();
             src.obj()
@@ -223,15 +228,6 @@ pub(crate) fn get_flow_def(
     };
     Ok(json)
 }
-pub(crate) fn generate_channel_mask_from_channels(channels: u32) -> gst::Bitmask {
-    let mask = if channels >= 64 {
-        u64::MAX
-    } else {
-        (1u64 << channels) - 1
-    };
-    gst::Bitmask::new(mask)
-}
-
 /// Video, audio, or discrete data.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum FlowKind {
