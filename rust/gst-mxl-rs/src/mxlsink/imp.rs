@@ -293,17 +293,13 @@ impl ElementImpl for MxlSink {
                             )
                             .build(),
                     );
-                    for ch in 1..64 {
-                        let mask = gst::Bitmask::from((1u64 << ch) - 1);
-                        caps.make_mut().append(
-                            gst::Caps::builder("audio/x-raw")
-                                .field("format", "F32LE")
-                                .field("layout", "interleaved")
-                                .field("channels", ch)
-                                .field("channel-mask", mask)
-                                .build(),
-                        );
-                    }
+                    caps.make_mut().append(
+                        gst::Caps::builder("audio/x-raw")
+                            .field("format", "F32LE")
+                            .field("layout", "interleaved")
+                            .field("channels", gst::IntRange::new(1, i32::MAX))
+                            .build(),
+                    );
                     caps.make_mut().append(
                         gst::Caps::builder("meta/x-st-2038")
                             .field("alignment", "frame")
