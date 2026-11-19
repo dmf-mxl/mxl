@@ -423,4 +423,4 @@ jobs:
 
       - name: Test the Rust bindings
         working-directory: mxl/rust
-        run: cargo test --release --all-targets --locked --workspace --exclude gst-mxl-rs -- --test-threads=1
+        run: cargo test --release --all-targets --locked -- --test-threads=1
