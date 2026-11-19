@@ -16,6 +16,14 @@ mod tests {
     const SHM_MXL_HINT: &str = "MXL uses mkdtemp(3) under /dev/shm; run integration tests \
         on Linux with tmpfs (/dev/shm)";
 
+    fn test_domain_root() -> PathBuf {
+        if cfg!(target_os = "linux") {
+            "/dev/shm".into()
+        } else {
+            std::env::temp_dir()
+        }
+    }
+
     /// Per-test MXL domain under `/dev/shm`, removed on drop.
     struct TestDomainGuard {
         dir: PathBuf,
@@ -23,8 +31,8 @@ mod tests {
 
     impl TestDomainGuard {
         fn new(test: &str) -> Self {
-            let dir = PathBuf::from(format!(
-                "/dev/shm/mxl_gst_test_domain_{test}_{}",
+            let dir = test_domain_root().join(format!(
+                "mxl_gst_test_domain_{test}_{}",
                 uuid::Uuid::new_v4()
             ));
             std::fs::create_dir_all(&dir).unwrap_or_else(|e| {
@@ -124,7 +132,7 @@ mod tests {
 
         let mxlsink = gst::ElementFactory::make("mxlsink")
             .property("flow-id", "8fbec3b1-1b0f-417d-9059-8b94a47197ed")
-            .property("domain", "/dev/shm")
+            .property("domain", test_domain_root().to_string_lossy().as_ref())
             .build()
             .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
 
@@ -140,7 +148,7 @@ mod tests {
         // -------------------------
         let src1 = gst::ElementFactory::make("mxlsrc")
             .property("video-flow-id", "8fbec3b1-1b0f-417d-9059-8b94a47197ed")
-            .property("domain", "/dev/shm")
+            .property("domain", test_domain_root().to_string_lossy().as_ref())
             .build()
             .map_err(|e| glib::Error::new(CoreError::Failed, &e.message))?;
 
