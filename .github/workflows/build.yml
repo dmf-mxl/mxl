@@ -423,4 +423,8 @@ jobs:
 
       - name: Test the Rust bindings
         working-directory: mxl/rust
-        run: cargo test --release --all-targets --locked -- --test-threads=1
+        # The gst-mxl-rs integration tests run pipelines in real time, which
+        # the hosted macOS runners do not keep up with.
+        run: |
+          cargo test --release --all-targets --locked --workspace --exclude gst-mxl-rs -- --test-threads=1
+          cargo test --release --locked -p gst-mxl-rs --lib -- --test-threads=1
