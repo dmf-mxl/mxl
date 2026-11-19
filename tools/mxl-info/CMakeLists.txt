@@ -62,3 +62,7 @@ install(TARGETS mxl-info
         COMPONENT ${PROJECT_NAME}-tools
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
+
+if (BUILD_TESTS)
+    add_subdirectory(tests)
+endif ()
