@@ -172,6 +172,73 @@ fn f32le_tone_round_trip_via_mxl() {
     );
 }
 
+/// An MXL audio flow records no channel positions, so `mxlsrc` claims none:
+/// mono and stereo have no `channel-mask`, which GStreamer reads as mono and
+/// front left and right, and more channels are unpositioned.
+#[test]
+fn mxlsrc_audio_caps_claim_no_channel_positions() {
+    init();
+    const FACTORIES: &[&str] = &["appsink", "audiotestsrc", "mxlsink", "mxlsrc", "queue"];
+    if let Some(reason) = skip_reason(FACTORIES) {
+        skip!(reason);
+    }
+
+    let domain_guard = common::TestDomainGuard::new("audio_channel_mask");
+    let domain = domain_guard.domain();
+
+    for (channels, expected_mask) in [(1, None), (2, None), (8, Some(0x0)), (16, Some(0x0))] {
+        let flow_id = uuid::Uuid::new_v4().to_string();
+        let producer_desc = format!(
+            "audiotestsrc is-live=true \
+               ! audio/x-raw,format=F32LE,layout=interleaved,channels={channels},rate={SAMPLE_RATE} \
+               ! queue \
+               ! mxlsink flow-id={flow_id} domain={domain}"
+        );
+        let consumer_desc = format!(
+            "mxlsrc audio-flow-id={flow_id} domain={domain} \
+               ! queue \
+               ! appsink name=sink sync=false"
+        );
+        let producer = gst::parse::launch(&producer_desc)
+            .expect("parse producer")
+            .downcast::<gst::Pipeline>()
+            .expect("producer pipeline");
+        let consumer = gst::parse::launch(&consumer_desc)
+            .expect("parse consumer")
+            .downcast::<gst::Pipeline>()
+            .expect("consumer pipeline");
+        let appsink = consumer
+            .by_name("sink")
+            .expect("appsink")
+            .downcast::<gst_app::AppSink>()
+            .expect("AppSink downcast");
+
+        let rt = RoundTrip { producer, consumer };
+        rt.producer
+            .set_state(gst::State::Playing)
+            .expect("producer Playing");
+        rt.consumer
+            .set_state(gst::State::Playing)
+            .expect("consumer Playing");
+
+        let sample = appsink
+            .try_pull_sample(gst::ClockTime::from_seconds(5))
+            .unwrap_or_else(|| panic!("no sample from mxlsrc for {channels} channels"));
+        let caps = sample.caps().expect("sample caps");
+        let s = caps.structure(0).expect("caps structure");
+        assert_eq!(s.get::<i32>("channels"), Ok(channels), "{caps}");
+        assert_eq!(
+            s.get_optional::<gst::Bitmask>("channel-mask")
+                .expect("channel-mask type")
+                .map(|mask| mask.0),
+            expected_mask,
+            "{caps}"
+        );
+
+        assert_bus_no_errors(&rt);
+    }
+}
+
 fn assert_bus_no_errors(rt: &RoundTrip) {
     let errors = common::collect_bus_errors(&rt.consumer);
     common::assert_bus_no_errors("consumer", &errors);
