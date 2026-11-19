@@ -1,11 +1,11 @@
 <map id="lib/internal/src/PathUtils.cpp" name="lib/internal/src/PathUtils.cpp">
-<area shape="rect" id="Node000001" title=" " alt="" coords="173,5,377,31"/>
-<area shape="rect" id="Node000002" href="$PathUtils_8hpp.html" title="Paths and filenames utilities used by the MXL SDK." alt="" coords="5,79,197,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="248,33,143,76,141,71,246,28"/>
-<area shape="rect" id="Node000004" title=" " alt="" coords="222,79,327,104"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="277,31,277,65,272,65,272,31"/>
-<area shape="rect" id="Node000005" href="$platform_8h.html" title=" " alt="" coords="351,79,470,104"/>
-<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="298,28,378,70,375,75,295,33"/>
-<area shape="rect" id="Node000003" title=" " alt="" coords="56,152,147,177"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="104,104,104,138,99,138,99,104"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="171,5,375,33"/>
+<area shape="rect" id="Node000002" href="$PathUtils_8hpp.html" title="Paths and filenames utilities used by the MXL SDK." alt="" coords="5,81,197,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="240,35,147,77,144,72,244,32"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="221,81,325,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="275,31,275,67,271,64,271,36"/>
+<area shape="rect" id="Node000005" href="$platform_8h.html" title=" " alt="" coords="350,81,468,109"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="298,31,374,73,369,74,297,36"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="56,157,146,184"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="103,107,103,142,99,140,99,111"/>
 </map>

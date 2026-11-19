@@ -1,9 +1,9 @@
 <map id="lib/include/mxl/mxl.h" name="lib/include/mxl/mxl.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="69,5,227,31"/>
-<area shape="rect" id="Node000002" title=" " alt="" coords="5,79,88,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="133,33,76,73,73,68,130,28"/>
-<area shape="rect" id="Node000003" title=" " alt="" coords="113,79,183,104"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="151,31,151,65,145,65,145,31"/>
-<area shape="rect" id="Node000004" href="$platform_8h.html" title=" " alt="" coords="207,79,326,104"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="168,28,237,69,234,74,166,33"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="67,5,225,33"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,81,87,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="131,33,77,74,74,70,126,34"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="111,81,181,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="148,32,148,66,144,64,144,36"/>
+<area shape="rect" id="Node000004" href="$platform_8h.html" title=" " alt="" coords="206,81,324,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="168,31,234,72,228,73,166,36"/>
 </map>

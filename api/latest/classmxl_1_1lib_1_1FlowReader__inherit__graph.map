@@ -1,15 +1,15 @@
 <map id="mxl::lib::FlowReader" name="mxl::lib::FlowReader">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,77,161,102"/>
-<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1ContinuousFlowReader.html" title=" " alt="" coords="223,9,406,49"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="146,71,236,47,238,52,147,76"/>
-<area shape="rect" id="Node000004" href="$classmxl_1_1lib_1_1DiscreteFlowReader.html" title=" " alt="" coords="209,77,420,102"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="175,87,209,87,209,92,175,92"/>
-<area shape="rect" id="Node000006" href="$classmxl_1_1lib_1_1EventFlowReader.html" title="Backend contract for reading complete event entries or fragments in queue order. Each reader has one ..." alt="" coords="218,133,411,158"/>
-<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="150,103,262,130,261,135,149,108"/>
-<area shape="rect" id="Node000003" href="$classmxl_1_1lib_1_1PosixContinuousFlowReader.html" title=" " alt="" coords="474,5,661,45"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="420,25,474,24,474,29,420,30"/>
-<area shape="rect" id="Node000005" href="$classmxl_1_1lib_1_1PosixDiscreteFlowReader.html" title=" " alt="" coords="468,69,667,109"/>
-<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="434,87,468,87,468,92,434,92"/>
-<area shape="rect" id="Node000007" href="$classmxl_1_1lib_1_1PosixEventFlowReader.html" title="POSIX event consumer with a single&#45;thread cursor and an owned payload snapshot." alt="" coords="476,133,659,173"/>
-<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="425,146,476,148,476,153,425,151"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,83,161,111"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1ContinuousFlowReader.html" title=" " alt="" coords="222,11,404,55"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="149,76,232,54,228,57,151,81"/>
+<area shape="rect" id="Node000004" href="$classmxl_1_1lib_1_1DiscreteFlowReader.html" title=" " alt="" coords="209,83,418,111"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="176,94,211,96,206,98,177,100"/>
+<area shape="rect" id="Node000006" href="$classmxl_1_1lib_1_1EventFlowReader.html" title="Backend contract for reading complete event entries or fragments in queue order. Each reader has one ..." alt="" coords="217,143,410,171"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="154,113,260,141,255,144,153,118"/>
+<area shape="rect" id="Node000003" href="$classmxl_1_1lib_1_1PosixContinuousFlowReader.html" title=" " alt="" coords="472,5,658,50"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="420,28,474,29,469,30,420,33"/>
+<area shape="rect" id="Node000005" href="$classmxl_1_1lib_1_1PosixDiscreteFlowReader.html" title=" " alt="" coords="466,75,664,119"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="433,94,468,97,463,97,434,100"/>
+<area shape="rect" id="Node000007" href="$classmxl_1_1lib_1_1PosixEventFlowReader.html" title="POSIX event consumer with a single&#45;thread cursor and an owned payload snapshot." alt="" coords="474,144,656,189"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="425,158,477,163,471,163,425,164"/>
 </map>

@@ -1,3 +1,17 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$classmxl_1_1lib_1_1FlowSynchronizationGroup.html" title=" " alt="" coords="5,5,220,45"/>
+<area shape="rect" id="Node000000" href="$classmxl_1_1lib_1_1FlowWriter.html" title=" " alt="" coords="5,119,155,147"/>
+<area shape="rect" id="Node000001" href="$classmxl_1_1lib_1_1ContinuousFlowWriter.html" title=" " alt="" coords="213,21,396,66"/>
+<area shape="poly" id="edge23_Node000000_Node000001" title=" " alt="" coords="130,111,248,64,245,69,132,115"/>
+<area shape="rect" id="Node000003" href="$classmxl_1_1lib_1_1DiscreteFlowWriter.html" title=" " alt="" coords="203,119,406,147"/>
+<area shape="poly" id="edge25_Node000000_Node000003" title=" " alt="" coords="170,130,205,132,200,134,171,136"/>
+<area shape="rect" id="Node000006" href="$classmxl_1_1lib_1_1EventFlowWriter.html" title="Backend contract for a single event producer with private write staging. Callers guarantee one writer..." alt="" coords="211,179,398,207"/>
+<area shape="poly" id="edge28_Node000000_Node000006" title=" " alt="" coords="149,149,252,177,247,180,149,154"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1PosixContinuousFlowWriter.html" title=" " alt="" coords="460,5,646,50"/>
+<area shape="poly" id="edge24_Node000001_Node000002" title=" " alt="" coords="411,34,462,33,457,34,412,39"/>
+<area shape="rect" id="Node000004" href="$structMockWriter.html" title=" " alt="" coords="505,74,601,102"/>
+<area shape="poly" id="edge26_Node000003_Node000004" title=" " alt="" coords="398,113,507,96,502,97,399,118"/>
+<area shape="rect" id="Node000005" href="$classmxl_1_1lib_1_1PosixDiscreteFlowWriter.html" title=" " alt="" coords="454,125,652,170"/>
+<area shape="poly" id="edge27_Node000003_Node000005" title=" " alt="" coords="421,137,456,142,451,142,422,143"/>
+<area shape="rect" id="Node000007" href="$classmxl_1_1lib_1_1PosixEventFlowWriter.html" title="POSIX single&#45;producer writer with private staging and monotonic timestamps. The caller guarantees one..." alt="" coords="462,195,644,239"/>
+<area shape="poly" id="edge29_Node000006_Node000007" title=" " alt="" coords="413,201,465,208,460,208,413,206"/>
 </map>

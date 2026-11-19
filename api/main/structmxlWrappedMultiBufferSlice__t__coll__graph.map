@@ -1,7 +1,7 @@
 <map id="mxlWrappedMultiBufferSlice_t" name="mxlWrappedMultiBufferSlice_t">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,181,225,207"/>
-<area shape="rect" id="Node000002" href="$structmxlWrappedBufferSlice__t.html" title=" " alt="" coords="22,93,209,119"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="118,133,118,181,113,181,113,133"/>
-<area shape="rect" id="Node000003" href="$structmxlBufferSlice__t.html" title=" " alt="" coords="51,5,180,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="118,45,118,93,113,93,113,45"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,207,225,234"/>
+<area shape="rect" id="Node000002" href="$structmxlWrappedBufferSlice__t.html" title=" " alt="" coords="22,106,208,134"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,148,118,207,112,205,113,151"/>
+<area shape="rect" id="Node000003" href="$structmxlBufferSlice__t.html" title=" " alt="" coords="51,5,179,33"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="116,46,118,106,112,105,114,51"/>
 </map>

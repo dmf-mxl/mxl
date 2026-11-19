@@ -14,7 +14,7 @@ var searchData=
   ['event_11',['event',['../structmxlFlowConfigInfo__t.html#acbf958066accdf589c90c876d5de5aa7',1,'mxlFlowConfigInfo_t']]],
   ['event_5fdata_5ffile_5fname_12',['EVENT_DATA_FILE_NAME',['../namespacemxl_1_1lib.html#a0f6f136c0828bcf9864f8cbafac49677',1,'mxl::lib']]],
   ['event_5fheader_5fversion_13',['EVENT_HEADER_VERSION',['../namespacemxl_1_1lib.html#a10580dc38bafefba50539a56b45d984e',1,'mxl::lib']]],
-  ['eventcount_14',['eventcount',['../structmxl_1_1lib_1_1EventRingHeader.html#a2915b63212bc232a26d4f97751548dbe',1,'mxl::lib::EventRingHeader::eventCount'],['../structmxlEventFlowConfigInfo__t.html#aaadc93ec1e3e7e5e4bdad184238dede7',1,'mxlEventFlowConfigInfo_t::eventCount']]],
+  ['eventcount_14',['eventCount',['../structmxlEventFlowConfigInfo__t.html#aaadc93ec1e3e7e5e4bdad184238dede7',1,'mxlEventFlowConfigInfo_t::eventCount'],['../structmxl_1_1lib_1_1EventRingHeader.html#a2915b63212bc232a26d4f97751548dbe',1,'mxl::lib::EventRingHeader::eventCount']]],
   ['eventpayloadsize_15',['eventPayloadSize',['../structmxlEventFlowConfigInfo__t.html#a0e0f9b0de438b06ceb7c0c0f05ef6078',1,'mxlEventFlowConfigInfo_t']]],
   ['eventsize_16',['eventSize',['../structmxlEventInfo__t.html#a5c7ed79e239872f2e8c933de36a32a98',1,'mxlEventInfo_t']]]
 ];

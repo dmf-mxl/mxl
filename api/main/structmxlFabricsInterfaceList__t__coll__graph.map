@@ -1,10 +1,10 @@
 <map id="mxlFabricsInterfaceList_t" name="mxlFabricsInterfaceList_t">
-<area shape="rect" id="Node000001" title=" " alt="" coords="123,181,309,207"/>
-<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="323,186,335,194,327,201,309,204,308,199,325,196,330,194,321,191"/>
-<area shape="rect" id="Node000002" href="$structmxlFabricsInterfaceConfig__t.html" title=" " alt="" coords="115,93,317,119"/>
-<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="219,133,219,181,213,181,213,133"/>
-<area shape="rect" id="Node000003" href="$structmxlFabricsInterfaceCaps__t.html" title=" " alt="" coords="5,5,200,31"/>
-<area shape="poly" id="edge3_Node000002_Node000003" title=" " alt="" coords="130,37,202,91,199,95,127,41"/>
-<area shape="rect" id="Node000004" href="$structmxlFabricsEndpointAddress__t.html" title=" " alt="" coords="224,5,437,31"/>
-<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="306,41,233,95,230,91,303,37"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="123,207,308,234"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="324,212,334,220,326,228,308,232,308,226,324,224,329,221,322,217"/>
+<area shape="rect" id="Node000002" href="$structmxlFabricsInterfaceConfig__t.html" title=" " alt="" coords="114,106,316,134"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="217,148,218,207,213,205,213,151"/>
+<area shape="rect" id="Node000003" href="$structmxlFabricsInterfaceCaps__t.html" title=" " alt="" coords="5,5,199,33"/>
+<area shape="poly" id="edge3_Node000002_Node000003" title=" " alt="" coords="129,41,203,105,198,106,128,46"/>
+<area shape="rect" id="Node000004" href="$structmxlFabricsEndpointAddress__t.html" title=" " alt="" coords="222,5,435,33"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="305,42,232,107,229,103,300,45"/>
 </map>

@@ -1,7 +1,7 @@
 <map id="mxl::lib::fabrics::ofi::IngressProtocol" name="mxl::lib::fabrics::ofi::IngressProtocol">
-<area shape="rect" id="Node000001" title="Interface for post&#45;processing on transfer reception." alt="" coords="5,37,152,77"/>
-<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMAGrainIngressProtocol.html" title="Ingress protocol for RMA writer endpoint." alt="" coords="207,5,418,45"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="165,43,207,37,208,42,166,48"/>
-<area shape="rect" id="Node000003" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleIngressProtocol.html" title="Ingress protocol for RMA writer endpoint for audio samples." alt="" coords="200,69,425,109"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="166,67,200,71,199,77,165,72"/>
+<area shape="rect" id="Node000001" title="Interface for post&#45;processing on transfer reception." alt="" coords="5,40,151,85"/>
+<area shape="rect" id="Node000002" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMAGrainIngressProtocol.html" title="Ingress protocol for RMA writer endpoint." alt="" coords="206,5,416,50"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="165,47,208,43,202,44,166,52"/>
+<area shape="rect" id="Node000003" href="$classmxl_1_1lib_1_1fabrics_1_1ofi_1_1RMASampleIngressProtocol.html" title="Ingress protocol for RMA writer endpoint for audio samples." alt="" coords="199,75,423,119"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="166,73,201,80,196,81,166,78"/>
 </map>

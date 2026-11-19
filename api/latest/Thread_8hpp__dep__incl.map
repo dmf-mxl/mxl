@@ -1,7 +1,7 @@
 <map id="lib/internal/include/mxl&#45;internal/Thread.hpp" name="lib/internal/include/mxl&#45;internal/Thread.hpp">
-<area shape="rect" id="Node000001" title=" " alt="" coords="100,5,283,45"/>
-<area shape="rect" id="Node000002" href="$Thread_8cpp.html" title=" " alt="" coords="5,93,196,119"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="161,56,116,95,113,91,157,52"/>
-<area shape="rect" id="Node000003" href="$time_8cpp.html" title=" " alt="" coords="221,93,343,119"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="225,52,270,91,267,95,222,56"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="99,5,281,50"/>
+<area shape="rect" id="Node000002" href="$Thread_8cpp.html" title=" " alt="" coords="5,98,196,126"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="158,60,116,100,113,95,153,62"/>
+<area shape="rect" id="Node000003" href="$time_8cpp.html" title=" " alt="" coords="220,98,341,126"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="226,58,269,98,263,97,224,63"/>
 </map>

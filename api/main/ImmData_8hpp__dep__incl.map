@@ -1,9 +1,9 @@
 <map id="lib/fabrics/ofi/src/internal/ImmData.hpp" name="lib/fabrics/ofi/src/internal/ImmData.hpp">
-<area shape="rect" id="Node000001" title=" " alt="" coords="230,5,399,45"/>
-<area shape="rect" id="Node000002" href="$ImmData_8cpp.html" title=" " alt="" coords="5,93,173,133"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="253,53,140,96,138,91,251,48"/>
-<area shape="rect" id="Node000003" href="$ProtocolEgressRMA_8cpp.html" title=" " alt="" coords="198,93,431,133"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="317,59,317,93,312,93,312,59"/>
-<area shape="rect" id="Node000004" href="$ProtocolIngressRMA_8cpp.html" title=" " alt="" coords="456,93,693,133"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="386,47,519,91,517,96,384,52"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="229,5,397,50"/>
+<area shape="rect" id="Node000002" href="$ImmData_8cpp.html" title=" " alt="" coords="5,98,173,143"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="248,56,144,100,142,95,243,57"/>
+<area shape="rect" id="Node000003" href="$ProtocolEgressRMA_8cpp.html" title=" " alt="" coords="197,98,429,143"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="315,64,315,99,311,96,311,68"/>
+<area shape="rect" id="Node000004" href="$ProtocolIngressRMA_8cpp.html" title=" " alt="" coords="454,98,690,143"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="390,53,512,97,507,98,389,58"/>
 </map>

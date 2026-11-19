@@ -1,10 +1,10 @@
 <map id="lib/include/mxl/time.h" name="lib/include/mxl/time.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,169,31"/>
-<area shape="rect" id="Node000002" title=" " alt="" coords="73,152,144,177"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="66,33,45,47,26,64,15,83,14,93,18,103,38,127,65,144,62,148,35,131,13,105,9,93,10,82,22,60,42,42,63,29"/>
-<area shape="rect" id="Node000003" href="$platform_8h.html" title=" " alt="" coords="28,79,147,104"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="90,31,90,65,85,65,85,31"/>
-<area shape="rect" id="Node000004" href="$rational_8h.html" title=" " alt="" coords="171,79,284,104"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="111,28,194,70,191,75,109,33"/>
-<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="210,106,141,147,139,142,207,102"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,169,33"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="73,157,144,184"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="62,36,45,50,26,68,16,87,15,97,19,107,37,130,62,148,58,150,34,134,14,110,10,98,11,86,22,64,41,46,65,31"/>
+<area shape="rect" id="Node000003" href="$platform_8h.html" title=" " alt="" coords="28,81,146,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="88,31,90,66,84,65,86,36"/>
+<area shape="rect" id="Node000004" href="$rational_8h.html" title=" " alt="" coords="171,81,283,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="112,31,191,72,186,75,112,36"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="208,109,143,151,141,146,203,110"/>
 </map>
