@@ -28,7 +28,7 @@ target_sources(mxl-tests
 
 target_link_libraries(mxl-tests
         PRIVATE
-            mxl
+            mxl::mxl
             mxl-internal-headers
             mxl-internal-objects
     )
@@ -48,7 +48,7 @@ endif()
 
 target_link_libraries(mxl-tests
         PRIVATE
-            mxl
+            mxl::mxl
             stduuid
             picojson::picojson
             Catch2::Catch2WithMain
@@ -66,7 +66,7 @@ target_compile_features(mxl-event-ipc-worker
     )
 target_link_libraries(mxl-event-ipc-worker
         PRIVATE
-            mxl
+            mxl::mxl
     )
 add_dependencies(mxl-tests mxl-event-ipc-worker)
 target_compile_definitions(mxl-tests

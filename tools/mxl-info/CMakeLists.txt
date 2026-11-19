@@ -48,7 +48,7 @@ target_link_libraries(mxl-info
             stduuid
             fmt::fmt
             picojson::picojson
-            mxl
+            mxl::mxl
             CLI11::CLI11
     )
 

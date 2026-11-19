@@ -28,10 +28,10 @@ target_sources(mxl-fabrics-tests
 
 target_link_libraries(mxl-fabrics-tests
         PRIVATE
-            mxl
+            mxl::mxl
             mxl-internal-objects
             mxl-internal-headers
-            mxl-fabrics
+            mxl::mxl-fabrics
             mxl-fabrics-objects
             Catch2::Catch2WithMain
             stduuid

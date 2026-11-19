@@ -45,7 +45,7 @@ if (gstreamer_FOUND)
 
     target_link_libraries(mxl-gst-testsrc
             PRIVATE
-                mxl
+                mxl::mxl
                 stduuid
                 fmt::fmt
                 picojson::picojson
@@ -75,7 +75,7 @@ if (gstreamer_FOUND)
 
     target_link_libraries(mxl-gst-sink
             PRIVATE
-                mxl
+                mxl::mxl
                 stduuid
                 fmt::fmt
                 picojson::picojson
@@ -106,7 +106,7 @@ if (gstreamer_FOUND)
 
     target_link_libraries(mxl-gst-looping-filesrc
             PRIVATE
-                mxl
+                mxl::mxl
                 stduuid
                 fmt::fmt
                 picojson::picojson
