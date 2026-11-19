@@ -17,8 +17,8 @@ endif()
 add_library(mxl-fabrics-demo-common OBJECT common.cpp)
 target_link_libraries(mxl-fabrics-demo-common
     PUBLIC
-        mxl
-        mxl-fabrics
+        mxl::mxl
+        mxl::mxl-fabrics
         fmt::fmt
         CLI11::CLI11
     PRIVATE
