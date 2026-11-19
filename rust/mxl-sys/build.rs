@@ -169,7 +169,8 @@ fn main() {
 struct CB;
 
 impl ParseCallbacks for CB {
-    // On macOS the default is the mangled name, whose leading underscore `dlsym` adds itself.
+    // Otherwise the loader looks up names such as `_mxlGetVersion` on macOS,
+    // where `dlsym` adds the leading underscore itself.
     fn generated_link_name_override(
         &self,
         item_info: bindgen::callbacks::ItemInfo<'_>,
