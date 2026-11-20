@@ -5,10 +5,14 @@ use bindgen::callbacks::ParseCallbacks;
 use std::env;
 use std::path::PathBuf;
 
+#[cfg(target_os = "macos")]
+const BUILD_SYSTEM: &str = "Darwin";
+#[cfg(not(target_os = "macos"))]
+const BUILD_SYSTEM: &str = "Linux";
 #[cfg(debug_assertions)]
-const BUILD_VARIANT: &str = "Linux-Clang-Debug";
+const BUILD_TYPE: &str = "Debug";
 #[cfg(not(debug_assertions))]
-const BUILD_VARIANT: &str = "Linux-Clang-Release";
+const BUILD_TYPE: &str = "Release";
 
 struct BindgenSpecs {
     header: String,
@@ -55,7 +59,7 @@ fn get_bindgen_specs() -> BindgenSpecs {
         config
             .generator("Ninja")
             .configure_arg("--preset")
-            .configure_arg(BUILD_VARIANT)
+            .configure_arg(format!("{BUILD_SYSTEM}-Clang-{BUILD_TYPE}"))
             .configure_arg("-B")
             .configure_arg(out_dir.join("build"))
             .define("BUILD_DOCS", "OFF")
@@ -165,6 +169,18 @@ fn main() {
 struct CB;
 
 impl ParseCallbacks for CB {
+    // Otherwise the loader looks up names such as `_mxlGetVersion` on macOS,
+    // where `dlsym` adds the leading underscore itself.
+    fn generated_link_name_override(
+        &self,
+        item_info: bindgen::callbacks::ItemInfo<'_>,
+    ) -> Option<String> {
+        match item_info.kind {
+            bindgen::callbacks::ItemKind::Function => Some(item_info.name.to_string()),
+            _ => None,
+        }
+    }
+
     fn item_name(&self, item_info: bindgen::callbacks::ItemInfo) -> Option<String> {
         match item_info.kind {
             bindgen::callbacks::ItemKind::Function => {
