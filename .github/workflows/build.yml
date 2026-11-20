@@ -374,9 +374,9 @@ jobs:
     strategy:
       matrix:
         os-version: [26]
-        architecture: [arm64]
+        architecture: [x64, arm64]
         build-type: [Darwin-Clang-Release]
-    runs-on: macos-${{ matrix.os-version }}
+    runs-on: ${{ format(startsWith(matrix.architecture, 'x64') && 'macos-{0}-intel' || 'macos-{0}', matrix.os-version) }}
     env:
       RUST_VERSION: 1.90.0
     steps:
