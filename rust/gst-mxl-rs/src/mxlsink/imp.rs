@@ -510,7 +510,28 @@ impl BaseSinkImpl for MxlSink {
         self.parent_caps(filter)
     }
 
+    // basesink only refuses the caps event when set_caps fails, so upstream
+    // posts a not-negotiated error that does not say why.
     fn set_caps(&self, caps: &gst::Caps) -> Result<(), gst::LoggableError> {
+        self.init_state_from_caps(caps).inspect_err(|e| {
+            gst::element_imp_error!(self, gst::CoreError::Failed, ["Failed to set caps: {}", e]);
+        })
+    }
+
+    fn fixate(&self, caps: gst::Caps) -> gst::Caps {
+        self.parent_fixate(caps)
+    }
+
+    fn propose_allocation(
+        &self,
+        query: &mut gst::query::Allocation,
+    ) -> Result<(), gst::LoggableError> {
+        self.parent_propose_allocation(query)
+    }
+}
+
+impl MxlSink {
+    fn init_state_from_caps(&self, caps: &gst::Caps) -> Result<(), gst::LoggableError> {
         let mut context = self
             .context
             .lock()
@@ -562,17 +583,6 @@ impl BaseSinkImpl for MxlSink {
         } else {
             Err(gst::loggable_error!(CAT, "Unknown caps: {}", caps))
         }
-    }
-
-    fn fixate(&self, caps: gst::Caps) -> gst::Caps {
-        self.parent_fixate(caps)
-    }
-
-    fn propose_allocation(
-        &self,
-        query: &mut gst::query::Allocation,
-    ) -> Result<(), gst::LoggableError> {
-        self.parent_propose_allocation(query)
     }
 }
 
