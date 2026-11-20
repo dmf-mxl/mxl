@@ -19,7 +19,8 @@ pub(crate) struct FlowColorimetry {
 }
 
 /// The flow definition attributes for `colorimetry`, or `None` when they
-/// cannot express it.
+/// cannot express it. `BT601` is Rec. ITU-R BT.601-7, which has 525-line
+/// (SMPTE 170M) and 625-line (BT.470BG) primaries, so both map to it.
 pub(crate) fn flow_colorimetry_from_gst(colorimetry: &VideoColorimetry) -> Option<FlowColorimetry> {
     let component_range = match colorimetry.range() {
         VideoColorRange::Range16_235 => "NARROW",
@@ -37,7 +38,10 @@ pub(crate) fn flow_colorimetry_from_gst(colorimetry: &VideoColorimetry) -> Optio
         _ => return None,
     };
     let colorspace = match (colorimetry.matrix(), colorimetry.primaries()) {
-        (VideoColorMatrix::Bt601, VideoColorPrimaries::Smpte170m) => "BT601",
+        (
+            VideoColorMatrix::Bt601,
+            VideoColorPrimaries::Smpte170m | VideoColorPrimaries::Bt470bg,
+        ) => "BT601",
         (VideoColorMatrix::Bt709, VideoColorPrimaries::Bt709) => "BT709",
         (VideoColorMatrix::Smpte240m, VideoColorPrimaries::Smpte240m) => "SMPTE240M",
         (VideoColorMatrix::Bt2020, VideoColorPrimaries::Bt2020)
@@ -159,6 +163,11 @@ mod tests {
             flow_colorimetry_from_gst(&gst("bt2020")),
             flow("BT2020", "SDR", "NARROW")
         );
+        // BT.601 625-line primaries
+        assert_eq!(
+            flow_colorimetry_from_gst(&gst("2:4:5:3")),
+            flow("BT601", "SDR", "NARROW")
+        );
     }
 
     #[test]
@@ -203,9 +212,9 @@ mod tests {
     #[test]
     fn inexpressible_gst_colorimetries_are_refused() {
         for name in [
-            // unknown range
-            "0:3:5:1", // BT.601 625-line primaries
-            "2:4:5:3", "sRGB",
+            "0:3:5:1", // unknown range
+            "2:4:5:2", // BT.470M primaries
+            "sRGB",
         ] {
             assert_eq!(flow_colorimetry_from_gst(&gst(name)), None, "{name}");
         }

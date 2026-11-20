@@ -132,21 +132,21 @@ fn round_trip(colorimetry: &str, flow_attributes: [&str; 3]) {
     );
 }
 
-/// BT.601 with BT.470BG primaries has no flow definition colorspace, so
-/// `mxlsink` refuses it.
+/// BT.601 with BT.470M primaries has no flow definition colorspace, so
+/// `mxlsink` refuses it with an error that names the colorimetry.
 #[test]
-fn mxlsink_refuses_bt470bg_caps() {
+fn mxlsink_refuses_bt470m_caps() {
     init();
     if let Some(reason) = skip_reason(&["mxlsink", "videotestsrc"]) {
         skip!(reason);
     }
     let flow_id = uuid::Uuid::new_v4().to_string();
-    let domain_guard = TestDomainGuard::new("video_colorimetry_bt470bg");
+    let domain_guard = TestDomainGuard::new("video_colorimetry_bt470m");
     let domain = domain_guard.domain();
 
     let producer = launch(&format!(
         "videotestsrc num-buffers=1 \
-           ! {VIDEO_CAPS},colorimetry=2:4:5:3 \
+           ! {VIDEO_CAPS},colorimetry=2:4:5:2 \
            ! mxlsink flow-id={flow_id} domain={domain}"
     ));
     producer
@@ -154,10 +154,7 @@ fn mxlsink_refuses_bt470bg_caps() {
         .expect("producer Playing");
     let error = expect_bus_error(&producer);
     producer.set_state(gst::State::Null).expect("producer Null");
-    assert!(
-        error.contains("not-negotiated"),
-        "unexpected error: {error}"
-    );
+    assert!(error.contains("2:4:5:2"), "unexpected error: {error}");
 }
 
 /// An `XYZ` flow has no GStreamer colorimetry, so `mxlsrc` refuses it.
