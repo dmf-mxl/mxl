@@ -96,10 +96,12 @@ namespace mxl::lib
         if ((_lastCommittedIndex != MXL_UNDEFINED_INDEX) && (in_index > (_lastCommittedIndex + 1U)))
         {
             // We have to invalidate any grain that would've been written to if the write was continuous. This is to ensure that the reader doesn't
-            // read stale data from a previous write.
+            // read stale data from a previous write. At most grainCount - 1 grains are invalidated, because grain in_index - grainCount shares its
+            // ring buffer entry with in_index. That entry can already hold the grain being opened: a fabrics initiator wrote it into a target
+            // flow, or an earlier commit of this incomplete grain did.
             auto const grainCount = _flowData->flowInfo()->config.discrete.grainCount;
             auto const skippedCount = in_index - _lastCommittedIndex - 1U;
-            auto const invalidatedCount = std::min<std::uint64_t>(skippedCount, grainCount);
+            auto const invalidatedCount = std::min<std::uint64_t>(skippedCount, grainCount - 1U);
             auto const firstInvalidatedIndex = in_index - invalidatedCount;
 
             for (auto missingIndex = firstInvalidatedIndex; missingIndex < in_index; ++missingIndex)
