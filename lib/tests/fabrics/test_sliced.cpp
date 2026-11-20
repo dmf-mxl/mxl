@@ -277,6 +277,13 @@ namespace
             return grainInfo.totalSlices;
         }
 
+        /// Number of grains in the ring buffer of the flow.
+        /// @return The grain count of the flow configuration that the initiator writer was created with.
+        std::uint64_t grainCount() const noexcept
+        {
+            return _flowConfigInfo.discrete.grainCount;
+        }
+
         // Commit an initiator grain that has no valid slices and carries the invalid flag
         void writeInitiatorInvalidGrain(std::uint64_t index)
         {
@@ -605,4 +612,41 @@ TEMPLATE_TEST_CASE_METHOD(FabricsTestFixture, "Target commits received grains", 
     auto const openedInfo = this->commitReceivedTargetGrain(invalidGrainIndex);
     REQUIRE((openedInfo.flags & MXL_GRAIN_FLAG_INVALID) != 0);
     REQUIRE((this->getTargetGrainInfo(invalidGrainIndex).flags & MXL_GRAIN_FLAG_INVALID) != 0);
+}
+
+TEMPLATE_TEST_CASE_METHOD(FabricsTestFixture, "Target commits a received grain a full ring ahead", "[sliced][target-commit]",
+    TCP_V210 /*, SHM_V210 */)
+{
+    // A target receives a grain grainCount or more grains past its last committed grain when its initiator stops and starts again. The ring
+    // buffer entry of the first skipped grain is the entry of the received grain.
+    auto const sliceCount = this->totalSlices();
+    auto const grainCount = this->grainCount();
+
+    auto grainIndex = std::uint64_t{400};
+    this->writeInitiatorGrainSlice(grainIndex, sliceCount - 1U, 0xAC, 0xAB);
+    REQUIRE(this->transferGrainSlices(grainIndex, 0, sliceCount) == grainIndex);
+    REQUIRE(this->commitReceivedTargetGrain(grainIndex).validSlices == sliceCount);
+
+    for (auto const skippedCount : {grainCount, (3U * grainCount) + 2U})
+    {
+        CAPTURE(skippedCount);
+        grainIndex += skippedCount + 1U;
+        this->writeInitiatorGrainSlice(grainIndex, sliceCount - 1U, 0xAD, 0xAB);
+        REQUIRE(this->transferGrainSlices(grainIndex, 0, sliceCount) == grainIndex);
+
+        auto const openedInfo = this->commitReceivedTargetGrain(grainIndex);
+        REQUIRE(openedInfo.validSlices == sliceCount);
+
+        auto const [fill, key] = this->readTargetGrainSlice(grainIndex, sliceCount - 1U, sliceCount);
+        REQUIRE(fill == 0xAD);
+    }
+
+    // A header-only transfer of an invalid grain a full ring ahead keeps the invalid flag.
+    grainIndex += grainCount + 1U;
+    this->writeInitiatorInvalidGrain(grainIndex);
+    REQUIRE(this->transferGrainSlices(grainIndex, 0, 0) == grainIndex);
+
+    auto const openedInfo = this->commitReceivedTargetGrain(grainIndex);
+    REQUIRE((openedInfo.flags & MXL_GRAIN_FLAG_INVALID) != 0);
+    REQUIRE((this->getTargetGrainInfo(grainIndex).flags & MXL_GRAIN_FLAG_INVALID) != 0);
 }
