@@ -7,8 +7,8 @@
 #include <optional>
 #include <string>
 #include <picojson/wrapper.h>
-#include <mxl/flowinfo.h>
 #include <mxl/platform.h>
+#include "PayloadStorage.hpp"
 
 namespace mxl::lib
 {
@@ -45,34 +45,28 @@ namespace mxl::lib
         std::optional<std::uint32_t> getMaxSyncBatchSizeHint() const;
 
         /**
-         * Payload location from options. Defaults to host memory when omitted.
+         * The payload storage requested by a writer, from the optional "payload" object of the options.
          *
-         * Accepted forms:
-         * - Nested: `{ "payload": { "location": "host"|"device", "deviceIndex": <int>, "backend": "cuda-linear" } }`
-         * - Flat:   `{ "payloadLocation": "host"|"device"|0|1, "deviceIndex": <int>, "payloadBackend": "cuda-linear" }`
+         * libmxl interprets one key. "backend" names the backend that holds the payload. It defaults to the built-in
+         * host storage, which "host" also names. All other keys belong to the backend, for example the device UUID of
+         * a CUDA backend, and are passed to it as a JSON object. The built-in host storage accepts no other keys.
+         *
+         * \return The requested storage.
+         * \throws PayloadStorageError with MXL_ERR_INVALID_ARG if the "payload" object is invalid.
          */
         [[nodiscard]]
-        mxlPayloadLocation getPayloadLocation() const noexcept;
+        PayloadStorageSpec getPayloadStorageSpec() const;
 
         /**
-         * Device index from options. Defaults to -1 for host, 0 for device when omitted.
+         * The options a reader passes to the backend of the flow, from the optional "payload" object of the reader
+         * options. Readers cannot select the storage, so "backend" is not accepted. All other keys
+         * are passed to the backend, which validates them. Flows with the built-in host storage ignore them.
+         *
+         * \return The options as JSON object text, or an empty string if there are none.
+         * \throws PayloadStorageError with MXL_ERR_INVALID_ARG if the "payload" object is invalid.
          */
         [[nodiscard]]
-        int32_t getDeviceIndex() const noexcept;
-
-        /**
-         * Reader-only: extract payload.deviceIndex or deviceIndex without requiring location=device.
-         * Empty / omitted options yield std::nullopt (map payloads on the writer's GPU).
-         */
-        [[nodiscard]]
-        static std::optional<int32_t> parseLocalDeviceIndex(std::string const& options);
-
-        /**
-         * Payload backend name from options (e.g. "host", "cuda-linear", "placeholder").
-         * Empty when the caller did not specify a backend (factory applies defaults).
-         */
-        [[nodiscard]]
-        std::string const& getPayloadBackend() const noexcept;
+        std::string getReaderPayloadOptions() const;
 
         /**
          * Generic accessor for json fields.
@@ -90,9 +84,6 @@ namespace mxl::lib
         std::optional<std::uint32_t> _maxSyncBatchSizeHint;
         /// \see mxlCommonFlowInfo::maxCommitBatchSizeHint
         std::optional<std::uint32_t> _maxCommitBatchSizeHint;
-        mxlPayloadLocation _payloadLocation{MXL_PAYLOAD_LOCATION_HOST_MEMORY};
-        int32_t _deviceIndex{-1};
-        std::string _payloadBackend;
         /** The parsed flow object. */
         picojson::object _root;
     };

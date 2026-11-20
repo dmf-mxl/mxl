@@ -232,7 +232,8 @@ extern "C"
      * \param in_target A valid fabrics target
      * \param out_grainIndex The index of the grain that was written, if any.
      * \param in_timeoutMs How long should we wait for the grain (in milliseconds)
-     * \return The result code. MXL_ERR_NOT_READY if no grain was available before the timeout. \see mxlStatus
+     * \return The result code. MXL_ERR_NOT_READY if no grain was available before the timeout. Some providers return MXL_ERR_INTERRUPTED when the
+     * blocking read is interrupted by a POSIX signal. \see mxlStatus
      */
     MXL_EXPORT
     mxlStatus mxlFabricsTargetReadGrain(mxlFabricsTarget in_target, uint16_t in_timeoutMs, uint64_t* out_entryIndex);
@@ -284,7 +285,10 @@ extern "C"
      * \param in_initiator A valid fabrics initiator
      * \param in_config The initiator configuration. This will be used to create an endpoint and register a memory region. The memory region
      * corresponds to the one that will be shared with targets.
-     * \param in_options A json-formatted string with additional options
+     * \param in_options An optional json-formatted string with options. May be NULL or empty. Recognized fields:
+     *  - "cqDepth" (number >= 1): the depth of the initiator's completion queue. The queue receives one completion per posted
+     *    write, so increase this when many writes are in flight at once (many targets, many slices per grain). When omitted,
+     *    an implementation default is used.
      * \return The result code. \see mxlStatus
      */
     MXL_EXPORT
@@ -351,7 +355,7 @@ extern "C"
      * \param in_initiator The initiator that should make progress.
      * \param in_timeoutMs The maximum time to wait for progress to be made (in milliseconds).
      * \return The result code. Returns MXL_ERR_NOT_READY if there is still progress to be made and not all operations have completed before the
-     * timeout.
+     * timeout. Some providers return MXL_ERR_INTERRUPTED if the operation is interrupted by the arrival of a POSIX signal.
      */
     MXL_EXPORT
     mxlStatus mxlFabricsInitiatorMakeProgressBlocking(mxlFabricsInitiator in_initiator, uint16_t in_timeoutMs);

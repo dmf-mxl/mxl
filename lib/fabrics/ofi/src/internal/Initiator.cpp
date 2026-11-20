@@ -14,18 +14,6 @@
 
 namespace mxl::lib::fabrics::ofi
 {
-    namespace
-    {
-        ::mxlFabricsInterfaceConfig interfaceConfigWithHmemIfNeeded(::mxlFabricsInterfaceConfig interfaceConfig, bool needsHmem)
-        {
-            if (needsHmem)
-            {
-                interfaceConfig.caps.flags |= MXL_FABRICS_IFACE_CAP_HMEM;
-                MXL_INFO("Device grain payloads detected; requiring FI_HMEM-capable fabric interface");
-            }
-            return interfaceConfig;
-        }
-    }
 
     InitiatorWrapper* InitiatorWrapper::fromAPI(mxlFabricsInitiator api) noexcept
     {
@@ -37,17 +25,18 @@ namespace mxl::lib::fabrics::ofi
         return reinterpret_cast<mxlFabricsInitiator>(this);
     }
 
-    void InitiatorWrapper::setup(mxlFabricsInitiatorConfig const& config)
+    void InitiatorWrapper::setup(mxlFabricsInitiatorConfig const& config, InitiatorSetupOptions const& options)
     {
         if (_inner)
         {
             _inner.reset();
         }
 
+        // Device payloads are registered for reading with FI_HMEM, so the interface must support it.
         auto const needsHmem = regionsNeedHmem(MxlRegions::forReader(config.reader).regions());
-        auto interfaceConfig = interfaceConfigWithHmemIfNeeded(config.interface, needsHmem);
-        auto const [info, providerConfig] = selectSourceInterface(interfaceConfig, /* target */ false);
-        (void)providerConfig;
+        auto const interfaceConfig = interfaceConfigWithHmemIfNeeded(config.interface, needsHmem);
+        auto const [info, provierConfig] = selectSourceInterface(interfaceConfig, /* target */ false);
+        (void)provierConfig;
 
         if (needsHmem)
         {
@@ -56,8 +45,8 @@ namespace mxl::lib::fabrics::ofi
 
         switch (info.view().endpointType())
         {
-            case FI_EP_MSG: _inner = RCInitiator::setup(config, info.view()); break;
-            case FI_EP_RDM: _inner = RDMInitiator::setup(config, info.view()); break;
+            case FI_EP_MSG: _inner = RCInitiator::setup(config, info.view(), options); break;
+            case FI_EP_RDM: _inner = RDMInitiator::setup(config, info.view(), options); break;
             default:        throw Exception::invalidState("unsupported endpoint type");
         }
     }
@@ -113,7 +102,7 @@ namespace mxl::lib::fabrics::ofi
         _inner->transferSamples(headIndex, count);
     }
 
-    bool InitiatorWrapper::makeProgress()
+    Initiator::MakeProgressResult InitiatorWrapper::makeProgress()
     {
         if (!_inner)
         {
@@ -123,7 +112,7 @@ namespace mxl::lib::fabrics::ofi
         return _inner->makeProgress();
     }
 
-    bool InitiatorWrapper::makeProgressBlocking(std::chrono::steady_clock::duration timeout)
+    Initiator::MakeProgressResult InitiatorWrapper::makeProgressBlocking(std::chrono::steady_clock::duration timeout)
     {
         if (!_inner)
         {

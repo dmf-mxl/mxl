@@ -2,21 +2,19 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include <cctype>
 #include <chrono>
 #include <csignal>
 #include <cstdint>
 #include <cstdlib>
+#include <filesystem>
 #include <fstream>
-#include <iterator>
 #include <optional>
-#include <stdexcept>
 #include <string>
 #include <type_traits>
+#include <utility>
 #include <uuid.h>
 #include <sys/types.h>
 #include <CLI/CLI.hpp>
-#include <fmt/format.h>
 #include <mxl-internal/FlowParser.hpp>
 #include <mxl-internal/Logging.hpp>
 #include <mxl/fabrics.h>
@@ -28,40 +26,17 @@
 #include "../../lib/fabrics/ofi/src/internal/Base64.hpp"
 
 /*
-    Same-node host example:
+    Example how to use:
 
         1- Start a target: ./mxl-fabrics-demo -d <tmpfs folder> -f <NMOS JSON File> --service 1234
         2- Paste the target info that gets printed in stdout to the --target-info argument of the initiator.
-        3- Start a sender: ./mxl-fabrics-demo -i -d <tmpfs folder> -f <flow uuid> --service 1235 --target-info <targetInfo>
-
-    Cross-GPU / cross-node CUDA (two independent MXL domains):
-
-        CUDA IPC is same-node only. Across pods or GPUs, each side owns local cudaMalloc
-        buffers; fabrics RDMA copies grains. Do not share the domain directory.
-
-        Target (receiver GPU, local domain B):
-          ./mxl-fabrics-demo -d /dev/shm/mxl-dst -f examples/flow-configs/flow-video-v210.json \
-            --flow-options examples/payload-options/cuda-payload-options.json \
-            --device-index 1 -p verbs -s 1234 --target-info /tmp/target-info.bin
-
-        Writer on the source node (local domain A, source GPU):
-          ./mxl-gst-testsrc -d /dev/shm/mxl-src -v examples/flow-configs/flow-video-v210.json \
-            --video-options-file examples/payload-options/cuda-payload-options.json
-
-        Initiator (reads domain A, RDMA-writes into the target's domain B buffers):
-          ./mxl-fabrics-demo -i -d /dev/shm/mxl-src -f <flow uuid> -p verbs -s 1235 \
-            --target-info @/tmp/target-info.bin
-
-        Use the same NMOS flow JSON (grain geometry) on both sides. Payload deviceIndex
-        is local to each domain and need not match.
-
-    Device (CUDA) grain payloads:
-        Prefer -p verbs (HMEM). The demo uses OpenGrainEx / GetGrain*Ex; fabrics
-        registers header + CUDA payload regions separately.
+        3- Start a sender: ./mxl-fabrics-demo -i -d <tmpfs folder> -f <test source flow uuid> --service 1234 --target-info <targetInfo>
 
     The best available interface is selected automatically (EFA > VERBS > TCP > SHM).
-    When a device payload flow is detected, HMEM-capable interfaces are preferred/required.
     Use --node to bind to a specific address.
+
+    Flows whose payload is in CUDA device memory (the cuda-linear payload backend) need an interface with FI_HMEM. The demo
+    prefers such an interface for those flows. Use -p verbs on hosts where that interface is available.
 */
 
 std::sig_atomic_t volatile g_exit_requested = 0;
@@ -191,95 +166,16 @@ int providerPriority(mxlFabricsProvider provider)
     }
 }
 
-[[nodiscard]]
-bool interfaceHasHmem(mxlFabricsInterfaceConfig const& interface) noexcept
-{
-    return (interface.caps.flags & MXL_FABRICS_IFACE_CAP_HMEM) != 0;
-}
-
-[[nodiscard]]
-int interfaceScore(mxlFabricsInterfaceConfig const& interface, bool preferHmem) noexcept
-{
-    auto score = providerPriority(interface.provider) * 10;
-    if (preferHmem)
-    {
-        score += interfaceHasHmem(interface) ? 5 : -100;
-    }
-    return score;
-}
-
-[[nodiscard]]
+/** True when the flow options ask for payloads in CUDA device memory. */
 bool flowOptionsRequestDevicePayload(std::string const& flowOptions)
 {
-    return (flowOptions.find("\"device\"") != std::string::npos) || (flowOptions.find("cuda-linear") != std::string::npos) ||
-           (flowOptions.find("\"payloadLocation\":\"device\"") != std::string::npos);
+    return flowOptions.find("\"cuda-linear\"") != std::string::npos;
 }
 
-[[nodiscard]]
-bool existingFlowNeedsHmem(std::string const& domain, std::string const& flowId)
+/** True when a published flow keeps its payload in CUDA device memory. The cuda-linear backend writes payload.cuda.json in the flow directory. */
+bool publishedFlowHasDevicePayload(std::string const& domain, std::string const& flowId)
 {
-    auto const payloadJsonPath = fmt::format("{}/{}.mxl-flow/payload.json", domain, flowId);
-    auto file = std::ifstream{payloadJsonPath};
-    if (!file)
-    {
-        return false;
-    }
-    auto const contents = std::string{std::istreambuf_iterator<char>{file}, std::istreambuf_iterator<char>{}};
-    return (contents.find("cuda-linear") != std::string::npos) || (contents.find("\"location\": \"device\"") != std::string::npos) ||
-           (contents.find("\"location\":\"device\"") != std::string::npos);
-}
-
-[[nodiscard]]
-std::string applyLocalDeviceIndex(std::string flowOptions, int deviceIndex)
-{
-    auto const synthesized = fmt::format(
-        "{{\"payload\":{{\"location\":\"device\",\"deviceIndex\":{},\"backend\":\"cuda-linear\"}}}}", deviceIndex);
-    if (flowOptions.empty())
-    {
-        return synthesized;
-    }
-
-    auto const key = std::string{"\"deviceIndex\""};
-    auto const keyPos = flowOptions.find(key);
-    if (keyPos == std::string::npos)
-    {
-        throw std::runtime_error{
-            "--device-index requires --flow-options that already contain payload.deviceIndex, or omit --flow-options to use cuda-linear"};
-    }
-    auto colon = flowOptions.find(':', keyPos + key.size());
-    if (colon == std::string::npos)
-    {
-        throw std::runtime_error{"Invalid flow options: deviceIndex is not a JSON number"};
-    }
-    auto begin = colon + 1;
-    while (begin < flowOptions.size() && std::isspace(static_cast<unsigned char>(flowOptions[begin])))
-    {
-        ++begin;
-    }
-    auto end = begin;
-    if (end < flowOptions.size() && flowOptions[end] == '-')
-    {
-        ++end;
-    }
-    while (end < flowOptions.size() && std::isdigit(static_cast<unsigned char>(flowOptions[end])))
-    {
-        ++end;
-    }
-    if (begin == end)
-    {
-        throw std::runtime_error{"Invalid flow options: deviceIndex is not a JSON number"};
-    }
-    flowOptions.replace(begin, end - begin, std::to_string(deviceIndex));
-    return flowOptions;
-}
-
-void logLocalPayloadIndependence(std::uint32_t location, int32_t deviceIndex)
-{
-    if (location == MXL_PAYLOAD_LOCATION_DEVICE_MEMORY)
-    {
-        MXL_INFO("Local CUDA payloads on deviceIndex={} (this process/domain only; fabrics copies grains to the peer's own buffers)",
-            deviceIndex);
-    }
+    return std::filesystem::exists(std::filesystem::path{domain} / fmt::format("{}.mxl-flow", flowId) / "payload.cuda.json");
 }
 
 InterfaceSelection selectInterface(mxlFabricsInstance instance, std::optional<std::string> const& node, std::optional<std::string> const& service,
@@ -305,10 +201,17 @@ InterfaceSelection selectInterface(mxlFabricsInstance instance, std::optional<st
         std::exit(status);
     }
 
+    // An interface with FI_HMEM ranks above the provider order when the flow needs it.
+    auto rank = [preferHmem](mxlFabricsInterfaceConfig const& iface)
+    {
+        auto const hmem = preferHmem && ((iface.caps.flags & MXL_FABRICS_IFACE_CAP_HMEM) != 0);
+        return std::pair{hmem, providerPriority(iface.provider)};
+    };
+
     auto best = std::add_pointer_t<mxlFabricsInterfaceConfig const>{nullptr};
     for (auto* entry = list; entry != nullptr; entry = entry->next)
     {
-        if (!best || (interfaceScore(entry->interface, preferHmem) > interfaceScore(*best, preferHmem)))
+        if (!best || (rank(entry->interface) > rank(*best)))
         {
             best = &entry->interface;
         }
@@ -317,13 +220,6 @@ InterfaceSelection selectInterface(mxlFabricsInstance instance, std::optional<st
     if (!best)
     {
         MXL_ERROR("No matching interfaces found");
-        mxlFabricsFreeInterfaceList(list);
-        std::exit(MXL_ERR_NO_FABRIC);
-    }
-
-    if (preferHmem && !interfaceHasHmem(*best))
-    {
-        MXL_ERROR("Device grain payloads require an HMEM-capable fabric interface (e.g. -p verbs with nvidia_peermem loaded)");
         mxlFabricsFreeInterfaceList(list);
         std::exit(MXL_ERR_NO_FABRIC);
     }
@@ -440,22 +336,6 @@ public:
             return status;
         }
 
-        {
-            mxlFlowConfigInfo readerConfig{};
-            if (mxlFlowReaderGetConfigInfo(_reader, &readerConfig) == MXL_STATUS_OK)
-            {
-                if (readerConfig.common.payloadLocation == MXL_PAYLOAD_LOCATION_DEVICE_MEMORY)
-                {
-                    MXL_INFO("Grain payload location: device (deviceIndex={})", readerConfig.common.deviceIndex);
-                    logLocalPayloadIndependence(readerConfig.common.payloadLocation, readerConfig.common.deviceIndex);
-                }
-                else
-                {
-                    MXL_INFO("Grain payload location: host");
-                }
-            }
-        }
-
         status = mxlFabricsCreateInitiator(_fabricsInstance, &_initiator);
         if (status != MXL_STATUS_OK)
         {
@@ -507,7 +387,7 @@ public:
             status = makeProgress(std::chrono::milliseconds(250));
             if (status == MXL_ERR_INTERRUPTED)
             {
-                return MXL_STATUS_OK;
+                return status;
             }
 
             if (status != MXL_ERR_NOT_READY && status != MXL_STATUS_OK)
@@ -554,7 +434,8 @@ public:
         MXL_INFO("Using batch size of {} slices", slicesPerBatch);
 
         mxlGrainInfo grainInfo;
-        mxlPayloadView payloadView{};
+        // The slot call works for host-pointer and cuda-linear storage. The transfer uses the grain index.
+        auto slot = std::uint32_t{0};
         std::uint16_t startSlice = 0;
         std::uint16_t endSlice = slicesPerBatch;
         auto stats = TransferStats{};
@@ -563,8 +444,7 @@ public:
 
         while (!g_exit_requested)
         {
-            // Use the Ex API so device (CUDA) payload flows work; only grain metadata is needed here.
-            auto status = mxlFlowReaderGetGrainSliceEx(_reader, grainIndex, endSlice, 200000000, &grainInfo, &payloadView);
+            auto status = mxlFlowReaderGetGrainSlot(_reader, grainIndex, endSlice, 200000000, &grainInfo, &slot);
             if (status == MXL_ERR_OUT_OF_RANGE_TOO_LATE)
             {
                 // We are too late.. time travel!
@@ -617,7 +497,7 @@ public:
                 status = makeProgress(std::chrono::milliseconds(10));
                 if (status == MXL_ERR_INTERRUPTED)
                 {
-                    return MXL_STATUS_OK;
+                    continue;
                 }
 
                 if (status != MXL_ERR_NOT_READY && status != MXL_STATUS_OK)
@@ -626,7 +506,7 @@ public:
                 }
             }
             while (status == MXL_ERR_NOT_READY && deadline > std::chrono::steady_clock::now());
-            MXL_DEBUG("Transferred grain index={} slices {}-{}", grainIndex, startSlice, grainInfo.validSlices);
+            MXL_DEBUG("Transferred grain index={} slot={} slices {}-{}", grainIndex, slot, startSlice, grainInfo.validSlices);
             stats.record(grainInfo.validSlices - startSlice);
             stats.maybeLog("grains", "slices");
 
@@ -710,7 +590,7 @@ public:
                 status = makeProgress(std::chrono::milliseconds(10));
                 if (status == MXL_ERR_INTERRUPTED)
                 {
-                    return MXL_STATUS_OK;
+                    continue;
                 }
 
                 if (status != MXL_ERR_NOT_READY && status != MXL_STATUS_OK)
@@ -843,20 +723,6 @@ public:
             MXL_WARN("Reusing existing flow");
         }
 
-        if (_configInfo.common.payloadLocation == MXL_PAYLOAD_LOCATION_DEVICE_MEMORY)
-        {
-            MXL_INFO("Grain payload location: device (deviceIndex={})", _configInfo.common.deviceIndex);
-            logLocalPayloadIndependence(_configInfo.common.payloadLocation, _configInfo.common.deviceIndex);
-            if (!flowCreated)
-            {
-                MXL_WARN("Reusing existing flow CUDA buffers; --device-index / --flow-options are ignored until this .mxl-flow directory is removed");
-            }
-        }
-        else
-        {
-            MXL_INFO("Grain payload location: host");
-        }
-
         status = mxlFabricsCreateTarget(_fabricsInstance, &_target);
         if (status != MXL_STATUS_OK)
         {
@@ -952,7 +818,8 @@ public:
     {
         mxlGrainInfo grainInfo;
         std::uint64_t grainIndex = 0;
-        mxlPayloadView unusedPayloadView{};
+        // The slot call works for host-pointer and cuda-linear storage. The commit uses the grain info.
+        auto slot = std::uint32_t{0};
         mxlStatus status;
         auto stats = TransferStats{};
 
@@ -975,7 +842,7 @@ public:
             }
             else if (status == MXL_ERR_INTERRUPTED)
             {
-                return MXL_STATUS_OK;
+                continue;
             }
             else if (status != MXL_STATUS_OK)
             {
@@ -983,8 +850,8 @@ public:
                 return status;
             }
 
-            // Open so we can commit. Payload was already written by the remote initiator (host or device).
-            status = mxlFlowWriterOpenGrainEx(_writer, grainIndex, &grainInfo, &unusedPayloadView);
+            // Open the grain so it can be committed. The initiator already wrote the grain info and the payload.
+            status = mxlFlowWriterOpenGrainSlot(_writer, grainIndex, &grainInfo, &slot);
             if (status != MXL_STATUS_OK)
             {
                 MXL_ERROR("Failed to open grain with status '{}'", static_cast<int>(status));
@@ -999,8 +866,9 @@ public:
                 return status;
             }
 
-            MXL_DEBUG("Committed grain with index={} current index={} validSlices={} flags={}",
+            MXL_DEBUG("Committed grain with index={} slot={} current index={} validSlices={} flags={}",
                 grainIndex,
+                slot,
                 mxlGetCurrentIndex(&_configInfo.common.grainRate),
                 grainInfo.validSlices,
                 grainInfo.flags);
@@ -1035,7 +903,7 @@ public:
             }
             else if (status == MXL_ERR_INTERRUPTED)
             {
-                return MXL_STATUS_OK;
+                continue;
             }
             else if (status != MXL_STATUS_OK)
             {
@@ -1111,12 +979,6 @@ int main(int argc, char** argv)
     std::string flowOptionsFile;
     app.add_option("--flow-options", flowOptionsFile, "Flow options file. (Only used when invoking a Target)");
 
-    int deviceIndex = -1;
-    app.add_option("--device-index",
-        deviceIndex,
-        "Target only: CUDA device for this process's local grain payloads. Independent of the initiator GPU. "
-        "Implies cuda-linear when --flow-options is omitted.");
-
     bool runAsInitiator = false;
     auto runAsInitiatorOpt = app.add_flag("-i,--initiator",
         runAsInitiator,
@@ -1140,12 +1002,6 @@ int main(int argc, char** argv)
         "As initiator: base64-encoded target info, or a path prefixed with '@' to read raw target info from a file.");
 
     CLI11_PARSE(app, argc, argv);
-
-    if (runAsInitiator && (deviceIndex >= 0))
-    {
-        MXL_ERROR("--device-index is only valid on the target; the initiator uses the local source flow's payload deviceIndex");
-        return MXL_ERR_INVALID_ARG;
-    }
 
     auto* instance = mxlCreateInstance(domain.c_str(), "");
     if (instance == nullptr)
@@ -1176,41 +1032,21 @@ int main(int argc, char** argv)
         return s;
     }
 
-    // Detect device payloads before interface selection so we can require HMEM (e.g. verbs).
-    auto preferHmem = false;
-    auto flowOptionsPreview = std::string{};
+    // Read the flow options before the interface is chosen, because they decide whether the flow needs FI_HMEM.
+    auto flowOptions = std::string{};
     if (!runAsInitiator && !flowOptionsFile.empty())
     {
-        if (auto optionFile = std::ifstream{flowOptionsFile, std::ios::in | std::ios::binary}; optionFile)
+        std::ifstream optionFile(flowOptionsFile, std::ios::in | std::ios::binary);
+        if (!optionFile)
         {
-            flowOptionsPreview = {std::istreambuf_iterator<char>(optionFile), std::istreambuf_iterator<char>()};
-            preferHmem = flowOptionsRequestDevicePayload(flowOptionsPreview);
-        }
-    }
-    else if (runAsInitiator)
-    {
-        preferHmem = existingFlowNeedsHmem(domain, flowConf);
-    }
-    if (!runAsInitiator && (deviceIndex >= 0))
-    {
-        try
-        {
-            flowOptionsPreview = applyLocalDeviceIndex(std::move(flowOptionsPreview), deviceIndex);
-        }
-        catch (std::exception const& ex)
-        {
-            MXL_ERROR("{}", ex.what());
+            MXL_ERROR("Failed to open file: '{}'", flowOptionsFile);
             mxlFabricsDestroyInstance(fabricsInstance);
             mxlDestroyInstance(instance);
-            return MXL_ERR_INVALID_ARG;
+            return EXIT_FAILURE;
         }
-        preferHmem = true;
+        flowOptions = {std::istreambuf_iterator<char>(optionFile), std::istreambuf_iterator<char>()};
     }
-
-    if (preferHmem)
-    {
-        MXL_INFO("Device grain payload detected; preferring HMEM-capable fabric interfaces");
-    }
+    auto const preferHmem = runAsInitiator ? publishedFlowHasDevicePayload(domain, flowConf) : flowOptionsRequestDevicePayload(flowOptions);
 
     auto selectedInterface = selectInterface(fabricsInstance, optNode, optService, optProvider, preferHmem);
     mxlFabricsDestroyInstance(fabricsInstance);
@@ -1289,18 +1125,6 @@ int main(int argc, char** argv)
         mxl::lib::FlowParser descriptorParser{flowDescriptor};
 
         auto flowId = uuids::to_string(descriptorParser.getId());
-
-        std::string flowOptions = std::move(flowOptionsPreview);
-        if (flowOptions.empty() && !flowOptionsFile.empty())
-        {
-            std::ifstream optionFile(flowOptionsFile, std::ios::in | std::ios::binary);
-            if (!optionFile)
-            {
-                MXL_ERROR("Failed to open file: '{}'", flowOptionsFile);
-                return EXIT_FAILURE;
-            }
-            flowOptions = {std::istreambuf_iterator<char>(optionFile), std::istreambuf_iterator<char>()};
-        }
 
         auto app = AppTarget{
             Config{

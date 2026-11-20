@@ -41,12 +41,8 @@ fn flow_def_data_details_roundtrip_serde() {
     assert_eq!(details, parsed);
 }
 
-/// Full [`FlowDef`] is not serde round-tripped here: `format` on the struct and
-/// `#[serde(tag = "format")]` on flattened [`FlowDefDetails`] duplicate the JSON
-/// key on serialize (same for video and audio). MXL code serializes to JSON for
-/// the C API; use this test only to lock data-flow JSON shape.
 #[test]
-fn flow_def_data_serializes_like_mxlsink() {
+fn flow_def_data_roundrip() {
     let flow = FlowDef {
         id: Uuid::new_v4(),
         description: "Long description of the data flow".into(),
@@ -54,7 +50,6 @@ fn flow_def_data_serializes_like_mxlsink() {
             "urn:x-nmos:tag:grouphint/v1.0".to_string(),
             vec!["test:Ancillary Data".to_string()],
         )]),
-        format: "urn:x-nmos:format:data".into(),
         label: "Short description of the data flow".into(),
         parents: vec![],
         media_type: "video/smpte291".into(),
@@ -66,12 +61,6 @@ fn flow_def_data_serializes_like_mxlsink() {
         }),
     };
     let json = serde_json::to_string(&flow).expect("serialize FlowDef data");
-    let v: serde_json::Value = serde_json::from_str(&json).expect("parse as JSON Value");
-    assert_eq!(
-        v["format"].as_str(),
-        Some("urn:x-nmos:format:data"),
-        "NMOS format tag"
-    );
-    assert_eq!(v["media_type"].as_str(), Some("video/smpte291"));
-    assert_eq!(v["grain_rate"]["numerator"], 50);
+    let def = serde_json::from_str::<FlowDef>(&json).expect("parse as JSON Value");
+    assert_eq!(def, flow);
 }

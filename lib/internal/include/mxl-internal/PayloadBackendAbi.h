@@ -1,0 +1,322 @@
+// SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
+// SPDX-License-Identifier: Apache-2.0
+
+/**
+ * \file PayloadBackendAbi.h
+ *
+ * C interface between libmxl and the payload storage backends that the SDK ships as separate shared libraries.
+ *
+ * This header is internal to the SDK. It is not installed, and applications cannot register backends through the
+ * API. libmxl loads backends by name, from the directories in MXL_PAYLOAD_PLUGIN_PATH and from the directory that
+ * holds libmxl. Because the interface is internal it can change between SDK releases. The interface version lets
+ * libmxl reject a backend library built for another version of this interface.
+ *
+ * A backend library is named libmxl-payload-\<name\>.so and exports one C function, named by
+ * MXL_PAYLOAD_BACKEND_ENTRY_POINT, with the signature mxlGetPayloadBackendApiFn. Only C types cross the
+ * interface. No C++ exception may leave a backend function.
+ *
+ * Options that only make sense for one kind of storage, such as a CUDA device UUID or a dma-heap name, are not
+ * part of this interface. libmxl passes the keys of the "payload" flow option that it does not interpret itself to
+ * the backend as a JSON object, and the backend validates them.
+ */
+
+#pragma once
+
+#include <stdint.h>
+#include <mxl/flow.h>
+#include <mxl/mxl.h>
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+/** Version of the backend interface described by this header. */
+#define MXL_PAYLOAD_BACKEND_ABI_VERSION 2U
+
+/** Name of the function every backend library exports. */
+#define MXL_PAYLOAD_BACKEND_ENTRY_POINT "mxlGetPayloadBackendApi"
+
+/** Value of mxlPayloadBackendFlowInfo.accessMode for a reader. */
+#define MXL_PAYLOAD_BACKEND_ACCESS_READ_ONLY 0U
+
+/** Value of mxlPayloadBackendFlowInfo.accessMode for a writer. */
+#define MXL_PAYLOAD_BACKEND_ACCESS_READ_WRITE 1U
+
+/**
+ * Capability of a backend that shares its storage through file descriptors. libmxl serves the descriptors that the
+ * writer's instance exports on the flow's payload.sock, and passes the descriptors a reader receives to the reader's
+ * instance. The backend implements exportDescriptors() and importDescriptors().
+ */
+#define MXL_PAYLOAD_BACKEND_CAP_SHARE_DESCRIPTORS 0x1U
+
+/**
+ * Capability of a backend that defines media types of its own. libmxl computes the geometry of a grain only for the
+ * media types it defines itself. For a flow of any other media type, it asks the backend that will hold the payload,
+ * through describeGeometry(), before it creates the flow. A backend without this capability stores only the media
+ * types libmxl defines.
+ */
+#define MXL_PAYLOAD_BACKEND_CAP_DESCRIBE_GEOMETRY 0x2U
+
+    /** Opaque state that a backend keeps for one flow opened or created in one process. */
+    typedef struct mxlPayloadBackendInstance_t* mxlPayloadBackendInstance;
+
+    /**
+     * The flow whose grain geometry libmxl asks a backend for. libmxl fills all fields.
+     */
+    typedef struct mxlPayloadBackendGeometryQuery_t
+    {
+        /** Size of this structure in bytes. */
+        uint32_t structSize;
+        /** The mxlDataFormat of the flow, MXL_DATA_FORMAT_VIDEO or MXL_DATA_FORMAT_DATA. */
+        uint32_t format;
+        /**
+         * For a video flow, the number of lines a grain holds: the frame height, or half of it for an interlaced flow,
+         * whose grains are fields. Zero for other formats.
+         */
+        uint32_t grainLines;
+        /** Reserved. Zero. */
+        uint32_t reserved;
+        /**
+         * The flow definition, NMOS IS-04 flow JSON as null terminated UTF-8, which holds the media type, and for
+         * video the frame size. Never null. Only valid during the call.
+         */
+        char const* flowDefinition;
+    } mxlPayloadBackendGeometryQuery;
+
+    /**
+     * The geometry of a grain of a media type a backend defines: how its bytes are laid out in planes and slices.
+     * The same media type has the same geometry in every backend that supports it, since the media type names the
+     * layout of the bytes, and the storage only says where they are.
+     */
+    typedef struct mxlPayloadBackendGrainGeometry_t
+    {
+        /** Size of this structure in bytes. libmxl sets it. */
+        uint32_t structSize;
+        /** Number of planes in a grain, 1 to MXL_MAX_PLANES_PER_GRAIN. */
+        uint32_t planeCount;
+        /**
+         * Number of slices in each plane of a grain, 1 to 65535. For video, the number of lines, which is
+         * mxlPayloadBackendGeometryQuery.grainLines unless the media type packs several lines in a slice.
+         */
+        uint32_t slicesPerGrain;
+        /** Size in bytes of one slice of each plane, without padding. Non-zero for the first planeCount entries, zero after. */
+        uint32_t sliceSizes[MXL_MAX_PLANES_PER_GRAIN];
+    } mxlPayloadBackendGrainGeometry;
+
+    /**
+     * Geometry and access of the flow a backend instance serves. libmxl fills all fields.
+     */
+    typedef struct mxlPayloadBackendFlowInfo_t
+    {
+        /** Size of this structure in bytes. */
+        uint32_t structSize;
+        /** Number of ring buffer slots, equal to the grain count of the flow. */
+        uint32_t grainCount;
+        /** Size in bytes of the payload of one grain, as recorded in mxlGrainInfo.grainSize. */
+        uint64_t grainPayloadSize;
+        /** MXL_PAYLOAD_BACKEND_ACCESS_READ_ONLY or MXL_PAYLOAD_BACKEND_ACCESS_READ_WRITE. */
+        uint32_t accessMode;
+        /** Number of planes in a grain. Video v210 has 1, v210a has 2 (fill, then key). */
+        uint32_t planeCount;
+        /** Number of slices in each plane of a grain. For video, the number of lines. */
+        uint32_t slicesPerGrain;
+        /**
+         * Minimum size in bytes of one slice of each plane, from mxlDiscreteFlowConfigInfo.sliceSizes. A backend
+         * that allocates images or device buffers may choose a larger pitch and reports it with describeLayout().
+         */
+        uint32_t sliceSizes[MXL_MAX_PLANES_PER_GRAIN];
+        /**
+         * The mxlDataFormat of the flow, MXL_DATA_FORMAT_VIDEO or MXL_DATA_FORMAT_DATA. libmxl does not restrict which
+         * formats a backend holds, so a backend rejects the formats it cannot store.
+         */
+        uint32_t format;
+        /** Reserved. Zero. */
+        uint32_t reserved;
+        /**
+         * The flow definition, NMOS IS-04 flow JSON as null terminated UTF-8, from which a backend reads what the
+         * other fields do not hold, for example the media type and frame size of a video flow. Never null. Only valid
+         * during the call that receives this structure.
+         */
+        char const* flowDefinition;
+    } mxlPayloadBackendFlowInfo;
+
+    /**
+     * Function table of a backend.
+     *
+     * The table and the strings it points to must stay valid until the process exits. libmxl never unloads a
+     * backend library.
+     */
+    typedef struct mxlPayloadBackendApi_t
+    {
+        /** Size of this structure in bytes, as compiled into the backend. */
+        uint32_t structSize;
+        /** Must be MXL_PAYLOAD_BACKEND_ABI_VERSION. */
+        uint32_t abiVersion;
+        /** Backend name. Must be equal to the name libmxl used to load the library. */
+        char const* name;
+        /**
+         * The storage type of every slot this backend describes, a null terminated name as described for
+         * mxlGrainStorageLayout.storageType. Several backends can hold the same storage type. libmxl rejects a
+         * backend whose storage type is not a valid name. It does not interpret the reserved bytes of
+         * mxlGrainStorageLayout and mxlGrainStorage, which the storage type defines: it copies them.
+         */
+        char const* storageType;
+
+        /**
+         * Allocate the payload storage of a new flow and write any files that readers need to import it.
+         *
+         * libmxl calls this while the flow is still in its temporary directory, before the rename that
+         * publishes the flow. Files must be written under stagingDir. They appear under finalDir once the
+         * flow is published. Values that must refer to the published location, such as keys of a registry
+         * inside the process, must be derived from finalDir.
+         *
+         * \param[in] info The flow geometry. accessMode is MXL_PAYLOAD_BACKEND_ACCESS_READ_WRITE.
+         * \param[in] options The writer's options for this backend, as JSON object text. Never null, "{}" if there
+         *      are none. Only valid during the call.
+         * \param[in] stagingDir The temporary flow directory. Null terminated UTF-8.
+         * \param[in] finalDir The directory the flow will have once published. Null terminated UTF-8.
+         * \param[out] out_instance Receives the new instance on success.
+         * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if the options are invalid, or another error code.
+         *      On error, the backend must release everything it allocated. libmxl then removes the temporary
+         *      directory.
+         */
+        mxlStatus (*prepare)(mxlPayloadBackendFlowInfo const* info, char const* options, char const* stagingDir, char const* finalDir,
+            mxlPayloadBackendInstance* out_instance);
+
+        /**
+         * Create an instance for a flow that already exists.
+         *
+         * This call must not import device memory or otherwise require a device. Imports happen in mapSlots(), or
+         * on the first call to slotStorage() if mapSlots() was not called, so that a process can open a flow to read
+         * its metadata without a device.
+         *
+         * \param[in] info The flow geometry and the access this process needs.
+         * \param[in] options The reader's options for this backend, as JSON object text, for example the device on
+         *      which to access the payload. Never null, "{}" if there are none. Only valid during the call.
+         * \param[in] flowDir The published flow directory. Null terminated UTF-8.
+         * \param[out] out_instance Receives the new instance on success.
+         * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if the options are invalid, or another error code.
+         */
+        mxlStatus (*open)(mxlPayloadBackendFlowInfo const* info, char const* options, char const* flowDir, mxlPayloadBackendInstance* out_instance);
+
+        /**
+         * Release an instance and everything it holds. Memory created by prepare() is freed. Memory imported by
+         * mapSlots() or slotStorage() is released.
+         *
+         * \param[in] instance The instance to release. May be null, in which case the call does nothing.
+         */
+        void (*destroy)(mxlPayloadBackendInstance instance);
+
+        /**
+         * Describe the storage of one slot, mapping the storage first if mapSlots() was not called.
+         *
+         * May be called from several threads at the same time, including for the first access. The description
+         * of a slot must not change for the lifetime of the instance.
+         *
+         * \param[in] instance A valid instance.
+         * \param[in] slot The slot to describe. Less than mxlPayloadBackendFlowInfo.grainCount.
+         * \param[out] out_storage Receives the description. The backend fills every byte, including version,
+         *      size and slot.
+         * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if slot is out of range, or another error code
+         *      if the payload cannot be imported.
+         */
+        mxlStatus (*slotStorage)(mxlPayloadBackendInstance instance, uint32_t slot, mxlGrainStorage* out_storage);
+
+        /**
+         * Complete the storage layout of the flow. Must not import device memory.
+         *
+         * libmxl passes a default layout in which storageType is set and the planes follow each other without
+         * padding between slices. The backend may change the offset, size and pitch of planes, for example to the
+         * values a device chose when it allocated its buffers, and may fill the part of the reserved space defined
+         * for its storage type, such as the device that holds the payload, in the terms of its own device API.
+         * It must not change the other fields. libmxl checks the result, and rejects a layout whose other fields
+         * changed or whose planes cannot hold their slices.
+         *
+         * \param[in] instance A valid instance.
+         * \param[in,out] inout_layout The default layout on input, the complete layout on output.
+         * \return MXL_STATUS_OK on success, or an error code.
+         */
+        mxlStatus (*describeLayout)(mxlPayloadBackendInstance instance, mxlGrainStorageLayout* inout_layout);
+
+        /**
+         * Map the storage of every slot into this process now, for example by importing device memory or
+         * receiving file descriptors, so that later slotStorage() calls do no further work.
+         *
+         * libmxl calls this when the application maps the slots of a reader or writer, before it asks for any
+         * slot description. It may be called more than once and from several threads. Calls after the first
+         * successful one must return MXL_STATUS_OK without doing anything.
+         *
+         * \param[in] instance A valid instance.
+         * \return MXL_STATUS_OK on success, or an error code if the storage cannot be mapped in this process.
+         */
+        mxlStatus (*mapSlots)(mxlPayloadBackendInstance instance);
+
+        /** Bitwise or of the MXL_PAYLOAD_BACKEND_CAP_* values the backend supports. */
+        uint32_t capabilities;
+        /** Reserved. Must be zero. */
+        uint32_t reserved2;
+
+        /**
+         * Report the file descriptors that readers need to access the storage of a writer's instance.
+         *
+         * Required with MXL_PAYLOAD_BACKEND_CAP_SHARE_DESCRIPTORS, otherwise null. libmxl calls this after
+         * prepare(), first with null descriptors to learn their number, then to receive them, and serves them on the
+         * flow's payload.sock until the instance is destroyed. The order of the descriptors is the backend's own, for
+         * example one per slot. The descriptors stay owned by the backend and must stay open until destroy().
+         *
+         * \param[in] instance A writer's instance.
+         * \param[out] out_descriptors Receives the descriptors, or null to only query their number.
+         * \param[in] capacity Number of entries out_descriptors can hold.
+         * \param[out] out_count Receives the number of descriptors.
+         * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if capacity is too small, or another error code.
+         */
+        mxlStatus (*exportDescriptors)(mxlPayloadBackendInstance instance, int* out_descriptors, uint32_t capacity, uint32_t* out_count);
+
+        /**
+         * Pass a reader's instance the file descriptors received from the writer's payload.sock.
+         *
+         * Required with MXL_PAYLOAD_BACKEND_CAP_SHARE_DESCRIPTORS, otherwise null. libmxl calls this before the first
+         * mapSlots() or slotStorage() of a reader, and again before the next one if it failed. The backend takes
+         * ownership of every descriptor, also when it returns an error, and checks that they match the flow, for
+         * example their number and size.
+         *
+         * \param[in] instance A reader's instance.
+         * \param[in] descriptors The descriptors, in the order exportDescriptors() reported them in the writer.
+         * \param[in] count The number of descriptors.
+         * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_STATE if the descriptors do not match the flow, or
+         *      another error code.
+         */
+        mxlStatus (*importDescriptors)(mxlPayloadBackendInstance instance, int const* descriptors, uint32_t count);
+
+        /**
+         * Report the grain geometry of a flow whose media type the backend defines.
+         *
+         * Required with MXL_PAYLOAD_BACKEND_CAP_DESCRIBE_GEOMETRY, otherwise null. libmxl calls this before it creates a
+         * flow whose media type it does not define itself, and sizes the ring buffer and the slices from the answer,
+         * which it also checks: a geometry outside the documented ranges, or whose grain does not fit in 32 bits, fails
+         * the creation. The geometry reaches prepare() in mxlPayloadBackendFlowInfo. It needs no instance and no device:
+         * it depends on the flow definition alone.
+         *
+         * \param[in] query The flow.
+         * \param[in,out] inout_geometry The geometry. structSize is set on input; the backend fills the other fields.
+         * \return MXL_STATUS_OK on success, MXL_ERR_UNSUPPORTED_OPERATION if the backend does not define the media type,
+         *      MXL_ERR_INVALID_ARG if the flow definition is not valid for the media type, for example a frame size it
+         *      cannot hold, or another error code.
+         */
+        mxlStatus (*describeGeometry)(mxlPayloadBackendGeometryQuery const* query, mxlPayloadBackendGrainGeometry* inout_geometry);
+    } mxlPayloadBackendApi;
+
+    /**
+     * Signature of the function a backend library exports under MXL_PAYLOAD_BACKEND_ENTRY_POINT.
+     *
+     * \param[in] requestedVersion The interface version libmxl was built with.
+     * \param[out] out_api Receives the function table of the backend on success.
+     * \return MXL_STATUS_OK on success, or MXL_ERR_UNSUPPORTED_OPERATION if the backend does not implement
+     *      requestedVersion.
+     */
+    typedef mxlStatus (*mxlGetPayloadBackendApiFn)(uint32_t requestedVersion, mxlPayloadBackendApi const** out_api);
+
+#ifdef __cplusplus
+}
+#endif

@@ -16,10 +16,6 @@ if (NOT TARGET fmt::fmt)
 endif()
 
 add_library(mxl-fabrics-objects OBJECT)
-target_compile_features(mxl-fabrics-objects
-        PRIVATE
-            cxx_std_20
-    )
 target_sources(mxl-fabrics-objects
         PRIVATE
             src/fabrics.cpp
@@ -62,7 +58,7 @@ target_sources(mxl-fabrics-objects
             src/internal/Region.cpp
             src/internal/RegisteredRegion.cpp
             src/internal/RemoteRegion.cpp
-            src/internal/GrainSlices.cpp
+            src/internal/SliceRange.cpp
             src/internal/Target.cpp
             src/internal/TargetInfo.cpp
     )
@@ -72,26 +68,23 @@ target_link_libraries(mxl-fabrics-objects
             mxl-fabrics-headers
             PkgConfig::libfabric
 )
-if (MXL_BUILT_WITH_CUDA)
+
+# Device grain payloads: egress copies payloads into bounce buffers that the NIC can register, which needs the CUDA runtime. Only the
+# fabrics library links it. libmxl does not.
+if (MXL_ENABLE_CUDA_PAYLOAD)
     find_package(CUDAToolkit REQUIRED)
-    target_compile_definitions(mxl-fabrics-objects
-            PRIVATE
-                MXL_HAS_CUDA=1
-        )
-    target_include_directories(mxl-fabrics-objects
-            PRIVATE
-                ${CUDAToolkit_INCLUDE_DIRS}
-        )
-    target_link_libraries(mxl-fabrics-objects
-            PRIVATE
-                CUDA::cudart
-        )
+    target_compile_definitions(mxl-fabrics-objects PRIVATE MXL_HAS_CUDA=1)
+    target_link_libraries(mxl-fabrics-objects PRIVATE CUDA::cudart_static)
 endif()
+
 set_target_properties(mxl-fabrics-objects
         PROPERTIES
             POSITION_INDEPENDENT_CODE ${MXL_POSITION_INDEPENDENT_CODE}
             C_EXTENSIONS              OFF
             CXX_EXTENSIONS            OFF
+            C_STANDARD                ${MXL_C_STANDARD}
+            CXX_STANDARD              ${MXL_CXX_STANDARD}
+
     )
 target_include_directories(mxl-fabrics-objects
         PUBLIC
@@ -130,11 +123,10 @@ target_link_libraries(mxl-fabrics
             spdlog::spdlog
             fmt::fmt
       )
-if (MXL_BUILT_WITH_CUDA)
-    target_link_libraries(mxl-fabrics
-            PRIVATE
-                CUDA::cudart
-        )
+
+# The objects library's link dependencies do not reach the shared library, so the CUDA runtime is linked here as well.
+if (MXL_ENABLE_CUDA_PAYLOAD)
+    target_link_libraries(mxl-fabrics PRIVATE CUDA::cudart_static)
 endif()
 
 # Add common linker options

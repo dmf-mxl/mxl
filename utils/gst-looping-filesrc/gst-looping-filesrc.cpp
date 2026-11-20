@@ -20,7 +20,7 @@
 #include <cassert>
 #include <algorithm>
 #include <gst/base/gstbasesrc.h>
-#include <gstreamer-1.0/gst/gstinfo.h>
+#include <gst/gstinfo.h>
 
 GST_DEBUG_CATEGORY_STATIC(gst_looping_filesrc_debug);
 #define GST_CAT_DEFAULT gst_looping_filesrc_debug

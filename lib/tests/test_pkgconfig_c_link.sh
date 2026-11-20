@@ -8,8 +8,8 @@ set -e
 usage() {
     echo "usage: $0 <build_dir> <vcpkg_install_dir> <vcpkg_triplet> <BUILD_SHARED_LIBS: ON|OFF> <MXL_ENABLE_FABRICS_OFI: ON|OFF> <MXL_LINKER_FLAG=<linker-selection-flag>> <c_compiler>" >&2
     echo "  build_dir         Path to the CMake build directory." >&2
-    echo "  vcpkg_install_dir vcpkg install directory" >&2
-    echo "  vcpkg_triplet     vcpkg target triplet used for the build." >&2
+    echo "  vcpkg_install_dir vcpkg install directory. Empty if the build does not use vcpkg." >&2
+    echo "  vcpkg_triplet     vcpkg target triplet used for the build. Empty if the build does not use vcpkg." >&2
     echo "  BUILD_SHARED_LIBS Indicates whether the build uses shared libraries (ON or OFF)." >&2
     echo "  MXL_ENABLE_FABRICS_OFI Enable libmxl-fabrics.pc test (ON or OFF)." >&2
     echo "  MXL_LINKER_FLAG   Optional compiler linker-selection flag (e.g. -fuse-ld=lld); empty means use default linker." >&2
@@ -39,7 +39,11 @@ case "$MXL_ENABLE_FABRICS_OFI" in
   *) usage; exit 2 ;;
 esac
 
-export PKG_CONFIG_PATH="$BUILD_DIR/pkgconfig_test:$VCPKG_INSTALL_DIR/$VCPKG_TRIPLET/lib/pkgconfig:${PKG_CONFIG_PATH}"
+VCPKG_PKG_CONFIG_PATH=""
+if [ -n "$VCPKG_INSTALL_DIR" ] && [ -n "$VCPKG_TRIPLET" ]; then
+    VCPKG_PKG_CONFIG_PATH="$VCPKG_INSTALL_DIR/$VCPKG_TRIPLET/lib/pkgconfig:"
+fi
+export PKG_CONFIG_PATH="$BUILD_DIR/pkgconfig_test:${VCPKG_PKG_CONFIG_PATH}${PKG_CONFIG_PATH}"
 
 case "$(uname -s)" in
   Linux)  DOMAIN_DIR="/dev/shm/mxl_link_test_domain" ;;

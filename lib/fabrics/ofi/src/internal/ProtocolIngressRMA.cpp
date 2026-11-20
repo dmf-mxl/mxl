@@ -61,7 +61,7 @@ namespace mxl::lib::fabrics::ofi
         auto immData = completionData->data();
         if (!immData)
         {
-            throw Exception::invalidState("Received a completion without immediate data.");
+            return {};
         }
 
         auto [slot, slice] = ImmDataGrain{static_cast<std::uint32_t>(*immData)}.unpack();
@@ -155,6 +155,10 @@ namespace mxl::lib::fabrics::ofi
         }
 
         auto const header = _bounceBuffer.unpack(*immData, _region);
+        if (header.count == 0)
+        {
+            return {};
+        }
         return std::make_optional<Target::SampleReadResult>(header.headIndex, header.count);
     }
 

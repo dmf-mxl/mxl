@@ -7,11 +7,6 @@ endif()
 
 add_executable(mxl-fabrics-tests)
 
-target_compile_features(mxl-fabrics-tests
-        PRIVATE
-            cxx_std_20
-    )
-
 set_target_properties(mxl-fabrics-tests
         PROPERTIES
             POSITION_INDEPENDENT_CODE    ON
@@ -20,12 +15,15 @@ set_target_properties(mxl-fabrics-tests
             CXX_VISIBILITY_PRESET        hidden
             C_EXTENSIONS                 OFF
             CXX_EXTENSIONS               OFF
+            C_STANDARD                   ${MXL_C_STANDARD}
+            CXX_STANDARD                 ${MXL_CXX_STANDARD}
     )
 
 target_sources(mxl-fabrics-tests
         PRIVATE
             test_basics.cpp
             test_interfaces.cpp
+            test_sliced.cpp
     )
 
 target_link_libraries(mxl-fabrics-tests

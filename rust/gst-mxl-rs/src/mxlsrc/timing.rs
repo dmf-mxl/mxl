@@ -28,6 +28,17 @@ pub(crate) fn oldest_retained_index(head: u64, grain_count: u32) -> u64 {
     head.saturating_sub((grain_count as u64).saturating_sub(1))
 }
 
+/// Oldest absolute grain index accessible to a discrete reader.
+pub(crate) fn oldest_reader_visible_index(head: u64, grain_count: u32) -> u64 {
+    let oldest_retained = oldest_retained_index(head, grain_count);
+
+    if head >= grain_count as u64 {
+        oldest_retained.saturating_add(1)
+    } else {
+        oldest_retained
+    }
+}
+
 /// What a discrete reader should do for its next grain.
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) enum ReadStep {
@@ -49,9 +60,9 @@ pub(crate) fn resolve_read_step(index: u64, head: u64, grain_count: u32) -> Read
     if head == 0 || index > head {
         return ReadStep::WaitForProducer;
     }
-    let oldest = oldest_retained_index(head, grain_count);
+    let oldest = oldest_reader_visible_index(head, grain_count);
     if index < oldest {
-        // The writer lapped us; resume at the oldest grain still in the ring.
+        // The writer lapped us; resume at the oldest reader-visible grain.
         ReadStep::Read {
             index: oldest,
             discont: true,
@@ -120,7 +131,7 @@ pub(crate) fn index_period(rate: &Rational) -> gst::ClockTime {
 
 #[cfg(test)]
 mod tests {
-    use super::{ReadStep, oldest_retained_index, resolve_read_step};
+    use super::{ReadStep, oldest_reader_visible_index, oldest_retained_index, resolve_read_step};
 
     const GRAIN_COUNT: u32 = 300;
 
@@ -133,6 +144,18 @@ mod tests {
     #[test]
     fn oldest_retained_when_ring_full() {
         assert_eq!(oldest_retained_index(400, GRAIN_COUNT), 101);
+    }
+
+    #[test]
+    fn reader_visible_index_saturates_at_zero() {
+        // Low indices must not underflow.
+        assert_eq!(oldest_reader_visible_index(50, GRAIN_COUNT), 0);
+    }
+
+    #[test]
+    fn reader_visible_range_excludes_tail() {
+        // The reader visible range begins one past the tail index.
+        assert_eq!(oldest_reader_visible_index(400, GRAIN_COUNT), 102);
     }
 
     #[test]
@@ -180,7 +203,7 @@ mod tests {
     #[test]
     fn catches_up_with_discont_when_lapped() {
         let head = 53_429_298_000;
-        let oldest = oldest_retained_index(head, GRAIN_COUNT);
+        let oldest = oldest_reader_visible_index(head, GRAIN_COUNT);
         // Reader fell far behind the ring.
         assert_eq!(
             resolve_read_step(head - 5_000, head, GRAIN_COUNT),
@@ -192,14 +215,29 @@ mod tests {
     }
 
     #[test]
-    fn oldest_retained_grain_is_read_without_discont() {
+    fn oldest_reader_visible_grain_is_read_without_discont() {
         let head = 53_429_298_000;
-        let oldest = oldest_retained_index(head, GRAIN_COUNT);
+        let oldest = oldest_reader_visible_index(head, GRAIN_COUNT);
         assert_eq!(
             resolve_read_step(oldest, head, GRAIN_COUNT),
             ReadStep::Read {
                 index: oldest,
                 discont: false,
+            }
+        );
+    }
+
+    #[test]
+    fn oldest_retained_grain_is_not_reader_visible() {
+        let head = 53_429_298_000;
+        let retained = oldest_retained_index(head, GRAIN_COUNT);
+        let visible = oldest_reader_visible_index(head, GRAIN_COUNT);
+
+        assert_eq!(
+            resolve_read_step(retained, head, GRAIN_COUNT),
+            ReadStep::Read {
+                index: visible,
+                discont: true,
             }
         );
     }

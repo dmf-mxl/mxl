@@ -2,14 +2,15 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [workspace]
-members = ["mxl", "mxl-sys", "gst-mxl-rs", "gst-avsynctest-rs"]
+members = ["mxl", "mxl-cuda", "mxl-sys", "gst-mxl-rs", "gst-avsynctest-rs"]
 
 resolver = "2"
 
 [workspace.package]
 edition = "2024"
 publish = false
-version = "0.1.0"
+version = "0.2.0"
+rust-version = "1.87"
 license = "Apache-2.0"
 license-file = "../LICENSE.txt"
 repository = "https://github.com/dmf-mxl/mxl"

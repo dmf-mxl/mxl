@@ -10,7 +10,6 @@ pub struct FlowDef {
     pub id: uuid::Uuid,
     pub description: String,
     pub tags: HashMap<String, Vec<String>>,
-    pub format: String,
     pub label: String,
     pub parents: Vec<String>,
     pub media_type: String,

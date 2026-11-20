@@ -6,6 +6,8 @@
 #include "PosixContinuousFlowWriter.hpp"
 #include "PosixDiscreteFlowReader.hpp"
 #include "PosixDiscreteFlowWriter.hpp"
+#include "PosixEventFlowReader.hpp"
+#include "PosixEventFlowWriter.hpp"
 
 namespace mxl::lib
 {
@@ -37,5 +39,17 @@ namespace mxl::lib
         std::unique_ptr<ContinuousFlowData>&& data) const
     {
         return std::make_unique<PosixContinuousFlowWriter>(manager, flowId, std::move(data));
+    }
+
+    std::unique_ptr<EventFlowReader> PosixFlowIoFactory::createEventFlowReader(FlowManager const& manager, uuids::uuid const& flowId,
+        std::unique_ptr<EventFlowData>&& data) const
+    {
+        return std::make_unique<PosixEventFlowReader>(manager, flowId, std::move(data));
+    }
+
+    std::unique_ptr<EventFlowWriter> PosixFlowIoFactory::createEventFlowWriter(FlowManager const& manager, uuids::uuid const& flowId,
+        std::unique_ptr<EventFlowData>&& data) const
+    {
+        return std::make_unique<PosixEventFlowWriter>(manager, flowId, std::move(data), _watcher);
     }
 }

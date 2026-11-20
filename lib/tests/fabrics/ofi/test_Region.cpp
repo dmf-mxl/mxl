@@ -2,8 +2,9 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include <catch2/catch_test_macros.hpp>
+#include <cstdint>
 #include <vector>
+#include <catch2/catch_test_macros.hpp>
 #include "Region.hpp"
 
 using namespace mxl::lib::fabrics::ofi;
@@ -49,10 +50,10 @@ TEST_CASE("ofi: split header/payload ring slot helpers", "[ofi][Region]")
     std::uint16_t validSlices1 = 0;
 
     auto regions = std::vector<Region>{
-        Region{0x1000, 8192, &grainIndex0, &validSlices0, Region::Location::host()},
-        Region{0x2000, 1024, nullptr, nullptr, Region::Location::cuda(0)},
-        Region{0x3000, 8192, &grainIndex1, &validSlices1, Region::Location::host()},
-        Region{0x4000, 1024, nullptr, nullptr, Region::Location::cuda(0)},
+        Region{0x1000, 8192, &grainIndex0, &validSlices0, Region::Location::host() },
+        Region{0x2000, 1024, nullptr,      nullptr,       Region::Location::cuda(0)},
+        Region{0x3000, 8192, &grainIndex1, &validSlices1, Region::Location::host() },
+        Region{0x4000, 1024, nullptr,      nullptr,       Region::Location::cuda(0)},
     };
 
     REQUIRE(getGrainIndexInRingSlot(regions, 0, 2) == 42);

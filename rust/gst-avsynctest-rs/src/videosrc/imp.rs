@@ -156,48 +156,6 @@ fn fill_uyvp(data: &mut [u8], info: &gst_video::VideoInfo, bar_centre: u32, bar_
     }
 }
 
-fn extend_with_even_odd_parity(v: u8) -> u16 {
-    if v.count_ones() & 1 == 0 {
-        0x1_00 | (v as u16)
-    } else {
-        0x2_00 | (v as u16)
-    }
-}
-
-fn compute_checksum(did_10bit: u16, sdid_10bit: u16, dc_10bit: u16, data: &[u16]) -> u16 {
-    let mut checksum = 0u16;
-    checksum = checksum.wrapping_add(did_10bit & 0x1ff);
-    checksum = checksum.wrapping_add(sdid_10bit & 0x1ff);
-    checksum = checksum.wrapping_add(dc_10bit & 0x1ff);
-    for &w in data {
-        checksum = checksum.wrapping_add(w & 0x1ff);
-    }
-    checksum &= 0x1ff;
-    checksum |= ((!(checksum >> 8)) & 0x01) << 9;
-    checksum
-}
-
-/// Attach one `GstAncillaryMeta` carrying `payload` under `did`/`sdid` on `line`,
-/// as `st2038extractor` expects (10-bit even/odd-parity words plus checksum).
-fn add_ancillary(buffer: &mut gst::BufferRef, did: u8, sdid: u8, line: u16, payload: &[u8]) {
-    let mut meta = gst_video::video_meta::AncillaryMeta::add(buffer);
-    meta.set_c_not_y_channel(false);
-    meta.set_line(line);
-    meta.set_offset(signal::ANC_OFFSET);
-    let did_10bit = extend_with_even_odd_parity(did);
-    let sdid_10bit = extend_with_even_odd_parity(sdid);
-    let dc_10bit = extend_with_even_odd_parity(payload.len() as u8);
-    meta.set_did(did_10bit);
-    meta.set_sdid_block_number(sdid_10bit);
-    let data: Vec<u16> = payload
-        .iter()
-        .copied()
-        .map(extend_with_even_odd_parity)
-        .collect();
-    meta.set_checksum(compute_checksum(did_10bit, sdid_10bit, dc_10bit, &data));
-    meta.set_data(glib::Slice::from(data));
-}
-
 #[glib::object_subclass]
 impl ObjectSubclass for AvSyncVideoTestSrc {
     const NAME: &'static str = "GstAvSyncVideoTestSrc";
@@ -625,19 +583,21 @@ impl PushSrcImpl for AvSyncVideoTestSrc {
                 }
                 data[0] = frame_idx;
             }
-            add_ancillary(
+            crate::ancillary::add_ancillary_meta(
                 buffer,
+                signal::ANC_LINE,
+                signal::ANC_OFFSET,
                 signal::ANC_DID,
                 signal::ANC_SDID,
-                signal::ANC_LINE,
                 &[frame_idx],
             );
             if let Some(cdp) = &cdp {
-                add_ancillary(
+                crate::ancillary::add_ancillary_meta(
                     buffer,
+                    captions::CC_LINE,
+                    captions::CC_OFFSET,
                     captions::CC_DID,
                     captions::CC_SDID,
-                    captions::CC_LINE,
                     cdp,
                 );
             }

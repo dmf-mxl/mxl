@@ -2,59 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "mxl-internal/FlowOptionsParser.hpp"
-#include <stdexcept>
-#include <string>
 #include <picojson/picojson.h>
 #include <mxl/mxl.h>
 #include "mxl-internal/Logging.hpp"
+#include "mxl-internal/PayloadBackend.hpp"
 
 namespace mxl::lib
 {
-    namespace
-    {
-        mxlPayloadLocation parsePayloadLocationValue(picojson::value const& value)
-        {
-            if (value.is<std::string>())
-            {
-                auto const& s = value.get<std::string>();
-                if ((s == "host") || (s == "HOST") || (s == "host_memory"))
-                {
-                    return MXL_PAYLOAD_LOCATION_HOST_MEMORY;
-                }
-                if ((s == "device") || (s == "DEVICE") || (s == "device_memory"))
-                {
-                    return MXL_PAYLOAD_LOCATION_DEVICE_MEMORY;
-                }
-                throw std::invalid_argument{"payload location must be \"host\" or \"device\"."};
-            }
-
-            if (value.is<double>())
-            {
-                auto const v = static_cast<int>(value.get<double>());
-                if (v == static_cast<int>(MXL_PAYLOAD_LOCATION_HOST_MEMORY))
-                {
-                    return MXL_PAYLOAD_LOCATION_HOST_MEMORY;
-                }
-                if (v == static_cast<int>(MXL_PAYLOAD_LOCATION_DEVICE_MEMORY))
-                {
-                    return MXL_PAYLOAD_LOCATION_DEVICE_MEMORY;
-                }
-                throw std::invalid_argument{"payload location numeric value must be 0 (host) or 1 (device)."};
-            }
-
-            throw std::invalid_argument{"payload location must be a string or number."};
-        }
-
-        int32_t parseDeviceIndexValue(picojson::value const& value)
-        {
-            if (!value.is<double>())
-            {
-                throw std::invalid_argument{"deviceIndex must be a number."};
-            }
-            return static_cast<int32_t>(value.get<double>());
-        }
-    }
-
     FlowOptionsParser::FlowOptionsParser(std::string const& in_options)
     {
         if (in_options.empty())
@@ -114,77 +68,6 @@ namespace mxl::lib
                 throw std::invalid_argument{"maxSyncBatchSizeHint must be a multiple of maxCommitBatchSizeHint."};
             }
         }
-
-        // Nested payload object takes precedence when present.
-        auto payloadIt = _root.find("payload");
-        if (payloadIt != _root.end())
-        {
-            if (!payloadIt->second.is<picojson::object>())
-            {
-                throw std::invalid_argument{"payload must be a JSON object."};
-            }
-            auto const& payloadObj = payloadIt->second.get<picojson::object>();
-
-            if (auto locIt = payloadObj.find("location"); locIt != payloadObj.end())
-            {
-                _payloadLocation = parsePayloadLocationValue(locIt->second);
-            }
-
-            if (auto deviceIt = payloadObj.find("deviceIndex"); deviceIt != payloadObj.end())
-            {
-                _deviceIndex = parseDeviceIndexValue(deviceIt->second);
-            }
-            else if (_payloadLocation == MXL_PAYLOAD_LOCATION_DEVICE_MEMORY)
-            {
-                _deviceIndex = 0;
-            }
-
-            if (auto backendIt = payloadObj.find("backend"); backendIt != payloadObj.end())
-            {
-                if (!backendIt->second.is<std::string>())
-                {
-                    throw std::invalid_argument{"payload.backend must be a string."};
-                }
-                _payloadBackend = backendIt->second.get<std::string>();
-            }
-        }
-        else
-        {
-            if (auto locIt = _root.find("payloadLocation"); locIt != _root.end())
-            {
-                _payloadLocation = parsePayloadLocationValue(locIt->second);
-            }
-
-            if (auto deviceIt = _root.find("deviceIndex"); deviceIt != _root.end())
-            {
-                _deviceIndex = parseDeviceIndexValue(deviceIt->second);
-            }
-            else if (_payloadLocation == MXL_PAYLOAD_LOCATION_DEVICE_MEMORY)
-            {
-                _deviceIndex = 0;
-            }
-
-            if (auto backendIt = _root.find("payloadBackend"); backendIt != _root.end())
-            {
-                if (!backendIt->second.is<std::string>())
-                {
-                    throw std::invalid_argument{"payloadBackend must be a string."};
-                }
-                _payloadBackend = backendIt->second.get<std::string>();
-            }
-        }
-
-        if (_payloadLocation == MXL_PAYLOAD_LOCATION_HOST_MEMORY)
-        {
-            if (_deviceIndex != -1)
-            {
-                throw std::invalid_argument{"deviceIndex must be -1 when payload location is host."};
-            }
-        }
-        else if (_deviceIndex < 0)
-        {
-            throw std::invalid_argument{"deviceIndex must be >= 0 when payload location is device."};
-        }
     }
 
     std::optional<std::uint32_t> FlowOptionsParser::getMaxCommitBatchSizeHint() const
@@ -197,54 +80,93 @@ namespace mxl::lib
         return _maxSyncBatchSizeHint;
     }
 
-    mxlPayloadLocation FlowOptionsParser::getPayloadLocation() const noexcept
+    namespace
     {
-        return _payloadLocation;
-    }
+        /** Name of the options object that describes the payload storage. */
+        constexpr auto PAYLOAD_OPTION = "payload";
 
-    int32_t FlowOptionsParser::getDeviceIndex() const noexcept
-    {
-        return _deviceIndex;
-    }
-
-    std::string const& FlowOptionsParser::getPayloadBackend() const noexcept
-    {
-        return _payloadBackend;
-    }
-
-    std::optional<int32_t> FlowOptionsParser::parseLocalDeviceIndex(std::string const& options)
-    {
-        if (options.empty())
+        /**
+         * \param[in] what The problem with the "payload" options.
+         * \return The error to throw.
+         */
+        PayloadStorageError invalidPayloadOption(std::string const& what)
         {
-            return std::nullopt;
+            return PayloadStorageError{MXL_ERR_INVALID_ARG, "Invalid \"payload\" option: " + what};
         }
 
-        auto jsonValue = picojson::value{};
-        auto const err = picojson::parse(jsonValue, options);
-        if (!err.empty() || !jsonValue.is<picojson::object>())
+        /**
+         * \param[in] root The parsed options.
+         * \return The "payload" object, or null if the options have none.
+         * \throws PayloadStorageError if "payload" is not an object.
+         */
+        picojson::object const* findPayloadObject(picojson::object const& root)
         {
-            throw std::invalid_argument{"Invalid reader options JSON. " + err};
-        }
-        auto const& root = jsonValue.get<picojson::object>();
-
-        if (auto payloadIt = root.find("payload"); payloadIt != root.end())
-        {
-            if (!payloadIt->second.is<picojson::object>())
+            auto const it = root.find(PAYLOAD_OPTION);
+            if (it == root.end())
             {
-                throw std::invalid_argument{"payload must be a JSON object."};
+                return nullptr;
             }
-            auto const& payloadObj = payloadIt->second.get<picojson::object>();
-            if (auto deviceIt = payloadObj.find("deviceIndex"); deviceIt != payloadObj.end())
+            if (!it->second.is<picojson::object>())
             {
-                return parseDeviceIndexValue(deviceIt->second);
+                throw invalidPayloadOption("it must be an object.");
             }
-            return std::nullopt;
+            return &it->second.get<picojson::object>();
+        }
+    }
+
+    PayloadStorageSpec FlowOptionsParser::getPayloadStorageSpec() const
+    {
+        auto spec = PayloadStorageSpec{};
+        auto const* const payload = findPayloadObject(_root);
+        if (payload == nullptr)
+        {
+            return spec;
         }
 
-        if (auto deviceIt = root.find("deviceIndex"); deviceIt != root.end())
+        auto backendOptions = picojson::object{};
+        for (auto const& [key, value] : *payload)
         {
-            return parseDeviceIndexValue(deviceIt->second);
+            if (key == "backend")
+            {
+                if (!value.is<std::string>() || !PayloadBackendLoader::isValidBackendName(value.get<std::string>()))
+                {
+                    throw invalidPayloadOption("\"backend\" must be a backend name of lowercase letters, digits and hyphens.");
+                }
+                spec.backend = value.get<std::string>();
+            }
+            else
+            {
+                backendOptions.emplace(key, value);
+            }
         }
-        return std::nullopt;
+
+        if (spec.backend == BUILT_IN_HOST_PAYLOAD_BACKEND)
+        {
+            spec.backend.clear();
+        }
+
+        if (!backendOptions.empty())
+        {
+            if (!spec.usesBackend())
+            {
+                throw invalidPayloadOption("the built-in host storage accepts no options, but got \"" + backendOptions.begin()->first + "\".");
+            }
+            spec.backendOptions = picojson::value{backendOptions}.serialize();
+        }
+        return spec;
+    }
+
+    std::string FlowOptionsParser::getReaderPayloadOptions() const
+    {
+        auto const* const payload = findPayloadObject(_root);
+        if ((payload == nullptr) || payload->empty())
+        {
+            return {};
+        }
+        if (payload->find("backend") != payload->end())
+        {
+            throw invalidPayloadOption("readers cannot select the storage with \"backend\".");
+        }
+        return picojson::value{*payload}.serialize();
     }
 } // namespace mxl::lib

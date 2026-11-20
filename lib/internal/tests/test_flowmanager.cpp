@@ -27,7 +27,7 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow Manager : Creat
     REQUIRE_THROWS(
         [&]()
         {
-            std::make_shared<FlowManager>(domain);
+            (void)std::make_shared<FlowManager>(domain);
         }());
 
     // Create the mxl domain path.
@@ -347,6 +347,63 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: re-crea
     REQUIRE(mgr->listFlows().size() == 1);
 }
 
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: open existing flow leaves no temporary directory", "[flow manager][reuse]")
+{
+    auto const countTemporaryDirectories = [this]
+    {
+        return std::ranges::count_if(std::filesystem::directory_iterator{domain},
+            [](auto const& entry) { return entry.path().filename().string().starts_with(".mxl-tmp-"); });
+    };
+
+    auto const mgr = std::make_shared<FlowManager>(domain);
+    auto const initialCount = countTemporaryDirectories();
+
+    SECTION("discrete")
+    {
+        auto const id = *uuids::uuid::from_string("c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1");
+        auto const def = mxl::tests::readFile("data/v210_flow.json");
+        auto const payloadSize = 512;
+        auto const sliceSizes = std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN>{payloadSize, 0, 0, 0};
+
+        auto [created1, f1] = mgr->createOrOpenDiscreteFlow(
+            id, def, MXL_DATA_FORMAT_VIDEO, 1, mxlRational{.numerator = 50, .denominator = 1}, payloadSize, 1, sliceSizes);
+        REQUIRE(created1);
+        auto [created2, f2] = mgr->createOrOpenDiscreteFlow(
+            id, def, MXL_DATA_FORMAT_VIDEO, 1, mxlRational{.numerator = 50, .denominator = 1}, payloadSize, 1, sliceSizes);
+        REQUIRE_FALSE(created2);
+        REQUIRE(f2);
+        REQUIRE(countTemporaryDirectories() == initialCount);
+    }
+
+    SECTION("continuous")
+    {
+        auto const id = *uuids::uuid::from_string("c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2");
+        auto const def = mxl::tests::readFile("data/audio_flow.json");
+
+        auto [created1, f1] = mgr->createOrOpenContinuousFlow(
+            id, def, MXL_DATA_FORMAT_AUDIO, mxlRational{.numerator = 48000, .denominator = 1}, 8, sizeof(float), 4096);
+        REQUIRE(created1);
+        auto [created2, f2] = mgr->createOrOpenContinuousFlow(
+            id, def, MXL_DATA_FORMAT_AUDIO, mxlRational{.numerator = 48000, .denominator = 1}, 8, sizeof(float), 4096);
+        REQUIRE_FALSE(created2);
+        REQUIRE(f2);
+        REQUIRE(countTemporaryDirectories() == initialCount);
+    }
+
+    SECTION("event")
+    {
+        auto const id = *uuids::uuid::from_string("c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3");
+        auto const def = mxl::tests::readFile("data/event_flow.json");
+
+        auto [created1, f1] = mgr->createOrOpenEventFlow(id, def, 4, mxlRational{.numerator = 20, .denominator = 1}, 64);
+        REQUIRE(created1);
+        auto [created2, f2] = mgr->createOrOpenEventFlow(id, def, 4, mxlRational{.numerator = 20, .denominator = 1}, 64);
+        REQUIRE_FALSE(created2);
+        REQUIRE(f2);
+        REQUIRE(countTemporaryDirectories() == initialCount);
+    }
+}
+
 // Test robustness: corrupted flow directory with missing descriptor
 TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: corrupted flow with missing descriptor", "[flow manager][corruption]")
 {
@@ -641,4 +698,30 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "FlowManager: paralle
 
     // In each iteration all workers that did not create the flow should have opened it.
     REQUIRE(numOpened.load() == numIterations * (numWorkers - 1));
+}
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Flow Manager : Reject flows with a payload location", "[flow manager]")
+{
+    auto manager = std::make_shared<FlowManager>(domain);
+
+    auto const flowId = *uuids::uuid::from_string("33333333-3333-3333-3333-333333333333");
+    auto const flowDef = mxl::tests::readFile("data/v210_flow.json");
+    auto const payloadSize = 512;
+    auto const sliceSizes = std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN>{payloadSize, 0, 0, 0};
+
+    auto [created, flowData] = manager->createOrOpenDiscreteFlow(
+        flowId, flowDef, MXL_DATA_FORMAT_VIDEO, 3, mxlRational{60000, 1001}, payloadSize, 0, sliceSizes);
+    REQUIRE(created);
+
+    // Writers leave the deprecated fields at 0 and -1.
+    REQUIRE(flowData->flowInfo()->config.common.payloadLocation == 0U);
+    REQUIRE(flowData->flowInfo()->config.common.deviceIndex == -1);
+
+    // Other software may set it to say that the payload is elsewhere.
+    flowData->flowInfo()->config.common.payloadLocation = 1U;
+    flowData.reset();
+
+    REQUIRE_THROWS_AS(manager->openFlow(flowId, AccessMode::READ_ONLY), std::invalid_argument);
+    REQUIRE_THROWS_AS(manager->openFlow(flowId, AccessMode::READ_WRITE), std::invalid_argument);
+    REQUIRE(manager->deleteFlow(flowId));
 }

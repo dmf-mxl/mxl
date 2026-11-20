@@ -85,6 +85,7 @@ namespace mxl::lib::fabrics::ofi
         private:
             ::fi_cq_err_entry _raw;
             std::shared_ptr<CompletionQueue> _cq;
+            std::string _message; /**< Copied at construction, since the next read of the CQ invalidates err_data. */
         };
 
     public:

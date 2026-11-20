@@ -2,14 +2,17 @@
 # SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
 # SPDX-License-Identifier: Apache-2.0
 #
-# Two independent MXL domains, each with its own CUDA grain buffers.
-# Simulates writer/initiator on one GPU (or node) and fabrics target on another:
-# CUDA IPC is not shared; fabrics RDMA copies grains.
+# Two independent MXL domains, each with its own CUDA payload flow.
+# Simulates a writer and initiator on one GPU (or node) and a fabrics target on
+# another. CUDA IPC is not shared between the domains; fabrics RDMA copies grains.
 #
-# Usage (from repo root, after building):
+# Usage (from repo root, after building with MXL_ENABLE_CUDA_PAYLOAD and MXL_ENABLE_FABRICS_OFI):
 #   SRC_GPU=0 DST_GPU=0 ./examples/scripts/fabrics-cuda-two-domain.sh
 # Cross-GPU on one node:
 #   SRC_GPU=0 DST_GPU=1 ./examples/scripts/fabrics-cuda-two-domain.sh
+#
+# The GPUs are selected by index. The script reads their UUIDs with nvidia-smi
+# and passes them to the payload backend as deviceUuid.
 #
 # Requires tmpfs domains (default /dev/shm/...). Ext4 /tmp cannot pin verbs MRs on many hosts.
 
@@ -18,9 +21,8 @@ set -euo pipefail
 repo_root="$(realpath "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"/../..)"
 build_dir="${MXL_BUILD_DIR:-${repo_root}/build/Linux-Clang-Debug}"
 demo="${build_dir}/tools/mxl-fabrics-demo/mxl-fabrics-demo"
-testsrc="${build_dir}/tools/mxl-gst/mxl-gst-testsrc"
+testsrc="${build_dir}/tools/mxl-gst/mxl-gst-cuda-testsrc"
 flow_json="${repo_root}/examples/flow-configs/flow-video-v210.json"
-src_opts="${repo_root}/examples/payload-options/cuda-payload-options.json"
 flow_id="5fbec3b1-1b0f-417d-9059-8b94a47197ed"
 
 src_domain="${SRC_DOMAIN:-/dev/shm/mxl-src}"
@@ -37,15 +39,34 @@ if [[ ! -x "${demo}" ]]; then
     exit 1
 fi
 if [[ ! -x "${testsrc}" ]]; then
-    echo "missing ${testsrc}; set MXL_BUILD_DIR or build mxl-gst-testsrc" >&2
+    echo "missing ${testsrc}; set MXL_BUILD_DIR or build mxl-gst-cuda-testsrc" >&2
     exit 1
 fi
+
+# Print the UUID of the GPU with the given index, for example GPU-1234....
+gpu_uuid() {
+    local uuid
+    uuid="$(nvidia-smi -i "$1" --query-gpu=uuid --format=csv,noheader)"
+    if [[ -z "${uuid}" ]]; then
+        echo "no GPU with index $1" >&2
+        exit 1
+    fi
+    printf '%s\n' "${uuid}"
+}
+
+src_uuid="$(gpu_uuid "${src_gpu}")"
+dst_uuid="$(gpu_uuid "${dst_gpu}")"
+
+# The target creates its flow with the payload on the destination GPU.
+dst_opts="$(mktemp)"
+printf '{"payload":{"backend":"cuda-linear","deviceUuid":"%s"}}\n' "${dst_uuid}" >"${dst_opts}"
 
 cleanup() {
     [[ -n "${testsrc_pid:-}" ]] && kill "${testsrc_pid}" 2>/dev/null || true
     [[ -n "${target_pid:-}" ]] && kill "${target_pid}" 2>/dev/null || true
     [[ -n "${initiator_pid:-}" ]] && kill "${initiator_pid}" 2>/dev/null || true
     wait 2>/dev/null || true
+    rm -f "${dst_opts}"
 }
 trap cleanup EXIT
 
@@ -53,12 +74,11 @@ mkdir -p "${src_domain}" "${dst_domain}"
 rm -rf "${src_domain}/${flow_id}.mxl-flow" "${dst_domain}/${flow_id}.mxl-flow"
 rm -f "${target_info}"
 
-echo "Starting target domain=${dst_domain} GPU=${dst_gpu}"
+echo "Starting target domain=${dst_domain} GPU=${dst_gpu} (${dst_uuid})"
 "${demo}" \
     -d "${dst_domain}" \
     -f "${flow_json}" \
-    --flow-options "${src_opts}" \
-    --device-index "${dst_gpu}" \
+    --flow-options "${dst_opts}" \
     -p verbs \
     -s "${target_port}" \
     --target-info "${target_info}" \
@@ -81,33 +101,24 @@ if [[ ! -s "${target_info}" ]]; then
     exit 1
 fi
 
-echo "Starting writer domain=${src_domain} GPU=${src_gpu}"
-# gst-testsrc has no --device-index; point it at a matching options file or generate one.
-src_opts_effective="${src_opts}"
-if [[ "${src_gpu}" != "0" ]]; then
-    src_opts_effective="$(mktemp)"
-    python3 - "${src_gpu}" "${src_opts_effective}" <<'PY'
-import json, sys
-idx, path = int(sys.argv[1]), sys.argv[2]
-json.dump({"payload": {"location": "device", "deviceIndex": idx, "backend": "cuda-linear"}}, open(path, "w"), indent=2)
-PY
-fi
-
+echo "Starting writer domain=${src_domain} GPU=${src_gpu} (${src_uuid})"
 "${testsrc}" \
     -d "${src_domain}" \
     -v "${flow_json}" \
-    --video-options-file "${src_opts_effective}" \
+    --device-uuid "${src_uuid}" \
     -p ball \
     >/tmp/mxl-gst-testsrc.log 2>&1 &
 testsrc_pid=$!
 sleep 2
 if ! kill -0 "${testsrc_pid}" 2>/dev/null; then
-    echo "gst-testsrc failed:" >&2
+    echo "mxl-gst-cuda-testsrc failed:" >&2
     cat /tmp/mxl-gst-testsrc.log >&2
     exit 1
 fi
 
 echo "Starting initiator (reads ${src_domain}, RDMA to target)"
+# The initiator runs until timeout stops it, which exits with status 124. That is a normal end here.
+initiator_status=0
 timeout "${seconds}" "${demo}" \
     -i \
     -d "${src_domain}" \
@@ -115,8 +126,12 @@ timeout "${seconds}" "${demo}" \
     -p verbs \
     -s "${initiator_port}" \
     --target-info "@${target_info}" \
-    | tee /tmp/mxl-fabrics-init.log
+    | tee /tmp/mxl-fabrics-init.log || initiator_status=$?
+if [[ "${initiator_status}" -ne 0 && "${initiator_status}" -ne 124 ]]; then
+    echo "initiator failed with status ${initiator_status}; see /tmp/mxl-fabrics-init.log" >&2
+    exit "${initiator_status}"
+fi
 
 echo
 echo "Target log tail:"
-grep -E 'deviceIndex|grains/s|Failed|error' /tmp/mxl-fabrics-target.log | tail -20 || true
+grep -E 'Failed|error|grains/s' /tmp/mxl-fabrics-target.log | tail -20 || true

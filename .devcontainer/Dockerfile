@@ -95,7 +95,9 @@ RUN groupadd --gid "${USER_GID}" "${USERNAME}" \
     && printf '%s ALL=(root) NOPASSWD:ALL\n' "${USERNAME}" > "/etc/sudoers.d/${USERNAME}" \
     && chmod 0440 "/etc/sudoers.d/${USERNAME}"
 
-USER "${USERNAME}"
+# No quotes around the user name: the dev containers CLI copies them into the image
+# user when it adds features, and the container then fails to start.
+USER ${USERNAME}
 WORKDIR "/home/${USERNAME}"
 
 # Install vcpkg
@@ -124,5 +126,5 @@ USER root
 RUN install -m 0644 /tmp/gst-plugins-rs/target/release/libgstrsclosedcaption.so \
     "/usr/lib/$(gcc -dumpmachine)/gstreamer-1.0/"
 
-USER "${USERNAME}"
+USER ${USERNAME}
 RUN rm -rf /tmp/gst-plugins-rs

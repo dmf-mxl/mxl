@@ -3,7 +3,7 @@
 
 # Building
 
-## Option 1 : Devcontainer build environment
+## Option 1: Devcontainer build environment
 
 This is the preferred option for development on WSL2 or native linux desktop. This method is self contained, provides a predictable build environment (through a dynamically built container) and pre-configured set of VSCode extensions defined in the devcontainer definition file.
 
@@ -23,8 +23,8 @@ This is the preferred option for development on WSL2 or native linux desktop. Th
 
 _Note: the following instructions apply to Ubuntu 22.04._
 
-1. Install all apt packages specified in the [Dockerfile](../.devcontainer/Dockerfile)
-2. Install vcpkg as done in the [Dockerfile](../.devcontainer/Dockerfile)
+1. Install all apt packages specified in the [Dockerfile](https://github.com/dmf-mxl/mxl/blob/main/.devcontainer/Dockerfile)
+2. Install vcpkg as done in the [Dockerfile](https://github.com/dmf-mxl/mxl/blob/main/.devcontainer/Dockerfile)
 3. Create a build directory and invoke cmake with a build preset. the list of available presets is:
 
 ```bash

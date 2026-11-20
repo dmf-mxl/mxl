@@ -50,26 +50,19 @@ namespace mxl::lib
     }
 
     MXL_EXPORT
+    std::filesystem::path makeEventDataFilePath(std::filesystem::path const& flowDirectory)
+    {
+        return flowDirectory / EVENT_DATA_FILE_NAME;
+    }
+
+    MXL_EXPORT
     std::filesystem::path makeDomainOptionsFilePath(std::filesystem::path const& domain)
     {
         return domain / (DOMAIN_OPTIONS_FILE_NAME);
     }
 
-    MXL_EXPORT
-    std::filesystem::path makePayloadDirectoryName(std::filesystem::path const& flowDirectory)
-    {
-        return flowDirectory / PAYLOAD_DIRECTORY_NAME;
-    }
-
-    MXL_EXPORT
     std::filesystem::path makePayloadDescriptorFilePath(std::filesystem::path const& flowDirectory)
     {
         return flowDirectory / PAYLOAD_DESCRIPTOR_FILE_NAME;
-    }
-
-    MXL_EXPORT
-    std::filesystem::path makePayloadSlotFilePath(std::filesystem::path const& flowDirectory, unsigned int index)
-    {
-        return makePayloadDirectoryName(flowDirectory) / fmt::format("{}.{}", PAYLOAD_SLOT_FILE_NAME_STEM, index);
     }
 }

@@ -3,6 +3,10 @@
 
 #pragma once
 
+/** @file
+ * @brief Public flow reader, writer, payload and synchronization APIs.
+ */
+
 #ifdef __cplusplus
 #   include <cstddef>
 #   include <cstdint>
@@ -147,10 +151,268 @@ extern "C"
         uint8_t reserved[4068];
     } mxlGrainInfo;
 
+    /**
+     * @brief Metadata for one event queue entry, either a complete event or a fragment.
+     *
+     */
+    typedef struct mxlEventInfo_t
+    {
+        uint32_t version;      ///< Structure version, currently 1.
+        uint32_t size;         ///< Size of this structure.
+        uint64_t timestamp;    ///< Application supplied TAI timestamp in nanoseconds since the epoch; must not decrease within a flow.
+        uint32_t flags;        ///< Reserved; must be zero.
+        uint32_t registryType; ///< Registry that determines the interpretation of dataItemType; a mxlEventRegistryType value.
+
+        /**
+         * @brief Data item type (DIT) interpreted according to registryType.
+         * SMPTE DIT strings omit the 0x prefix. MXL DIT strings use a namespace
+         * such as `x-mxl:example` or `x-company:example`. Readers must bound string
+         * access to 256 bytes; a full array need not contain a terminating NUL.
+         */
+        char dataItemType[256];
+
+        /**
+         * @brief Number of payload bytes published in this entry, possibly zero.
+         * For fragments this is the fragment size, not the total logical event
+         * size. It must not exceed the flow's eventPayloadSize.
+         */
+        uint32_t eventSize;
+
+        /**
+         * @brief Logical byte offset within a fragmented event.
+         * Zero for unfragmented events and first fragments. Consumers validate
+         * continuity and assemble the complete payload. Fragments of one logical
+         * event must occupy consecutive queue entries; interleaving un related events
+         * is not allowed.
+         */
+        uint32_t offset;
+
+        /** @brief 1 for an unfragmented event or final fragment; 0 if more fragments follow. */
+        uint8_t complete;
+
+        /** @brief Reserved bytes; leave zero. */
+        uint8_t reserved[215];
+
+        /**
+         * @brief Zero-based queue position, assigned by the library on a successful read.
+         * Compare with mxlFlowRuntimeInfo.headIndex to measure reader lag, or with the
+         * previous received index to count skipped entries. Open initializes this to
+         * MXL_UNDEFINED_INDEX; commit ignores the supplied value.
+         */
+        uint64_t index;
+    } mxlEventInfo;
+
+    /**
+     * Size of mxlGrainStorageLayout.storageType, the name of a storage type, including its terminating null character.
+     */
+#define MXL_PAYLOAD_STORAGE_TYPE_SIZE 64
+
+    /**
+     * The storage type of payload in host memory. A slot is addressed through a host pointer, which the pointer based
+     * functions such as mxlFlowWriterOpenGrain() and mxlFlowReaderGetGrain() also return.
+     */
+#define MXL_PAYLOAD_STORAGE_HOST_POINTER "host-pointer"
+
+    /**
+     * Position and geometry of one plane of a grain payload.
+     *
+     * The fields follow the plane model used by DRM, V4L2 and Vulkan: an offset and a pitch within the memory
+     * object that holds the plane. For pointer based storage types, all planes of a slot are in one memory
+     * object, and offset is relative to the address in the slot description. For storage types whose slot
+     * description carries one handle per plane, offset is relative to the start of that plane's object.
+     * The values are the same for every slot of a flow.
+     */
+    typedef struct mxlGrainPlaneLayout_t
+    {
+        /** Offset in bytes of the first byte of the plane within the memory object that holds it. */
+        uint64_t offset;
+        /** Size of the plane in bytes, from its first byte to the end of its last slice. */
+        uint64_t size;
+        /**
+         * Distance in bytes between the starts of two consecutive slices of the plane. For video, a slice is
+         * a line. At least mxlDiscreteFlowConfigInfo.sliceSizes for the plane. Storage that does not add
+         * padding between slices reports exactly that value.
+         */
+        uint64_t pitch;
+        /** Reserved. Always zero. */
+        uint64_t reserved;
+    } mxlGrainPlaneLayout;
+
+    /**
+     * Describes the storage of the payload of all the slots of a discrete flow.
+     *
+     * A slot is one entry of the ring buffer. The grain at index i is stored in slot (i % slotCount).
+     * The layout does not change for the lifetime of a flow, so it can be read once after the flow reader or
+     * writer is created.
+     *
+     * The library fills all fields, including version and size.
+     */
+    typedef struct mxlGrainStorageLayout_t
+    {
+        /** Version of this structure. The only currently supported value is 1. */
+        uint32_t version;
+        /** Size of this structure in bytes. */
+        uint32_t size;
+        /**
+         * How the payload of the slots is stored, as the null terminated name of a storage type, such as
+         * MXL_PAYLOAD_STORAGE_HOST_POINTER. The bytes after the terminating null character are zero.
+         *
+         * A storage type defines how a slot is addressed and what the reserved bytes of this structure and of
+         * mxlGrainStorage hold. The names of the storage types the SDK defines have no dot. Other names start with
+         * a reversed domain name of whoever defines the type, for example "org.example.image", so that they do not
+         * need to be registered with the SDK. Names use lowercase ASCII letters, digits, '-', '_' and '.'.
+         */
+        char storageType[MXL_PAYLOAD_STORAGE_TYPE_SIZE];
+        /** Number of slots in the ring buffer. Equal to mxlDiscreteFlowConfigInfo.grainCount. */
+        uint32_t slotCount;
+        /** Number of used entries in planes. Video v210 has 1 plane, v210a has 2 (fill, then key). Data has 1. */
+        uint32_t planeCount;
+        /** Position and geometry of each plane. Only the first planeCount entries are valid. */
+        mxlGrainPlaneLayout planes[MXL_MAX_PLANES_PER_GRAIN];
+        /**
+         * Reserved for descriptions specific to a storage type, such as the device that holds the payload, the
+         * pixel format and format modifier of each plane or the extent of an image. The library does not interpret
+         * these bytes: what identifies a device, for example, is the storage type's to define, since a CUDA device
+         * has an index in each process and a UUID, a Vulkan device two UUIDs, and a dma-buf heap a name. Zero for
+         * MXL_PAYLOAD_STORAGE_HOST_POINTER. Pads the total size of this structure to 512 bytes.
+         */
+        uint8_t reserved[304];
+    } mxlGrainStorageLayout;
+
+    /**
+     * Storage of one slot when the storage type is MXL_PAYLOAD_STORAGE_HOST_POINTER.
+     */
+    typedef struct mxlHostGrainStorage_t
+    {
+        /** Host address of the first byte of the slot storage. */
+        void* pointer;
+    } mxlHostGrainStorage;
+
+    /**
+     * Describes the storage of the payload of one slot of a discrete flow.
+     *
+     * The description of a slot does not change for the lifetime of a flow. Applications can therefore set up
+     * any per slot resources once. The planes of the payload are located with mxlGrainStorageLayout.planes.
+     *
+     * Pointer based storage types describe a slot with one address. Storage types that share memory through
+     * handles, such as file descriptors, describe a slot with one handle per plane. The library owns such
+     * handles. An application that needs a handle beyond the lifetime of its reader or writer duplicates it.
+     *
+     * The library fills all fields, including version and size. Only the union member that matches
+     * mxlGrainStorageLayout.storageType is valid.
+     */
+    typedef struct mxlGrainStorage_t
+    {
+        /** Version of this structure. The only currently supported value is 1. */
+        uint32_t version;
+        /** Size of this structure in bytes. */
+        uint32_t size;
+        /** The slot described by this structure. */
+        uint32_t slot;
+        /** Reserved. Always zero. Aligns the union. */
+        uint32_t reserved0;
+
+        union
+        {
+            /** Valid if mxlGrainStorageLayout.storageType is MXL_PAYLOAD_STORAGE_HOST_POINTER. */
+            mxlHostGrainStorage host;
+
+            /**
+             * The storage of a slot of any other storage type, as that storage type defines it, for example a
+             * device address, or one handle per plane and a synchronization object. Pads the total size of this
+             * structure to 256 bytes.
+             */
+            uint8_t reserved[240];
+        };
+    } mxlGrainStorage;
+
     typedef struct mxlFlowReader_t* mxlFlowReader;
     typedef struct mxlFlowWriter_t* mxlFlowWriter;
 
     typedef struct mxlFlowSynchronizationGroup_t* mxlFlowSynchronizationGroup;
+
+    /**
+     * Open an event for writing
+     * @param[in] writer Event flow writer acquired with mxlCreateFlowWriter.
+     * @param[out] event Receives initialized metadata; must not be NULL.
+     * @param[out] payload Receives the private writable buffer; must not be NULL.
+     * The buffer contents are not cleared on open. eventSize starts at zero; obtain
+     * capacity from mxlFlowConfigInfo.event.eventPayloadSize and set the actual size before commit.
+     * @retval MXL_STATUS_OK The event is open for editing.
+     * @retval MXL_ERR_INVALID_ARG An output pointer is NULL or an event is already open.
+     * @retval MXL_ERR_INVALID_FLOW_WRITER The handle is NULL or is not an event writer.
+     * @retval MXL_ERR_UNKNOWN An internal exception occurred.
+     */ 
+    MXL_EXPORT
+    mxlStatus mxlFlowWriterOpenEvent(mxlFlowWriter writer, mxlEventInfo* event, uint8_t** payload);
+
+    /** Publish one event entry (a complete event or one fragment) and wake waiting readers.
+     * Timestamps must be nondecreasing relative to the last committed event in this flow.
+     * Equal timestamps are allowed, including for fragments of the same event.
+     * An earlier timestamp returns MXL_ERR_INVALID_ARG without publishing or advancing the queue.
+     * A failed commit leaves the event open for correction or cancellation.
+     * Queue positions advance in commit order, independently of timestamps.
+     * The producer must commit all fragments of one logical event consecutively,
+     * ending with complete = 1 before starting any other event in this flow.
+     * Interleaving is forbidden even when events have different timestamps or DITs.
+     * This is a producer requirement; the API does not enforce fragment continuity
+     * or detect interleaving. Queue indices identify entries, not logical events.
+     *
+     * @param[in] writer Writer that owns the open event.
+     * @param[in] event Metadata to publish with the staged payload; must not be NULL.
+     * @retval MXL_STATUS_OK The entry was published and the write transaction closed.
+     * @retval MXL_ERR_INVALID_ARG No event is open, metadata is invalid, the timestamp
+     * decreases, the payload exceeds capacity, or event is NULL.
+     * @retval MXL_ERR_INVALID_FLOW_WRITER The handle is NULL or is not an event writer.
+     * @retval MXL_ERR_FLOW_INVALID Publication would overwrite an already-published or newer sequence tag.
+     * @retval MXL_ERR_OUT_OF_RANGE_TOO_LATE The queue sequence index is exhausted.
+     * @retval MXL_ERR_UNKNOWN An internal exception occurred.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowWriterCommitEvent(mxlFlowWriter writer, mxlEventInfo const* event);
+
+    /**
+     * @brief Cancel the open event without publishing or changing timestamp ordering.
+     * @param[in] writer Writer whose open event is to be discarded.
+     * @retval MXL_STATUS_OK The write transaction was closed.
+     * @retval MXL_ERR_INVALID_ARG No event is open.
+     * @retval MXL_ERR_INVALID_FLOW_WRITER The handle is NULL or is not an event writer.
+     * @retval MXL_ERR_UNKNOWN An internal exception occurred.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowWriterCancelEvent(mxlFlowWriter writer);
+
+    /** Read the next event using this reader's queue cursor, starting with the oldest retained event.
+     * An overrun advances the cursor past lost entries; retry to resume reading.
+     * Each reader handle must be accessed by a single thread at a time.
+     * Payload is a private snapshot, valid until the next read attempt on this reader or reader release.
+     * Producers and independent readers cannot overwrite it. Metadata includes the queue index on success;
+     * event and payload output arguments are unchanged on failure.
+     *
+     * @param[in] reader Event flow reader acquired with mxlCreateFlowReader.
+     * @param[in] timeoutNs Maximum wait in nanoseconds; zero requests a nonblocking read.
+     * @param[out] event Receives metadata on success; must not be NULL.
+     * @param[out] payload Receives the private payload snapshot on success; must not be NULL.
+     * @retval MXL_STATUS_OK One entry was copied and the cursor advanced.
+     * @retval MXL_ERR_OUT_OF_RANGE_TOO_EARLY No entry was available before the deadline.
+     * @retval MXL_ERR_OUT_OF_RANGE_TOO_LATE An entry was lost to ring overwrite.
+     * @retval MXL_ERR_FLOW_INVALID Stored metadata is invalid or a removed/replaced flow was detected.
+     * @retval MXL_ERR_INVALID_ARG An output pointer is NULL.
+     * @retval MXL_ERR_INVALID_FLOW_READER The handle is NULL or is not an event reader.
+     * @retval MXL_ERR_UNKNOWN An internal exception occurred.
+     */    
+    MXL_EXPORT
+    mxlStatus mxlFlowReaderGetEvent(mxlFlowReader reader, uint64_t timeoutNs, mxlEventInfo* event, uint8_t** payload);
+
+    /**
+     * @brief Attempt to read one event entry without waiting for publication.
+     * @param[in] reader Event flow reader to advance.
+     * @param[out] event Receives metadata on success; must not be NULL.
+     * @param[out] payload Receives a private payload snapshot on success; must not be NULL.
+     * @return The same statuses as mxlFlowReaderGetEvent with timeoutNs equal to zero.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowReaderGetEventNonBlocking(mxlFlowReader reader, mxlEventInfo* event, uint8_t** payload);
 
     /**
      * Attempts to create a flow writer for a given flow definition. If the flow does not exist already, it is created and 'created' will be set to
@@ -192,7 +454,13 @@ extern "C"
      *
      * \param[in] instance The mxl instance created using mxlCreateInstance
      * \param[in] flowDef The flow definition from which a flow should be created if there is not already a flow with the same flow id.
-     * \param[in] options (optional) Additional options, can be NULL
+     * \param[in] options (optional) Additional options in JSON, can be NULL. The optional "payload" object selects where the
+     *     payload of a discrete flow is stored. libmxl interprets one of its keys, "backend", the name of a backend library that
+     *     ships with the SDK and holds the payload. Without it, or with "host", the payload is in host shared memory as before.
+     *     All other keys belong to the backend, which validates them, for example the device to allocate on. Invalid "payload"
+     *     options return MXL_ERR_INVALID_ARG. A backend that is not installed, and a flow that the backend cannot store, return
+     *     MXL_ERR_UNSUPPORTED_OPERATION. A flow whose payload is held by a backend accepts only one writer: creating a second
+     *     writer for it returns MXL_ERR_CONFLICT.
      * \param[out] writer A pointer to a memory location where the created flow writer will be written.
      * \param[out] configInfo (optional) A pointer to an mxlFlowConfigInfo structure.
      *     If not the null pointer, this structure will be updated with the flow information after the flow is created.
@@ -207,12 +475,28 @@ extern "C"
     mxlStatus mxlReleaseFlowWriter(mxlInstance instance, mxlFlowWriter writer);
 
     /**
-     * Open a reader for an existing flow.
+     * Create a reader for an existing flow, or obtain another reference to the reader this instance already has for it.
+     * Each successful call must be paired with a call to mxlReleaseFlowReader().
      *
-     * \param[in] options Optional JSON. For CUDA payloads on the same node as the writer, set
-     *     \c deviceIndex (or \c payload.deviceIndex) to map grains onto this process's GPU via
-     *     CUDA IPC peer access. Omit to attach on the writer's GPU. Cross-node readers must not
-     *     share the domain; use fabrics instead.
+     * Opening a reader does not access the payload storage, so a reader can be created in a process that cannot access the
+     * payload, for example to read the flow metadata.
+     *
+     * \param[in] instance The mxl instance created using mxlCreateInstance
+     * \param[in] flowId The id of the flow to read, as a UUID string.
+     * \param[in] options (optional) Reader options in JSON, can be NULL. The keys of the optional "payload" object are passed to
+     *     the backend that holds the payload of the flow, which validates them, for example the device on which this process
+     *     accesses the payload. Readers cannot select the storage, so "backend" is not accepted. Flows with the
+     *     built-in host storage ignore these keys. Only the options of the call that creates the reader are used.
+     * \param[out] reader A pointer to a memory location where the flow reader will be written.
+     * \retval MXL_STATUS_OK The reader was created, or another reference to it obtained.
+     * \retval MXL_ERR_INVALID_ARG The instance, the flow id, the options or the reader pointer is not valid.
+     * \retval MXL_ERR_FLOW_NOT_FOUND There is no flow with this id in the domain.
+     * \retval MXL_ERR_PERMISSION_DENIED The files of the flow cannot be accessed with the permissions of the process.
+     * \retval MXL_ERR_INVALID_STATE The payload of the flow is held by a backend, and its payload descriptor, payload.json in
+     *     the flow directory, is missing or invalid.
+     * \retval MXL_ERR_UNSUPPORTED_OPERATION The payload descriptor of the flow is in a format this SDK does not know, written by
+     *     another release.
+     * \retval MXL_ERR_UNKNOWN Any other failure.
      */
     MXL_EXPORT
     mxlStatus mxlCreateFlowReader(mxlInstance instance, char const* flowId, char const* options, mxlFlowReader* reader);
@@ -301,15 +585,12 @@ extern "C"
      *      operate on discrete flows. Any attempt to call this function on a
      *      reader that operates on another type of flow will result in an
      *      error.
+     * \note The payload pointer is only available for flows whose storage type is
+     *      MXL_PAYLOAD_STORAGE_HOST_POINTER. For other storage types this function returns
+     *      MXL_ERR_UNSUPPORTED_OPERATION. \see mxlGrainStorageLayout
      */
     MXL_EXPORT
     mxlStatus mxlFlowReaderGetGrain(mxlFlowReader reader, uint64_t index, uint64_t timeoutNs, mxlGrainInfo* grain, uint8_t** payload);
-
-    /**
-     * Like \ref mxlFlowReaderGetGrain but returns an \ref mxlPayloadView.
-     */
-    MXL_EXPORT
-    mxlStatus mxlFlowReaderGetGrainEx(mxlFlowReader reader, uint64_t index, uint64_t timeoutNs, mxlGrainInfo* grain, mxlPayloadView* payload);
 
     /**
      * Accessors for a flow grain at a specific index, with a minimum number of valid slices.
@@ -325,17 +606,13 @@ extern "C"
      *      operate on discrete flows. Any attempt to call this function on a
      *      reader that operates on another type of flow will result in an
      *      error.
+     * \note The payload pointer is only available for flows whose storage type is
+     *      MXL_PAYLOAD_STORAGE_HOST_POINTER. For other storage types this function returns
+     *      MXL_ERR_UNSUPPORTED_OPERATION. \see mxlGrainStorageLayout
      */
     MXL_EXPORT
     mxlStatus mxlFlowReaderGetGrainSlice(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, uint64_t timeoutNs, mxlGrainInfo* grain,
         uint8_t** payload);
-
-    /**
-     * Like \ref mxlFlowReaderGetGrainSlice but returns an \ref mxlPayloadView.
-     */
-    MXL_EXPORT
-    mxlStatus mxlFlowReaderGetGrainSliceEx(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, uint64_t timeoutNs, mxlGrainInfo* grain,
-        mxlPayloadView* payload);
 
     /**
      * Non-blocking accessor for a flow grain at a specific index
@@ -349,15 +626,12 @@ extern "C"
      *      operate on discrete flows. Any attempt to call this function on a
      *      reader that operates on another type of flow will result in an
      *      error.
+     * \note The payload pointer is only available for flows whose storage type is
+     *      MXL_PAYLOAD_STORAGE_HOST_POINTER. For other storage types this function returns
+     *      MXL_ERR_UNSUPPORTED_OPERATION. \see mxlGrainStorageLayout
      */
     MXL_EXPORT
     mxlStatus mxlFlowReaderGetGrainNonBlocking(mxlFlowReader reader, uint64_t index, mxlGrainInfo* grain, uint8_t** payload);
-
-    /**
-     * Like \ref mxlFlowReaderGetGrainNonBlocking but returns an \ref mxlPayloadView.
-     */
-    MXL_EXPORT
-    mxlStatus mxlFlowReaderGetGrainNonBlockingEx(mxlFlowReader reader, uint64_t index, mxlGrainInfo* grain, mxlPayloadView* payload);
 
     /**
      * Non-blocking accessor for a flow grain at a specific index, with a minimum number of valid slices.
@@ -372,17 +646,82 @@ extern "C"
      *      operate on discrete flows. Any attempt to call this function on a
      *      reader that operates on another type of flow will result in an
      *      error.
+     * \note The payload pointer is only available for flows whose storage type is
+     *      MXL_PAYLOAD_STORAGE_HOST_POINTER. For other storage types this function returns
+     *      MXL_ERR_UNSUPPORTED_OPERATION. \see mxlGrainStorageLayout
      */
     MXL_EXPORT
     mxlStatus mxlFlowReaderGetGrainSliceNonBlocking(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, mxlGrainInfo* grain,
         uint8_t** payload);
 
     /**
-     * Like \ref mxlFlowReaderGetGrainSliceNonBlocking but returns an \ref mxlPayloadView.
+     * Get the storage layout of the grain payloads of a discrete flow.
+     *
+     * \param[in] reader A valid discrete flow reader.
+     * \param[out] layout A valid pointer to a structure that receives the layout.
+     * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if layout is NULL, MXL_ERR_INVALID_FLOW_READER if
+     *      reader is not a valid discrete flow reader, or MXL_ERR_UNSUPPORTED_OPERATION if the backend that holds the
+     *      payload cannot be used in this process, for example because it is not installed. The reader can still read
+     *      the flow metadata.
      */
     MXL_EXPORT
-    mxlStatus mxlFlowReaderGetGrainSliceNonBlockingEx(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, mxlGrainInfo* grain,
-        mxlPayloadView* payload);
+    mxlStatus mxlFlowReaderGetStorageLayout(mxlFlowReader reader, mxlGrainStorageLayout* layout);
+
+    /**
+     * Map the storage of every slot of a discrete flow into the calling process, and describe each slot.
+     *
+     * Call this once, after creating the reader and reading the layout, and before reading grains. It does all
+     * the work needed to access the payload in this process, such as importing device memory or receiving file
+     * descriptors, so that reading grains adds no latency later. Slot descriptions do not change for the
+     * lifetime of the reader. The application can therefore keep the array, set up its own per slot resources
+     * from it, and then look slots up by the value that mxlFlowReaderGetGrainSlot() returns.
+     *
+     * Opening a reader does not map anything, so a reader that only reads flow metadata does not need the device
+     * that holds the payload.
+     *
+     * For storage that is shared as file descriptors, this is when the reader receives them from the writer, through
+     * the socket payload.sock in the flow directory. The writer serves them until it is released, so mapping needs
+     * the writer: if it is gone, this function returns MXL_ERR_INVALID_STATE. Once mapped, the descriptions stay valid
+     * until the reader is released, whatever happens to the writer.
+     *
+     * If the flow becomes invalid (MXL_ERR_FLOW_INVALID), for example because its writer recreated it, the slot
+     * descriptions and any handles in them are stale. Release the reader, create a new one and map it again.
+     *
+     * \param[in] reader A valid discrete flow reader.
+     * \param[in] slotCount The number of entries in slots. Must be equal to mxlGrainStorageLayout.slotCount.
+     * \param[out] slots A valid pointer to an array of slotCount structures. Entry i receives the description of
+     *      slot i. Handles in the descriptions are owned by the library and stay valid until the reader is
+     *      released.
+     * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if slots is NULL or slotCount does not match the
+     *      layout, MXL_ERR_INVALID_FLOW_READER if reader is not a valid discrete flow reader, MXL_ERR_INVALID_STATE
+     *      if the descriptors of the storage cannot be received from the writer, for example because it is gone, or
+     *      another error code if the storage cannot be mapped in this process.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowReaderMapSlots(mxlFlowReader reader, uint32_t slotCount, mxlGrainStorage* slots);
+
+    /**
+     * Wait for a grain at a specific index to have a minimum number of valid slices, and return the slot that
+     * holds it.
+     *
+     * This function works for every storage type. It behaves like mxlFlowReaderGetGrainSlice(), except that it
+     * returns a slot in place of a payload pointer. The application finds the storage of the slot in the array
+     * filled by mxlFlowReaderMapSlots(). This function does not access the payload storage itself.
+     *
+     * \param[in] reader A valid discrete flow reader.
+     * \param[in] index The index of the grain to obtain.
+     * \param[in] minValidSlices The minimum number of valid slices required in the returned grain.
+     *      MXL_GRAIN_VALID_SLICES_ALL waits for the complete grain.
+     * \param[in] timeoutNs How long to wait for the grain, in nanoseconds. 0 returns without waiting.
+     * \param[out] grain A valid pointer to a structure that receives a copy of the grain info.
+     * \param[out] slot A valid pointer that receives the slot holding the grain. Written only on success.
+     * \return The result code. \see mxlStatus
+     *      This function never returns MXL_ERR_TIMEOUT. If the grain is not available before the timeout, it
+     *      returns MXL_ERR_OUT_OF_RANGE_TOO_EARLY.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowReaderGetGrainSlot(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, uint64_t timeoutNs, mxlGrainInfo* grain,
+        uint32_t* slot);
 
     /**
      * Get grain info for a given index. This is used to inspect the grain info without opening the grain for mutation.
@@ -403,6 +742,11 @@ extern "C"
      * Open a grain for mutation.  The flow writer will remember which index is currently opened. Before opening a new grain
      * for mutation, the user must either cancel the mutation using mxlFlowWriterCancelGrain or mxlFlowWriterCommitGrain.
      *
+     * If the ring buffer entry for this index still holds an older grain, its header is reset: validSlices is set to 0 and
+     * MXL_GRAIN_FLAG_INVALID is cleared. If the entry already holds this index, the header is returned unchanged. This keeps
+     * the progress of an incomplete grain that is opened again, and it keeps the header that a fabrics initiator wrote into a
+     * target flow, so that the target application can commit the returned grain info as is.
+     *
      * \todo Allow operating on multiple grains simultaneously, by making this function return a handle that has to be passed
      *      to mxlFlowWriterCommitGrain or mxlFlowWriterCancelGrain to identify the grain the call refers to.
      *
@@ -415,22 +759,12 @@ extern "C"
      *      operate on discrete flows. Any attempt to call this function on a
      *      writer that operates on another type of flow will result in an
      *      error.
+     * \note The payload pointer is only available for flows whose storage type is
+     *      MXL_PAYLOAD_STORAGE_HOST_POINTER. For other storage types this function returns
+     *      MXL_ERR_UNSUPPORTED_OPERATION. \see mxlGrainStorageLayout
      */
     MXL_EXPORT
     mxlStatus mxlFlowWriterOpenGrain(mxlFlowWriter writer, uint64_t index, mxlGrainInfo* mxlGrainInfo, uint8_t** payload);
-
-    /**
-     * Open a grain for mutation and return an extended payload view.
-     *
-     * Prefer this over \ref mxlFlowWriterOpenGrain when the flow may use a non-host payload
-     * backing store. For host-mapped flows the returned view has kind \c MXL_PAYLOAD_KIND_HOST_PTR
-     * and \c u.hostPtr matches the pointer that \ref mxlFlowWriterOpenGrain would return.
-     *
-     * \return \c MXL_ERR_UNSUPPORTED_OPERATION when the flow records a device payload location but
-     *         no device allocator has been configured yet.
-     */
-    MXL_EXPORT
-    mxlStatus mxlFlowWriterOpenGrainEx(mxlFlowWriter writer, uint64_t index, mxlGrainInfo* mxlGrainInfo, mxlPayloadView* payload);
 
     /**
      *
@@ -449,6 +783,53 @@ extern "C"
      */
     MXL_EXPORT
     mxlStatus mxlFlowWriterCommitGrain(mxlFlowWriter writer, mxlGrainInfo const* grain);
+
+    /**
+     * Get the storage layout of the grain payloads of a discrete flow.
+     *
+     * \param[in] writer A valid discrete flow writer.
+     * \param[out] layout A valid pointer to a structure that receives the layout.
+     * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if layout is NULL, MXL_ERR_INVALID_FLOW_WRITER if
+     *      writer is not a valid discrete flow writer, or another error code if the storage cannot describe its layout.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowWriterGetStorageLayout(mxlFlowWriter writer, mxlGrainStorageLayout* layout);
+
+    /**
+     * Describe the storage of every slot of a discrete flow in the calling process.
+     *
+     * The writer that created the flow allocated its storage at creation time, so for that writer this call only
+     * fills the array. It exists so that readers and writers can set up their per slot resources the same way,
+     * and look slots up by the value that mxlFlowWriterOpenGrainSlot() returns.
+     *
+     * \param[in] writer A valid discrete flow writer.
+     * \param[in] slotCount The number of entries in slots. Must be equal to mxlGrainStorageLayout.slotCount.
+     * \param[out] slots A valid pointer to an array of slotCount structures. Entry i receives the description of
+     *      slot i. Handles in the descriptions are owned by the library and stay valid until the writer is
+     *      released.
+     * \return MXL_STATUS_OK on success, MXL_ERR_INVALID_ARG if slots is NULL or slotCount does not match the
+     *      layout, MXL_ERR_INVALID_FLOW_WRITER if writer is not a valid discrete flow writer, or another error
+     *      code if the storage cannot be mapped in this process.
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowWriterMapSlots(mxlFlowWriter writer, uint32_t slotCount, mxlGrainStorage* slots);
+
+    /**
+     * Open a grain for mutation and return the slot that holds it.
+     *
+     * This function works for every storage type. It behaves like mxlFlowWriterOpenGrain(), except that it
+     * returns a slot in place of a payload pointer. The application finds the storage of the slot in the array
+     * filled by mxlFlowWriterMapSlots(). The grain is then committed with mxlFlowWriterCommitGrain() or
+     * cancelled with mxlFlowWriterCancelGrain().
+     *
+     * \param[in] writer A valid discrete flow writer.
+     * \param[in] index The index of the grain to open.
+     * \param[out] grain A valid pointer to a structure that receives a copy of the grain info.
+     * \param[out] slot A valid pointer that receives the slot holding the grain. Written only on success.
+     * \return The result code. \see mxlStatus
+     */
+    MXL_EXPORT
+    mxlStatus mxlFlowWriterOpenGrainSlot(mxlFlowWriter writer, uint64_t index, mxlGrainInfo* grain, uint32_t* slot);
 
     /**
      * Return the absolute maximum number of samples a read operation may retrieve from a flow.

@@ -62,8 +62,15 @@ namespace mxl::lib
         /** \see DiscreteFlowWriter::openGrain */
         virtual mxlStatus openGrain(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::uint8_t** out_payload) override;
 
-        /** \see DiscreteFlowWriter::openGrain */
-        virtual mxlStatus openGrain(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, mxlPayloadView* out_payload) override;
+        /** \see DiscreteFlowWriter::openGrainSlot */
+        virtual mxlStatus openGrainSlot(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::uint32_t* out_slot) override;
+
+        /** \see DiscreteFlowWriter::getStorageLayout */
+        [[nodiscard]]
+        virtual mxlGrainStorageLayout getStorageLayout() const override;
+
+        /** \see DiscreteFlowWriter::mapSlots */
+        virtual mxlStatus mapSlots(std::uint32_t in_slotCount, mxlGrainStorage* out_slots) const override;
 
         /** \see DiscreteFlowWriter::commit */
         virtual mxlStatus commit(mxlGrainInfo const& mxlGrainInfo) override;
@@ -76,10 +83,24 @@ namespace mxl::lib
         virtual bool makeExclusive() override;
 
     private:
+        /**
+         * Implementation of openGrain() and openGrainSlot(). The caller must have checked that _flowData is
+         * a valid pointer.
+         *
+         * \param[in] in_index The grain index.
+         * \param[out] out_grainInfo A valid pointer that receives a copy of the grain info.
+         * \param[out] out_slot Receives the slot that holds the grain. Written only on success.
+         * \return A status code describing the outcome of the call.
+         */
+        mxlStatus openGrainImpl(std::uint64_t in_index, mxlGrainInfo* out_grainInfo, std::size_t* out_slot);
+
+    private:
         /** The FlowData for the currently opened flow. null if no flow is opened. */
         std::unique_ptr<DiscreteFlowData> _flowData;
         /** The currently opened grain index. MXL_UNDEFINED_INDEX if no grain is currently opened. */
         std::uint64_t _currentIndex;
+        /** The last committed grain index. MXL_UNDEFINED_INDEX if no grain has been committed yet. */
+        std::uint64_t _lastCommittedIndex;
 
         // The watcher reference needs live in the most derived class of `FlowWriter` because it only synchronizes with the `DomainWatcher` thread
         // while the destructor runs. If it was inside the `FlowWriter` destructor itself, the domain watcher thread could call `flowRead()` of a

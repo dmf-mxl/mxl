@@ -1,0 +1,28 @@
+{
+  "description": "An interlaced flow of the made-up two-plane media type the test-memfd backend defines",
+  "id": "d2b3f4a5-6c7d-4e8f-9a01-b2c3d4e5f6a7",
+  "tags": {
+    "urn:x-nmos:tag:grouphint/v1.0": [
+      "TestMemfd:Video"
+    ]
+  },
+  "format": "urn:x-nmos:format:video",
+  "label": "Interlaced two-plane test flow",
+  "parents": [],
+  "media_type": "video/x-test-two-plane",
+  "grain_rate": {
+    "numerator": 30000,
+    "denominator": 1001
+  },
+  "frame_width": 1920,
+  "frame_height": 1080,
+  "interlace_mode": "interlaced_tff",
+  "colorspace": "BT709",
+  "components": [
+    {"name": "R", "width": 1920, "height": 1080, "bit_depth": 8},
+    {"name": "G", "width": 1920, "height": 1080, "bit_depth": 8},
+    {"name": "B", "width": 1920, "height": 1080, "bit_depth": 8},
+    {"name": "A", "width": 1920, "height": 1080, "bit_depth": 8},
+    {"name": "K", "width": 1920, "height": 1080, "bit_depth": 8}
+  ]
+}

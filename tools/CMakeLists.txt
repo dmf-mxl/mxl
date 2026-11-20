@@ -14,8 +14,10 @@ else()
     set(MXL_TOOLS_INSTALL_RPATH "$ORIGIN/${MXL_TOOLS_INSTALL_RPATH}")
 endif()
 
+add_subdirectory(common)
 add_subdirectory(mxl-info)
 add_subdirectory(mxl-data-probe)
+add_subdirectory(mxl-video-probe)
 add_subdirectory(mxl-gst)
 
 if (MXL_ENABLE_FABRICS_OFI)

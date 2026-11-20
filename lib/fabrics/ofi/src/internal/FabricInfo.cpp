@@ -160,6 +160,11 @@ namespace mxl::lib::fabrics::ofi
         return _raw->tx_attr->iov_limit;
     }
 
+    std::size_t FabricInfoView::txSize() const noexcept
+    {
+        return _raw->tx_attr->size;
+    }
+
     ::fi_ep_type FabricInfoView::endpointType() const noexcept
     {
         return _raw->ep_attr->type;

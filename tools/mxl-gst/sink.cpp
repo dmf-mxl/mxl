@@ -5,9 +5,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <memory>
+#include <mutex>
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <utility>
 #include <uuid.h>
 #include <CLI/CLI.hpp>
 #include <fmt/core.h>
@@ -25,10 +28,6 @@
 #include "mxl/rational.h"
 #include "utils.hpp"
 
-#if defined(MXL_HAS_CUDA) && MXL_HAS_CUDA
-#   include <cuda_runtime_api.h>
-#endif
-
 #ifdef __APPLE__
 #   include <TargetConditionals.h>
 #endif
@@ -40,57 +39,6 @@ namespace
     void signal_handler(int) noexcept
     {
         g_exit_requested = 1;
-    }
-
-    /**
-     * Copy a grain payload view into a host destination buffer.
-     * Host payloads are memcpy'd; CUDA device payloads are downloaded with cudaMemcpy.
-     */
-    [[nodiscard]]
-    mxlStatus copyPayloadViewToHost(mxlPayloadView const& view, void* destination, std::size_t destinationSize)
-    {
-        if ((destination == nullptr) || (destinationSize < view.grainSize))
-        {
-            return MXL_ERR_INVALID_ARG;
-        }
-
-        if (view.kind == MXL_PAYLOAD_KIND_HOST_PTR)
-        {
-            if (view.u.hostPtr == nullptr)
-            {
-                return MXL_ERR_UNKNOWN;
-            }
-            std::memcpy(destination, view.u.hostPtr, view.grainSize);
-            return MXL_STATUS_OK;
-        }
-
-        if (view.kind == MXL_PAYLOAD_KIND_DEVICE_PTR)
-        {
-#if defined(MXL_HAS_CUDA) && MXL_HAS_CUDA
-            if (view.u.devicePtr == 0)
-            {
-                return MXL_ERR_UNKNOWN;
-            }
-            if (auto const err = ::cudaSetDevice(view.deviceIndex); err != cudaSuccess)
-            {
-                MXL_ERROR("cudaSetDevice({}) failed: {}", view.deviceIndex, cudaGetErrorString(err));
-                return MXL_ERR_UNKNOWN;
-            }
-            auto const* const devicePtr = reinterpret_cast<void const*>(static_cast<std::uintptr_t>(view.u.devicePtr));
-            if (auto const err = ::cudaMemcpy(destination, devicePtr, view.grainSize, cudaMemcpyDeviceToHost); err != cudaSuccess)
-            {
-                MXL_ERROR("cudaMemcpy D2H failed: {}", cudaGetErrorString(err));
-                return MXL_ERR_UNKNOWN;
-            }
-            return MXL_STATUS_OK;
-#else
-            MXL_ERROR("Device payload requested but mxl-gst-sink was built without CUDA support");
-            return MXL_ERR_UNSUPPORTED_OPERATION;
-#endif
-        }
-
-        MXL_ERROR("Unsupported grain payload kind {}", view.kind);
-        return MXL_ERR_UNSUPPORTED_OPERATION;
     }
 
     struct VideoPipelineConfig
@@ -205,7 +153,7 @@ namespace
             }
         }
 
-        void launchPipeline(std::string const& pipelineDescription)
+        void launchPipeline(std::string const& pipelineDescription, std::string const& appSourceName = "appsource")
         {
             GError* error = nullptr;
             _pipeline = ::gst_parse_launch(pipelineDescription.c_str(), &error);
@@ -220,7 +168,7 @@ namespace
                 throw std::runtime_error{"Gstreamer pipeline could not be created."};
             }
 
-            _appSource = ::gst_bin_get_by_name(GST_BIN(_pipeline), "appsource");
+            _appSource = ::gst_bin_get_by_name(GST_BIN(_pipeline), appSourceName.c_str());
             if (_appSource == nullptr)
             {
                 throw std::runtime_error{"Well-known application source element could not be found in the gstreamer pipeline."};
@@ -246,6 +194,20 @@ namespace
             }
         }
 
+    public:
+        [[nodiscard]]
+        constexpr GstElement* getPipeline() noexcept
+        {
+            return _pipeline;
+        }
+
+        [[nodiscard]]
+        constexpr GstElement const* getPipeline() const noexcept
+        {
+            return _pipeline;
+        }
+
+    protected:
         [[nodiscard]]
         constexpr GstElement* getAppSource() noexcept
         {
@@ -258,7 +220,6 @@ namespace
             return _appSource;
         }
 
-    private:
         GstElement* _pipeline;
         GstElement* _appSource;
         std::uint64_t _mxlBaseTime;
@@ -291,7 +252,7 @@ namespace
                 _config.frameRate.denominator,
                 _config.offset);
 
-            MXL_INFO("Generating following GStreamer video pipeline -> {}", pipelineDesc);
+            MXL_INFO("Generating following Video gsteamer pipeline -> {}", pipelineDesc);
             launchPipeline(pipelineDesc);
         }
 
@@ -325,7 +286,7 @@ namespace
                 generateMixMatrix(),
                 _config.offset);
 
-            MXL_INFO("Generating following GStreamer audio pipeline -> {}", pipelineDesc);
+            MXL_INFO("Generating following Audio gsteamer pipeline -> {}", pipelineDesc);
             launchPipeline(pipelineDesc);
 
             {
@@ -344,6 +305,7 @@ namespace
 
                 auto const caps = ::gst_audio_info_to_caps(_audioInfo);
                 ::g_object_set(G_OBJECT(getAppSource()), "caps", caps, nullptr);
+                ::gst_caps_unref(caps);
             }
         }
 
@@ -403,10 +365,13 @@ namespace
         GstAudioInfo* _audioInfo;
     };
 
+    // Forward declaration for MxlReader::run() overload
+    class MultiviewerPipeline;
+
     class MxlReader
     {
     public:
-        MxlReader(std::string const& domain, std::string flowId, std::string const& readerOptions = {})
+        MxlReader(std::string const& domain, std::string flowId)
             // Delegate to the default ctor. See comment below on why we do that
             : MxlReader{}
         {
@@ -416,9 +381,7 @@ namespace
                 throw std::runtime_error{"Failed to create MXL instance"};
             }
 
-            _readerOptions = readerOptions;
-            auto const* const options = _readerOptions.empty() ? "" : _readerOptions.c_str();
-            if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), options, &_reader); ret != MXL_STATUS_OK)
+            if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), "", &_reader); ret != MXL_STATUS_OK)
             {
                 throw std::runtime_error{fmt::format("Failed to create flow reader with status code {}", static_cast<int>(ret))};
             }
@@ -427,28 +390,52 @@ namespace
             {
                 throw std::runtime_error{fmt::format("Failed to get flow config info with status code {}", static_cast<int>(ret))};
             }
-
-            if (_configInfo.common.payloadLocation == MXL_PAYLOAD_LOCATION_DEVICE_MEMORY)
-            {
-                MXL_INFO("Grain payload location: device (flow deviceIndex={}, reader options={})",
-                    _configInfo.common.deviceIndex,
-                    _readerOptions.empty() ? "<writer GPU>" : _readerOptions);
-            }
-            else
-            {
-                MXL_INFO("Grain payload location: host");
-            }
         }
 
         ~MxlReader()
         {
-            if (_reader != nullptr)
+            close();
+        }
+
+        // A reader can't be duplicated or copy-assigned since that would mess with the internal state of the flow reader.
+        MxlReader(MxlReader const&) = delete;
+        void operator=(MxlReader const&) = delete;
+
+        MxlReader(MxlReader&& other) noexcept
+            : MxlReader{}
+        {
+            // *this is fully initialized through the delegating constructor,
+            // then takes ownership from other via swap.
+            swap(other);
+        }
+
+        MxlReader& operator=(MxlReader other) noexcept
+        {
+            swap(other);
+
+            return *this;
+        }
+
+        void swap(MxlReader& other) noexcept
+        {
+            using std::swap;
+            swap(_instance, other._instance);
+            swap(_reader, other._reader);
+            swap(_configInfo, other._configInfo);
+            swap(_highestLatencyNs, other._highestLatencyNs);
+        }
+
+        void close()
+        {
+            if (_reader)
             {
                 ::mxlReleaseFlowReader(_instance, _reader);
+                _reader = nullptr;
             }
-            if (_instance != nullptr)
+            if (_instance)
             {
                 ::mxlDestroyInstance(_instance);
+                _instance = nullptr;
             }
         }
 
@@ -483,8 +470,8 @@ namespace
             while (!g_exit_requested)
             {
                 auto ret = mxlStatus{};
-                mxlGrainInfo grainInfo{};
-                mxlPayloadView payloadView{};
+                mxlGrainInfo grainInfo;
+                uint8_t* payload;
 
                 auto const iterationStartTime = ::mxlGetTime();
                 auto const iterationTimeoutNs =
@@ -494,14 +481,13 @@ namespace
                     // Slice mode is not really useful here since gstreamer needs the full grain to push to the pipeline. But for educational
                     // purposes, here's how you can wait for slices to be available.
                     // Please note that -- contrary to how this sample does it -- you don't have to use the slice based reading just because
-                    // the producer indicates a sub-grain sync batch size and are free to use mxlFlowReaderGetGrainEx() in any case.
-                    ret = ::mxlFlowReaderGetGrainSliceEx(
-                        _reader, cursor.requestedIndex(), expectedSlices, iterationTimeoutNs, &grainInfo, &payloadView);
+                    // the producer indicates a sub-grain sync batch size and are free to use mxlFlowReaderGetGrain() in any case.
+                    ret = ::mxlFlowReaderGetGrainSlice(_reader, cursor.requestedIndex(), expectedSlices, iterationTimeoutNs, &grainInfo, &payload);
                 }
                 else
                 {
                     // Use this function to wait for a full grain
-                    ret = ::mxlFlowReaderGetGrainEx(_reader, cursor.requestedIndex(), iterationTimeoutNs, &grainInfo, &payloadView);
+                    ret = ::mxlFlowReaderGetGrain(_reader, cursor.requestedIndex(), iterationTimeoutNs, &grainInfo, &payload);
                 }
 
                 if (ret == MXL_STATUS_OK)
@@ -521,13 +507,7 @@ namespace
                             auto map = GstMapInfo{};
 
                             ::gst_buffer_map(buffer, &map, GST_MAP_WRITE);
-                            if (copyPayloadViewToHost(payloadView, map.data, map.size) != MXL_STATUS_OK)
-                            {
-                                ::gst_buffer_unmap(buffer, &map);
-                                ::gst_buffer_unref(buffer);
-                                MXL_ERROR("Failed to copy grain payload at index {}. Exiting...", cursor.requestedIndex());
-                                return;
-                            }
+                            std::memcpy(map.data, payload, grainInfo.grainSize);
                             ::gst_buffer_unmap(buffer, &map);
 
                             gstPipeline.pushBuffer(buffer, ::mxlIndexToTimestamp(&rate, cursor.requestedIndex()));
@@ -578,7 +558,7 @@ namespace
                     {
                         // Create a new reader
                         auto const flowId = uuids::to_string(_configInfo.common.id);
-                        if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), _readerOptions.c_str(), &_reader); ret != MXL_STATUS_OK)
+                        if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), "", &_reader); ret != MXL_STATUS_OK)
                         {
                             MXL_TRACE("Failed to reopen video flow reader with status code {}.", static_cast<int>(ret));
                             // Arbitrary wait time before retrying to prevent busy looping
@@ -726,7 +706,7 @@ namespace
                     {
                         // Create a new reader
                         auto const flowId = uuids::to_string(_configInfo.common.id);
-                        if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), _readerOptions.c_str(), &_reader); ret != MXL_STATUS_OK)
+                        if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), "", &_reader); ret != MXL_STATUS_OK)
                         {
                             MXL_TRACE("Failed to reopen sound flow reader with status code {}.", static_cast<int>(ret));
                             // Arbitrary wait time before retrying.
@@ -763,6 +743,9 @@ namespace
             }
         }
 
+        // Declaration only - implementation after MultiviewerPipeline class definition
+        void run(MultiviewerPipeline& gstPipeline, std::size_t sourceIndex, std::int64_t readDelay);
+
     private:
         /**
          * This default constructor is private, because the only reason why it
@@ -773,12 +756,11 @@ namespace
          * which is what we need in order to clean up partially established
          * state.
          */
-        MxlReader() noexcept
+        constexpr MxlReader() noexcept
             : _instance{}
             , _reader{}
             , _configInfo{}
             , _highestLatencyNs{}
-            , _readerOptions{}
         {}
 
         struct Cursor
@@ -882,7 +864,7 @@ namespace
 
             // Create a new reader
             auto const flowId = uuids::to_string(_configInfo.common.id);
-            if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), _readerOptions.c_str(), &_reader); ret != MXL_STATUS_OK)
+            if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), "", &_reader); ret != MXL_STATUS_OK)
             {
                 MXL_TRACE("Failed to reopen sound flow reader with status code {}.", static_cast<int>(ret));
                 result = false;
@@ -913,8 +895,426 @@ namespace
         mxlFlowReader _reader;
         mxlFlowConfigInfo _configInfo;
         std::uint64_t _highestLatencyNs;
-        std::string _readerOptions;
     };
+
+    [[maybe_unused]]
+    void swap(MxlReader& lhs, MxlReader& rhs) noexcept
+    {
+        lhs.swap(rhs);
+    }
+
+    class MultiviewerPipeline : public GstreamerPipeline
+    {
+    public:
+        MultiviewerPipeline(std::vector<VideoPipelineConfig> const& configs)
+            : GstreamerPipeline{}
+            , _configs{configs}
+        {
+            if (configs.empty() || configs.size() > 4)
+            {
+                throw std::invalid_argument{"Multiviewer supports 1 to 4 video flows"};
+            }
+
+            MXL_INFO("Creating multiviewer pipeline with {} video flow(s)", configs.size());
+
+            // Build the compositor layout pipeline
+            auto const pipelineDesc = buildMultiviewerPipeline();
+            MXL_INFO("Generating multiviewer gstreamer pipeline -> {}", pipelineDesc);
+            launchPipeline(pipelineDesc, "appsource0");
+
+            // Configure all appsrc elements to use time format
+            for (auto i = std::size_t{0}; i < _configs.size(); ++i)
+            {
+                auto const sourceName = fmt::format("appsource{}", i);
+                auto* const appSrc = ::gst_bin_get_by_name(GST_BIN(getPipeline()), sourceName.c_str());
+                if (appSrc)
+                {
+                    ::g_object_set(G_OBJECT(appSrc), "format", GST_FORMAT_TIME, nullptr);
+                    ::gst_object_unref(appSrc);
+                    MXL_INFO("Configured {} with GST_FORMAT_TIME", sourceName);
+                }
+                else
+                {
+                    MXL_WARN("Could not find {} in pipeline", sourceName);
+                }
+            }
+
+            // Get compositor element and configure sink pad positions
+            auto const compositor = ::gst_bin_get_by_name(GST_BIN(getPipeline()), "c");
+            if (compositor)
+            {
+                MXL_INFO("Retrieved compositor element: {}", GST_ELEMENT_NAME(compositor));
+                MXL_INFO("Compositor type: {}", G_OBJECT_TYPE_NAME(compositor));
+
+                // Get compositor properties
+                gint background;
+                ::g_object_get(compositor, "background", &background, nullptr);
+                MXL_INFO("Compositor background mode: {}", background);
+
+                // Get number of sink pads
+                GValue val = G_VALUE_INIT;
+                ::g_value_init(&val, G_TYPE_UINT);
+                ::g_object_get_property(G_OBJECT(compositor), "n-pads", &val);
+                auto const numPads = ::g_value_get_uint(&val);
+                ::g_value_unset(&val);
+                MXL_INFO("Compositor has {} sink pads", numPads);
+
+                configureCompositorLayout(compositor);
+                ::gst_object_unref(compositor);
+            }
+            else
+            {
+                MXL_WARN("Could not retrieve compositor element from pipeline");
+            }
+        }
+
+        [[nodiscard]]
+        std::vector<VideoPipelineConfig> const& configs() const noexcept
+        {
+            return _configs;
+        }
+
+    private:
+        std::string buildMultiviewerPipeline()
+        {
+            auto pipelineDesc = std::ostringstream{};
+
+            // Create appsrc for each video flow
+            for (auto i = std::size_t{0}; i < _configs.size(); ++i)
+            {
+                if (i > 0)
+                {
+                    pipelineDesc << " ";
+                }
+
+                auto const& config = _configs[i];
+                pipelineDesc << fmt::format("appsrc name=appsource{} is-live=true ! "
+                                            "video/x-raw,format=v210,width={},height={},framerate={}/{} ! "
+                                            "videoconvert ! videoscale ! c.sink_{}",
+                    i,
+                    config.frameWidth,
+                    config.frameHeight,
+                    config.frameRate.numerator,
+                    config.frameRate.denominator,
+                    i);
+            }
+
+            // Determine output resolution based on number of inputs
+            auto [outputWidth, outputHeight] = getOutputResolution(_configs.size());
+            MXL_INFO("Compositor output resolution: {}x{}", outputWidth, outputHeight);
+
+            pipelineDesc << fmt::format(" compositor name=c background=black ! "
+                                        "video/x-raw,width={},height={} ! "
+                                        "videoconvert ! videoscale ! autovideosink ts-offset={}",
+                outputWidth,
+                outputHeight,
+                _configs[0].offset);
+
+            return pipelineDesc.str();
+        }
+
+        constexpr std::pair<std::uint64_t, std::uint64_t> getOutputResolution(std::size_t flowCount) const noexcept
+        {
+            switch (flowCount)
+            {
+                case 1:  return {1280, 960}; // Single video at full resolution
+                case 2:  return {1280, 480}; // Side-by-side
+                case 3:  return {1280, 720}; // 2 top, 1 bottom
+                case 4:  return {1280, 960}; // 2x2 grid
+                default: return {1280, 960};
+            }
+        }
+
+        void configureCompositorLayout(GstElement* compositor)
+        {
+            auto const numFlows = _configs.size();
+
+            MXL_INFO("Configuring compositor layout for {} video flows", numFlows);
+
+            // Iterate through all pads to see what's available
+            auto* padIter = ::gst_element_iterate_sink_pads(compositor);
+            GValue item = G_VALUE_INIT;
+            auto padCount = 0;
+            while (::gst_iterator_next(padIter, &item) == GST_ITERATOR_OK)
+            {
+                auto* const pad = static_cast<GstPad*>(::g_value_get_object(&item));
+                MXL_INFO("Found compositor pad: {}", GST_PAD_NAME(pad));
+                ::g_value_reset(&item);
+                padCount++;
+            }
+            ::g_value_unset(&item);
+            ::gst_iterator_free(padIter);
+            MXL_INFO("Total sink pads found: {}", padCount);
+
+            for (auto i = std::size_t{0}; i < numFlows; ++i)
+            {
+                // Try multiple naming schemes
+                auto sinkPadName = fmt::format("sink_{}", i);
+                auto sinkPad = ::gst_element_get_static_pad(compositor, sinkPadName.c_str());
+
+                if (!sinkPad)
+                {
+                    // Try alternative naming
+                    sinkPadName = fmt::format("sink%d", i);
+                    sinkPad = ::gst_element_get_static_pad(compositor, sinkPadName.c_str());
+                }
+
+                if (sinkPad)
+                {
+                    auto [xpos, ypos, width, height] = getLayoutPosition(numFlows, i);
+
+                    MXL_INFO("Setting compositor sink pad {}: xpos={} ypos={} width={} height={}", GST_PAD_NAME(sinkPad), xpos, ypos, width, height);
+
+                    g_object_set(sinkPad,
+                        "xpos",
+                        static_cast<gint>(xpos),
+                        "ypos",
+                        static_cast<gint>(ypos),
+                        "width",
+                        static_cast<gint>(width),
+                        "height",
+                        static_cast<gint>(height),
+                        "alpha",
+                        1.0,
+                        NULL);
+
+                    // Verify the properties were set
+                    gint verifyX, verifyY, verifyW, verifyH;
+                    ::g_object_get(sinkPad, "xpos", &verifyX, "ypos", &verifyY, "width", &verifyW, "height", &verifyH, nullptr);
+                    MXL_INFO("Verified compositor sink pad {}: xpos={} ypos={} width={} height={}",
+                        GST_PAD_NAME(sinkPad),
+                        verifyX,
+                        verifyY,
+                        verifyW,
+                        verifyH);
+
+                    ::gst_object_unref(sinkPad);
+                }
+                else
+                {
+                    MXL_WARN("Could not find sink pad {} in compositor", sinkPadName);
+                }
+            }
+        }
+
+        constexpr std::tuple<std::uint64_t, std::uint64_t, std::uint64_t, std::uint64_t> getLayoutPosition(std::size_t flowCount,
+            std::size_t index) const noexcept
+        {
+            switch (flowCount)
+            {
+                case 1: return {0, 0, 1280, 960};
+
+                case 2:
+                    // Side-by-side: 640x480 each
+                    if (index == 0)
+                    {
+                        return {0, 0, 640, 480};
+                    }
+                    else
+                    {
+                        return {640, 0, 640, 480};
+                    }
+
+                case 3:
+                    // 2 top, 1 bottom centered
+                    if (index == 0)
+                    {
+                        return {0, 0, 640, 360};
+                    }
+                    else if (index == 1)
+                    {
+                        return {640, 0, 640, 360};
+                    }
+                    else
+                    {
+                        return {320, 360, 640, 360};
+                    }
+
+                case 4:
+                    // 2x2 grid
+                    {
+                        auto row = index / 2;
+                        auto col = index % 2;
+                        return {col * 640, row * 480, 640, 480};
+                    }
+
+                default: return {0, 0, 1280, 960};
+            }
+        }
+
+    private:
+        std::vector<VideoPipelineConfig> _configs;
+    };
+
+    // MxlReader::run() implementation for MultiviewerPipeline - defined here after MultiviewerPipeline class is complete
+    void MxlReader::run(MultiviewerPipeline& gstPipeline, std::size_t sourceIndex, std::int64_t readDelay)
+    {
+        if (_configInfo.common.format != MXL_DATA_FORMAT_VIDEO)
+        {
+            throw std::domain_error{"Attempt to feed a gstreamer video pipeline from a non-video MXL flow."};
+        }
+
+        // Get the specific appsource for this reader by index
+        auto const sourceName = fmt::format("appsource{}", sourceIndex);
+        auto* appSource = ::gst_bin_get_by_name(GST_BIN(gstPipeline.getPipeline()), sourceName.c_str());
+
+        auto appSourceRef = std::unique_ptr<GstObject, void (*)(GstObject*)>{GST_OBJECT(appSource),
+            [](GstObject* obj)
+            {
+                if (obj != nullptr)
+                {
+                    ::gst_object_unref(obj);
+                }
+            }};
+
+        if (appSource == nullptr)
+        {
+            throw std::runtime_error{fmt::format("Could not find appsource {} in multiviewer pipeline", sourceIndex)};
+        }
+
+        // Only start the pipeline once (first reader)
+        static auto startFlag = std::once_flag{};
+        std::call_once(startFlag, [&]() { gstPipeline.start(); });
+
+        auto const rate = _configInfo.common.grainRate;
+        auto const slicesPerBatch = _configInfo.common.maxSyncBatchSizeHint;
+        auto const& config = gstPipeline.configs()[sourceIndex];
+        auto const sliceReadMode = (slicesPerBatch < config.frameHeight);
+
+        if (slicesPerBatch > config.frameHeight)
+        {
+            throw std::invalid_argument{"slicesPerBatch cannot be greater than frame height."};
+        }
+
+        MXL_INFO("Starting multiviewer flow {} reading at rate {}/{} and slices per batch {}",
+            sourceIndex,
+            rate.numerator,
+            rate.denominator,
+            slicesPerBatch);
+
+        auto cursor = Cursor{rate, 1U, readDelay};
+        auto const mxlBaseTime = ::mxlGetTime();
+
+        initializeHighestLatency(fmt::format("Video{}", sourceIndex).c_str(), rate, cursor.currentIndex(), cursor.requestedIndex());
+
+        auto expectedSlices = slicesPerBatch;
+        while (!g_exit_requested)
+        {
+            auto ret = mxlStatus{};
+            auto grainInfo = mxlGrainInfo{};
+            uint8_t* payload;
+
+            auto const iterationStartTime = ::mxlGetTime();
+            auto const iterationTimeoutNs =
+                (iterationStartTime < cursor.deliveryDeadline()) ? (cursor.deliveryDeadline() - iterationStartTime) : 0ULL;
+
+            if (sliceReadMode)
+            {
+                ret = ::mxlFlowReaderGetGrainSlice(_reader, cursor.requestedIndex(), expectedSlices, iterationTimeoutNs, &grainInfo, &payload);
+            }
+            else
+            {
+                ret = ::mxlFlowReaderGetGrain(_reader, cursor.requestedIndex(), iterationTimeoutNs, &grainInfo, &payload);
+            }
+
+            if (ret == MXL_STATUS_OK)
+            {
+                if (grainInfo.validSlices >= grainInfo.totalSlices)
+                {
+                    if ((grainInfo.flags & MXL_GRAIN_FLAG_INVALID) == 0)
+                    {
+                        updateHighestLatency(
+                            fmt::format("Video{}", sourceIndex).c_str(), ::mxlIndexToTimestamp(&rate, cursor.requestedIndex()), ::mxlGetTime());
+
+                        auto const buffer = ::gst_buffer_new_allocate(nullptr, grainInfo.grainSize, nullptr);
+                        auto map = GstMapInfo{};
+
+                        ::gst_buffer_map(buffer, &map, GST_MAP_WRITE);
+                        std::memcpy(map.data, payload, grainInfo.grainSize);
+                        ::gst_buffer_unmap(buffer, &map);
+
+                        // Push to the specific appsource for this reader
+                        GST_BUFFER_PTS(buffer) = ::mxlIndexToTimestamp(&rate, cursor.currentIndex() + 1U) - mxlBaseTime;
+                        int pushRet;
+                        ::g_signal_emit_by_name(appSource, "push-buffer", buffer, &pushRet);
+                        if (pushRet != GST_FLOW_OK)
+                        {
+                            MXL_ERROR("Could not push buffer to appsource{}", sourceIndex);
+                        }
+
+                        ::gst_buffer_unref(buffer);
+                    }
+
+                    cursor.next();
+                    expectedSlices = slicesPerBatch;
+                }
+                else if (sliceReadMode)
+                {
+                    expectedSlices = std::min<std::uint16_t>(grainInfo.totalSlices, grainInfo.validSlices + slicesPerBatch);
+                }
+            }
+            else if (ret == MXL_ERR_FLOW_INVALID)
+            {
+                if (handleInvalidFlow(cursor.requestedIndex()))
+                {
+                    cursor.realign(iterationStartTime);
+                }
+            }
+            else if (ret == MXL_ERR_OUT_OF_RANGE_TOO_EARLY)
+            {
+                auto runtimeInfo = ::mxlFlowRuntimeInfo{};
+                (void)::mxlFlowReaderGetRuntimeInfo(_reader, &runtimeInfo);
+                MXL_WARN("Flow {}: Failed to get grain at index {}: TOO EARLY. Last published {}",
+                    sourceIndex,
+                    cursor.requestedIndex(),
+                    runtimeInfo.headIndex);
+            }
+            else if (ret == MXL_ERR_OUT_OF_RANGE_TOO_LATE)
+            {
+                auto runtimeInfo = ::mxlFlowRuntimeInfo{};
+                (void)::mxlFlowReaderGetRuntimeInfo(_reader, &runtimeInfo);
+                MXL_TRACE("Flow {}: Failed to get grain at index {}: TOO LATE. Last published {}",
+                    sourceIndex,
+                    cursor.requestedIndex(),
+                    runtimeInfo.headIndex);
+                cursor.realign(iterationStartTime);
+            }
+            else
+            {
+                if (_reader == nullptr)
+                {
+                    auto const flowId = uuids::to_string(_configInfo.common.id);
+                    if (auto const ret = ::mxlCreateFlowReader(_instance, flowId.c_str(), "", &_reader); ret != MXL_STATUS_OK)
+                    {
+                        MXL_TRACE("Flow {}: Failed to reopen video flow reader with status code {}.", sourceIndex, static_cast<int>(ret));
+                        std::this_thread::sleep_for(std::chrono::milliseconds{500});
+                    }
+                    else
+                    {
+                        MXL_INFO("Flow {}: Reconnected to video flowId {}.", sourceIndex, flowId);
+                        if (auto const ret = mxlFlowReaderGetConfigInfo(_reader, &_configInfo); ret != MXL_STATUS_OK)
+                        {
+                            MXL_ERROR("Flow {}: Failed to get flow config info with status code {}. Exiting.", sourceIndex, static_cast<int>(ret));
+                            return;
+                        }
+                    }
+
+                    if (_reader != nullptr)
+                    {
+                        cursor.realign(iterationStartTime);
+                    }
+                }
+                else
+                {
+                    MXL_ERROR("Flow {}: Unexpected error when reading grain {} with status {}. Exiting...",
+                        sourceIndex,
+                        cursor.requestedIndex(),
+                        static_cast<int>(ret));
+                    return;
+                }
+            }
+        }
+    }
 
     std::string readFlowDescriptor(std::string const& domain, std::string const& flowID)
     {
@@ -931,10 +1331,13 @@ namespace
 
         if (mxlGetFlowDef(instance, flowID.c_str(), fourKBuffer, &requiredBufferSize) != MXL_STATUS_OK)
         {
+            ::mxlDestroyInstance(instance);
             throw std::runtime_error{"Failed to get flow definition for flow id " + flowID};
         }
 
-        return std::string{fourKBuffer, requiredBufferSize - 1};
+        auto const flowDescriptor = std::string{fourKBuffer, requiredBufferSize - 1};
+        ::mxlDestroyInstance(instance);
+        return flowDescriptor;
     }
 
     int real_main(int argc, char** argv, void*)
@@ -944,8 +1347,8 @@ namespace
 
         auto app = CLI::App{"mxl-gst-sink"};
 
-        auto videoFlowID = std::string{};
-        app.add_option("-v, --video-flow-id", videoFlowID, "The video flow ID");
+        auto videoFlowIDs = std::vector<std::string>{};
+        app.add_option("-v, --video-flow-id", videoFlowIDs, "The video flow ID(s) (supports multiple for multiviewer mode)");
 
         auto audioFlowID = std::string{};
         app.add_option("-a, --audio-flow-id", audioFlowID, "The audio flow ID");
@@ -954,12 +1357,6 @@ namespace
         auto domainOpt = app.add_option("-d,--domain", domain, "The MXL domain directory.");
         domainOpt->required(true);
         domainOpt->check(CLI::ExistingDirectory);
-
-        auto deviceIndex = int{-1};
-        app.add_option("--device-index",
-            deviceIndex,
-            "CUDA device this process should map grain payloads onto (same node as the writer). "
-            "Requires P2P/NVLink when it differs from the writer's deviceIndex. Omit to use the writer's GPU.");
 
         auto listenChannels = std::vector<std::size_t>{};
         auto listenChanOpt = app.add_option("-l, --listen-channels", listenChannels, "Audio channels to listen.");
@@ -992,12 +1389,6 @@ namespace
 
         CLI11_PARSE(app, argc, argv);
 
-        auto readerOptions = std::string{};
-        if (deviceIndex >= 0)
-        {
-            readerOptions = fmt::format("{{\"deviceIndex\":{}}}", deviceIndex);
-        }
-
         ::gst_init(nullptr, nullptr);
 
         if (ptsOffset.has_value())
@@ -1007,48 +1398,136 @@ namespace
 
         auto threads = std::vector<std::thread>{};
 
-        if (!videoFlowID.empty())
+        // Handle video flows - single or multiviewer mode
+        if (!videoFlowIDs.empty())
         {
-            threads.emplace_back(
-                [&]()
-                {
-                    try
+            if (videoFlowIDs.size() == 1)
+            {
+                // Single video mode - existing behavior
+                threads.emplace_back(
+                    [&]()
                     {
-                        auto reader = MxlReader{domain, videoFlowID, readerOptions};
-
-                        auto const flowDescriptor = readFlowDescriptor(domain, videoFlowID);
-                        auto const flowNmos = json_utils::parseBuffer(flowDescriptor);
-
-                        if (json_utils::getField<std::string>(flowNmos, "interlace_mode") != "progressive")
+                        try
                         {
-                            throw std::invalid_argument{"This application does not support interlaced flows."};
+                            auto reader = MxlReader{domain, videoFlowIDs[0]};
+
+                            auto const flowDescriptor = readFlowDescriptor(domain, videoFlowIDs[0]);
+                            auto const flowNmos = json_utils::parseBuffer(flowDescriptor);
+
+                            if (json_utils::getField<std::string>(flowNmos, "interlace_mode") != "progressive")
+                            {
+                                throw std::invalid_argument{"This application does not support interlaced flows."};
+                            }
+
+                            auto const grainRate = json_utils::getRational(flowNmos, "grain_rate");
+                            auto const frameWidth = static_cast<std::uint32_t>(json_utils::getField<double>(flowNmos, "frame_width"));
+                            auto const frameHeight = static_cast<std::uint32_t>(json_utils::getField<double>(flowNmos, "frame_height"));
+
+                            auto videoConfig = VideoPipelineConfig{
+                                .frameRate = grainRate,
+                                .frameWidth = static_cast<std::uint64_t>(frameWidth),
+                                .frameHeight = static_cast<std::uint64_t>(frameHeight),
+                                .offset = playbackDelay + ((audioVideoOffset < 0) ? -audioVideoOffset : 0LL),
+                            };
+
+                            auto pipeline = VideoPipeline{videoConfig};
+                            reader.run(pipeline, readDelay);
+
+                            MXL_INFO("Video pipeline finished");
                         }
-
-                        auto const grainRate = json_utils::getRational(flowNmos, "grain_rate");
-                        auto const frameWidth = static_cast<std::uint32_t>(json_utils::getField<double>(flowNmos, "frame_width"));
-                        auto const frameHeight = static_cast<std::uint32_t>(json_utils::getField<double>(flowNmos, "frame_height"));
-
-                        auto videoConfig = VideoPipelineConfig{
-                            .frameRate = grainRate,
-                            .frameWidth = static_cast<std::uint64_t>(frameWidth),
-                            .frameHeight = static_cast<std::uint64_t>(frameHeight),
-                            .offset = playbackDelay + ((audioVideoOffset < 0) ? -audioVideoOffset : 0LL),
-                        };
-
-                        auto pipeline = VideoPipeline{videoConfig};
-                        reader.run(pipeline, readDelay);
-
-                        MXL_INFO("Video pipeline finished");
-                    }
-                    catch (std::exception const& e)
+                        catch (std::exception const& e)
+                        {
+                            MXL_ERROR("Error while processing video pipeline: {}", e.what());
+                        }
+                        catch (...)
+                        {
+                            MXL_ERROR("Encountered unknown error while processing video pipeline.");
+                        }
+                    });
+            }
+            else
+            {
+                // Multiviewer mode - multiple videos
+                threads.emplace_back(
+                    [&]()
                     {
-                        MXL_ERROR("Error while processing video pipeline: {}", e.what());
-                    }
-                    catch (...)
-                    {
-                        MXL_ERROR("Encountered unknown error while processing video pipeline.");
-                    }
-                });
+                        try
+                        {
+                            auto configs = std::vector<VideoPipelineConfig>{};
+                            auto readers = std::vector<MxlReader>{};
+
+                            // Create readers and configs for all video flows
+                            for (auto i = std::size_t{0}; i < videoFlowIDs.size(); ++i)
+                            {
+                                auto const& flowID = videoFlowIDs[i];
+
+                                MXL_INFO("Creating reader {} for flow ID: {}", i, flowID);
+                                readers.emplace_back(domain, flowID);
+
+                                auto const flowDescriptor = readFlowDescriptor(domain, flowID);
+                                auto const flowNmos = json_utils::parseBuffer(flowDescriptor);
+
+                                auto const interlaceMode = json_utils::getField<std::string>(flowNmos, "interlace_mode");
+                                MXL_INFO("  Reader[{}] interlace_mode: {}", i, interlaceMode);
+
+                                if (interlaceMode != "progressive")
+                                {
+                                    throw std::invalid_argument{"This application does not support interlaced flows."};
+                                }
+
+                                auto const grainRate = json_utils::getRational(flowNmos, "grain_rate");
+                                auto const frameWidth = static_cast<std::uint32_t>(json_utils::getField<double>(flowNmos, "frame_width"));
+                                auto const frameHeight = static_cast<std::uint32_t>(json_utils::getField<double>(flowNmos, "frame_height"));
+
+                                MXL_INFO("  Reader[{}] resolution: {}x{} @ {}/{} fps",
+                                    i,
+                                    frameWidth,
+                                    frameHeight,
+                                    grainRate.numerator,
+                                    grainRate.denominator);
+
+                                configs.emplace_back(VideoPipelineConfig{
+                                    .frameRate = grainRate,
+                                    .frameWidth = static_cast<std::uint64_t>(frameWidth),
+                                    .frameHeight = static_cast<std::uint64_t>(frameHeight),
+                                    .offset = playbackDelay + ((audioVideoOffset < 0) ? -audioVideoOffset : 0LL),
+                                });
+                            }
+
+                            // Print all configs
+                            MXL_INFO("Creating MultiviewerPipeline with {} configs:", configs.size());
+                            for (auto i = std::size_t{0}; i < configs.size(); ++i)
+                            {
+                                MXL_INFO("  Config[{}]: {}", i, configs[i].display());
+                            }
+
+                            auto pipeline = MultiviewerPipeline{configs};
+                            // Run all readers in parallel for multiviewer
+                            auto readerThreads = std::vector<std::thread>{};
+                            MXL_INFO("Multiviewer pipeline started with {} video flows", videoFlowIDs.size());
+                            MXL_INFO("readers.size(): {}", readers.size());
+                            for (auto i = std::size_t{0}; i < readers.size(); ++i)
+                            {
+                                readerThreads.emplace_back([&readers, &pipeline, i, readDelay]() { readers[i].run(pipeline, i, readDelay); });
+                            }
+                            MXL_INFO("readerThreads.size(): {}", readerThreads.size());
+                            for (auto& t : readerThreads)
+                            {
+                                t.join();
+                            }
+
+                            MXL_INFO("Multiviewer pipeline finished");
+                        }
+                        catch (std::exception const& e)
+                        {
+                            MXL_ERROR("Error while processing multiviewer pipeline: {}", e.what());
+                        }
+                        catch (...)
+                        {
+                            MXL_ERROR("Encountered unknown error while processing multiviewer pipeline.");
+                        }
+                    });
+            }
         }
 
         if (!audioFlowID.empty())
@@ -1058,7 +1537,7 @@ namespace
                 {
                     try
                     {
-                        auto reader = MxlReader{domain, audioFlowID, readerOptions};
+                        auto reader = MxlReader{domain, audioFlowID};
                         auto const flowDescriptor = readFlowDescriptor(domain, audioFlowID);
                         auto flowNmos = json_utils::parseBuffer(flowDescriptor);
 
@@ -1096,7 +1575,6 @@ namespace
 
         return 0;
     }
-
 }
 
 int main(int argc, char* argv[])

@@ -36,6 +36,8 @@ namespace mxl::lib::fabrics::ofi
         std::uint64_t requiredCaps;
         /** Libfabric capabilities that cause an interface to be rejected if present. */
         std::uint64_t filteredCaps;
+        /** Libfabric fabric names that are accepted. Empty accepts any. */
+        std::vector<std::string> supportedFabricNames;
     };
 
     /**

@@ -15,8 +15,9 @@ use std::time::Duration;
 #[macro_use]
 mod common;
 
-use common::{FRAME_PERIOD_NS, add_ancillary_meta, build_producer, init, skip_reason};
+use common::{FRAME_PERIOD_NS, build_producer, init, skip_reason};
 use gst::prelude::*;
+use gstavsynctest::ancillary::add_ancillary_meta;
 use gstreamer as gst;
 use gstreamer_app as gst_app;
 

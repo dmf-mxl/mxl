@@ -11,16 +11,6 @@
 #include <mxl/flow.h>
 #include <mxl/mxl.h>
 #include <mxl/time.h>
-
-#ifndef __APPLE__
-#   include <Device.h>
-#   include <Packet.h>
-#   include <PcapFileDevice.h>
-#   include <ProtocolType.h>
-#   include <RawPacket.h>
-#   include <UdpLayer.h>
-#endif
-
 #include "Utils.hpp"
 
 /// The test simulates trying to read video data from the current head, while the writer is still

@@ -45,10 +45,11 @@ mod common;
 use std::collections::{BTreeMap, BTreeSet};
 
 use common::{
-    FRAME_PERIOD_NS, FRAMERATE_DEN, FRAMERATE_NUM, add_ancillary_meta, assert_bus_no_errors,
-    build_producer, collect_bus_errors, init, skip_reason, st2038_first_packet_data0,
+    FRAME_PERIOD_NS, FRAMERATE_DEN, FRAMERATE_NUM, assert_bus_no_errors, build_producer,
+    collect_bus_errors, init, skip_reason, st2038_first_packet_data0,
 };
 use gst::prelude::*;
+use gstavsynctest::ancillary::add_ancillary_meta;
 use gstreamer as gst;
 use gstreamer_app as gst_app;
 use gstreamer_video as gst_video;

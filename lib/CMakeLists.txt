@@ -40,14 +40,13 @@ install(DIRECTORY
 add_subdirectory(internal)
 
 add_library(mxl)
-target_compile_features(mxl
-        PRIVATE
-            cxx_std_20
-    )
+
 set_target_properties(mxl
         PROPERTIES
             POSITION_INDEPENDENT_CODE ${MXL_POSITION_INDEPENDENT_CODE}
             VISIBILITY_INLINES_HIDDEN ON
+            C_STANDARD                ${MXL_C_STANDARD}
+            CXX_STANDARD              ${MXL_CXX_STANDARD}
             C_VISIBILITY_PRESET       hidden
             CXX_VISIBILITY_PRESET     hidden
             C_EXTENSIONS              OFF
@@ -80,6 +79,10 @@ mxl_enable_target_ipo(mxl)
 # in lieu of a module from the local source tree
 add_library(${PROJECT_NAME}::mxl ALIAS mxl)
 
+
+if (MXL_ENABLE_CUDA_PAYLOAD)
+    add_subdirectory(payload-backends/cuda-linear)
+endif ()
 
 if (MXL_ENABLE_FABRICS_OFI)
     add_subdirectory(fabrics)

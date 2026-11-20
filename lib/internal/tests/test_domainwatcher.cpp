@@ -4,6 +4,7 @@
 #include <condition_variable>
 #include <cstdio>
 #include <cstdlib>
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <list>
@@ -191,9 +192,24 @@ struct MockWriter : mxl::lib::DiscreteFlowWriter
         return MXL_STATUS_OK;
     }
 
-    virtual mxlStatus openGrain(std::uint64_t, mxlGrainInfo*, mxlPayloadView*) override
+    /** Not used by the domain watcher tests. */
+    virtual mxlStatus openGrainSlot(std::uint64_t, mxlGrainInfo*, std::uint32_t*) override
     {
         return MXL_STATUS_OK;
+    }
+
+    /** Not used by the domain watcher tests. */
+    [[noreturn]]
+    virtual mxlGrainStorageLayout getStorageLayout() const override
+    {
+        // Implementation is not provided
+        std::terminate();
+    }
+
+    /** Not used by the domain watcher tests. */
+    virtual mxlStatus mapSlots(std::uint32_t, mxlGrainStorage*) const override
+    {
+        return MXL_ERR_UNSUPPORTED_OPERATION;
     }
 
     virtual mxlStatus commit(mxlGrainInfo const&) override

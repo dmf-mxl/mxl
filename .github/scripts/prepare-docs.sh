@@ -89,11 +89,14 @@ fi
 
 # ---------------------------------------------------------------------------
 # 4. Template zensical.toml so the header repo link (repo_url / repo_name)
-#    points at the fork or upstream that produced this build. The same
-#    __REPO_SLUG__ placeholder is used elsewhere (see step 3).
+#    points at the fork or upstream that produced this build. The checked-in
+#    values point at the upstream repository for local builds.
 # ---------------------------------------------------------------------------
 if [[ -f zensical.toml ]]; then
-    sed -i.bak -e "s#__REPO_SLUG__#${REPO_SLUG}#g" zensical.toml
+    sed -i.bak \
+        -e "s#^repo_name = \".*\"#repo_name = \"${REPO_SLUG}\"#" \
+        -e "s#^repo_url = \".*\"#repo_url = \"https://github.com/${REPO_SLUG}\"#" \
+        zensical.toml
     rm -f zensical.toml.bak
     echo "Templated zensical.toml for repo=${REPO_SLUG}"
 fi

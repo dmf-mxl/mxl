@@ -19,6 +19,7 @@ RUN dnf install -y \
     tar \
     clang \
     clang-tools-extra \
+    lld \
     ca-certificates \
     git \
     git-lfs \

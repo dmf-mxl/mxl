@@ -9,6 +9,7 @@
 #include <rdma/fabric.h>
 #include <rdma/fi_eq.h>
 #include "AddressVector.hpp"
+#include "EventQueue.hpp"
 #include "Exception.hpp"
 #include "FabricAddress.hpp"
 #include "FabricInfo.hpp"
@@ -62,11 +63,14 @@ namespace mxl::lib::fabrics::ofi
         auto av = AddressVector::open(domain);
         endpoint.bind(av);
 
+        endpoint.bind(EventQueue::open(fabric));
+
         // Connectionless endpoints must be explictely enabled when they are ready to be used.
         endpoint.enable();
 
         auto mxlRegions = MxlRegions::forWriter(config.writer);
-        auto protocol = selectIngressProtocol(mxlRegions.dataLayout(), mxlRegions.regions(), mxlRegions.maxSyncBatchSize(), mxlRegions.regionsPerGrain());
+        auto protocol = selectIngressProtocol(
+            mxlRegions.dataLayout(), mxlRegions.regions(), mxlRegions.maxSyncBatchSize(), mxlRegions.regionsPerGrain());
         auto targetInfo = std::make_unique<TargetInfo>(
             endpoint.id(), endpoint.localAddress(), *provider, protocol->registerMemory(domain), protocol->bounceBufferInfo());
 
@@ -85,60 +89,14 @@ namespace mxl::lib::fabrics::ofi
         , _protocol(std::move(proto))
     {}
 
-    std::optional<Target::GrainReadResult> RDMTarget::readGrain()
+    std::optional<Target::ReadResult> RDMTarget::read()
     {
-        if (!_protocol->canReadGrains())
-        {
-            throw Exception::unsupportedOperation("The current protocol does not support reading grains.");
-        }
-
-        if (auto res = readNext<QueueReadMode::NonBlocking>({}); res)
-        {
-            return std::get<Target::GrainReadResult>(*res);
-        }
-        return std::nullopt;
+        return readNext<QueueReadMode::NonBlocking>({});
     }
 
-    std::optional<Target::GrainReadResult> RDMTarget::readGrainBlocking(std::chrono::steady_clock::duration timeout)
+    std::optional<Target::ReadResult> RDMTarget::readBlocking(std::chrono::steady_clock::duration timeout)
     {
-        if (!_protocol->canReadGrains())
-        {
-            throw Exception::unsupportedOperation("The current protocol does not support reading grains.");
-        }
-
-        if (auto res = readNext<QueueReadMode::Blocking>(timeout); res)
-        {
-            return std::get<Target::GrainReadResult>(*res);
-        }
-        return std::nullopt;
-    }
-
-    std::optional<Target::SampleReadResult> RDMTarget::readSamples()
-    {
-        if (!_protocol->canReadSamples())
-        {
-            throw Exception::unsupportedOperation("The current protocol does not support reading samples.");
-        }
-
-        if (auto res = readNext<QueueReadMode::NonBlocking>({}); res)
-        {
-            return std::get<Target::SampleReadResult>(*res);
-        }
-        return std::nullopt;
-    }
-
-    std::optional<Target::SampleReadResult> RDMTarget::readSamplesBlocking(std::chrono::steady_clock::duration timeout)
-    {
-        if (!_protocol->canReadSamples())
-        {
-            throw Exception::unsupportedOperation("The current protocol does not support reading samples.");
-        }
-
-        if (auto res = readNext<QueueReadMode::Blocking>(timeout); res)
-        {
-            return std::get<Target::SampleReadResult>(*res);
-        }
-        return std::nullopt;
+        return readNext<QueueReadMode::Blocking>(timeout);
     }
 
     void RDMTarget::shutdown()
@@ -147,10 +105,23 @@ namespace mxl::lib::fabrics::ofi
     template<QueueReadMode queueReadMode>
     std::optional<Target::ReadResult> RDMTarget::readNext(std::chrono::steady_clock::duration timeout)
     {
-        auto completion = readCompletionQueue<queueReadMode>(*_ep.completionQueue(), timeout);
-        if (completion)
+        drainEventQueue(*_ep.eventQueue());
+        try
         {
-            return _protocol->read(_ep, *completion);
+            auto completion = readCompletionQueue<queueReadMode>(*_ep.completionQueue(), timeout);
+            if (completion)
+            {
+                return _protocol->read(_ep, *completion);
+            }
+        }
+        catch (FabricException const& ex)
+        {
+            if (ex.isInterrupted())
+            {
+                return std::make_optional<Target::Interrupted>();
+            }
+
+            throw;
         }
 
         return {};

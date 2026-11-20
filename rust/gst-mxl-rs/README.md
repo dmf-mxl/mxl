@@ -33,10 +33,19 @@ The following elements are included:
 
 ### mxlsink
 
-| Property  | Description                                                |
-| --------- | ---------------------------------------------------------- |
-| `flow-id` | UUID of the flow to create.                                |
-| `domain`  | Filesystem path to the MXL domain directory.               |
+| Property              | Description                                                         |
+| --------------------- | ------------------------------------------------------------------- |
+| `flow-id`             | UUID of the flow to create.                                         |
+| `domain`              | Filesystem path to the MXL domain directory.                        |
+| `alignment-threshold` | Audio timestamp alignment threshold in nanoseconds (default 40 ms). |
+| `discont-wait`        | Audio discontinuity wait in nanoseconds (default 0).                |
+
+An audio buffer whose timestamp is within `alignment-threshold` of the end of
+the previous buffer is written straight after it. A buffer flagged `DISCONT` or
+`RESYNC` is always written at its timestamp. Other timestamps beyond the
+threshold are followed once they have stayed beyond it for `discont-wait`. MXL
+time keeps running while the pipeline is paused or the source stops, so a
+non-zero `discont-wait` writes the samples that follow behind MXL now.
 
 The flow's media type is based on the upstream caps.
 `video/x-raw, format=v210` results in a `video/v210` video flow.

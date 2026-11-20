@@ -3,20 +3,19 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <stdexcept>
 #include <vector>
 #include <fmt/format.h>
-#include <mxl/mxl.h>
 #include "Flow.hpp"
 #include "FlowData.hpp"
-#include "GrainPayloadAllocator.hpp"
+#include "PayloadStorage.hpp"
 
 namespace mxl::lib
 {
     ///
-    /// Shared memory resources of a discrete flow: grain headers (always host-mapped) plus a
-    /// pluggable payload allocator that describes where grain payload bytes live.
+    /// Simple structure holding the shared memory resources of discrete flows.
     ///
     class DiscreteFlowData : public FlowData
     {
@@ -34,19 +33,46 @@ namespace mxl::lib
         mxlGrainInfo* grainInfoAt(std::size_t i) noexcept;
         mxlGrainInfo const* grainInfoAt(std::size_t i) const noexcept;
 
-        void setPayloadAllocator(std::unique_ptr<GrainPayloadAllocator> allocator) noexcept;
-        [[nodiscard]]
-        GrainPayloadAllocator const& payloadAllocator() const;
+        /**
+         * Set the storage that holds the grain payloads. The flow manager calls this once all grains are mapped.
+         * \param[in] storage The payload storage. Replaces any previously set storage.
+         */
+        void setPayloadStorage(std::unique_ptr<PayloadStorage>&& storage) noexcept;
 
         /**
-         * Resolve the payload view for ring slot \p i via the attached payload allocator.
+         * Accessor for the storage that holds the grain payloads.
+         * \return The payload storage.
+         * \throws std::logic_error if no storage was set. The flow manager sets one on every discrete flow it
+         *      creates or opens.
          */
         [[nodiscard]]
-        mxlStatus payloadViewAt(std::size_t i, mxlPayloadView* outView) const noexcept;
+        PayloadStorage const& payloadStorage() const;
+
+        /**
+         * Compute the storage layout of the grain payloads.
+         * \return The storage layout.
+         * \throws std::logic_error if no storage was set.
+         */
+        [[nodiscard]]
+        mxlGrainStorageLayout storageLayout() const;
+
+        /**
+         * Map the storage of every slot into this process and describe each slot.
+         * \param[in] slotCount The number of entries in out_slots. Must be equal to the slot count of the storage.
+         * \param[out] out_slots A valid pointer to slotCount structures. Entry i receives the description of slot i.
+         * \return MXL_STATUS_OK on success, or MXL_ERR_INVALID_ARG if out_slots is null or slotCount does not match.
+         * \throws std::logic_error if no storage was set.
+         * \throws std::exception if the storage cannot be mapped in this process.
+         */
+        mxlStatus mapSlots(std::uint32_t slotCount, mxlGrainStorage* out_slots) const;
 
     private:
         std::vector<SharedMemoryInstance<Grain>> _grains;
-        std::unique_ptr<GrainPayloadAllocator> _payloadAllocator;
+        /**
+         * The storage that holds the grain payloads. Declared after _grains so that it is destroyed first, since
+         * a storage may refer to the grain segments.
+         */
+        std::unique_ptr<PayloadStorage> _payloadStorage;
     };
 
     /**************************************************************************/
@@ -56,7 +82,7 @@ namespace mxl::lib
     inline DiscreteFlowData::DiscreteFlowData(SharedMemoryInstance<Flow>&& flowSegement) noexcept
         : FlowData{std::move(flowSegement)}
         , _grains{}
-        , _payloadAllocator{}
+        , _payloadStorage{}
     {
         _grains.reserve(flowInfo()->config.discrete.grainCount);
     }
@@ -64,7 +90,7 @@ namespace mxl::lib
     inline DiscreteFlowData::DiscreteFlowData(char const* flowFilePath, AccessMode mode, LockMode lockMode)
         : FlowData{flowFilePath, mode, lockMode}
         , _grains{}
-        , _payloadAllocator{}
+        , _payloadStorage{}
     {
         _grains.reserve(flowInfo()->config.discrete.grainCount);
     }
@@ -120,33 +146,41 @@ namespace mxl::lib
         return nullptr;
     }
 
-    inline void DiscreteFlowData::setPayloadAllocator(std::unique_ptr<GrainPayloadAllocator> allocator) noexcept
+    inline void DiscreteFlowData::setPayloadStorage(std::unique_ptr<PayloadStorage>&& storage) noexcept
     {
-        _payloadAllocator = std::move(allocator);
+        _payloadStorage = std::move(storage);
     }
 
-    inline GrainPayloadAllocator const& DiscreteFlowData::payloadAllocator() const
+    inline PayloadStorage const& DiscreteFlowData::payloadStorage() const
     {
-        if (!_payloadAllocator)
+        if (!_payloadStorage)
         {
-            throw std::runtime_error{"Discrete flow has no payload allocator."};
+            throw std::logic_error{"No payload storage set for this flow."};
         }
-        return *_payloadAllocator;
+        return *_payloadStorage;
     }
 
-    inline mxlStatus DiscreteFlowData::payloadViewAt(std::size_t i, mxlPayloadView* outView) const noexcept
+    inline mxlStatus DiscreteFlowData::mapSlots(std::uint32_t slotCount, mxlGrainStorage* out_slots) const
     {
-        if ((outView == nullptr) || !_payloadAllocator)
+        auto const& storage = payloadStorage();
+        if ((out_slots == nullptr) || (slotCount != storage.slotCount()))
         {
             return MXL_ERR_INVALID_ARG;
         }
 
-        auto const grain = grainAt(i);
-        if (grain == nullptr)
+        storage.mapSlots();
+        for (auto slot = std::uint32_t{0}; slot < slotCount; ++slot)
         {
-            return MXL_ERR_INVALID_ARG;
+            out_slots[slot] = storage.slotStorage(slot);
         }
+        return MXL_STATUS_OK;
+    }
 
-        return _payloadAllocator->viewAt(i, grain, outView);
+    inline mxlGrainStorageLayout DiscreteFlowData::storageLayout() const
+    {
+        // All grains of a flow have the same number of slices.
+        auto const firstGrain = grainInfoAt(0);
+        auto const totalSlices = (firstGrain != nullptr) ? firstGrain->totalSlices : std::uint16_t{0};
+        return makeGrainStorageLayout(flowInfo()->config.discrete, totalSlices, payloadStorage());
     }
 }

@@ -15,8 +15,8 @@
     ],
     "mounts": [
         // These 2 mount points are required for GUI applications to work in WSL2. Remove them if you are not using WSL2.
-        "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached",
-        "source=/mnt/wslg,target=/mnt/wslg,type=bind,consistency=cached"
+        //"source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached",
+        //"source=/mnt/wslg,target=/mnt/wslg,type=bind,consistency=cached"
     ],
     "customizations": {
         "vscode": {

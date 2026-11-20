@@ -3,10 +3,6 @@
 
 # Add the test executable
 add_executable(mxl-tests)
-target_compile_features(mxl-tests
-        PRIVATE
-            cxx_std_20
-    )
 set_target_properties(mxl-tests
         PROPERTIES
             POSITION_INDEPENDENT_CODE    ON
@@ -15,15 +11,20 @@ set_target_properties(mxl-tests
             CXX_VISIBILITY_PRESET        hidden
             C_EXTENSIONS                 OFF
             CXX_EXTENSIONS               OFF
+            C_STANDARD                   ${MXL_C_STANDARD}
+            CXX_STANDARD                 ${MXL_CXX_STANDARD}
     )
 
 target_sources(mxl-tests
         PRIVATE
+            test_flow_sync_groups.cpp
             test_flows.cpp
+            test_events.cpp
             test_flows_timing.cpp
+            test_grain_storage.cpp
             test_instance.cpp
-            test_payload_plugin.cpp
             test_time.cpp
+            test_read_write_conflict.cpp
     )
 
 target_link_libraries(mxl-tests
@@ -33,6 +34,9 @@ target_link_libraries(mxl-tests
             mxl-internal-objects
     )
 
+# The flow tests create flows whose payload is held by the test backends built in lib/internal/tests.
+add_dependencies(mxl-tests mxl-test-payload-test-file mxl-test-payload-test-memfd)
+
 if (NOT TARGET Catch2::Catch2WithMain)
     find_package(Catch2 REQUIRED)
 endif()
@@ -41,20 +45,8 @@ if (NOT TARGET stduuid)
     find_package(stduuid CONFIG REQUIRED)
 endif ()
 
-if (NOT TARGET spdlog::spdlog)
-    find_package(spdlog CONFIG REQUIRED)
-endif ()
-
-if (NOT TARGET fmt::fmt)
-    find_package(fmt CONFIG REQUIRED)
-endif()
-
 if (NOT TARGET picojson::picojson)
     find_package(picojson REQUIRED)
-endif()
-
-if (NOT TARGET PcapPlusPlus::Pcap++)
-    find_package(PcapPlusPlus CONFIG)
 endif()
 
 
@@ -62,30 +54,29 @@ target_link_libraries(mxl-tests
         PRIVATE
             mxl
             stduuid
-            spdlog::spdlog
-            fmt::fmt
             picojson::picojson
             Catch2::Catch2WithMain
     )
 
-if (MXL_BUILT_WITH_CUDA)
-    find_package(CUDAToolkit REQUIRED)
-    target_compile_definitions(mxl-tests
-            PRIVATE
-                MXL_HAS_CUDA=1
-        )
-    target_link_libraries(mxl-tests
-            PRIVATE
-                CUDA::cudart
-        )
-endif()
-
-if (TARGET PcapPlusPlus::Pcap++)
-    target_link_libraries(mxl-tests
-            PRIVATE
-                PcapPlusPlus::Pcap++
-        )
-endif()
+# Helper process for event IPC tests.
+add_executable(mxl-event-ipc-worker)
+target_sources(mxl-event-ipc-worker
+        PRIVATE
+            event_ipc_worker.cpp
+    )
+target_compile_features(mxl-event-ipc-worker
+        PRIVATE
+            cxx_std_20
+    )
+target_link_libraries(mxl-event-ipc-worker
+        PRIVATE
+            mxl
+    )
+add_dependencies(mxl-tests mxl-event-ipc-worker)
+target_compile_definitions(mxl-tests
+        PRIVATE
+            MXL_EVENT_IPC_WORKER="$<TARGET_FILE:mxl-event-ipc-worker>"
+    )
 
 # Enable testing using CTest
 include(CTest)
@@ -100,8 +91,10 @@ add_test(
   NAME "pkg-config C consumer can link and run"
   COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_pkgconfig_c_link.sh
           ${CMAKE_BINARY_DIR}
-          ${VCPKG_INSTALLED_DIR}
-          ${VCPKG_TARGET_TRIPLET}
+          # Quoted so that empty values, as in builds without vcpkg, are still
+          # passed as arguments.
+          "${VCPKG_INSTALLED_DIR}"
+          "${VCPKG_TARGET_TRIPLET}"
           ${BUILD_SHARED_LIBS}
 	  ${MXL_ENABLE_FABRICS_OFI}
           MXL_LINKER_FLAG=${MXL_LINKER_FLAG}
@@ -142,24 +135,3 @@ target_compile_options(mxl-all-headers PRIVATE
 if (MXL_ENABLE_FABRICS_OFI)
     add_subdirectory(fabrics)
 endif ()
-
-add_library(mxl-test-payload-plugin MODULE payload_plugin/test_payload_plugin.c)
-target_link_libraries(mxl-test-payload-plugin
-        PRIVATE
-            mxl-headers
-    )
-set_target_properties(mxl-test-payload-plugin
-        PROPERTIES
-            PREFIX ""
-            OUTPUT_NAME "mxl-test-payload-plugin"
-            C_STANDARD 17
-            C_STANDARD_REQUIRED ON
-            C_EXTENSIONS OFF
-            POSITION_INDEPENDENT_CODE ON
-            C_VISIBILITY_PRESET default
-    )
-target_compile_definitions(mxl-tests
-        PRIVATE
-"MXL_TEST_PAYLOAD_PLUGIN_PATH=\"$<TARGET_FILE:mxl-test-payload-plugin>\""
-    )
-add_dependencies(mxl-tests mxl-test-payload-plugin)

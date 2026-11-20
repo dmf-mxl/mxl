@@ -6,10 +6,14 @@ include(GNUInstallDirs)
 # Interface library for all targets that need to consume
 # internal symbols from the mxl-internal/*.h header files
 add_library(mxl-internal-headers INTERFACE)
-target_compile_features(mxl-internal-headers
-        INTERFACE
-            cxx_std_20
+set_target_properties(mxl-internal-headers
+        PROPERTIES 
+            C_EXTENSIONS              OFF
+            CXX_EXTENSIONS            OFF
+            C_STANDARD                ${MXL_C_STANDARD}
+            CXX_STANDARD              ${MXL_CXX_STANDARD}
     )
+
 target_include_directories(mxl-internal-headers
         INTERFACE
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -43,11 +47,9 @@ else()
         )
 endif()
 
+# Internal implementation objects. These are consumed by libmxl and by internal
+# tests, but are not installed or exported as a user-visible library.
 add_library(mxl-internal-objects OBJECT)
-target_compile_features(mxl-internal-objects
-        PUBLIC
-            cxx_std_20
-    )
 set_target_properties(mxl-internal-objects
         PROPERTIES 
             POSITION_INDEPENDENT_CODE ${MXL_POSITION_INDEPENDENT_CODE}
@@ -56,10 +58,16 @@ set_target_properties(mxl-internal-objects
             CXX_VISIBILITY_PRESET     hidden
             C_EXTENSIONS              OFF
             CXX_EXTENSIONS            OFF
+            C_STANDARD                ${MXL_C_STANDARD}
+            CXX_STANDARD              ${MXL_CXX_STANDARD}
     )
 target_sources(mxl-internal-objects
         PRIVATE
+            src/DescriptorChannel.cpp
             src/DomainWatcher.cpp
+            src/EventRingBuffer.cpp
+            src/PosixEventFlowReader.cpp
+            src/PosixEventFlowWriter.cpp
             src/FlowData.cpp
             src/FlowInfo.cpp
             src/FlowIoFactory.cpp
@@ -69,12 +77,12 @@ target_sources(mxl-internal-objects
             src/FlowReader.cpp
             src/FlowSynchronizationGroup.cpp
             src/FlowWriter.cpp
-            src/GrainPayloadAllocator.cpp
             src/Instance.cpp
             src/Logging.cpp
             src/MediaUtils.cpp
             src/PathUtils.cpp
-            src/PayloadBackendRegistry.cpp
+            src/PayloadBackend.cpp
+            src/PayloadStorage.cpp
             src/PosixContinuousFlowReader.cpp
             src/PosixContinuousFlowWriter.cpp
             src/PosixDiscreteFlowReader.cpp
@@ -86,50 +94,6 @@ target_sources(mxl-internal-objects
             src/Time.cpp
             src/Timing.cpp
     )
-
-option(MXL_ENABLE_CUDA "Enable CUDA linear grain payload plugin" ON)
-if (MXL_ENABLE_CUDA)
-    find_package(CUDAToolkit QUIET)
-    if (CUDAToolkit_FOUND)
-        message(STATUS "CUDA toolkit found: building libmxl-payload-cuda")
-        add_library(mxl-payload-cuda SHARED
-                src/CudaLinearPayloadAllocator.cpp
-                src/CudaPayloadPlugin.cpp
-                src/PathUtils.cpp
-            )
-        target_compile_features(mxl-payload-cuda PRIVATE cxx_std_20)
-        set_target_properties(mxl-payload-cuda
-                PROPERTIES
-                    OUTPUT_NAME "mxl-payload-cuda"
-                    POSITION_INDEPENDENT_CODE ON
-                    C_VISIBILITY_PRESET hidden
-                    CXX_VISIBILITY_PRESET hidden
-                    VISIBILITY_INLINES_HIDDEN ON
-                    C_EXTENSIONS OFF
-                    CXX_EXTENSIONS OFF
-                    SOVERSION "${PROJECT_VERSION_MAJOR}"
-                    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-            )
-        target_compile_definitions(mxl-payload-cuda PRIVATE MXL_HAS_CUDA=1)
-        target_include_directories(mxl-payload-cuda PRIVATE ${CUDAToolkit_INCLUDE_DIRS})
-        target_link_libraries(mxl-payload-cuda
-                PRIVATE
-                    mxl-internal-headers
-                    CUDA::cudart
-            )
-        target_compile_definitions(mxl-internal-objects PRIVATE MXL_HAS_CUDA_PAYLOAD_PLUGIN=1)
-        install(TARGETS mxl-payload-cuda
-                LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-                RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-            )
-        set(MXL_BUILT_WITH_CUDA ON CACHE INTERNAL "MXL was configured with CUDA payload support")
-    else()
-        message(STATUS "MXL_ENABLE_CUDA is ON but CUDAToolkit was not found; building without CUDA payload support")
-        set(MXL_BUILT_WITH_CUDA OFF CACHE INTERNAL "MXL was configured with CUDA payload support")
-    endif()
-else()
-    set(MXL_BUILT_WITH_CUDA OFF CACHE INTERNAL "MXL was configured with CUDA payload support")
-endif()
 
 if (NOT TARGET stduuid)
     find_package(stduuid CONFIG REQUIRED)
@@ -155,8 +119,10 @@ target_link_libraries(mxl-internal-objects
         PRIVATE
             mxl-internal-headers
     )
+
+# The payload backend loader uses dlopen(). On older glibc and on some other platforms it lives in a separate library.
 target_link_libraries(mxl-internal-objects
-        PUBLIC
+        INTERFACE
             ${CMAKE_DL_LIBS}
     )
 

@@ -1,13 +1,13 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <climits>
 #include <csignal>
 #include <cstdint>
 #include <cstring>
 #include <atomic>
 #include <filesystem>
 #include <memory>
+#include <random>
 #include <thread>
 #include <uuid.h>
 #include <CLI/CLI.hpp>
@@ -372,7 +372,7 @@ public:
             gst_object_unref(pad);
 
             // make sure the videoFlowId is set
-            videoFlowId = in_videoId.value_or(uuids::uuid_system_generator{}());
+            videoFlowId = in_videoId.value_or(randomUuid());
 
             std::string flowDef;
             videoGrainRate = mxlRational{fps_n, fps_d};
@@ -459,7 +459,7 @@ public:
             gst_object_unref(pad);
 
             // make sure the audioFlowId is set
-            audioFlowId = in_audioId.value_or(uuids::uuid_system_generator{}());
+            audioFlowId = in_audioId.value_or(randomUuid());
 
             std::string flowDef;
             audioGrainRate = mxlRational{rate, 1};
@@ -623,6 +623,13 @@ private:
         root["maxCommitBatchSizeHint"] = picojson::value(static_cast<double>(maxCommitBatchSizeHint));
         root["maxSyncBatchSizeHint"] = picojson::value(static_cast<double>(maxSyncBatchSizeHint));
         return picojson::value(root).serialize(true);
+    }
+
+    static uuids::uuid randomUuid()
+    {
+        static auto engine = std::mt19937{std::random_device{}()};
+        static auto generator = uuids::uuid_random_generator{engine};
+        return generator();
     }
 
     void videoThread()

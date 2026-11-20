@@ -13,6 +13,7 @@
 #include "mxl-internal/Instance.hpp"
 #include "mxl-internal/Logging.hpp"
 #include "mxl-internal/PathUtils.hpp"
+#include "mxl-internal/PayloadBackend.hpp"
 
 namespace
 {
@@ -45,7 +46,7 @@ mxlStatus mxlIsFlowActive(mxlInstance instance, char const* flowId, bool* isActi
                         // other process is writing to the flow.
                         auto flowDataFile = mxl::lib::makeFlowDataFilePath(domain, flowId);
 
-                        int fd = open(flowDataFile.c_str(), O_RDONLY | O_CLOEXEC);
+                        auto const fd = ::open(flowDataFile.c_str(), O_RDONLY | O_CLOEXEC);
                         if (fd < 0)
                         {
                             auto const error = errno;
@@ -59,7 +60,7 @@ mxlStatus mxlIsFlowActive(mxlInstance instance, char const* flowId, bool* isActi
                         }
 
                         // Try to obtain an exclusive lock on the file descriptor. Do not block if the lock cannot be obtained.
-                        bool active = flock(fd, LOCK_EX | LOCK_NB) < 0;
+                        auto const active = ::flock(fd, LOCK_EX | LOCK_NB) < 0;
                         close(fd);
 
                         *isActive = active;
@@ -144,7 +145,7 @@ mxlStatus mxlCreateFlowReader(mxlInstance instance, char const* flowId, char con
             {
                 if ((flowId != nullptr) && uuids::uuid::is_valid_uuid(flowId))
                 {
-                    *reader = reinterpret_cast<mxlFlowReader>(cppInstance->getFlowReader(flowId, options));
+                    *reader = reinterpret_cast<mxlFlowReader>(cppInstance->getFlowReaderWithOptions(flowId, (options != nullptr) ? options : ""));
                     return MXL_STATUS_OK;
                 }
             }
@@ -154,23 +155,29 @@ mxlStatus mxlCreateFlowReader(mxlInstance instance, char const* flowId, char con
     }
     catch (std::filesystem::filesystem_error const& e)
     {
-        if (e.code().value() == ENOENT)
+        auto const code = e.code();
+        if (code.value() == ENOENT)
         {
             return MXL_ERR_FLOW_NOT_FOUND;
         }
 
         MXL_ERROR("Failed to create flow reader: {}", e.what());
+        if ((code == std::errc::permission_denied) || (code == std::errc::operation_not_permitted))
+        {
+            return MXL_ERR_PERMISSION_DENIED;
+        }
         return MXL_ERR_UNKNOWN;
+    }
+    catch (PayloadStorageError const& e)
+    {
+        MXL_ERROR("Failed to create flow reader: {}", e.what());
+        return e.status();
     }
     catch (std::invalid_argument const& e)
     {
+        // The options are not a JSON object.
         MXL_ERROR("Failed to create flow reader: {}", e.what());
         return MXL_ERR_INVALID_ARG;
-    }
-    catch (std::exception const& e)
-    {
-        MXL_ERROR("Failed to create flow reader: {}", e.what());
-        return MXL_ERR_UNKNOWN;
     }
     catch (...)
     {
@@ -249,6 +256,11 @@ mxlStatus mxlCreateFlowWriter(mxlInstance instance, char const* flowDef, char co
             MXL_ERROR("Filesystem error: {}", code.message());
             return MXL_ERR_UNKNOWN;
         }
+    }
+    catch (PayloadStorageError const& e)
+    {
+        MXL_ERROR("Failed to create flow writer: {}", e.what());
+        return e.status();
     }
     catch (std::exception const& e)
     {
@@ -372,38 +384,8 @@ mxlStatus mxlFlowReaderGetGrain(mxlFlowReader reader, uint64_t index, uint64_t t
 
 extern "C"
 MXL_EXPORT
-mxlStatus mxlFlowReaderGetGrainEx(mxlFlowReader reader, uint64_t index, uint64_t timeoutNs, mxlGrainInfo* grainInfo, mxlPayloadView* payload)
-{
-    return mxlFlowReaderGetGrainSliceEx(reader, index, MXL_GRAIN_VALID_SLICES_ALL, timeoutNs, grainInfo, payload);
-}
-
-extern "C"
-MXL_EXPORT
 mxlStatus mxlFlowReaderGetGrainSlice(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, uint64_t timeoutNs, mxlGrainInfo* grainInfo,
     uint8_t** payload)
-{
-    try
-    {
-        if ((grainInfo != nullptr) && (payload != nullptr))
-        {
-            if (auto const cppReader = dynamic_cast<DiscreteFlowReader*>(to_FlowReader(reader)); cppReader != nullptr)
-            {
-                return cppReader->getGrain(index, minValidSlices, toDeadline(timeoutNs), grainInfo, payload);
-            }
-            return MXL_ERR_INVALID_FLOW_READER;
-        }
-        return MXL_ERR_INVALID_ARG;
-    }
-    catch (...)
-    {
-        return MXL_ERR_UNKNOWN;
-    }
-}
-
-extern "C"
-MXL_EXPORT
-mxlStatus mxlFlowReaderGetGrainSliceEx(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, uint64_t timeoutNs, mxlGrainInfo* grainInfo,
-    mxlPayloadView* payload)
 {
     try
     {
@@ -432,13 +414,6 @@ mxlStatus mxlFlowReaderGetGrainNonBlocking(mxlFlowReader reader, uint64_t index,
 
 extern "C"
 MXL_EXPORT
-mxlStatus mxlFlowReaderGetGrainNonBlockingEx(mxlFlowReader reader, uint64_t index, mxlGrainInfo* grainInfo, mxlPayloadView* payload)
-{
-    return mxlFlowReaderGetGrainSliceNonBlockingEx(reader, index, MXL_GRAIN_VALID_SLICES_ALL, grainInfo, payload);
-}
-
-extern "C"
-MXL_EXPORT
 mxlStatus mxlFlowReaderGetGrainSliceNonBlocking(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, mxlGrainInfo* grainInfo,
     uint8_t** payload)
 {
@@ -462,25 +437,95 @@ mxlStatus mxlFlowReaderGetGrainSliceNonBlocking(mxlFlowReader reader, uint64_t i
 
 extern "C"
 MXL_EXPORT
-mxlStatus mxlFlowReaderGetGrainSliceNonBlockingEx(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, mxlGrainInfo* grainInfo,
-    mxlPayloadView* payload)
+mxlStatus mxlFlowReaderGetStorageLayout(mxlFlowReader reader, mxlGrainStorageLayout* layout)
 {
     try
     {
-        if ((grainInfo != nullptr) && (payload != nullptr))
+        if (layout != nullptr)
         {
             if (auto const cppReader = dynamic_cast<DiscreteFlowReader*>(to_FlowReader(reader)); cppReader != nullptr)
             {
-                return cppReader->getGrain(index, minValidSlices, grainInfo, payload);
+                *layout = cppReader->getStorageLayout();
+                return MXL_STATUS_OK;
             }
             return MXL_ERR_INVALID_FLOW_READER;
         }
         return MXL_ERR_INVALID_ARG;
     }
+    catch (PayloadStorageError const& e)
+    {
+        MXL_ERROR("Failed to get storage layout: {}", e.what());
+        return e.status();
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Failed to get storage layout: {}", e.what());
+    }
     catch (...)
     {
-        return MXL_ERR_UNKNOWN;
+        MXL_ERROR("Failed to get storage layout: {}", "An unknown error occured.");
     }
+    return MXL_ERR_UNKNOWN;
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowReaderMapSlots(mxlFlowReader reader, uint32_t slotCount, mxlGrainStorage* slots)
+{
+    try
+    {
+        if (slots != nullptr)
+        {
+            if (auto const cppReader = dynamic_cast<DiscreteFlowReader*>(to_FlowReader(reader)); cppReader != nullptr)
+            {
+                return cppReader->mapSlots(slotCount, slots);
+            }
+            return MXL_ERR_INVALID_FLOW_READER;
+        }
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (PayloadStorageError const& e)
+    {
+        MXL_ERROR("Failed to map slots: {}", e.what());
+        return e.status();
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Failed to map slots: {}", e.what());
+    }
+    catch (...)
+    {
+        MXL_ERROR("Failed to map slots: {}", "An unknown error occured.");
+    }
+    return MXL_ERR_UNKNOWN;
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowReaderGetGrainSlot(mxlFlowReader reader, uint64_t index, uint16_t minValidSlices, uint64_t timeoutNs, mxlGrainInfo* grainInfo,
+    uint32_t* slot)
+{
+    try
+    {
+        if ((grainInfo != nullptr) && (slot != nullptr))
+        {
+            if (auto const cppReader = dynamic_cast<DiscreteFlowReader*>(to_FlowReader(reader)); cppReader != nullptr)
+            {
+                return cppReader->getGrainSlot(index, minValidSlices, toDeadline(timeoutNs), grainInfo, slot);
+            }
+            return MXL_ERR_INVALID_FLOW_READER;
+        }
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Failed to get grain slot: {}", e.what());
+    }
+    catch (...)
+    {
+        MXL_ERROR("Failed to get grain slot: {}", "An unknown error occured.");
+    }
+    return MXL_ERR_UNKNOWN;
 }
 
 extern "C"
@@ -510,29 +555,6 @@ mxlStatus mxlFlowWriterGetGrainInfo(mxlFlowWriter writer, uint64_t index, mxlGra
 extern "C"
 MXL_EXPORT
 mxlStatus mxlFlowWriterOpenGrain(mxlFlowWriter writer, uint64_t index, mxlGrainInfo* grainInfo, uint8_t** payload)
-{
-    try
-    {
-        if ((grainInfo != nullptr) && (payload != nullptr))
-        {
-            if (auto const cppWriter = dynamic_cast<DiscreteFlowWriter*>(to_FlowWriter(writer)); cppWriter != nullptr)
-            {
-                return cppWriter->openGrain(index, grainInfo, payload);
-            }
-
-            return MXL_ERR_INVALID_FLOW_WRITER;
-        }
-        return MXL_ERR_INVALID_ARG;
-    }
-    catch (...)
-    {
-        return MXL_ERR_UNKNOWN;
-    }
-}
-
-extern "C"
-MXL_EXPORT
-mxlStatus mxlFlowWriterOpenGrainEx(mxlFlowWriter writer, uint64_t index, mxlGrainInfo* grainInfo, mxlPayloadView* payload)
 {
     try
     {
@@ -592,6 +614,98 @@ mxlStatus mxlFlowWriterCommitGrain(mxlFlowWriter writer, mxlGrainInfo const* gra
     {
         return MXL_ERR_UNKNOWN;
     }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowWriterGetStorageLayout(mxlFlowWriter writer, mxlGrainStorageLayout* layout)
+{
+    try
+    {
+        if (layout != nullptr)
+        {
+            if (auto const cppWriter = dynamic_cast<DiscreteFlowWriter*>(to_FlowWriter(writer)); cppWriter != nullptr)
+            {
+                *layout = cppWriter->getStorageLayout();
+                return MXL_STATUS_OK;
+            }
+            return MXL_ERR_INVALID_FLOW_WRITER;
+        }
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (PayloadStorageError const& e)
+    {
+        MXL_ERROR("Failed to get storage layout: {}", e.what());
+        return e.status();
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Failed to get storage layout: {}", e.what());
+    }
+    catch (...)
+    {
+        MXL_ERROR("Failed to get storage layout: {}", "An unknown error occured.");
+    }
+    return MXL_ERR_UNKNOWN;
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowWriterMapSlots(mxlFlowWriter writer, uint32_t slotCount, mxlGrainStorage* slots)
+{
+    try
+    {
+        if (slots != nullptr)
+        {
+            if (auto const cppWriter = dynamic_cast<DiscreteFlowWriter*>(to_FlowWriter(writer)); cppWriter != nullptr)
+            {
+                return cppWriter->mapSlots(slotCount, slots);
+            }
+            return MXL_ERR_INVALID_FLOW_WRITER;
+        }
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (PayloadStorageError const& e)
+    {
+        MXL_ERROR("Failed to map slots: {}", e.what());
+        return e.status();
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Failed to map slots: {}", e.what());
+    }
+    catch (...)
+    {
+        MXL_ERROR("Failed to map slots: {}", "An unknown error occured.");
+    }
+    return MXL_ERR_UNKNOWN;
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowWriterOpenGrainSlot(mxlFlowWriter writer, uint64_t index, mxlGrainInfo* grainInfo, uint32_t* slot)
+{
+    try
+    {
+        if ((grainInfo != nullptr) && (slot != nullptr))
+        {
+            if (auto const cppWriter = dynamic_cast<DiscreteFlowWriter*>(to_FlowWriter(writer)); cppWriter != nullptr)
+            {
+                return cppWriter->openGrainSlot(index, grainInfo, slot);
+            }
+            return MXL_ERR_INVALID_FLOW_WRITER;
+        }
+        return MXL_ERR_INVALID_ARG;
+    }
+    catch (std::exception const& e)
+    {
+        MXL_ERROR("Failed to open grain slot: {}", e.what());
+    }
+    catch (...)
+    {
+        MXL_ERROR("Failed to open grain slot: {}", "An unknown error occured.");
+    }
+    return MXL_ERR_UNKNOWN;
 }
 
 extern "C"
@@ -741,6 +855,112 @@ mxlStatus mxlFlowWriterCommitSamples(mxlFlowWriter writer)
             return cppWriter->commit();
         }
         return MXL_ERR_INVALID_FLOW_WRITER;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowWriterOpenEvent(mxlFlowWriter handle, mxlEventInfo* info, uint8_t** payload)
+{
+    if ((info == nullptr) || (payload == nullptr))
+    {
+        return MXL_ERR_INVALID_ARG;
+    }
+    try
+    {
+        if (auto object = dynamic_cast<EventFlowWriter*>(to_FlowWriter(handle)); object != nullptr)
+        {
+            return object->openEvent(info, payload);
+        }
+        return MXL_ERR_INVALID_FLOW_WRITER;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowWriterCommitEvent(mxlFlowWriter handle, mxlEventInfo const* info)
+{
+    if (info == nullptr)
+    {
+        return MXL_ERR_INVALID_ARG;
+    }
+    try
+    {
+        if (auto object = dynamic_cast<EventFlowWriter*>(to_FlowWriter(handle)); object != nullptr)
+        {
+            return object->commit(*info);
+        }
+        return MXL_ERR_INVALID_FLOW_WRITER;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowWriterCancelEvent(mxlFlowWriter handle)
+{
+    try
+    {
+        if (auto object = dynamic_cast<EventFlowWriter*>(to_FlowWriter(handle)); object != nullptr)
+        {
+            return object->cancel();
+        }
+        return MXL_ERR_INVALID_FLOW_WRITER;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowReaderGetEvent(mxlFlowReader handle, uint64_t timeoutNs, mxlEventInfo* info, uint8_t** payload)
+{
+    if ((info == nullptr) || (payload == nullptr))
+    {
+        return MXL_ERR_INVALID_ARG;
+    }
+    try
+    {
+        if (auto object = dynamic_cast<EventFlowReader*>(to_FlowReader(handle)); object != nullptr)
+        {
+            return object->getEvent(toDeadline(timeoutNs), info, payload);
+        }
+        return MXL_ERR_INVALID_FLOW_READER;
+    }
+    catch (...)
+    {
+        return MXL_ERR_UNKNOWN;
+    }
+}
+
+extern "C"
+MXL_EXPORT
+mxlStatus mxlFlowReaderGetEventNonBlocking(mxlFlowReader handle, mxlEventInfo* info, uint8_t** payload)
+{
+    if ((info == nullptr) || (payload == nullptr))
+    {
+        return MXL_ERR_INVALID_ARG;
+    }
+    try
+    {
+        if (auto object = dynamic_cast<EventFlowReader*>(to_FlowReader(handle)); object != nullptr)
+        {
+            return object->getEvent(toDeadline(0), info, payload);
+        }
+        return MXL_ERR_INVALID_FLOW_READER;
     }
     catch (...)
     {

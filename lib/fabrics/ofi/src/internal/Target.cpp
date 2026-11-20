@@ -8,7 +8,6 @@
 #include <fmt/format.h>
 #include <rdma/fabric.h>
 #include <rdma/fi_errno.h>
-#include <mxl-internal/Logging.hpp>
 #include "mxl/fabrics.h"
 #include "Exception.hpp"
 #include "FabricInfoHelpers.hpp"
@@ -20,19 +19,6 @@
 
 namespace mxl::lib::fabrics::ofi
 {
-    namespace
-    {
-        ::mxlFabricsInterfaceConfig interfaceConfigWithHmemIfNeeded(::mxlFabricsInterfaceConfig interfaceConfig, bool needsHmem)
-        {
-            if (needsHmem)
-            {
-                interfaceConfig.caps.flags |= MXL_FABRICS_IFACE_CAP_HMEM;
-                MXL_INFO("Device grain payloads detected; requiring FI_HMEM-capable fabric interface");
-            }
-            return interfaceConfig;
-        }
-    }
-
     LocalRegion Target::ImmediateDataLocation::toLocalRegion() const noexcept
     {
         return LocalRegion{
@@ -52,44 +38,24 @@ namespace mxl::lib::fabrics::ofi
         return reinterpret_cast<mxlFabricsTarget>(this);
     }
 
-    std::optional<Target::GrainReadResult> TargetWrapper::readGrain()
+    std::optional<Target::ReadResult> TargetWrapper::read()
     {
         if (!_inner)
         {
             throw Exception::invalidState("Target is not set up.");
         }
 
-        return _inner->readGrain();
+        return _inner->read();
     }
 
-    std::optional<Target::GrainReadResult> TargetWrapper::readGrainBlocking(std::chrono::steady_clock::duration timeout)
+    std::optional<Target::ReadResult> TargetWrapper::readBlocking(std::chrono::steady_clock::duration timeout)
     {
         if (!_inner)
         {
             throw Exception::invalidState("Target is not set up.");
         }
 
-        return _inner->readGrainBlocking(timeout);
-    }
-
-    std::optional<Target::SampleReadResult> TargetWrapper::readSamples()
-    {
-        if (!_inner)
-        {
-            throw Exception::invalidState("Target is not set up.");
-        }
-
-        return _inner->readSamples();
-    }
-
-    std::optional<Target::SampleReadResult> TargetWrapper::readSamplesBlocking(std::chrono::steady_clock::duration timeout)
-    {
-        if (!_inner)
-        {
-            throw Exception::invalidState("Target is not set up.");
-        }
-
-        return _inner->readSamplesBlocking(timeout);
+        return _inner->readBlocking(timeout);
     }
 
     template<typename TargetT>
@@ -107,8 +73,9 @@ namespace mxl::lib::fabrics::ofi
             _inner.reset();
         }
 
+        // Regions in device memory need an interface that can register them (FI_HMEM). The regions come from the flow the target writes.
         auto const needsHmem = regionsNeedHmem(MxlRegions::forWriter(config.writer).regions());
-        auto interfaceConfig = interfaceConfigWithHmemIfNeeded(config.interface, needsHmem);
+        auto const interfaceConfig = interfaceConfigWithHmemIfNeeded(config.interface, needsHmem);
         auto [info, providerConfig] = selectSourceInterface(interfaceConfig, /* target */ true);
         (void)providerConfig;
 

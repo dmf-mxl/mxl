@@ -137,6 +137,13 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         std::size_t txIovLimit() const noexcept;
 
+        /** \brief Return the transmit queue size of the endpoint.
+         *
+         * \return The number of transmit queue entries. A single operation may use more than one.
+         */
+        [[nodiscard]]
+        std::size_t txSize() const noexcept;
+
         [[nodiscard]]
         ::fi_ep_type endpointType() const noexcept;
 

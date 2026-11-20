@@ -11,9 +11,9 @@
 #include <rdma/fabric.h>
 #include "mxl/fabrics.h"
 #include "Endpoint.hpp"
-#include "GrainSlices.hpp"
 #include "Initiator.hpp"
 #include "Protocol.hpp"
+#include "SliceRange.hpp"
 #include "TargetInfo.hpp"
 
 namespace mxl::lib::fabrics::ofi
@@ -108,9 +108,14 @@ namespace mxl::lib::fabrics::ofi
     {
     public:
         /** \brief Set up a new RDMInitiator.
+         *
+         * \param config The configuration to use for setting up the initiator.
+         * \param info Fabric info already resolved from the interface config.
+         * \param options Optional tuning parameters (e.g. completion queue depth).
          */
         [[nodiscard]]
-        static std::unique_ptr<RDMInitiator> setup(mxlFabricsInitiatorConfig const& config, FabricInfoView info);
+        static std::unique_ptr<RDMInitiator> setup(mxlFabricsInitiatorConfig const& config, FabricInfoView info,
+            InitiatorSetupOptions const& options = {});
 
         /** \copydoc Initiator::addTarget()
          */
@@ -137,11 +142,11 @@ namespace mxl::lib::fabrics::ofi
 
         /** \copydoc Initiator::makeProgress()
          */
-        virtual bool makeProgress() final;
+        virtual Initiator::MakeProgressResult makeProgress() final;
 
         /** \copydoc Initiator::makeProgressBlocking()
          */
-        virtual bool makeProgressBlocking(std::chrono::steady_clock::duration timeout) final;
+        virtual Initiator::MakeProgressResult makeProgressBlocking(std::chrono::steady_clock::duration timeout) final;
 
     private:
         /** \brief Construct a new RDMInitiator object.
@@ -167,15 +172,24 @@ namespace mxl::lib::fabrics::ofi
         /** \brief Returns true if any of the endpoints contained in this initiator have pending work.
          */
         [[nodiscard]]
-        bool hasPendingWork() const noexcept;
+        Initiator::MakeProgressResult afterProgressResult() const noexcept;
 
         /** \brief Block on the completion queue with a timeout.
          */
         void blockOnCQ(std::chrono::steady_clock::duration timeout);
 
-        /** \brief Poll the completion queue and process the events until the queue is empty.
+        /** \brief Process completions until the completion queue is empty.
          */
-        void pollCQ();
+        void drainCQ();
+
+        /** \brief Offer a transfer to every target.
+         *
+         * \param transfer Called once per target.
+         * \throws Exception The first one thrown by transfer, after every target was offered the transfer. Any other exception propagates
+         * immediately.
+         */
+        template<typename F>
+        void forEachTarget(F&& transfer);
 
         /** \brief Try to activate any idle endpoints.
          */

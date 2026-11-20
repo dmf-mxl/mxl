@@ -1,20 +1,10 @@
 # SPDX-FileCopyrightText: 2025 Contributors to the Media eXchange Layer project.
 # SPDX-License-Identifier: Apache-2.0
 
-cmake_minimum_required(VERSION 3.24 FATAL_ERROR)
-
-# Allow version in project definition
-cmake_policy(SET CMP0048 NEW)
-# Only interpret if arguments as variables or keywords when unquoted.
-cmake_policy(SET CMP0054 NEW)
-# Allow visibility definitions
-cmake_policy(SET CMP0063 NEW)
-# Interpret target_sources paths as relative to the current source dir
-cmake_policy(SET CMP0076 NEW)
-# Set the timestamps of all extracted contents to the time of the extraction
-cmake_policy(SET CMP0135 NEW)
+cmake_minimum_required(VERSION 3.24...4.3)
 
 option(MXL_ENABLE_FABRICS_OFI "Enable building the fabrics library with libfabric" OFF)
+option(MXL_ENABLE_CUDA_PAYLOAD "Build the cuda-linear payload backend, which keeps grain payloads in CUDA device memory. Needs the CUDA toolkit." OFF)
 
 # Build type. Used as a build suffix or in the operating system package file name.  Currently manually set but could be automated using branch names, etc.
 # One of : dev, beta, rc, "" (empty for final releases)
@@ -56,7 +46,6 @@ project(mxl
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
 
-
 # Enable testing for the project
 enable_testing()
 
@@ -80,6 +69,9 @@ if(NOT BUILD_SHARED_LIBS)
 else()
     set(MXL_POSITION_INDEPENDENT_CODE ON)
 endif()
+
+set(MXL_C_STANDARD 17)
+set(MXL_CXX_STANDARD 20)
 
 #-------------------------------------------------------------------------------
 # Helper to conditionally add flags supported by the current compiler

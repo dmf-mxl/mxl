@@ -3,7 +3,9 @@
 
 use std::{collections::HashMap, process, str::FromStr};
 
-use crate::mxlsink::imp::CAT;
+use crate::mxlsink::{
+    imp::CAT, render_continuous::SampleAlignment, render_discrete::GrainAlignment,
+};
 use gst::StructureRef;
 use gst::prelude::*;
 use gst_audio::AudioInfo;
@@ -23,6 +25,14 @@ use uuid::Uuid;
 pub(crate) const DEFAULT_FLOW_ID: &str = "";
 pub(crate) const DEFAULT_DOMAIN: &str = "";
 pub(crate) const GROUPHINT_TAG: &str = "urn:x-nmos:tag:grouphint/v1.0";
+/// Largest difference between a buffer's timestamp and the end of the previous
+/// buffer that the sink still treats as continuous audio.
+pub(crate) const DEFAULT_ALIGNMENT_THRESHOLD_NS: u64 = 40_000_000;
+/// How long buffer timestamps must stay further than the alignment threshold
+/// from the end of the previous buffer before the sink resyncs to them. MXL
+/// time keeps running while a pipeline is paused or a source stops, so any
+/// wait writes the samples that follow behind MXL now.
+pub(crate) const DEFAULT_DISCONT_WAIT_NS: u64 = 0;
 
 #[derive(Debug, Clone)]
 pub(crate) struct Settings {
@@ -36,6 +46,10 @@ pub(crate) struct Settings {
     pub description: String,
     /// `urn:x-nmos:tag:grouphint/v1.0` value. Empty keeps the built-in default.
     pub group_hint: String,
+    /// Audio timestamp alignment threshold in nanoseconds.
+    pub alignment_threshold: u64,
+    /// Audio discontinuity wait in nanoseconds.
+    pub discont_wait: u64,
 }
 
 impl Default for Settings {
@@ -46,6 +60,8 @@ impl Default for Settings {
             label: String::new(),
             description: String::new(),
             group_hint: String::new(),
+            alignment_threshold: DEFAULT_ALIGNMENT_THRESHOLD_NS,
+            discont_wait: DEFAULT_DISCONT_WAIT_NS,
         }
     }
 }
@@ -157,17 +173,33 @@ pub(crate) enum DiscreteFormat {
 pub(crate) struct DiscreteState {
     pub format: DiscreteFormat,
     pub writer: GrainWriter,
+    pub flow_def: DiscreteFlowDef,
+    pub alignment: GrainAlignment,
+}
+
+/// Video vs data details stored alongside the discrete writer.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) enum DiscreteFlowDef {
+    Video(FlowDefVideo),
+    Data(FlowDefData),
 }
 
 pub(crate) struct ContinuousState {
     pub writer: SamplesWriter,
     pub flow_def: FlowDefAudio,
+    pub alignment: SampleAlignment,
 }
 
 #[derive(Default)]
 pub(crate) struct Context {
     pub state: Option<State>,
 }
+
+const RE_SET_CAPS_NO_CHANGE: &str = "set_caps: flow_def unchanged; keeping existing writer";
+const RE_SET_CAPS_FORMAT_CHANGE: &str =
+    "mxlsink does not support mid-stream format changes after the flow writer is created";
+const RE_SET_CAPS_MEDIA_TYPE_CHANGE: &str =
+    "mxlsink does not support mid-stream media type changes after the flow writer is created";
 
 pub(crate) fn init_state_with_video(
     state: &mut State,
@@ -228,16 +260,40 @@ pub(crate) fn init_state_with_video(
             },
         ],
     };
+    if let Some(prev_state) = &state.flow_state {
+        return match prev_state {
+            FlowState::Discrete(prev_discrete) => match &prev_discrete.flow_def {
+                DiscreteFlowDef::Video(prev_def_details)
+                    if prev_def_details == &flow_def_details =>
+                {
+                    trace!(RE_SET_CAPS_NO_CHANGE);
+                    Ok(())
+                }
+                DiscreteFlowDef::Video(_) => {
+                    Err(gst::loggable_error!(CAT, "{}", RE_SET_CAPS_FORMAT_CHANGE))
+                }
+                DiscreteFlowDef::Data(_) => Err(gst::loggable_error!(
+                    CAT,
+                    "{}",
+                    RE_SET_CAPS_MEDIA_TYPE_CHANGE
+                )),
+            },
+            FlowState::Continuous(_) => Err(gst::loggable_error!(
+                CAT,
+                "{}",
+                RE_SET_CAPS_MEDIA_TYPE_CHANGE
+            )),
+        };
+    }
     let flow_def = FlowDef {
         id: Uuid::parse_str(&settings.flow_id)
             .map_err(|e| gst::loggable_error!(CAT, "Flow ID is invalid: {}", e))?,
         description,
         tags,
-        format: "urn:x-nmos:format:video".into(),
         label,
         parents: vec![],
         media_type: format!("video/{}", format),
-        details: mxl::flowdef::FlowDefDetails::Video(flow_def_details),
+        details: mxl::flowdef::FlowDefDetails::Video(flow_def_details.clone()),
     };
     let instance = &state.instance;
 
@@ -261,6 +317,8 @@ pub(crate) fn init_state_with_video(
     state.flow_state = Some(FlowState::Discrete(DiscreteState {
         format: DiscreteFormat::Video,
         writer,
+        flow_def: DiscreteFlowDef::Video(flow_def_details),
+        alignment: GrainAlignment::default(),
     }));
     state.flow_config = Some(flow);
 
@@ -276,7 +334,6 @@ pub(crate) fn init_state_with_audio(
     let channels = info.channels() as i32;
     let rate = info.rate() as i32;
     let bit_depth = info.depth() as u8;
-    let format = info.format().to_string();
     let default_name = format!(
         "MXL Audio Flow, {} ch, {}",
         channels,
@@ -293,12 +350,28 @@ pub(crate) fn init_state_with_audio(
         channel_count: channels,
         bit_depth,
     };
+    if let Some(prev_state) = &state.flow_state {
+        return match prev_state {
+            FlowState::Continuous(prev_continuous) => {
+                if prev_continuous.flow_def == flow_def_details {
+                    trace!(RE_SET_CAPS_NO_CHANGE);
+                    Ok(())
+                } else {
+                    Err(gst::loggable_error!(CAT, "{}", RE_SET_CAPS_FORMAT_CHANGE))
+                }
+            }
+            FlowState::Discrete(_) => Err(gst::loggable_error!(
+                CAT,
+                "{}",
+                RE_SET_CAPS_MEDIA_TYPE_CHANGE
+            )),
+        };
+    }
 
     let flow_def = FlowDef {
         id: Uuid::parse_str(&settings.flow_id)
             .map_err(|e| gst::loggable_error!(CAT, "Flow ID is invalid: {}", e))?,
         description,
-        format: "urn:x-nmos:format:audio".into(),
         tags,
         label,
         media_type: "audio/float32".to_string(),
@@ -327,13 +400,10 @@ pub(crate) fn init_state_with_audio(
     state.flow_state = Some(FlowState::Continuous(ContinuousState {
         writer,
         flow_def: flow_def_details,
+        alignment: SampleAlignment::default(),
     }));
     state.flow_config = Some(flow);
 
-    trace!(
-        "Made it to the end of set_caps with format {}, channel_count {}, sample_rate {}, bit_depth {}",
-        format, channels, rate, bit_depth
-    );
     Ok(())
 }
 
@@ -358,16 +428,40 @@ pub(crate) fn init_state_with_data(
             denominator: framerate.denom(),
         },
     };
+    if let Some(prev_state) = &state.flow_state {
+        return match prev_state {
+            FlowState::Discrete(prev_discrete) => match &prev_discrete.flow_def {
+                DiscreteFlowDef::Data(prev_def_details)
+                    if prev_def_details == &flow_def_details =>
+                {
+                    trace!(RE_SET_CAPS_NO_CHANGE);
+                    Ok(())
+                }
+                DiscreteFlowDef::Data(_) => {
+                    Err(gst::loggable_error!(CAT, "{}", RE_SET_CAPS_FORMAT_CHANGE))
+                }
+                DiscreteFlowDef::Video(_) => Err(gst::loggable_error!(
+                    CAT,
+                    "{}",
+                    RE_SET_CAPS_MEDIA_TYPE_CHANGE
+                )),
+            },
+            FlowState::Continuous(_) => Err(gst::loggable_error!(
+                CAT,
+                "{}",
+                RE_SET_CAPS_MEDIA_TYPE_CHANGE
+            )),
+        };
+    }
     let flow_def = FlowDef {
         id: Uuid::parse_str(&settings.flow_id)
             .map_err(|e| gst::loggable_error!(CAT, "Flow ID is invalid: {}", e))?,
         description,
         tags,
-        format: "urn:x-nmos:format:data".into(),
         label,
         parents: vec![],
         media_type: "video/smpte291".into(),
-        details: FlowDefDetails::Data(flow_def_details),
+        details: FlowDefDetails::Data(flow_def_details.clone()),
     };
     let instance = &state.instance;
 
@@ -391,6 +485,8 @@ pub(crate) fn init_state_with_data(
     state.flow_state = Some(FlowState::Discrete(DiscreteState {
         format: DiscreteFormat::Data,
         writer,
+        flow_def: DiscreteFlowDef::Data(flow_def_details),
+        alignment: GrainAlignment::default(),
     }));
     state.flow_config = Some(flow);
 

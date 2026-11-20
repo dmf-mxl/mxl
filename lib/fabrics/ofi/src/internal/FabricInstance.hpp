@@ -67,6 +67,8 @@ namespace mxl::lib::fabrics::ofi
         void destroyInitiator(InitiatorWrapper* initiator);
 
     private:
+        std::mutex _mu;
+
         mxl::lib::Instance* _mxlInstance;
         std::list<TargetWrapper> _targets;
         std::list<InitiatorWrapper> _initiators;

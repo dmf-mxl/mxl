@@ -4,17 +4,43 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
+#include <optional>
 #include "Endpoint.hpp"
 #include "TargetInfo.hpp"
 
 namespace mxl::lib::fabrics::ofi
 {
 
+    /** \brief Provider-independent tuning options for initiator setup.
+     */
+    struct InitiatorSetupOptions
+    {
+        /** \brief Desired completion-queue depth.
+         *
+         * When left empty the implementation default
+         * (CompletionQueue::Attributes::DEFAULT_SIZE) is used.
+         */
+        std::optional<std::size_t> cqDepth;
+    };
+
     /** \brief Abstract base class for Initiator implementations.
      */
     class Initiator
     {
+    public:
+        struct Ready
+        {};
+
+        struct NotReady
+        {};
+
+        struct Interrupted
+        {};
+
+        using MakeProgressResult = std::variant<Ready, NotReady, Interrupted>;
+
     public:
         virtual ~Initiator() = default;
 
@@ -69,13 +95,13 @@ namespace mxl::lib::fabrics::ofi
          *
          * This is the non-blocking version of the progress function.
          */
-        virtual bool makeProgress() = 0;
+        virtual MakeProgressResult makeProgress() = 0;
 
         /** \brief Attempts to progress execution, including connection management and data operations.
          *
          * This is the blocking version of the progress function.
          */
-        virtual bool makeProgressBlocking(std::chrono::steady_clock::duration) = 0;
+        virtual MakeProgressResult makeProgressBlocking(std::chrono::steady_clock::duration) = 0;
 
         /** \brief Shut down the initiator gracefully.
          *
@@ -115,8 +141,9 @@ namespace mxl::lib::fabrics::ofi
          * based on the provided configuration.
          *
          * \param config The configuration to use for setting up the initiator.
+         * \param options Optional tuning parameters (e.g. completion queue depth).
          */
-        void setup(mxlFabricsInitiatorConfig const& config);
+        void setup(mxlFabricsInitiatorConfig const& config, InitiatorSetupOptions const& options = {});
 
         /** \copydoc Initiator::addTarget()
          */
@@ -141,11 +168,11 @@ namespace mxl::lib::fabrics::ofi
 
         /** \copydoc Initiator::makeProgress()
          */
-        bool makeProgress();
+        Initiator::MakeProgressResult makeProgress();
 
         /** \copydoc Initiator::makeProgressBlocking()
          */
-        bool makeProgressBlocking(std::chrono::steady_clock::duration);
+        Initiator::MakeProgressResult makeProgressBlocking(std::chrono::steady_clock::duration);
 
     private:
         std::unique_ptr<Initiator> _inner; /**< The underlying initiator implementation. */

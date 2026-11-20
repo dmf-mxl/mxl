@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cstring>
 #include <algorithm>
+#include <atomic>
 #include <filesystem>
 #include <memory>
 #include <mutex>
@@ -15,7 +16,7 @@
 #include <unistd.h>
 #include <uuid.h>
 #include <mxl/platform.h>
-#include "mxl-internal/DiscreteFlowWriter.hpp"
+#include "mxl-internal/FlowWriter.hpp"
 #include "mxl-internal/Logging.hpp"
 #include "mxl-internal/PathUtils.hpp"
 #include "mxl-internal/Timing.hpp"
@@ -30,6 +31,25 @@
 
 namespace mxl::lib
 {
+    namespace
+    {
+        /**
+         * @brief Record a consumer access time using atomic stores for event flows.
+         * @param[in,out] info Shared flow metadata whose lastReadTime is updated.
+         * @param time Access timestamp in TAI nanoseconds.
+         */
+        void updateReadTime(mxlFlowInfo& info, std::uint64_t time) noexcept
+        {
+            std::atomic_ref{info.runtime.lastReadTime}.store(time, std::memory_order_release);
+        }
+
+#ifdef __APPLE__
+        constexpr auto VNODE_EVENTS = static_cast<unsigned int>(NOTE_DELETE | NOTE_WRITE | NOTE_ATTRIB);
+
+        using KEvent = struct kevent;
+#endif
+    }
+
     DomainWatcher::DomainWatcher(std::filesystem::path const& in_domain)
         : _domain{in_domain}
         , _running{true}
@@ -41,7 +61,8 @@ namespace mxl::lib
         }
 #ifdef __APPLE__
         /* Open a kernel queue. */
-        if ((_kq = kqueue()) < 0)
+        _kq = kqueue();
+        if (_kq < 0)
         {
             auto const error = errno;
             throw std::system_error(error, std::generic_category(), "Failed to create a kqueue");
@@ -170,8 +191,8 @@ namespace mxl::lib
 
     std::size_t DomainWatcher::count(uuids::uuid id) const noexcept
     {
-        auto lock = std::lock_guard{_mutex};
-        auto it = std::ranges::find_if(_watches, [id](auto const& item) { return item.second.id == id; });
+        auto lock = std::scoped_lock{_mutex};
+        auto it = std::ranges::find_if(_watches, [id](auto const& item) noexcept { return item.second.id == id; });
         if (it == _watches.end())
         {
             return 0;
@@ -182,11 +203,11 @@ namespace mxl::lib
 
     std::size_t DomainWatcher::size() const noexcept
     {
-        auto lock = std::lock_guard{_mutex};
+        auto lock = std::scoped_lock{_mutex};
         return _watches.size();
     }
 
-    void DomainWatcher::addFlow(DiscreteFlowWriter* writer, uuids::uuid id)
+    void DomainWatcher::addFlow(FlowWriter* writer, uuids::uuid id)
     {
         auto record = DomainWatcherRecord{
             .id = id,
@@ -195,13 +216,13 @@ namespace mxl::lib
             .flowData = {},
         };
         {
-            auto lock = std::lock_guard{_mutex};
+            auto lock = std::scoped_lock{_mutex};
             auto existingWd = -1;
 
             // Check if this flow is already being watched
             for (auto const& [wd, rec] : _watches)
             {
-                if (rec == record)
+                if (rec.id == record.id)
                 {
                     existingWd = wd;
                     record.flowData = rec.flowData;
@@ -214,7 +235,25 @@ namespace mxl::lib
                 MXL_DEBUG("Record for {} not found, creating one.", uuids::to_string(record.id));
 
 #ifdef __APPLE__
-                existingWd = ::open(record.fileName.c_str(), O_EVTONLY);
+                existingWd = ::open(record.fileName.c_str(), O_EVTONLY | O_CLOEXEC);
+                if (existingWd != -1)
+                {
+                    auto change = KEvent{};
+                    EV_SET(&change,
+                        existingWd,
+                        EVFILT_VNODE,
+                        EV_ADD | EV_CLEAR,
+                        VNODE_EVENTS,
+                        0,
+                        std::bit_cast<void*>(static_cast<std::uintptr_t>(existingWd)));
+                    if (::kevent(_kq, &change, 1, nullptr, 0, nullptr) == -1)
+                    {
+                        auto const error = errno;
+                        ::close(existingWd);
+                        errno = error;
+                        existingWd = -1;
+                    }
+                }
 #elif defined __linux__
                 // if not found, add the watch and add it to the maps
                 existingWd = ::inotify_add_watch(_inotifyFd, record.fileName.c_str(), IN_ACCESS | IN_ATTRIB);
@@ -231,13 +270,13 @@ namespace mxl::lib
                 }
             }
 
-            record.flowData = std::make_shared<DiscreteFlowData>(
-                makeFlowDataFilePath(_domain, uuids::to_string(record.id)).c_str(), AccessMode::READ_WRITE, LockMode::None);
+            record.flowData = std::make_shared<SharedMemoryInstance<Flow>>(
+                makeFlowDataFilePath(_domain, uuids::to_string(record.id)).c_str(), AccessMode::READ_WRITE, 0U, LockMode::None);
             _watches.emplace(existingWd, std::move(record));
         }
     }
 
-    void DomainWatcher::removeFlow(DiscreteFlowWriter* writer, uuids::uuid id)
+    void DomainWatcher::removeFlow(FlowWriter* writer, uuids::uuid id)
     {
         auto record = DomainWatcherRecord{
             .id = id,
@@ -246,10 +285,10 @@ namespace mxl::lib
             .flowData = {},
         };
         {
-            auto lock = std::lock_guard{_mutex};
+            auto lock = std::scoped_lock{_mutex};
 
             // Remove the record for this writer
-            auto it = std::ranges::find_if(_watches, [record](auto const& item) { return item.second == record; });
+            auto it = std::ranges::find_if(_watches, [record](auto const& item) noexcept { return item.second == record; });
             if (it == _watches.end())
             {
                 return;
@@ -286,13 +325,16 @@ namespace mxl::lib
 
         while (_running)
         {
-            timespec timeout;
-            timeout.tv_sec = 0;          // 0 seconds
-            timeout.tv_nsec = 250000000; // 250 milliseconds
+            auto timeout = timespec{.tv_sec = 0, .tv_nsec = 250000000}; // 250 milliseconds
 
             setWatch();
 
-            int eventCount = kevent(_kq, _eventsToMonitor.data(), _eventsToMonitor.size(), _eventData.data(), _eventsToMonitor.size(), &timeout);
+            auto const eventCount = kevent(_kq,
+                _eventsToMonitor.data(),
+                static_cast<int>(_eventsToMonitor.size()),
+                _eventData.data(),
+                static_cast<int>(_eventData.size()),
+                &timeout);
             if (eventCount < 0)
             {
                 auto const error = errno;
@@ -373,11 +415,9 @@ namespace mxl::lib
 
     void DomainWatcher::setWatch()
     {
-        auto lock = std::lock_guard{_mutex};
+        auto lock = std::scoped_lock{_mutex};
 
         /* Set up a list of events to monitor. */
-        constexpr unsigned int vnodeEvents = NOTE_DELETE | NOTE_WRITE | NOTE_ATTRIB;
-
         _eventsToMonitor.resize(_watches.size() + 1);
         _eventData.resize(_watches.size() + 1);
 
@@ -386,7 +426,7 @@ namespace mxl::lib
         for (auto const& [wd, rec] : _watches)
         {
             EV_SET(
-                &_eventsToMonitor[index], wd, EVFILT_VNODE, EV_ADD | EV_CLEAR, vnodeEvents, 0, std::bit_cast<void*>(static_cast<std::uintptr_t>(wd)));
+                &_eventsToMonitor[index], wd, EVFILT_VNODE, EV_ADD | EV_CLEAR, VNODE_EVENTS, 0, std::bit_cast<void*>(static_cast<std::uintptr_t>(wd)));
             index++;
         }
 
@@ -396,7 +436,7 @@ namespace mxl::lib
 
     void DomainWatcher::processPendingEvents(int numEvents)
     {
-        auto lock = std::lock_guard{_mutex};
+        auto lock = std::scoped_lock{_mutex};
         auto time = currentTime(Clock::TAI);
         for (int eventIndex = 0; eventIndex < numEvents; eventIndex++)
         {
@@ -414,14 +454,14 @@ namespace mxl::lib
             }
 
             auto& [unused, rec] = *it;
-            rec.flowData->flowInfo()->runtime.lastReadTime = time.value;
+            updateReadTime(rec.flowData->get()->info, time.value);
         }
     }
 
 #elif defined __linux__
     void DomainWatcher::processEventBuffer(::inotify_event const* buffer, std::size_t count)
     {
-        auto lock = std::lock_guard{_mutex};
+        auto lock = std::scoped_lock{_mutex};
         auto time = currentTime(Clock::TAI);
         for (auto p = buffer; p != buffer + count; ++p)
         {
@@ -439,7 +479,7 @@ namespace mxl::lib
             try
             {
                 auto& [_, record] = *it;
-                record.flowData->flowInfo()->runtime.lastReadTime = time.value;
+                updateReadTime(record.flowData->get()->info, time.value);
             }
             catch (std::exception const& e)
             {

@@ -4,18 +4,14 @@
 #pragma once
 
 #include <cstdint>
-#include <atomic>
 #include <filesystem>
 #include <memory>
-#include <mutex>
 #include <string>
-#include <thread>
-#include <unordered_map>
-#include <variant>
 #include <unistd.h>
 #include <uuid.h>
 #include <mxl/platform.h>
-#include "mxl-internal/DiscreteFlowData.hpp"
+#include "mxl-internal/Flow.hpp"
+#include "mxl-internal/SharedMemory.hpp"
 
 #if defined __linux__
 #   include <sys/eventfd.h>
@@ -26,25 +22,25 @@
 
 namespace mxl::lib
 {
-#ifdef __APPLE__
+#if defined __APPLE__
     constexpr static std::uintptr_t USER_IDENT = 0x13acab2142;
 #endif
 
-    class DiscreteFlowWriter;
+    class FlowWriter;
 
     /// Entry stored in the unordered_maps
     struct DomainWatcherRecord
     {
-        typedef std::shared_ptr<DomainWatcherRecord> ptr;
+        using ptr = std::shared_ptr<DomainWatcherRecord>; ///< Shared ownership of a watch record.
 
         /// flow id
         uuids::uuid id;
         /// file being watched
         std::string fileName;
 
-        DiscreteFlowWriter* fw;
+        FlowWriter* fw;                                       ///< Non-owning event or discrete writer registered with the watcher.
 
-        std::shared_ptr<DiscreteFlowData> flowData;
+        std::shared_ptr<SharedMemoryInstance<Flow>> flowData; ///< Shared mapping used to update the flow's last-read time.
 
         [[nodiscard]]
         bool operator==(DomainWatcherRecord const& other) const noexcept
@@ -62,7 +58,7 @@ namespace mxl::lib
     class MXL_EXPORT DomainWatcher
     {
     public:
-        typedef std::shared_ptr<DomainWatcher> ptr;
+        using ptr = std::shared_ptr<DomainWatcher>; ///< Shared ownership of the domain watcher.
 
         ///
         /// Constructor that initializes inotify and epoll/kqueue, and starts the event processing thread.
@@ -81,7 +77,7 @@ namespace mxl::lib
         /// \param writer The FlowWriter reference
         /// \param id Id of the flow the FlowWriter is writing to.
         ///
-        void addFlow(DiscreteFlowWriter* writer, uuids::uuid id);
+        void addFlow(FlowWriter* writer, uuids::uuid id);
 
         ///
         /// Remove a FlowWriter reference from the DomainWatcher.
@@ -89,7 +85,7 @@ namespace mxl::lib
         /// it stops watching the flow.
         /// \param writer The flow writer reference to remove.
         /// \param id Id of the flow the FlowWriter is writing to.
-        void removeFlow(DiscreteFlowWriter* writer, uuids::uuid id);
+        void removeFlow(FlowWriter* writer, uuids::uuid id);
 
         ///
         /// Stops the running thread
@@ -99,14 +95,14 @@ namespace mxl::lib
             _running = false;
             if (_watchThread.joinable())
             {
-#ifdef __linux__
+#if defined __linux__
                 auto value = ::eventfd_t{1};
                 if (::write(_eventFd, &value, sizeof(::eventfd_t)) < 0)
                 {
                     auto const error = errno;
                     MXL_ERROR("Failed to signal DomainWatcher stop request: {}", ::strerror(error));
                 }
-#elif __APPLE__
+#elif defined __APPLE__
                 struct kevent kev{};
                 EV_SET(&kev, USER_IDENT, EVFILT_USER, 0, NOTE_TRIGGER, 0, nullptr);
                 if (::kevent(_kq, &kev, 1, nullptr, 0, nullptr) < 0)
@@ -135,7 +131,7 @@ namespace mxl::lib
         /// (invokes the callback)
         void processEvents();
 
-#ifdef __linux__
+#if defined __linux__
         void processEventBuffer(struct ::inotify_event const* buffer, std::size_t count);
 #elif defined __APPLE__
         void setWatch();
@@ -145,7 +141,7 @@ namespace mxl::lib
         /// The monitored domain
         std::filesystem::path _domain;
 
-#ifdef __APPLE__
+#if defined __APPLE__
         int _kq;
         std::vector<struct ::kevent> _eventsToMonitor;
         std::vector<struct ::kevent> _eventData;

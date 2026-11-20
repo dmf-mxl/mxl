@@ -10,8 +10,8 @@
 #include <rdma/fabric.h>
 #include "DataLayout.hpp"
 #include "Endpoint.hpp"
-#include "GrainSlices.hpp"
 #include "Region.hpp"
+#include "SliceRange.hpp"
 #include "Target.hpp"
 #include "TargetInfo.hpp"
 
@@ -134,7 +134,6 @@ namespace mxl::lib::fabrics::ofi
      * \param layout The data layout.
      * \param regions The regions involved.
      * \param maxSyncBatchSize The maximum batch size for transfers.
-     * \param regionsPerGrain Number of registered regions per discrete grain (1 = contiguous header+payload, 2 = split).
      * \return A unique pointer to the selected ingress protocol.
      */
     [[nodiscard]]
@@ -144,9 +143,9 @@ namespace mxl::lib::fabrics::ofi
     /** \brief Select an appropriate egress protocol based on the data layout
      * \param layout The data layout.
      * \param regions The regions involved.
-     * \param regionsPerGrain Number of registered regions per discrete grain (1 = contiguous header+payload, 2 = split).
      * \return A unique pointer to the selected egress protocol.
      */
     [[nodiscard]]
-    std::unique_ptr<EgressProtocolTemplate> selectEgressProtocol(DataLayout const& layout, std::vector<Region> regions, std::size_t regionsPerGrain = 1);
+    std::unique_ptr<EgressProtocolTemplate> selectEgressProtocol(DataLayout const& layout, std::vector<Region> regions,
+        std::size_t regionsPerGrain = 1);
 }

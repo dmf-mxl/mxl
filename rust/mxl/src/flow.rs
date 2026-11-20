@@ -39,6 +39,7 @@ pub struct FlowInfo {
     pub runtime: FlowRuntimeInfo,
 }
 
+#[derive(Clone)]
 pub struct FlowConfigInfo {
     pub(crate) value: mxl_sys::FlowConfigInfo,
 }
@@ -122,10 +123,12 @@ impl CommonFlowConfigInfo<'_> {
         self.0.maxSyncBatchSizeHint
     }
 
+    #[deprecated(note = "MXL never used the payload location. It is always 0.")]
     pub fn payload_location(&self) -> u32 {
         self.0.payloadLocation
     }
 
+    #[deprecated(note = "MXL never used the device index. It is always -1.")]
     pub fn device_index(&self) -> i32 {
         self.0.deviceIndex
     }

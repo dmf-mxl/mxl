@@ -5,7 +5,9 @@
 #include "Region.hpp"
 #include <cassert>
 #include <cstdint>
+#include <cstring>
 #include <algorithm>
+#include <string_view>
 #include <sys/uio.h>
 #include <mxl-internal/DiscreteFlowData.hpp>
 #include <mxl-internal/Flow.hpp>
@@ -139,26 +141,76 @@ namespace mxl::lib::fabrics::ofi
         if (mxlIsDiscreteDataFormat(static_cast<int>(flow.flowInfo()->config.common.format)))
         {
             auto& discreteFlow = static_cast<DiscreteFlowData&>(flow);
-            auto const stride = mxlRegions.regionsPerGrain();
 
-            if ((stride == 0) || ((mxlRegions._regions.size() % stride) != 0) ||
-                ((mxlRegions._regions.size() / stride) != discreteFlow.grainCount()))
+            if (mxlRegions._regions.size() != discreteFlow.grainCount() * mxlRegions._regionsPerGrain)
             {
-                throw Exception::invalidState("Unexpected number of regions in discrete flow (regions={}, grains={}, stride={})",
-                    mxlRegions._regions.size(),
-                    discreteFlow.grainCount(),
-                    stride);
+                throw Exception::invalidState("Unexpected number of grains in discrete flow");
             }
 
+            // The grain header is the first region of each grain.
             for (std::size_t i = 0; i < discreteFlow.grainCount(); ++i)
             {
-                auto& headerRegion = mxlRegions._regions[i * stride];
+                auto& headerRegion = mxlRegions._regions[i * mxlRegions._regionsPerGrain];
                 headerRegion.grainIndexPtr = &discreteFlow.grainAt(i)->header.info.index;
                 headerRegion.validSlicesPtr = &discreteFlow.grainAt(i)->header.info.validSlices;
             }
         }
 
         return mxlRegions;
+    }
+
+    namespace
+    {
+        /** Storage type of payload in CUDA device memory. Defined by the cuda-linear backend, see cuda_device_pointer.h. */
+        constexpr auto cudaDevicePointerStorageType = "cuda-device-pointer";
+
+        /** Byte offset of the device index in mxlGrainStorageLayout::reserved for cuda-device-pointer storage. The layout is
+         * mxlCudaGrainStorageLayout: int32_t deviceIndex first. The fabrics library does not depend on the backend header.
+         */
+        int cudaDeviceIndexFromLayout(mxlGrainStorageLayout const& layout) noexcept
+        {
+            auto deviceIndex = std::int32_t{-1};
+            std::memcpy(&deviceIndex, layout.reserved, sizeof(deviceIndex));
+            return deviceIndex;
+        }
+
+        /** Pointer of a slot in process memory. Only the storage types fabrics knows are supported.
+         * The cuda-device-pointer slot starts with the device pointer (mxlCudaGrainStorage::pointer).
+         */
+        std::uintptr_t slotPointer(std::string_view storageType, mxlGrainStorage const& slot)
+        {
+            if (storageType == MXL_PAYLOAD_STORAGE_HOST_POINTER)
+            {
+                return reinterpret_cast<std::uintptr_t>(slot.host.pointer);
+            }
+            if (storageType == cudaDevicePointerStorageType)
+            {
+                void* pointer = nullptr;
+                std::memcpy(&pointer, slot.reserved, sizeof(pointer));
+                return reinterpret_cast<std::uintptr_t>(pointer);
+            }
+            throw Exception::make(MXL_ERR_UNSUPPORTED_OPERATION, "Fabrics does not support the payload storage type '{}'", storageType);
+        }
+
+        /** Memory location of the payloads of a storage type. */
+        Region::Location slotLocation(mxlGrainStorageLayout const& layout)
+        {
+            auto const storageType = std::string_view{layout.storageType};
+            if (storageType == MXL_PAYLOAD_STORAGE_HOST_POINTER)
+            {
+                return Region::Location::host();
+            }
+            if (storageType == cudaDevicePointerStorageType)
+            {
+                auto const deviceIndex = cudaDeviceIndexFromLayout(layout);
+                if (deviceIndex < 0)
+                {
+                    throw Exception::invalidState("The payload is in CUDA device memory, but this process has no device to access it");
+                }
+                return Region::Location::cuda(deviceIndex);
+            }
+            throw Exception::make(MXL_ERR_UNSUPPORTED_OPERATION, "Fabrics does not support the payload storage type '{}'", layout.storageType);
+        }
     }
 
     MxlRegions mxlFabricsRegionsFromFlow(FlowData const& flow)
@@ -170,78 +222,64 @@ namespace mxl::lib::fabrics::ofi
         if (mxlIsDiscreteDataFormat(static_cast<int>(flow.flowInfo()->config.common.format)))
         {
             auto const& discreteFlow = static_cast<DiscreteFlowData const&>(flow);
-            auto const payloadLocation = static_cast<mxlPayloadLocation>(flow.flowInfo()->config.common.payloadLocation);
             auto regions = std::vector<Region>{};
             auto regionsPerGrain = std::size_t{1};
 
-            if (payloadLocation == MXL_PAYLOAD_LOCATION_HOST_MEMORY)
+            if (flow.flowInfo()->version == FLOW_DATA_VERSION_PAYLOAD_BACKEND)
             {
-                regions.reserve(discreteFlow.grainCount());
-                for (auto i = std::size_t{0}; i < discreteFlow.grainCount(); ++i)
-                {
-                    auto const* grain = discreteFlow.grainAt(i);
-                    auto const grainInfoBaseAddr = reinterpret_cast<std::uintptr_t>(grain);
-                    auto const grainInfoSize = sizeof(GrainHeader);
-                    auto const grainPayloadSize = grain->header.info.grainSize;
-
-                    // Host-mapped payloads remain embedded after the grain header (single contiguous MR).
-                    regions.emplace_back(grainInfoBaseAddr, grainInfoSize + grainPayloadSize, nullptr, nullptr, Region::Location::host());
-                }
-            }
-            else if (payloadLocation == MXL_PAYLOAD_LOCATION_DEVICE_MEMORY)
-            {
+                // The payload is held by a payload backend, so the grain file has only the header. Each grain registers two regions: the
+                // header in host memory, then the payload at the address the storage gives for the slot.
                 regionsPerGrain = 2;
-                regions.reserve(discreteFlow.grainCount() * regionsPerGrain);
+                auto const grainCount = discreteFlow.grainCount();
+                regions.reserve(grainCount * regionsPerGrain);
 
-                for (auto i = std::size_t{0}; i < discreteFlow.grainCount(); ++i)
+                auto slots = std::vector<mxlGrainStorage>(grainCount);
+                if (auto const status = discreteFlow.mapSlots(static_cast<std::uint32_t>(grainCount), slots.data()); status != MXL_STATUS_OK)
+                {
+                    throw Exception::make(status, "Failed to map the payload storage of the flow for fabrics (status {})", static_cast<int>(status));
+                }
+
+                auto const storageLayout = discreteFlow.storageLayout();
+                auto const location = slotLocation(storageLayout);
+                auto const storageType = std::string_view{storageLayout.storageType};
+
+                for (auto i = std::size_t{0}; i < grainCount; ++i)
                 {
                     auto const* grain = discreteFlow.grainAt(i);
-                    auto const headerBase = reinterpret_cast<std::uintptr_t>(grain);
-
-                    mxlPayloadView payloadView{};
-                    if (auto const status = discreteFlow.payloadViewAt(i, &payloadView); status != MXL_STATUS_OK)
+                    auto const pointer = slotPointer(storageType, slots[i]);
+                    if (pointer == 0)
                     {
-                        throw Exception::make(status,
-                            "Failed to resolve device grain payload for fabrics registration at slot {} (status {})",
-                            i,
-                            static_cast<int>(status));
-                    }
-                    if (payloadView.kind != MXL_PAYLOAD_KIND_DEVICE_PTR)
-                    {
-                        throw Exception::make(MXL_ERR_UNSUPPORTED_OPERATION,
-                            "Fabrics discrete device flows currently require DEVICE_PTR payloads (got kind {})",
-                            payloadView.kind);
-                    }
-                    if (payloadView.u.devicePtr == 0)
-                    {
-                        throw Exception::invalidState("Device payload pointer is null at grain slot {}", i);
+                        throw Exception::invalidState("Payload pointer is null at grain slot {}", i);
                     }
 
-                    regions.emplace_back(headerBase, sizeof(GrainHeader), nullptr, nullptr, Region::Location::host());
-                    regions.emplace_back(static_cast<std::uintptr_t>(payloadView.u.devicePtr),
-                        payloadView.grainSize,
-                        nullptr,
-                        nullptr,
-                        Region::Location::cuda(payloadView.deviceIndex));
+                    regions.emplace_back(reinterpret_cast<std::uintptr_t>(grain), sizeof(GrainHeader), nullptr, nullptr, Region::Location::host());
+                    regions.emplace_back(pointer, grain->header.info.grainSize, nullptr, nullptr, location);
                 }
             }
             else
             {
-                throw Exception::make(MXL_ERR_UNSUPPORTED_OPERATION, "Unsupported payload location {}", static_cast<int>(payloadLocation));
+                regions.reserve(discreteFlow.grainCount());
+                for (auto i = std::size_t{0}; i < discreteFlow.grainCount(); ++i)
+                {
+                    auto grain = discreteFlow.grainAt(i);
+
+                    auto grainInfoBaseAddr = reinterpret_cast<std::uintptr_t>(discreteFlow.grainAt(i));
+                    auto grainInfoSize = sizeof(GrainHeader);
+                    auto grainPayloadSize = grain->header.info.grainSize;
+
+                    // Host payloads follow the header in the grain file, so one contiguous region covers both.
+                    regions.emplace_back(grainInfoBaseAddr, grainInfoSize + grainPayloadSize, nullptr, nullptr, Region::Location::host());
+                }
             }
 
+            auto const totalSlices = discreteFlow.grainAt(0)->header.info.totalSlices;
             return {std::move(regions),
-                DataLayout::fromDiscrete(std::to_array(discreteFlow.flowInfo()->config.discrete.sliceSizes)),
+                DataLayout::fromDiscrete(std::to_array(discreteFlow.flowInfo()->config.discrete.sliceSizes), totalSlices),
                 discreteFlow.flowInfo()->config.common.maxSyncBatchSizeHint,
                 regionsPerGrain};
         }
         else if (mxlIsContinuousDataFormat(static_cast<int>(flow.flowInfo()->config.common.format)))
         {
-            if (flow.flowInfo()->config.common.payloadLocation != MXL_PAYLOAD_LOCATION_HOST_MEMORY)
-            {
-                throw Exception::make(MXL_ERR_UNSUPPORTED_OPERATION, "Continuous flows with non-host payloads are not supported by fabrics");
-            }
-
             auto const& continuousFlow = static_cast<ContinuousFlowData const&>(flow);
             auto regions = std::vector<Region>{};
 
@@ -254,8 +292,7 @@ namespace mxl::lib::fabrics::ofi
 
             return {std::move(regions),
                 DataLayout::fromContinuous(continuousFlow.sampleWordSize(), continuousFlow.channelCount(), continuousFlow.channelBufferLength()),
-                continuousFlow.flowInfo()->config.common.maxSyncBatchSizeHint,
-                1};
+                continuousFlow.flowInfo()->config.common.maxSyncBatchSizeHint};
         }
         else
         {
@@ -263,43 +300,26 @@ namespace mxl::lib::fabrics::ofi
         }
     }
 
-    namespace
-    {
-        std::size_t headerRegionIndex(std::uint16_t slot, std::size_t regionsPerGrain, std::size_t regionCount)
-        {
-            if ((regionsPerGrain == 0) || ((regionCount % regionsPerGrain) != 0))
-            {
-                throw Exception::invalidState("Invalid regionsPerGrain {} for region count {}", regionsPerGrain, regionCount);
-            }
-
-            auto const grainCount = regionCount / regionsPerGrain;
-            if (slot >= grainCount)
-            {
-                throw Exception::invalidArgument("Invalid ring buffer slot number: {}, grain count: {}", slot, grainCount);
-            }
-
-            return static_cast<std::size_t>(slot) * regionsPerGrain;
-        }
-    }
-
     std::uint64_t getGrainIndexInRingSlot(std::vector<Region> const& regions, std::uint16_t slot, std::size_t regionsPerGrain)
     {
-        auto const index = headerRegionIndex(slot, regionsPerGrain, regions.size());
-        if (regions[index].grainIndexPtr == nullptr)
+        auto const headerIndex = static_cast<std::size_t>(slot) * regionsPerGrain;
+        if ((regionsPerGrain == 0) || (headerIndex >= regions.size()))
         {
-            throw Exception::invalidState("Grain index pointer is not set for ring slot {}", slot);
+            throw Exception::invalidArgument("Invalid ring buffer slot number: {}, ring buffer len: {}", slot, regions.size() / regionsPerGrain);
         }
-        return *regions[index].grainIndexPtr;
+
+        return *regions[headerIndex].grainIndexPtr;
     }
 
     void setValidSlicesForGrain(std::vector<Region> const& regions, std::uint16_t slot, std::uint16_t validSlices, std::size_t regionsPerGrain)
     {
-        auto const index = headerRegionIndex(slot, regionsPerGrain, regions.size());
-        if (regions[index].validSlicesPtr == nullptr)
+        auto const headerIndex = static_cast<std::size_t>(slot) * regionsPerGrain;
+        if ((regionsPerGrain == 0) || (headerIndex >= regions.size()))
         {
-            throw Exception::invalidState("Valid slices pointer is not set for ring slot {}", slot);
+            throw Exception::invalidArgument("Invalid ring buffer slot number: {}, ring buffer len: {}", slot, regions.size() / regionsPerGrain);
         }
-        *regions[index].validSlicesPtr = validSlices;
+
+        *regions[headerIndex].validSlicesPtr = validSlices;
     }
 
     bool regionsNeedHmem(std::vector<Region> const& regions) noexcept

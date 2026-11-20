@@ -3,6 +3,10 @@
 
 #pragma once
 
+/** @file
+ * @brief Public configuration and runtime metadata for MXL flows.
+ */
+
 #ifdef __cplusplus
 #   include <cstdint>
 #else
@@ -11,6 +15,7 @@
 
 #include <sys/types.h>
 #include <mxl/dataformat.h>
+#include <mxl/platform.h>
 #include <mxl/rational.h>
 
 /**
@@ -28,61 +33,14 @@ extern "C"
 {
 #endif
     /**
-     * The payload location of the grain
+     * The payload location of the grain.
+     * \deprecated MXL never used this. See mxlCommonFlowConfigInfo.payloadLocation.
      */
     typedef enum mxlPayloadLocation
     {
-        MXL_PAYLOAD_LOCATION_HOST_MEMORY = 0,
-        MXL_PAYLOAD_LOCATION_DEVICE_MEMORY = 1,
-    } mxlPayloadLocation;
-
-    /**
-     * How a grain payload can be addressed by a reader or writer.
-     *
-     * Host-mapped payloads (the default today) use \ref MXL_PAYLOAD_KIND_HOST_PTR and are also
-     * exposed through the classic \c uint8_t* grain accessors. Device and opaque backends use the
-     * extended \c mxlPayloadView accessors (\c mxlFlowWriterOpenGrainEx / \c mxlFlowReaderGetGrainEx).
-     */
-    typedef enum mxlPayloadKind
-    {
-        /** Linear payload in the calling process's address space. \c mxlPayloadView::u.hostPtr is valid. */
-        MXL_PAYLOAD_KIND_HOST_PTR = 0,
-        /** Linear device address (e.g. CUDA device pointer). \c mxlPayloadView::u.devicePtr is valid. */
-        MXL_PAYLOAD_KIND_DEVICE_PTR = 1,
-        /** Exported DMA-BUF file descriptor. \c mxlPayloadView::u.dmaBufFd is valid. */
-        MXL_PAYLOAD_KIND_DMABUF = 2,
-        /** Backend-specific opaque resource (e.g. CUDA array, Vulkan image). */
-        MXL_PAYLOAD_KIND_OPAQUE = 3,
-    } mxlPayloadKind;
-
-    /**
-     * Description of a grain payload backing store.
-     *
-     * Grain headers and flow synchronization always live in host shared memory. This structure
-     * describes only the payload bytes that follow (or are associated with) a grain header.
-     */
-    typedef struct mxlPayloadView
-    {
-        /** Payload addressing kind. \see mxlPayloadKind */
-        uint32_t kind;
-        /** Logical payload size in bytes (matches \c mxlGrainInfo::grainSize). */
-        uint32_t grainSize;
-        /** Device index when the payload lives in device memory; -1 for host memory. */
-        int32_t deviceIndex;
-        /** Reserved for future use; must be zero. */
-        uint32_t reserved;
-        union
-        {
-            /** Valid when kind == MXL_PAYLOAD_KIND_HOST_PTR. */
-            uint8_t* hostPtr;
-            /** Valid when kind == MXL_PAYLOAD_KIND_DEVICE_PTR. */
-            uint64_t devicePtr;
-            /** Valid when kind == MXL_PAYLOAD_KIND_DMABUF. */
-            int64_t dmaBufFd;
-            /** Valid when kind == MXL_PAYLOAD_KIND_OPAQUE. */
-            uint64_t opaqueHandle;
-        } u;
-    } mxlPayloadView;
+        MXL_PAYLOAD_LOCATION_HOST_MEMORY MXL_DEPRECATED("MXL never used the payload location.") = 0,
+        MXL_PAYLOAD_LOCATION_DEVICE_MEMORY MXL_DEPRECATED("MXL never used the payload location.") = 1,
+    } mxlPayloadLocation MXL_DEPRECATED("MXL never used the payload location.");
 
     /**
      * Immutable metadata about a media flow that is independent of the data
@@ -104,8 +62,9 @@ extern "C"
 
         /**
          * The number of grains per second expressed as a rational.
-         * For VIDEO and DATA this value must match the 'grain_rate' found in the flow descriptor.
+         * For VIDEO, DATA and EVENT this value must match the 'grain_rate' found in the flow descriptor.
          * For AUDIO flows this value must match the 'sample_rate' found in the flow descriptor.
+         * For EVENT flows this controls buffer capacity; queue positions are independent of time.
          */
         mxlRational grainRate;
 
@@ -123,13 +82,17 @@ extern "C"
         uint32_t maxSyncBatchSizeHint;
 
         /**
-         * And indication, where the payload memory is located.
-         * \see mxlPayloadLocation
+         * \deprecated MXL never used this field. Writers always set it to 0, and readers refuse to open a flow that has
+         * any other value, because they cannot find its payload. The field is kept so that the layout of this
+         * structure does not change.
          */
         uint32_t payloadLocation;
 
         /**
-         * Device index (if payload is in device memory). -1 if on host memory.
+         * \deprecated MXL never used this field. Writers always set it to -1. A device index is only valid in the
+         * process that reports it, so it cannot describe a flow shared between processes. The field is kept so that
+         * the layout of this structure does not change. The storage type of mxlGrainStorageLayout describes the device
+         * that holds the payload, if any, in its reserved bytes, in the terms of the device API that storage uses.
          */
         int32_t deviceIndex;
 
@@ -163,6 +126,30 @@ extern "C"
          */
         uint8_t reserved[44];
     } mxlDiscreteFlowConfigInfo;
+
+    /**
+     * The type of event registry associated with the event flow.
+     * Refer to <a href="https://smpte-ra.org/smpte-st2110-41-ar">SMPTE ST 2110-41 AR</a> for SMPTE registry information.
+     */
+    typedef enum mxlEventRegistryType
+    {
+        MXL_EVENT_REGISTRY_TYPE_MXL = 0,  ///< Namespaced application DIT strings, such as `x-mxl:example`.
+        MXL_EVENT_REGISTRY_TYPE_SMPTE = 1 ///< SMPTE registry DIT strings without the 0x prefix.
+    } mxlEventRegistryType;
+
+    /**
+     * @brief Immutable event queue capacity and entry payload geometry (64 bytes).
+     * This is the event member of mxlFlowConfigInfo for MXL_DATA_FORMAT_EVENT.
+     */
+    typedef struct mxlEventFlowConfigInfo_t
+    {
+        /** Number of ring slots available for committed event entries, including fragments. */
+        uint32_t eventCount;
+        /** Maximum payload size of one event entry (a complete event or one fragment), in bytes. */
+        uint32_t eventPayloadSize;
+        /** @brief Reserved bytes that pad this configuration to 64 bytes; leave zero. */
+        uint8_t reserved[56];
+    } mxlEventFlowConfigInfo;
 
     /**
      * Immutable metadata about an AUDIO flow.
@@ -201,6 +188,7 @@ extern "C"
         {
             mxlDiscreteFlowConfigInfo discrete;
             mxlContinuousFlowConfigInfo continuous;
+            mxlEventFlowConfigInfo event; ///< Event queue geometry when common.format is MXL_DATA_FORMAT_EVENT.
         };
 
     } mxlFlowConfigInfo;
@@ -211,7 +199,9 @@ extern "C"
      */
     typedef struct mxlFlowRuntimeInfo_t
     {
-        /** The current head index of the ringbuffer(s) of this flow. */
+        /** The last committed index of the ringbuffer(s) of this flow.
+         * For event flows, MXL_UNDEFINED_INDEX until the first event is committed at index zero.
+         */
         uint64_t headIndex;
 
         /** The last time a producer wrote to the flow in nanoseconds since the epoch. */

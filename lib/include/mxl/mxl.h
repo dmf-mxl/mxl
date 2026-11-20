@@ -21,7 +21,11 @@ extern "C"
     typedef enum mxlStatus
     {
         MXL_STATUS_OK,
+
+        // Do not check for MXL_ERR_UNKNOWN. Functions that return MXL_ERR_UNKNOWN in a certain situation, may return
+        // a more descriptive error code in the future and this would not be considered a breaking change.
         MXL_ERR_UNKNOWN,
+
         MXL_ERR_FLOW_NOT_FOUND,
         MXL_ERR_OUT_OF_RANGE_TOO_LATE,
         MXL_ERR_OUT_OF_RANGE_TOO_EARLY,
@@ -73,9 +77,7 @@ extern "C"
     /// Create a new MXL instance for a specific domain.
     ///
     /// \param in_mxlDomain The domain is the directory where the MXL ringbuffers files are stored.  It should live on a tmpfs filesystem.
-    /// \param in_options Optional JSON string. "payloadPlugins" is an array of
-    ///        shared-library paths loaded into the process-wide payload registry.
-    ///        MXL_PAYLOAD_PLUGIN_PATH is also searched (colon-separated).
+    /// \param in_options Optional JSON string containing additional SDK options. Currently not used.
     /// \return A pointer to the MXL instance or NULL if the instance could not be created.
     ///
     MXL_EXPORT

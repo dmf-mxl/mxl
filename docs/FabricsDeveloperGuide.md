@@ -1,7 +1,7 @@
 <!-- SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project. -->
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 
-# Fabrics Developer Guide
+# Usage
 
 This guide covers the `mxl-fabrics` C API for transferring MXL flows between hosts over network fabrics (RDMA, TCP, EFA, shared memory). It assumes familiarity with the MXL Flow API (`mxl/flow.h`) and basic flow reader/writer usage as described in [Usage](./Usage.md). For the internal design and implementation details see [Fabrics](./Fabrics.md).
 
@@ -181,6 +181,12 @@ mxlFabricsInitiatorConfig config = {
 
 mxlFabricsInitiatorSetup(initiator, &config, NULL);
 ```
+
+The `in_options` parameter accepts a JSON string. Currently the following option is recognized:
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `cqDepth` | number >= 1 | Depth of the initiator's completion queue. Each posted write produces one completion, so increase this when many writes are in flight at once, for example with many targets or many slices per grain. |
 
 Select an interface from `mxlFabricsGetInterfaces()` that is compatible with the target's interface (same provider, matching capabilities).
 

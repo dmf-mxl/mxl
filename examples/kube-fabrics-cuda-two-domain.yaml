@@ -5,16 +5,20 @@
 # This is not a drop-in for kube-example.yaml. Do not share a domain PVC.
 #
 # Fill in:
-#   __SRC_HOSTNAME__ / __DST_HOSTNAME__  — or delete nodeSelector for GPU scheduling
-#   image                                — CUDA + libfabric verbs + MXL_ENABLE_FABRICS_OFI
+#   __SRC_HOSTNAME__ / __DST_HOSTNAME__  - or delete nodeSelector for GPU scheduling
+#   __SRC_GPU_UUID__ / __DST_GPU_UUID__  - GPU UUIDs from nvidia-smi -L on each node
+#   image                                - CUDA + libfabric verbs + MXL_ENABLE_FABRICS_OFI
 #                                          (the stock examples/Dockerfile does not build this)
-#   nvidia.com/gpu                       — NVIDIA device plugin
-#   /dev/infiniband                      — or an RDMA device-plugin resource
-#   peermem / DMA-BUF                    — on the node
-#   ConfigMap mxl-fabrics-target-info    — after the target prints "Target info:"
+#   nvidia.com/gpu                       - NVIDIA device plugin. The pod must get the GPU
+#                                          whose UUID is passed to it.
+#   /dev/infiniband                      - or an RDMA device-plugin resource
+#   nvidia_peermem                       - loaded on the node. Without it the target fails to
+#                                          register device memory. DMA-BUF registration is not
+#                                          implemented yet.
+#   ConfigMap mxl-fabrics-target-info    - after the target prints "Target info:"
 #
-# Render hostnames:
-#   examples/scripts/render-kube-fabrics-template.sh src-node dst-node
+# Render hostnames and GPU UUIDs:
+#   examples/scripts/render-kube-fabrics-template.sh src-node dst-node GPU-<src> GPU-<dst>
 #
 ---
 apiVersion: v1
@@ -67,20 +71,7 @@ data:
       ]
     }
 ---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: mxl-fabrics-cuda-payload-src
-data:
-  payload.json: |
-    {
-      "payload": {
-        "location": "device",
-        "deviceIndex": 0,
-        "backend": "cuda-linear"
-      }
-    }
----
+# Payload options for the target's flow. The payload lives in the CUDA device with this UUID.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -89,9 +80,8 @@ data:
   payload.json: |
     {
       "payload": {
-        "location": "device",
-        "deviceIndex": 0,
-        "backend": "cuda-linear"
+        "backend": "cuda-linear",
+        "deviceUuid": "__DST_GPU_UUID__"
       }
     }
 ---
@@ -137,8 +127,6 @@ spec:
           env:
             - name: NVIDIA_DRIVER_CAPABILITIES
               value: compute,utility
-            - name: DST_GPU
-              value: "0"
             - name: TARGET_PORT
               value: "1234"
           resources:
@@ -163,7 +151,6 @@ spec:
                 -d /home/mxl/domain \
                 -f /home/mxl/config/flow.json \
                 --flow-options /home/mxl/payload/payload.json \
-                --device-index "${DST_GPU}" \
                 -p verbs \
                 -s "${TARGET_PORT}"
       volumes:
@@ -228,8 +215,6 @@ spec:
               mountPath: /home/mxl/domain
             - name: flow-config
               mountPath: /home/mxl/config
-            - name: payload-config
-              mountPath: /home/mxl/payload
             - name: target-info
               mountPath: /home/mxl/target-info
             - name: infiniband
@@ -240,10 +225,10 @@ spec:
             - -c
             - |
               set -euo pipefail
-              mxl-gst-testsrc \
+              mxl-gst-cuda-testsrc \
                 -d /home/mxl/domain \
                 -v /home/mxl/config/flow.json \
-                --video-options-file /home/mxl/payload/payload.json \
+                --device-uuid "__SRC_GPU_UUID__" \
                 -p ball &
               writer_pid=$!
               trap 'kill "${writer_pid}" 2>/dev/null || true' EXIT
@@ -274,9 +259,6 @@ spec:
         - name: flow-config
           configMap:
             name: mxl-fabrics-cuda-flow
-        - name: payload-config
-          configMap:
-            name: mxl-fabrics-cuda-payload-src
         - name: target-info
           configMap:
             name: mxl-fabrics-target-info

@@ -27,10 +27,6 @@ if (gstreamer_FOUND)
     endif ()
 
     add_executable(mxl-gst-testsrc)
-    target_compile_features(mxl-gst-testsrc
-            PRIVATE
-                cxx_std_20
-        )
     set_target_properties(mxl-gst-testsrc
             PROPERTIES
                 POSITION_INDEPENDENT_CODE    ON
@@ -39,6 +35,8 @@ if (gstreamer_FOUND)
                 CXX_VISIBILITY_PRESET        hidden
                 C_EXTENSIONS                 OFF
                 CXX_EXTENSIONS               OFF
+                C_STANDARD                   ${MXL_C_STANDARD}
+                CXX_STANDARD                 ${MXL_CXX_STANDARD}
         )
     target_sources(mxl-gst-testsrc
             PRIVATE
@@ -57,24 +55,8 @@ if (gstreamer_FOUND)
                 PkgConfig::gstreamer-video
             )
 
-    if (MXL_BUILT_WITH_CUDA)
-        find_package(CUDAToolkit REQUIRED)
-        target_compile_definitions(mxl-gst-testsrc
-                PRIVATE
-                    MXL_HAS_CUDA=1
-            )
-        target_link_libraries(mxl-gst-testsrc
-                PRIVATE
-                    CUDA::cudart
-            )
-    endif()
-
 
     add_executable(mxl-gst-sink)
-    target_compile_features(mxl-gst-sink
-            PRIVATE
-                cxx_std_20
-        )
     set_target_properties(mxl-gst-sink
             PROPERTIES
                 POSITION_INDEPENDENT_CODE   ON
@@ -83,6 +65,8 @@ if (gstreamer_FOUND)
                 CXX_VISIBILITY_PRESET       hidden
                 C_EXTENSIONS                OFF
                 CXX_EXTENSIONS              OFF
+                C_STANDARD                   ${MXL_C_STANDARD}
+                CXX_STANDARD                 ${MXL_CXX_STANDARD}
         )
     target_sources(mxl-gst-sink
             PRIVATE
@@ -103,23 +87,7 @@ if (gstreamer_FOUND)
                 PkgConfig::gstreamer-video
         )
 
-    if (MXL_BUILT_WITH_CUDA)
-        find_package(CUDAToolkit REQUIRED)
-        target_compile_definitions(mxl-gst-sink
-                PRIVATE
-                    MXL_HAS_CUDA=1
-            )
-        target_link_libraries(mxl-gst-sink
-                PRIVATE
-                    CUDA::cudart
-            )
-    endif()
-
     add_executable(mxl-gst-looping-filesrc)
-    target_compile_features(mxl-gst-looping-filesrc
-            PRIVATE
-                cxx_std_20
-        )
     set_target_properties(mxl-gst-looping-filesrc
             PROPERTIES
                 POSITION_INDEPENDENT_CODE   ON
@@ -128,6 +96,8 @@ if (gstreamer_FOUND)
                 CXX_VISIBILITY_PRESET       hidden
                 C_EXTENSIONS                OFF
                 CXX_EXTENSIONS              OFF
+                C_STANDARD                  ${MXL_C_STANDARD}
+                CXX_STANDARD                ${MXL_CXX_STANDARD}
         )
     target_sources(mxl-gst-looping-filesrc
             PRIVATE
@@ -147,8 +117,49 @@ if (gstreamer_FOUND)
                 PkgConfig::gstreamer-video
         )
 
+    set(mxl_gst_tools mxl-gst-sink mxl-gst-testsrc mxl-gst-looping-filesrc)
+
+    # These tools copy v210 pictures with cudaMemcpy. They are separate from mxl-gst-testsrc and mxl-gst-sink,
+    # which use the host pointer API.
+    if (MXL_ENABLE_CUDA_PAYLOAD)
+        if (NOT TARGET CUDA::cudart_static)
+            find_package(CUDAToolkit REQUIRED)
+        endif()
+
+        add_executable(mxl-gst-cuda-testsrc cuda_testsrc.cpp)
+        add_executable(mxl-gst-cuda-sink cuda_sink.cpp)
+        foreach(target mxl-gst-cuda-testsrc mxl-gst-cuda-sink)
+            set_target_properties(${target}
+                    PROPERTIES
+                        POSITION_INDEPENDENT_CODE   ON
+                        VISIBILITY_INLINES_HIDDEN   ON
+                        C_VISIBILITY_PRESET         hidden
+                        CXX_VISIBILITY_PRESET       hidden
+                        C_EXTENSIONS                OFF
+                        CXX_EXTENSIONS              OFF
+                        C_STANDARD                  ${MXL_C_STANDARD}
+                        CXX_STANDARD                ${MXL_CXX_STANDARD}
+                )
+            target_link_libraries(${target}
+                    PRIVATE
+                        mxl
+                        mxl-cuda-device-pointer-headers
+                        CUDA::cudart_static
+                        fmt::fmt
+                        picojson::picojson
+                        CLI11::CLI11
+                        PkgConfig::gstreamer
+                        PkgConfig::gstreamer-app
+                        PkgConfig::gstreamer-video
+                )
+            # libmxl loads the backend at run time, so nothing links it.
+            add_dependencies(${target} mxl-payload-cuda-linear)
+        endforeach()
+        list(APPEND mxl_gst_tools mxl-gst-cuda-testsrc mxl-gst-cuda-sink)
+    endif()
+
     # Install targets
-    install(TARGETS mxl-gst-sink mxl-gst-testsrc mxl-gst-looping-filesrc
+    install(TARGETS ${mxl_gst_tools}
             COMPONENT ${PROJECT_NAME}-tools
             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         )

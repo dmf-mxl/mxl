@@ -4,6 +4,7 @@
 #include "mxl-internal/FlowParser.hpp"
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <ranges>
 #include <stdexcept>
 #include <string>
@@ -26,8 +27,8 @@ namespace mxl::lib
 
         // this are arbitrary limits, but we need to put a cap somewhere to prevent a bad json document
         // from allocating all the RAM on the system.
-        constexpr auto MAX_WIDTH = 7680u;  // 8K UHD
-        constexpr auto MAX_HEIGHT = 4320u; // 8K UHD
+        constexpr auto MAX_WIDTH = std::uint32_t{7680};  ///< Maximum supported video width in pixels (8K UHD).
+        constexpr auto MAX_HEIGHT = std::uint32_t{4320}; ///< Maximum supported video height in pixels (8K UHD).
 
         /**
          * Translate a NMOS IS-04 data format to a an mxlDataFormat enum.
@@ -52,6 +53,10 @@ namespace mxl::lib
                 if (tail == "audio"sv)
                 {
                     return MXL_DATA_FORMAT_AUDIO;
+                }
+                if ((tail == "event"sv) || (tail == "data.event"sv))
+                {
+                    return MXL_DATA_FORMAT_EVENT;
                 }
                 if (tail == "data"sv)
                 {
@@ -117,75 +122,68 @@ namespace mxl::lib
             return result;
         }
 
-        //
-        // Validates that the group hint tag is present and valid
-        // See https://specs.amwa.tv/nmos-parameter-registers/branches/main/tags/grouphint.html
-        //
+        /**
+         * @brief Validate one group hint's name, role and optional scope.
+         * @param value JSON value expected to contain a group hint string.
+         * @return True for a nonempty name and role with an optional device/node scope.
+         * @throws std::exception Allocation fails while splitting the hint.
+         */
+        bool validateGroupHintValue(picojson::value const& value)
+        {
+            if (!value.is<std::string>())
+            {
+                MXL_ERROR("Invalid group hint value. Not a string.");
+                return false;
+            }
+
+            auto const& hint = value.get<std::string>();
+            auto parts = std::vector<std::string_view>{};
+            for (auto part : hint | std::views::split(':'))
+            {
+                parts.emplace_back(std::ranges::data(part), std::ranges::size(part));
+            }
+            if ((parts.size() < 2) || (parts.size() > 3))
+            {
+                MXL_ERROR("Invalid group hint value '{}'. Expected format '<group-name>:<role-in-group>[:<group-scope>]'", hint);
+                return false;
+            }
+            if (parts[0].empty() || parts[1].empty())
+            {
+                MXL_ERROR("Invalid group hint value '{}'. Group name and role must not be empty.", hint);
+                return false;
+            }
+            if ((parts.size() == 3) && (parts[2] != "device") && (parts[2] != "node"))
+            {
+                MXL_ERROR("Invalid group hint value '{}'. Group scope must be either 'device' or 'node'.", hint);
+                return false;
+            }
+            return true;
+        }
+
+        /**
+         * @brief Validate the presence and contents of the flow's group hint tag.
+         * @param in_object Flow definition containing the tags object.
+         * @return True if at least one group hint exists and every hint is valid.
+         */
         bool validateGroupHint(picojson::object const& in_object)
         {
             try
             {
-                // obtain the tags object. Will throw if not found or not an object
                 auto const tags = fetchAs<picojson::object>(in_object, "tags");
-
-                // obtain the specific tag array from the tags object. Will throw if not found or not an array
-                auto const& groupHints = fetchAs<picojson::array>(tags, "urn:x-nmos:tag:grouphint/v1.0");
-
-                // we need at least a group hint
+                auto const groupHints = fetchAs<picojson::array>(tags, "urn:x-nmos:tag:grouphint/v1.0");
                 if (groupHints.empty())
                 {
                     MXL_ERROR("Group hint tag found but empty.");
                     return false;
                 }
-                else
+                for (auto const& value : groupHints)
                 {
-                    // iterate over the array and confirm that all values are strings and follow the
-                    // expected format.
-                    // "<group-name>:<role-in-group>[:<group-scope>]" where group-scope if present, is either device or node
-                    for (auto const& v : groupHints)
+                    if (!validateGroupHintValue(value))
                     {
-                        if (!v.is<std::string>())
-                        {
-                            MXL_ERROR("Invalid group hint value. Not a string.");
-                            return false;
-                        }
-
-                        // Get the array item
-                        auto const& s = v.get<std::string>();
-                        // Split the string into parts separated by ':'
-                        auto parts = s | std::views::split(':') |
-                                     std::views::transform([&](auto&& rng) { return std::string_view(&*rng.begin(), std::ranges::distance(rng)); });
-
-                        auto vec = std::vector<std::string_view>{parts.begin(), parts.end()};
-                        if ((vec.size() < 2) || (vec.size() > 3))
-                        {
-                            MXL_ERROR("Invalid group hint value '{}'. Expected format '<group-name>:<role-in-group>[:<group-scope>]'", s);
-                            return false;
-                        }
-
-                        // Validate the group name and role
-                        auto const& groupName = vec[0];
-                        auto const& role = vec[1];
-                        if (groupName.empty() || role.empty())
-                        {
-                            MXL_ERROR("Invalid group hint value '{}'. Group name and role must not be empty.", s);
-                            return false;
-                        }
-
-                        // Validate the group scope if present
-                        if (vec.size() == 3)
-                        {
-                            auto const& groupScope = vec[2];
-                            if (groupScope != "device" && groupScope != "node")
-                            {
-                                MXL_ERROR("Invalid group hint value '{}'. Group scope must be either 'device' or 'node'.", s);
-                                return false;
-                            }
-                        }
+                        return false;
                     }
-                    // all the tags passed validation
-                    return true;
                 }
+                return true;
             }
             catch (std::exception const& e)
             {
@@ -232,7 +230,7 @@ namespace mxl::lib
         _format = translateFlowFormat(fetchAs<std::string>(_root, "format"));
 
         // Read the grain rate if this is not an audio flow.
-        if (mxlIsDiscreteDataFormat(_format))
+        if (mxlIsDiscreteDataFormat(_format) || mxlIsEventDataFormat(_format))
         {
             _grainRate = extractRational(fetchAs<picojson::object>(_root, "grain_rate"));
         }
@@ -243,6 +241,11 @@ namespace mxl::lib
         else
         {
             throw std::domain_error{"Unsupported flow format."};
+        }
+
+        if (mxlIsEventDataFormat(_format) && ((_grainRate.numerator <= 0) || (_grainRate.denominator <= 0)))
+        {
+            throw std::invalid_argument{"Event grain_rate must be positive."};
         }
 
         // Validate that we have a non empty label
@@ -284,7 +287,7 @@ namespace mxl::lib
             }
 
             constexpr auto validValues = std::array{"progressive", "interlaced_tff", "interlaced_bff"};
-            bool match = std::ranges::any_of(validValues, [&](auto v) { return interlaceMode == v; });
+            auto const match = std::ranges::any_of(validValues, [&](auto v) noexcept { return interlaceMode == v; });
             if (!match)
             {
                 auto msg = fmt::format("Invalid interlace_mode: {}", interlaceMode);
@@ -322,73 +325,111 @@ namespace mxl::lib
         return _format;
     }
 
+    std::string FlowParser::getMediaType() const
+    {
+        return fetchAs<std::string>(_root, "media_type");
+    }
+
+    std::size_t FlowParser::getGrainLines() const
+    {
+        if (_format != MXL_DATA_FORMAT_VIDEO)
+        {
+            return 0U;
+        }
+        auto const height = static_cast<std::size_t>(fetchAs<double>(_root, "frame_height"));
+        if (!_interlaced)
+        {
+            return height;
+        }
+        // Interlaced media is handled as separate fields.
+        if ((height % 2) != 0)
+        {
+            throw std::invalid_argument{"Invalid video height for interlaced video. Must be even."};
+        }
+        return height / 2;
+    }
+
+    std::optional<GrainGeometry> FlowParser::getVideoGrainGeometry() const
+    {
+        auto const width = static_cast<std::size_t>(fetchAs<double>(_root, "frame_width"));
+        auto const mediaType = getMediaType();
+        auto geometry = GrainGeometry{
+            .payloadSize = 0U, .totalSlices = 0U, .sliceLengths = {0U, 0U, 0U, 0U}
+        };
+
+        if (mediaType == "video/v210")
+        {
+            geometry.sliceLengths[0] = getV210LineLength(width);
+        }
+        else if (mediaType == "video/v210a")
+        {
+            // Fill, then key. The key is stored as 10 bits per pixel, 3x10 bit words in a 32 bit word, little-endian.
+            // the last 2 bits of the 32 bit group of 3 pixels are unused.
+            geometry.sliceLengths[0] = getV210LineLength(width);
+            geometry.sliceLengths[1] = get10BitAlphaLineLength(width);
+        }
+        else
+        {
+            // A media type libmxl does not define. The backend that holds the payload may define it.
+            return std::nullopt;
+        }
+
+        // For every video media type libmxl defines, a slice is a line, and a grain holds the lines of a frame or field.
+        geometry.totalSlices = getGrainLines();
+        for (auto const sliceLength : geometry.sliceLengths)
+        {
+            geometry.payloadSize += std::size_t{sliceLength} * geometry.totalSlices;
+        }
+        return geometry;
+    }
+
+    std::optional<GrainGeometry> FlowParser::getGrainGeometry() const
+    {
+        switch (_format)
+        {
+            case MXL_DATA_FORMAT_VIDEO:
+            {
+                return getVideoGrainGeometry();
+            }
+            case MXL_DATA_FORMAT_DATA:
+            {
+                if (auto const mediaType = getMediaType(); mediaType != "video/smpte291")
+                {
+                    return std::nullopt;
+                }
+                // Data flows have a fixed grain size, in slices of 1 byte.
+                return GrainGeometry{
+                    .payloadSize = MXL_DATA_FORMAT_GRAIN_SIZE, .totalSlices = MXL_DATA_FORMAT_GRAIN_SIZE, .sliceLengths = {1U, 0U, 0U, 0U}
+                };
+            }
+            default:
+            {
+                throw std::invalid_argument{"Cannot compute the grain geometry for this data format."};
+            }
+        }
+    }
+
+    GrainGeometry FlowParser::requireGrainGeometry() const
+    {
+        if (auto geometry = getGrainGeometry(); geometry.has_value())
+        {
+            return *geometry;
+        }
+        throw std::invalid_argument{
+            std::string{(_format == MXL_DATA_FORMAT_VIDEO) ? "Unsupported video media_type: " : "Unsupported data media_type: "} + getMediaType()};
+    }
+
     std::size_t FlowParser::getPayloadSize() const
     {
-        auto payloadSize = std::size_t{0};
-
-        if (_format == MXL_DATA_FORMAT_VIDEO)
+        if (mxlIsDiscreteDataFormat(_format))
         {
-            auto const width = static_cast<std::size_t>(fetchAs<double>(_root, "frame_width"));
-            auto const height = static_cast<std::size_t>(fetchAs<double>(_root, "frame_height"));
-            auto const mediaType = fetchAs<std::string>(_root, "media_type");
-
-            if (mediaType == "video/v210")
-            {
-                if (!_interlaced || ((height % 2) == 0))
-                {
-                    // Interlaced media is handled as separate fields.
-                    auto const h = _interlaced ? height / 2 : height;
-                    payloadSize = getV210LineLength(width) * h;
-                }
-                else
-                {
-                    auto msg = std::string{"Invalid video height for interlaced v210. Must be even."};
-                    throw std::invalid_argument{std::move(msg)};
-                }
-            }
-            else if (mediaType == "video/v210a")
-            {
-                if (!_interlaced || ((height % 2) == 0))
-                {
-                    // Interlaced media is handled as separate fields.
-                    auto const h = _interlaced ? height / 2 : height;
-
-                    // Fill size
-                    auto fillPayloadSize = getV210LineLength(width) * h;
-
-                    // Key is stored as 10 bits per pixel, 3x10 bit words in a 32 bit word, little-endian.
-                    // the last 2 bits of the 32 bit group of 3 pixels are unused.
-                    auto keyPayloadSize = get10BitAlphaLineLength(width) * h;
-
-                    // Total payload size is the sum of the fill and key sizes
-                    payloadSize = fillPayloadSize + keyPayloadSize;
-                }
-                else
-                {
-                    auto msg = std::string{"Invalid video height for interlaced v210a. Must be even."};
-                    throw std::invalid_argument{std::move(msg)};
-                }
-            }
-            else
-            {
-                auto msg = std::string{"Unsupported video media_type: "} + mediaType;
-                throw std::invalid_argument{std::move(msg)};
-            }
+            return requireGrainGeometry().payloadSize;
         }
-        else if (_format == MXL_DATA_FORMAT_DATA)
+        if (_format == MXL_DATA_FORMAT_EVENT)
         {
-            auto const mediaType = fetchAs<std::string>(_root, "media_type");
-            if (mediaType == "video/smpte291")
-            {
-                payloadSize = MXL_DATA_FORMAT_GRAIN_SIZE;
-            }
-            else
-            {
-                auto msg = std::string{"Unsupported data media_type: "} + mediaType;
-                throw std::invalid_argument{std::move(msg)};
-            }
+            return MXL_DATA_FORMAT_GRAIN_SIZE;
         }
-        else if (_format == MXL_DATA_FORMAT_AUDIO)
+        if (_format == MXL_DATA_FORMAT_AUDIO)
         {
             // TODO: Also check the media type once we agreed on how to encode
             //      single precision IEEE floats.
@@ -399,96 +440,21 @@ namespace mxl::lib
                 throw std::invalid_argument{std::move(msg)};
             }
 
-            payloadSize = static_cast<std::size_t>(bitDepth) / 8U;
-        }
-        else
-        {
-            /// \todo Implement audio formats.
-            throw std::invalid_argument{"Format not implemented."};
+            return static_cast<std::size_t>(bitDepth) / 8U;
         }
 
-        return payloadSize;
+        /// \todo Implement audio formats.
+        throw std::invalid_argument{"Format not implemented."};
     }
 
     std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN> FlowParser::getPayloadSliceLengths() const
     {
-        auto sliceLengths = std::array<std::uint32_t, MXL_MAX_PLANES_PER_GRAIN>{0, 0, 0, 0};
-
-        switch (_format)
-        {
-            case MXL_DATA_FORMAT_DATA:
-            {
-                // For "data" flows, the slice length is 1 byte
-                sliceLengths[0] = 1;
-                return sliceLengths;
-            }
-
-            case MXL_DATA_FORMAT_VIDEO:
-            {
-                // For video flows the slice length is the byte-length of a single
-                // line of v210 video.
-                auto const width = static_cast<std::size_t>(fetchAs<double>(_root, "frame_width"));
-                auto const mediaType = fetchAs<std::string>(_root, "media_type");
-                auto const v210fillSize = getV210LineLength(width);
-
-                if (mediaType == "video/v210")
-                {
-                    sliceLengths[0] = v210fillSize;
-                }
-                else if (mediaType == "video/v210a")
-                {
-                    sliceLengths[0] = v210fillSize;
-                    sliceLengths[1] = get10BitAlphaLineLength(width);
-                }
-                else
-                {
-                    auto msg = std::string{"Unsupported video media_type: "} + mediaType;
-                    throw std::invalid_argument{std::move(msg)};
-                }
-
-                return sliceLengths;
-            }
-
-            default:
-            {
-                throw std::invalid_argument{"Cannot compute slice length for this data format."};
-            }
-        }
+        return requireGrainGeometry().sliceLengths;
     }
 
     std::size_t FlowParser::getTotalPayloadSlices() const
     {
-        switch (_format)
-        {
-            case MXL_DATA_FORMAT_DATA:
-            {
-                // Since the slice length for data flows is 1 byte, the number of slices must be the
-                // grain size.
-                return MXL_DATA_FORMAT_GRAIN_SIZE;
-            }
-
-            case MXL_DATA_FORMAT_VIDEO:
-            {
-                if (auto const mediaType = fetchAs<std::string>(_root, "media_type"); mediaType != "video/v210" && mediaType != "video/v210a")
-                {
-                    auto msg = std::string{"Unsupported video media_type: "} + mediaType;
-                    throw std::invalid_argument{std::move(msg)};
-                }
-
-                // For v210, the number of slices is always the number of video lines
-                auto h = static_cast<std::size_t>(fetchAs<double>(_root, "frame_height"));
-                if (_interlaced)
-                {
-                    return h / 2;
-                }
-
-                return h;
-            }
-            default:
-            {
-                throw std::invalid_argument{"Cannot compute slice length for this data format."};
-            }
-        }
+        return requireGrainGeometry().totalSlices;
     }
 
     std::size_t FlowParser::getChannelCount() const

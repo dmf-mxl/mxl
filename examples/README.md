@@ -54,6 +54,56 @@ In the "examples" directory run:
 ```bash
 docker compose build
 ```
+
+The CUDA payload tests are a separate image. From the repository root:
+
+```bash
+docker build -f examples/Dockerfile.cuda-tests -t mxl-cuda-tests .
+docker run --rm --gpus all --shm-size=1g mxl-cuda-tests
+```
+
+`--gpus all` makes every GPU visible. `--shm-size` gives the tests a `/dev/shm` domain. The image contains the CUDA toolkit only for the build. The machine that runs it needs the NVIDIA driver and the NVIDIA container toolkit. Peer access between two GPUs is a property of that machine. The peer test skips when it is not available.
+
+The same image can run the writer and the reader in two containers. The script bind-mounts one tmpfs directory into both, and that directory is the MXL domain. The payload descriptor travels on a socket in the flow directory, so the containers do not share an IPC namespace or a PID namespace.
+
+```bash
+examples/cuda-cross-container-test.sh
+```
+
+On a machine that only has the image, copy the script out first:
+
+```bash
+docker create --name mxl-cuda-extract mxl-cuda-tests
+docker cp mxl-cuda-extract:/opt/mxl/bin/mxl-cuda-cross-container.sh ./mxl-cuda-cross-container.sh
+docker rm mxl-cuda-extract
+bash ./mxl-cuda-cross-container.sh
+```
+
+`mxl-gst-cuda-testsrc` and `mxl-gst-cuda-sink` have their own image. From the repository root:
+
+```bash
+docker build -f examples/Dockerfile.cuda-gst -t mxl-cuda-gst .
+```
+
+Run the writer and the sink in two containers. `nvidia-smi -L` prints the GPU UUIDs. Mount the same tmpfs directory as the domain in both containers. `--device-uuid` on the sink selects the GPU that accesses the payload. That GPU must have peer access to the writer's GPU. Both containers must see the writer's GPU.
+
+```bash
+mkdir -p /dev/shm/mxl
+docker run -d --name mxl-cuda-writer --gpus all \
+  -v /dev/shm/mxl:/dev/shm/mxl \
+  --entrypoint /opt/mxl/bin/mxl-gst-cuda-testsrc mxl-cuda-gst \
+  -d /dev/shm/mxl -v /opt/mxl/data/v210_flow.json --device-uuid GPU-<writer>
+
+xhost +local:
+docker run --rm --gpus all \
+  -v /dev/shm/mxl:/dev/shm/mxl \
+  -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
+  --entrypoint /opt/mxl/bin/mxl-gst-cuda-sink mxl-cuda-gst \
+  -d /dev/shm/mxl -v 5fbec3b1-1b0f-417d-9059-8b94a47197ed --device-uuid GPU-<reader>
+
+docker rm -f mxl-cuda-writer
+```
+
 ## Running
 
 In the "examples" directory run: 
@@ -111,64 +161,22 @@ To check if the audio flow writer is producing samples:
 kubectl logs -f mxl-audio-flow-info-(...)
 ```
 
-# CUDA writer / reader topologies
+# CUDA fabrics between two nodes
 
-| Setup | Domain | How grains move |
-| --- | --- | --- |
-| Two pods, **same node, same GPU** | Shared `hostPath` (e.g. `/dev/shm/...`) | CUDA IPC |
-| Two processes, **same node, two GPUs** | Shared domain; both must see both GPUs | CUDA IPC + P2P |
-| Two pods, **different nodes** (or exclusive GPUs that cannot P2P) | One domain per pod; do not share | Fabrics RDMA / GPUDirect |
-
-## Same node, same GPU (two pods)
-
-This is the default CUDA-linear path: the writer `cudaMalloc`s, publishes IPC handles under the flow directory, and the reader `cudaIpcOpenMemHandle`s. Do not pass `--device-index` on the reader.
-
-Same-machine rehearsal:
-
-```bash
-./examples/scripts/cuda-ipc-same-gpu.sh
-```
-
-Kubernetes skeleton: `kube-cuda-ipc-two-pod.yaml`. Both pods must land on one node, mount the **same** host tmpfs domain, set `hostIPC: true`, and actually share the GPU (device-plugin time-slicing or MPS). Exclusive `nvidia.com/gpu: 1` without sharing either leaves a pod Pending or assigns two different GPUs — that is not CUDA IPC.
-
-```bash
-examples/scripts/render-kube-cuda-ipc-template.sh my-node > /tmp/mxl-cuda-ipc.yml
-kubectl apply -f /tmp/mxl-cuda-ipc.yml
-```
-
-## Same node, two GPUs (P2P)
-
-A reader on the **same node** can map those grains onto a **second GPU** with CUDA IPC peer access (NVLink or P2P-capable PCIe) — no second domain and no fabrics.
-
-```bash
-SRC_GPU=0 DST_GPU=1 ./examples/scripts/cuda-p2p-two-gpu.sh
-```
-
-`mxl-gst-sink --device-index 1` (or `mxlCreateFlowReader(..., "{\"deviceIndex\":1}", ...)`) selects the local GPU. Kubernetes: `kube-cuda-p2p-two-gpu.yaml` is one pod with **two** GPUs so both processes see device 0 and 1. Two pods that each get a single GPU cannot use this path (`CUDA_VISIBLE_DEVICES` hides the peer).
-
-## Cross-node CUDA fabrics
-
-Writer and reader pods on **different nodes** must **not** share the MXL domain. Use two local domains (tmpfs / emptyDir memory) and copy grains with fabrics RDMA (GPUDirect / `FI_HMEM`):
-
-1. **Target pod** creates a local CUDA flow on *its* GPU and listens:
-   `mxl-fabrics-demo -d /dev/shm/mxl-dst ... --device-index <dst-gpu> -p verbs --target-info ...`
-2. **Writer pod** publishes into a *different* local domain on *its* GPU (`mxl-gst-testsrc --video-options-file ...`).
-3. **Initiator** (same node as the writer) reads that source domain and RDMA-writes into the target’s buffers.
-   Same NMOS flow JSON (grain geometry); `deviceIndex` is local to each domain.
-
-Same-machine rehearsal:
+Writer and reader on different nodes use separate domains. The writer's domain holds a CUDA payload on the writer's GPU. The target's domain holds a CUDA payload on the target's GPU. The fabrics initiator copies grains from the first domain into the second with RDMA. The domains do not share memory, so CUDA IPC is not used.
 
 ```bash
 SRC_GPU=0 DST_GPU=0 ./examples/scripts/fabrics-cuda-two-domain.sh
-# or DST_GPU=1 if a second GPU is present
 ```
 
-Do not put CUDA payload flows on a shared PVC. The in-tree `kube-example.yaml` still uses one node-local `/dev/shm` domain for host-mapped compose-style flows.
+The script builds on `mxl-gst-cuda-testsrc`, which needs the `MXL_ENABLE_CUDA_PAYLOAD` build, and `mxl-fabrics-demo`, which needs `MXL_ENABLE_FABRICS_OFI`. `SRC_GPU` and `DST_GPU` are GPU indexes. The script reads their UUIDs with `nvidia-smi`. Run it on the target node for a same-host check, or split the parts across two nodes.
 
-A two-pod **skeleton** is in `kube-fabrics-cuda-two-domain.yaml`: separate `emptyDir` memory domains, one GPU per pod, `hostNetwork` + `/dev/infiniband`, and a ConfigMap for fabrics target-info. It will not run on a stock k3s node. You need an image built with CUDA, libfabric verbs, and `MXL_ENABLE_FABRICS_OFI` (the compose `examples/Dockerfile` does not), plus the NVIDIA device plugin, GPUDirect (`nvidia_peermem` or DMA-BUF), and an RDMA-capable fabric.
+The target needs `nvidia_peermem` loaded. Without it, the verbs memory registration of the device payload fails. The initiator copies each device payload into a staging buffer before the RDMA write.
+
+Kubernetes skeleton: `kube-fabrics-cuda-two-domain.yaml`. It has one pod for the writer and initiator and one for the target, each with one GPU and separate `emptyDir` memory domains. Render it with the hostnames and the GPU UUIDs from `nvidia-smi -L`:
 
 ```bash
-examples/scripts/render-kube-fabrics-template.sh src-node dst-node > /tmp/mxl-fabrics-cuda.yml
+examples/scripts/render-kube-fabrics-template.sh src-node dst-node GPU-<src> GPU-<dst> > /tmp/mxl-fabrics-cuda.yml
 kubectl apply -f /tmp/mxl-fabrics-cuda.yml
 # After the target prints "Target info: <base64>":
 kubectl create configmap mxl-fabrics-target-info \
@@ -176,5 +184,4 @@ kubectl create configmap mxl-fabrics-target-info \
   -o yaml --dry-run=client | kubectl apply -f -
 ```
 
-Same-node rehearsal (no Kubernetes): `SRC_GPU=0 DST_GPU=0 ./examples/scripts/fabrics-cuda-two-domain.sh`.
-
+The skeleton needs an image built with CUDA and `MXL_ENABLE_FABRICS_OFI`. The stock `examples/Dockerfile` does not build either. The pods also need the NVIDIA device plugin, `/dev/infiniband`, and an RDMA fabric. It does not run on a stock k3s node without these.

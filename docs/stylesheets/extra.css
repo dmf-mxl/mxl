@@ -1,0 +1,96 @@
+/* SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project. */
+/* SPDX-License-Identifier: CC-BY-4.0 */
+
+/* MXL brand blue from the official MXL logo. */
+:root > * {
+  --md-primary-fg-color: #1b4098;
+  --md-primary-fg-color--light: #4968b0;
+  --md-primary-fg-color--dark: #122d6b;
+  --md-primary-bg-color: #ffffff;
+  --md-primary-bg-color--light: #ffffff;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #1b4098;
+  --md-primary-fg-color--light: #4968b0;
+  --md-primary-fg-color--dark: #122d6b;
+  --md-primary-bg-color: #ffffff;
+  --md-primary-bg-color--light: #ffffff;
+}
+
+/* Use the MXL blue for the header and white for its controls. */
+.md-header {
+  background-color: var(--md-primary-fg-color);
+  color: #ffffff;
+}
+
+.md-header a,
+.md-header .md-icon {
+  color: #ffffff;
+}
+
+/* Keep unselected Mike versions readable on the light menu background. */
+.md-header .md-version__list a {
+  color: var(--md-default-fg-color--light);
+}
+
+.md-header .md-version__list .md-version__link:hover,
+.md-header .md-version__list .md-version__link:focus {
+  color: var(--md-accent-fg-color);
+}
+
+.md-header .md-version__list .md-version__link:hover {
+  background-color: var(--md-default-fg-color--lightest);
+}
+
+/* Load the official logo without copying it into this repository. */
+.md-header__button.md-logo,
+.md-nav__button.md-logo {
+  width: 4.75rem;
+  height: 2.25rem;
+  background-image: url("https://raw.githubusercontent.com/dmf-mxl/mxl-logos/main/mxl-on-blue-rectangular.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.md-header__button.md-logo svg,
+.md-nav__button.md-logo svg {
+  display: none;
+}
+
+/* Important and Caution are not built-in types.
+   Use the example purple and the danger red. */
+.md-typeset .admonition.important,
+.md-typeset details.important {
+  background-color: #7c4dff1a;
+}
+
+.md-typeset .important > .admonition-title:before,
+.md-typeset .important > summary:before {
+  background-color: #7c4dff;
+  -webkit-mask-image: var(--md-admonition-icon--important);
+  mask-image: var(--md-admonition-icon--important);
+}
+
+.md-typeset .important > .admonition-title:after,
+.md-typeset .important > summary:after {
+  color: #7c4dff;
+}
+
+.md-typeset .admonition.caution,
+.md-typeset details.caution {
+  background-color: #ff17441a;
+}
+
+.md-typeset .caution > .admonition-title:before,
+.md-typeset .caution > summary:before {
+  background-color: #ff1744;
+  -webkit-mask-image: var(--md-admonition-icon--caution);
+  mask-image: var(--md-admonition-icon--caution);
+}
+
+.md-typeset .caution > .admonition-title:after,
+.md-typeset .caution > summary:after {
+  color: #ff1744;
+}

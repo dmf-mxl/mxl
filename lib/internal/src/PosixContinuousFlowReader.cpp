@@ -3,6 +3,8 @@
 
 #include "PosixContinuousFlowReader.hpp"
 #include <atomic>
+#include <filesystem>
+#include <system_error>
 #include <sys/stat.h>
 #include "mxl-internal/PathUtils.hpp"
 #include "mxl-internal/Sync.hpp"
@@ -18,7 +20,9 @@ namespace mxl::lib
     {
         if (!checkPermissions())
         {
-            throw std::runtime_error{"Flow is not accessible due to insufficient permissions."};
+            throw std::filesystem::filesystem_error{"Flow is not accessible due to insufficient permissions.",
+                makeFlowDescriptorFilePath(getDomain(), uuids::to_string(getId())),
+                std::make_error_code(std::errc::permission_denied)};
         }
     }
 

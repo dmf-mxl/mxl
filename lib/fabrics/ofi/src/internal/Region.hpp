@@ -203,8 +203,8 @@ namespace mxl::lib::fabrics::ofi
     {
     public:
         /**
-         * \param regionsPerGrain For discrete flows: 1 when header+payload are one contiguous host
-         *        mapping, 2 when header (host) and payload (e.g. CUDA) are registered separately
+         * \param regionsPerGrain For discrete flows: 1 when header and payload are one contiguous host
+         *        mapping, 2 when the header (host) and the payload (e.g. CUDA) are registered separately
          *        and interleaved as [header0, payload0, header1, payload1, ...].
          */
         MxlRegions(std::vector<Region> regions, DataLayout dataLayout, std::uint32_t maxSyncBatchSize = 0, std::size_t regionsPerGrain = 1)
@@ -228,9 +228,7 @@ namespace mxl::lib::fabrics::ofi
         [[nodiscard]]
         std::uint32_t maxSyncBatchSize() const noexcept;
 
-        /**
-         * \brief Number of registered memory regions that belong to one discrete grain slot.
-         * Always 1 for continuous flows.
+        /** \brief Number of registered regions that belong to one discrete grain slot. Always 1 for continuous flows.
          */
         [[nodiscard]]
         std::size_t regionsPerGrain() const noexcept;
@@ -258,13 +256,13 @@ namespace mxl::lib::fabrics::ofi
     [[nodiscard]]
     MxlRegions mxlFabricsRegionsFromMutableFlow(FlowData& flow);
 
-    /** \brief Read the grain index from the header region for ring slot \p slotIndex. */
+    /** \brief Read the grain index from the header region of ring slot \p slotIndex. */
     std::uint64_t getGrainIndexInRingSlot(std::vector<Region> const& regions, std::uint16_t slotIndex, std::size_t regionsPerGrain = 1);
 
-    /** \brief Update validSlices on the header region for ring slot \p slot. */
+    /** \brief Update validSlices in the header region of ring slot \p slot. */
     void setValidSlicesForGrain(std::vector<Region> const& regions, std::uint16_t slot, std::uint16_t validSlices, std::size_t regionsPerGrain = 1);
 
-    /** \brief True when any region is backed by non-host memory (e.g. CUDA) and needs FI_HMEM. */
+    /** \brief True when any region is in non-host memory (e.g. CUDA) and therefore needs FI_HMEM. */
     [[nodiscard]]
     bool regionsNeedHmem(std::vector<Region> const& regions) noexcept;
 }

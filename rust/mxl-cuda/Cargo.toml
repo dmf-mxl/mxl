@@ -1,0 +1,20 @@
+# SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project.
+# SPDX-License-Identifier: Apache-2.0
+
+[package]
+name = "mxl-cuda"
+description = "Payload in CUDA device memory: the storage type of the cuda-linear payload backend"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+mxl = { path = "../mxl" }
+
+[dev-dependencies]
+mxl-sys = { path = "../mxl-sys" }
+
+[build-dependencies]
+bindgen.workspace = true
