@@ -47,9 +47,9 @@ MXL is not a standard, it is a publicly available open source code project. This
 
 Workshops were held in late 2024 and early 2025 to test industry appetite for the project, agree on first requirements and establish a way forward. The open source project with an early release of the code was announced in [June 2025](https://tech.ebu.ch/news/2025/06/ebu-launches-open-source-mxl-sdk-for-software-based-media-exchange).
 
-## When will MXL v1.0 be published?
+## Where can I find published MXL releases?
 
-(Writing in August 2025) Based on current progress we expect the first release version of the SDK in a few months. As an open source project based on volunteer contribution, this is not possible to commit on hard dates.
+Published SDK versions and their release notes are available on the [GitHub releases page](https://github.com/dmf-mxl/mxl/releases).
 
 ## How can I try MXL?
 
