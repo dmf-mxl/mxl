@@ -71,7 +71,7 @@ Software media functions do not have to be in containers to use MXL, however the
 
 ## Can MXL be used between containers running on different hosts?
 
-MXL has not yet released capability to exchange live media between hosts, but it is on the roadmap.
+Yes. MXL v1.1 introduced inter-host media exchange through [MXL Fabrics](FabricsGettingStarted.md). See that guide for build requirements and network setup.
 
 ## How does MXL relate to the VSF Ground-Cloud-Cloud-Ground group?
 
