@@ -1,11 +1,14 @@
 <!-- SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project. -->
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 
+# Initial proposal for Inter-Node Memory Sharing
+
+> [!NOTE]
+> This page is taken from an initial proposal for inter-host memory sharing. Please see the [Fabrics Overview](FabricsGettingStarted.md) for up-to-date information.
+
 ## Disclaimer
 
 The following text refers to a specific vendor; however, this reference is made purely for informational clarity. It should not be interpreted as an endorsement or indication of bias.
-
-# Inter-node memory sharing
 
 For memory sharing by copy (internode host-device, etc.), we intend to use `libfabric` which supports transfers of heterogenous memories very well. Although not in technical scope of this document, device to host and device to device memory sharing has support in the Libfabric framework. It also supports CUDA quite well through the HMEM memory registration. It provides support for GPUDirect RDMA by using either `nvidia-peermem` kernel module or `dma-buf`, when not only targeting NVIDIA devices (need to confirm with Intel's MXL member).
 
