@@ -121,6 +121,21 @@ impl MxlInstance {
             .map_err(|_| Error::Other("Invalid UTF-8 in flow definition".to_string()))
     }
 
+    /// Reports whether the flow with the given id has a live writer. Returns an
+    /// error if the flow does not exist or cannot be tested.
+    pub fn is_flow_active(&self, flow_id: &str) -> Result<bool> {
+        let flow_id = CString::new(flow_id)?;
+        let mut is_active = false;
+        unsafe {
+            Error::from_status(self.context.api.is_flow_active(
+                self.context.instance,
+                flow_id.as_ptr(),
+                &mut is_active,
+            ))?;
+        }
+        Ok(is_active)
+    }
+
     /// Garbage-collect orphan flow directories in the MXL domain.
     ///
     /// Iterates over the domain's `<flowId>.mxl-flow/` directories and removes
@@ -185,6 +200,13 @@ impl MxlInstance {
 
     pub fn sleep_for(&self, duration: std::time::Duration) {
         unsafe { self.context.api.sleep_for_ns(duration.as_nanos() as u64) }
+    }
+
+    /// Sleep until an absolute timestamp, given in nanoseconds since the epoch
+    /// in the same clock as `get_time`. Returns immediately if the timestamp
+    /// is already in the past.
+    pub fn sleep_until(&self, timestamp: u64) {
+        unsafe { self.context.api.sleep_until(timestamp) }
     }
 
     pub fn get_time(&self) -> u64 {
