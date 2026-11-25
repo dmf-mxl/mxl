@@ -41,6 +41,25 @@ impl SamplesWriter {
         Ok(())
     }
 
+    /// Maximum number of samples a single write can accept right now, i.e. the
+    /// largest `count` that `open_samples` will take without wrapping the ring
+    /// buffer.
+    pub fn get_max_write_length_samples(&self) -> Result<usize> {
+        let mut max_write_length: usize = 0;
+        unsafe {
+            Error::from_status(
+                self.writer
+                    .context
+                    .api
+                    .flow_writer_get_max_write_length_samples(
+                        self.writer.as_ptr(),
+                        &mut max_write_length,
+                    ),
+            )?;
+        }
+        Ok(max_write_length)
+    }
+
     pub fn open_samples<'a>(&'a self, index: u64, count: usize) -> Result<SamplesWriteAccess<'a>> {
         let mut buffer_slice: mxl_sys::MutableWrappedMultiBufferSlice =
             unsafe { std::mem::zeroed() };

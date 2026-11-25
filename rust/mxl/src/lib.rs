@@ -10,7 +10,7 @@ mod samples;
 
 pub mod config;
 
-pub use api::{MxlApi, load_api};
+pub use api::{MxlApi, Version, get_version, is_tmp_fs, load_api};
 pub use error::{Error, Result};
 pub use flow::{reader::FlowReader, writer::FlowWriter, *};
 pub use grain::{
