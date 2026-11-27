@@ -126,9 +126,10 @@ pub fn alpha_line_length(width: usize) -> usize {
 
 /// Bytes in a `video/v210a` grain of `lines` lines, or `None` on overflow.
 pub fn v210a_grain_size(width: usize, lines: usize) -> Option<usize> {
-    v210_line_length(width)
-        .checked_add(alpha_line_length(width))?
-        .checked_mul(lines)
+    // `v210_line_length` and `alpha_line_length` multiply unchecked.
+    let fill_line = width.div_ceil(48).checked_mul(128)?;
+    let key_line = width.div_ceil(ALPHA_SAMPLES_PER_WORD).checked_mul(4)?;
+    fill_line.checked_add(key_line)?.checked_mul(lines)
 }
 
 #[derive(Clone, Copy)]
@@ -150,9 +151,10 @@ pub fn gst_a422_10le_from_mxl_v210a_grain(
     key_range: KeyRange,
     planes: &mut [PlaneMut<'_>; 4],
 ) -> Result<(), VideoLayoutError> {
+    // check_grain first, so the line lengths below cannot overflow.
+    check_grain(grain.len(), width, height)?;
     let fill_line = v210_line_length(width);
     let key_line = alpha_line_length(width);
-    check_grain(grain.len(), width, height)?;
     check_planes(
         planes.each_ref().map(|p| (p.data.len(), p.stride)),
         width,
@@ -188,9 +190,10 @@ pub fn mxl_v210a_grain_from_gst_a422_10le(
     key_range: KeyRange,
     grain: &mut [u8],
 ) -> Result<(), VideoLayoutError> {
+    // check_grain first, so the line lengths below cannot overflow.
+    check_grain(grain.len(), width, height)?;
     let fill_line = v210_line_length(width);
     let key_line = alpha_line_length(width);
-    check_grain(grain.len(), width, height)?;
     check_planes(planes.map(|p| (p.data.len(), p.stride)), width, height)?;
     let (fill, key) = grain.split_at_mut(fill_line * height);
     let [y, u, v, a] = planes;
@@ -614,6 +617,34 @@ mod tests {
         assert_eq!(alpha_line_length(1920), 2560);
         assert_eq!(grain_size(1920, 1080), (5120 + 2560) * 1080);
         assert_eq!(v210a_grain_size(usize::MAX / 2, 3), None);
+    }
+
+    #[test]
+    fn grain_size_does_not_wrap() {
+        // 128 * width.div_ceil(48) is exactly 2^usize::BITS, which wraps to 0 when unchecked.
+        assert_eq!(v210a_grain_size(3 << (usize::BITS - 3), 1), None);
+    }
+
+    #[test]
+    fn oversized_frames_are_rejected() {
+        let width = 3 << (usize::BITS - 3);
+        let planes = [Plane {
+            data: &[],
+            stride: 0,
+        }; 4];
+        assert!(matches!(
+            mxl_v210a_grain_from_gst_a422_10le(&planes, width, 1, KeyRange::Narrow, &mut []),
+            Err(VideoLayoutError::TooLarge { .. })
+        ));
+
+        let mut planes = [(); 4].map(|_| PlaneMut {
+            data: &mut [],
+            stride: 0,
+        });
+        assert!(matches!(
+            gst_a422_10le_from_mxl_v210a_grain(&[], width, 1, KeyRange::Narrow, &mut planes),
+            Err(VideoLayoutError::TooLarge { .. })
+        ));
     }
 
     #[test]
