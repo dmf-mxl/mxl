@@ -118,7 +118,15 @@ fn dev_shm_skip_reason() -> Option<String> {
 
 #[cfg(not(target_os = "linux"))]
 fn dev_shm_skip_reason() -> Option<String> {
-    Some(format!("not Linux; {SHM_MXL_HINT}"))
+    None
+}
+
+fn test_domain_root() -> PathBuf {
+    if cfg!(target_os = "linux") {
+        "/dev/shm".into()
+    } else {
+        std::env::temp_dir()
+    }
 }
 
 /// Per-test MXL domain under `/dev/shm`, removed on drop.
@@ -128,8 +136,8 @@ pub struct TestDomainGuard {
 
 impl TestDomainGuard {
     pub fn new(test: &str) -> Self {
-        let dir = PathBuf::from(format!(
-            "/dev/shm/mxl_gst_test_domain_{test}_{}",
+        let dir = test_domain_root().join(format!(
+            "mxl_gst_test_domain_{test}_{}",
             uuid::Uuid::new_v4()
         ));
         std::fs::create_dir_all(&dir).unwrap_or_else(|e| {

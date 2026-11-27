@@ -78,6 +78,25 @@ impl SamplesReader {
         Ok(SamplesData::new(buffer_slice))
     }
 
+    /// Maximum number of samples a single read can return right now. A read of
+    /// at most this many samples at the current head index succeeds without
+    /// wrapping the ring buffer.
+    pub fn get_max_read_length_samples(&self) -> Result<usize> {
+        let mut max_read_length: usize = 0;
+        unsafe {
+            Error::from_status(
+                self.reader
+                    .context
+                    .api
+                    .flow_reader_get_max_read_length_samples(
+                        self.reader.as_ptr(),
+                        &mut max_read_length,
+                    ),
+            )?;
+        }
+        Ok(max_read_length)
+    }
+
     pub fn get_samples_non_blocking(&self, index: u64, count: usize) -> Result<SamplesData<'_>> {
         let mut buffer_slice: mxl_sys::WrappedMultiBufferSlice = unsafe { std::mem::zeroed() };
         unsafe {

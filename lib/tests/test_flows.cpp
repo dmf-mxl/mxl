@@ -1609,3 +1609,60 @@ TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : validSl
     REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
     REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
 }
+
+TEST_CASE_PERSISTENT_FIXTURE(mxl::tests::mxlDomainFixture, "Video Flow : Reopen an incomplete grain after a jump of a full ring", "[mxl flows]")
+{
+    auto const opts = "{}";
+    auto flowDef = mxl::tests::readFile("data/v210_flow.json");
+
+    auto instance = mxlCreateInstance(domain.string().c_str(), opts);
+    REQUIRE(instance != nullptr);
+
+    auto writer = mxlFlowWriter{};
+    auto configInfo = mxlFlowConfigInfo{};
+    auto flowWasCreated = false;
+    REQUIRE(mxlCreateFlowWriter(instance, flowDef.c_str(), opts, &writer, &configInfo, &flowWasCreated) == MXL_STATUS_OK);
+    REQUIRE(flowWasCreated);
+
+    auto const grainCount = static_cast<std::uint64_t>(configInfo.discrete.grainCount);
+
+    auto gInfo = mxlGrainInfo{};
+    auto buffer = static_cast<std::uint8_t*>(nullptr);
+
+    auto lastCompleteIndex = std::uint64_t{100};
+    REQUIRE(mxlFlowWriterOpenGrain(writer, lastCompleteIndex, &gInfo, &buffer) == MXL_STATUS_OK);
+    gInfo.validSlices = gInfo.totalSlices;
+    REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_STATUS_OK);
+
+    // When grainCount or more grains are skipped, the ring buffer entry of the first skipped grain is the entry of the grain being written.
+    for (auto const skippedCount : {grainCount, (3U * grainCount) + 2U})
+    {
+        CAPTURE(skippedCount);
+        auto const grainIndex = lastCompleteIndex + skippedCount + 1U;
+
+        REQUIRE(mxlFlowWriterOpenGrain(writer, grainIndex, &gInfo, &buffer) == MXL_STATUS_OK);
+        REQUIRE(gInfo.index == grainIndex);
+        REQUIRE(gInfo.validSlices == 0);
+
+        auto const partialValidSlices = std::uint16_t{3};
+        REQUIRE(partialValidSlices < gInfo.totalSlices);
+        gInfo.validSlices = partialValidSlices;
+        REQUIRE(mxlFlowWriterCommitGrain(writer, &gInfo) == MXL_STATUS_OK);
+
+        // The grain is incomplete, so the last complete grain is still the one before the jump. Reopening the grain keeps its progress.
+        auto reopenedInfo = mxlGrainInfo{};
+        auto reopenedBuffer = static_cast<std::uint8_t*>(nullptr);
+        REQUIRE(mxlFlowWriterOpenGrain(writer, grainIndex, &reopenedInfo, &reopenedBuffer) == MXL_STATUS_OK);
+        REQUIRE(reopenedInfo.index == grainIndex);
+        REQUIRE(reopenedBuffer == buffer);
+        REQUIRE(reopenedInfo.validSlices == partialValidSlices);
+        REQUIRE((reopenedInfo.flags & MXL_GRAIN_FLAG_INVALID) == 0);
+
+        reopenedInfo.validSlices = reopenedInfo.totalSlices;
+        REQUIRE(mxlFlowWriterCommitGrain(writer, &reopenedInfo) == MXL_STATUS_OK);
+        lastCompleteIndex = grainIndex;
+    }
+
+    REQUIRE(mxlReleaseFlowWriter(instance, writer) == MXL_STATUS_OK);
+    REQUIRE(mxlDestroyInstance(instance) == MXL_STATUS_OK);
+}

@@ -34,8 +34,8 @@ endif()
 
 target_link_libraries(mxl-fabrics-info
         PRIVATE
-            mxl
-            mxl-fabrics
+            mxl::mxl
+            mxl::mxl-fabrics
             fmt::fmt
             CLI11::CLI11
             picojson::picojson

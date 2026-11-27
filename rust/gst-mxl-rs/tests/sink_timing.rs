@@ -644,9 +644,10 @@ enum Phase {
 /// demuxer produces them, must map to consecutive grains: rounding must not put
 /// two frames in one grain (which the writer rejects) or skip a grain.
 ///
-/// The pipeline runs on a TAI system clock, the clock MXL time is read from, so
-/// the sampled offset is zero, and `base_time` is set explicitly. That pins
-/// where frame 0 lands in MXL time.
+/// The pipeline runs on a TAI system clock, and `base_time` is set explicitly,
+/// less the clock's offset from MXL time. That pins where frame 0 lands in MXL
+/// time. The offset is zero where the system clock reads `CLOCK_TAI`, the clock
+/// MXL time is read from.
 fn fractional_rate_frames_map_to_consecutive_grains(test: &str, phase: Phase) {
     const FRAMES: u64 = 30;
     let domain_guard = TestDomainGuard::new(test);
@@ -670,11 +671,14 @@ fn fractional_rate_frames_map_to_consecutive_grains(test: &str, phase: Phase) {
         ));
         pipeline.use_clock(Some(&tai));
         pipeline.set_start_time(gst::ClockTime::NONE);
+        let clock_now = tai.time().nseconds();
+        let clock_offset = instance.get_time() - clock_now;
         let first = instance.get_current_index(&rate) + 10;
         let half_grain = 500_000_000 * denominator as u64 / numerator as u64;
         let base_time = instance
             .index_to_timestamp(first, &rate)
             .expect("timestamp")
+            - clock_offset
             + match phase {
                 Phase::MidGrain => 0,
                 Phase::RoundingBoundary => half_grain,
