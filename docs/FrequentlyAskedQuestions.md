@@ -23,7 +23,7 @@ The DMF (Dynamic Media Facility) is an initiative of the EBU (European Broadcast
 
 ## How does MXL work?
 
-MXL uses shared memory to exchange live media. On the same host, a filesystem in RAM is used. Between hosts, MXL will use remote memory access using fabric technologies and protocols such as RoCEv2.
+MXL uses shared memory to exchange live media. On the same host, a filesystem in RAM is used. Between hosts, MXL uses remote memory access using fabric technologies and protocols such as RoCEv2.
 
 ## Who is contributing to MXL?
 

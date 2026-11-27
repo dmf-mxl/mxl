@@ -3,7 +3,7 @@
 
 # Implementation
 
-This page presents the details of the libfabric implementation of the Fabrics API. This page assumes familiarity with the MXL Flow API, with asynchronous networking workflows and RDMA. A good place to start would be to read the [inter-node memory sharing proposition](InterHostMemorySharingProposition.md).
+This page presents the details of the libfabric implementation of the Fabrics API. This page assumes familiarity with the MXL Flow API, with asynchronous networking workflows and RDMA.
 
 ## 1. Requirements
 
@@ -35,7 +35,7 @@ To cover all the cases, there are two types of transfers we intend to use:
 
 ### 3.1 Remote Write
 
-As stated in the proposition, the preferred method to use to transfer data is Remote Write. Remote Write allows to modify target’s memory directly without it being involved. In RDMA, we can use “immediate data” to signal the target that a remote write operation occurred on its memory region. Immediate data also allows a user to embed 32-bit user data that will be available at the destination. Libfabric also supports this immediate data feature, and we will use it to communicate specific information to the target. Such information includes grainIndex and slice index for the “Discrete flow”, and head index and count for “Continuous flow”.
+The preferred method to use to transfer data is Remote Write. Remote Write allows to modify target’s memory directly without it being involved. In RDMA, we can use “immediate data” to signal the target that a remote write operation occurred on its memory region. Immediate data also allows a user to embed 32-bit user data that will be available at the destination. Libfabric also supports this immediate data feature, and we will use it to communicate specific information to the target. Such information includes grainIndex and slice index for the “Discrete flow”, and head index and count for “Continuous flow”.
 
 #### Scatter-Gather
 

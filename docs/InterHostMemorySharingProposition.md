@@ -1,7 +1,7 @@
 <!-- SPDX-FileCopyrightText: 2026 Contributors to the Media eXchange Layer project. -->
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 
-# Initial proposal for Inter-Node Memory Sharing
+# (Outdated) Inter-Node memory sharing proposal
 
 > [!NOTE]
 > This page is taken from an initial proposal for inter-host memory sharing. Please see the [Fabrics Overview](FabricsGettingStarted.md) for up-to-date information.
