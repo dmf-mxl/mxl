@@ -38,7 +38,7 @@ endif ()
 
 target_link_libraries(mxl-info-tests
         PRIVATE
-            mxl
+            mxl::mxl
             Catch2::Catch2WithMain
     )
 

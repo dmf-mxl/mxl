@@ -99,12 +99,12 @@ TEST_CASE("Wait timeout", "[mxl-info][latency]")
     audio.config.common.grainRate = ::mxlRational{48000, 1};
     CHECK(waitTimeoutNs(audio) == 202'666'667U);
 
-    // A one-grain ring has no history, so the read does not block.
+    // A one-grain ring has no history, so the wait does not block.
     auto oneGrain = makeFlowInfo(MXL_DATA_FORMAT_VIDEO, 1);
     oneGrain.config.common.grainRate = ::mxlRational{30000, 1001};
     CHECK(waitTimeoutNs(oneGrain) == 0U);
 
     // A zero grain rate cannot be converted.
     auto const noRate = makeFlowInfo(MXL_DATA_FORMAT_VIDEO, 5);
-    CHECK(waitTimeoutNs(noRate) == MXL_UNDEFINED_INDEX);
+    CHECK_FALSE(waitTimeoutNs(noRate).has_value());
 }

@@ -101,11 +101,11 @@ Example 2a : Printing details about a specific flow using an MXL URI
                     Active: true
 ```
 
-For discrete and continuous flows, `mxl-info` waits for the writer's next commit and measures the latency when that commit arrives. The second number is the time in ms from the head grain's timestamp, which is the start of the grain, to the moment `mxl-info` saw the commit. The first number is the same latency in grains or samples, rounded to the nearest index. A writer that commits each grain 18.8 ms after its timestamp at 29.97 shows `1, 18.80`. Event flows have no latency line.
+For discrete and continuous flows, `mxl-info` waits for the grain or sample after the head index and measures the latency when it arrives. A grain arrives when it is complete, so for a writer that commits a grain in several slices, this is when the last slice is committed. A sample arrives when the writer commits the batch that contains it. The second number is the time in ms from the head grain's timestamp, which is the start of the grain, to the moment `mxl-info` saw it arrive. The first number is the same latency in grains or samples, rounded to the nearest index. A writer that commits each grain 18.8 ms after its timestamp at 29.97 shows `1, 18.80`. Event flows have no latency line.
 
 In a terminal, the latency line is green up to half of the flow's history, yellow up to the full history, and red beyond that or when the head index is ahead of the current time. The history is the grain count minus one for discrete flows, because the writer keeps one grain, and half the buffer length for continuous flows, because readers can only access half of a continuous buffer.
 
-If no commit arrives within one history duration, for example because the writer has stopped, `mxl-info` measures from the current head index instead. The ms value is then a range that covers the head grain's period, and a note follows it:
+If the next grain or sample does not arrive within one history duration, for example because the writer has stopped, `mxl-info` measures from the current head index instead. The ms value is then a range that covers the head grain's period, and a note follows it:
 
 ```bash
       Latency (grains, ms): 278, [9231.09 .. 9264.45]

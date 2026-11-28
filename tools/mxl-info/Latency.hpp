@@ -14,6 +14,7 @@
 #include <mxl/flow.h>
 #include <mxl/flowinfo.h>
 #include <mxl/mxl.h>
+#include <mxl/rational.h>
 #include <mxl/time.h>
 
 namespace mxl::info
@@ -57,15 +58,21 @@ namespace mxl::info
     }
 
     /**
-     * @brief Get the longest time waitForNextCommit() waits for a commit.
+     * @brief Get the longest time waitForNextCommit() waits for the grain or sample after the head index.
      * @param[in] info Flow info.
-     * @return One history duration in ns, rounded to the nearest ns. 0 when the history is empty, so the read does
-     *         not block. MXL_UNDEFINED_INDEX when the grain rate is not valid.
+     * @return One history duration in ns, rounded to the nearest ns. 0 when the history is empty, so the wait does
+     *         not block. std::nullopt when the grain rate is not valid.
      */
     [[nodiscard]]
-    inline std::uint64_t waitTimeoutNs(::mxlFlowInfo const& info) noexcept
+    inline std::optional<std::uint64_t> waitTimeoutNs(::mxlFlowInfo const& info) noexcept
     {
-        return ::mxlIndexToTimestamp(&info.config.common.grainRate, historyLength(info));
+        // mxlIndexToTimestamp returns MXL_UNDEFINED_INDEX when it cannot convert with the rate.
+        auto const timeoutNs = ::mxlIndexToTimestamp(&info.config.common.grainRate, historyLength(info));
+        if (timeoutNs == MXL_UNDEFINED_INDEX)
+        {
+            return std::nullopt;
+        }
+        return timeoutNs;
     }
 
     /// Runtime info read after a commit, with the time at which the reader saw that commit.
@@ -76,35 +83,47 @@ namespace mxl::info
     };
 
     /**
-     * @brief Wait for the grain or sample at @p index to be committed.
-     * @param[in] reader Reader open on the flow.
-     * @param[in] format Data format of the flow. It must be a discrete or a continuous format.
+     * @brief Wait for the grain or sample at @p index to be committed, without reading it.
+     * @param[in] instance Instance that created @p reader.
+     * @param[in] reader Reader open on a discrete or continuous flow.
+     * @param[in] rate Grain or sample rate of the flow.
      * @param[in] index Grain or sample index to wait for.
      * @param[in] timeoutNs Longest time to wait, in ns.
-     * @return The status of the read.
+     * @return The status of the wait, or of the first group call that fails.
      */
     [[nodiscard]]
-    inline ::mxlStatus waitForIndex(::mxlFlowReader reader, int format, std::uint64_t index, std::uint64_t timeoutNs) noexcept
+    inline ::mxlStatus waitForIndex(::mxlInstance instance, ::mxlFlowReader reader, ::mxlRational const& rate, std::uint64_t index,
+        std::uint64_t timeoutNs) noexcept
     {
-        // The public functions reject null out pointers. The values written here are not used.
-        if (::mxlIsDiscreteDataFormat(format))
+        // A successful read of a discrete flow updates the flow's last read time, which would make mxl-info look like
+        // a consumer. A synchronization group waits for the data without reading it.
+        auto group = ::mxlFlowSynchronizationGroup{nullptr};
+        if (auto const status = ::mxlCreateFlowSynchronizationGroup(instance, &group); status != MXL_STATUS_OK)
         {
-            auto grainInfo = ::mxlGrainInfo{};
-            auto* payload = static_cast<std::uint8_t*>(nullptr);
-            return ::mxlFlowReaderGetGrain(reader, index, timeoutNs, &grainInfo, &payload);
+            return status;
         }
-        auto slices = ::mxlWrappedMultiBufferSlice{};
-        return ::mxlFlowReaderGetSamples(reader, index, 1U, timeoutNs, &slices);
+        auto status = ::mxlFlowSynchronizationGroupAddReader(group, reader);
+        if (status == MXL_STATUS_OK)
+        {
+            // The group converts the timestamp back to an index at the same rate. Both conversions round to the
+            // nearest value, so the group waits for this index.
+            status = ::mxlFlowSynchronizationGroupWaitForDataAt(group, ::mxlIndexToTimestamp(&rate, index), timeoutNs);
+        }
+        // The wait status is the result. If the release fails, the instance frees the group when it is destroyed.
+        (void)::mxlReleaseFlowSynchronizationGroup(instance, group);
+        return status;
     }
 
     /**
-     * @brief Wait until the writer commits past the head index in @p info, then read the runtime info again.
+     * @brief Wait until the grain or sample after the head index in @p info arrives, then read the runtime info again.
+     *        A grain arrives when all its slices are committed. A sample arrives with the batch that contains it.
+     * @param[in] instance Instance that created @p reader.
      * @param[in] reader Reader open on the flow.
      * @param[in] info Flow info read before the wait. Its head index is the starting point.
-     * @return The sample taken after the commit. std::nullopt for event flows, when no commit arrives within
-     *         one history duration, or when a read fails.
+     * @return The sample taken after the wait. std::nullopt for event flows, when the grain or sample does not
+     *         arrive within one history duration, or when a read fails.
      */
-    inline std::optional<CommitSample> waitForNextCommit(::mxlFlowReader reader, ::mxlFlowInfo const& info)
+    inline std::optional<CommitSample> waitForNextCommit(::mxlInstance instance, ::mxlFlowReader reader, ::mxlFlowInfo const& info)
     {
         // The format helpers take int. Format values are small enumerators, so the cast keeps the value.
         auto const format = static_cast<int>(info.config.common.format);
@@ -114,13 +133,13 @@ namespace mxl::info
         }
 
         auto const timeoutNs = waitTimeoutNs(info);
-        if (timeoutNs == MXL_UNDEFINED_INDEX)
+        if (!timeoutNs.has_value())
         {
             return std::nullopt;
         }
 
         auto const nextIndex = info.runtime.headIndex + 1U;
-        auto const status = waitForIndex(reader, format, nextIndex, timeoutNs);
+        auto const status = waitForIndex(instance, reader, info.config.common.grainRate, nextIndex, *timeoutNs);
         auto const nowNs = ::mxlGetTime();
 
         // TOO_LATE means the writer moved more than a ring length past the nextIndex during the wait.

@@ -96,18 +96,22 @@ namespace
             picojson::value _doc;
         };
 
-        /// Holds a flow's info and its open reader so that operator<< can print the info and measure latency.
+        /// Holds a flow's info, its open reader and the reader's instance so that operator<< can print the info and
+        /// measure latency.
         struct LatencyPrinter
         {
             /**
+             * @param[in] instance Instance that created @p reader. It must outlive the printer.
              * @param[in] reader Reader open on the flow. It must stay open while the printer is used.
              * @param[in] info Flow info to print. It must outlive the printer.
              */
-            constexpr LatencyPrinter(::mxlFlowReader reader, ::mxlFlowInfo const& info) noexcept
-                : flowReader{reader}
+            constexpr LatencyPrinter(::mxlInstance instance, ::mxlFlowReader reader, ::mxlFlowInfo const& info) noexcept
+                : instance{instance}
+                , flowReader{reader}
                 , flowInfo{&info}
             {}
 
+            ::mxlInstance instance;        ///< Instance used to create the synchronization group.
             ::mxlFlowReader flowReader;    ///< Reader used to wait for the next commit.
             ::mxlFlowInfo const* flowInfo; ///< Flow info to print. Not owned.
         };
@@ -266,7 +270,7 @@ namespace
             // Wait before printing, so the head index and write time printed above the latency line are the ones
             // the latency is measured from.
             auto info = *lp.flowInfo;
-            auto const sample = mxl::info::waitForNextCommit(lp.flowReader, info);
+            auto const sample = mxl::info::waitForNextCommit(lp.instance, lp.flowReader, info);
             if (sample)
             {
                 info.runtime = sample->runtime;
@@ -292,13 +296,14 @@ namespace
 
     /**
      * @brief Wrap a flow for printing with its latency line.
+     * @param[in] instance Instance that created @p reader. It must outlive the result.
      * @param[in] reader Reader open on the flow. It must stay open until the result is printed.
      * @param[in] info Flow info to print. It must outlive the result.
      * @return Printer object for operator<<.
      */
-    detail::LatencyPrinter formatWithLatency(::mxlFlowReader reader, ::mxlFlowInfo const& info)
+    detail::LatencyPrinter formatWithLatency(::mxlInstance instance, ::mxlFlowReader reader, ::mxlFlowInfo const& info)
     {
-        return detail::LatencyPrinter{reader, info};
+        return detail::LatencyPrinter{instance, reader, info};
     }
 
     class ScopedMxlInstance
@@ -584,8 +589,8 @@ namespace
     }
 
     /// Print detailed information about a specific flow in the MXL domain, including its configuration and runtime status. For discrete and
-    /// continuous flows, also print the latency, measured when the writer commits its next grain or samples. If no commit arrives within one
-    /// history duration, the latency is taken from the current state of the flow.
+    /// continuous flows, also print the latency, measured when the grain or sample after the head index arrives. A grain arrives when all its
+    /// slices are committed. If it does not arrive within one history duration, the latency is taken from the current state of the flow.
     /// \param in_domain The MXL domain the flow belongs to.
     /// \param in_id The id of the flow to print information about.
     /// \return EXIT_SUCCESS if the operation was successful, EXIT_FAILURE otherwise.
@@ -605,7 +610,7 @@ namespace
 
             if (getInfoStatus == MXL_STATUS_OK)
             {
-                std::cout << formatWithLatency(reader, info);
+                std::cout << formatWithLatency(instance, reader, info);
 
                 auto active = false;
                 if (auto const status = ::mxlIsFlowActive(instance, in_id.c_str(), &active); status == MXL_STATUS_OK)
